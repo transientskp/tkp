@@ -1,3 +1,5 @@
+add_subdirectory (external)
+
 add_custom_target (tkp_python_lib
   ALL
   COMMAND ${PYTHON_EXECUTABLE} ./setup.py build

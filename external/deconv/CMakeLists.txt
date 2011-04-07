@@ -7,5 +7,5 @@ add_custom_target (deconv
   SOURCES deconv.f
   )
 
-install (FILES deconv.so 
+install (FILES deconv.so
 	 DESTINATION ${PYTHON_LOCAL_PACKAGE_DIR})

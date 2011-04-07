@@ -1,0 +1,245 @@
+#!/bin/sh
+# This script loads the DDLs for the MySQL pipeline_test DB
+# 
+echo "-------------------------------"
+echo "MySQL pipeline_test database"
+echo "-------------------------------"
+
+
+echo "\tDropping MySQL pipeline_test database"
+mysql -ulofar -pcs1 < /home/bscheers/tkp-code/pipe/database/pipeline_develop/MySQL/drop.database.pipeline_test.sql
+
+echo "\tCreating MySQL pipeline_test database"
+mysql -ulofar -pcs1 < /home/bscheers/tkp-code/pipe/database/pipeline_develop/MySQL/create.database.pipeline_test.sql
+
+
+echo "\t--------------------------------------"
+echo "\tDropping MySQL pipeline_test tables"
+echo "\t--------------------------------------"
+
+echo "\t\tDropping MySQL pipeline_test table zones"
+mysql -ulofar -pcs1 -Dpipeline_test < /home/bscheers/tkp-code/pipe/database/pipeline_develop/MySQL/tables/drop.table.zones.sql
+
+echo "\t\tDropping MySQL pipeline_test table zoneheight"
+mysql -ulofar -pcs1 -Dpipeline_test < /home/bscheers/tkp-code/pipe/database/pipeline_develop/MySQL/tables/drop.table.zoneheight.sql
+
+echo "\t\tDropping MySQL pipeline_test table associatedsources"
+mysql -ulofar -pcs1 -Dpipeline_test < /home/bscheers/tkp-code/pipe/database/pipeline_develop/MySQL/tables/drop.table.associatedsources.sql
+
+echo "\t\tDropping MySQL pipeline_test table extractedsources"
+mysql -ulofar -pcs1 -Dpipeline_test < /home/bscheers/tkp-code/pipe/database/pipeline_develop/MySQL/tables/drop.table.extractedsources.sql
+
+echo "\t\tDropping MySQL pipeline_test table catalogedsources"
+mysql -ulofar -pcs1 -Dpipeline_test < /home/bscheers/tkp-code/pipe/database/pipeline_develop/MySQL/tables/drop.table.catalogedsources.sql
+
+echo "\t\tDropping MySQL pipeline_test table catalogs"
+mysql -ulofar -pcs1 -Dpipeline_test < /home/bscheers/tkp-code/pipe/database/pipeline_develop/MySQL/tables/drop.table.catalogs.sql
+
+echo "\t\tDropping MySQL pipeline_test table associationclass"
+mysql -ulofar -pcs1 -Dpipeline_test < /home/bscheers/tkp-code/pipe/database/pipeline_develop/MySQL/tables/drop.table.associationclass.sql
+
+echo "\t\tDropping MySQL pipeline_test table images"
+mysql -ulofar -pcs1 -Dpipeline_test < /home/bscheers/tkp-code/pipe/database/pipeline_develop/MySQL/tables/drop.table.images.sql
+
+echo "\t\tDropping MySQL pipeline_test table datasets"
+mysql -ulofar -pcs1 -Dpipeline_test < /home/bscheers/tkp-code/pipe/database/pipeline_develop/MySQL/tables/drop.table.datasets.sql
+
+echo "\t\tDropping MySQL pipeline_test table frequencybands"
+mysql -ulofar -pcs1 -Dpipeline_test < /home/bscheers/tkp-code/pipe/database/pipeline_develop/MySQL/tables/drop.table.frequencybands.sql
+
+echo "\t\tDropping MySQL pipeline_test table versions"
+mysql -ulofar -pcs1 -Dpipeline_test < /home/bscheers/tkp-code/pipe/database/pipeline_develop/MySQL/tables/drop.table.versions.sql
+
+echo "\t\t-----------------------------------------------------------------------"
+echo "\t\tDropping MySQL pipeline_test tables for multiple catalog association"
+echo "\t\t-----------------------------------------------------------------------"
+
+echo "\t\t\tDropping MySQL pipeline_test table multiplecatalogsources"
+mysql -ulofar -pcs1 -Dpipeline_test < /home/bscheers/tkp-code/pipe/database/pipeline_develop/MySQL/tables/drop.table.multiplecatalogsources.sql
+
+echo "\t\t\tDropping MySQL pipeline_test table multiplecatalogassocs"
+mysql -ulofar -pcs1 -Dpipeline_test < /home/bscheers/tkp-code/pipe/database/pipeline_develop/MySQL/tables/drop.table.multiplecatalogassocs.sql
+
+
+echo "\t--------------------------------------"
+echo "\tCreating MySQL pipeline_test tables"
+echo "\t--------------------------------------"
+
+echo "\t\tCreating MySQL pipeline_test table versions"
+mysql -ulofar -pcs1 -Dpipeline_test < /home/bscheers/tkp-code/pipe/database/pipeline_develop/MySQL/tables/create.table.versions.sql
+
+echo "\t\tCreating MySQL pipeline_test table frequencybands"
+mysql -ulofar -pcs1 -Dpipeline_test < /home/bscheers/tkp-code/pipe/database/pipeline_develop/MySQL/tables/create.table.frequencybands.sql
+
+echo "\t\tCreating MySQL pipeline_test table datasets"
+mysql -ulofar -pcs1 -Dpipeline_test < /home/bscheers/tkp-code/pipe/database/pipeline_develop/MySQL/tables/create.table.datasets.sql
+
+echo "\t\tCreating MySQL pipeline_test table images"
+mysql -ulofar -pcs1 -Dpipeline_test < /home/bscheers/tkp-code/pipe/database/pipeline_develop/MySQL/tables/create.table.images.sql
+
+echo "\t\tCreating MySQL pipeline_test table associationclass"
+mysql -ulofar -pcs1 -Dpipeline_test < /home/bscheers/tkp-code/pipe/database/pipeline_develop/MySQL/tables/create.table.associationclass.sql
+
+echo "\t\tCreating MySQL pipeline_test table catalogs"
+mysql -ulofar -pcs1 -Dpipeline_test < /home/bscheers/tkp-code/pipe/database/pipeline_develop/MySQL/tables/create.table.catalogs.sql
+
+echo "\t\tCreating MySQL pipeline_test table catalogedsources"
+mysql -ulofar -pcs1 -Dpipeline_test < /home/bscheers/tkp-code/pipe/database/pipeline_develop/MySQL/tables/create.table.catalogedsources.sql
+
+echo "\t\tCreating MySQL pipeline_test table extractedsources"
+mysql -ulofar -pcs1 -Dpipeline_test < /home/bscheers/tkp-code/pipe/database/pipeline_develop/MySQL/tables/create.table.extractedsources.sql
+
+echo "\t\tCreating MySQL pipeline_test table associatedsources"
+mysql -ulofar -pcs1 -Dpipeline_test < /home/bscheers/tkp-code/pipe/database/pipeline_develop/MySQL/tables/create.table.associatedsources.sql
+
+echo "\t\tCreating MySQL pipeline_test table zoneheight"
+mysql -ulofar -pcs1 -Dpipeline_test < /home/bscheers/tkp-code/pipe/database/pipeline_develop/MySQL/tables/create.table.zoneheight.sql
+
+echo "\t\tCreating MySQL pipeline_test table zones"
+mysql -ulofar -pcs1 -Dpipeline_test < /home/bscheers/tkp-code/pipe/database/pipeline_develop/MySQL/tables/create.table.zones.sql
+
+echo "\t\t-----------------------------------------------------------------------"
+echo "\t\tCreating MySQL pipeline_test tables for multiple catalog association"
+echo "\t\t-----------------------------------------------------------------------"
+
+echo "\t\t\tCreating MySQL pipeline_test table multiplecatalogsources"
+mysql -ulofar -pcs1 -Dpipeline_test < /home/bscheers/tkp-code/pipe/database/pipeline_develop/MySQL/tables/create.table.multiplecatalogsources.sql
+
+echo "\t\t\tCreating MySQL pipeline_test table multiplecatalogassocs"
+mysql -ulofar -pcs1 -Dpipeline_test < /home/bscheers/tkp-code/pipe/database/pipeline_develop/MySQL/tables/create.table.multiplecatalogassocs.sql
+
+
+echo "\t----------------------------"
+echo "\tSetting the GLOBAL variables"
+echo "\t----------------------------"
+
+echo "\t\tSetting: log_bin_trust_function_creators = 1"
+mysql -ulofar -pcs1 < /home/bscheers/tkp-code/pipe/database/pipeline_develop/MySQL/scripts/set.global.variables.sql
+
+echo "\t-----------------------------------------"
+echo "\tCreating MySQL pipeline_test functions"
+echo "\t-----------------------------------------"
+
+echo "\t\tCreating MySQL pipeline_test function alpha"
+mysql -ulofar -pcs1 -Dpipeline_test < /home/bscheers/tkp-code/pipe/database/pipeline_develop/MySQL/functions/create.function.alpha.sql
+
+echo "\t\tCreating MySQL pipeline_test function getWeightRectIntersection"
+mysql -ulofar -pcs1 -Dpipeline_test < /home/bscheers/tkp-code/pipe/database/pipeline_develop/MySQL/functions/create.function.getWeightRectIntersection.sql
+
+echo "\t\tCreating MySQL pipeline_test function getBand"
+mysql -ulofar -pcs1 -Dpipeline_test < /home/bscheers/tkp-code/pipe/database/pipeline_develop/MySQL/functions/create.function.getBand.sql
+
+echo "\t\tCreating MySQL pipeline_test function decl2deg"
+mysql -ulofar -pcs1 -Dpipeline_test < /home/bscheers/tkp-code/pipe/database/pipeline_develop/MySQL/functions/create.function.decl2deg.sql
+
+echo "\t\tCreating MySQL pipeline_test function decl2dms"
+mysql -ulofar -pcs1 -Dpipeline_test < /home/bscheers/tkp-code/pipe/database/pipeline_develop/MySQL/functions/create.function.decl2dms.sql
+
+echo "\t\tCreating MySQL pipeline_test function doSourcesIntersect"
+mysql -ulofar -pcs1 -Dpipeline_test < /home/bscheers/tkp-code/pipe/database/pipeline_develop/MySQL/functions/create.function.doSourcesIntersect.sql
+
+echo "\t\tCreating MySQL pipeline_test function getBand"
+mysql -ulofar -pcs1 -Dpipeline_test < /home/bscheers/tkp-code/pipe/database/pipeline_develop/MySQL/functions/create.function.getBand.sql
+
+echo "\t\tCreating MySQL pipeline_test function getVectorLength"
+mysql -ulofar -pcs1 -Dpipeline_test < /home/bscheers/tkp-code/pipe/database/pipeline_develop/MySQL/functions/create.function.getVectorLength.sql
+
+echo "\t\tCreating MySQL pipeline_test function getDistanceArcsec"
+mysql -ulofar -pcs1 -Dpipeline_test < /home/bscheers/tkp-code/pipe/database/pipeline_develop/MySQL/functions/create.function.getDistanceArcsec.sql
+
+echo "\t\tCreating MySQL pipeline_test function solidangle_arcsec2"
+mysql -ulofar -pcs1 -Dpipeline_test < /home/bscheers/tkp-code/pipe/database/pipeline_develop/MySQL/functions/create.function.solidangle_arcsec2.sql
+
+echo "\t\tCreating MySQL pipeline_test function insertDataset"
+mysql -ulofar -pcs1 -Dpipeline_test < /home/bscheers/tkp-code/pipe/database/pipeline_develop/MySQL/functions/create.function.insertDataset.sql
+
+echo "\t\tCreating MySQL pipeline_test function insertImage"
+mysql -ulofar -pcs1 -Dpipeline_test < /home/bscheers/tkp-code/pipe/database/pipeline_develop/MySQL/functions/create.function.insertImage.sql
+
+echo "\t\tCreating MySQL pipeline_test function ra2deg"
+mysql -ulofar -pcs1 -Dpipeline_test < /home/bscheers/tkp-code/pipe/database/pipeline_develop/MySQL/functions/create.function.ra2deg.sql
+
+echo "\t\tCreating MySQL pipeline_test function ra2hms"
+mysql -ulofar -pcs1 -Dpipeline_test < /home/bscheers/tkp-code/pipe/database/pipeline_develop/MySQL/functions/create.function.ra2hms.sql
+
+
+echo "\t------------------------------------------"
+echo "\tCreating MySQL pipeline_test procedures"
+echo "\t------------------------------------------"
+
+echo "\t\tCreating MySQL pipeline_test specific procedure AssocXSourceByImage"
+mysql -ulofar -pcs1 -Dpipeline_test < /home/bscheers/tkp-code/pipe/database/pipeline_develop/MySQL/procedures/create.procedure.AssocXSourceByImage.sql
+
+echo "\t\tCreating MySQL pipeline_test specific procedure BuildAssociationClass"
+mysql -ulofar -pcs1 -Dpipeline_test < /home/bscheers/tkp-code/pipe/database/pipeline_develop/MySQL/procedures/create.procedure.BuildAssociationClass.sql
+
+echo "\t\tCreating MySQL pipeline_test specific procedure BuildFrequencyBands"
+mysql -ulofar -pcs1 -Dpipeline_test < /home/bscheers/tkp-code/pipe/database/pipeline_develop/MySQL/procedures/create.procedure.BuildFrequencyBands.sql
+
+echo "\t\tCreating MySQL pipeline_test specific procedure BuildZones"
+mysql -ulofar -pcs1 -Dpipeline_test < /home/bscheers/tkp-code/pipe/database/pipeline_develop/MySQL/procedures/create.procedure.BuildZones.sql
+
+echo "\t\tCreating MySQL pipeline_test specific procedure InsertSrc"
+mysql -ulofar -pcs1 -Dpipeline_test < /home/bscheers/tkp-code/pipe/database/pipeline_develop/MySQL/procedures/create.procedure.InsertSrc.sql
+
+echo "\t\tCreating MySQL pipeline_test specific procedure InsertVersion"
+mysql -ulofar -pcs1 -Dpipeline_test < /home/bscheers/tkp-code/pipe/database/pipeline_develop/MySQL/procedures/create.procedure.InsertVersion.sql
+
+echo "\t\tCreating MySQL pipeline_test specific procedure CatSourcesInRegion"
+mysql -ulofar -pcs1 -Dpipeline_test < /home/bscheers/tkp-code/pipe/database/pipeline_develop/MySQL/procedures/create.procedure.CatSourcesInRegion.sql
+
+echo "\t\tCreating MySQL pipeline_test specific procedure SourcesInRegion"
+mysql -ulofar -pcs1 -Dpipeline_test < /home/bscheers/tkp-code/pipe/database/pipeline_develop/MySQL/procedures/create.procedure.SourcesInRegion.sql
+
+echo "\t\t---------------------------------------------------------------------------"
+echo "\t\tCreating MySQL pipeline_test procedures for multiple catalog association"
+echo "\t\t---------------------------------------------------------------------------"
+
+echo "\t\t\tCreating MySQL pipeline_test procedure MultipleCatMatchingInit"
+mysql -ulofar -pcs1 -Dpipeline_test < /home/bscheers/tkp-code/pipe/database/pipeline_develop/MySQL/procedures/create.procedure.MultipleCatMatchingInit.sql
+
+echo "\t\t\tCreating MySQL pipeline_test procedure MultipleCatMatching"
+mysql -ulofar -pcs1 -Dpipeline_test < /home/bscheers/tkp-code/pipe/database/pipeline_develop/MySQL/procedures/create.procedure.MultipleCatMatching.sql
+
+
+echo "\t---------------------------------"
+echo "\tInitialize MySQL pipeline_test"
+echo "\t---------------------------------"
+
+echo "\t\tInitialize MySQL pipeline_test tables"
+mysql -ulofar -pcs1 -Dpipeline_test < /home/bscheers/tkp-code/pipe/database/pipeline_develop/MySQL/init/init.tables.sql
+
+
+echo "\t--------------------------------------------"
+echo "\tLoading catalogs into MySQL pipeline_test"
+echo "\t--------------------------------------------"
+
+date '+%Y-%m-%d-%H:%M:%S'
+
+#echo "\t\tLoad NVSS catalog"
+#mysql -ulofar -pcs1 -Dpipeline_test < /home/bscheers/tkp-code/pipe/database/pipeline_develop/MySQL/load/load.cat.nvss.sql
+#date '+%Y-%m-%d-%H:%M:%S'
+
+#echo "\t\tLoad VLSS catalog"
+#mysql -ulofar -pcs1 -Dpipeline_test < /home/bscheers/tkp-code/pipe/database/pipeline_develop/MySQL/load/load.cat.vlss.sql
+#date '+%Y-%m-%d-%H:%M:%S'
+
+#echo "\t\tLoad WENSS catalog"
+#mysql -ulofar -pcs1 -Dpipeline_test < /home/bscheers/tkp-code/pipe/database/pipeline_develop/MySQL/load/load.cat.wenss.sql
+#date '+%Y-%m-%d-%H:%M:%S'
+
+#echo "\t\tLoad 8C catalog"
+#mysql -ulofar -pcs1 -Dpipeline_test < /home/bscheers/tkp-code/pipe/database/pipeline_develop/MySQL/load/load.cat.8c.sql
+
+#echo "\t\tLoad 2XMMi-Slim catalog"
+#mysql -ulofar -pcs1 -Dpipeline_test < /home/bscheers/tkp-code/pipe/database/pipeline_develop/MySQL/load/load.cat.2XMMi-slim.sql
+
+#echo "\t\tLoad 2XMMi-Slim A catalog"
+#mysql -ulofar -pcs1 -Dpipeline_test < /home/bscheers/tkp-code/pipe/database/pipeline_develop/MySQL/load/load.cat.2XMMi-slim.A.sql
+
+#echo "\t\tLoad 2XMMi-Slim B catalog"
+#mysql -ulofar -pcs1 -Dpipeline_test < /home/bscheers/tkp-code/pipe/database/pipeline_develop/MySQL/load/load.cat.2XMMi-slim.B.sql
+
+echo "-----"
+echo "READY"
+echo "-----"

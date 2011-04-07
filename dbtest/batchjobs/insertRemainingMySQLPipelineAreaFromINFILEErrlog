@@ -1,0 +1,22 @@
+Mon Mar  5 20:05:34 MET 2007
+iter: 0
+Mon Mar  5 20:05:34 MET 2007
++-------------------------------------+
+|                                     |
+| data is written to INFILEs          |
+|                                     |
+| Nimages  = 10000         |
+| Nbands   = 10         |
+| Nbeams   = 10         |
+| Nsources = 400         |
+|                                     |
+| PROCESSING TIMES                    |
+-------------------------------------------------------
+- SQLException @ query: LOAD DATA INFILE '../../../java/files/dbtests/pipeline/mysql/infile/Nimg10000-Nf10-Nbm10-Ns400/extractedsources.txt' INTO TABLE extractedsources FIELDS TERMINATED BY ',' LINES TERMINATED BY '\n' (beam_id,freq_id,integr_id,logid,htmid,ra,decl,ra_err,decl_err,I,Q,U,V,I_err,Q_err,U_err,V_err);
+- SQLException ErrorCode: 1197
+- SQLException SQLState: HY000
+- SQLException Message: Multi-statement transaction required more than 'max_binlog_cache_size' bytes of storage; increase this mysqld variable and try again
+- This query will not be inserted
+-------------------------------------------------------
+Tue Mar  6 01:51:14 MET 2007
+

@@ -1,0 +1,899 @@
+-------------------------------
+MySQL pipeline_develop database
+-------------------------------
+	--------------------------------------
+	Dropping MySQL pipeline_develop tables
+	--------------------------------------
+		Dropping MySQL pipeline_develop table assoccatsrcids
+		Dropping MySQL pipeline_develop table assocxtrsrcids
+		Dropping MySQL pipeline_develop table zones
+		Dropping MySQL pipeline_develop table zoneheight
+		Dropping MySQL pipeline_develop table sourcesizes
+		Dropping MySQL pipeline_develop table averagedsources
+		Dropping MySQL pipeline_develop table associatedcatsources
+		Dropping MySQL pipeline_develop table associatedsources
+		Dropping MySQL pipeline_develop table extractedsources
+		Dropping MySQL pipeline_develop table catalogedsources
+		Dropping MySQL pipeline_develop table catalogs
+		Dropping MySQL pipeline_develop table sourcelist
+		Dropping MySQL pipeline_develop table associationclass
+		Dropping MySQL pipeline_develop table images
+		Dropping MySQL pipeline_develop table datasets
+		Dropping MySQL pipeline_develop table frequencybands
+		Dropping MySQL pipeline_develop table versions
+	--------------------------------------
+	Creating MySQL pipeline_develop tables
+	--------------------------------------
+		Creating MySQL pipeline_develop table versions
+		Creating MySQL pipeline_develop table frequencybands
+		Creating MySQL pipeline_develop table datasets
+		Creating MySQL pipeline_develop table images
+		Creating MySQL pipeline_develop table associationclass
+		Creating MySQL pipeline_develop table sourcelist
+		Creating MySQL pipeline_develop table catalogs
+		Creating MySQL pipeline_develop table catalogedsources
+		Creating MySQL pipeline_develop table extractedsources
+		Creating MySQL pipeline_develop table associatedsources
+		Creating MySQL pipeline_develop table associatedcatsources
+		Creating MySQL pipeline_develop table averagedsources
+		Creating MySQL pipeline_develop table sourcesizes
+		Creating MySQL pipeline_develop table zoneheight
+		Creating MySQL pipeline_develop table zones
+		Creating MySQL pipeline_develop table assocxtrsrcids
+		Creating MySQL pipeline_develop table assoccatsrcids
+	----------------------------
+	Setting the GLOBAL variables
+	----------------------------
+		Setting: log_bin_trust_function_creators = 1
+	-----------------------------------------
+	Creating MySQL pipeline_develop functions
+	-----------------------------------------
+		Creating MySQL pipeline_develop function alpha
+		Creating MySQL pipeline_develop function insertDataset
+		Creating MySQL pipeline_develop function insertImage
+		Creating MySQL pipeline_develop function doIntersectElls
+	--------------------------------------------------
+	Creating MySQL pipeline_develop general procedures
+	--------------------------------------------------
+		Creating MySQL pipeline_develop general procedure BuildZones
+		Creating MySQL pipeline_develop general procedure BuildFrequencyBands
+		Creating MySQL pipeline_develop general procedure BuildAssociationClass
+		Creating MySQL pipeline_develop general procedure InsertSrc
+		Creating MySQL pipeline_develop general procedure AssocSrc
+		Creating MySQL pipeline_develop general procedure AvgSrcs
+		Creating MySQL pipeline_develop general procedure DumpSrcs
+	---------------------------------------------------
+	Creating MySQL pipeline_develop specific procedures
+	---------------------------------------------------
+		Creating MySQL pipeline_develop specific procedure AssocCatSrcs
+	---------------------------------
+	Initialize MySQL pipeline_develop
+	---------------------------------
+		Initialize MySQL pipeline_develop tables
+	--------------------------------------------
+	Loading catalogs into MySQL pipeline_develop
+	--------------------------------------------
+2009-03-18-17:10:42
+		Load WENSS catalog
+		Load 2XMMi-Slim WENSS catalog
+2009-03-18-17:11:28
+-----
+READY
+-----
+Associate 1000 WENSS sources with 1000 XMM sources
+Deleting wenss sources
+2009-03-18 17:11:28
+
+
+Deleting xmm sources
+2009-03-18 17:12:30
+
+
+Calling AssocCatSrcs()
+2009-03-18 17:13:11
+
+
+Result
+2009-03-18 17:14:21
+
+
+COUNT(*)
+3
+Ready
+2009-03-18 17:14:21
+-------------------------------
+MySQL pipeline_develop database
+-------------------------------
+	--------------------------------------
+	Dropping MySQL pipeline_develop tables
+	--------------------------------------
+		Dropping MySQL pipeline_develop table assoccatsrcids
+		Dropping MySQL pipeline_develop table assocxtrsrcids
+		Dropping MySQL pipeline_develop table zones
+		Dropping MySQL pipeline_develop table zoneheight
+		Dropping MySQL pipeline_develop table sourcesizes
+		Dropping MySQL pipeline_develop table averagedsources
+		Dropping MySQL pipeline_develop table associatedcatsources
+		Dropping MySQL pipeline_develop table associatedsources
+		Dropping MySQL pipeline_develop table extractedsources
+		Dropping MySQL pipeline_develop table catalogedsources
+		Dropping MySQL pipeline_develop table catalogs
+		Dropping MySQL pipeline_develop table sourcelist
+		Dropping MySQL pipeline_develop table associationclass
+		Dropping MySQL pipeline_develop table images
+		Dropping MySQL pipeline_develop table datasets
+		Dropping MySQL pipeline_develop table frequencybands
+		Dropping MySQL pipeline_develop table versions
+	--------------------------------------
+	Creating MySQL pipeline_develop tables
+	--------------------------------------
+		Creating MySQL pipeline_develop table versions
+		Creating MySQL pipeline_develop table frequencybands
+		Creating MySQL pipeline_develop table datasets
+		Creating MySQL pipeline_develop table images
+		Creating MySQL pipeline_develop table associationclass
+		Creating MySQL pipeline_develop table sourcelist
+		Creating MySQL pipeline_develop table catalogs
+		Creating MySQL pipeline_develop table catalogedsources
+		Creating MySQL pipeline_develop table extractedsources
+		Creating MySQL pipeline_develop table associatedsources
+		Creating MySQL pipeline_develop table associatedcatsources
+		Creating MySQL pipeline_develop table averagedsources
+		Creating MySQL pipeline_develop table sourcesizes
+		Creating MySQL pipeline_develop table zoneheight
+		Creating MySQL pipeline_develop table zones
+		Creating MySQL pipeline_develop table assocxtrsrcids
+		Creating MySQL pipeline_develop table assoccatsrcids
+	----------------------------
+	Setting the GLOBAL variables
+	----------------------------
+		Setting: log_bin_trust_function_creators = 1
+	-----------------------------------------
+	Creating MySQL pipeline_develop functions
+	-----------------------------------------
+		Creating MySQL pipeline_develop function alpha
+		Creating MySQL pipeline_develop function insertDataset
+		Creating MySQL pipeline_develop function insertImage
+		Creating MySQL pipeline_develop function doIntersectElls
+	--------------------------------------------------
+	Creating MySQL pipeline_develop general procedures
+	--------------------------------------------------
+		Creating MySQL pipeline_develop general procedure BuildZones
+		Creating MySQL pipeline_develop general procedure BuildFrequencyBands
+		Creating MySQL pipeline_develop general procedure BuildAssociationClass
+		Creating MySQL pipeline_develop general procedure InsertSrc
+		Creating MySQL pipeline_develop general procedure AssocSrc
+		Creating MySQL pipeline_develop general procedure AvgSrcs
+		Creating MySQL pipeline_develop general procedure DumpSrcs
+	---------------------------------------------------
+	Creating MySQL pipeline_develop specific procedures
+	---------------------------------------------------
+		Creating MySQL pipeline_develop specific procedure AssocCatSrcs
+	---------------------------------
+	Initialize MySQL pipeline_develop
+	---------------------------------
+		Initialize MySQL pipeline_develop tables
+	--------------------------------------------
+	Loading catalogs into MySQL pipeline_develop
+	--------------------------------------------
+2009-03-18-17:14:21
+		Load WENSS catalog
+		Load 2XMMi-Slim WENSS catalog
+2009-03-18-17:15:08
+-----
+READY
+-----
+Associate 10000 WENSS sources with 1000 XMM sources
+Deleting wenss sources
+2009-03-18 17:15:08
+
+
+Deleting xmm sources
+2009-03-18 17:16:07
+
+
+Calling AssocCatSrcs()
+2009-03-18 17:16:46
+
+
+Result
+2009-03-18 17:18:04
+
+
+COUNT(*)
+3
+Ready
+2009-03-18 17:18:04
+-------------------------------
+MySQL pipeline_develop database
+-------------------------------
+	--------------------------------------
+	Dropping MySQL pipeline_develop tables
+	--------------------------------------
+		Dropping MySQL pipeline_develop table assoccatsrcids
+		Dropping MySQL pipeline_develop table assocxtrsrcids
+		Dropping MySQL pipeline_develop table zones
+		Dropping MySQL pipeline_develop table zoneheight
+		Dropping MySQL pipeline_develop table sourcesizes
+		Dropping MySQL pipeline_develop table averagedsources
+		Dropping MySQL pipeline_develop table associatedcatsources
+		Dropping MySQL pipeline_develop table associatedsources
+		Dropping MySQL pipeline_develop table extractedsources
+		Dropping MySQL pipeline_develop table catalogedsources
+		Dropping MySQL pipeline_develop table catalogs
+		Dropping MySQL pipeline_develop table sourcelist
+		Dropping MySQL pipeline_develop table associationclass
+		Dropping MySQL pipeline_develop table images
+		Dropping MySQL pipeline_develop table datasets
+		Dropping MySQL pipeline_develop table frequencybands
+		Dropping MySQL pipeline_develop table versions
+	--------------------------------------
+	Creating MySQL pipeline_develop tables
+	--------------------------------------
+		Creating MySQL pipeline_develop table versions
+		Creating MySQL pipeline_develop table frequencybands
+		Creating MySQL pipeline_develop table datasets
+		Creating MySQL pipeline_develop table images
+		Creating MySQL pipeline_develop table associationclass
+		Creating MySQL pipeline_develop table sourcelist
+		Creating MySQL pipeline_develop table catalogs
+		Creating MySQL pipeline_develop table catalogedsources
+		Creating MySQL pipeline_develop table extractedsources
+		Creating MySQL pipeline_develop table associatedsources
+		Creating MySQL pipeline_develop table associatedcatsources
+		Creating MySQL pipeline_develop table averagedsources
+		Creating MySQL pipeline_develop table sourcesizes
+		Creating MySQL pipeline_develop table zoneheight
+		Creating MySQL pipeline_develop table zones
+		Creating MySQL pipeline_develop table assocxtrsrcids
+		Creating MySQL pipeline_develop table assoccatsrcids
+	----------------------------
+	Setting the GLOBAL variables
+	----------------------------
+		Setting: log_bin_trust_function_creators = 1
+	-----------------------------------------
+	Creating MySQL pipeline_develop functions
+	-----------------------------------------
+		Creating MySQL pipeline_develop function alpha
+		Creating MySQL pipeline_develop function insertDataset
+		Creating MySQL pipeline_develop function insertImage
+		Creating MySQL pipeline_develop function doIntersectElls
+	--------------------------------------------------
+	Creating MySQL pipeline_develop general procedures
+	--------------------------------------------------
+		Creating MySQL pipeline_develop general procedure BuildZones
+		Creating MySQL pipeline_develop general procedure BuildFrequencyBands
+		Creating MySQL pipeline_develop general procedure BuildAssociationClass
+		Creating MySQL pipeline_develop general procedure InsertSrc
+		Creating MySQL pipeline_develop general procedure AssocSrc
+		Creating MySQL pipeline_develop general procedure AvgSrcs
+		Creating MySQL pipeline_develop general procedure DumpSrcs
+	---------------------------------------------------
+	Creating MySQL pipeline_develop specific procedures
+	---------------------------------------------------
+		Creating MySQL pipeline_develop specific procedure AssocCatSrcs
+	---------------------------------
+	Initialize MySQL pipeline_develop
+	---------------------------------
+		Initialize MySQL pipeline_develop tables
+	--------------------------------------------
+	Loading catalogs into MySQL pipeline_develop
+	--------------------------------------------
+2009-03-18-17:18:05
+		Load WENSS catalog
+		Load 2XMMi-Slim WENSS catalog
+2009-03-18-17:18:51
+-----
+READY
+-----
+Associate 100000 WENSS sources with 1000 XMM sources
+Deleting wenss sources
+2009-03-18 17:18:51
+
+
+Deleting xmm sources
+2009-03-18 17:19:22
+
+
+Calling AssocCatSrcs()
+2009-03-18 17:20:02
+
+
+Result
+2009-03-18 17:22:40
+
+
+COUNT(*)
+3
+Ready
+2009-03-18 17:22:40
+-------------------------------
+MySQL pipeline_develop database
+-------------------------------
+	--------------------------------------
+	Dropping MySQL pipeline_develop tables
+	--------------------------------------
+		Dropping MySQL pipeline_develop table assoccatsrcids
+		Dropping MySQL pipeline_develop table assocxtrsrcids
+		Dropping MySQL pipeline_develop table zones
+		Dropping MySQL pipeline_develop table zoneheight
+		Dropping MySQL pipeline_develop table sourcesizes
+		Dropping MySQL pipeline_develop table averagedsources
+		Dropping MySQL pipeline_develop table associatedcatsources
+		Dropping MySQL pipeline_develop table associatedsources
+		Dropping MySQL pipeline_develop table extractedsources
+		Dropping MySQL pipeline_develop table catalogedsources
+		Dropping MySQL pipeline_develop table catalogs
+		Dropping MySQL pipeline_develop table sourcelist
+		Dropping MySQL pipeline_develop table associationclass
+		Dropping MySQL pipeline_develop table images
+		Dropping MySQL pipeline_develop table datasets
+		Dropping MySQL pipeline_develop table frequencybands
+		Dropping MySQL pipeline_develop table versions
+	--------------------------------------
+	Creating MySQL pipeline_develop tables
+	--------------------------------------
+		Creating MySQL pipeline_develop table versions
+		Creating MySQL pipeline_develop table frequencybands
+		Creating MySQL pipeline_develop table datasets
+		Creating MySQL pipeline_develop table images
+		Creating MySQL pipeline_develop table associationclass
+		Creating MySQL pipeline_develop table sourcelist
+		Creating MySQL pipeline_develop table catalogs
+		Creating MySQL pipeline_develop table catalogedsources
+		Creating MySQL pipeline_develop table extractedsources
+		Creating MySQL pipeline_develop table associatedsources
+		Creating MySQL pipeline_develop table associatedcatsources
+		Creating MySQL pipeline_develop table averagedsources
+		Creating MySQL pipeline_develop table sourcesizes
+		Creating MySQL pipeline_develop table zoneheight
+		Creating MySQL pipeline_develop table zones
+		Creating MySQL pipeline_develop table assocxtrsrcids
+		Creating MySQL pipeline_develop table assoccatsrcids
+	----------------------------
+	Setting the GLOBAL variables
+	----------------------------
+		Setting: log_bin_trust_function_creators = 1
+	-----------------------------------------
+	Creating MySQL pipeline_develop functions
+	-----------------------------------------
+		Creating MySQL pipeline_develop function alpha
+		Creating MySQL pipeline_develop function insertDataset
+		Creating MySQL pipeline_develop function insertImage
+		Creating MySQL pipeline_develop function doIntersectElls
+	--------------------------------------------------
+	Creating MySQL pipeline_develop general procedures
+	--------------------------------------------------
+		Creating MySQL pipeline_develop general procedure BuildZones
+		Creating MySQL pipeline_develop general procedure BuildFrequencyBands
+		Creating MySQL pipeline_develop general procedure BuildAssociationClass
+		Creating MySQL pipeline_develop general procedure InsertSrc
+		Creating MySQL pipeline_develop general procedure AssocSrc
+		Creating MySQL pipeline_develop general procedure AvgSrcs
+		Creating MySQL pipeline_develop general procedure DumpSrcs
+	---------------------------------------------------
+	Creating MySQL pipeline_develop specific procedures
+	---------------------------------------------------
+		Creating MySQL pipeline_develop specific procedure AssocCatSrcs
+	---------------------------------
+	Initialize MySQL pipeline_develop
+	---------------------------------
+		Initialize MySQL pipeline_develop tables
+	--------------------------------------------
+	Loading catalogs into MySQL pipeline_develop
+	--------------------------------------------
+2009-03-18-17:22:41
+		Load WENSS catalog
+		Load 2XMMi-Slim WENSS catalog
+2009-03-18-17:23:27
+-----
+READY
+-----
+Associate all WENSS sources with 1000 XMM sources
+Deleting xmm sources
+2009-03-18 17:23:27
+
+
+Calling AssocCatSrcs()
+2009-03-18 17:23:50
+
+
+Result
+2009-03-18 17:28:51
+
+
+COUNT(*)
+3
+Ready
+2009-03-18 17:28:51
+-------------------------------
+MySQL pipeline_develop database
+-------------------------------
+	--------------------------------------
+	Dropping MySQL pipeline_develop tables
+	--------------------------------------
+		Dropping MySQL pipeline_develop table assoccatsrcids
+		Dropping MySQL pipeline_develop table assocxtrsrcids
+		Dropping MySQL pipeline_develop table zones
+		Dropping MySQL pipeline_develop table zoneheight
+		Dropping MySQL pipeline_develop table sourcesizes
+		Dropping MySQL pipeline_develop table averagedsources
+		Dropping MySQL pipeline_develop table associatedcatsources
+		Dropping MySQL pipeline_develop table associatedsources
+		Dropping MySQL pipeline_develop table extractedsources
+		Dropping MySQL pipeline_develop table catalogedsources
+		Dropping MySQL pipeline_develop table catalogs
+		Dropping MySQL pipeline_develop table sourcelist
+		Dropping MySQL pipeline_develop table associationclass
+		Dropping MySQL pipeline_develop table images
+		Dropping MySQL pipeline_develop table datasets
+		Dropping MySQL pipeline_develop table frequencybands
+		Dropping MySQL pipeline_develop table versions
+	--------------------------------------
+	Creating MySQL pipeline_develop tables
+	--------------------------------------
+		Creating MySQL pipeline_develop table versions
+		Creating MySQL pipeline_develop table frequencybands
+		Creating MySQL pipeline_develop table datasets
+		Creating MySQL pipeline_develop table images
+		Creating MySQL pipeline_develop table associationclass
+		Creating MySQL pipeline_develop table sourcelist
+		Creating MySQL pipeline_develop table catalogs
+		Creating MySQL pipeline_develop table catalogedsources
+		Creating MySQL pipeline_develop table extractedsources
+		Creating MySQL pipeline_develop table associatedsources
+		Creating MySQL pipeline_develop table associatedcatsources
+		Creating MySQL pipeline_develop table averagedsources
+		Creating MySQL pipeline_develop table sourcesizes
+		Creating MySQL pipeline_develop table zoneheight
+		Creating MySQL pipeline_develop table zones
+		Creating MySQL pipeline_develop table assocxtrsrcids
+		Creating MySQL pipeline_develop table assoccatsrcids
+	----------------------------
+	Setting the GLOBAL variables
+	----------------------------
+		Setting: log_bin_trust_function_creators = 1
+	-----------------------------------------
+	Creating MySQL pipeline_develop functions
+	-----------------------------------------
+		Creating MySQL pipeline_develop function alpha
+		Creating MySQL pipeline_develop function insertDataset
+		Creating MySQL pipeline_develop function insertImage
+		Creating MySQL pipeline_develop function doIntersectElls
+	--------------------------------------------------
+	Creating MySQL pipeline_develop general procedures
+	--------------------------------------------------
+		Creating MySQL pipeline_develop general procedure BuildZones
+		Creating MySQL pipeline_develop general procedure BuildFrequencyBands
+		Creating MySQL pipeline_develop general procedure BuildAssociationClass
+		Creating MySQL pipeline_develop general procedure InsertSrc
+		Creating MySQL pipeline_develop general procedure AssocSrc
+		Creating MySQL pipeline_develop general procedure AvgSrcs
+		Creating MySQL pipeline_develop general procedure DumpSrcs
+	---------------------------------------------------
+	Creating MySQL pipeline_develop specific procedures
+	---------------------------------------------------
+		Creating MySQL pipeline_develop specific procedure AssocCatSrcs
+	---------------------------------
+	Initialize MySQL pipeline_develop
+	---------------------------------
+		Initialize MySQL pipeline_develop tables
+	--------------------------------------------
+	Loading catalogs into MySQL pipeline_develop
+	--------------------------------------------
+2009-03-18-17:28:52
+		Load WENSS catalog
+		Load 2XMMi-Slim WENSS catalog
+2009-03-18-17:29:39
+-----
+READY
+-----
+Associate 1000 WENSS sources with 10000 XMM sources
+Deleting wenss sources
+2009-03-18 17:29:39
+
+
+Deleting xmm sources
+2009-03-18 17:30:40
+
+
+Calling AssocCatSrcs()
+2009-03-18 17:31:18
+
+
+Result
+2009-03-18 17:32:39
+
+
+COUNT(*)
+3
+Ready
+2009-03-18 17:32:39
+-------------------------------
+MySQL pipeline_develop database
+-------------------------------
+	--------------------------------------
+	Dropping MySQL pipeline_develop tables
+	--------------------------------------
+		Dropping MySQL pipeline_develop table assoccatsrcids
+		Dropping MySQL pipeline_develop table assocxtrsrcids
+		Dropping MySQL pipeline_develop table zones
+		Dropping MySQL pipeline_develop table zoneheight
+		Dropping MySQL pipeline_develop table sourcesizes
+		Dropping MySQL pipeline_develop table averagedsources
+		Dropping MySQL pipeline_develop table associatedcatsources
+		Dropping MySQL pipeline_develop table associatedsources
+		Dropping MySQL pipeline_develop table extractedsources
+		Dropping MySQL pipeline_develop table catalogedsources
+		Dropping MySQL pipeline_develop table catalogs
+		Dropping MySQL pipeline_develop table sourcelist
+		Dropping MySQL pipeline_develop table associationclass
+		Dropping MySQL pipeline_develop table images
+		Dropping MySQL pipeline_develop table datasets
+		Dropping MySQL pipeline_develop table frequencybands
+		Dropping MySQL pipeline_develop table versions
+	--------------------------------------
+	Creating MySQL pipeline_develop tables
+	--------------------------------------
+		Creating MySQL pipeline_develop table versions
+		Creating MySQL pipeline_develop table frequencybands
+		Creating MySQL pipeline_develop table datasets
+		Creating MySQL pipeline_develop table images
+		Creating MySQL pipeline_develop table associationclass
+		Creating MySQL pipeline_develop table sourcelist
+		Creating MySQL pipeline_develop table catalogs
+		Creating MySQL pipeline_develop table catalogedsources
+		Creating MySQL pipeline_develop table extractedsources
+		Creating MySQL pipeline_develop table associatedsources
+		Creating MySQL pipeline_develop table associatedcatsources
+		Creating MySQL pipeline_develop table averagedsources
+		Creating MySQL pipeline_develop table sourcesizes
+		Creating MySQL pipeline_develop table zoneheight
+		Creating MySQL pipeline_develop table zones
+		Creating MySQL pipeline_develop table assocxtrsrcids
+		Creating MySQL pipeline_develop table assoccatsrcids
+	----------------------------
+	Setting the GLOBAL variables
+	----------------------------
+		Setting: log_bin_trust_function_creators = 1
+	-----------------------------------------
+	Creating MySQL pipeline_develop functions
+	-----------------------------------------
+		Creating MySQL pipeline_develop function alpha
+		Creating MySQL pipeline_develop function insertDataset
+		Creating MySQL pipeline_develop function insertImage
+		Creating MySQL pipeline_develop function doIntersectElls
+	--------------------------------------------------
+	Creating MySQL pipeline_develop general procedures
+	--------------------------------------------------
+		Creating MySQL pipeline_develop general procedure BuildZones
+		Creating MySQL pipeline_develop general procedure BuildFrequencyBands
+		Creating MySQL pipeline_develop general procedure BuildAssociationClass
+		Creating MySQL pipeline_develop general procedure InsertSrc
+		Creating MySQL pipeline_develop general procedure AssocSrc
+		Creating MySQL pipeline_develop general procedure AvgSrcs
+		Creating MySQL pipeline_develop general procedure DumpSrcs
+	---------------------------------------------------
+	Creating MySQL pipeline_develop specific procedures
+	---------------------------------------------------
+		Creating MySQL pipeline_develop specific procedure AssocCatSrcs
+	---------------------------------
+	Initialize MySQL pipeline_develop
+	---------------------------------
+		Initialize MySQL pipeline_develop tables
+	--------------------------------------------
+	Loading catalogs into MySQL pipeline_develop
+	--------------------------------------------
+2009-03-18-17:32:40
+		Load WENSS catalog
+		Load 2XMMi-Slim WENSS catalog
+2009-03-18-17:33:26
+-----
+READY
+-----
+Associate 10000 WENSS sources with 10000 XMM sources
+Deleting wenss sources
+2009-03-18 17:33:26
+
+
+Deleting xmm sources
+2009-03-18 17:34:25
+
+
+Calling AssocCatSrcs()
+2009-03-18 17:35:01
+
+
+Result
+2009-03-18 17:38:28
+
+
+COUNT(*)
+60
+Ready
+2009-03-18 17:38:28
+-------------------------------
+MySQL pipeline_develop database
+-------------------------------
+	--------------------------------------
+	Dropping MySQL pipeline_develop tables
+	--------------------------------------
+		Dropping MySQL pipeline_develop table assoccatsrcids
+		Dropping MySQL pipeline_develop table assocxtrsrcids
+		Dropping MySQL pipeline_develop table zones
+		Dropping MySQL pipeline_develop table zoneheight
+		Dropping MySQL pipeline_develop table sourcesizes
+		Dropping MySQL pipeline_develop table averagedsources
+		Dropping MySQL pipeline_develop table associatedcatsources
+		Dropping MySQL pipeline_develop table associatedsources
+		Dropping MySQL pipeline_develop table extractedsources
+		Dropping MySQL pipeline_develop table catalogedsources
+		Dropping MySQL pipeline_develop table catalogs
+		Dropping MySQL pipeline_develop table sourcelist
+		Dropping MySQL pipeline_develop table associationclass
+		Dropping MySQL pipeline_develop table images
+		Dropping MySQL pipeline_develop table datasets
+		Dropping MySQL pipeline_develop table frequencybands
+		Dropping MySQL pipeline_develop table versions
+	--------------------------------------
+	Creating MySQL pipeline_develop tables
+	--------------------------------------
+		Creating MySQL pipeline_develop table versions
+		Creating MySQL pipeline_develop table frequencybands
+		Creating MySQL pipeline_develop table datasets
+		Creating MySQL pipeline_develop table images
+		Creating MySQL pipeline_develop table associationclass
+		Creating MySQL pipeline_develop table sourcelist
+		Creating MySQL pipeline_develop table catalogs
+		Creating MySQL pipeline_develop table catalogedsources
+		Creating MySQL pipeline_develop table extractedsources
+		Creating MySQL pipeline_develop table associatedsources
+		Creating MySQL pipeline_develop table associatedcatsources
+		Creating MySQL pipeline_develop table averagedsources
+		Creating MySQL pipeline_develop table sourcesizes
+		Creating MySQL pipeline_develop table zoneheight
+		Creating MySQL pipeline_develop table zones
+		Creating MySQL pipeline_develop table assocxtrsrcids
+		Creating MySQL pipeline_develop table assoccatsrcids
+	----------------------------
+	Setting the GLOBAL variables
+	----------------------------
+		Setting: log_bin_trust_function_creators = 1
+	-----------------------------------------
+	Creating MySQL pipeline_develop functions
+	-----------------------------------------
+		Creating MySQL pipeline_develop function alpha
+		Creating MySQL pipeline_develop function insertDataset
+		Creating MySQL pipeline_develop function insertImage
+		Creating MySQL pipeline_develop function doIntersectElls
+	--------------------------------------------------
+	Creating MySQL pipeline_develop general procedures
+	--------------------------------------------------
+		Creating MySQL pipeline_develop general procedure BuildZones
+		Creating MySQL pipeline_develop general procedure BuildFrequencyBands
+		Creating MySQL pipeline_develop general procedure BuildAssociationClass
+		Creating MySQL pipeline_develop general procedure InsertSrc
+		Creating MySQL pipeline_develop general procedure AssocSrc
+		Creating MySQL pipeline_develop general procedure AvgSrcs
+		Creating MySQL pipeline_develop general procedure DumpSrcs
+	---------------------------------------------------
+	Creating MySQL pipeline_develop specific procedures
+	---------------------------------------------------
+		Creating MySQL pipeline_develop specific procedure AssocCatSrcs
+	---------------------------------
+	Initialize MySQL pipeline_develop
+	---------------------------------
+		Initialize MySQL pipeline_develop tables
+	--------------------------------------------
+	Loading catalogs into MySQL pipeline_develop
+	--------------------------------------------
+2009-03-18-17:38:29
+		Load WENSS catalog
+		Load 2XMMi-Slim WENSS catalog
+2009-03-18-17:39:15
+-----
+READY
+-----
+Associate 100000 WENSS sources with 10000 XMM sources
+Deleting wenss sources
+2009-03-18 17:39:15
+
+
+Deleting xmm sources
+2009-03-18 17:39:47
+
+
+Calling AssocCatSrcs()
+2009-03-18 17:40:26
+
+
+Result
+2009-03-18 18:03:14
+
+
+COUNT(*)
+60
+Ready
+2009-03-18 18:03:14
+-------------------------------
+MySQL pipeline_develop database
+-------------------------------
+	--------------------------------------
+	Dropping MySQL pipeline_develop tables
+	--------------------------------------
+		Dropping MySQL pipeline_develop table assoccatsrcids
+		Dropping MySQL pipeline_develop table assocxtrsrcids
+		Dropping MySQL pipeline_develop table zones
+		Dropping MySQL pipeline_develop table zoneheight
+		Dropping MySQL pipeline_develop table sourcesizes
+		Dropping MySQL pipeline_develop table averagedsources
+		Dropping MySQL pipeline_develop table associatedcatsources
+		Dropping MySQL pipeline_develop table associatedsources
+		Dropping MySQL pipeline_develop table extractedsources
+		Dropping MySQL pipeline_develop table catalogedsources
+		Dropping MySQL pipeline_develop table catalogs
+		Dropping MySQL pipeline_develop table sourcelist
+		Dropping MySQL pipeline_develop table associationclass
+		Dropping MySQL pipeline_develop table images
+		Dropping MySQL pipeline_develop table datasets
+		Dropping MySQL pipeline_develop table frequencybands
+		Dropping MySQL pipeline_develop table versions
+	--------------------------------------
+	Creating MySQL pipeline_develop tables
+	--------------------------------------
+		Creating MySQL pipeline_develop table versions
+		Creating MySQL pipeline_develop table frequencybands
+		Creating MySQL pipeline_develop table datasets
+		Creating MySQL pipeline_develop table images
+		Creating MySQL pipeline_develop table associationclass
+		Creating MySQL pipeline_develop table sourcelist
+		Creating MySQL pipeline_develop table catalogs
+		Creating MySQL pipeline_develop table catalogedsources
+		Creating MySQL pipeline_develop table extractedsources
+		Creating MySQL pipeline_develop table associatedsources
+		Creating MySQL pipeline_develop table associatedcatsources
+		Creating MySQL pipeline_develop table averagedsources
+		Creating MySQL pipeline_develop table sourcesizes
+		Creating MySQL pipeline_develop table zoneheight
+		Creating MySQL pipeline_develop table zones
+		Creating MySQL pipeline_develop table assocxtrsrcids
+		Creating MySQL pipeline_develop table assoccatsrcids
+	----------------------------
+	Setting the GLOBAL variables
+	----------------------------
+		Setting: log_bin_trust_function_creators = 1
+	-----------------------------------------
+	Creating MySQL pipeline_develop functions
+	-----------------------------------------
+		Creating MySQL pipeline_develop function alpha
+		Creating MySQL pipeline_develop function insertDataset
+		Creating MySQL pipeline_develop function insertImage
+		Creating MySQL pipeline_develop function doIntersectElls
+	--------------------------------------------------
+	Creating MySQL pipeline_develop general procedures
+	--------------------------------------------------
+		Creating MySQL pipeline_develop general procedure BuildZones
+		Creating MySQL pipeline_develop general procedure BuildFrequencyBands
+		Creating MySQL pipeline_develop general procedure BuildAssociationClass
+		Creating MySQL pipeline_develop general procedure InsertSrc
+		Creating MySQL pipeline_develop general procedure AssocSrc
+		Creating MySQL pipeline_develop general procedure AvgSrcs
+		Creating MySQL pipeline_develop general procedure DumpSrcs
+	---------------------------------------------------
+	Creating MySQL pipeline_develop specific procedures
+	---------------------------------------------------
+		Creating MySQL pipeline_develop specific procedure AssocCatSrcs
+	---------------------------------
+	Initialize MySQL pipeline_develop
+	---------------------------------
+		Initialize MySQL pipeline_develop tables
+	--------------------------------------------
+	Loading catalogs into MySQL pipeline_develop
+	--------------------------------------------
+2009-03-18-18:03:15
+		Load WENSS catalog
+		Load 2XMMi-Slim WENSS catalog
+2009-03-18-18:04:02
+-----
+READY
+-----
+Associate all WENSS sources with 10000 XMM sources
+Deleting xmm sources
+2009-03-18 18:04:02
+
+
+Calling AssocCatSrcs()
+2009-03-18 18:04:23
+
+
+Result
+2009-03-18 18:55:19
+
+
+COUNT(*)
+65
+Ready
+2009-03-18 18:55:19
+-------------------------------
+MySQL pipeline_develop database
+-------------------------------
+	--------------------------------------
+	Dropping MySQL pipeline_develop tables
+	--------------------------------------
+		Dropping MySQL pipeline_develop table assoccatsrcids
+		Dropping MySQL pipeline_develop table assocxtrsrcids
+		Dropping MySQL pipeline_develop table zones
+		Dropping MySQL pipeline_develop table zoneheight
+		Dropping MySQL pipeline_develop table sourcesizes
+		Dropping MySQL pipeline_develop table averagedsources
+		Dropping MySQL pipeline_develop table associatedcatsources
+		Dropping MySQL pipeline_develop table associatedsources
+		Dropping MySQL pipeline_develop table extractedsources
+		Dropping MySQL pipeline_develop table catalogedsources
+		Dropping MySQL pipeline_develop table catalogs
+		Dropping MySQL pipeline_develop table sourcelist
+		Dropping MySQL pipeline_develop table associationclass
+		Dropping MySQL pipeline_develop table images
+		Dropping MySQL pipeline_develop table datasets
+		Dropping MySQL pipeline_develop table frequencybands
+		Dropping MySQL pipeline_develop table versions
+	--------------------------------------
+	Creating MySQL pipeline_develop tables
+	--------------------------------------
+		Creating MySQL pipeline_develop table versions
+		Creating MySQL pipeline_develop table frequencybands
+		Creating MySQL pipeline_develop table datasets
+		Creating MySQL pipeline_develop table images
+		Creating MySQL pipeline_develop table associationclass
+		Creating MySQL pipeline_develop table sourcelist
+		Creating MySQL pipeline_develop table catalogs
+		Creating MySQL pipeline_develop table catalogedsources
+		Creating MySQL pipeline_develop table extractedsources
+		Creating MySQL pipeline_develop table associatedsources
+		Creating MySQL pipeline_develop table associatedcatsources
+		Creating MySQL pipeline_develop table averagedsources
+		Creating MySQL pipeline_develop table sourcesizes
+		Creating MySQL pipeline_develop table zoneheight
+		Creating MySQL pipeline_develop table zones
+		Creating MySQL pipeline_develop table assocxtrsrcids
+		Creating MySQL pipeline_develop table assoccatsrcids
+	----------------------------
+	Setting the GLOBAL variables
+	----------------------------
+		Setting: log_bin_trust_function_creators = 1
+	-----------------------------------------
+	Creating MySQL pipeline_develop functions
+	-----------------------------------------
+		Creating MySQL pipeline_develop function alpha
+		Creating MySQL pipeline_develop function insertDataset
+		Creating MySQL pipeline_develop function insertImage
+		Creating MySQL pipeline_develop function doIntersectElls
+	--------------------------------------------------
+	Creating MySQL pipeline_develop general procedures
+	--------------------------------------------------
+		Creating MySQL pipeline_develop general procedure BuildZones
+		Creating MySQL pipeline_develop general procedure BuildFrequencyBands
+		Creating MySQL pipeline_develop general procedure BuildAssociationClass
+		Creating MySQL pipeline_develop general procedure InsertSrc
+		Creating MySQL pipeline_develop general procedure AssocSrc
+		Creating MySQL pipeline_develop general procedure AvgSrcs
+		Creating MySQL pipeline_develop general procedure DumpSrcs
+	---------------------------------------------------
+	Creating MySQL pipeline_develop specific procedures
+	---------------------------------------------------
+		Creating MySQL pipeline_develop specific procedure AssocCatSrcs
+	---------------------------------
+	Initialize MySQL pipeline_develop
+	---------------------------------
+		Initialize MySQL pipeline_develop tables
+	--------------------------------------------
+	Loading catalogs into MySQL pipeline_develop
+	--------------------------------------------
+2009-03-18-18:55:21
+		Load WENSS catalog
+		Load 2XMMi-Slim WENSS catalog
+2009-03-18-18:56:06
+-----
+READY
+-----
+Associate 1000 WENSS sources with 100000 XMM sources

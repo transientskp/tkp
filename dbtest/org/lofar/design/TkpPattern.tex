@@ -1,0 +1,65 @@
+\documentstyle[11pt]{article}
+\textwidth 16cm
+\hoffset -1.5cm
+\textheight 23cm
+\voffset -1.5cm
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{\baselineskip}
+\newcommand{\planitem}[3]{
+\begin{tabular}{l@{\hspace{1cm}}p{12cm}}
+  {\sl #1} & {\sl #2} \\  
+           & #3 \\
+\end{tabular}
+}
+
+\newenvironment{simplist}{
+   \vspace*{-\baselineskip}
+   \begin{itemize}
+      \setlength{\itemsep}{-\parsep}
+      \setlength{\parsep}{0pt}
+}{
+   \end{itemize}
+   \vspace*{-\baselineskip}
+}
+  
+\begin{document}
+\begin{center}
+   {\bf Design Priciples}\\[2em]
+\end{center}
+
+\bigskip\bigskip
+
+\planitem{1}
+{Identify the aspects of your application that vary and separate them from what stays the same}
+{
+     In our case changes will occur:
+
+	\begin{simplist}
+	\item at the interface level
+	\item at the storage level
+	\end{simplist}
+}
+
+\planitem{2}
+{Program to an interface/supertype, not an implementation}
+{
+     In our case this implies:
+
+	\begin{simplist}
+	\item use an interface to represent each behavior
+	\item each implementation of a {\i behavior} will implement one of those interfaces
+	\end{simplist}
+}
+
+\planitem{3}
+{Favor composition over inheritance}
+{
+     In our case this implies:
+
+	\begin{simplist}
+	\item Composition is: putting classes together via the HAS-A relationship
+	\item this lets you change a behavior at runtime
+	\end{simplist}
+}
+
+\end{document}

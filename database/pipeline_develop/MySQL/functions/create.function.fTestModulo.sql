@@ -1,0 +1,22 @@
+DROP FUNCTION IF EXISTS fTestModulo;
+
+DELIMITER //
+
+CREATE FUNCTION fTestModulo(theta DOUBLE) RETURNS BOOLEAN 
+DETERMINISTIC 
+BEGIN
+
+  DECLARE b BOOLEAN;
+
+  IF (theta - PI() / 2) % PI() = 0 THEN
+    SET b = TRUE;
+  ELSE 
+    SET b = FALSE;
+  END IF;
+
+  RETURN b;
+
+END;
+//
+
+DELIMITER ;

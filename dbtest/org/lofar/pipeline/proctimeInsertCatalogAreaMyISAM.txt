@@ -1,0 +1,9 @@
+catalog MyISAM 100 sources, each 10000 measurements every second:
++-------------------------------------+
+|                                     |
+| PROCESSING TIMES                    |
+| DB con     : 0.428 s
+| DB ins     : 1187.917 s
+|                                     |
++-------------------------------------+
+

@@ -1,0 +1,239 @@
+\documentclass{article}
+\usepackage{amssymb}
+\usepackage{amsmath}
+\usepackage{epsfig}
+\usepackage{subfigure}
+
+\setlength{\textwidth}{160mm}
+\setlength{\textheight}{255mm}
+\setlength{\topmargin}{-15mm}
+\setlength{\oddsidemargin}{0mm}
+\setlength{\evensidemargin}{0mm}
+
+\begin{document}
+
+\title{Can we difference in the {\it uv}-plane?}
+\author{James Miller-Jones}
+\maketitle
+
+Up until this point, we have assumed that the easiest way to detect
+transients would be to difference two consecutive data sets in the
+image plane.  Following discussions with Jan Noordam, it was decided
+to investigate the possibility of differencing in the {\it uv}-plane
+prior to imaging, in order that imperfectly-calibrated data might
+cancel out, rather than creating artifacts in the image plane.
+
+\section{Fourier transforms}
+The image plane and {\it uv}-plane are related by a Fourier transform
+relationship.  In order to simplify the discussion, we reduce the
+problem to one dimension.  Let us denote the image $I(l)$ and the
+visibility data (the measurements in the {\it uv}-plane) as $V(u)$.
+Thus,
+\begin{align}
+I(l) &= \int^{\infty}_{-\infty}V(u)\exp^{-2\pi iul}du,\\
+V(u) &= \int^{\infty}_{-\infty}I(l)\exp^{2\pi iul}dl,
+\end{align}
+where $l$ is the direction cosine corresponding to the Fourier
+transform of the baseline co-ordinate $u$.
+
+A point source in the image plane can be represented as a
+$\delta$-function, $A_0\delta(l-l_0)$.  The corresponding visibility is
+then the Fourier transform of a $\delta$-function,
+\begin{equation}
+\begin{split}
+V(u) &= \int^{\infty}_{-\infty}I(l)\exp^{2\pi iul}dl\\
+&= \int^{\infty}_{-\infty}\delta A_0(l-l_0) \exp^{2\pi iul}dl\\
+&= A_0 \exp^{2\pi iul_0}\\
+&= A_0[\cos(2\pi ul_0) + i\sin(2\pi ul_0)].
+\end{split}
+\end{equation}
+This is a single-frequency sinusoid, the imaginary part lagging the
+real part by $\pi/2$, and with a frequency depending on the position
+of the source in the image plane.  For a source at the phase centre
+($l=0$), the visibility is a source of constant amplitude, $V(u)=A_0$.
+
+If we can approximate the image as a sum of point sources,
+\begin{equation}
+I(u) = \sum_{j=1}^{n} A_j \delta(l-l_j),
+\end{equation}
+then because of the linearity property of Fourier transforms, the
+resulting visibility is then a sum of complex exponentials, all of
+different frequencies,
+\begin{equation}
+\begin{split}
+V(u) &= \sum_{j=1}^{n} A_j \exp^{2\pi iul_j}\\
+&= V_{\rm Re}(u) + iV_{\rm Im}(u)\\
+&= \sum_{j=1}^{n} \left[A_j\cos(2\pi ul_j) + i\sin[A_j\sin(2\pi ul_j)\right].
+\label{eq:source_vis}
+\end{split}
+\end{equation}
+
+\subsection{Discrete sampling}
+Unfortunately, we do not fully sample the $u$-co-ordinate from
+$-\infty$ to $\infty$.  Thus we introduce the sampling function
+$S(u)$.  In principle, with known baseline lengths in the three
+spatial co-ordinates ($L_X$, $L_Y$ and $L_Z$), then for a given hour
+angle and declination of the phase reference centre ($H_0$ and
+$\delta_0$ respectively), and a given observing wavelength, $\lambda$,
+we can calculate the {\it uv}-coverage.
+\begin{gather}
+\begin{pmatrix}u \\ v \\ w\end{pmatrix} \quad = \quad \frac{1}{\lambda}
+\begin{pmatrix}\sin H_0 & \cos H_0 & 0 \\ -\sin \delta_0\cos H_0 &
+  \sin\delta_0 \sin H_0 & \cos\delta_0 \\ \cos\delta_0\cos H_0 &
+  -\cos\delta_0\sin H_0 & \sin\delta_0\end{pmatrix} \quad
+\begin{pmatrix}L_X \\ L_Y \\ L_Z\end{pmatrix}
+\end{gather}
+
+The sampling function $S(u)$ is defined to be 1 at each point in the
+{\it uv}-plane where a measurement is made, and zero elsewhere.
+Between two observations taken at times $t_1$ and $t_2$, the sampling
+function will change from $S_1(u)$ to $S_2(u)$ as the hour angle
+changes.  Denoting the Fourier transform of the sampling function
+$S(u)$ as $B(l)$, we have
+\begin{align}
+V^m_1(u) &= S_1(u) V_1(u) \rightleftharpoons I^D_1(l) = I_1(l) \ast
+B_1(l)\\
+V^m_2(u) &= S_2(u) V_2(u) \rightleftharpoons I^D_2(l) = I_2(l) \ast
+B_2(l),
+\end{align}
+where we have used $\ast$ to denote convolution and
+$\rightleftharpoons$ to denote a Fourier transform.  $V$ is a true set
+of visibilities, $V^m$ a measured set of visibilities, $I^D$ is a
+dirty image, and $I$ the true sky brightness.
+
+It is also worth noting that each baseline gives us two different
+measurements, one at co-ordinate $u$ and the other at $-u$, and the
+visibility measured at $-u$ is the complex conjugate of that measured
+at $u$, for
+\begin{equation}
+V_{\nu}(\mathbf{r_1,r_2}) = \int I_{\nu}(\mathbf{s})\exp^{-2\pi i \nu
+  \mathbf{s}\cdot(\mathbf{r_1-r_2})/c}\,d\Omega
+\end{equation}
+and
+\begin{equation}
+V_{\nu}(\mathbf{r_2,r_1}) = \int I_{\nu}(\mathbf{s})\exp^{-2\pi i \nu
+  \mathbf{s}\cdot(\mathbf{r_2-r_1})/c}\,d\Omega
+\end{equation}
+and since the distribution of sky brightness, $I_{\nu}(\mathbf{s})$ is
+the same, then $V_{\nu}(\mathbf{r_2,r_1}) =
+V_{\nu}^{\ast}(\mathbf{r_1,r_2})$.  This means that the sky brightness
+is always real.
+
+\subsection{Practicalities}
+Thus we can generate a random set of baselines $(L_X,L_Y,L_Z)$ and
+generate their {\it uv}-coverage at two different hour angles,
+\begin{equation}
+u = \lambda^{-1}(L_X\sin H_0 + L_Y \cos H_0),
+\end{equation}
+to simulate how the {\it uv}-coverage changes with time.  The LOFAR
+core will have a maximum baseline of $\sim 3000$\,m, a minimum
+baseline of $\gtrsim 85$\,m (the station size), and 32 stations giving
+$N(N-1)/2 = 496$ baselines.
+
+For a source at sky position $(\alpha,\delta)$, and a phase reference
+position $(\alpha_0,\delta_0)$, we can calculate its $(l,m)$
+co-ordinates in the image as
+\begin{align}
+l &= \cos\delta\sin\Delta\alpha\\
+m &= \sin\delta\cos\delta_0 - \cos\delta\sin\delta_0\cos\Delta\alpha,
+\end{align}
+where $\Delta\alpha = (\alpha-\alpha_0)$.
+
+\section{Subtraction}
+If we wish to detect transients, we need to compare two observations.
+Comparing $I_1^D$ and $I_2^D$ will cause problems in detecting faint
+transients, since the sidelobes of bright sources that have not been
+deconvolved from the respective beams $B_1$ and $B_2$ will be present
+in the map, and since the sampling functions will not be identical,
+they will not subtract properly.  Thus in order to difference two
+images, the images must first have been deconvolved.  Thus we turn to
+subtraction in the {\it uv}-plane.  Since $S_1$ and $S_2$ are
+different, we cannot directly subtract one set of visibilities from
+another without interpolation, which requires {\it a priori} knowledge
+of the true sky brightness distribution.  However, let us form the
+summed set of visibilities 
+\begin{equation}
+V^m_{12}(u) = V^m_1(u) + (-1)\times V^m_2(u),
+\end{equation}
+which has a sampling function $S_{12}(u) = S_1(u)+S_2(u)$.
+
+For a single point source, the measured visibilities, $V^m_{12}(u)$,
+are then a pair of sinusoids, with identical frequencies and
+amplitudes, but one positive and the other negative (or alternatively,
+shifted by $\pi$ in phase), and sampled at different points.  But
+since the Fourier transform is linear, these will each produce in the
+dirty image $I^D_{12}(l)$ a point spread function (a $\delta$ function
+convolved with the appropriate dirty beam) at the same position (owing
+to the identical frequencies of the sinusoids) but with opposite
+amplitudes.  Thus {\it they will sum to zero at the source position}.
+The sidelobes will not cancel, since the dirty beams $B_1(l)$ and
+$B_2(l)$ are different, so the noise in the image will be the flux
+density of the brightest source in either dirty image multiplied by
+the peak sidelobe intensity.
+
+Now consider the effect of a transient in the second set of
+visibilities.  There will be no positive-amplitude sinusoid to cancel
+it out in the other set of visibilities.  Thus it will appear as a
+negative component in the dirty map $I^D_{12}(l)$.  But since it only
+appears in one of the two maps, its brightness will appear as half
+that of its true brightness.  This can more easily be seen by
+considering the discrete representation of the Fourier transform.  For
+a set of complex visibilities $V_k$, measured at $2N$ points over $N$
+baselines, $u_k$, the dirty spectrum can be computed as
+\begin{equation}
+I^D_{12}(l_j) = \frac{1}{2N}\sum_{k=1}^N (V_k \exp^{-2\pi i l_j u_k}+V_k^{\ast} \exp^{2\pi i l_j u_k}).
+\end{equation}
+The $1/2N$ term divides the sum by the total number of visibilities in
+the two sets of measurements, $2N_1+2N_2$, whereas the transient is
+only measured in set $N_2$.  Thus the amplitude of the transient is
+reduced by a factor $N_2/(N_1+N_2)$.
+
+\subsection{Caveats}
+We note that this will {\bf only} work if the image consists solely of
+point sources, such that the source visibility is the same regardless
+of {\it uv}-coverage and a given frequency exponential identifies a
+given source.  Otherwise, the visibilities corresponding to a single
+source (Equation \ref{eq:source_vis}) contain several exponentials all
+mixed in together, some of which are sampled only by certain
+baselines, so will not necessarily cancel between two sets of
+visibilities.  The cancellation should work as long as there are
+sufficient visibility samples to distinguish all the exponentials in
+the sum in both cases, and is not dependent on the source position in
+the image.
+
+\section{Examples}
+Two examples are shown below.  In the first case (Fig.~1), $V_1(u)$ and
+$V_2(u)$ are identical, but sampled differently (the hour angles
+differ by $\pi/12$, i.e. one hour of time.  Each consists of a single
+point source of amplitude 5.  The summed visibility set $V^m_{12}(u)$
+is shown, as is the resulting dirty image, $I^D_{12}(l)$.  In the
+second example (Fig.~2), a transient of amplitude 4 has been inserted into the
+second set of visibilities.
+
+\begin{figure}
+\begin{center}
+\subfigure[{\it uv}-data.  {\it Left}: the two individual data sets,
+  $V_1^m(u)$ and $V_2^m(u)$.  {\it Right}: the summed data set,
+  $V_{12}^m(u)$.]{\epsfig{figure=uv_data1.eps,width=\textwidth}}\\
+\subfigure[Dirty images.  {\it Left}: individual dirty images,
+  $I^D_1(l)$ and $I^D_2(l)$.  {\it Right}: dirty image of the summed
+  data, $I^D_{12}(l)$.]{\epsfig{figure=skydata1.eps,width=\textwidth}}
+\caption{One source in both {\it uv}-data sets.}
+\end{center}
+\end{figure}
+
+\begin{figure}
+\begin{center}
+\subfigure[{\it uv}-data.  {\it Left}: the two individual data sets,
+  $V_1^m(u)$ and $V_2^m(u)$.  {\it Right}: the summed data set,
+  $V_{12}^m(u)$.]{\epsfig{figure=uv_data2.eps,width=\textwidth}}\\
+\subfigure[Dirty images.  {\it Left}: individual dirty images,
+  $I^D_1(l)$ and $I^D_2(l)$.  {\it Right}: dirty image of the summed
+  data, $I^D_{12}(l)$.]{\epsfig{figure=skydata2.eps,width=\textwidth}}
+\caption{One source in both {\it uv}-data sets, and a transient which
+  appears only in the second.  The common source disappears and the
+  transient pops up at half the brightness.}
+\end{center}
+\end{figure}
+
+\end{document}

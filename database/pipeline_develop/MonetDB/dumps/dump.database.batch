@@ -1,0 +1,34 @@
+#!/bin/sh
+# This script dumps the requested MonetDB database into 
+# a file that can be used as backup
+# 
+
+# input arguments
+# $1: database to be dumped
+# $2: username
+# $3: password
+
+#if [ -z "$*" ]
+#then
+#    echo "Usage:"
+#    echo "$0 database-name username password "
+#    exit ;
+#fi
+
+echo "-------------------------"
+echo "MonetDB Dumping  database"
+echo "-------------------------"
+
+date '+%Y-%m-%d-%H:%M:%S'
+
+dumpdir=/home/scheers/dumps
+dumpfile=$dumpdir/dump.${1}.$(date +%Y%m%d-%H%M).sql
+mclient -lsql -t -d${1} -u${2} -P${3} --dump > $dumpfile
+
+echo "\tDatabase dumped in file ${dumpfile}"
+date '+%Y-%m-%d-%H:%M:%S'
+
+echo "-----"
+echo "READY"
+echo "-----"
+

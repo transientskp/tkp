@@ -1,0 +1,12 @@
+insert into testtable values (0,1);
+insert into testtable values (0,2);
+insert into testtable values (0,3);
+insert into testtable values (1,0);
+insert into testtable values (1,1);
+insert into testtable values (1,2);
+insert into testtable values (2,0);
+insert into testtable values (2,1);
+insert into testtable values (2,2);
+insert into testtable values (3,0);
+insert into testtable values (3,1);
+insert into testtable values (3,2);

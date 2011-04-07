@@ -1,0 +1,9 @@
+catalog InnoDB 100 sources, each 10000 measurements every second:
++-------------------------------------+
+|                                     |
+| PROCESSING TIMES                    |
+| DB con     : 0.422 s
+| DB ins     : 3116.425 s
+|                                     |
++-------------------------------------+
+

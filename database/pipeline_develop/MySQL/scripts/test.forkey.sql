@@ -1,0 +1,37 @@
+DROP TABLE IF EXISTS t3;
+DROP TABLE IF EXISTS t2;
+DROP TABLE IF EXISTS t1;
+
+CREATE TABLE t1 (
+  t1id INT NOT NULL AUTO_INCREMENT,
+  image_id INT NOT NULL, 
+  zone INT NOT NULL,
+  ra DOUBLE NOT NULL,
+  decl DOUBLE NOT NULL,
+  PRIMARY KEY (zone
+              ,ra
+              ,t1id
+              ),
+  UNIQUE INDEX (t1id),
+  INDEX (image_id)
+) ENGINE=InnoDB;
+
+CREATE TABLE t2 (
+  t2id INT NOT NULL AUTO_INCREMENT,
+  t1_id INT NOT NULL,
+  insert_src1 BOOLEAN NULL,
+  src_type CHAR(1) NOT NULL,
+  PRIMARY KEY (t2id),
+  INDEX (t1_id),
+  FOREIGN KEY (t1_id) REFERENCES t1 (t1id)
+) ENGINE=InnoDB;
+
+CREATE TABLE t3 (
+  t3id INT NOT NULL AUTO_INCREMENT,
+  t1_id1 INT NOT NULL,
+  ra DOUBLE NOT NULL,
+  decl DOUBLE NOT NULL,
+  PRIMARY KEY (t3id),
+  INDEX (t1_id1),
+  FOREIGN KEY (t1_id1) REFERENCES t2 (t1_id)
+) ENGINE=InnoDB;

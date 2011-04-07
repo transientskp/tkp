@@ -1,0 +1,168 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
+           targetNamespace="http://transientskp.org/classification">
+
+  <xs:complexType name="valueType">
+      <xs:simpleContent>
+        <xs:extension base="xs:string">
+          <xs:attribute name="type">
+            <xs:simpleType>
+              <xs:restriction base="xs:string">
+                <xs:enumeration value="special" />
+                <xs:enumeration value="bool" />
+                <xs:enumeration value="integer" />
+                <xs:enumeration value="float" />
+                <xs:enumeration value="string" />
+              </xs:restriction>
+            </xs:simpleType>
+          </xs:attribute>
+          <xs:attribute name="unit" type="xs:string" />
+	</xs:extension>
+      </xs:simpleContent>
+  </xs:complexType>
+
+  <xs:complexType name="weightType">
+      <xs:simpleContent>
+        <xs:extension base="xs:float">
+          <xs:attribute name="type">
+            <xs:simpleType>
+              <xs:restriction base="xs:string">
+                <xs:enumeration value="weight" />
+              </xs:restriction>
+            </xs:simpleType>
+          </xs:attribute>
+	</xs:extension>
+      </xs:simpleContent>
+  </xs:complexType>
+
+  <xs:complexType name="actionType">
+    <xs:choice>
+      <xs:element name="weight" type="weightType" />
+      <xs:element name="branch" type="branchType" />
+    </xs:choice>
+  </xs:complexType>
+
+  <xs:element name="operators" type="operatorType" />
+
+  <xs:complexType name="operatorType">
+    <xs:choice>
+      <xs:element name="node" />
+    </xs:choice>
+  </xs:complexType>
+
+  <xs:complexType name="operatorType2">
+    <xs:choice>
+      <xs:element name="operator">
+        <xs:complexType>
+          <xs:all>
+            <xs:element type="operatorType" name="operator1" />
+            <xs:element type="operatorType" name="operator2" />
+          </xs:all>
+          <xs:attribute name="op" use="required">
+            <xs:simpleType>
+              <xs:restriction base="xs:string">
+                <xs:enumeration value="and" />
+                <xs:enumeration value="or" />
+              </xs:restriction>
+            </xs:simpleType>
+          </xs:attribute>
+        </xs:complexType>
+      </xs:element>
+
+      <xs:element name="operator">
+        <xs:complexType>
+          <xs:all>
+            <xs:element name="attribute" type="xs:string" />
+            <xs:element name="value" type="valueType" />
+          </xs:all>
+          <xs:attribute name="op" use="required">
+            <xs:simpleType>
+              <xs:restriction base="xs:string">
+                <xs:enumeration value="gte" />
+                <xs:enumeration value="lte" />
+                <xs:enumeration value="gt" />
+                <xs:enumeration value="lt" />
+                <xs:enumeration value="eq" />
+                <xs:enumeration value="neq" />
+              </xs:restriction>
+            </xs:simpleType>
+          </xs:attribute>
+        </xs:complexType>
+      </xs:element>
+
+      <xs:element name="operator">
+        <xs:complexType>
+          <xs:all>
+            <xs:element name="attribute" type="xs:string" />
+            <xs:element name="type" type="xs:string" />
+            <xs:element name="unit" type="xs:string" />
+          </xs:all>
+          <xs:attribute name="op" use="required">
+            <xs:simpleType>
+              <xs:restriction base="xs:string">
+                <xs:enumeration value="match" />
+              </xs:restriction>
+            </xs:simpleType>
+          </xs:attribute>
+          <xs:attribute name="precision" type="xs:float" />
+        </xs:complexType>
+      </xs:element>
+
+    </xs:choice>
+  </xs:complexType>
+
+  <xs:complexType name="testType">
+    <xs:sequence>
+      <xs:element name="condition">
+        <xs:complexType>
+          <xs:sequence>
+            <xs:element name="variable" type="xs:string" minOccurs="1" maxOccurs="1" />
+            <xs:element name="compare" type="operatorType" />
+          </xs:sequence>
+        </xs:complexType>
+      </xs:element>
+      <xs:element name="outcome" minOccurs="1" maxOccurs="unbounded">
+        <xs:complexType>
+          <xs:sequence>
+            <xs:element name="value" type="valueType" minOccurs="1" maxOccurs="unbounded" />
+            <xs:element name="action" type="actionType" />
+          </xs:sequence>
+        </xs:complexType>
+      </xs:element>
+    </xs:sequence>
+    <xs:attribute name="id" type="xs:string" />
+    <xs:attribute name="name" type="xs:string" />
+  </xs:complexType>
+
+
+  <xs:complexType name="branchType">
+    <xs:sequence>
+      <xs:element name="test" type="testType" />
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:element name="root">
+    <xs:complexType>
+      <xs:sequence>
+
+        <xs:element name="comment" type="xs:string" minOccurs="0" maxOccurs="unbounded" />
+
+        <xs:element name="test" type="testType" minOccurs="0" maxOccurs="unbounded" />
+        <xs:element name="transient-classification-scheme" minOccurs="1" maxOccurs="1">
+          <xs:complexType>
+            <xs:sequence>
+              <xs:element name="branch" minOccurs="0" maxOccurs="unbounded">
+                <xs:complexType>
+                </xs:complexType>
+              </xs:element>
+              <xs:element name="test" type="testType" minOccurs="0" maxOccurs="unbounded" />
+            </xs:sequence>
+            <xs:attribute name="name" type="xs:string" />
+            <xs:attribute name="id" type="xs:string" />
+          </xs:complexType>
+        </xs:element>
+
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+</xs:schema>

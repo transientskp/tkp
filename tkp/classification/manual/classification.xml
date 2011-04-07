@@ -1,0 +1,398 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<root xmlns="http://transientskp.org/classification"
+      schemaLocation="http://transientskp.org/svn/code/classification/classification.xsd">
+
+  <comment>Needs check: can I use dashes for tag names? Can I use colons inside id attributes?</comment>
+
+  <test id="test:GRB-prompt-emission-light-curve-duration" name="light curve duration">
+    <condition>
+      <variable>self</variable>
+      <compare op="and">
+        <compare op="gt">
+          <attribute>duration</attribute>
+          <value type="float" unit="second">1.0e-1</value>
+        </compare>
+        <compare op="lte">
+          <attribute>duration</attribute>
+          <value type="float" unit="second">1.0e3</value>
+        </compare>
+      </compare>
+    </condition>
+    <outcome>
+      <value type="bool">true</value>
+      <action type="weight">0.5</action>
+    </outcome>
+    <outcome>
+      <value type="bool">false</value>
+      <value type="special">N/A</value>
+      <action type="weight">0.0</action>
+    </outcome>
+  </test>
+
+  <test id="test:GRB-prompt-emission-light-curve-variability" name="light curve variability">
+    <condition>
+      <variable>self</variable>
+      <compare op="lt">
+        <attribute>variability</attribute>
+        <value type="float">1.0e-1</value>
+      </compare>
+    </condition>
+    <outcome>
+      <value type="bool">true</value>
+      <action type="weight">0.5</action>
+    </outcome>
+    <outcome>
+      <value type="bool">false</value>
+      <value type="special">N/A</value>
+      <action type="weight">0.0</action>
+    </outcome>
+  </test>
+
+  <test id="test:GRB-prompt-emission-external-trigger-match" name="external trigger match">
+    <condition>
+      <variable>external-trigger</variable>
+      <compare op="and">
+        <compare op="match" precision="5">
+          <attribute>position</attribute>
+          <type>position</type>
+          <unit>arcsec</unit>
+        </compare>
+        <compare op="match" precision="60">
+          <attribute>timezero</attribute>
+          <type>datetime</type>
+          <unit>second</unit>
+        </compare>
+      </compare>
+    </condition>
+    <outcome>
+      <value type="bool">true</value>
+      <action type="weight">1.0</action>
+    </outcome>
+    <outcome>
+      <value type="bool">false</value>
+      <value type="special">N/A</value>
+      <action type="weight">0.0</action>
+    </outcome>
+  </test>
+
+  <test id="test:GRB-reverse-shock-light-curve-duration" name="light curve duration">
+    <condition>
+      <variable>self</variable>
+      <compare op="and">
+        <compare op="gt">
+          <attribute>duration</attribute>
+          <value type="float" unit="second">1.0e3</value>
+        </compare>
+        <compare op="lte">
+          <attribute>duration</attribute>
+          <value type="float" unit="second">1.0e6</value>
+        </compare>
+      </compare>
+    </condition>
+    <outcome>
+      <value type="bool">true</value>
+      <action type="weight">0.5</action>
+    </outcome>
+    <outcome>
+      <value type="bool">false</value>
+      <value type="special">N/A</value>
+      <action type="weight">0.0</action>
+    </outcome>
+  </test>
+  
+  <test id="test:GRB-reverse-shock-light-curve-variability" name="light curve variability">
+    <condition>
+      <variable>self</variable>
+      <compare op="gt">
+        <attribute>variability</attribute>
+        <value type="float" unit="second">1.0e4</value>
+      </compare>
+    </condition>
+    <outcome>
+      <value type="bool">true</value>
+      <action type="weight">0.5</action>
+    </outcome>
+    <outcome>
+      <value type="bool">false</value>
+      <value type="special">N/A</value>
+      <action type="weight">0.0</action>
+    </outcome>
+  </test>
+     
+  <test id="test:GRB-reverse-shock-external-trigger-match" name="external trigger match">
+    <condition>
+      <variable>external-trigger</variable>
+      <compare op="and">
+        <compare op="match" precision="5">
+          <attribute>position</attribute>
+          <type>position</type>
+          <unit>arcsec</unit>
+        </compare>
+        <compare op="match" precision="1.0e4">
+          <attribute>timezero</attribute>
+          <type>datetime</type>
+          <unit>second</unit>
+        </compare>
+      </compare>
+    </condition>
+    <outcome>
+      <value type="bool">true</value>
+      <action type="weight">0.8</action>
+    </outcome>
+    <outcome>
+      <value type="bool">false</value>
+      <value type="special">N/A</value>
+      <action type="weight">0.0</action>
+    </outcome>
+  </test>
+
+  <test id="test:GRB-forward-shock-database-match" name="Database match">
+    <condition>
+      <variable>database</variable>
+      <compare op="and">
+        <compare op="eq">
+          <attribute>association</attribute>
+          <value type="bool">true</value>
+        </compare>
+        <compare op="eq">
+          <attribute>name</attribute>
+          <value type="string">GRB_afterglows</value>
+        </compare>
+      </compare>
+    </condition>
+    <outcome>
+      <value type="bool">true</value>
+      <action type="weight">0.99</action>
+    </outcome>
+    <outcome>
+      <value type="bool">false</value>
+      <value type="special">N/A</value>
+      <action type="weight">0.0</action>
+    </outcome>
+  </test>
+  
+  <test id="test:GRB-forward-shock-lightcurve-variability" name="Lightcurve variability">
+    <condition>
+      <variable>self</variable>
+      <compare op="gt">
+        <attribute>variability</attribute>
+        <value type="float" unit="second">1.0e6</value>
+      </compare>
+    </condition>
+    <outcome>
+      <value type="bool">true</value>
+      <action type="weight">0.5</action>
+    </outcome>
+    <outcome>
+      <value type="bool">false</value>
+      <value type="special">N/A</value>
+      <action type="weight">0.0</action>
+    </outcome>
+  </test>
+
+  <test id="test:inverted-spectrum-anything" name="anything with an inverted spectrum">
+    <condition>
+      <variable>self</variable>
+      <compare op="eq">
+        <attribute>nonexistent</attribute>
+        <value type="bool">false</value>
+      </compare>
+    </condition>
+    <outcome>
+      <value type="special">N/A</value>
+      <action type="weight">1.0</action>
+    </outcome>
+  </test>
+
+  <test id="test:slow-light-curve-duration" name="light curve duration">
+    <condition>
+      <variable>self</variable>
+      <compare op="gt">
+        <attribute>duration</attribute>
+        <value type="float" unit="second">0.98e3</value>
+      </compare>
+    </condition>
+    <outcome>
+      <value type="bool">true</value>
+      <action type="weight">1.0</action>
+    </outcome>
+    <outcome>
+      <value type="bool">false</value>
+      <value type="special">N/A</value>
+      <action type="weight">0.0</action>
+    </outcome>
+  </test>
+
+  <test id="test:fast-light-curve-duration" name="light curve duration">
+    <condition>
+      <variable>self</variable>
+      <compare op="lte">
+        <attribute>duration</attribute>
+        <value type="float" unit="second">1.0e3</value>
+      </compare>
+    </condition>
+    <outcome>
+      <value type="bool">true</value>
+      <action type="weight">1.0</action>
+    </outcome>
+    <outcome>
+      <value type="bool">false</value>
+      <value type="special">N/A</value>
+      <action type="weight">0.0</action>
+    </outcome>
+  </test>
+
+  <test id="test:slow-extended-source-light-curve-duration" name="extended light curve duration">
+    <condition>
+      <variable>self</variable>
+      <compare op="gt">
+        <attribute>duration</attribute>
+        <value type="float" unit="second">0.98e3</value>
+      </compare>
+    </condition>
+    <outcome>
+      <value type="bool">true</value>
+      <action type="weight">1.0</action>
+    </outcome>
+    <outcome>
+      <value type="bool">false</value>
+      <value type="special">N/A</value>
+      <action type="weight">0.0</action>
+    </outcome>
+  </test>
+
+  <test id="test:fast-extended-source-light-curve-duration" name="extended light curve duration">
+    <condition>
+      <variable>self</variable>
+      <compare op="lte">
+        <attribute>duration</attribute>
+        <value type="float" unit="second">1.0e3</value>
+      </compare>
+    </condition>
+    <outcome>
+      <value type="bool">true</value>
+      <action type="weight">1.0</action>
+    </outcome>
+    <outcome>
+      <value type="bool">false</value>
+      <value type="special">N/A</value>
+      <action type="weight">0.0</action>
+    </outcome>
+  </test>
+
+
+  <transient-classification-scheme>
+
+   <classification id="classification:fast" name="Fast variable source">
+     <rule>
+       <type>weights</type>
+       <test refer="test:fast-light-curve-duration" />
+     </rule>
+   </classification>
+
+   <classification id="classification:slow" name="Slow variable source">
+     <rule>
+       <type>weights</type>
+       <test refer="test:slow-light-curve-duration" />
+     </rule>
+   </classification>
+  
+    <branch name="point source" id="branch:point-source">
+      <test name="point source">
+        <condition>
+          <variable>self</variable>
+          <compare op="eq">
+            <attribute>shape</attribute>
+            <value type="string">point</value>
+          </compare>
+        </condition>
+        <outcome>
+          <value type="bool">true</value>
+          <value type="special">N/A</value>
+          <action type="branch">
+            <branch name="positive spectrum" id="branch:positive-spectrum">
+              <test name="positive-spectrum">
+                <condition>
+                  <variable>self</variable>
+                  <compare op="gt">
+                    <attribute>spectralslope</attribute>
+                    <value type="float">0.0</value>
+                  </compare>
+                </condition>
+                <outcome>
+                  <value type="bool">true</value>
+                  <value type="special">N/A</value>
+                  <action type="branch">
+        
+                    <classification id="classification:GRB-prompt" name="GRB prompt emission">
+                      <rule>
+                        <type>weights</type>
+                        <test refer="test:GRB-prompt-emission-light-curve-duration" />                    
+                        <test refer="test:GRB-prompt-emission-light-curve-variability" />                    
+                        <test refer="test:GRB-prompt-emission-external-trigger-match" />
+                      </rule>
+                    </classification>
+                    
+                    <classification id="classification:GRB-reverse-shock" name="GRB reverse shock afterglow">
+                      <rule>
+                        <type>weights</type>
+                        <test refer="test:GRB-reverse-shock-light-curve-duration" />                        
+                        <test refer="test:GRB-reverse-shock-light-curve-variability" />                           
+                        <test refer="test:GRB-reverse-shock-external-trigger-match" />                    
+                      </rule>
+                    </classification>
+                    
+                    <classification id="classification:GRB-forward-shock" name="GRB forward shock afterglow">
+                      <rule>
+                        <type>weights</type>
+                        <test refer="test:GRB-forward-shock-database-match" />                  
+                        <test refer="test:GRB-forward-shock-lightcurve-variability" />                 
+                      </rule>
+                    </classification>
+
+                  </action>
+                </outcome>
+                <outcome comment="inverted spectrum">
+                  <value type="bool">false</value>
+                  <action type="branch">
+        
+                    <classification id="classification:inverted" name="anything with an inverted spectrum">
+                      <rule>
+                        <type>weights</type>
+                        <test refer="test:inverted-spectrum-anything" />
+                      </rule>
+                    </classification>
+
+                  </action>
+                </outcome>
+              </test>
+            </branch>
+          </action>
+        </outcome>
+
+        <outcome>
+          <value type="bool">false</value>
+          <action type="branch">
+
+            <classification id="classification:fast-extended" name="Fast variable extended source">
+              <rule>
+                <type>weights</type>
+                <test refer="test:fast-extended-source-light-curve-duration" />
+              </rule>
+            </classification>
+
+            <classification id="classification:slow-extended" name="Slow variable extended source">
+              <rule>
+                <type>weights</type>
+                <test refer="test:slow-extended-source-light-curve-duration" />
+              </rule>
+            </classification>
+
+         </action>
+        </outcome>
+      </test>
+    </branch>
+  </transient-classification-scheme>
+
+</root>

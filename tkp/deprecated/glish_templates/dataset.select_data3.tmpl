@@ -1,0 +1,5 @@
+include 'ms.g'
+m:=ms('${path + masterfile}',readonly=F)
+m.split(outputms='${path + filename}', timerange='${start_time}-${end_time}', whichcol='${whichcol}')
+m.done()
+exit

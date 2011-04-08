@@ -13,7 +13,7 @@ if (WCSLIB_INCLUDES)
     )
 endif (WCSLIB_INCLUDES)
 
-add_library (wcs SHARED wcslib.cpp)
+add_library (wcslib SHARED wcslib.cpp)
 
 set_target_properties(wcs
   PROPERTIES
@@ -36,5 +36,5 @@ else (APPLE)
 endif (APPLE)
 
 
-install (TARGETS wcs
+install (TARGETS wcslib
 	 DESTINATION ${PYTHON_LOCAL_PACKAGE_DIR})

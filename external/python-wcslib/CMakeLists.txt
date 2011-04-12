@@ -14,8 +14,10 @@ if (WCSLIB_INCLUDES)
 endif (WCSLIB_INCLUDES)
 
 add_library (wcslib SHARED wcslib.cpp)
+message(STATUS "boost python lib = ${Boost_PYTHON_LIBRARY}")
 
-set_target_properties(wcs
+target_link_libraries (wcslib wcs ${Boost_PYTHON_LIBRARY})
+set_target_properties(wcslib
   PROPERTIES
   PREFIX ""
 #  LINK_FLAGS "-undefined dynamic_lookup"
@@ -24,14 +26,14 @@ set_target_properties(wcs
 ## Linker instructions
 
 if (APPLE)
-  set_target_properties (wcstools
+  set_target_properties (wcslib
     PROPERTIES
     LINK_FLAGS "-fPIC -bundle -headerpad_max_install_names -undefined dynamic_lookup"
     )
 else (APPLE)
-  set_target_properties (wcstools
+  set_target_properties (wcslib
     PROPERTIES
-    LINK_FLAGS "-fPIC -shared"
+    LINK_FLAGS "-shared"
     )
 endif (APPLE)
 

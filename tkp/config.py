@@ -172,6 +172,7 @@ def parse_config(config):
               ('source_extraction', 'fdr_alpha'),
               ('source_extraction', 'deblend_mincont'),
               ('source_extraction', 'detection_threshold'),
+              ('source_extraction', 'analysis_threshold'),
               ('source_extraction', 'alpha_maj1'),
               ('source_extraction', 'alpha_min1'),
               ('source_extraction', 'alpha_maj2'),

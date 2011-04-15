@@ -4,7 +4,8 @@ This module contain utilities that were originally in the main settings.py
 
 """
 
-import scipy
+import numpy
+import scipy.integrate
 
 
 def calculate_correlation_lengths(semimajor, semiminor):

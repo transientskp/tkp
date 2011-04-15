@@ -9,9 +9,10 @@ This module provides simple access to an image, without database overhead.
 
 # Python 2.5 only!
 from __future__ import with_statement
+import os
+import time
+import logging
 from contextlib import closing
-# Python standard library
-import os, time, logging
 # Other external libraries
 import numpy
 import scipy.stats
@@ -83,52 +84,44 @@ class ImageData(object):
     @property
     def _id(self):
         """
-        An image will be added to the database. 
-        An image id will be generated (inside db) for every image. 
-        An image should belong to a dataset, which will be referenced by the dataset id
-        (ds_id). 
+        An image will be added to the database.
+        An image id will be generated (inside db) for every image.
+        An image should belong to a dataset, which will be referenced by
+        the dataset id (ds_id).
         If the database is not enabled the id is set to "None".
-        
-        The DB function 
-        'insertImage(ds_id, tau, band,tau_time,freq_eff,taustart_timestamp,url)' 
-        is called. An image id will be generated under the specified ds_id. The 
-        function return value is the just generated image id.
+
+        The DB function
+        'insertImage(ds_id, tau, band, tau_time, freq_eff,
+                     taustart_timestamp, url)'
+        is called. An image id will be generated under the specified ds_id.
+        The function return value is the just generated image id.
         """
         if self.conn is not None:
             # params[3] represents the obstime in timestamp format
-            # As from python 2.6 we can use obstime.strftime("%Y-%m-%d-%H:%M:%S.%f")
-            params = [self.dataset.id \
-                     ,self.datasource.freqeff \
-                     ,self.datasource.freqbw \
-                     ,self.datasource.obstime.strftime("%Y-%m-%d-%H:%M:%S") + \
-                                "." + str(self.datasource.obstime.microsecond) \
-                     ,self.datasource.filename
-                     #,self.datasource.semimaj # resolution beam semi-major axis
-                     #,self.datasource.semimin # idem, semi-minor
-                     #,self.datasource.theta   # idem, postion angle (in rad)
-                     ]
-            #print "ImageData.params", params        
+            # As from python 2.6 we can use
+            # obstime.strftime("%Y-%m-%d-%H:%M:%S.%f")
+            params = [
+                self.dataset.id,
+                self.datasource.freqeff,
+                self.datasource.freqbw,
+                (self.datasource.obstime.strftime("%Y-%m-%d-%H:%M:%S") +
+                 "." + str(self.datasource.obstime.microsecond)),
+                self.datasource.filename
+                ]
             try:
-                #print "cursor create"
                 cursor = self.conn.cursor()
-                #print "cursor execute"
-                cursor.execute("""SELECT insertImage(%s,%s,%s,%s,%s);""", params)
-                #print "commit"
+                cursor.execute("""SELECT insertImage(%s,%s,%s,%s,%s);""",
+                               params)
                 self.conn.commit()
-                #print "cursor fetchone"
                 self.id = cursor.fetchone()
-                #print "self._id",self._id
-                #print "cursor close"
                 cursor.close()
             except db.Error, e:
-                logging.warn("Insert Image for ds_id %s failed" % 
-                              (self.dataset.id,))
+                logging.warn("Insert Image for ds_id %s failed" %
+                              (self.dataset.id, ))
                 raise
         else:
             self.id = None
-        #print "image id: ", self.id
-        #return self._id
-    
+
     def _localinit(self):
         """
         Perform local initialization of this ImageData's state.
@@ -181,14 +174,14 @@ class ImageData(object):
     @Memoize
     def _grids(self):
         """Gridded RMS and background data for interpolating"""
-        return self.__grids()
+        return self._grids()
     grids = property(fget=_grids, fdel=_grids.delete)
 
     @Memoize
     def _backmap(self):
         """Background map"""
         if not hasattr(self, "_user_backmap"):
-            return self.__interpolate(self.grids['bg'])
+            return self._interpolate(self.grids['bg'])
         else:
             return self._user_backmap
 
@@ -203,15 +196,15 @@ class ImageData(object):
     def _get_rm(self):
         """RMS map"""
         if not hasattr(self, "_user_noisemap"):
-            return self.__interpolate(self.grids['rms'], roundup=True)
+            return self._interpolate(self.grids['rms'], roundup=True)
         else:
-            return self._user_noisemap       
+            return self._user_noisemap
 
     def _set_rm(self, noisemap):
         self._user_noisemap = noisemap
         del(self.rmsmap)
 
-    rmsmap = property(fget=_get_rm, fdel=_get_rm.delete,fset=_set_rm)
+    rmsmap = property(fget=_get_rm, fdel=_get_rm.delete, fset=_set_rm)
 
     @Memoize
     def _get_data(self):
@@ -231,8 +224,7 @@ class ImageData(object):
         """Background subtracted masked image data"""
         return self.data - self.backmap
     data_bgsubbed = property(fget=_get_data_bgsubbed,
-        fdel=_get_data_bgsubbed.delete,
-    )
+        fdel=_get_data_bgsubbed.delete)
 
     @property
     def xdim(self):
@@ -368,7 +360,7 @@ class ImageData(object):
 
         return mask
 
-    def stats(self, nbins=100, plot=True): #, filename=False):
+    def stats(self, nbins=100, plot=True):
         """
         Produce brief statistical report on this image, suitable for printing.
 
@@ -403,29 +395,21 @@ class ImageData(object):
         pylab.xlabel("Pixel value")
         pylab.ylabel("Number of pixels")
 
-        mystats = {'npix':scistats.npix, 'smin':scistats.min,
-            'smax':scistats.max,'stdd':scistats.stddev,
-            'mean':scistats.mean,'medi':scipy.stats.median(self.data.ravel()),
-            'skew':scipy.stats.skew(self.data.ravel()),
-            'kurt':scipy.stats.kurtosis(self.data.ravel()),
-            'n1':norm[0], 'n2':norm[1],
-            'filename':self.filename.split('/')[-1].replace('_', '\_'),
-            'time':time.strftime('%c')}
+        mystats = {
+            'npix': scistats.npix,
+            'smin': scistats.min,
+            'smax': scistats.max,
+            'stdd': scistats.stddev,
+            'mean': scistats.mean,
+            'medi': scipy.stats.median(self.data.ravel()),
+            'skew': scipy.stats.skew(self.data.ravel()),
+            'kurt': scipy.stats.kurtosis(self.data.ravel()),
+            'n1': norm[0],
+            'n2': norm[1],
+            'filename': self.filename.split('/')[-1].replace('_', '\_'),
+            'time': time.strftime('%c')
+            }
 
-#        if filename:
-#            figure = self.filename.replace('.fits', '')
-#            pylab.savefig(figure)
-#            mystats['figure'] = figure
-#
-#            mytemplate = mako.template.Template(filename = librarypath[0] +
-#                '/lates_templates/imagestats.tex')
-#
-#            tmp = open(filename + '.tex', 'w')
-#            tmp.writelines(mytemplate.render(**mystats))
-#            tmp.close()
-#
-#            os.system('pdflatex ' + filename + '.tex')
-#        else:
         scistats.printStats()
         print "Median            :   " + str(mystats['medi'])
         print "Skew              :   " + str(mystats['skew'])
@@ -434,12 +418,12 @@ class ImageData(object):
             pylab.show()
 
     # Private "support" methods
-    def __grids(self):
+    def _grids(self):
         """
         Calculate background and RMS grids of this image.
 
         These grids can be interpolated up to make maps of the original image
-        dimensions: see L{__interpolate()}.
+        dimensions: see L{_interpolate()}.
 
         This is called automatically when C{ImageData.backmap},
         C{ImageData.rmsmap} or C{ImageData.fdrmap} is first accessed.
@@ -460,7 +444,8 @@ class ImageData(object):
                     startx:startx + CONFIG['back_sizex'],
                     starty:starty + CONFIG['back_sizey']
                 ].ravel()
-                chunk, sigma, median, no_clip = utilities.sigma_clip(chunk,self.beam)
+                chunk, sigma, median, no_clip = utilities.sigma_clip(
+                    chunk, self.beam)
                 mean = numpy.mean(chunk)
 
                 if len(chunk) == 0 or not chunk.any():
@@ -477,12 +462,12 @@ class ImageData(object):
                     # estimator devised by Karl Pearson.
                     if numpy.fabs(mean - median) / sigma >= 0.3:
                         logging.debug(
-                            'bg skewed, %f clipping iterations' % (no_clip,)
-                        )
+                            'bg skewed, %f clipping iterations' % no_clip)
                         bgrow.append(median)
                     else:
                         logging.debug(
-                            'bg not skewed, %f clipping iterations' % (no_clip,)
+                            'bg not skewed, %f clipping iterations' % (
+                            no_clip)
                         )
                         bgrow.append(2.5 * median - 1.5 * mean)
 
@@ -490,20 +475,18 @@ class ImageData(object):
             bggrid.append(bgrow)
 
         rmsgrid = numpy.ma.array(
-            rmsgrid, mask=numpy.where(numpy.array(rmsgrid) == False, 1, 0)
-        )
+            rmsgrid, mask=numpy.where(numpy.array(rmsgrid) == False, 1, 0))
         bggrid = numpy.ma.array(
-            bggrid, mask=numpy.where(numpy.array(bggrid) == False, 1, 0)
-        )
+            bggrid, mask=numpy.where(numpy.array(bggrid) == False, 1, 0))
 
         return {'rms': rmsgrid, 'bg': bggrid}
 
-    def __interpolate(self, grid, roundup=False):
+    def _interpolate(self, grid, roundup=False):
         """
         Interpolate a grid to produce a map of the dimensions of the image.
 
         Used to transform the RMS, background or FDR grids produced by
-        L{__grids()} to a map we can compare with the image data.
+        L{_grids()} to a map we can compare with the image data.
 
         If roundup is true, values of the resultant map which are lower than
         the input grid are trimmed.
@@ -542,8 +525,7 @@ class ImageData(object):
         my_map = numpy.zeros(self.data.shape)
         my_map[useful_chunk[0]] = ndimage.map_coordinates(
             grid, numpy.mgrid[slicex, slicey],
-            mode='nearest', order=interpolate_order
-        )
+            mode='nearest', order=interpolate_order)
 
         # In some cases, the spline interpolation may produce values lower
         # than the minimum value in the map. If required, these can be trimmed
@@ -586,21 +568,22 @@ class ImageData(object):
             logging.warn(
                 "Analysis threshold is higher than detection threshold"
             )
-        if type(bgmap).__name__=='ndarray' or type(bgmap).__name__=='MaskedArray':
-            if bgmap.shape!=self.backmap.shape:
+        if (type(bgmap).__name__ == 'ndarray' or
+            type(bgmap).__name__ == 'MaskedArray'):
+            if bgmap.shape != self.backmap.shape:
                 raise IndexError("Background map has wrong shape")
             else:
-                self.backmap=bgmap
-                
-        if type(noisemap).__name__=='ndarray' or type(noisemap).__name__=='MaskedArray':
-            if noisemap.shape!=self.rmsmap.shape:
+                self.backmap = bgmap
+
+        if (type(noisemap).__name__ == 'ndarray' or
+            type(noisemap).__name__ == 'MaskedArray'):
+            if noisemap.shape != self.rmsmap.shape:
                 raise IndexError("Noisemap has wrong shape")
-            if noisemap.min()<0:
+            if noisemap.min() < 0:
                 raise ValueError("RMS noise cannot be negative")
             else:
-                self.rmsmap=noisemap
-        return self.__pyse(det * self.rmsmap, anl * self.rmsmap)
-
+                self.rmsmap = noisemap
+        return self._pyse(det * self.rmsmap, anl * self.rmsmap)
 
     def reverse_se(self, det=None):
         """
@@ -638,71 +621,71 @@ class ImageData(object):
         # The correlation length in config.py is used not only for the
         # calculation of error bars with the Condon formulae, but also for
         # calculating the number of independent pixels.
-        corlengthlong, corlengthshort = utils.calculate_correlation_lengths(self.beam[0],self.beam[1])
-        
+        corlengthlong, corlengthshort = utils.calculate_correlation_lengths(
+            self.beam[0], self.beam[1])
+
         C_n = (1.0 / numpy.arange(
-            round(0.25 * numpy.pi * corlengthlong * corlengthshort + 1)
-        )[1:]).sum()
-        
+            round(0.25 * numpy.pi * corlengthlong *
+                  corlengthshort + 1))[1:]).sum()
+
         # Calculate the FDR threshold
         # Things will go terribly wrong in the line below if the interpolated
         # noise values get very close or below zero. Use interpolate_order=1
         # in config or the roundup option.
-        if type(bgmap).__name__=='ndarray' or type(bgmap).__name__=='MaskedArray':
-            if bgmap.shape!=self.backmap.shape:
+        if (type(bgmap).__name__ == 'ndarray' or
+            type(bgmap).__name__ == 'MaskedArray'):
+            if bgmap.shape != self.backmap.shape:
                 raise IndexError("Background map has wrong shape")
             else:
-                self.backmap=bgmap
-                
-        if type(noisemap).__name__=='ndarray' or type(noisemap).__name__=='MaskedArray':
-            if noisemap.shape!=self.rmsmap.shape:
+                self.backmap = bgmap
+        if (type(noisemap).__name__ == 'ndarray' or
+            type(noisemap).__name__ == 'MaskedArray'):
+            if noisemap.shape != self.rmsmap.shape:
                 raise IndexError("Noisemap has wrong shape")
             if noisemap.min()<0:
                 raise ValueError("RMS noise cannot be negative")
             else:
-                self.rmsmap=noisemap    
-        
+                self.rmsmap = noisemap
+
         normalized_data = self.data_bgsubbed/self.rmsmap
 
         n1 = numpy.sqrt(2 * numpy.pi)
-        prob = numpy.sort(numpy.ravel(numpy.exp(-0.5*normalized_data**2)/n1))
+        prob = numpy.sort(numpy.ravel(numpy.exp(-0.5 * normalized_data**2)/n1))
         lengthprob = float(len(prob))
         compare = (alpha / C_n) * numpy.arange(lengthprob+1)[1:] / lengthprob
         # Find the last undercrossing, see, e.g., fig. 9 in Miller et al., AJ
         # 122, 3492 (2001).  Searchsorted is not used because the array is not
         # sorted.
         try:
-            index = (numpy.where(prob-compare<0.)[0]).max()
+            index = (numpy.where(prob-compare < 0.)[0]).max()
         except ValueError:
             # Everything below threshold
             return containers.SextractionResults()
 
-        fdr_threshold = numpy.sqrt(-2.*numpy.log(n1*prob[index]))
+        fdr_threshold = numpy.sqrt(-2.0 * numpy.log(n1 * prob[index]))
         # Default we require that all source pixels are above the threshold,
         # not only the peak pixel.  This gives a better guarantee that indeed
         # the fraction of false positives is less than fdr_alpha in config.py.
         # See, e.g., Hopkins et al., AJ 123, 1086 (2002).
         if not anl:
             anl = fdr_threshold
-        
-        return self.__pyse(fdr_threshold*self.rmsmap, anl * self.rmsmap)
-
+        return self._pyse(fdr_threshold * self.rmsmap, anl * self.rmsmap)
 
     def flux_at_pixel(self, x, y, numpix=1):
         # numpix is the number of pixels to look around the target.
         # e.g. numpix = 1 means a total of 9 pixels, 1 in each direction.
-        return self.data_bgsubbed[
-            y-numpix:y+numpix+1, x-numpix:x+numpix+1
-        ].max()
+        return self.data_bgsubbed[y-numpix:y+numpix+1,
+                                  x-numpix:x+numpix+1].max()
 
     def fit_to_point(self, x, y, boxsize, threshold=0.0, fixed='position'):
         """
         Fit an elliptical Gaussian to a specified point on the image.
 
         The fit is carried on a square section of the image, of length
-        *boxsize* & centred at pixel coordinates *x*, *y*. Any data below
-        *threshold* * rmsmap is not used for fitting. If *fixed* is set to
-        ``position``, then the pixel coordinates are fixed in the fit.
+        *boxsize* & centred at pixel coordinates *x*, *y*. Any data
+        below *threshold* * rmsmap is not used for fitting. If *fixed*
+        is set to ``position``, then the pixel coordinates are fixed
+        in the fit.
 
         Returns an instance of :class:`tkp_lib.sextraction.Detection`.
         """
@@ -717,13 +700,11 @@ class ImageData(object):
             )
         )
 
-        chunk = (
-            slice(x-boxsize/2.0, x+boxsize/2.0),
-            slice(y-boxsize/2.0, y+boxsize/2.0)
-        )
-        mylabel = labels[x,y]
+        chunk = (slice(x - boxsize/2.0, x + boxsize/2.0),
+                 slice(y - boxsize/2.0, y + boxsize/2.0))
+        mylabel = labels[x, y]
         mask = numpy.where(labels[chunk] == mylabel, 0, 1)
-        fitme = numpy.ma.array(self.data_bgsubbed[chunk], mask = mask)
+        fitme = numpy.ma.array(self.data_bgsubbed[chunk], mask=mask)
 
         if len(fitme.compressed()) < 1:
             raise ValueError("Too small to fit")
@@ -737,8 +718,8 @@ class ImageData(object):
             raise TypeError("Unkown fixed parameter")
 
         measurement, residuals = sextract.source_profile_and_errors(
-            fitme, threshold*self.rmsmap[x,y], self.rmsmap[x,y], self.beam, fixed=fixed
-        )
+            fitme, threshold * self.rmsmap[x, y], self.rmsmap[x, y],
+            self.beam, fixed=fixed)
 
         try:
             assert(abs(measurement['xbar'] < boxsize))
@@ -754,29 +735,34 @@ class ImageData(object):
             if measurement.moments or measurement.gaussian:
                 return sextract.Detection(measurement, self)
             else:
-                logging.warn("Moments & Gaussian fit failed at %f, %f" % (x, y))
+                logging.warn("Moments & Gaussian fit failed at %f, %f" %
+                             (x, y))
         except ValueError, message:
             raise
-            
+
     def dump_islands(self, filename, det, anl, minsize=4):
         # Identify potential islands
         sci_clip = numpy.where(self.data_bgsubbed > anl * self.rmsmap, 1, 0)
-        sci_labels, sci_num = ndimage.label(sci_clip, CONFIG['structuring_element'])
+        sci_labels, sci_num = ndimage.label(sci_clip,
+                                            CONFIG['structuring_element'])
         chunks = ndimage.find_objects(sci_labels)
 
         # Good islands meet the detection threshold and contain enough pixels
         subtracted_map = self.data_bgsubbed - det * self.rmsmap
         for isl, chunk in enumerate(chunks, 1):
-            if not (numpy.where(sci_labels[chunk] == isl)[0].shape[0] > minsize and
-                numpy.where(sci_labels[chunk] == isl, subtracted_map[chunk], -999).max() >= 0):
-                sci_labels[chunk] = numpy.where(sci_labels[chunk] == isl, 0, sci_labels[chunk])
+            if not (numpy.where(sci_labels[chunk] == isl)[0].shape[0] >
+                    minsize and
+                    numpy.where(sci_labels[chunk] == isl,
+                                subtracted_map[chunk], -999).max() >= 0):
+                sci_labels[chunk] = numpy.where(sci_labels[chunk] == isl,
+                                                0, sci_labels[chunk])
 
         import pyrap.images
         pyrap.images.image('', values=sci_labels).tofits(filename)
 
         return sci_labels
 
-    def __pyse(self, detectionthresholdmap, analysisthresholdmap):
+    def _pyse(self, detectionthresholdmap, analysisthresholdmap):
         """
         Run Python-based source extraction on this image.
 
@@ -789,39 +775,67 @@ class ImageData(object):
         """
 
         structuring_element = CONFIG['structuring_element']
-        # Make sure to set sci_clip to zero where either the analysisthresholdmap or self.data_bgsubbed are masked.
+        # Make sure to set sci_clip to zero where either the
+        # analysisthresholdmap or self.data_bgsubbed are masked.
         # That is why we use numpy.ma.where and the filling.
-        sci_clip = numpy.ma.where(self.data_bgsubbed > analysisthresholdmap, 1, 0).filled(fill_value=0)
+        sci_clip = numpy.ma.where(self.data_bgsubbed > analysisthresholdmap,
+                                  1, 0).filled(fill_value=0)
         sci_labels, sci_num = ndimage.label(sci_clip, structuring_element)
 
         # Map our chunks onto a list of islands.
         island_list = []
         # This map can be used for analysis of the islands.
-        self.islands_map=numpy.zeros(self.data_bgsubbed.shape)
+        self.islands_map = numpy.zeros(self.data_bgsubbed.shape)
 
         if sci_num>0:
-            # Select the labels of the islands with a maximum pixel value above the (local) detection threshold.
+            # Select the labels of the islands with a maximum pixel
+            # value above the (local) detection threshold.
             slices = ndimage.find_objects(sci_labels)
-        
-            # Select the labels of the islands above the analysis threshold that have maximum values values above the detection threshold.
-            # Like above we make sure not to select anything where either the data or the noise map are masked.
-            # We fill these pixels in above_det_thr with -1 to make sure its labels will not be in labels_above_det_thr.
-            above_det_thr=(self.data_bgsubbed-detectionthresholdmap).filled(fill_value=-1)
-            maximum_values=ndimage.maximum(above_det_thr,sci_labels,numpy.arange(sci_num+1)[1:])
-            # The "+1" in the statement above may seem a bit awkward, but accounts for label=0 which is the background, which we do not want.
-            labels_above_det_thr=(numpy.array(maximum_values)>=0.).nonzero()[0]+1
-            # The "+1" in the statement above may seem a bit awkward, but accounts for the mapping from index of maximum values-->label number.   
-        
+
+            # Select the labels of the islands above the analysis threshold
+            # that have maximum values values above the detection threshold.
+            # Like above we make sure not to select anything where either
+            # the data or the noise map are masked.
+            # We fill these pixels in above_det_thr with -1 to make sure
+            # its labels will not be in labels_above_det_thr.
+            above_det_thr = (
+                self.data_bgsubbed - detectionthresholdmap).filled(
+                fill_value=-1)
+            maximum_values = ndimage.maximum(above_det_thr, sci_labels,
+                                           numpy.arange(sci_num + 1)[1:])
+            # The "+1" in the statement above may seem a bit awkward, but
+            # accounts for label=0 which is the background, which we do not
+            # want.
+
+            labels_above_det_thr = (
+                numpy.array(maximum_values) >= 0.0).nonzero()[0] + 1
+            # The "+1" in the statement above may seem a bit awkward, but
+            # accounts for the mapping from index of maximum values-->label
+            # number.
+
             for label in labels_above_det_thr:
                 chunk=slices[label-1]
-                detection_threshold = (detectionthresholdmap[chunk] / self.rmsmap[chunk]).max()
-                analysis_threshold  = (analysisthresholdmap[chunk]  / self.rmsmap[chunk]).max()
-                # In selected_data only the pixels with the "correct" (see above) labels are retained. Other pixel values are set to zero.
-                # In this way, disconnected pixels within (rectangular) slices around islands (paricularly the large ones) do not affect the source measurements.
-                selected_data=numpy.ma.where(sci_labels[chunk]==label,self.data_bgsubbed[chunk],0.).filled(fill_value=0.)
-                self.islands_map[chunk]+=selected_data
-                island_list.append(sextract.Island(selected_data,self.rmsmap[chunk], chunk, analysis_threshold, detectionthresholdmap[chunk], self.beam))
-
+                detection_threshold = (detectionthresholdmap[chunk] /
+                                       self.rmsmap[chunk]).max()
+                analysis_threshold = (analysisthresholdmap[chunk] /
+                                      self.rmsmap[chunk]).max()
+                # In selected_data only the pixels with the "correct"
+                # (see above) labels are retained. Other pixel values are
+                # set to zero.
+                # In this way, disconnected pixels within (rectangular)
+                # slices around islands (paricularly the large ones) do
+                # not affect the source measurements.
+                selected_data = numpy.ma.where(
+                    sci_labels[chunk] == label, self.data_bgsubbed[chunk],
+                    0.0).filled(fill_value=0.)
+                self.islands_map[chunk] += selected_data
+                island_list.append(
+                    sextract.Island(selected_data,
+                                    self.rmsmap[chunk],
+                                    chunk,
+                                    analysis_threshold,
+                                    detectionthresholdmap[chunk],
+                                    self.beam))
 
         # If required, we can save the 'left overs' from the deblending and
         # fitting processes for later analysis. This needs setting up here:
@@ -829,7 +843,8 @@ class ImageData(object):
             self.residuals_from_gauss_fitting = numpy.zeros(self.data.shape)
             self.residuals_from_deblending = numpy.zeros(self.data.shape)
             for island in island_list:
-                self.residuals_from_deblending[island.chunk] += island.data.filled(fill_value=0.)
+                self.residuals_from_deblending[island.chunk] += (
+                    island.data.filled(fill_value=0.))
 
         # Deblend each of the islands to its consituent parts, if necessary
         if CONFIG['deblend']:
@@ -847,11 +862,11 @@ class ImageData(object):
                     sextract.Detection(measurement, self, chunk=island.chunk)
                 )
                 if CONFIG['residuals']:
-                    self.residuals_from_deblending[island.chunk] -= island.data.filled(fill_value=0.)
+                    self.residuals_from_deblending[island.chunk] -= (
+                        island.data.filled(fill_value=0.))
                     self.residuals_from_gauss_fitting[island.chunk] += residual
             except RuntimeError:
                 logging.warn("Island not processed; unphysical?")
                 raise
-            
-        return results
 
+        return results

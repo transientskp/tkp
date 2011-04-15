@@ -7,7 +7,6 @@ This module contain utilities that were originally in the main settings.py
 import scipy
 
 
-
 def calculate_correlation_lengths(semimajor, semiminor):
     """Calculate the Condon correlation length
 
@@ -21,27 +20,22 @@ def calculate_correlation_lengths(semimajor, semiminor):
     Basically one has theta_N**2 = theta_B*theta_b.
 
     Good estimates in general are:
-    
+
     + theta_B = 2.0 * semimajar
 
     + theta_b = 2.0 * semiminor
-
     """
 
-    corlengthlong = 2.*semimajor
-    corlengthshort = 2.*semiminor
     return (2.0 * semimajor, 2.0 * semiminor)
-    #return (corlengthlong, corlengthshort)
 
 
-def calculate_beamsize(semimajor,semiminor):
+def calculate_beamsize(semimajor, semiminor):
     """Calculate the beamsize based on the semi major and minor axes"""
-    
-    return numpy.pi*semimajor*semiminor
+
+    return numpy.pi * semimajor * semiminor
 
 
-
-def fudge_max_pix(semimajor,semiminor,theta):
+def fudge_max_pix(semimajor, semiminor, theta):
     """
 
     Previously, we adopted Rengelink's correction for the
@@ -56,28 +50,29 @@ def fudge_max_pix(semimajor,semiminor,theta):
     position on the peak pixel and averaging over all possible
     corrections.  This overall correction makes use of the beamshape,
     so strictly speaking only accurate for unresolved sources.
-
     """
 
     # scipy.integrate.dblquad: Computes a double integral
     # from the scipy docs:
-    #   Return the double (definite) integral of f1(y,x) from x=a..b and y=f2(x)..f3(x).
+    #   Return the double (definite) integral of f1(y,x) from x=a..b
+    #   and y=f2(x)..f3(x).
     correction = scipy.integrate.dblquad(
-        lambda y, x: numpy.exp(numpy.log(2.0) * 
+        lambda y, x: numpy.exp(numpy.log(2.0) *
                                (((numpy.cos(theta) * x +
-                                  numpy.sin(theta) * y) / semiminor)**2.0 + 
+                                  numpy.sin(theta) * y) / semiminor)**2.0 +
                                 ((numpy.cos(theta) * y -
                                   numpy.sin(theta) * x) / semimajor)**2.)),
         -0.5,
         0.5,
-        lambda ymin:-0.5,
-        lambda ymax:0.5)[0]
-     
+        lambda ymin: -0.5,
+        lambda ymax: 0.5)[0]
+
     return correction
- 
-def maximum_pixel_method_variance(semimajor,semiminor,theta):
+
+
+def maximum_pixel_method_variance(semimajor, semiminor, theta):
     """
-    
+
     When we use the maximum pixel method, with a correction
     fudge_max_pix, there should be no bias, unless the peaks of the
     Gaussians are not randomly distributed, but relatively close to
@@ -95,7 +90,8 @@ def maximum_pixel_method_variance(semimajor,semiminor,theta):
 
     # scipy.integrate.dblquad: Computes a double integral
     # from the scipy docs:
-    #   Return the double (definite) integral of f1(y,x) from x=a..b and y=f2(x)..f3(x).
+    #   Return the double (definite) integral of f1(y,x) from x=a..b
+    #   and y=f2(x)..f3(x).
     variance = (scipy.integrate.dblquad(
         lambda y, x: numpy.exp(2.0 * numpy.log(2.0) *
                                (((numpy.cos(theta) * x +
@@ -104,8 +100,8 @@ def maximum_pixel_method_variance(semimajor,semiminor,theta):
                                   numpy.sin(theta) * x) / semimajor)**2.0)),
         -0.5,
         0.5,
-        lambda ymin:-0.5,
-        lambda ymax:0.5)[0] 
+        lambda ymin: -0.5,
+        lambda ymax: 0.5)[0]
                 - fudge_max_pix(semimajor, semiminor, theta)**2)
 
-     return variance
+    return variance

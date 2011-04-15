@@ -4,8 +4,11 @@
 # Gaussian fitting routines
 #
 
-import math, logging
-import numpy, scipy, scipy.optimize
+import math
+import logging
+import numpy
+import scipy
+import scipy.optimize
 
 from tkp.sourcefinder import utils
 from tkp.config import config
@@ -13,9 +16,20 @@ from tkp.utility.uncertain import Uncertain
 
 
 def gaussian(height, centre_x, centre_y, semimajor, semiminor, theta):
-    """Return a Gaussian function with the given parameters. Theta is the
-    angle between the semi-major & y axes measured in radians, measured counterclockwise."""
-    return lambda x, y: height*numpy.exp(-math.log(2.)*(((math.cos(theta)*(x-centre_x)+math.sin(theta)*(y-centre_y))/semiminor)**2.+((math.cos(theta)*(y-centre_y)-math.sin(theta)*(x-centre_x))/semimajor)**2.))
+    """Return a Gaussian function with the given parameters.
+
+    Theta is the angle between the semi-major & y axes measured in
+    radians, measured counterclockwise.
+    """
+
+    return lambda x, y: height * numpy.exp(
+        -math.log(2.0) * (((math.cos(theta) * (x - centre_x) +
+                            math.sin(theta) * (y - centre_y)) /
+                           semiminor)**2.0 +
+                          ((math.cos(theta) * (y - centre_y) -
+                            math.sin(theta) * (x - centre_x)) /
+                           semimajor)**2.))
+
 
 def moments(dat, beam, threshold=0):
     """Use the first moment of the distribution is the barycentre of an
@@ -24,7 +38,8 @@ def moments(dat, beam, threshold=0):
 
     input: numpy array of pixel values, threshold
     reutrns: dict(peak, total, xbar, ybar, semimajor, semiminor, theta).
-    ** NB DO NOT CHANGE ARGUMENTS / RETURN VALUES **"""
+    ** NB DO NOT CHANGE ARGUMENTS / RETURN VALUES **
+    """
 
     # Are we fitting a -ve or +ve Gaussian?
     if dat.mean() >= 0:
@@ -32,19 +47,18 @@ def moments(dat, beam, threshold=0):
         peak = dat.max() * utils.fudge_max_pix(*beam)
     else:
         peak = dat.min()
-    ratio = threshold/peak
+    ratio = threshold / peak
     total = dat.sum()
     X, Y = numpy.indices(dat.shape)
-    xbar = float((X*dat).sum()/total)
-    ybar = float((Y*dat).sum()/total)
-    xxbar = (X*X*dat).sum()/total - xbar**2
-    yybar = (Y*Y*dat).sum()/total - ybar**2
-    xybar = (X*Y*dat).sum()/total - xbar*ybar
+    xbar = float((X * dat).sum()/total)
+    ybar = float((Y * dat).sum()/total)
+    xxbar = (X * X * dat).sum()/total - xbar**2
+    yybar = (Y * Y * dat).sum()/total - ybar**2
+    xybar = (X * Y * dat).sum()/total - xbar * ybar
 
     working1 = (xxbar + yybar) / 2.0
     working2 = math.sqrt(((xxbar - yybar)/2)**2 + xybar**2)
-
-    beamsize = utils.calculate_beamsize(beam[0],beam[1])
+    beamsize = utils.calculate_beamsize(beam[0], beam[1])
 
     # Some problems arise with the sqrt of (working1-working2) when they are
     # equal, this happens with islands that have a thickness of only one pixel
@@ -56,31 +70,28 @@ def moments(dat, beam, threshold=0):
         semiminor = numpy.sqrt(beamsize/numpy.pi)
         semimajor = numpy.sqrt(beamsize/numpy.pi)
     else:
-        semimajor_tmp = (working1 + working2)*2.*math.log(2.)
-        semiminor_tmp = (working1 - working2)*2.*math.log(2.)
+        semimajor_tmp = (working1 + working2) * 2.0 * math.log(2.0)
+        semiminor_tmp = (working1 - working2) * 2.0 * math.log(2.0)
         # ratio will be 0 for data that hasn't been selected according to a
         # threshold.
         if ratio != 0:
             # The corrections below for the semi-major and semi-minor axes are
-            # to compensate for the underestimate of these quantities due to the
-            # cutoff at the threshold.
-            semimajor_tmp /= (1.0+math.log(ratio)*ratio/(1.0-ratio))
-            semiminor_tmp /= (1.0+math.log(ratio)*ratio/(1.0-ratio))
+            # to compensate for the underestimate of these quantities
+            # due to the cutoff at the threshold.
+            semimajor_tmp /= (1.0 + math.log(ratio) * ratio / (1.0 - ratio))
+            semiminor_tmp /= (1.0 + math.log(ratio) * ratio / (1.0 - ratio))
         semimajor = math.sqrt(semimajor_tmp)
         semiminor = math.sqrt(semiminor_tmp)
         if semiminor == 0:
             # A semi-minor axis exactly zero gives all kinds of problems.
             # For instance wrt conversion to celestial coordinates.
             # This is a quick fix.
-            semiminor = beamsize/(numpy.pi*semimajor)
+            semiminor = beamsize / (numpy.pi * semimajor)
 
     # This shouldn't happen, but..
-    if (
-        numpy.isnan(xbar) or numpy.isnan(ybar) or
-        numpy.isnan(semimajor) or numpy.isnan(semiminor)
-    ):
+    if (numpy.isnan(xbar) or numpy.isnan(ybar) or
+        numpy.isnan(semimajor) or numpy.isnan(semiminor)):
         raise ValueError("Unable to estimate Gauss shape")
-
     # Not sure if theta is affected in any way by the cutoff at the threshold.
 
     if abs(semimajor - semiminor) < 0.01:
@@ -96,8 +107,16 @@ def moments(dat, beam, threshold=0):
 
     ## NB: a dict should give us a bit more flexibility about arguments;
     ## however, all those here are ***REQUIRED***.
-    return {"peak": peak, "flux": total, "xbar": xbar, "ybar": ybar,
-        "semimajor": semimajor, "semiminor":  semiminor, "theta": theta}
+    return {
+        "peak": peak,
+        "flux": total,
+        "xbar": xbar,
+        "ybar": ybar,
+        "semimajor": semimajor,
+        "semiminor": semiminor,
+        "theta": theta
+        }
+
 
 def fitgaussian(data, params, fixed={}, maxfev=0):
     """
@@ -121,7 +140,7 @@ def fitgaussian(data, params, fixed={}, maxfev=0):
     # fixed.
     my_pars = []
     for param in fit_params:
-        if not fixed.has_key(param):
+        if param not in fixed:
             if isinstance(params[param], Uncertain):
                 my_pars.append(params[param].value)
             else:
@@ -134,13 +153,12 @@ def fitgaussian(data, params, fixed={}, maxfev=0):
         paramlist = list(paramlist)
         gaussian_args = []
         for param in fit_params:
-            if fixed.has_key(param):
+            if param in fixed:
                 gaussian_args.append(fixed[param])
             else:
                 gaussian_args.append(paramlist.pop(0))
-        return (
-            gaussian(*gaussian_args)(*numpy.indices(data.shape)) - data
-        ).compressed()
+        return (gaussian(*gaussian_args)(*numpy.indices(data.shape)) - data
+                ).compressed()
 
     # The .compressed() below is essential so the Gaussian fit will not take
     # account of the masked values (=below threshold) at the edges and corners
@@ -153,7 +171,7 @@ def fitgaussian(data, params, fixed={}, maxfev=0):
     tmp_solution = list(solution)
     solution = []
     for param in fit_params:
-        if fixed.has_key(param):
+        if param in fixed:
             solution.append(fixed[param])
         else:
             solution.append(tmp_solution.pop(0))
@@ -180,7 +198,10 @@ def fitgaussian(data, params, fixed={}, maxfev=0):
             theta += numpy.pi
 
     return {
-        "peak": solution[0], "xbar": solution[1], "ybar": solution[2],
-        "semimajor": solution[3], "semiminor": solution[4], "theta": solution[5]
-    }
-
+        "peak": solution[0],
+        "xbar": solution[1],
+        "ybar": solution[2],
+        "semimajor": solution[3],
+        "semiminor": solution[4],
+        "theta": solution[5]
+        }

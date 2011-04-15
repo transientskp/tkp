@@ -1,6 +1,0 @@
-include 'table.g'
-t:=tablecommand('select from ${path + masterfile} where TIME >= ${start_time} and TIME <= ${end_time} giving ${path + filename}.tmp')
-t.close()
-tablecopy('${path + filename}.tmp','${path + filename}',T)
-exit
-

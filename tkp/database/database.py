@@ -16,7 +16,7 @@ HOST = config['database']['host']
 USER = config['database']['user']
 PASSWD = config['database']['password']
 DBASE = config['database']['name']
-PORT = config['database'['port']
+PORT = config['database']['port']
 
 
 @contextlib.contextmanager
@@ -29,7 +29,7 @@ def connect(*args, **kwargs):
         db.close()
 
 
-def connection(hostname=HOST, username=USER, password=PASSWD, database=DBASE, 
+def connection(hostname=HOST, username=USER, password=PASSWD, database=DBASE,
                dbport=PORT):
     """Returns a connection object or raise an error if not enabled
 
@@ -38,7 +38,7 @@ def connection(hostname=HOST, username=USER, password=PASSWD, database=DBASE,
 
     if not ENABLED:
         raise TKPDataBaseError("Database is not enabled")
-    conn = db.connect(hostname=hostname, username=username, 
+    conn = db.connect(hostname=hostname, username=username,
                       password=password, database=database, port=dbport)
     return conn
 
@@ -51,13 +51,14 @@ def connection_to_db(usr, dbname):
     if not ENABLED:
         raise TKPDataBaseError("Database is not enabled")
     else:
-        conn = db.connect(hostname=HOST, username=USER, password=PASSWD, port=PORT)
+        conn = db.connect(hostname=HOST, username=USER, password=PASSWD,
+                          port=PORT)
     return conn
 
 
 def call_proc(conn, procname):
     """Calls a particular database procedure"""
-    
+
     if not ENABLED:
         raise TKPDataBaseError("Database is not enabled")
     cursor = conn.cursor()
@@ -70,9 +71,11 @@ def call_proc(conn, procname):
         cursor.close()
         conn.commit()
 
+
 def save_to_db(dataset, objectlist, conn):
-    """Save a list of detections belonging to a particular dataset to the database"""
-    
+    """Save a list of detections belonging to a particular dataset to
+    the database"""
+
     cursor = conn.cursor()
     try:
         for det in objectlist:
@@ -80,16 +83,21 @@ def save_to_db(dataset, objectlist, conn):
             ##print "det.serialize()[1]:",det.serialize()[1]
             ## TODO: how to handle weird fits?
             ## Here we exclude a position in an image with id 327...
-            ##if ((det.serialize()[0] == 327) and (det.serialize()[1] > 161.205 and det.serialize()[1] < 161.212) and (det.serialize()[2] > 21.617 and det.serialize()[2] < 21.628)):
+            ##if ((det.serialize()[0] == 327) and (det.serialize()[1] >
+            # 161.205 and det.serialize()[1] < 161.212) and
+            # (det.serialize()[2] > 21.617 and det.serialize()[2] < 21.628)):
             ##    print "\nNOTE: Not inserted :\n",det.serialize(), "\n"
             ##else:
-            procInsert = "CALL InsertSrc(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)" % (dataset.id,) + det.serialize()
+            procInsert = "CALL InsertSrc(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)" % (
+                dataset.id, ) + det.serialize()
             ##print procInsert
             cursor.execute(procInsert)
             ##cursor.execute("COPY INTO insertedsources " + \
-            ##               "FROM STDIN UNSING DELIMITERS '\r\n','\t' ", (det.serialize(),))
+            ##               "FROM STDIN UNSING DELIMITERS '\r\n','\t' ", (
+            ##det.serialize(),))
     except db.Error, e:
-        logging.warn("Insert source %s failed" % str((dataset.id,) + det.serialize()))
+        logging.warn("Insert source %s failed" % str((dataset.id, ) +
+                                                     det.serialize()))
         raise
     finally:
         cursor.close()
@@ -98,8 +106,8 @@ def save_to_db(dataset, objectlist, conn):
 
 def assoc_in_db(imageid, conn):
     """Associate the sources found in imageid with the database catalogs"""
-    
-    procAssoc = "CALL AssocXSourceByImage(%d)" % (imageid) 
+
+    procAssoc = "CALL AssocXSourceByImage(%d)" % (imageid)
     try:
         call_proc(conn, procAssoc)
     except db.Error, e:
@@ -109,21 +117,21 @@ def assoc_in_db(imageid, conn):
 
 def assoc_xsrc_to_xsrc(imageid, conn):
     """Associate sources with sources from a previous image"""
-    
-    procAssoc = "CALL AssocXSources2XSourcesByImage(%d)" % (imageid) 
+
+    procAssoc = "CALL AssocXSources2XSourcesByImage(%d)" % (imageid)
     try:
         call_proc(conn, procAssoc)
     except db.Error, e:
         logging.warn("Associating image %s failed." % (str(imageid),))
         raise
-    
+
 
 def assoc_xsrc_to_cat(imageid, conn):
     """Associate sources with the current catalog"""
-    
-    procAssoc = "CALL AssocXSources2CatByImage(%d)" % (imageid) 
+
+    procAssoc = "CALL AssocXSources2CatByImage(%d)" % (imageid)
     try:
         call_proc(conn, procAssoc)
     except db.Error, e:
-        logging.warn("Associating image %s failed." % (str(imageid),))
+        logging.warn("Associating image %s failed." % (str(imageid), ))
         raise

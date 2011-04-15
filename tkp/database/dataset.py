@@ -16,6 +16,7 @@ import logging
 # Local stuff
 import tkp.database.database as db
 
+
 class DataSet(list):
     """
     A DataSet is a list of ImageData objects which fall logically together as
@@ -43,8 +44,8 @@ class DataSet(list):
         rerun value in the table will be incremented by 1. If the database is
         not enabled the id is set to "None".
 
-        The stored function insertDataset() is called. It takes the name as 
-        input and returns the generated id.  
+        The stored function insertDataset() is called. It takes the name as
+        input and returns the generated id.
         """
 
         # Note: put double code in separate function?
@@ -53,24 +54,29 @@ class DataSet(list):
                 with closing(self.dbconnection.cursor()) as cursor:
                     try:
                         # MySQL & MonetDB syntax
-                        cursor.execute("""SELECT insertDataset(%s)""", (self.name,))
+                        cursor.execute("""SELECT insertDataset(%s)""", (
+                            self.name,))
                         self.dbconnection.commit()
                         self._id = cursor.fetchone()[0]
                     except db.Error, e:
-                        logging.warn("Insert DataSet %s failed." % (self.name,))
+                        logging.warn("Insert DataSet %s failed." % (
+                            self.name, ))
                         raise
             else:
                 with closing(db.connection()) as conn:
                     with closing(conn.cursor()) as cursor:
                         try:
                             # MySQL & MonetDB syntax
-                            cursor.execute("""SELECT insertDataset(%s)""", (self.name,))
+                            cursor.execute("""SELECT insertDataset(%s)""", (
+                                self.name, ))
                             conn.commit()
                             self._id = cursor.fetchone()[0]
                         except db.Error, e:
-                            logging.warn("Insert DataSet %s failed" % (self.name,))
+                            logging.warn("Insert DataSet %s failed" % (
+                                self.name, ))
                             raise
         return self._id
 
     def __str__(self):
-        return "DataSet: %s. Database ID: %s %d items." % (self.name, str(self.id), len(self))
+        return "DataSet: %s. Database ID: %s %d items." % (
+            self.name, str(self.id), len(self))

@@ -14,7 +14,7 @@ core_lon = -6.8689 # Note that wcstools takes a +ve longitude as WEST.
 #You'll need the libwcstools library (available in the TKP repostory as
 #external/libwcstools; in theory you just need to run "make") somewhere on
 #the ctypes library search path.
-wcstools_name = "libwcstools.so.1"
+wcstools_name = "libwcstools.so"
 
 def julian_date(time=None, modified=False):
     """Return the Julian Date: the number of days (including fractions) which

@@ -26,7 +26,7 @@
 
 import unittest
 import os
-import tkp.sourcefinder.accessors as access
+from tkp.utility import accessors
 import numpy as np
 import tkp.sourcefinder.image as imag 
 import tkp.config
@@ -38,9 +38,9 @@ NUMBER_INSERTED=float(3969)
 
 class test_maps(unittest.TestCase):
     def setUp(self):
-        my_uncorr_map=access.FitsFile(os.path.join(DATAPATH, 'UNCORRELATED_NOISE.FITS'))
-        my_corr_map=access.FitsFile(os.path.join(DATAPATH, 'CORRELATED_NOISE.FITS'))
-        my_map_with_sources=access.FitsFile(os.path.join(DATAPATH, 'TEST_DECONV.FITS'))
+        my_uncorr_map=accessors.FitsFile(os.path.join(DATAPATH, 'UNCORRELATED_NOISE.FITS'))
+        my_corr_map=accessors.FitsFile(os.path.join(DATAPATH, 'CORRELATED_NOISE.FITS'))
+        my_map_with_sources=accessors.FitsFile(os.path.join(DATAPATH, 'TEST_DECONV.FITS'))
 
         my_uncorr_image=imag.ImageData(my_uncorr_map)
         my_corr_image=imag.ImageData(my_corr_map)

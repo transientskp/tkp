@@ -2,7 +2,7 @@
 
 import unittest
 import os
-import tkp.sourcefinder.accessors as accessors
+from tkp.utility import accessors
 import tkp.sourcefinder.image as image
 import tkp.config
 
@@ -10,7 +10,7 @@ import tkp.config
 DATAPATH = tkp.config.config['test']['datapath']
 
 
-class AIPSppImageTestCase(unittest.TestCase):
+class AIPSppImage(unittest.TestCase):
     def setUp(self):
         self.filename = os.path.join(DATAPATH, 'CX3_peeled.image/')
         # Beam here is a random beam, in this case the WENSS beam without the declination dependence.

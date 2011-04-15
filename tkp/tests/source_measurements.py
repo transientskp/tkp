@@ -10,7 +10,7 @@
 
 import unittest
 import os
-import tkp.sourcefinder.accessors as access
+from tkp.utility import accessors
 import numpy as np
 import tkp.sourcefinder.image as imag 
 import tkp.config
@@ -29,9 +29,9 @@ TRUE_DECONV_BPA = -0.5*(-49.8)
 
 class SourceParameters(unittest.TestCase):
     def setUp(self):
-        my_bgfile=access.FitsFile(os.path.join(DATAPATH, 'CORRELATED_NOISE.FITS'))
+        my_bgfile=accessors.FitsFile(os.path.join(DATAPATH, 'CORRELATED_NOISE.FITS'))
         bgdata=imag.ImageData(my_bgfile).data
-        my_fitsfile = access.FitsFile(os.path.join(DATAPATH, 'TEST_DECONV.FITS'))
+        my_fitsfile = accessors.FitsFile(os.path.join(DATAPATH, 'TEST_DECONV.FITS'))
         my_image= imag.ImageData(my_fitsfile)
         # This is quite subtle. We bypass any possible flaws in the kappa, sigma clipping algorithm by supplying a background level and noise map.
         # In this way we make sure that any possible biases in the measured source parameters cannot come from biases in the background level.

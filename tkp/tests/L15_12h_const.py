@@ -2,7 +2,7 @@
 
 import unittest
 import os
-import tkp.sourcefinder.accessors as accessors
+from tkp.utility import accessors
 import tkp.sourcefinder.image as image
 import tkp.utility.coordinates as coords
 import tkp.config
@@ -18,7 +18,7 @@ DATAPATH = tkp.config.config['test']['datapath']
 # flux.
 fudgefactor = 0.5
 
-class L15_12h_const_obs(unittest.TestCase):
+class L15_12hConstObs(unittest.TestCase):
     # Single, constant 1 Jy source at centre of image.
     def setUp(self):
         # Beam here is a random beam, in this case the WENSS beam without the declination dependence.
@@ -39,7 +39,7 @@ class L15_12h_const_obs(unittest.TestCase):
         del(self.myff)
 
 
-class L15_12h_const_cor(unittest.TestCase):
+class L15_12hConstCor(unittest.TestCase):
     # Cross shape of 5 sources, 2 degrees apart, at centre of image.
     def setUp(self):
         # Beam here is a random beam, in this case the WENSS beam without the declination dependence.
@@ -70,7 +70,7 @@ class L15_12h_const_cor(unittest.TestCase):
         del(self.myff)
 
 
-class L15_12h_const_mod(unittest.TestCase):
+class L15_12hConstMod(unittest.TestCase):
     # 1 Jy constant source at centre; 1 Jy (peak) transient 3 degrees away.
     def setUp(self):
         # This image is of the whole sequence, so obviously we won't see the

@@ -22,9 +22,8 @@ class Transient(object):
     Not all attributes need to be available; unavailable attributes
     will be simply ignored. The classification schema decides how to handle
     these cases.
-
     """
-    
+
     def __init__(self, srcid=0, duration=None, variability=None, database=None,
                  position=None, timezero=None, shape=None, spectralindex=None):
         self.srcid = int(srcid)
@@ -47,13 +46,12 @@ class Transient(object):
             return "transient with variability %-6g" % (self.variability)
         else:
             return "transient source"
-        
 
     def __repr__(self):
         arglist = ["srcid=%d" % self.srcid]
         if self.duration is not None:
             arglist.append("duration=%.1f" % self.duration)
-        if self.variability is not None:            
+        if self.variability is not None:
             arglist.append("variability=%.2f" % self.variability)
         if self.database is not None:
             arglist.append("database=%s" % self.database)
@@ -67,7 +65,6 @@ class Transient(object):
             arglist.append("spectral index=%.1f" % self.spectralindex)
         return "%s(%s)" % (self.__class__.__name__, ", ".join(arglist),)
 
-    
     def read(self, db_cursor=None):
         """Set up the transient by reading from the database"""
 

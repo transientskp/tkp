@@ -29,7 +29,7 @@ dependent on each other.
 class SlowTransient(ClassifiedTransient):
 
     """Slow transient"""
-    
+
     def test_duration(self):
         if self.duration > 1e6:
             return 0.9
@@ -50,11 +50,10 @@ class GRBPrompt(ClassifiedTransient):
     def test_voevent_delay(self):
         if 0 < self.vo_event.delay < 1e5:
             return 0.6
-    
+
     def test_variability(self):
         if 0 < self.variability < 1e3:
             return 0.6
-
 
 
 class MainBranch(Branch):
@@ -71,13 +70,13 @@ class SubBranch1(Branch):
     def test1(self):
         return [SlowTransient]
 
-    
+
 class SubBranch2(Branch):
 
     def test1(self):
         return [GRBPrompt]
 
-    
+
 class SpectralBranch(Branch):
 
     """Spectral branch"""
@@ -86,6 +85,3 @@ class SpectralBranch(Branch):
         if self.transient.spectralindex < 0:
             return [SlowTransient, GRBPrompt]
         return []
-
-
-

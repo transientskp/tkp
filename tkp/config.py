@@ -122,7 +122,8 @@ def set_default_config():
     config.set('source_extraction', 'eps_dec', '0.')
 
     from tkp.tests import __path__ as testpath
-    config.set('test', 'datapath', datapath=os.path.join(testpath[0], "data"))
+    config.add_section('test')
+    config.set('test', 'datapath', os.path.join(testpath[0], "data"))
     return config
 
 

@@ -40,7 +40,6 @@ To do:
 """
 
 
-
 # Avoid eval
 # This is very simple, and likely may be fooled by incorrect
 # input
@@ -74,10 +73,10 @@ def double_list_from_string(text, contenttype=str):
         text = tmptext.lstrip('[').strip()
         if tmptext == text:
             raise ValueError("missing opening bracket in %s" % origtext)
-        
+
     return elements
 
-    
+
 def set_default_config():
 
     config = ConfigParser.SafeConfigParser()
@@ -89,10 +88,10 @@ def set_default_config():
     config.set('database', 'user', 'tkp')
     config.set('database', 'password', 'tkp')
     config.set('database', 'port', '50000')
-    
+
     config.add_section('source_association')
     config.set('source_association', 'deruiter_radius', '0.0010325')
-    
+
     config.add_section('source_extraction')
     config.set('source_extraction', 'back_sizex', '32')
     config.set('source_extraction', 'back_sizey', '32')
@@ -102,7 +101,8 @@ def set_default_config():
     config.set('source_extraction', 'margin', '0')
     config.set('source_extraction', 'max_degradation', '0.2')
     config.set('source_extraction', 'fdr_alpha', '1e-2')
-    config.set('source_extraction', 'structuring_element', '[[0,1,0], [1,1,1], [0,1,0]]')
+    config.set('source_extraction', 'structuring_element',
+               '[[0,1,0], [1,1,1], [0,1,0]]')
     config.set('source_extraction', 'deblend', 'False')
     config.set('source_extraction', 'deblend_nthresh', '32')
     config.set('source_extraction', 'deblend_mincont', '0.005')
@@ -147,17 +147,20 @@ def read_config(default_config):
             config.add_section(section)
         for option in default_config.options(section):
             if not config.has_option(section, option):
-                config.set(section, option, default_config.get(section, option))
+                config.set(section, option,
+                           default_config.get(section, option))
 
     return config
 
 
 def parse_config(config):
-    """Parse the various config parameters into a dictionary, including type conversion"""
+    """Parse the various config parameters into a dictionary,
+    including type conversion"""
 
-    # On to do list: create an inherited configparser that stores a type with the options,
-    # and then does the parsing behind the scenes
-    configuration = dict(database={}, source_association={}, source_extraction={})
+    # On to do list: create an inherited configparser that stores a type with
+    # the options, # and then does the parsing behind the scenes
+    configuration = dict(database={}, source_association={},
+                         source_extraction={})
     booleans = (('database', 'enabled'), ('source_extraction', 'deblend'),
                 ('source_extraction', 'residuals'))
     integers = (('database', 'port'), ('source_extraction', 'back_sizex'),
@@ -211,10 +214,10 @@ def parse_config(config):
         'source_extraction', 'structuring_element'), contenttype=float)
     if (len(elements) != 3 or len(elements[0]) != 3 or len(elements[1]) != 3
         or len(elements[2]) != 3):
-        raise ValueError(
-            "incorrect type for structuring_element in section source_extraction")
+        raise ValueError("""\
+incorrect type for structuring_element in section source_extraction""")
     configuration['source_extraction']['structuring_element'] = elements
-    
+
     return configuration
 
 

@@ -163,7 +163,9 @@ class wcsDetectionEquinox(unittest.TestCase):
         init_errra = self.det.errra
 
         self.wcs.outputsys = 'fk5'
-
+        # Do this ourselves, since louie has been taken out
+        self.det._physical_coordinates()
+        
         final_ra = self.det.ra
         final_errra = self.det.errra
 

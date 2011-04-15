@@ -5,7 +5,7 @@
 #
 
 
-import math, numpy, scipy, wcslib, logging, louie, datetime, pytz
+import math, numpy, scipy, wcslib, logging, datetime, pytz
 import ctypes, ctypes.util
 
 core_lat = 52.9088
@@ -472,7 +472,6 @@ class wcs(wcslib.wcs):
             wcslib.wcs.__setattr__(self, attrname, coordsystem(value))
             # Notify any objects which depend on this that their parameters
             # have changed.
-            louie.send(self.change, sender=self)
         else:
             wcslib.wcs.__setattr__(self, attrname, value)
 

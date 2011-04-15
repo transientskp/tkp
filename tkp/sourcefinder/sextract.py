@@ -7,7 +7,6 @@ Source Extraction Helpers.
 These are used in conjunction with image.ImageData.
 """
 import logging
-import louie
 import numpy
 from scipy import integrate as integr
 from deconv import deconv
@@ -529,11 +528,6 @@ class Detection(object):
         self.theta_dc = paramset['theta_deconv']
 
         self.sig   = paramset.sig
-
-        # If the wcs object changes equinox (or anything else, for that
-        # matter), we can recompute the physical parameters.
-        louie.connect(self.__physical_coordinates,
-            signal=coordinates.wcs.change, sender=self.imagedata.wcs)
 
         try:
             self.__physical_coordinates()

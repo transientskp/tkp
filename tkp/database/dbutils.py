@@ -11,7 +11,6 @@ from monetdb.sql import Error as Error
 #from MySQLdb import Error as Error
 import logging
 from tkp.settings import DERUITER_R
-from tkp.utility.logger import add_logger
 
 
 def loadLSM(ira_min, ira_max, idecl_min, idecl_max, cn1,cn2,cn3, conn):
@@ -30,7 +29,6 @@ def loadLSM(ira_min, ira_max, idecl_min, idecl_max, cn1,cn2,cn3, conn):
     """
 
 
-@add_logger
 def insertExtractedSources(conn, image_id, results):
     """
     This method inserts the sources that were detected by the
@@ -120,13 +118,12 @@ def insertExtractedSources(conn, image_id, results):
         #print "\tQuery", query, ":", str(round(query_time*1000,2)), "ms"
         conn.commit()
     except db.Error, e:
-        logger.warn("Failed on query nr %s." % query)
+        logging.warn("Failed on query nr %s." % query)
         raise
     finally:
         cursor.close()
 
 
-@add_logger
 def associateExtractedSources(conn, image_id, deRuiter_r=DERUITER_R):
     """Association of extracted sources with sources detected before
     (those in running catalog).
@@ -837,7 +834,7 @@ def associateExtractedSources(conn, image_id, deRuiter_r=DERUITER_R):
         #print "\tQuery", query, ": ", str(round(query_time*1000,2)), "ms"
         conn.commit()
     except db.Error, e:
-        logger.warn("Failed on query nr %s." % query)
+        logging.warn("Failed on query nr %s." % query)
         raise
     finally:
         cursor.close()

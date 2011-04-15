@@ -11,7 +11,6 @@ from monetdb.sql import Error as Error
 #from MySQLdb import Error as Error
 import logging
 from tkp.settings import DERUITER_R
-from tkp.utility.logger import add_logger
 
 
 def loadLSM(ira_min, ira_max, idecl_min, idecl_max, cn1,cn2,cn3, conn):
@@ -43,7 +42,7 @@ def __empty_detections(conn):
         cursor.execute(query)
         conn.commit()
     except db.Error, e:
-        logger.warn("Failed on query nr %s." % query)
+        logging.warn("Failed on query nr %s." % query)
         raise
     finally:
         cursor.close()
@@ -68,7 +67,7 @@ def __insert_into_detections(conn, results):
             cursor.execute(query)
             conn.commit()
     except db.Error, e:
-        logger.warn("Failed on query nr %s." % query)
+        logging.warn("Failed on query nr %s." % query)
         raise
     finally:
         cursor.close()
@@ -116,12 +115,11 @@ def __insert_extractedsources(conn, image_id):
         cursor.execute(query, (image_id,))
         conn.commit()
     except db.Error, e:
-        logger.warn("Failed on query nr %s." % query)
+        logging.warn("Failed on query nr %s." % query)
         raise
     finally:
         cursor.close()
 
-@add_logger
 def insertExtractedSources(conn, image_id, results):
     """
     This method inserts the sources that were detected by the
@@ -148,7 +146,7 @@ def __empty_temprunningcatalog(conn):
         cursor.execute(query)
         conn.commit()
     except db.Error, e:
-        logger.warn("Failed on query nr %s." % query)
+        logging.warn("Failed on query nr %s." % query)
         raise
     finally:
         cursor.close()
@@ -285,7 +283,7 @@ def __insert_temprunningcatalog(conn, image_id, deRuiter_r):
         #    raise
         conn.commit()
     except db.Error, e:
-        logger.warn("Failed on query nr %s." % query)
+        logging.warn("Failed on query nr %s." % query)
         raise
     finally:
         cursor.close()
@@ -371,7 +369,7 @@ def __flag_multiple_counterparts_in_runningcatalog(conn):
                 cursor.execute(query, (xtrsrc_id[j],assoc_xtrsrc_id[j]))
             conn.commit()
     except db.Error, e:
-        logger.warn("Failed on query nr %s." % query)
+        logging.warn("Failed on query nr %s." % query)
         raise
     finally:
         cursor.close()
@@ -403,7 +401,7 @@ def __insert_multiple_assocs(conn):
         cursor.execute(query)
         conn.commit()
     except db.Error, e:
-        logger.warn("Failed on query nr %s." % query)
+        logging.warn("Failed on query nr %s." % query)
         raise
     finally:
         cursor.close()
@@ -432,7 +430,7 @@ def __insert_first_of_assocs(conn):
         cursor.execute(query)
         conn.commit()
     except db.Error, e:
-        logger.warn("Failed on query nr %s." % query)
+        logging.warn("Failed on query nr %s." % query)
         raise
     finally:
         cursor.close()
@@ -457,7 +455,7 @@ def __flag_swapped_assocs(conn):
         cursor.execute(query)
         conn.commit()
     except db.Error, e:
-        logger.warn("Failed on query nr %s." % query)
+        logging.warn("Failed on query nr %s." % query)
         raise
     finally:
         cursor.close()
@@ -521,7 +519,7 @@ def __insert_multiple_assocs_runcat(conn):
         cursor.execute(query)
         conn.commit()
     except db.Error, e:
-        logger.warn("Failed on query nr %s." % query)
+        logging.warn("Failed on query nr %s." % query)
         raise
     finally:
         cursor.close()
@@ -545,7 +543,7 @@ def __flag_old_assocs_runcat(conn):
         cursor.execute(query)
         conn.commit()
     except db.Error, e:
-        logger.warn("Failed on query nr %s." % query)
+        logging.warn("Failed on query nr %s." % query)
         raise
     finally:
         cursor.close()
@@ -569,7 +567,7 @@ def __flag_multiple_assocs(conn):
         cursor.execute(query)
         conn.commit()
     except db.Error, e:
-        logger.warn("Failed on query nr %s." % query)
+        logging.warn("Failed on query nr %s." % query)
         raise
     finally:
         cursor.close()
@@ -593,7 +591,7 @@ def __insert_single_assocs(conn):
         cursor.execute(query)
         conn.commit()
     except db.Error, e:
-        logger.warn("Failed on query nr %s." % query)
+        logging.warn("Failed on query nr %s." % query)
         raise
     finally:
         cursor.close()
@@ -738,7 +736,7 @@ def __update_runningcatalog(conn):
                 print "\t\tUpdate iter:", k
         conn.commit()
     except db.Error, e:
-        logger.warn("Failed on query nr %s." % query)
+        logging.warn("Failed on query nr %s." % query)
         raise
     finally:
         cursor.close()
@@ -776,7 +774,7 @@ def __count_known_sources(conn, image_id, deRuiter_r):
         #print "\t\tNumber of known sources (or sources in NOT IN): ", y[0][0]
         conn.commit()
     except db.Error, e:
-        logger.warn("Failed on query nr %s." % query)
+        logging.warn("Failed on query nr %s." % query)
         raise
     finally:
         cursor.close()
@@ -826,7 +824,7 @@ def __insert_new_assocs(conn, image_id, deRuiter_r):
         cursor.execute(query, (image_id, image_id, deRuiter_r))
         conn.commit()
     except db.Error, e:
-        logger.warn("Failed on query nr %s." % query)
+        logging.warn("Failed on query nr %s." % query)
         raise
     finally:
         cursor.close()
@@ -912,12 +910,11 @@ def __insert_new_source_runcat(conn, image_id, deRuiter_r):
         cursor.execute(query, (image_id, image_id, deRuiter_r))
         conn.commit()
     except db.Error, e:
-        logger.warn("Failed on query nr %s." % query)
+        logging.warn("Failed on query nr %s." % query)
         raise
     finally:
         cursor.close()
 
-@add_logger
 def associateExtractedSources(conn, image_id, deRuiter_r=DERUITER_R):
     """Association of extracted sources with sources detected before
     (those in running catalog).
@@ -989,12 +986,11 @@ def __select_variability_indices(conn, dsid, V_lim, eta_lim):
             print "\teta_nu =",y[i][8]
         conn.commit()
     except db.Error, e:
-        logger.warn("Failed on query %s" % query)
+        logging.warn("Failed on query %s" % query)
         raise
     finally:
         cursor.close()
 
-@add_logger
 def variabilityDetection(conn, dsid, V_lim, eta_lim):
     """Detection of variability in the extracted sources as
     compared their previous detections.
@@ -1003,11 +999,12 @@ def variabilityDetection(conn, dsid, V_lim, eta_lim):
     #sources = __select_variability_indices(conn, dsid, V_lim, eta_lim)
     __select_variability_indices(conn, dsid, V_lim, eta_lim)
 
-@add_logger
+
 def associateCataloguedSourcesInArea(conn, ra, dec, search_radius): 
     """Detection of variability in the extracted sources as
     compared their previous detections.
     
     """
+    pass
     # the sources in the current image need to be matched to the 
     # list of sources from the merged cross-correlated catalogues

@@ -12,10 +12,8 @@ from datetime import *
 # Local tkp_lib functionality
 import tkp.database.database as db
 import tkp.database.dbplots as dbplots
-from tkp.utility.logger import add_logger
 
 
-@add_logger
 def scatterWenssNvssSigmaOverMuX2X(dsid,conn):
     """
     This makes a plot of the sigma over mu's for the associated sources
@@ -88,11 +86,10 @@ def scatterWenssNvssSigmaOverMuX2X(dsid,conn):
         
         return plotfiles
     except db.Error, e:
-        logger.warn("scatterSigmaOverMuX2X for dsid %s failed " % (str(dsid)))
+        logging.warn("scatterSigmaOverMuX2X for dsid %s failed " % (str(dsid)))
         raise
 
 
-@add_logger
 def plotWenssNvssSpIdxFig7(dsid,catid,conn):
     """
     This makes a spectral index histogram of the WENSS-NVSS assocs
@@ -162,11 +159,10 @@ def plotWenssNvssSpIdxFig7(dsid,catid,conn):
         
         return plotfiles
     except db.Error, e:
-        logger.warn("plotWenssNvssSpIdxFig7() for dsid %s failed " % (str(dsid)))
+        logging.warn("plotWenssNvssSpIdxFig7() for dsid %s failed " % (str(dsid)))
         raise
     
 
-@add_logger
 def plotWenssNvssFig6(dsid,catid,conn):
     """
     The input arguments are actually dummies because we know
@@ -247,11 +243,10 @@ def plotWenssNvssFig6(dsid,catid,conn):
         
         return plotfiles
     except db.Error, e:
-        logger.warn("plotWenssNvssFig6() for dsid %s failed " % (str(dsid)))
+        logging.warn("plotWenssNvssFig6() for dsid %s failed " % (str(dsid)))
         raise
     
 
-@add_logger
 def plotWenssNvssFig5(dsid,dsid_min,dsid_max,catid,conn):
     """
     This makes a x-y, logLR-N/field step plot of the source and background fields.
@@ -457,11 +452,10 @@ def plotWenssNvssFig5(dsid,dsid_min,dsid_max,catid,conn):
         
         return plotfiles
     except db.Error, e:
-        logger.warn("plotWenssNvssFig5() for dsid %s failed " % (str(dsid)))
+        logging.warn("plotWenssNvssFig5() for dsid %s failed " % (str(dsid)))
         raise
     
 
-@add_logger
 def plotWenssNvssDistDistrib(dsid,dsid_min,dsid_max,catid,conn):
     """
     This makes a x-y, r-N/field step plot of the source and background fields.
@@ -604,11 +598,10 @@ def plotWenssNvssDistDistrib(dsid,dsid_min,dsid_max,catid,conn):
         
         return plotfiles
     except db.Error, e:
-        logger.warn("plotWenssNvssFig4() for dsid %s failed " % (str(dsid)))
+        logging.warn("plotWenssNvssFig4() for dsid %s failed " % (str(dsid)))
         raise
     
 
-@add_logger
 def plotWenssNvssFig4(dsid,dsid_min,dsid_max,catid,conn):
     """
     This makes a x-y, r-N/field step plot of the source and background fields.
@@ -747,11 +740,10 @@ def plotWenssNvssFig4(dsid,dsid_min,dsid_max,catid,conn):
         
         return plotfiles
     except db.Error, e:
-        logger.warn("plotWenssNvssFig4() for dsid %s failed " % (str(dsid)))
+        logging.warn("plotWenssNvssFig4() for dsid %s failed " % (str(dsid)))
         raise
     
 
-@add_logger
 def plotWenssNvssFig3(dsid,dsid_min,dsid_max,catid,conn):
     """
     This makes a x-y, logLR-r plot of the source and background fields.
@@ -866,11 +858,10 @@ def plotWenssNvssFig3(dsid,dsid_min,dsid_max,catid,conn):
         
         return plotfiles
     except db.Error, e:
-        logger.warn("plotWenssNvssFig3() for dsid %s failed " % (str(dsid)))
+        logging.warn("plotWenssNvssFig3() for dsid %s failed " % (str(dsid)))
         raise
     
 
-@add_logger
 def plotWenssNvssFig2(dsid,dsid_min,dsid_max,catid,conn):
     """
     This makes a scatter plot of the min avg and max log(LR)
@@ -1011,11 +1002,10 @@ def plotWenssNvssFig2(dsid,dsid_min,dsid_max,catid,conn):
         
         return plotfiles
     except db.Error, e:
-        logger.warn("scatterWenssNvssSourceFieldplusBackGround() for dsid %s failed " % (str(dsid)))
+        logging.warn("scatterWenssNvssSourceFieldplusBackGround() for dsid %s failed " % (str(dsid)))
         raise
     
 
-@add_logger
 def scatterSourceAssocIndexX2CBackGround(dsid_min,dsid_max,catid,conn):
     """
     This makes a scatter plot of the min avg and max log(LR)
@@ -1111,11 +1101,10 @@ def scatterSourceAssocIndexX2CBackGround(dsid_min,dsid_max,catid,conn):
         
         return plotfiles
     except db.Error, e:
-        logger.warn("scatterSourceAssocIndexX2X() for dsid %s failed " % (str(dsid)))
+        logging.warn("scatterSourceAssocIndexX2X() for dsid %s failed " % (str(dsid)))
         raise
     
 
-@add_logger
 def scatterSourceAssocIndexX2C(dsid,catid,conn):
     """
     This makes a scatter plot of the min avg and max log(LR)
@@ -1210,11 +1199,10 @@ def scatterSourceAssocIndexX2C(dsid,catid,conn):
         
         return plotfiles
     except db.Error, e:
-        logger.warn("scatterSourceAssocIndexX2X() for dsid %s failed " % (str(dsid)))
+        logging.warn("scatterSourceAssocIndexX2X() for dsid %s failed " % (str(dsid)))
         raise
     
 
-@add_logger
 def scatterSourceAssocIndexX2X(dsid,conn):
     """
     This makes a scatter plot of the min avg and max log(LR)
@@ -1301,11 +1289,10 @@ def scatterSourceAssocIndexX2X(dsid,conn):
         
         return plotfiles
     except db.Error, e:
-        logger.warn("scatterSourceAssocIndexX2X() for dsid %s failed " % (str(dsid)))
+        logging.warn("scatterSourceAssocIndexX2X() for dsid %s failed " % (str(dsid)))
         raise
     
 
-@add_logger
 def contourX2CDistLRRho(conn,dsid, catid):
     try:
         cursor = conn.cursor()
@@ -1398,11 +1385,10 @@ def contourX2CDistLRRho(conn,dsid, catid):
 
         return plotfiles
     except db.Error, e:
-        logger.warn("contourX2XDistLRRho() for dsid %s failed " % (str(dsid)))
+        logging.warn("contourX2XDistLRRho() for dsid %s failed " % (str(dsid)))
         raise
     
 
-@add_logger
 def contourX2XDistLRRho(conn,dsid):
     try:
         cursor = conn.cursor()
@@ -1493,11 +1479,10 @@ def contourX2XDistLRRho(conn,dsid):
 
         return plotfiles
     except db.Error, e:
-        logger.warn("contourX2XDistLRRho() for dsid %s failed " % (str(dsid)))
+        logging.warn("contourX2XDistLRRho() for dsid %s failed " % (str(dsid)))
         raise
     
 
-@add_logger
 def plotLightCurveLevelVar_v1(conn,dsid,level=None):
     """
     This makes a lightcurve plot of the sources that have a
@@ -1546,11 +1531,10 @@ def plotLightCurveLevelVar_v1(conn,dsid,level=None):
         
         return plotfiles
     except db.Error, e:
-        logger.warn("plotLightCurveLevelSigmaOverMu failed for dsid = " % (str(dsid)))
+        logging.warn("plotLightCurveLevelSigmaOverMu failed for dsid = " % (str(dsid)))
         raise
     
 
-@add_logger
 def plotLightCurveMaxVar_v1(dsid,conn):
     """
     This makes a lightcurve plot of the source that has the maximum value of sigma over mu
@@ -1606,11 +1590,10 @@ def plotLightCurveMaxVar_v1(dsid,conn):
         
         return plotfiles
     except db.Error, e:
-        logger.warn("plotLightCurveMaxVar_v1 failed for dsid = " % (str(dsid)))
+        logging.warn("plotLightCurveMaxVar_v1 failed for dsid = " % (str(dsid)))
         raise
     
 
-@add_logger
 def plotLightCurveMaxVar_v2(dsid,conn):
     """
     This makes a lightcurve plot of the source that has the maximum value of sigma over mu
@@ -1670,11 +1653,10 @@ def plotLightCurveMaxVar_v2(dsid,conn):
         
         return plotfiles
     except db.Error, e:
-        logger.warn("plotLightCurveMaxVar_v2 failed for dsid = " % (str(dsid)))
+        logging.warn("plotLightCurveMaxVar_v2 failed for dsid = " % (str(dsid)))
         raise
     
 
-@add_logger
 def scatterVar_v1_v2_X2X(dsid,conn):
     """
     This makes a plot of the sigma over mu's for the associated sources
@@ -1776,11 +1758,10 @@ def scatterVar_v1_v2_X2X(dsid,conn):
 
         return plotfiles
     except db.Error, e:
-        logger.warn("scatterVar_v1_v2_X2X() for dsid %s failed " % (str(dsid)))
+        logging.warn("scatterVar_v1_v2_X2X() for dsid %s failed " % (str(dsid)))
         raise
     
 
-@add_logger
 def plotSigmaMuAssocs2XtrByDsid(dsid,cnt,conn):
     """
     This method makes two plots.
@@ -1872,11 +1853,10 @@ def plotSigmaMuAssocs2XtrByDsid(dsid,cnt,conn):
         
         return plotfiles
     except db.Error, e:
-        logger.warn("Retrieving info for dsid %s failed: " % (str(dsid)))
+        logging.warn("Retrieving info for dsid %s failed: " % (str(dsid)))
         raise
     
 
-@add_logger
 def plotSourcesPerImage(dsid,conn):
     """
     This makes a plot file of the all the images in the dataset (x-axis)
@@ -1925,11 +1905,10 @@ def plotSourcesPerImage(dsid,conn):
         
         return plotfiles
     except db.Error, e:
-        logger.warn("plotSourcesPerImage failed for dsid =  %s " % (str(dsid)))
+        logging.warn("plotSourcesPerImage failed for dsid =  %s " % (str(dsid)))
         raise
     
 
-@add_logger
 def histNumberOfAssociations(dsid,conn):
     """
     This makes a barchart of how many times a source could be associated through all
@@ -1985,11 +1964,10 @@ def histNumberOfAssociations(dsid,conn):
         
         return plotfiles
     except db.Error, e:
-        logger.warn("Retrieving info for dsid %s failed: " % (str(dsid)))
+        logging.warn("Retrieving info for dsid %s failed: " % (str(dsid)))
         raise
     
 
-@add_logger
 def plotXtrBarLR(dsid, conn):
     try:
         cursor = conn.cursor()
@@ -2121,11 +2099,10 @@ def plotXtrBarLR(dsid, conn):
         
         return plotfiles
     except db.Error, e:
-        logger.warn("Retrieving info for dsid %s failed: " % (str(dsid)))
+        logging.warn("Retrieving info for dsid %s failed: " % (str(dsid)))
         raise
     
 
-@add_logger
 def plotCatBarLR(dsid, catid,conn):
     try:
         cursor = conn.cursor()
@@ -2262,5 +2239,5 @@ def plotCatBarLR(dsid, catid,conn):
         
         return plotfiles
     except db.Error, e:
-        logger.warn("Retrieving info for dsid %s failed: " % (str(dsid)))
+        logging.warn("Retrieving info for dsid %s failed: " % (str(dsid)))
         raise

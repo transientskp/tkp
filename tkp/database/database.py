@@ -12,7 +12,6 @@
 import logging
 import contextlib
 
-from tkp.utility.logger import add_logger
 import tkp.settings as settings
 from ..utility.exceptions import TKPException, TKPDataBaseError
 
@@ -83,7 +82,6 @@ def connection2db(usr,dbname):
     return conn
 
 
-@add_logger
 def call_proc(conn, procname):
     """Calls a particular database procedure"""
     
@@ -93,7 +91,7 @@ def call_proc(conn, procname):
     try:
         cursor.execute(procname)
     except dbError, e:
-        logger.warn("DB procedure %s failed" % (procname,))
+        logging.warn("DB procedure %s failed" % (procname,))
         raise
     finally:
         cursor.close()
@@ -126,34 +124,31 @@ def savetoDB(dataset, objectlist, conn):
     conn.commit()
 
 
-@add_logger
 def associnDB(imageid, conn):
     """Associate the sources found in imageid with the database catalogs"""
     procAssoc = "CALL AssocXSourceByImage(%d)" % (imageid) 
     try:
-        call_proc(conn, procAssoc, logger=logger)
+        call_proc(conn, procAssoc)
     except db.Error, e:
-        logger.warn("Associating image %s failed" % (str(imageid),))
+        logging.warn("Associating image %s failed" % (str(imageid),))
         raise
 
 
-@add_logger
 def assocXSrc2XSrc(imageid, conn):
     """   """
     procAssoc = "CALL AssocXSources2XSourcesByImage(%d)" % (imageid) 
     try:
-        call_proc(conn, procAssoc, logger=logger)
+        call_proc(conn, procAssoc)
     except db.Error, e:
-        logger.warn("Associating image %s failed." % (str(imageid),))
+        logging.warn("Associating image %s failed." % (str(imageid),))
         raise
     
 
-@add_logger
 def assocXSrc2Cat(imageid, conn):
     """   """
     procAssoc = "CALL AssocXSources2CatByImage(%d)" % (imageid) 
     try:
-        call_proc(conn, procAssoc, logger=logger)
+        call_proc(conn, procAssoc)
     except db.Error, e:
-        logger.warn("Associating image %s failed." % (str(imageid),))
+        logging.warn("Associating image %s failed." % (str(imageid),))
         raise

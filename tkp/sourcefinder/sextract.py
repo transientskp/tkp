@@ -6,7 +6,9 @@ Source Extraction Helpers.
 
 These are used in conjunction with image.ImageData.
 """
-import numpy, logging, louie
+import logging
+import louie
+import numpy
 from scipy import integrate as integr
 from deconv import deconv
 
@@ -22,7 +24,6 @@ import tkp.sourcefinder.gaussian as gaussian
 import tkp.utility.utilities as utilities
 import tkp.utility.coordinates as coordinates
 from tkp.utility.uncertain import Uncertain
-from tkp.utility.logger import add_logger
 
 
 class Island(object):
@@ -427,7 +428,6 @@ class ParamSet(DictMixin):
         return self
 
 
-@add_logger
 def source_profile_and_errors(data, threshold, noise, beam, fixed={}):
     """Given an island of pixels it will return a number of measurable
     properties including errorbars.  It will also compute residuals from Gauss
@@ -458,7 +458,7 @@ def source_profile_and_errors(data, threshold, noise, beam, fixed={}):
         param.update({"peak": 1, "flux": 1, "xbar": data.shape[0]/2.0,
             "ybar": data.shape[1]/2.0, "semimajor": 1, "semiminor":  1,
             "theta": 0})
-        logger.warn("""\
+        logging.warn("""\
 Unable to estimate gaussian parameters. Proceeding with defaults %s""" %
                      str(param))
 
@@ -475,9 +475,9 @@ Unable to estimate gaussian parameters. Proceeding with defaults %s""" %
         try:
             param.update(gaussian.fitgaussian(data, param, fixed=fixed))
             param.gaussian = True
-            logger.info('Gauss fitting was successful.')
+            logging.info('Gauss fitting was successful.')
         except ValueError:
-            logger.warn('Gauss fitting failed.')
+            logging.warn('Gauss fitting failed.')
 
     else:
         if fixed:

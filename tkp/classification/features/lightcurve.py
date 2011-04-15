@@ -10,7 +10,7 @@ from datetime import timedelta
 import logging
 import numpy
 from tkp.utility.sigmaclip import sigmaclip, calcsigma, calcmean
-from tkp.classification.manual import DateTime
+from tkp.classification.manual.utils import DateTime
 from .sql import lightcurve as sql_lightcurve
 
 

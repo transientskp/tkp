@@ -47,12 +47,9 @@ def connect(*args, **kwargs):
 
 def connection(hostname=host, username=user, password=passwd, database=dbase, 
                dbport=port):
-    """
-    Returns a connection object to the configured database, if enabled. If not
-    enabled, raises an error.
+    """Returns a connection object or raise an error if not enabled
 
-    Use defaults from settings module, but user can override these
-
+    Use defaults from the settings module, but the user can override these
     """
 
     if not enabled:
@@ -66,11 +63,9 @@ def connection(hostname=host, username=user, password=passwd, database=dbase,
     return conn
 
 
-def connection2db(usr,dbname):
-    """
-    Returns a connection object to the configured database, if enabled. If not
-    enabled, raises an error.
-    """
+def connection_to_db(usr, dbname):
+    """Returns a connection object or raise an error if not enabled"""
+
     user = usr
     dbase = dbname
     if not enabled:
@@ -97,25 +92,24 @@ def call_proc(conn, procname):
         cursor.close()
         conn.commit()
 
-def savetoDB(dataset, objectlist, conn):
-    """Save a list of detections belonging to aa particular dataset
-    to the database"""
+def save_to_db(dataset, objectlist, conn):
+    """Save a list of detections belonging to a particular dataset to the database"""
     
     cursor = conn.cursor()
     try:
         for det in objectlist:
-            #print "det.serializeAll():",det.serializeAll()
-            #print "det.serialize()[1]:",det.serialize()[1]
-            # TODO: how to handle weird fits?
-            # Here we exclude a position in an image with id 327...
-            #if ((det.serialize()[0] == 327) and (det.serialize()[1] > 161.205 and det.serialize()[1] < 161.212) and (det.serialize()[2] > 21.617 and det.serialize()[2] < 21.628)):
-            #    print "\nNOTE: Not inserted :\n",det.serialize(), "\n"
-            #else:
+            ##print "det.serializeAll():",det.serializeAll()
+            ##print "det.serialize()[1]:",det.serialize()[1]
+            ## TODO: how to handle weird fits?
+            ## Here we exclude a position in an image with id 327...
+            ##if ((det.serialize()[0] == 327) and (det.serialize()[1] > 161.205 and det.serialize()[1] < 161.212) and (det.serialize()[2] > 21.617 and det.serialize()[2] < 21.628)):
+            ##    print "\nNOTE: Not inserted :\n",det.serialize(), "\n"
+            ##else:
             procInsert = "CALL InsertSrc(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)" % (dataset.id,) + det.serialize()
-            #print procInsert
+            ##print procInsert
             cursor.execute(procInsert)
-            #cursor.execute("COPY INTO insertedsources " + \
-            #               "FROM STDIN UNSING DELIMITERS '\r\n','\t' ", (det.serialize(),))
+            ##cursor.execute("COPY INTO insertedsources " + \
+            ##               "FROM STDIN UNSING DELIMITERS '\r\n','\t' ", (det.serialize(),))
     except db.Error, e:
         logging.warn("Insert source %s failed" % str((dataset.id,) + det.serialize()))
         raise
@@ -124,8 +118,9 @@ def savetoDB(dataset, objectlist, conn):
     conn.commit()
 
 
-def associnDB(imageid, conn):
+def assoc_in_db(imageid, conn):
     """Associate the sources found in imageid with the database catalogs"""
+    
     procAssoc = "CALL AssocXSourceByImage(%d)" % (imageid) 
     try:
         call_proc(conn, procAssoc)
@@ -134,8 +129,9 @@ def associnDB(imageid, conn):
         raise
 
 
-def assocXSrc2XSrc(imageid, conn):
-    """   """
+def assoc_xsrc_to_xsrc(imageid, conn):
+    """Associate sources with sources from a previous image"""
+    
     procAssoc = "CALL AssocXSources2XSourcesByImage(%d)" % (imageid) 
     try:
         call_proc(conn, procAssoc)
@@ -144,8 +140,9 @@ def assocXSrc2XSrc(imageid, conn):
         raise
     
 
-def assocXSrc2Cat(imageid, conn):
-    """   """
+def assoc_xsrc_to_cat(imageid, conn):
+    """Associate sources with the current catalog"""
+    
     procAssoc = "CALL AssocXSources2CatByImage(%d)" % (imageid) 
     try:
         call_proc(conn, procAssoc)

@@ -13,27 +13,31 @@ import logging
 from tkp.settings import DERUITER_R
 
 
-def loadLSM(ira_min, ira_max, idecl_min, idecl_max, cn1,cn2,cn3, conn):
+def load_LSM(ira_min, ira_max, idecl_min, idecl_max, cn1,cn2,cn3, conn):
     raise NotImplementedError
-    """
-    try:
-        cursor = conn.cursor()
-        procLoadLSM = "CALL LoadLSM(%s,%s,%s,%s,%s,%s,%s)" % (ira_min,ira_max,idecl_min,idecl_max,cn1,cn2,cn3)
-        cursor.execute(procLoadLSM)
-    except db.Error, e:
-        logging.warn("Failed to insert lsm by procedure LoadLSM")
-        raise
-    finally:
-        cursor.close()
-    conn.commit()
-    """
 
-def __empty_detections(conn):
-    """
-    This private method initialises the detections table by
-    deleting all entries. 
+    ##try:
+    ##    cursor = conn.cursor()
+    ##    procLoadLSM = "CALL LoadLSM(%s,%s,%s,%s,%s,%s,%s)" % (ira_min,ira_max,idecl_min,idecl_max,cn1,cn2,cn3)
+    ##    cursor.execute(procLoadLSM)
+    ##except db.Error, e:
+    ##    logging.warn("Failed to insert lsm by procedure LoadLSM")
+    ##    raise
+    ##finally:
+    ##    cursor.close()
+    ##conn.commit()
+
+
+def _empty_detections(conn):
+    """Empty the detections table
+    
+    Initialize the detections table by
+    deleting all entries.
+    
     It is used at the beginning and the end.
+    
     """
+    
     try: 
         cursor = conn.cursor()
         query = """\
@@ -47,12 +51,16 @@ def __empty_detections(conn):
     finally:
         cursor.close()
 
-def __insert_into_detections(conn, results):
-    """
-    This private method inserts all detections, as they are,
+
+def _insert_into_detections(conn, results):
+    """Insert all detections
+    
+    Insert all detections, as they are,
     straight into the detection table.
-    # TODO: COPY INTO is faster. 
+
     """
+
+    # TODO: COPY INTO is faster. 
     try: 
         cursor = conn.cursor()
         query = "INSERT INTO detections VALUES "
@@ -72,11 +80,15 @@ def __insert_into_detections(conn, results):
     finally:
         cursor.close()
 
-def __insert_extractedsources(conn, image_id):
+
+def _insert_extractedsources(conn, image_id):
+    """Insert all extracted sources with their properties
+    
+    Insert all detected sources and some derived properties into the
+    extractedsources table.
+
     """
-    This private method inserts all detected sources and
-    some derived properties into the extractedsources table.
-    """
+
     try: 
         cursor = conn.cursor()
         query = """\
@@ -120,24 +132,30 @@ def __insert_extractedsources(conn, image_id):
     finally:
         cursor.close()
 
-def insertExtractedSources(conn, image_id, results):
-    """
-    This method inserts the sources that were detected by the
-    Source Extraction procedures into the "extractedsources" table.
-    Therefore, we use a temporary table containing the "raw" detections,
+
+def insert_extracted_sources(conn, image_id, results):
+    """Insert all extracted sources
+    
+    Insert the sources that were detected by the Source Extraction
+    procedures into the"extractedsources" table.
+
+    Therefore, we use a temporary table containing the"raw" detections,
     from which the sources will then be inserted into extractedsourtces.
     """
 
-    __empty_detections(conn)
-    __insert_into_detections(conn, results)
-    __insert_extractedsources(conn, image_id)
-    __empty_detections(conn)
+    _empty_detections(conn)
+    _insert_into_detections(conn, results)
+    _insert_extractedsources(conn, image_id)
+    _empty_detections(conn)
 
-def __empty_temprunningcatalog(conn):
+
+def _empty_temprunningcatalog(conn):
+    """Initialize the temporary storage table
+    
+    Initialize the temporary table temprunningcatalog which contains
+    the current observed sources.
     """
-    This private method initialises the temporary table 
-    temprunningcatalog which contains the current observed sources.
-    """
+    
     try: 
         cursor = conn.cursor()
         query = """\
@@ -151,23 +169,29 @@ def __empty_temprunningcatalog(conn):
     finally:
         cursor.close()
 
-def __insert_temprunningcatalog(conn, image_id, deRuiter_r):
-    """
-    Here we select the extractedsources that have a positional match 
-    with the sources in the running catalogue table (runningcatalog) and 
-    those who have will be inserted into the temporary running catalogue table
-    (temprunningcatalog).
-    Explanation of some columns:
-    avg_I_peak := average of I_peak
-    avg_I_peak_sq := average of I_peak^2
-    avg_weight_I_peak := average of weight of I_peak, i.e. 1/error^2
-    avg_weighted_I_peak := average of weighted i_peak, i.e. average of I_peak/error^2
-    avg_weighted_I_peak_sq := average of weighted i_peak^2, i.e. average of I_peak^2/error^2
+
+def _insert_temprunningcatalog(conn, image_id, deRuiter_r):
+    """Select matched sources
+    
+    Here we select the extractedsources that have a positional match
+    with the sources in the running catalogue table (runningcatalog)
+    and those who have will be inserted into the temporary running
+    catalogue table (temprunningcatalog).
+    
+    Explanation of some columns used in the SQL query:
+    
+    - avg_I_peak := average of I_peak
+    - avg_I_peak_sq := average of I_peak^2
+    - avg_weight_I_peak := average of weight of I_peak, i.e. 1/error^2
+    - avg_weighted_I_peak := average of weighted i_peak, i.e. average of I_peak/error^2
+    - avg_weighted_I_peak_sq := average of weighted i_peak^2, i.e. average of I_peak^2/error^2
 
     This result set might contain multiple associations (1-n,n-1)
     for a single known source in runningcatalog.
+    
     The n-1 assocs will be treated similar as the 1-1 assocs.
     """
+    
     try: 
         cursor = conn.cursor()
         query = """\
@@ -288,24 +312,29 @@ def __insert_temprunningcatalog(conn, image_id, deRuiter_r):
     finally:
         cursor.close()
 
-def __flag_multiple_counterparts_in_runningcatalog(conn):
-    """
-    Before we continue, we first take care of the sources 
-    that have multiple associations in both directions.
+
+def _flag_multiple_counterparts_in_runningcatalog(conn):
+    """Flag source with multiple associations
+    
+    Before we continue, we first take care of the sources that have
+    multiple associations in both directions.
     
     -1- running-catalogue sources  <- extracted source
-    An extracted source has multiple counterparts in the
-    running catalogue.
-    We only keep the ones with the lowest deRuiter_r value,
-    the rest we throw away.
     
-    NOTE :
-    It is worth considering whether this might be changed to
-    selecting the brightest neighbour source, instead of
-    just the closest neighbour.
-    (There are case [when flux_lim > 10Jy] that the nearest source
-    has a lower flux level, causing unexpected spectral indices)
+    An extracted source has multiple counterparts in the running
+    catalogue.  We only keep the ones with the lowest deRuiter_r
+    value, the rest we throw away.
+    
+    NOTE:
+    
+    It is worth considering whether this might be changed to selecting
+    the brightest neighbour source, instead of just the closest
+    neighbour.
+    
+    (There are case [when flux_lim > 10Jy] that the nearest source has
+    a lower flux level, causing unexpected spectral indices)
     """
+    
     try: 
         cursor = conn.cursor()
         query = """\
@@ -374,14 +403,17 @@ def __flag_multiple_counterparts_in_runningcatalog(conn):
     finally:
         cursor.close()
 
-def __insert_multiple_assocs(conn):
-    """
-    -2- Now, we take care of the sources in the running catalogue that 
+
+def _insert_multiple_assocs(conn):
+    """Insert sources with multiple associations
+    
+    -2- Now, we take care of the sources in the running catalogue that
     have more than one counterpart among the extracted sources.
-    We now make two entries in the running catalogue, 
-    in stead of the one we had before. 
-    Therefore, we 'swap' the ids.
+    
+    We now make two entries in the running catalogue, in stead of the
+    one we had before. Therefore, we 'swap' the ids.
     """
+    
     try: 
         cursor = conn.cursor()
         query = """\
@@ -406,11 +438,13 @@ def __insert_multiple_assocs(conn):
     finally:
         cursor.close()
 
-def __insert_first_of_assocs(conn):
+def _insert_first_of_assocs(conn):
+    """Insert identical ids
+    
+    -3- And, we have to insert identical ids to identify a light-curve
+    starting point.
     """
-    -3- And, we have to insert identical ids to identify a
-    light-curve starting point.
-    """
+    
     try: 
         cursor = conn.cursor()
         query = """\
@@ -435,11 +469,13 @@ def __insert_first_of_assocs(conn):
     finally:
         cursor.close()
 
-def __flag_swapped_assocs(conn):
-    """
-    -4- And, we throw away the swapped id
-    Maybe TODO, It might be better to flag this record:
-    consider setting rows to inactive instead of deleting
+def _flag_swapped_assocs(conn):
+    """Throw away swapped ids
+    
+    -4- And, we throw away the swapped id.
+    
+    It might be better to flag this record: consider setting rows to
+    inactive instead of deleting
     """
     try: 
         cursor = conn.cursor()
@@ -460,10 +496,9 @@ def __flag_swapped_assocs(conn):
     finally:
         cursor.close()
 
-def __insert_multiple_assocs_runcat(conn):
-    """
-    Here we insert new ids of the sources in the running catalogue
-    """
+def _insert_multiple_assocs_runcat(conn):
+    """Insert new ids of the sources in the running catalogue"""
+    
     try: 
         cursor = conn.cursor()
         query = """\
@@ -524,11 +559,10 @@ def __insert_multiple_assocs_runcat(conn):
     finally:
         cursor.close()
 
-def __flag_old_assocs_runcat(conn):
-    """
-    Here the old assocs in runcat will be deleted. 
-    TODO: Consider setting row to inactive instead of deleting
-    """
+def _flag_old_assocs_runcat(conn):
+    """Here the old assocs in runcat will be deleted."""
+    
+    # TODO: Consider setting row to inactive instead of deleting
     try: 
         cursor = conn.cursor()
         query = """\
@@ -548,11 +582,10 @@ def __flag_old_assocs_runcat(conn):
     finally:
         cursor.close()
 
-def __flag_multiple_assocs(conn):
-    """
-    Here we delete the multiple assocs from the temporary running catalogue
-    table, since they have been processed.
-    """
+
+def _flag_multiple_assocs(conn):
+    """Delete the multiple assocs from the temporary running catalogue table"""
+
     try: 
         cursor = conn.cursor()
         query = """\
@@ -572,11 +605,9 @@ def __flag_multiple_assocs(conn):
     finally:
         cursor.close()
 
-def __insert_single_assocs(conn):
-    """
-    The remaining associations in the temporary table are
-    1-1 and will be inserted into the assocxtrsources table.
-    """
+def _insert_single_assocs(conn):
+    """Insert remaining 1-1 associations into assocxtrsources table"""
+
     try: 
         cursor = conn.cursor()
         query = """\
@@ -596,72 +627,73 @@ def __insert_single_assocs(conn):
     finally:
         cursor.close()
 
-def __update_runningcatalog(conn):
-    """
-    Since Jun2010 version we cannot use the massive (but simple) update statement anymore.
-    Therefore, unfortunately, we cursor through the tempsources table
-    TODO: However, it has not been checked yet, whether it is working again
-    in the latest version.
-    +--------------------------------------------
-    UPDATE multcatbasesources 
-      SET zone = (SELECT zone
-                    FROM tempmultcatbasesources 
-                   WHERE tempmultcatbasesources.xtrsrc_id = multcatbasesources.xtrsrc_id
-                 ) 
-         ,ra_avg = (SELECT ra_avg 
-                      FROM tempmultcatbasesources 
-                     WHERE tempmultcatbasesources.xtrsrc_id = multcatbasesources.xtrsrc_id 
-                   ) 
-         ,decl_avg = (SELECT decl_avg 
-                        FROM tempmultcatbasesources 
-                       WHERE tempmultcatbasesources.xtrsrc_id = multcatbasesources.xtrsrc_id 
-                     ) 
-         ,ra_err_avg = (SELECT ra_err_avg 
-                          FROM tempmultcatbasesources 
-                         WHERE tempmultcatbasesources.xtrsrc_id = multcatbasesources.xtrsrc_id 
-                       ) 
-         ,decl_err_avg = (SELECT decl_err_avg 
-                            FROM tempmultcatbasesources 
-                           WHERE tempmultcatbasesources.xtrsrc_id = multcatbasesources.xtrsrc_id 
-                         ) 
-         ,x = (SELECT x 
-                 FROM tempmultcatbasesources 
-                WHERE tempmultcatbasesources.xtrsrc_id = multcatbasesources.xtrsrc_id 
-              ) 
-         ,y = (SELECT y
-                 FROM tempmultcatbasesources 
-                WHERE tempmultcatbasesources.xtrsrc_id = multcatbasesources.xtrsrc_id 
-              ) 
-         ,z = (SELECT z 
-                 FROM tempmultcatbasesources 
-                WHERE tempmultcatbasesources.xtrsrc_id = multcatbasesources.xtrsrc_id 
-              ) 
-         ,datapoints = (SELECT datapoints 
-                          FROM tempmultcatbasesources 
-                         WHERE tempmultcatbasesources.xtrsrc_id = multcatbasesources.xtrsrc_id 
-                       ) 
-         ,avg_weighted_ra = (SELECT avg_weighted_ra
-                               FROM tempmultcatbasesources 
-                              WHERE tempmultcatbasesources.xtrsrc_id = multcatbasesources.xtrsrc_id 
-                            ) 
-         ,avg_weighted_decl = (SELECT avg_weighted_decl
-                                 FROM tempmultcatbasesources 
-                                WHERE tempmultcatbasesources.xtrsrc_id = multcatbasesources.xtrsrc_id 
-                              ) 
-         ,avg_ra_weight = (SELECT avg_ra_weight
-                             FROM tempmultcatbasesources 
-                            WHERE tempmultcatbasesources.xtrsrc_id = multcatbasesources.xtrsrc_id 
-                          ) 
-         ,avg_decl_weight = (SELECT avg_decl_weight
-                               FROM tempmultcatbasesources 
-                              WHERE tempmultcatbasesources.xtrsrc_id = multcatbasesources.xtrsrc_id 
-                            ) 
-    WHERE EXISTS (SELECT xtrsrc_id 
-                    FROM tempmultcatbasesources 
-                   WHERE tempmultcatbasesources.xtrsrc_id = multcatbasesources.xtrsrc_id 
-                 )
-    +--------------------------------------------
-    """
+def _update_runningcatalog(conn):
+    """Update the running catalog"""
+    
+    #Since Jun2010 version we cannot use the massive (but simple) update statement anymore.
+    #Therefore, unfortunately, we cursor through the tempsources table
+    #TODO: However, it has not been checked yet, whether it is working again
+    #in the latest version.
+    #+--------------------------------------------
+    #UPDATE multcatbasesources 
+    #  SET zone = (SELECT zone
+    #                FROM tempmultcatbasesources 
+    #               WHERE tempmultcatbasesources.xtrsrc_id = multcatbasesources.xtrsrc_id
+    #             ) 
+    #     ,ra_avg = (SELECT ra_avg 
+    #                  FROM tempmultcatbasesources 
+    #                 WHERE tempmultcatbasesources.xtrsrc_id = multcatbasesources.xtrsrc_id 
+    #               ) 
+    #     ,decl_avg = (SELECT decl_avg 
+    #                    FROM tempmultcatbasesources 
+    #                   WHERE tempmultcatbasesources.xtrsrc_id = multcatbasesources.xtrsrc_id 
+    #                 ) 
+    #     ,ra_err_avg = (SELECT ra_err_avg 
+    #                      FROM tempmultcatbasesources 
+    #                     WHERE tempmultcatbasesources.xtrsrc_id = multcatbasesources.xtrsrc_id 
+    #                   ) 
+    #     ,decl_err_avg = (SELECT decl_err_avg 
+    #                        FROM tempmultcatbasesources 
+    #                       WHERE tempmultcatbasesources.xtrsrc_id = multcatbasesources.xtrsrc_id 
+    #                     ) 
+    #     ,x = (SELECT x 
+    #             FROM tempmultcatbasesources 
+    #            WHERE tempmultcatbasesources.xtrsrc_id = multcatbasesources.xtrsrc_id 
+    #          ) 
+    #     ,y = (SELECT y
+    #             FROM tempmultcatbasesources 
+    #            WHERE tempmultcatbasesources.xtrsrc_id = multcatbasesources.xtrsrc_id 
+    #          ) 
+    #     ,z = (SELECT z 
+    #             FROM tempmultcatbasesources 
+    #            WHERE tempmultcatbasesources.xtrsrc_id = multcatbasesources.xtrsrc_id 
+    #          ) 
+    #     ,datapoints = (SELECT datapoints 
+    #                      FROM tempmultcatbasesources 
+    #                     WHERE tempmultcatbasesources.xtrsrc_id = multcatbasesources.xtrsrc_id 
+    #                   ) 
+    #     ,avg_weighted_ra = (SELECT avg_weighted_ra
+    #                           FROM tempmultcatbasesources 
+    #                          WHERE tempmultcatbasesources.xtrsrc_id = multcatbasesources.xtrsrc_id 
+    #                        ) 
+    #     ,avg_weighted_decl = (SELECT avg_weighted_decl
+    #                             FROM tempmultcatbasesources 
+    #                            WHERE tempmultcatbasesources.xtrsrc_id = multcatbasesources.xtrsrc_id 
+    #                          ) 
+    #     ,avg_ra_weight = (SELECT avg_ra_weight
+    #                         FROM tempmultcatbasesources 
+    #                        WHERE tempmultcatbasesources.xtrsrc_id = multcatbasesources.xtrsrc_id 
+    #                      ) 
+    #     ,avg_decl_weight = (SELECT avg_decl_weight
+    #                           FROM tempmultcatbasesources 
+    #                          WHERE tempmultcatbasesources.xtrsrc_id = multcatbasesources.xtrsrc_id 
+    #                        ) 
+    #WHERE EXISTS (SELECT xtrsrc_id 
+    #                FROM tempmultcatbasesources 
+    #               WHERE tempmultcatbasesources.xtrsrc_id = multcatbasesources.xtrsrc_id 
+    #             )
+    #+--------------------------------------------
+
     try: 
         cursor = conn.cursor()
         query = """\
@@ -741,11 +773,10 @@ def __update_runningcatalog(conn):
     finally:
         cursor.close()
 
-def __count_known_sources(conn, image_id, deRuiter_r):
-    """
-    This private method counts the number of extracted sources from an image,
-    that are known in the running catalogue.
-    """
+
+def _count_known_sources(conn, image_id, deRuiter_r):
+    """Count number of extracted sources that are know in the running catalog"""
+
     try: 
         cursor = conn.cursor()
         query = """\
@@ -779,12 +810,14 @@ def __count_known_sources(conn, image_id, deRuiter_r):
     finally:
         cursor.close()
 
-def __insert_new_assocs(conn, image_id, deRuiter_r):
-    """
-    This inserts new associations for the sources that were not known in 
-    the running catalogue (i.e. they did not have an entry in the
+def _insert_new_assocs(conn, image_id, deRuiter_r):
+    """Insert new associations for unknown sources
+    
+    This inserts new associations for the sources that were not known
+    in the running catalogue (i.e. they did not have an entry in the
     runningcatalog table).
     """
+    
     try: 
         cursor = conn.cursor()
         query = """\
@@ -829,9 +862,10 @@ def __insert_new_assocs(conn, image_id, deRuiter_r):
     finally:
         cursor.close()
 
-def __insert_new_source_runcat(conn, image_id, deRuiter_r):
-    """
-    """
+
+def _insert_new_source_runcat(conn, image_id, deRuiter_r):
+    """Insert new sources into the running catalog"""
+
     try: 
         cursor = conn.cursor()
         query = """\
@@ -915,9 +949,10 @@ def __insert_new_source_runcat(conn, image_id, deRuiter_r):
     finally:
         cursor.close()
 
-def associateExtractedSources(conn, image_id, deRuiter_r=DERUITER_R):
-    """Association of extracted sources with sources detected before
-    (those in running catalog).
+
+def associate_extracted_sources(conn, image_id, deRuiter_r=DERUITER_R):
+    """Associate extracted sources with sources detected in the running catalog
+
     
     The dimensionless distance between two sources is given by the 
     "De Ruiter radius", see Ch2&3 of thesis Scheers.
@@ -925,34 +960,32 @@ def associateExtractedSources(conn, image_id, deRuiter_r=DERUITER_R):
     Here we use a default value of deRuiter_r = 3.717/3600. for a
     reliable association.
     """
-    deRuiter_r = 4.0/3600.
     
     #if image_id == 2:
     #    raise
-    __empty_temprunningcatalog(conn)
-    __insert_temprunningcatalog(conn, image_id, deRuiter_r)
-    __flag_multiple_counterparts_in_runningcatalog(conn)
-    __insert_multiple_assocs(conn)
-    __insert_first_of_assocs(conn)
-    __flag_swapped_assocs(conn)
-    __insert_multiple_assocs_runcat(conn)
-    __flag_old_assocs_runcat(conn)
-    __flag_multiple_assocs(conn)
+    _empty_temprunningcatalog(conn)
+    _insert_temprunningcatalog(conn, image_id, deRuiter_r)
+    _flag_multiple_counterparts_in_runningcatalog(conn)
+    _insert_multiple_assocs(conn)
+    _insert_first_of_assocs(conn)
+    _flag_swapped_assocs(conn)
+    _insert_multiple_assocs_runcat(conn)
+    _flag_old_assocs_runcat(conn)
+    _flag_multiple_assocs(conn)
     #+-----------------------------------------------------+
     #| After all this, we are now left with the 1-1 assocs |
     #+-----------------------------------------------------+
-    __insert_single_assocs(conn)
-    __update_runningcatalog(conn)
-    __empty_temprunningcatalog(conn)
-    __count_known_sources(conn, image_id, deRuiter_r)
-    __insert_new_assocs(conn, image_id, deRuiter_r)
-    __insert_new_source_runcat(conn, image_id, deRuiter_r)
+    _insert_single_assocs(conn)
+    _update_runningcatalog(conn)
+    _empty_temprunningcatalog(conn)
+    _count_known_sources(conn, image_id, deRuiter_r)
+    _insert_new_assocs(conn, image_id, deRuiter_r)
+    _insert_new_source_runcat(conn, image_id, deRuiter_r)
 
-def __select_variability_indices(conn, dsid, V_lim, eta_lim):
-    """
-    This private method selects the sources in the running catalog
-    and their variability indices.
-    """
+
+def _select_variability_indices(conn, dsid, V_lim, eta_lim):
+    """Select sources and variability indices in the running catalog"""
+
     try: 
         cursor = conn.cursor()
         query = """\
@@ -991,16 +1024,16 @@ def __select_variability_indices(conn, dsid, V_lim, eta_lim):
     finally:
         cursor.close()
 
-def variabilityDetection(conn, dsid, V_lim, eta_lim):
-    """Detection of variability in the extracted sources as
-    compared their previous detections.
+
+def variability_detection(conn, dsid, V_lim, eta_lim):
+    """Detect variability in extracted sources compared to the previous
+    detections"""
     
-    """
-    #sources = __select_variability_indices(conn, dsid, V_lim, eta_lim)
-    __select_variability_indices(conn, dsid, V_lim, eta_lim)
+    #sources = _select_variability_indices(conn, dsid, V_lim, eta_lim)
+    _select_variability_indices(conn, dsid, V_lim, eta_lim)
 
 
-def associateCataloguedSourcesInArea(conn, ra, dec, search_radius): 
+def associate_catalogued_sources_in_area(conn, ra, dec, search_radius): 
     """Detection of variability in the extracted sources as
     compared their previous detections.
     

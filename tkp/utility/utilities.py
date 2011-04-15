@@ -6,8 +6,9 @@
 import pyfits, numpy, scipy
 from weakref import WeakKeyDictionary
 from functools import update_wrapper
-import tkp.settings as settings
+from tkp.sourcefinder import utils
 from tkp.utility.uncertain import Uncertain
+
 
 # Numpy 1.1 moves from numpy.core.ma to numpy.ma
 try:
@@ -61,7 +62,7 @@ def var_helper(N):
     return term1/(term1-term2)
 
 def indep_pixels(N,beam):
-    corlengthlong,corlengthshort=settings.calculate_correlation_lengths(beam[0],beam[1])
+    corlengthlong, corlengthshort = utils.calculate_correlation_lengths(beam[0],beam[1])
     correlated_area = 0.25 * numpy.pi * corlengthlong * corlengthshort
     return N/correlated_area
 

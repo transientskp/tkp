@@ -6,11 +6,11 @@
 import os, errno, time, sys
 from datetime import datetime
 import monetdb.sql as db
-from monetdb.sql import Error as Error
-#import MySQLdb as db
-#from MySQLdb import Error as Error
 import logging
-from tkp.settings import DERUITER_R
+from tkp.config import config
+
+
+DERUITER_R = config['source_association']['deruiter_radius']
 
 
 def load_LSM(ira_min, ira_max, idecl_min, idecl_max, cn1,cn2,cn3, conn):

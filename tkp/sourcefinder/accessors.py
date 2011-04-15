@@ -243,8 +243,6 @@ class FitsFile(DataAccessor):
         """
         Read and return the beam properties bmaj, bmin and bpa values from the fits header
         Only Miriad and AIPS cleaned images can be handled by this method.
-        (As these values were previously hard-coded in settings.py,
-        we now set them here when the header is read.)
         If no (key) values can be read we use the WENSS values.
         """
 

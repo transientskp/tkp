@@ -7,8 +7,10 @@
 import math, logging
 import numpy, scipy, scipy.optimize
 
-import tkp.settings as settings
+from tkp.sourcefinder import utils
+from tkp.config import config
 from tkp.utility.uncertain import Uncertain
+
 
 def gaussian(height, centre_x, centre_y, semimajor, semiminor, theta):
     """Return a Gaussian function with the given parameters. Theta is the
@@ -27,7 +29,7 @@ def moments(dat, beam, threshold=0):
     # Are we fitting a -ve or +ve Gaussian?
     if dat.mean() >= 0:
         # The peak is always underestimated when you take the highest pixel.
-        peak = dat.max()*settings.fudge_max_pix(*beam)
+        peak = dat.max() * utils.fudge_max_pix(*beam)
     else:
         peak = dat.min()
     ratio = threshold/peak
@@ -42,7 +44,7 @@ def moments(dat, beam, threshold=0):
     working1 = (xxbar + yybar) / 2.0
     working2 = math.sqrt(((xxbar - yybar)/2)**2 + xybar**2)
 
-    beamsize = settings.calculate_beamsize(beam[0],beam[1])
+    beamsize = utils.calculate_beamsize(beam[0],beam[1])
 
     # Some problems arise with the sqrt of (working1-working2) when they are
     # equal, this happens with islands that have a thickness of only one pixel

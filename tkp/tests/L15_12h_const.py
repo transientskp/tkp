@@ -5,7 +5,11 @@ import os
 import tkp.sourcefinder.accessors as accessors
 import tkp.sourcefinder.image as image
 import tkp.utility.coordinates as coords
-from tkp.settings import datapath
+import tkp.config
+
+
+DATAPATH = tkp.config.config['test']['datapath']
+
 
 # The different sections (observed, corrected, model) of the MeasurementSet
 # contain different simulations.
@@ -18,7 +22,7 @@ class L15_12h_const_obs(unittest.TestCase):
     # Single, constant 1 Jy source at centre of image.
     def setUp(self):
         # Beam here is a random beam, in this case the WENSS beam without the declination dependence.
-        self.myff = accessors.FitsFile(os.path.join(datapath, 'L15_12h_const/observed-all.fits'),beam=(54./3600,54./3600,0.))
+        self.myff = accessors.FitsFile(os.path.join(DATAPATH, 'L15_12h_const/observed-all.fits'),beam=(54./3600,54./3600,0.))
         self.myim = image.ImageData(self.myff)
         self.sex  = self.myim.sextract(det=10)
 
@@ -39,7 +43,7 @@ class L15_12h_const_cor(unittest.TestCase):
     # Cross shape of 5 sources, 2 degrees apart, at centre of image.
     def setUp(self):
         # Beam here is a random beam, in this case the WENSS beam without the declination dependence.
-        self.myff = accessors.FitsFile(os.path.join(datapath, 'L15_12h_const/corrected-all.fits'),beam=(54./3600,54./3600,0.))
+        self.myff = accessors.FitsFile(os.path.join(DATAPATH, 'L15_12h_const/corrected-all.fits'),beam=(54./3600,54./3600,0.))
         self.myim = image.ImageData(self.myff)
         self.sex  = self.myim.sextract(det=10)
 
@@ -74,7 +78,7 @@ class L15_12h_const_mod(unittest.TestCase):
         # process, it will appear smeared out & shouldn't be identified at
         # all.
         # Beam here is a random beam, in this case the WENSS beam without the declination dependence.
-        self.myff = accessors.FitsFile(os.path.join(datapath, 'L15_12h_const/model-all.fits'),beam=(54./3600,54./3600,0.))
+        self.myff = accessors.FitsFile(os.path.join(DATAPATH, 'L15_12h_const/model-all.fits'),beam=(54./3600,54./3600,0.))
         self.myim = image.ImageData(self.myff)
         self.sex  = self.myim.sextract(det=5)
 
@@ -92,7 +96,7 @@ class L15_12h_const_mod(unittest.TestCase):
 
 class FitToPointTestCase(unittest.TestCase):
     def setUp(self):
-        filename = os.path.join(datapath, "L15_12h_const/corrected-all.fits")
+        filename = os.path.join(DATAPATH, "L15_12h_const/corrected-all.fits")
         # Beam here is a random beam, in this case the WENSS beam without the declination dependence.
         self.my_im = image.ImageData(accessors.FitsFile(filename,beam=(54./3600,54./3600,0.)))
 

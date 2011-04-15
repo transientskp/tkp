@@ -25,8 +25,13 @@ import tkp.utility.coordinates as coordinates
 import tkp.utility.utilities as utilities
 import tkp.sourcefinder.sextract as sextract
 import tkp.database as db
-import tkp.settings as settings
+from tkp.sourcefinder import utils
+from tkp.config import config
 from tkp.utility.memoize import Memoize
+
+
+CONFIG = config['source_extraction']
+
 
 class ImageData(object):
     """
@@ -211,9 +216,9 @@ class ImageData(object):
     @Memoize
     def _get_data(self):
         """Masked image data"""
-        margin = settings.margin
+        margin = CONFIG['margin']
         margin_mask = 0
-        if not settings.margin == 0:
+        if not CONFIG['margin'] == 0:
             margin_mask = numpy.ones((self.xdim, self.ydim))
             margin_mask[margin:-margin, margin:-margin] = 0
         mask = numpy.logical_or(margin_mask, self.reliable_window())
@@ -301,7 +306,7 @@ class ImageData(object):
     # maps (in conjuntion with the properties above).                         #
     #                                                                         #
     ###########################################################################
-    def reliable_window(self, max_degradation=settings.max_degradation):
+    def reliable_window(self, max_degradation=CONFIG['max_degradation']):
         """
         Calculates limits over which the image may be regarded as "reliable".
 
@@ -448,12 +453,12 @@ class ImageData(object):
         my_xdim, my_ydim = useful_data.shape
 
         rmsgrid, bggrid = [], []
-        for startx in xrange(0, my_xdim, settings.BACK_SIZEX):
+        for startx in xrange(0, my_xdim, CONFIG['back_sizex']):
             rmsrow, bgrow = [], []
-            for starty in xrange(0, my_ydim, settings.BACK_SIZEY):
+            for starty in xrange(0, my_ydim, CONFIG['back_sizey']):
                 chunk = useful_data[
-                    startx:startx+settings.BACK_SIZEX,
-                    starty:starty+settings.BACK_SIZEY
+                    startx:startx + CONFIG['back_sizex'],
+                    starty:starty + CONFIG['back_sizey']
                 ].ravel()
                 chunk, sigma, median, no_clip = utilities.sigma_clip(chunk,self.beam)
                 mean = numpy.mean(chunk)
@@ -507,9 +512,9 @@ class ImageData(object):
         @type roundup: Boolean
         @rtype: numpy.array
         """
-        my_filter = settings.median_filter
-        mf_threshold = settings.mf_threshold
-        interpolate_order = settings.interpolate_order
+        my_filter = CONFIG['median_filter']
+        mf_threshold = CONFIG['mf_threshold']
+        interpolate_order = CONFIG['interpolate_order']
 
         # there's no point in working with the whole of the data array if it's
         # masked.
@@ -527,8 +532,8 @@ class ImageData(object):
                 grid = f_grid
 
         # Bicubic spline interpolation
-        xratio = float(my_xdim)/settings.BACK_SIZEX
-        yratio = float(my_ydim)/settings.BACK_SIZEY
+        xratio = float(my_xdim)/CONFIG['back_sizex']
+        yratio = float(my_ydim)/CONFIG['back_sizey']
         # First arg: starting point. Second arg: ending point. Third arg:
         # 1j * number of points. (Why is this complex? Sometimes, NumPy has an
         # utterly baffling API...)
@@ -574,9 +579,9 @@ class ImageData(object):
         :class:`tkp_lib.containers.SextractionResults`.
         """
         if not det:
-            det = settings.detection_threshold
+            det = CONFIG['detection_threshold']
         if not anl:
-            anl = settings.analysis_threshold
+            anl = CONFIG['analysis_threshold']
         if anl > det:
             logging.warn(
                 "Analysis threshold is higher than detection threshold"
@@ -610,7 +615,7 @@ class ImageData(object):
         implement a separate cache.
         """
         if not det:
-            det = settings.detection_threshold
+            det = CONFIG['detection_threshold']
         self.labels.clear()
         self.clip.clear()
         self.data_bgsubbed *= -1
@@ -629,11 +634,11 @@ class ImageData(object):
         """
         # "The FDR procedure... guarantees that <FDR> \le \alpha"
         if not alpha:
-            alpha = settings.fdr_alpha
-        # The correlation length in settings.py is used not only for the
+            alpha = CONFIG['fdr_alpha']
+        # The correlation length in config.py is used not only for the
         # calculation of error bars with the Condon formulae, but also for
         # calculating the number of independent pixels.
-        corlengthlong,corlengthshort=settings.calculate_correlation_lengths(self.beam[0],self.beam[1])
+        corlengthlong, corlengthshort = utils.calculate_correlation_lengths(self.beam[0],self.beam[1])
         
         C_n = (1.0 / numpy.arange(
             round(0.25 * numpy.pi * corlengthlong * corlengthshort + 1)
@@ -642,7 +647,7 @@ class ImageData(object):
         # Calculate the FDR threshold
         # Things will go terribly wrong in the line below if the interpolated
         # noise values get very close or below zero. Use interpolate_order=1
-        # in settings or the roundup option.
+        # in config or the roundup option.
         if type(bgmap).__name__=='ndarray' or type(bgmap).__name__=='MaskedArray':
             if bgmap.shape!=self.backmap.shape:
                 raise IndexError("Background map has wrong shape")
@@ -675,7 +680,7 @@ class ImageData(object):
         fdr_threshold = numpy.sqrt(-2.*numpy.log(n1*prob[index]))
         # Default we require that all source pixels are above the threshold,
         # not only the peak pixel.  This gives a better guarantee that indeed
-        # the fraction of false positives is less than settings.fdr_alpha.
+        # the fraction of false positives is less than fdr_alpha in config.py.
         # See, e.g., Hopkins et al., AJ 123, 1086 (2002).
         if not anl:
             anl = fdr_threshold
@@ -756,7 +761,7 @@ class ImageData(object):
     def dump_islands(self, filename, det, anl, minsize=4):
         # Identify potential islands
         sci_clip = numpy.where(self.data_bgsubbed > anl * self.rmsmap, 1, 0)
-        sci_labels, sci_num = ndimage.label(sci_clip, settings.structuring_element)
+        sci_labels, sci_num = ndimage.label(sci_clip, CONFIG['structuring_element'])
         chunks = ndimage.find_objects(sci_labels)
 
         # Good islands meet the detection threshold and contain enough pixels
@@ -783,7 +788,7 @@ class ImageData(object):
         @rtype: L{cointainers.SextractionResults}
         """
 
-        structuring_element = settings.structuring_element
+        structuring_element = CONFIG['structuring_element']
         # Make sure to set sci_clip to zero where either the analysisthresholdmap or self.data_bgsubbed are masked.
         # That is why we use numpy.ma.where and the filling.
         sci_clip = numpy.ma.where(self.data_bgsubbed > analysisthresholdmap, 1, 0).filled(fill_value=0)
@@ -820,14 +825,14 @@ class ImageData(object):
 
         # If required, we can save the 'left overs' from the deblending and
         # fitting processes for later analysis. This needs setting up here:
-        if settings.residuals:
+        if CONFIG['residuals']:
             self.residuals_from_gauss_fitting = numpy.zeros(self.data.shape)
             self.residuals_from_deblending = numpy.zeros(self.data.shape)
             for island in island_list:
                 self.residuals_from_deblending[island.chunk] += island.data.filled(fill_value=0.)
 
         # Deblend each of the islands to its consituent parts, if necessary
-        if settings.deblend:
+        if CONFIG['deblend']:
             deblended_list=map(lambda x: x.deblend(), island_list)
             # Apparently, the map command always results in nested lists.
             island_list = list(utilities.flatten(deblended_list))
@@ -841,7 +846,7 @@ class ImageData(object):
                 results.append(
                     sextract.Detection(measurement, self, chunk=island.chunk)
                 )
-                if settings.residuals:
+                if CONFIG['residuals']:
                     self.residuals_from_deblending[island.chunk] -= island.data.filled(fill_value=0.)
                     self.residuals_from_gauss_fitting[island.chunk] += residual
             except RuntimeError:

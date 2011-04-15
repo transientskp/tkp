@@ -14,7 +14,7 @@
 # up (I used scipy.signal.fftconvolve).
 # We adjusted the header of UNCORRELATED_NOISE.FITS, by adding values for BMAJ and BMIN (and BPA, but that is redundant)
 # to make sure that 0.25 * pi* BMAJ * BMIN = -CDELT1 * CDELT2,
-# i.e., that the correlated area (with the default equations from settings.py) equals the area of exactly one pixel.
+# i.e., that the correlated area (with the default equations from config.py) equals the area of exactly one pixel.
 
 # Strictly speaking the FDR algorithm applies to the number of falsely detected pixels as a fraction of all detected pixels.
 # in the presence of uncorrelated noise. The algorithm has been modified somewhat to apply it to correlated noise, but 
@@ -29,15 +29,18 @@ import os
 import tkp.sourcefinder.accessors as access
 import numpy as np
 import tkp.sourcefinder.image as imag 
-from tkp.settings import datapath
+import tkp.config
 
-number_inserted=float(3969)
+
+DATAPATH = tkp.config.config['test']['datapath']
+NUMBER_INSERTED=float(3969)
+
 
 class test_maps(unittest.TestCase):
     def setUp(self):
-        my_uncorr_map=access.FitsFile(os.path.join(datapath, 'UNCORRELATED_NOISE.FITS'))
-        my_corr_map=access.FitsFile(os.path.join(datapath, 'CORRELATED_NOISE.FITS'))
-        my_map_with_sources=access.FitsFile(os.path.join(datapath, 'TEST_DECONV.FITS'))
+        my_uncorr_map=access.FitsFile(os.path.join(DATAPATH, 'UNCORRELATED_NOISE.FITS'))
+        my_corr_map=access.FitsFile(os.path.join(DATAPATH, 'CORRELATED_NOISE.FITS'))
+        my_map_with_sources=access.FitsFile(os.path.join(DATAPATH, 'TEST_DECONV.FITS'))
 
         my_uncorr_image=imag.ImageData(my_uncorr_map)
         my_corr_image=imag.ImageData(my_corr_map)
@@ -53,9 +56,9 @@ class test_maps(unittest.TestCase):
         self.assertEqual(self.number_detections_uncorr, 0)
         self.assertEqual(self.number_detections_corr, 0)
     
-        self.assertTrue((self.number_alpha_10pc-number_inserted)/number_inserted<0.1)
-        self.assertTrue((self.number_alpha_1pc-number_inserted)/number_inserted<0.01)
-        self.assertTrue((self.number_alpha_point1pc-number_inserted)/number_inserted<0.001)
+        self.assertTrue((self.number_alpha_10pc-NUMBER_INSERTED)/NUMBER_INSERTED<0.1)
+        self.assertTrue((self.number_alpha_1pc-NUMBER_INSERTED)/NUMBER_INSERTED<0.01)
+        self.assertTrue((self.number_alpha_point1pc-NUMBER_INSERTED)/NUMBER_INSERTED<0.001)
         
 
 if __name__ == '__main__':

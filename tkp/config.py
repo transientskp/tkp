@@ -79,10 +79,11 @@ def double_list_from_string(text, contenttype=str):
 
     
 def set_default_config():
+
     config = ConfigParser.SafeConfigParser()
 
     config.add_section('database')
-    config.set('database', 'enable', 'True')
+    config.set('database', 'enabled', 'True')
     config.set('database', 'host', 'ldb001')
     config.set('database', 'name', 'tkp')
     config.set('database', 'user', 'tkp')
@@ -120,6 +121,8 @@ def set_default_config():
     config.set('source_extraction', 'eps_ra', '0.')
     config.set('source_extraction', 'eps_dec', '0.')
 
+    from tkp.tests import __path__ as testpath
+    config.set('test', 'datapath', datapath=os.path.join(testpath[0], "data"))
     return config
 
 
@@ -154,7 +157,7 @@ def parse_config(config):
     # On to do list: create an inherited configparser that stores a type with the options,
     # and then does the parsing behind the scenes
     configuration = dict(database={}, source_association={}, source_extraction={})
-    booleans = (('database', 'enable'), ('source_extraction', 'deblend'),
+    booleans = (('database', 'enabled'), ('source_extraction', 'deblend'),
                 ('source_extraction', 'residuals'))
     integers = (('database', 'port'), ('source_extraction', 'back_sizex'),
                 ('source_extraction', 'back_sizey'),

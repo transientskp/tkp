@@ -4,35 +4,19 @@
 # Interface with the pipeline databases.
 #
 
-#from pysqlite2 import dbapi2 as db
-#
-# Uncomment the import statement depending on the DB
-# that is used
-#
 import logging
 import contextlib
-
-import tkp.settings as settings
+import monetdb.sql as db
+from tkp.config import config
 from ..utility.exceptions import TKPException, TKPDataBaseError
 
 
-enabled = settings.database_enabled
-host = settings.database_host
-user = settings.database_user
-passwd = settings.database_passwd
-dbase = settings.database_dbase
-lang = settings.database_lang
-port = settings.database_port
-dbtype = settings.database_type
-
-if dbtype == "MySQL":
-    import MySQLdb as db
-    from MySQLdb import Error as Error
-elif dbtype == "MonetDB":
-    import monetdb.sql as db
-    from monetdb.sql import Error as Error
-
-test = settings.database_test
+ENABLED = config['database']['enabled']
+HOST = config['database']['host']
+USER = config['database']['user']
+PASSWD = config['database']['password']
+DBASE = config['database']['name']
+PORT = config['database'['port']
 
 
 @contextlib.contextmanager
@@ -45,21 +29,17 @@ def connect(*args, **kwargs):
         db.close()
 
 
-def connection(hostname=host, username=user, password=passwd, database=dbase, 
-               dbport=port):
+def connection(hostname=HOST, username=USER, password=PASSWD, database=DBASE, 
+               dbport=PORT):
     """Returns a connection object or raise an error if not enabled
 
-    Use defaults from the settings module, but the user can override these
+    Use defaults from the config module, but the user can override these
     """
 
-    if not enabled:
+    if not ENABLED:
         raise TKPDataBaseError("Database is not enabled")
-    if lang == "sql":
-        conn = db.connect(hostname=hostname, username=username, 
-                          password=password, database=database, port=dbport)
-    else:
-        conn = db.connect(host=hostname, user=username, passwd=password, 
-                          db=database)
+    conn = db.connect(hostname=hostname, username=username, 
+                      password=password, database=database, port=dbport)
     return conn
 
 
@@ -68,19 +48,17 @@ def connection_to_db(usr, dbname):
 
     user = usr
     dbase = dbname
-    if not enabled:
+    if not ENABLED:
         raise TKPDataBaseError("Database is not enabled")
-    elif lang == "sql":
-        conn = db.connect(hostname=host, username=user, password=passwd, port=port)
     else:
-        conn = db.connect(host=host, user=user, passwd=passwd, db=dbase)
+        conn = db.connect(hostname=HOST, username=USER, password=PASSWD, port=PORT)
     return conn
 
 
 def call_proc(conn, procname):
     """Calls a particular database procedure"""
     
-    if not enabled:
+    if not ENABLED:
         raise TKPDataBaseError("Database is not enabled")
     cursor = conn.cursor()
     try:

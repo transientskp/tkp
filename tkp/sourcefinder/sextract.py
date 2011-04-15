@@ -19,11 +19,15 @@ except ImportError:
 
 from UserDict import DictMixin
 
-import tkp.settings as settings
+from tkp.sourcefinder import utils
+from tkp.config import config
 import tkp.sourcefinder.gaussian as gaussian
 import tkp.utility.utilities as utilities
 import tkp.utility.coordinates as coordinates
 from tkp.utility.uncertain import Uncertain
+
+
+CONFIG = config['source_extraction']
 
 
 class Island(object):
@@ -66,14 +70,14 @@ class Island(object):
         else:
             self.max_orig = max_orig
         # This factor is used for determining the subthreshold levels, exponentially spaced.
-        self.factor=(self.max_orig-self.min_orig)/(numpy.exp(settings.deblend_nthresh+1)-1.)
+        self.factor=(self.max_orig-self.min_orig)/(numpy.exp(CONFIG['deblend_nthresh']+1)-1.)
 
     def deblend(self,iter=1):
         # Iterate up through subthresholds, looking for our island splitting
         # into two. If it does, start again, with two or more separate islands.
         # Return a decomposed numpy array of all the subislands.
 
-        subthrrange=self.factor*(numpy.exp(numpy.arange(iter,settings.deblend_nthresh+1))-1.)+self.min_orig
+        subthrrange=self.factor*(numpy.exp(numpy.arange(iter, CONFIG['deblend_nthresh']+1))-1.)+self.min_orig
         for level in subthrrange:
             # The idea is to retain the parent island when no significant subislands are
             # found and jump to the next subthreshold using iter.
@@ -87,7 +91,7 @@ class Island(object):
                 # Return the current island.
                 break
             clipped_data = numpy.where(self.data.filled(fill_value=0) >= level, 1, 0)
-            labels, number = ndimage.label((clipped_data), settings.structuring_element)
+            labels, number = ndimage.label((clipped_data), CONFIG['structuring_element'])
             # If we have more than one island, then we need to make subislands.
             if number > 1:
                 subislands = []
@@ -112,19 +116,19 @@ class Island(object):
                 # Sufficient means: the flux of the branch above the subthreshold (=level)
                 # must exceed some user given fraction of the
                 # composite object, i.e., the original island.
-                subislands = filter(lambda isl: (isl.data-numpy.ma.array(numpy.ones(isl.data.shape)*level,mask=isl.data.mask)).sum()>settings.deblend_mincont*self.flux_orig, subislands)
+                subislands = filter(lambda isl: (isl.data-numpy.ma.array(numpy.ones(isl.data.shape)*level,mask=isl.data.mask)).sum()> CONFIG['deblend_mincont'] * self.flux_orig, subislands)
                 # Discard subislands below detection threshold
                 subislands = filter(lambda isl: (isl.data - isl.detection_map).max() >= 0, subislands)
                 numbersignifsub= len(subislands)
                 # Proceed with the previous island, but make sure the next subthreshold is higher than the present one.
                 # Or we would end up in an infinite loop...
                 if numbersignifsub>1:
-                    if iter<settings.deblend_nthresh:
+                    if iter < CONFIG['deblend_nthresh']:
                         # Apparently, the map command always results in nested lists.
                         return list(utilities.flatten(map(lambda island: island.deblend(iter=iter+1),  subislands)))
                     else:
                         return subislands
-                elif numbersignifsub==1 and iter<settings.deblend_nthresh:
+                elif numbersignifsub==1 and iter < CONFIG['deblend_nthresh']:
                     return Island.deblend(self,iter=iter+1)
                 else:
                     # In this case we have numbersignifsub==0 or (1 and reached the highest subthreshold level).
@@ -205,16 +209,16 @@ class ParamSet(DictMixin):
         smin = self['semiminor'].value
         theta = self['theta'].value
 
-        alpha_maj1=settings.alpha_maj1
-        alpha_min1=settings.alpha_min1
-        alpha_maj2=settings.alpha_maj2
-        alpha_min2=settings.alpha_min2
-        alpha_maj3=settings.alpha_maj3
-        alpha_min3=settings.alpha_min3
-        clean_bias=settings.clean_bias
-        clean_bias_error=settings.clean_bias_error
-        frac_flux_cal_error=settings.frac_flux_cal_error
-        theta_B,theta_b=settings.calculate_correlation_lengths(beam[0],beam[1])
+        alpha_maj1 = CONFIG['alpha_maj1']
+        alpha_min1 = CONFIG['alpha_min1']
+        alpha_maj2 = CONFIG['alpha_maj2']
+        alpha_min2 = CONFIG['alpha_min2']
+        alpha_maj3 = CONFIG['alpha_maj3']
+        alpha_min3 = CONFIG['alpha_min3']
+        clean_bias = CONFIG['clean_bias']
+        clean_bias_error = CONFIG['clean_bias_error']
+        frac_flux_cal_error = CONFIG['frac_flux_cal_error']
+        theta_B,theta_b = utils.calculate_correlation_lengths(beam[0],beam[1])
 
         rho_sq1=(smaj*smin/(theta_B*theta_b))*(1.+(theta_B/(2.*smaj))**2)**alpha_maj1*(1.+(theta_b/(2.*smin))**2)**alpha_min1*(peak/noise)**2
         rho_sq2=(smaj*smin/(theta_B*theta_b))*(1.+(theta_B/(2.*smaj))**2)**alpha_maj2*(1.+(theta_b/(2.*smin))**2)**alpha_min2*(peak/noise)**2
@@ -281,10 +285,10 @@ class ParamSet(DictMixin):
         smin  = self['semiminor'].value
         theta = self['theta'].value
 
-        clean_bias=settings.clean_bias
-        clean_bias_error=settings.clean_bias_error
-        frac_flux_cal_error=settings.frac_flux_cal_error
-        theta_B,theta_b=settings.calculate_correlation_lengths(beam[0],beam[1])
+        clean_bias = CONFIG['clean_bias']
+        clean_bias_error = CONFIG['clean_bias_error']
+        frac_flux_cal_error = CONFIG['frac_flux_cal_error']
+        theta_B,theta_b = utils.calculate_correlation_lengths(beam[0],beam[1])
 
         # This formula was derived in Spreeuw's Ph.D. thesis.
         rho_sq=(16.*smaj*smin/(numpy.log(2.)*theta_B*theta_b*noise**2))*((peak-threshold)/(numpy.log(peak)-numpy.log(threshold)))**2
@@ -319,7 +323,7 @@ class ParamSet(DictMixin):
         # To this, we add, in quadrature, the errors corresponding to the first and last term of the rhs of equation 37 of the
         # NVSS paper. The middle term in that equation 37 is heuristically replaced by noise**2 since the threshold should not affect the error from the (corrected) maximum pixel method,
         # while it is part of the expression for rho_sq above.
-        errorpeaksq=(frac_flux_cal_error*peak)**2+clean_bias_error**2+noise**2+settings.maximum_pixel_method_variance(*beam)*peak**2
+        errorpeaksq=(frac_flux_cal_error*peak)**2+clean_bias_error**2+noise**2 + utils.maximum_pixel_method_variance(*beam)*peak**2
         errorpeak=numpy.sqrt(errorpeaksq)
 
         help1=(errorsmaj/smaj)**2
@@ -484,7 +488,7 @@ Unable to estimate gaussian parameters. Proceeding with defaults %s""" %
             # moments can't handle fixed params
             raise ValueError("Sorry, can't fit with those fixed parameters")
 
-    beamsize = settings.calculate_beamsize(beam[0],beam[1])
+    beamsize = utils.calculate_beamsize(beam[0],beam[1])
 
     param["flux"]=numpy.pi*param["peak"]*param["semimajor"]*param["semiminor"]/beamsize
 
@@ -492,7 +496,7 @@ Unable to estimate gaussian parameters. Proceeding with defaults %s""" %
 
     param.deconvolve_from_clean_beam(beam)
 
-    if settings.residuals:
+    if CONFIG['residuals']:
         gauss_arg = (param["peak"].value, param["xbar"].value, param["ybar"].value,
             param["semimajor"].value, param["semiminor"].value, param["theta"].value)
         gauss_resid = -(gaussian.gaussian(*gauss_arg)(*numpy.indices(data.shape)) - data).filled(fill_value=0.)
@@ -637,8 +641,8 @@ class Detection(object):
         end_ra2, end_dec2 = self.imagedata.wcs.p2s([self.x.value, self.y.value+errory_proj])
 
         # Here we include the position calibration errors
-        self.ra.error = settings.eps_ra + max(numpy.fabs(self.ra.value - end_ra1),numpy.fabs(self.ra.value - end_ra2))
-        self.dec.error = settings.eps_dec + max(numpy.fabs(self.dec.value - end_dec1),numpy.fabs(self.dec.value - end_dec2))
+        self.ra.error = CONFIG['eps_ra'] + max(numpy.fabs(self.ra.value - end_ra1),numpy.fabs(self.ra.value - end_ra2))
+        self.dec.error = CONFIG['eps_dec'] + max(numpy.fabs(self.dec.value - end_dec1),numpy.fabs(self.dec.value - end_dec2))
 
         # Now we can compute the BPA, east from local north.
         # That these angles can simply be added is not completely trivial.

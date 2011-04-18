@@ -6,6 +6,7 @@
 from weakref import WeakKeyDictionary
 from functools import update_wrapper
 
+
 class Memoize(object):
     """Decorator to cache the results of methods.
 
@@ -15,16 +16,16 @@ class Memoize(object):
         def _grids(self):
             return self.__grids()
         grids = property(fget=_grids, fdel=_grids.delete)
-    
+
     """
-    
+
     def __init__(self, funct):
         self.funct = funct
         self.memo = WeakKeyDictionary()
         update_wrapper(self, self.funct)
 
     def __call__(self, instance):
-        if not self.memo.has_key(instance):
+        if instance not in self.memo:
             self.memo[instance] = self.funct(instance)
         return self.memo[instance]
 
@@ -34,4 +35,3 @@ class Memoize(object):
             del(self.memo[instance])
         except KeyError:
             pass
-

@@ -1,12 +1,12 @@
-import os, sys
+import os
 import datetime
 import math
-from cStringIO import StringIO
 import shutil
 import pyrap
 import pyrap.images
 import pyrap.tables
 import pyfits
+
 
 MJD0 = datetime.datetime(1858, 11, 17, 0, 0, 0)
 
@@ -28,13 +28,13 @@ def convert(casa_image, ms, fits_filename=None):
 
     if fits_filename is None:
         fits_filename = os.path.splitext(casa_image)[0] + ".fits"
-                        
+
     # To do:
     # It would probably be more efficient (less IO)
     # to create a pyfits HDU object from the casa image data,
     # but I'm not sure how correct the coordinate conversion
     # would be.
-    # Currently using the easy way    
+    # Currently using the easy way
     image = pyrap.images.image(casa_image)
     image.tofits(fits_filename)
     hdulist = pyfits.open(fits_filename, mode='update')
@@ -43,19 +43,19 @@ def convert(casa_image, ms, fits_filename=None):
     t0 = pyrap.tables.table(ms, ack=False)
     header.update('OBS-ID', t0.getcol('OBSERVATION_ID')[0])
 
-    t  = pyrap.tables.table(t0.getkeyword('SPECTRAL_WINDOW'), ack=False)
+    t = pyrap.tables.table(t0.getkeyword('SPECTRAL_WINDOW'), ack=False)
     header.update('SUBBAND', t.getcol('NAME')[0])
     header.update('REFFREQ', t.getcol('REF_FREQUENCY')[0])
     header.update('BANDWIDT', t.getcol('TOTAL_BANDWIDTH')[0])
     header.update('FREQUNIT', 'MHz')
-    
+
     t = pyrap.tables.table(t0.getkeyword('FIELD'), ack=False)
     phasedir = t.getcol('PHASE_DIR')
-    phase_ra = phasedir[0][0][0]*180/math.pi
+    phase_ra = phasedir[0][0][0] * 180 / math.pi
     if phase_ra < 0:
         phase_ra += 360
     header.update('phasera', phase_ra, 'degrees')
-    header.update('phasedec', phasedir[0][0][1]*180/math.pi, 'degrees')
+    header.update('phasedec', phasedir[0][0][1] * 180 / math.pi, 'degrees')
     header.update('field', t.getcol('NAME')[0])
 
     # When the MS we access is actually a slice through a current MS,
@@ -80,12 +80,11 @@ def convert(casa_image, ms, fits_filename=None):
 
     t = pyrap.tables.table(t0.getkeyword('OBSERVATION'), ack=False)
     header.update('OBSERVER', t.getcol('OBSERVER')[0])
-    release_date = t.getcol('RELEASE_DATE')
     header.update('TELESCOP', t.getcol('TELESCOPE_NAME')[0])
 
     header.update('PIPENAME', 'TRAP')
     header.update('PIPE_VER', '0.1')
-    
+
     hdulist.close()
 
 
@@ -103,7 +102,7 @@ def combine(fitsfiles, outputfile, method="average"):
         None
 
     """
-        
+
     if method is None:
         return
     N = len(fitsfiles)
@@ -122,14 +121,14 @@ def combine(fitsfiles, outputfile, method="average"):
         data += hdulist[0].data
         freqs.append(header['reffreq'])
         header0.update(
-            'orig%d' % (i+1), os.path.basename(filename),
+            'orig%d' % (i + 1), os.path.basename(filename),
             'original fitsfile')
     if method == "average":
         data /= float(N)
 
     minfreq, maxfreq = min(freqs), max(freqs)
     hdu = pyfits.PrimaryHDU(data)
-    reffreq = (minfreq + maxfreq)/2
+    reffreq = (minfreq + maxfreq) / 2
     bandwidth = maxfreq - minfreq
     header0.update('reffreq', reffreq,
                   'reference frequency')

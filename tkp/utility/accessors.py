@@ -8,11 +8,14 @@ These can be used to populate ImageData objects based on some data source
 (FITS file, array in memory... etc).
 """
 # Python standard library
-import datetime, logging
-import dateutil.parser, pytz
+import datetime
+import logging
+import dateutil.parser
+import pytz
 # Other external libraries
 import pyfits
 import numpy
+
 
 class DataAccessor(object):
     """
@@ -22,15 +25,18 @@ class DataAccessor(object):
     image representation) to access the various ways in which images may be
     stored (FITS files, arrays in memory, potentially HDF5, etc).
     """
-    def _beamsizeparse(self, bmaj, bmin, bpa):
-        """
-        Needs beam parameters, no defaults.
-        """
 
-        self.semimaj = (bmaj / 2.) * (numpy.sqrt((numpy.sin(numpy.pi * bpa / 180.) ** 2) / (self.cdelt1 ** 2) \
-                                          +(numpy.cos(numpy.pi * bpa / 180.) ** 2) / (self.cdelt2 ** 2)))
-        self.semimin = (bmin / 2.) * (numpy.sqrt((numpy.cos(numpy.pi * bpa / 180.) ** 2) / (self.cdelt1 ** 2) \
-                                          +(numpy.sin(numpy.pi * bpa / 180.) ** 2) / (self.cdelt2 ** 2)))
+    def _beamsizeparse(self, bmaj, bmin, bpa):
+        """Needs beam parameters, no defaults."""
+
+        self.semimaj = (bmaj / 2.) * (numpy.sqrt(
+            (numpy.sin(numpy.pi * bpa / 180.) ** 2) /
+            (self.cdelt1 ** 2) + (numpy.cos(numpy.pi * bpa / 180.) ** 2) /
+            (self.cdelt2 ** 2)))
+        self.semimin = (bmin / 2.) * (numpy.sqrt(
+            (numpy.cos(numpy.pi * bpa / 180.) ** 2) /
+            (self.cdelt1 ** 2) + (numpy.sin(numpy.pi * bpa / 180.) ** 2) /
+            (self.cdelt2 ** 2)))
         self.theta = numpy.pi * bpa / 180
 
 
@@ -62,11 +68,11 @@ class AIPSppImage(DataAccessor):
     James Miller-Jones provided me with. This is probably not a good
     assumption...
     """
-    def __init__(self, filename, plane=0,beam=False):
+    def __init__(self, filename, plane=0, beam=False):
         self.filename = filename
         self.plane = plane
         self._coordparse()
-        bmaj,bmin,bpa=beam
+        bmaj, bmin, bpa = beam
         self._beamsizeparse(bmaj, bmin, bpa)
 
     def _get_table(self):
@@ -87,7 +93,7 @@ class AIPSppImage(DataAccessor):
     @property
     def data(self):
         return self._get_table().getcellslice("map", 0,
-            [0, self.plane,  0,  0],
+            [0, self.plane, 0, 0],
             [0, self.plane, -1, -1]
         ).squeeze()
 
@@ -108,27 +114,28 @@ class FitsFile(DataAccessor):
     passed a request for an unknown attribute, we try to pull it out of the
     FITS header.
     If beam info is not present in the header, it HAS to be provided as a
-    tuple: (bmaj,bmin,bpa).
+    tuple: (bmaj, bmin, bpa).
     """
-    def __init__(self, filename, plane=False,beam=False):
+    def __init__(self, filename, plane=False, beam=False):
         # NB: pyfits bogs down reading parameters from FITS files with very
         # long headers. This code should run in a fraction of a second on most
         # files, but can take several seconds given a huge header.
         self.filename = filename
         hdulist = pyfits.open(self.filename)
-        
+
         self._coordparse(hdulist)
         self._freqparse(hdulist)
         if not beam:
             self._beamsizeparse(hdulist)
         else:
-            bmaj,bmin,bpa=beam
+            bmaj, bmin, bpa = beam
             super(FitsFile, self)._beamsizeparse(bmaj, bmin, bpa)
 
         # Attempt to do something sane with timestamps.
         try:
             try:
-                timestamp = dateutil.parser.parse(hdulist[0].header['date-obs'])
+                timestamp = dateutil.parser.parse(
+                    hdulist[0].header['date-obs'])
             except AttributeError:
                 # Maybe it's a float, Westerbork-style?
                 if isinstance(hdulist[0].header['date-obs'], float):
@@ -142,9 +149,10 @@ class FitsFile(DataAccessor):
             try:
                 timezone = pytz.timezone(hdulist[0].header['timesys'])
             except (pytz.UnknownTimeZoneError, KeyError), error:
-                logging.debug("Timezone not specified in FITS file: assuming UTC")
+                logging.debug(
+                    "Timezone not specified in FITS file: assuming UTC")
                 timezone = pytz.utc
-            #print "timestamp:",timestamp
+            #print "timestamp:", timestamp
             timestamp = timestamp.replace(tzinfo=timezone)
             self.utc = pytz.utc.normalize(timestamp.astimezone(pytz.utc))
         except KeyError:
@@ -157,9 +165,8 @@ class FitsFile(DataAccessor):
         hdulist.close()
 
     def _coordparse(self, hdulist):
-        """
-        Set some 'shortcut' variables for access to the coordinate parameters
-        in the FITS file header.
+        """Set some 'shortcut' variables for access to the coordinate
+        parameters in the FITS file header.
 
         @param hdulist: hdulist to parse
         @type hdulist: hdulist
@@ -198,7 +205,11 @@ class FitsFile(DataAccessor):
             raise
 
     def __getstate__(self):
-        return {"filename": self.filename, "plane": self.plane, "obstime": self.obstime}
+        return {
+            "filename": self.filename,
+            "plane": self.plane,
+            "obstime": self.obstime
+            }
 
     def __setstate__(self, statedict):
         self.filename = statedict['filename']
@@ -212,7 +223,7 @@ class FitsFile(DataAccessor):
         hdulist.close()
 
     def get_header(self):
-         return pyfits.getheader(self.filename)
+        return pyfits.getheader(self.filename)
 
     @property
     def data(self):
@@ -231,7 +242,8 @@ class FitsFile(DataAccessor):
         if not isinstance(self.plane, bool):
             data = data[self.plane].squeeze()
         if len(data.shape) != 2:
-            # This basically takes Stokes I if we have an image cube instead of an image.
+            # This basically takes Stokes I if we have an image cube instead
+            # of an image.
             # self.data=self.data[0,:,:]
             # If you make some assumptions about the data format, that may
             # be true, but...
@@ -240,8 +252,9 @@ class FitsFile(DataAccessor):
         return data
 
     def _beamsizeparse(self, hdulist):
-        """
-        Read and return the beam properties bmaj, bmin and bpa values from the fits header
+        """Read and return the beam properties bmaj, bmin and bpa values from
+        the fits header
+
         Only Miriad and AIPS cleaned images can be handled by this method.
         If no (key) values can be read we use the WENSS values.
         """
@@ -257,7 +270,7 @@ class FitsFile(DataAccessor):
             bmaj = prthdr['BMAJ']
             bmin = prthdr['BMIN']
             bpa = prthdr['BPA']
-        except KeyError,error:
+        except KeyError, error:
             # if not found we check whether they are in the HISTORY key (AIPS)
             found = False
             for i in range(len(prthdr.ascardlist().keys())):
@@ -292,10 +305,9 @@ class FitsFile(DataAccessor):
         """
         if hasattr(self, "filename"):
             hdr = pyfits.open(self.filename)[0].header
-            if hdr.has_key(attrname):
+            if hdr in attrname:
                 return hdr[attrname]
         raise AttributeError(attrname)
-
 
     def fitsfile(self):
         return self.filename

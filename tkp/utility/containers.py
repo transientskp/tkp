@@ -28,12 +28,13 @@ class ObjectContainer(list):
     """
     def closest_to(self, pix_x, pix_y):
         distance, target = False, False
-        logging.debug("Beginning a search for objects near: " + str(pix_x) + ", " + str(pix_y))
+        logging.debug("Beginning a search for objects near: " +
+                      str(pix_x) + ", " + str(pix_y))
         logging.debug("I have %d objects" % (len(self),))
         for my_obj in self:
             my_dist = (pix_x - my_obj.x)**2 + (pix_y - my_obj.y)**2
-            logging.debug("Object at %f, %f" %(my_obj.x, my_obj.y))
-            logging.debug("Has distance %f" %(my_dist,))
+            logging.debug("Object at %f, %f" % (my_obj.x, my_obj.y))
+            logging.debug("Has distance %f" %my_dist)
             if not distance:
                 distance = my_dist
                 target = my_obj
@@ -41,7 +42,7 @@ class ObjectContainer(list):
                 if my_dist < distance:
                     target = my_obj
                     distance = my_dist
-            logging.debug("Best distance is now %f" %(distance,))
+            logging.debug("Best distance is now %f" % distance)
             logging.debug("From object " + str(target))
         if not distance:
             return (target, distance)
@@ -84,17 +85,18 @@ class ObjectContainer(list):
 
 class SextractionResults(ObjectContainer):
     """
-    Container for the results of running source extraction on an ImageData object
+    Container for the results of running source extraction on an ImageData
+    object
     """
+
     def regionlist(self, radius=5):
-        """
-        Output a list of regions suitable for use in DS9.
+        """Output a list of regions suitable for use in DS9.
 
         @type radius: Numeric
         @param radius: Size of DS9 marker object.
         """
         for o in self:
-            print "circle(%f,%f,%f)" % (o.x, o.y, radius)
+            print "circle(%f, %f, %f)" % (o.x, o.y, radius)
 
     def __str__(self):
         return 'SextractionResults: ' + str(len(self)) + ' detection(s).'
@@ -150,7 +152,8 @@ class Source(ObjectContainer):
         return list(set(bands))
 
     def __str__(self):
-        return 'Source: ' + str(len(self)) + ' detection(s) at ' + str(self.x) + ',' + str(self.y)
+        return ('Source: ' + str(len(self)) + ' detection(s) at ' +
+                str(self.x) + ',' + str(self.y))
 
 
 class TargetList(ObjectContainer):
@@ -243,7 +246,8 @@ class LightCurve(ObjectContainer):
         return self[0][0].wcs.p2s([self.x.value, self.y.value])[1]
 
     def __str__(self):
-        return 'Lightcurve: ' + str(len(self)) + ' source(s) at ' + str(self.x) + ',' + str(self.y)
+        return ('Lightcurve: ' + str(len(self)) + ' source(s) at ' +
+                str(self.x) + ',' + str(self.y))
 
     def dumpdata(self, band):
         i = 0
@@ -253,7 +257,6 @@ class LightCurve(ObjectContainer):
                     if d.imagedata.freq_id == band:
                         print "%d\t%f\t%s" % (i, d.peak, d.layer_id)
             i += 1
-
 
     def peak(self, freq=None):
         """
@@ -298,6 +301,7 @@ class LightCurve(ObjectContainer):
 #
 #        plot = Gnuplot.Data(x, data, title='Source', with='linespoints')
 #        graph.plot(plot)
+
 
 class Plots(object):
 

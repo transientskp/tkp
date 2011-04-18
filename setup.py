@@ -9,9 +9,7 @@ setup(
         'tkp.sourcefinder',
         'tkp.classification',
         'tkp.classification.manual',
-        'tkp.classification.manual.etree',
         'tkp.classification.features',
-        'tkp.classification.database',
         'tkp.tests',
         'tkp.utility'
     ],

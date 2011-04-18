@@ -34,8 +34,10 @@ def flatten(lst):
     http://www.daniweb.com/code/snippet216879.html.
 
     The output from this method is a generator, so make sure to turn
-    it into a list, like this:
+    it into a list, like this::
+    
         flattened = list(flatten(nested)).
+        
     """
     for elem in lst:
         if type(elem) in (tuple, list):

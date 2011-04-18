@@ -17,7 +17,7 @@ def convert(casa_image, ms, fits_filename=None):
     :argument casa_image: CASA image
     :type casa_image: pyrap.images.image
     :argument ms: CASA measurement set
-    :type ms:pyrap.tables.table
+    :type ms: pyrap.tables.table
     
     :keyword fits_filename: FITS output filename
     :type fits_filename: str

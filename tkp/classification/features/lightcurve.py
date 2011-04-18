@@ -1,7 +1,8 @@
 """
 
-.. module::
-   :synposis: Obtain light curve characteristics of a transient source
+.. module:: lightcurve
+
+:synopsis: Obtain light curve characteristics of a transient source
    
 .. moduleauthor: Evert Rol, Transient Key Project <software@transientskp.org>
 

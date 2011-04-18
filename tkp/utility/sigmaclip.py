@@ -42,7 +42,7 @@ def clip(data, mean, sigma, siglow, sighigh, indices=None):
     :argument sighigh: higher kappa clipping values
     :type sighigh: float
 
-    :argument indices: data selection by indices
+    :keyword indices: data selection by indices
     :type indices: numpy.ndarray
 
     :returns: indices of non-clipped data

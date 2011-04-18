@@ -19,16 +19,6 @@ DBASE = config['database']['name']
 PORT = config['database']['port']
 
 
-@contextlib.contextmanager
-def connect(*args, **kwargs):
-    db = connection(*args, **kwargs)
-    try:
-        yield db
-    finally:
-        # we probably still need to check for actual database opening errors
-        db.close()
-
-
 def connection(hostname=HOST, username=USER, password=PASSWD, database=DBASE,
                dbport=PORT):
     """Returns a connection object or raise an error if not enabled

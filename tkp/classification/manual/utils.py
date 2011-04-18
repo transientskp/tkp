@@ -28,6 +28,14 @@ class Position(object):
     def match(self, other, precision=0):
         """Matches this position object (self) with another (other) position
 
+        :argument other: position to match with
+        :type other: Position instance
+        :keyword precision: positional match accuracy in degrees
+        :type precision: float
+
+        :returns: whether the positions match
+        :rtype: bool
+        
         The parameter precision is combined with the errors on both positions;
         it has the same unit as the error (and ra & dec).
         """
@@ -65,15 +73,14 @@ class DateTime(datetime.datetime):
     def __reduce__(self):
         """Override this function to pickle correctly
 
-        When pickling a datetime object and then subsequently
-        unpickling it, pickle uses an undocumented initializer, namely
-        a single string representing the current date & time (eg,
-        '\x07\xda\x02\x03\x04\x05\x06\x00\x00\x00'). This is the
-        string returned by __reduce__ (and __reduce_ex__) of the
-        datetime type.  We override __reduce__ to return an object
-        that can work with an extra argument when pickling.
         """
-
+        # When pickling a datetime object and then subsequently
+        # unpickling it, pickle uses an undocumented initializer, namely
+        # a single string representing the current date & time (eg,
+        # '\x07\xda\x02\x03\x04\x05\x06\x00\x00\x00'). This is the
+        # string returned by __reduce__ (and __reduce_ex__) of the
+        # datetime type.  We override __reduce__ to return an object
+        # that can work with an extra argument when pickling.
         ret = (DateTime,
                (self.year, self.month, self.day, self.hour, self.minute,
                self.second, self.microsecond, self.error))
@@ -97,6 +104,14 @@ class DateTime(datetime.datetime):
     def match(self, other, precision=0):
         """Matches this datetime object (self) with another (other) datetime
 
+        :argument other: date-time to match with
+        :type other: DateTime instance
+        :keyword precision: match accuracy in seconds
+        :type precision: float
+
+        :returns: whether the dates match
+        :rtype: bool
+        
         The parameter precision is combined with the errors on both datetime;
         it has the same unit as the error (seconds).
         """

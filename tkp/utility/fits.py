@@ -14,15 +14,15 @@ MJD0 = datetime.datetime(1858, 11, 17, 0, 0, 0)
 def convert(casa_image, ms, fits_filename=None):
     """Convert a CASA image to FITS, taking care of header keywords
 
-    Args:
-        casa_image (pyrap.images.image): CASA image
-        ms (pyrap.tables.table): CASA measurement set
+    :argument casa_image: CASA image
+    :type casa_image: pyrap.images.image
+    :argument ms: CASA measurement set
+    :type ms:pyrap.tables.table
+    
+    :keyword fits_filename: FITS output filename
+    :type fits_filename: str
 
-    Kwargs:
-        fits_filename (str): FITS output filename
-
-    Returns:
-        None
+    :returns: None
 
     """
 
@@ -91,15 +91,15 @@ def convert(casa_image, ms, fits_filename=None):
 def combine(fitsfiles, outputfile, method="average"):
     """Combine a set of FITS files, taking care of header keywords
 
-    Args:
-        fitsfiles (list): list of FITS filenames to combine
-        outputfile (str): output FITS filename
+    :argument fitsfiles: FITS filenames to combine
+    :type fitsfiles: list
+    :argument outputfile: output FITS filename
+    :type outputfile: str
 
-    Kwargs:
-        method (str): average or sum the images
+    :keyword method: average or sum the images
+    :type method: str
 
-    Returns:
-        None
+    :returns: None
 
     """
 

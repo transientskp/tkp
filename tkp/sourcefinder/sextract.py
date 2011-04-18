@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 #
 # LOFAR Transients Key Project
 #
@@ -76,7 +78,7 @@ class Island(object):
         self.factor = ((self.max_orig - self.min_orig) /
                        (numpy.exp(CONFIG['deblend_nthresh']+1)-1.))
 
-    def deblend(self, iter=1):
+    def deblend(self, niter=1):
         """Return a decomposed numpy array of all the subislands.
 
         Iterate up through subthresholds, looking for our island
@@ -85,18 +87,18 @@ class Island(object):
         """
 
         subthrrange = (self.factor*(numpy.exp(numpy.arange(
-            iter, CONFIG['deblend_nthresh']+1))-1.) + self.min_orig)
+            niter, CONFIG['deblend_nthresh']+1))-1.) + self.min_orig)
         for level in subthrrange:
 
             # The idea is to retain the parent island when no significant
             # subislands are found and jump to the next subthreshold
-            # using iter.
+            # using niter.
             # Deblending is started at a level higher than the lowest
             # pixel value in the island.
             # Deblending at the level of the lowest pixel value will
             # likely not yield anything, because the island was formed at
             # threshold just below that.
-            # So that is why we use iter+1 (>=1) instead of iter (>=0).
+            # So that is why we use niter+1 (>=1) instead of niter (>=0).
 
             if level > self.data.max():
                 # level is above the highest pixel value...
@@ -152,16 +154,16 @@ class Island(object):
                 # subthreshold is higher than the present one.
                 # Or we would end up in an infinite loop...
                 if numbersignifsub > 1:
-                    if iter < CONFIG['deblend_nthresh']:
+                    if niter < CONFIG['deblend_nthresh']:
                         # Apparently, the map command always results in
                         # nested lists.
                         return list(utilities.flatten(map(
-                            lambda island: island.deblend(iter=iter+1),
+                            lambda island: island.deblend(niter=niter+1),
                             subislands)))
                     else:
                         return subislands
-                elif numbersignifsub == 1 and iter < CONFIG['deblend_nthresh']:
-                    return Island.deblend(self, iter=iter+1)
+                elif numbersignifsub == 1 and niter < CONFIG['deblend_nthresh']:
+                    return Island.deblend(self, niter=niter+1)
                 else:
                     # In this case we have numbersignifsub == 0 or
                     # (1 and reached the highest subthreshold level).
@@ -171,19 +173,19 @@ class Island(object):
         return self
 
     def threshold(self):
-        """ """
+        """Threshold"""
         return self.noise() * self.analysis_threshold
 
     def noise(self):
-        """ """
+        """Noise at maximum position"""
         return self.rms[self.max_pos]
 
     def sig(self):
-        """ """
+        """Deviation"""
         return (self.data/ self.rms_orig).max()
 
     def fit(self):
-        """ """
+        """Fit the position"""
         measurement, gauss_residual = source_profile_and_errors(
             self.data, self.threshold(), self.noise(), self.beam)
         measurement["xbar"] += self.position[0]
@@ -363,7 +365,8 @@ class ParamSet(DictMixin):
         smin = self['semiminor'].value
         theta = self['theta'].value
 
-        clean_bias = CONFIG['clean_bias']
+        ##not used
+        ##clean_bias = CONFIG['clean_bias']
         clean_bias_error = CONFIG['clean_bias_error']
         frac_flux_cal_error = CONFIG['frac_flux_cal_error']
         theta_B, theta_b = utils.calculate_correlation_lengths(
@@ -417,7 +420,8 @@ class ParamSet(DictMixin):
         # while it is part of the expression for rho_sq above.
         errorpeaksq = ((frac_flux_cal_error*peak)**2 +
                        clean_bias_error**2+noise**2 +
-                       utils.maximum_pixel_method_variance(*beam)*peak**2)
+                       utils.maximum_pixel_method_variance(
+            beam[0], beam[1], beam[2])*peak**2)
         errorpeak = numpy.sqrt(errorpeaksq)
 
         help1 = (errorsmaj/smaj)**2
@@ -436,6 +440,8 @@ class ParamSet(DictMixin):
         return self
 
     def deconvolve_from_clean_beam(self, beam):
+        """Deconvolve with the clean beam"""
+        
         # If the fitted axes are smaller than the clean beam
         # (=restoring beam) axes, the axes and position angle
         # can be deconvolved from it.
@@ -481,11 +487,11 @@ class ParamSet(DictMixin):
             rmaj2, rmin2, rpa2, ierr2 = deconv(
                 fmaj, fmin, fpa-fpaerror, cmaj, cmin, cpa)
             if ierr2 < 2:
-                if rpa2>90:
+                if rpa2 > 90:
                     rpa2 = -numpy.mod(-rpa2, 180.)
-                rpaerror2 = numpy.abs(rpa2-rpa)
+                rpaerror2 = numpy.abs(rpa2 - rpa)
                 # An angle error can never be more than 90 degrees.
-                if rpaerror2>90.:
+                if rpaerror2 > 90.:
                     rpaerror2 = numpy.mod(-rpaerror2, 180.)
             else:
                 rpaerror2 = numpy.nan
@@ -495,31 +501,31 @@ class ParamSet(DictMixin):
             else:
                 self['theta_deconv'].error = numpy.mean(
                     [rpaerror1, rpaerror2])
-            self['semimaj_deconv'].value = rmaj/2.
+            self['semimaj_deconv'].value = rmaj / 2.
             rmaj3, rmin3, rpa3, ierr3 = deconv(
-                fmaj+fmajerror, fmin, fpa, cmaj, cmin, cpa)
+                fmaj + fmajerror, fmin, fpa, cmaj, cmin, cpa)
             # If rmaj>0, then rmaj3 should also be > 0,
             # if I am not mistaken, see the formulas at
             # the end of ch.2 of Spreeuw's Ph.D. thesis.
             if fmaj-fmajerror > fmin:
                 rmaj4, rmin4, rpa4, ierr4 = deconv(
                     fmaj-fmajerror, fmin, fpa, cmaj, cmin, cpa)
-                if rmaj4>0:
+                if rmaj4 > 0:
                     self['semimaj_deconv'].error = numpy.mean(
-                        [numpy.abs(rmaj3-rmaj), numpy.abs(rmaj-rmaj4)])
+                        [numpy.abs(rmaj3-rmaj), numpy.abs(rmaj - rmaj4)])
                 else:
-                    self['semimaj_deconv'].error = numpy.abs(rmaj3-rmaj)
+                    self['semimaj_deconv'].error = numpy.abs(rmaj3 - rmaj)
             else:
                 rmin4, rmaj4, rpa4, ierr4 = deconv(
-                    fmin, fmaj-fmajerror, fpa, cmaj, cmin, cpa)
+                    fmin, fmaj - fmajerror, fpa, cmaj, cmin, cpa)
                 if rmaj4>0:
                     self['semimaj_deconv'].error = numpy.mean(
-                        [numpy.abs(rmaj3-rmaj), numpy.abs(rmaj-rmaj4)])
+                        [numpy.abs(rmaj3-rmaj), numpy.abs(rmaj - rmaj4)])
                 else:
-                    self['semimaj_deconv'].error = numpy.abs(rmaj3-rmaj)
+                    self['semimaj_deconv'].error = numpy.abs(rmaj3 - rmaj)
             if rmin > 0:
-                self['semimin_deconv'].value = rmin/2.
-                if fmin+fminerror<fmaj:
+                self['semimin_deconv'].value = rmin / 2.
+                if fmin + fminerror < fmaj:
                     rmaj5, rmin5, rpa5, ierr5 = deconv(
                         fmaj, fmin+fminerror, fpa, cmaj, cmin, cpa)
                 else:
@@ -546,7 +552,7 @@ class ParamSet(DictMixin):
         return self
 
 
-def source_profile_and_errors(data, threshold, noise, beam, fixed={}):
+def source_profile_and_errors(data, threshold, noise, beam, fixed=None):
     """Return a number of measurable properties with errorbars
 
     Given an island of pixels it will return a number of measurable
@@ -554,25 +560,26 @@ def source_profile_and_errors(data, threshold, noise, beam, fixed={}):
     from Gauss fitting and export these to a residual map.  And it
     will make a map of the decomposed sources.
 
-    Input:
-
-      - NumPy array of pixel values, can be a masked array, which is
+    :argumenet data: array of pixel values, can be a masked array, which is
         necessary for proper Gauss fitting, because the pixels below
         the threshold in the corners and along the edges should not be
         included in the fitting process
+    :type data: numpy.ndarray
+    :argument threshold: Threshold used for selecting pixels for the source (ie,
+        building an island)
+    :type threshold: float
+    :argument noise: Noise level in data
+    :type noise: float
+    :argument fixed: passed on to gaussian.fitgaussian(): this will
+        lock fit to only occur at that pixel coordinate.
+    :type fixed: dict
 
-      - Threshold used for selecting pixels for the source (ie,
-        building an island) as a float
-
-      - Noise level in data as a float
-
-      - if fixed is a tuple (x,y) pass it on to
-        gaussian.fitgaussian(): this will lock fit to only occur at
-        that pixel coordinate.
-
-    output: A populated ParamSet, and a residual array.
+    :returns: A populated ParamSet, and a residual array.
+    :rtype: tuple 
     """
 
+    if fixed is None:
+        fixed = {}
     param = ParamSet()
 
     try:
@@ -592,8 +599,9 @@ def source_profile_and_errors(data, threshold, noise, beam, fixed={}):
             "semiminor": 1,
             "theta": 0
             })
-        logging.warn("""Unable to estimate gaussian parameters. \
-        Proceeding with defaults %s""" % str(param))
+        logging.warn("""
+Unable to estimate gaussian parameters. Proceeding with defaults %s""",
+                     str(param))
 
     ranges = data.nonzero()
     xmin = min(ranges[0])
@@ -776,7 +784,7 @@ class Detection(object):
         # is measured eastwards (increasing RA), not westwards.
         sign_cor = (numpy.dot(cross_prod, center_position) /
                     numpy.sqrt(length_cross_sq))
-        yoffs_rad*= -sign_cor
+        yoffs_rad *= -sign_cor
         yoffset_angle = numpy.degrees(yoffs_rad)
 
         # Now that we have the BPA, we can also compute the position errors
@@ -852,6 +860,7 @@ class Detection(object):
         self.smin_asec = Uncertain(smin_asec, errsmin_asec)
 
     def distance_from(self, x, y):
+        """Distance from center"""
         return ((self.x - x)**2 + (self.y - y)**2)**0.5
 
     def serialize_all(self):

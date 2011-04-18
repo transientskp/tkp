@@ -1,31 +1,30 @@
-#
-# LOFAR Transients Key Project
-#
+# -*- coding: utf-8 -*-
+
 """
-Simple Image Handling.
+.. module:: gaussian
+
+.. moduleauthor:: TKP, Hanno Spreeuw <software@transientskp.org>
+
+
+:synposis: Simple image handling
 
 This module provides simple access to an image, without database overhead.
 """
 
-# Python 2.5 only!
 from __future__ import with_statement
-import os
 import time
 import logging
-from contextlib import closing
-# Other external libraries
 import numpy
 import scipy.stats
 try:
     import ndimage
 except ImportError:
     import scipy.ndimage as ndimage
-# Local tkp functionality
 import tkp.utility.containers as containers
 import tkp.utility.coordinates as coordinates
 import tkp.utility.utilities as utilities
 import tkp.sourcefinder.sextract as sextract
-import tkp.database as db
+from monetdb.sql import Error as DBError
 from tkp.sourcefinder import utils
 from tkp.config import config
 from tkp.utility.memoize import Memoize
@@ -35,20 +34,19 @@ CONFIG = config['source_extraction']
 
 
 class ImageData(object):
-    """
-    Encapsulates an image in terms of a numpy array + metadata.
+    """Encapsulates an image in terms of a numpy array + metadata.
 
     This is your primary contact point for interaction with images: it icludes
     facilities for source extraction and measurement, etc.
 
     *datasource* should be an instance of
-    :class:`tkp_lib.accessors.DataAccessor` which provides access to some
+    :class:`tkp.utility.accessors.DataAccessor` which provides access to some
     image data for this instance.  Note that requests for instance variables
     which are not defined in this class are automatically passed through to
     the data accessor.
 
     *dataset* is only used if the ImageData is a member of a
-    :class:`tkp_lib.dataset.DataSet`.
+    :class:`tkp.utility.dataset.DataSet`.
     It is required if this ImageData is to be used in conjunction with a
     database. It provides a means of ordering images within the database
     for source association etc.
@@ -66,25 +64,26 @@ class ImageData(object):
         """
         Sets up an ImageData object.
 
-        The C{ImageData} object requires data source (FITS file, HDF5 file,
-        etc) accessed through a C{DataAccessor}.
+        The ImageData object requires data source (FITS file, HDF5 file,
+        etc) accessed through a DataAccessor.
 
-        @type datasource: DataAccessor
-        @type dataset: L{DataSet}
+        :argument datasource: datasource
+        :type datasource: DataAccessor
+        :keyword conn: database connection object
+        :keyword dataset: DataSet object
         """
+
         self.datasource = datasource
         self.conn = conn
         self.dataset = dataset
-        #print "centre ra", self.centrera
-        #self.id = None
         self.beam = (self.semimaj, self.semimin, self.theta)
         self._localinit()
         self._id
 
     @property
     def _id(self):
-        """
-        An image will be added to the database.
+        """An image will be added to the database.
+
         An image id will be generated (inside db) for every image.
         An image should belong to a dataset, which will be referenced by
         the dataset id (ds_id).
@@ -96,6 +95,7 @@ class ImageData(object):
         is called. An image id will be generated under the specified ds_id.
         The function return value is the just generated image id.
         """
+
         if self.conn is not None:
             # params[3] represents the obstime in timestamp format
             # As from python 2.6 we can use
@@ -115,22 +115,22 @@ class ImageData(object):
                 self.conn.commit()
                 self.id = cursor.fetchone()
                 cursor.close()
-            except db.Error, e:
-                logging.warn("Insert Image for ds_id %s failed" %
-                              (self.dataset.id, ))
+            except DBError:
+                logging.warn("Insert Image for ds_id %s failed",
+                             self.dataset.id)
                 raise
         else:
             self.id = None
 
     def _localinit(self):
-        """
-        Perform local initialization of this ImageData's state.
+        """Perform local initialization of this ImageData's state.
 
         This is used both by the objects __init__() method *and* by
         __setstate__() to populate the attributes of the ImageData from its
         standard sources. It assumes that self.datasource, and
         self.dataset have already been set when the object was initialised.
         """
+
         self.clip = {}
         self.labels = {}
         self.freq_low = 1
@@ -171,10 +171,11 @@ class ImageData(object):
     # __getattr__() which attempts to retrieve it from the DataAccessor.      #
     #                                                                         #
     ###########################################################################
+
     @Memoize
     def _grids(self):
         """Gridded RMS and background data for interpolating"""
-        return self._grids()
+        return self.__grids()
     grids = property(fget=_grids, fdel=_grids.delete)
 
     @Memoize
@@ -228,42 +229,31 @@ class ImageData(object):
 
     @property
     def xdim(self):
-        """
-        X pixel dimension of (unmasked) data
-        """
+        """X pixel dimension of (unmasked) data"""
         return self.rawdata.shape[0]
 
     @property
     def ydim(self):
-        """
-        Y pixel dimension of (unmasked) data
-        """
+        """Y pixel dimension of (unmasked) data"""
         return self.rawdata.shape[1]
 
     @property
     def pixmax(self):
-        """
-        Maximum pixel value (pre-background subtraction)
-        """
+        """Maximum pixel value (pre-background subtraction)"""
         return self.data.max()
 
     @property
     def pixmin(self):
-        """
-        Minimum pixel value (pre-background subtraction)
-        """
+        """Minimum pixel value (pre-background subtraction)"""
         return self.data.min()
 
     @property
     def rawdata(self):
-        """
-        Raw numeric image data from accessor
-        """
+        """Raw numeric image data from accessor"""
         return self.datasource.data
 
     def clearcache(self):
-        """
-        Zap any calculated data stored in this object.
+        """Zap any calculated data stored in this object.
 
         Clear the background and rms maps, labels, clip, and any locally held
         data. All of these can be reconstructed from the data accessor.
@@ -299,8 +289,15 @@ class ImageData(object):
     #                                                                         #
     ###########################################################################
     def reliable_window(self, max_degradation=CONFIG['max_degradation']):
-        """
-        Calculates limits over which the image may be regarded as "reliable".
+        """Calculates limits over which the image may be regarded as
+        "reliable".
+
+        :keyword max_degradation: astronometry accuracy allowed. See
+            description below
+        :type max_degradation: float
+
+        :returns: masked window where the FITS image astrometry is valid
+        :rtype: numpy.ndarray
 
         This code calculates a window within a FITS image that is "reliable",
         i.e.  the mapping from pixel coordinates to celestial coordinates is
@@ -332,11 +329,11 @@ class ImageData(object):
         **NOTE: This is only valid for a SIN projection. Needs more thought
         for other projection types.**
         """
+
         mask = numpy.ones((self.xdim, self.ydim))
         if max_degradation and self.wcs.ctype == ('RA---SIN', 'DEC--SIN'):
             max_angle = numpy.arccos(1./(1. + max_degradation))
-            conv_factor = 0.5*numpy.sqrt(2.)*numpy.sin(max_angle)
-
+            conv_factor = 0.5 * numpy.sqrt(2.) * numpy.sin(max_angle)
             raincr_rad = numpy.radians(numpy.fabs(self.cdelt1))
             decincr_rad = numpy.radians(numpy.fabs(self.cdelt2))
 
@@ -344,10 +341,11 @@ class ImageData(object):
             delta_dec_pix = int(conv_factor/decincr_rad)
 
             # One added to lower limits to exclude lower bound.
-            limits = numpy.array([self.crpix1-delta_ra_pix,
-                self.crpix1-1+delta_ra_pix,
-                self.crpix2-delta_dec_pix,
-                self.crpix2-1+delta_dec_pix])
+            limits = numpy.array([
+                self.crpix1-delta_ra_pix,
+                self.crpix1 - 1 + delta_ra_pix,
+                self.crpix2 - delta_dec_pix,
+                self.crpix2 - 1 + delta_dec_pix])
             limits = numpy.where(limits > 0, limits, 0)
 
             mask[limits[0]:limits[1], limits[2]:limits[3]] = 0
@@ -361,14 +359,18 @@ class ImageData(object):
         return mask
 
     def stats(self, nbins=100, plot=True):
-        """
-        Produce brief statistical report on this image, suitable for printing.
+        """Produce brief statistical report on this image, suitable for
+        printing.
 
-        *nbins* determines how many bins to divide the pixel values into for
-        building a historgram. If *plot* is true, then the histogram will also
-        be printed. If *filename* is supplied, a latex document is produced
-        with the statistical information enclosed.
+        :keyword nbins: how many bins to divide the pixel values into for
+            building a historgram.
+        :type nbins: int
+        :keyword plot: print histogram?
+        :type plot: bool
+
+        :returns: None
         """
+
         try:
             import imagestats
         except ImportError:
@@ -377,10 +379,6 @@ class ImageData(object):
             import pylab
         except ImportError:
             raise NotImplementedError("matplotlib not found")
-        try:
-            import mako.template
-        except ImportError:
-            raise NotImplementedError("mako.template not found")
         pylab.close()
         scistats = imagestats.ImageStats(self.data, nclip=5)
         norm = scipy.stats.normaltest(self.data.ravel())
@@ -418,18 +416,18 @@ class ImageData(object):
             pylab.show()
 
     # Private "support" methods
-    def _grids(self):
-        """
-        Calculate background and RMS grids of this image.
+    def __grids(self):
+        """Calculate background and RMS grids of this image.
 
         These grids can be interpolated up to make maps of the original image
-        dimensions: see L{_interpolate()}.
+        dimensions: see _interpolate().
 
-        This is called automatically when C{ImageData.backmap},
-        C{ImageData.rmsmap} or C{ImageData.fdrmap} is first accessed.
+        This is called automatically when ImageData.backmap,
+        ImageData.rmsmap or ImageData.fdrmap is first accessed.
         """
-        # there's no point in working with the whole of the data array if it's
-        # masked.
+        
+        # there's no point in working with the whole of the data array
+        # if it's masked.
         useful_chunk = ndimage.find_objects(numpy.where(self.data.mask, 0, 1))
         #print useful_chunk
         assert(len(useful_chunk) == 1)
@@ -462,13 +460,11 @@ class ImageData(object):
                     # estimator devised by Karl Pearson.
                     if numpy.fabs(mean - median) / sigma >= 0.3:
                         logging.debug(
-                            'bg skewed, %f clipping iterations' % no_clip)
+                            'bg skewed, %f clipping iterations', no_clip)
                         bgrow.append(median)
                     else:
                         logging.debug(
-                            'bg not skewed, %f clipping iterations' % (
-                            no_clip)
-                        )
+                            'bg not skewed, %f clipping iterations', no_clip)
                         bgrow.append(2.5 * median - 1.5 * mean)
 
             rmsgrid.append(rmsrow)
@@ -586,8 +582,7 @@ class ImageData(object):
         return self._pyse(det * self.rmsmap, anl * self.rmsmap)
 
     def reverse_se(self, det=None):
-        """
-        Run source extraction on the negative of this image.
+        """Run source extraction on the negative of this image.
 
         Obviously, there should be no sources in the negative image, so this
         tells you about the false positive rate.
@@ -609,13 +604,13 @@ class ImageData(object):
         return results
 
     def fd_extract(self, alpha=None, anl=None, noisemap=None, bgmap=None):
-        """
-        False Detection Rate based source extraction.
+        """False Detection Rate based source extraction.
 
         See `Hopkins et al., AJ, 123, 1086 (2002)
         <http://adsabs.harvard.edu/abs/2002AJ....123.1086H>`_.
         """
-        # "The FDR procedure... guarantees that <FDR> \le \alpha"
+
+        # The FDR procedure... guarantees that <FDR> < alpha
         if not alpha:
             alpha = CONFIG['fdr_alpha']
         # The correlation length in config.py is used not only for the
@@ -672,6 +667,9 @@ class ImageData(object):
         return self._pyse(fdr_threshold * self.rmsmap, anl * self.rmsmap)
 
     def flux_at_pixel(self, x, y, numpix=1):
+        """Return the background-subtracted flux at a certain position
+        in the map"""
+        
         # numpix is the number of pixels to look around the target.
         # e.g. numpix = 1 means a total of 9 pixels, 1 in each direction.
         return self.data_bgsubbed[y-numpix:y+numpix+1,
@@ -695,10 +693,10 @@ class ImageData(object):
                 self.clip.setdefault(
                     threshold, numpy.where(
                         self.data_bgsubbed > threshold * self.rmsmap, 1, 0
+                        )
                     )
                 )
             )
-        )
 
         chunk = (slice(x - boxsize/2.0, x + boxsize/2.0),
                  slice(y - boxsize/2.0, y + boxsize/2.0))
@@ -731,17 +729,14 @@ class ImageData(object):
         measurement['ybar'] += y-boxsize/2.0
         measurement.sig = (fitme / self.rmsmap[chunk]).max()
 
-        try:
-            if measurement.moments or measurement.gaussian:
-                return sextract.Detection(measurement, self)
-            else:
-                logging.warn("Moments & Gaussian fit failed at %f, %f" %
-                             (x, y))
-        except ValueError, message:
-            raise
+        if measurement.moments or measurement.gaussian:
+            return sextract.Detection(measurement, self)
+        else:
+            logging.warn("Moments & Gaussian fit failed at %f, %f", x, y)
 
     def dump_islands(self, filename, det, anl, minsize=4):
-        # Identify potential islands
+        """Identify potential islands"""
+
         sci_clip = numpy.where(self.data_bgsubbed > anl * self.rmsmap, 1, 0)
         sci_labels, sci_num = ndimage.label(sci_clip,
                                             CONFIG['structuring_element'])
@@ -766,12 +761,16 @@ class ImageData(object):
         """
         Run Python-based source extraction on this image.
 
+        :argument detectionthresholdmap:
+        :type detectionthresholdmap: numpy.ndarray
+        :argument analysisthresholdmap:
+        :type analysisthresholdmap: numpy.ndarray
+
+        :returns:
+        :rtype: cointainers.SextractionResults
+
         This is described in detail in the "Source Extraction System" document
         by John Swinbank, available from TKP svn; see that for details.
-
-        @type detectionthresholdmap: numpy.array
-        @type analysisthresholdmap:  numpy.array
-        @rtype: L{cointainers.SextractionResults}
         """
 
         structuring_element = CONFIG['structuring_element']
@@ -787,7 +786,7 @@ class ImageData(object):
         # This map can be used for analysis of the islands.
         self.islands_map = numpy.zeros(self.data_bgsubbed.shape)
 
-        if sci_num>0:
+        if sci_num > 0:
             # Select the labels of the islands with a maximum pixel
             # value above the (local) detection threshold.
             slices = ndimage.find_objects(sci_labels)
@@ -814,9 +813,10 @@ class ImageData(object):
             # number.
 
             for label in labels_above_det_thr:
-                chunk=slices[label-1]
-                detection_threshold = (detectionthresholdmap[chunk] /
-                                       self.rmsmap[chunk]).max()
+                chunk = slices[label-1]
+                ##detection_threshold is not used anywhere
+                ##detection_threshold = (detectionthresholdmap[chunk] /
+                ##                       self.rmsmap[chunk]).max()
                 analysis_threshold = (analysisthresholdmap[chunk] /
                                       self.rmsmap[chunk]).max()
                 # In selected_data only the pixels with the "correct"
@@ -848,8 +848,8 @@ class ImageData(object):
 
         # Deblend each of the islands to its consituent parts, if necessary
         if CONFIG['deblend']:
-            deblended_list=map(lambda x: x.deblend(), island_list)
-            # Apparently, the map command always results in nested lists.
+            deblended_list = map(lambda x: x.deblend(), island_list)
+            #deblended_list = [x.deblend() for x in island_list]
             island_list = list(utilities.flatten(deblended_list))
 
         # Iterate over the list of islands and measure the source in each,

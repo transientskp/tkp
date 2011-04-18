@@ -58,6 +58,8 @@ class GRBPrompt(ClassifiedTransient):
 
 class MainBranch(Branch):
 
+    """Starting point for manual classification tree"""
+    
     def test1(self):
         return [SubBranch1]
 

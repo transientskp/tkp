@@ -1,3 +1,15 @@
+"""
+
+A Transient object class, that stores a variety of information related to any type of transient
+
+.. module::
+   :synposis: A Transient object class
+   
+.. moduleauthor: Evert Rol, Transient Key Project <software@transientskp.org>
+
+"""
+
+
 from .utils import Position, DateTime
 
 
@@ -26,6 +38,22 @@ class Transient(object):
 
     def __init__(self, srcid=0, duration=None, variability=None, database=None,
                  position=None, timezero=None, shape=None, spectralindex=None):
+        """
+        :keyword srcid: a source ID, if known
+        :type srcid: int or 0)
+        :keyword duration: total duration of the transient
+        :keyword variability: measure of the variability 
+        :keyword database: name of transient in the database
+        :keyword position: transient position
+        :type position: Position
+        :keyword timezero: start time and date of the transient
+        :type timezero: DateTime
+        :keyword shape: shape of the transient ('point', 'extended', 'gaussian')
+        :type shape: str
+        :keyword spectralindex: spectral index of the source
+        :type spectralindex: float
+        """
+        
         self.srcid = int(srcid)
         self.duration = duration
         self.variability = variability
@@ -64,9 +92,3 @@ class Transient(object):
         if self.spectralindex is not None:
             arglist.append("spectral index=%.1f" % self.spectralindex)
         return "%s(%s)" % (self.__class__.__name__, ", ".join(arglist),)
-
-    def read(self, db_cursor=None):
-        """Set up the transient by reading from the database"""
-
-        if not db_cursor:
-            return

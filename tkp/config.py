@@ -1,7 +1,3 @@
-import ConfigParser
-import os
-
-
 """
 
 The config module stores the default values for various tunable parameters
@@ -28,11 +24,16 @@ reads of this file.
 
 """
 
+
+import ConfigParser
+import os
+
+
 _TO_DO = """\
 
 To do:
 
-- avoid the HAS_READ / NameError trick
+- avoid the HAS_READ / NameError trick below,
   possibly by use of a singleton
 
 - (optional) use class instead of dictionary to store options
@@ -60,7 +61,8 @@ def double_list_from_string(text, contenttype=str):
     while True:
         i = text.find(']')
         part = text[:i]
-        elements.append(map(contenttype, part.split(',')))
+        #elements.append(map(contenttype, part.split(',')))
+        elements.append([contenttype(var) for var in part.split(',')])
         try:
             text = text[i+1:].strip()
         except IndexError:
@@ -78,6 +80,7 @@ def double_list_from_string(text, contenttype=str):
 
 
 def set_default_config():
+    """Set up the default configuration"""
 
     config = ConfigParser.SafeConfigParser()
 
@@ -158,7 +161,7 @@ def parse_config(config):
     including type conversion"""
 
     # On to do list: create an inherited configparser that stores a type with
-    # the options, # and then does the parsing behind the scenes
+    # the options, and then does the parsing behind the scenes
     configuration = dict(database={}, source_association={},
                          source_extraction={})
     booleans = (('database', 'enabled'), ('source_extraction', 'deblend'),

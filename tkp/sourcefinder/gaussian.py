@@ -1,60 +1,99 @@
-#
-# LOFAR Transients Key Project
-#
-# Gaussian fitting routines
-#
+# -*- coding: utf-8 -*-
+
+"""
+
+.. module:: gaussian
+
+.. moduleauthor:: TKP, Hanno Spreeuw <software@transientskp.org>
+
+
+:synposis: Gaussian fitting algorithms
+
+"""
+
 
 import math
-import logging
 import numpy
-import scipy
 import scipy.optimize
-
 from tkp.sourcefinder import utils
-from tkp.config import config
 from tkp.utility.uncertain import Uncertain
 
 
-def gaussian(height, centre_x, centre_y, semimajor, semiminor, theta):
-    """Return a Gaussian function with the given parameters.
+FIT_PARAMS = ('peak', 'xbar', 'ybar', 'semimajor', 'semiminor', 'theta')
+
+
+def gaussian(height, center_x, center_y, semimajor, semiminor, theta):
+    """Return a 2D Gaussian function with the given parameters.
+
+    :argument height: (z-)value of the 2D Gaussian
+    :type height: float
+    
+    :argument center_x: x center of the Gaussian
+    :type center_x: float
+    
+    :argument center_y: y center of the Gaussian
+    :type center_y: float
+    
+    :argument semimajor: major axis of the Gaussian
+    :type semimajor: float
+    
+    :argument semiminor: minor axis of the Gaussian
+    :type semiminor: float
+    
+    :argument theta: angle of the 2D Gaussian in radians, measured
+        between the semi-major and y axes, in counterclockwise
+        direction
+    :type theta: float
 
     Theta is the angle between the semi-major & y axes measured in
     radians, measured counterclockwise.
+
+    :returns: 2D Gaussian
+    :rtype: function
+    
     """
 
     return lambda x, y: height * numpy.exp(
-        -math.log(2.0) * (((math.cos(theta) * (x - centre_x) +
-                            math.sin(theta) * (y - centre_y)) /
+        -math.log(2.0) * (((math.cos(theta) * (x - center_x) +
+                            math.sin(theta) * (y - center_y)) /
                            semiminor)**2.0 +
-                          ((math.cos(theta) * (y - centre_y) -
-                            math.sin(theta) * (x - centre_x)) /
+                          ((math.cos(theta) * (y - center_y) -
+                            math.sin(theta) * (x - center_x)) /
                            semimajor)**2.))
 
 
-def moments(dat, beam, threshold=0):
-    """Use the first moment of the distribution is the barycentre of an
+def moments(data, beam, threshold=0):
+    """Calculate source positional values using moments
+
+    :argument data: values
+    :type data: numpy.ndarray
+    :argument beam: beam/psf information, with semi-major and semi-minor axes
+    :type beam: (3-list, 3-tuple)
+
+    :returns: peak, total, xbar, ybar, semimajor axis, semiminor axis, theta
+    :rtype: dict
+
+    :raises: ValueError (in case of NaN in input)
+
+    Use the first moment of the distribution is the barycenter of an
     ellipse. The second moments are used to estimate the rotation angle
     and the length of the axes.
-
-    input: numpy array of pixel values, threshold
-    reutrns: dict(peak, total, xbar, ybar, semimajor, semiminor, theta).
-    ** NB DO NOT CHANGE ARGUMENTS / RETURN VALUES **
     """
 
     # Are we fitting a -ve or +ve Gaussian?
-    if dat.mean() >= 0:
+    if data.mean() >= 0:
         # The peak is always underestimated when you take the highest pixel.
-        peak = dat.max() * utils.fudge_max_pix(*beam)
+        peak = data.max() * utils.fudge_max_pix(beam[0], beam[1], beam[2])
     else:
-        peak = dat.min()
+        peak = data.min()
     ratio = threshold / peak
-    total = dat.sum()
-    X, Y = numpy.indices(dat.shape)
-    xbar = float((X * dat).sum()/total)
-    ybar = float((Y * dat).sum()/total)
-    xxbar = (X * X * dat).sum()/total - xbar**2
-    yybar = (Y * Y * dat).sum()/total - ybar**2
-    xybar = (X * Y * dat).sum()/total - xbar * ybar
+    total = data.sum()
+    x, y = numpy.indices(data.shape)
+    xbar = float((x * data).sum()/total)
+    ybar = float((y * data).sum()/total)
+    xxbar = (x * x * data).sum()/total - xbar**2
+    yybar = (y * y * data).sum()/total - ybar**2
+    xybar = (x * y * data).sum()/total - xbar * ybar
 
     working1 = (xxbar + yybar) / 2.0
     working2 = math.sqrt(((xxbar - yybar)/2)**2 + xybar**2)
@@ -64,7 +103,7 @@ def moments(dat, beam, threshold=0):
     # equal, this happens with islands that have a thickness of only one pixel
     # in at least one dimension.  Due to rounding errors this difference
     # becomes negative--->math domain error in sqrt.
-    if len(dat.nonzero()[0]) == 1:
+    if len(data.nonzero()[0]) == 1:
         # This is the case when the island (or more likely subisland) has
         # a size of only one pixel.
         semiminor = numpy.sqrt(beamsize/numpy.pi)
@@ -88,12 +127,11 @@ def moments(dat, beam, threshold=0):
             # This is a quick fix.
             semiminor = beamsize / (numpy.pi * semimajor)
 
-    # This shouldn't happen, but..
     if (numpy.isnan(xbar) or numpy.isnan(ybar) or
         numpy.isnan(semimajor) or numpy.isnan(semiminor)):
         raise ValueError("Unable to estimate Gauss shape")
-    # Not sure if theta is affected in any way by the cutoff at the threshold.
 
+    # Not sure if theta is affected in any way by the cutoff at the threshold.
     if abs(semimajor - semiminor) < 0.01:
         # short circuit!
         theta = 0.
@@ -118,8 +156,24 @@ def moments(dat, beam, threshold=0):
         }
 
 
-def fitgaussian(data, params, fixed={}, maxfev=0):
-    """
+def fitgaussian(data, params, fixed=None, maxfev=0):
+    """Calculate source positional values by fitting a 2D Gaussian
+
+    :argument data: pixel values
+    :type data: numpy.ndarray
+    :argument params:  initial fit parameters (possibly estimated
+        using the moments function
+    :type params: dict
+    :keyword fixed: parameters to be kept frozen (ie, not fitted)
+    :type fixed: dict
+    :keyword maxfew: maximum number of calls to the error function
+    :type maxfew: int
+
+    :returns: peak, total, xbar, ybar, semimajor, semiminor, theta
+    :rtype: dict
+
+    :raises: ValueError (in case of a bad fit)
+
     Perform a least squares fit to an elliptical Gaussian. Uses the
     moments() method to generate an initial estimate of the solution. Based on
     code from SciPy cookbook, but modified to take account of rotation of
@@ -131,15 +185,17 @@ def fitgaussian(data, params, fixed={}, maxfev=0):
 
     input: numpy array of pixel values, initial parameters for fit (a dict, as
     generated by moments(), above.
-    output: max value, barycentre pixel x, y, length of semimajor & minor
+    output: max value, barycenter pixel x, y, length of semimajor & minor
     axes, angle between x axis and semi-major axis in radians. In a dict, as
     above.
     """
-    fit_params = ('peak', 'xbar', 'ybar', 'semimajor', 'semiminor', 'theta')
+
+    if fixed is None:
+        fixed = {}
     # Collect necessary values from parameter dict; only those which aren't
     # fixed.
     my_pars = []
-    for param in fit_params:
+    for param in FIT_PARAMS:
         if param not in fixed:
             if isinstance(params[param], Uncertain):
                 my_pars.append(params[param].value)
@@ -147,30 +203,38 @@ def fitgaussian(data, params, fixed={}, maxfev=0):
                 my_pars.append(params[param])
 
     def errorfunction(paramlist, fixed):
-        # Takes two arguments: the current fit parameters (paramlist) and a
-        # list of all the parameters which are fixed for this fit. Combines
-        # the two to build the arguments to gaussian().
+        """Error function to be used in chi-squared fitting
+
+        :argument paramlist: fitting parameters
+        :type paramlist: dict
+        :argument fixed: parameters to be held frozen
+        :type fixed: dict
+
+        :returns: 2d-array of difference between estimated Gaussian function
+            and the actual data
+        """
+
         paramlist = list(paramlist)
         gaussian_args = []
-        for param in fit_params:
+        for param in FIT_PARAMS:
             if param in fixed:
                 gaussian_args.append(fixed[param])
             else:
                 gaussian_args.append(paramlist.pop(0))
+        # The .compressed() below is essential so the Gaussian fit
+        # will not take account of the masked values (=below
+        # threshold) at the edges and corners of data (=(masked)
+        # array, so rectangular in shape).
         return (gaussian(*gaussian_args)(*numpy.indices(data.shape)) - data
                 ).compressed()
 
-    # The .compressed() below is essential so the Gaussian fit will not take
-    # account of the masked values (=below threshold) at the edges and corners
-    # of data (=(masked) array, so rectangular in shape).
     solution, icov_x, infodict, mesg, success = scipy.optimize.leastsq(
-        errorfunction, my_pars, fixed, full_output=True, maxfev=maxfev
-    )
+        errorfunction, my_pars, fixed, full_output=True, maxfev=maxfev)
     # solution contains only the variable parameters; we need to merge the
     # contents of fixed into the solution list.
     tmp_solution = list(solution)
     solution = []
-    for param in fit_params:
+    for param in FIT_PARAMS:
         if param in fixed:
             solution.append(fixed[param])
         else:

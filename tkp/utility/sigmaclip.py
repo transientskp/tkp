@@ -1,9 +1,13 @@
-#! /usr/bin/env python
+# -*- coding: utf-8 -*-
 
 """
 
-Generic sigmaclip routine
+.. module:: sigmaclip
 
+.. moduleauthor:: TKP, Evert rol <software@transientskp.org>
+
+
+:synposis: Generic sigmaclip routine
 
 Note: this does *not* replace the specialized sigma_clip function in
 utilities.py
@@ -27,17 +31,22 @@ import numpy
 def clip(data, mean, sigma, siglow, sighigh, indices=None):
     """Perform kappa-sigma clipping of data around mean
 
-    Args:
-        data (numpy.ndarray): N-dimensional array of values
-        mean: value around which to clip (does not have to be the mean)
-        sigma: sigma-value for clipping
-        siglow, sighigh: lower and higher kappa clipping values
+    :argument data: N-dimensional array of values
+    :type data: numpy.ndarray
+    :argument mean: value around which to clip (does not have to be the mean)
+    :type mean: float
+    :argument sigma: sigma-value for clipping
+    :type sigma: float
+    :argument siglow: lower kappa clipping values
+    :type siglow: float
+    :argument sighigh: higher kappa clipping values
+    :type sighigh: float
 
-    Kwargs:
-        indices (numpy.ndarray): data selection by indices
+    :argument indices: data selection by indices
+    :type indices: numpy.ndarray
 
-    Returns:
-        numpy.ndarray: indices of non-clipped data
+    :returns: indices of non-clipped data
+    :rtype: numpy.ndarray
 
     """
 
@@ -69,35 +78,30 @@ def calcsigma(data, errors=None, mean=None, axis=None, errors_as_weight=False):
     """
     Calculate the sample standard deviation
 
-    Args:
-        data (numpy.ndarray):
-            Data to be averaged. No conversion from eg
-            a list to a numpy.array is done.
+    :argument data: Data to be averaged. No conversion from eg a list
+        to a numpy.array is done.
+    :type data: numpy.ndarray
 
-    Kwargs:
-        errors (numpy.ndarray):
-            Errors for the data. Errors needs to be the same shape as data(*).
-            If you want to use weights instead of errors as input,
-            set errors_as_weight=True.
-            If not given, all errors (and thus weights) are assumed to be
-            equal to 1.
-            (*) This is different than for numpy.average.
+    :keyword errors: Errors for the data. Errors needs to be the same
+            shape as data (this is different than for numpy.average).
+            If you want to use weights instead of errors as input, set
+            errors_as_weight=True.  If not given, all errors (and thus
+            weights) are assumed to be equal to 1.
+    :type errors: numpy.ndarray
+    
+    :keyword mean: Provide mean if you don't want the mean to be calculated
+        for you. Pay careful attention to the shape if you provide 'axis'.
+    :type mean: float
 
-        mean (float):
-            Provide mean if you don't want the mean to be calculated
-            for you. Pay careful attention to the shape if you provide 'axis'.
+    :keyword axis: Specify axis along which the mean and sigma are calculated.
+        If not provided, calculations are done over the whole array
+    :type axis: int
 
-        axis (int):
-            Specify axis along which the mean and sigma are calculated.
-            If not provided, calculations are done over the whole array
+    :keyword errors_as_weight: Set to True if errors are weights.
+    :type errors_as_weight: bool
 
-        errors_as_weight (bool):
-            Set to True if errors are weights.
-
-    Returns:
-        tuple (float, float):
-            Tuple with (mean, sigma)
-            In case axis is not None, mean and sigma can be arrays
+    :returns: mean and sigma
+    :rtype: tuple
     """
 
     N = data.shape[axis] if axis else len(data)
@@ -137,35 +141,34 @@ def sigmaclip(data, errors=None, niter=0, siglow=3., sighigh=3.,
     Remove outliers from data which lie more than siglow/sighigh
     sample standard deviations from mean.
 
-    Args:
-      data (numpy.ndarray):
-          Numpy array containing data values.
+    :argument data: Numpy array containing data values.
+    :type data: numpy.ndarray
 
-    Kwargs:
-      errors (numpy.ndarray):
-          Errors associated with the data values. If None,
-          unweighted mean and standard deviation are used
-          in calculations.
+    
+    :keyword errors: Errors associated with the data values. If None,
+        unweighted mean and standard deviation are used in
+        calculations.
+    :type errors: numpy.ndarray
 
-      niter (int):
-          Number of iterations to calculate mean & standard
-          deviation, and reject outliers,
-          If niter is negative, iterations will continue until no more clipping
-          occurs, or until abs('niter') is reached.
+    :keyword niter: Number of iterations to calculate mean & standard
+        deviation, and reject outliers, If niter is negative,
+        iterations will continue until no more clipping occurs, or
+        until abs('niter') is reached.
+    :type niter: int
 
-      siglow, sighigh (float):
-          Multiplier for standard deviation. Std * siglow/sighigh define
-          the range outside of which data are rejected.
+    :keyword siglow: Multiplier for standard deviation. Std * siglow
+        defines the value below of which data are rejected.
+    :type siglow: float
+    :keyword sighigh: Multiplier for standard deviation. Std * sighigh
+        defines the value above of which data are rejected.
+    :type sighigh: float
+    :keyword use_median: Use median of data instead of mean.
+    :type use_median: bool
 
-      use_median (bool):
-          Use median of data instead of mean.
-
-    Returns:
-        tuple (numpy.ndarray, int):
-            The first element is a boolean numpy array of indices
-            indicating which elements are clipped (False), with the same shape
-            as the input data.
-            The second element contains the number of iterations
+    :returns: boolean numpy array of indices indicating which elements
+        are clipped (False), with the same shape as the input; number
+        of iterations
+    :rtype: tuple
     """
 
     # indices keeps track which data should be discarded

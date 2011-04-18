@@ -1,6 +1,8 @@
+# -*- coding: utf-8 -*-
+
 """
 
-This module contain utilities that were originally in the main settings.py
+This module contain utilities for the source finding routines
 
 """
 

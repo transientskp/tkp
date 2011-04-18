@@ -1,3 +1,26 @@
+"""
+
+Classify a Transient object, according to a user classification tree.
+
+.. module::
+   :synposis: Classify a Transient object, according to a user classification tree.
+   
+.. moduleauthor: Evert Rol, Transient Key Project <software@transientskp.org>
+
+
+The actual classification work is done here, in three parts:
+
+- The Classifier class picks up the transient and classification tree
+
+- The Branch will step through the tree, adding points (weights) to
+  the classification of the Transient instance
+
+- The ClassifiedTransient instance will compare each criterion with
+  the value of the Transient instance
+
+"""
+
+
 from .transient import Transient
 import os
 import  itertools
@@ -12,6 +35,9 @@ class Branch(object):
         super(Branch, self).__init__(*args, **kwargs)
 
     def classify(self):
+        """Classify the transient by stepping through the classification
+        tree"""
+        
         tests = list(itertools.ifilter(
             lambda x: x.startswith('test'), dir(self)))
         for test in tests:
@@ -67,13 +93,13 @@ class Classifier(object):
         """Initialize the classifier with a transient and a classification
         starting point
 
-        arguments
-
-        - transient: a Transient object
-
-        - base: The starting class from which the classification logic follows.
-                The base class normally calls several other classes that
-                classify various transient.
+        :argument transient: the transient to be classified
+        :type transient: Transient
+        :argument base: The starting class from which the
+            classification logic follows.  The base class normally
+            calls several other classes that classify various
+            transient.
+        :type base: (sub)class of Branch
         """
 
         self.transient = transient
@@ -83,5 +109,12 @@ class Classifier(object):
         super(Classifier, self).__init__(*args, **kwargs)
 
     def classify(self):
+        """Start the actual classification
+
+        :returns: weights for each possible classification: each tuple
+            containing a description and a weight
+        :rtype: list of two-tuples
+        """
+        
         self.results = self.base(self.transient).classify()
         return self.results

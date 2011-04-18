@@ -1,9 +1,11 @@
-__author__ = 'Evert Rol / TKP software group'
-__email__ = 'evert.astro@gmail.com'
-__contact__ = __author__ + ', ' + __email__
-__copyright__ = '2010, University of Amsterdam'
-__version__ = '0.2'
-__last_modification__ = '2010-08-24'
+"""
+
+.. module::
+   :synposis: Obtain light curve characteristics of a transient source
+   
+.. moduleauthor: Evert Rol, Transient Key Project <software@transientskp.org>
+
+"""
 
 
 from datetime import timedelta

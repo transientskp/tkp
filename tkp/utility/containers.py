@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 #
 # LOFAR Transients Key Project
 #
@@ -9,19 +11,19 @@ lightcurves, detections, sources, etc -- that the pipeline must handle.
 """
 
 import logging
-
 import numpy
-
+import pylab
 from ..utility.exceptions import TKPException, TKPDataBaseError
 
 
 class ObjectContainer(list):
-    """
-    A container class for objects. What sort of objects? Well, anything
-    that has a position and we want to keep lists of, really. So detections
-    (ie, an individual source measurement on an image), sources (ie all the
-    detections of a given object in a given image stack) and lightcurves (ie,
-    all the sources associated with a given object through time).
+    """A container class for objects.
+
+    What sort of objects? Well, anything that has a position and we
+    want to keep lists of, really. So detections (ie, an individual
+    source measurement on an image), sources (ie all the detections of
+    a given object in a given image stack) and lightcurves (ie, all
+    the sources associated with a given object through time).
 
     You probably don't want to use this on it's own: see SextractionResults,
     TargetList or source for more useful derived classes.

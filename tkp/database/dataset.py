@@ -26,8 +26,14 @@ class DataSet(list):
     """
     def __init__(self, name, dbconnection=None, id=None):
         """
-        @type name: string
-        @param name: Name of this DataSet.
+
+        :argument name: Dataset name
+
+        :keyword dbconnection: database connection object
+
+        :keyword id: ID of the dataset in the database. If None, a new
+        ID will be created.
+        
         """
         self.name = name
         self.dbconnection = dbconnection
@@ -38,7 +44,8 @@ class DataSet(list):
 
     @property
     def id(self):
-        """
+        """Add a dataset ID to the database
+        
         A dataset will be added to the database. A dataset id will be
         generated for every dataset name. If the name already exists the
         rerun value in the table will be incremented by 1. If the database is

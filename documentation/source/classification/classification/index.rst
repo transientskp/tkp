@@ -1,8 +1,8 @@
 .. _manual_classification_module:
 
-+++++++++++++++++++++++++++++++++
-Manual classification TKP modules
-+++++++++++++++++++++++++++++++++
++++++++++++++++++++++++++++++
+Manual classification package
++++++++++++++++++++++++++++++
 
 Modules from ``tkp.classification.manual``
 

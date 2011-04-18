@@ -1,8 +1,8 @@
 .. _utility_package:
 
-+++++++++++++++++++
-TKP Utility package
-+++++++++++++++++++
++++++++++++++++
+Utility package
++++++++++++++++
 
 Modules from ``tkp.utility``
 

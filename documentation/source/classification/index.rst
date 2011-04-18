@@ -1,8 +1,8 @@
 .. _modules:
 
-++++++++++++++++++++++++++
-Classification TKP modules
-++++++++++++++++++++++++++
+++++++++++++++++++++++
+Classification package
+++++++++++++++++++++++
 
 Modules from ``tkp.classification``
 

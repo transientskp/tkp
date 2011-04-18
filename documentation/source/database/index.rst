@@ -1,8 +1,8 @@
 .. _database_module:
 
-++++++++++++++++++++
-TKP database package
-++++++++++++++++++++
+++++++++++++++++
+database package
+++++++++++++++++
 
 Modules from the ``tkp.database`` package.
 

@@ -1,7 +1,7 @@
 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-:mod:`tkp.sourcefinder.gaussian` -- Image container classes
+:mod:`tkp.utility.gaussian` -- Image container classes
 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-.. automodule:: tkp.sourcefinder.accessors
+.. automodule:: tkp.utility.accessors
    :synopsis: Image container classes
    :members:

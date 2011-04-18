@@ -1,8 +1,8 @@
 .. _features:
 
-+++++++++++++++++++++++++
-Feature extraction module
-+++++++++++++++++++++++++
+++++++++++++++++++++++++++
+Feature extraction package
+++++++++++++++++++++++++++
 
 Routines from ``tkp.classification.features``
 

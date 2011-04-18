@@ -1,8 +1,8 @@
 .. _sourcefinder_module:
 
-++++++++++++++++++++++++
-TKP sourcefinder package
-++++++++++++++++++++++++
+++++++++++++++++++++
+sourcefinder package
+++++++++++++++++++++
 
 Modules from ``tkp.sourcefinder``
 

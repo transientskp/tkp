@@ -12,7 +12,6 @@ Contents:
 .. toctree::
    :maxdepth: 2
 
-   introduction/index
    database/index
    sourcefinder/index
    utility/index

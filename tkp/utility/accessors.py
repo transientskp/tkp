@@ -305,7 +305,7 @@ class FitsFile(DataAccessor):
         """
         if hasattr(self, "filename"):
             hdr = pyfits.open(self.filename)[0].header
-            if hdr in attrname:
+            if attrname in hdr:
                 return hdr[attrname]
         raise AttributeError(attrname)
 

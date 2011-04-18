@@ -135,7 +135,7 @@ class wcstoolsTest(unittest.TestCase):
     def testLoad(self):
         import ctypes
         try:
-            wcstools = ctypes.cdll.LoadLibrary(coordinates.wcstools_name)
+            wcstools = ctypes.cdll.LoadLibrary(coordinates.WCSTOOLS_NAME)
         except OSError, message:
             self.fail(message)
 

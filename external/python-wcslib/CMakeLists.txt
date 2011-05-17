@@ -1,4 +1,3 @@
-
 if (BOOST_INCLUDES)
   include_directories (${BOOST_INCLUDES})
 endif (BOOST_INCLUDES)
@@ -14,9 +13,8 @@ if (WCSLIB_INCLUDES)
 endif (WCSLIB_INCLUDES)
 
 add_library (wcslib SHARED wcslib.cpp)
-message(STATUS "boost python lib = ${Boost_PYTHON_LIBRARY}")
 
-target_link_libraries (wcslib wcs ${Boost_PYTHON_LIBRARY})
+target_link_libraries (wcslib ${WCSLIB_LIBRARIES} ${Boost_PYTHON_LIBRARY})
 set_target_properties(wcslib
   PROPERTIES
   PREFIX ""

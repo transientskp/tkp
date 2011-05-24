@@ -86,6 +86,7 @@ FROM
 /* '/home/scheers/tkp-code/pipe/database/catfiles/wenss/WENSS-all_strip.csv' */
 /* '/export/scratch1/bscheers/code/pipe/database/catfiles/wenss/WENSS-all_strip.csv' */
 /* '/zfs/heastro-plex/scratch/evert/catfiles/WENSS-all_strip.csv' */
+/* '/Users/evert/lofar/data/catalogs/WENSS-all_strip.csv' */
 USING DELIMITERS ';', '\n' 
 ;
 

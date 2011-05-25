@@ -6,11 +6,6 @@ import os
 import tkp.config
 
 
-
-# To do: find a smart/good way to capture the output.
-# Perhaps in an external shell script that runs this
-# test.
-
 class TestLogger(unittest.TestCase):
 
     def setUp(self):

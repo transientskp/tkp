@@ -6,7 +6,8 @@
 
 import logging
 import contextlib
-import monetdb.sql as db
+import monetdb
+import monetdb.sql
 from tkp.config import config
 from ..utility.exceptions import TKPException, TKPDataBaseError
 
@@ -14,114 +15,71 @@ from ..utility.exceptions import TKPException, TKPDataBaseError
 ENABLED = config['database']['enabled']
 HOST = config['database']['host']
 USER = config['database']['user']
-PASSWD = config['database']['password']
+PASSWORD = config['database']['password']
 DBASE = config['database']['name']
 PORT = config['database']['port']
 
 
-def connection(hostname=HOST, username=USER, password=PASSWD, database=DBASE,
-               dbport=PORT):
-    """Returns a connection object or raise an error if not enabled
+class DataBase(object):
+    """An object representing a database connection
 
-    Use defaults from the config module, but the user can override these
+    This object only represents the database; it takes care of the
+    login procedure etc, but doesn't care about the actual contents of
+    the database, such as the tables.
+
+    It keeps a a connection object and a cursor object around as well,
+    which can readily be accessed. Usage example:
+
+    >>> db = DataBase(host, dbname, user, password)
+    >>> db
+    <tkp.database.database.DataBase object at 0x1004959d0>
+    >>> db.connection
+    <monetdb.sql.connections.Connection instance at 0x10149a5f0>
+    >>> db.cursor
+    <monetdb.sql.cursors.Cursor instance at 0x10149a710>
+
+    (Note: this example is not doctest compatible.)
     """
 
-    if not ENABLED:
-        raise TKPDataBaseError("Database is not enabled")
-    conn = db.connect(hostname=hostname, username=username,
-                      password=password, database=database, port=dbport)
-    return conn
+    # Assign this class variable for convenience
+    Error = monetdb.sql.Error
+
+    def __init__(self, hostname=HOST, dbname=DBASE, user=USER,
+                 password=PASSWORD, port=PORT):
+        """Set up a database connection object
+
+        Raises an exception if not enabled.
+
+        Use defaults from the config module, but the user can override these
+        """
+        self.hostname = hostname
+        self.name = dbname
+        self.user = user
+        self.password = password
+        self.port = port
+        self.connection = None
+        if not ENABLED:
+            raise TKPDataBaseError("Database is not enabled")
+        self.connect()
+
+    def __del__(self):
+        self.close()
+
+    def connect(self):
+        """Connect to the database"""
+        
+        self.connection = monetdb.sql.connect(
+            hostname=self.hostname, username=self.user, password=self.password,
+            database=self.name, port=self.port)
+        self.cursor = self.connection.cursor()
 
 
-def connection_to_db(usr, dbname):
-    """Returns a connection object or raise an error if not enabled"""
+    def close(self):
+        """Explicitly close the database connection"""
 
-    user = usr
-    dbase = dbname
-    if not ENABLED:
-        raise TKPDataBaseError("Database is not enabled")
-    else:
-        conn = db.connect(hostname=HOST, username=USER, password=PASSWD,
-                          port=PORT)
-    return conn
-
-
-def call_proc(conn, procname):
-    """Calls a particular database procedure"""
-
-    if not ENABLED:
-        raise TKPDataBaseError("Database is not enabled")
-    cursor = conn.cursor()
-    try:
-        cursor.execute(procname)
-    except dbError, e:
-        logging.warn("DB procedure %s failed" % (procname,))
-        raise
-    finally:
-        cursor.close()
-        conn.commit()
-
-
-def save_to_db(dataset, objectlist, conn):
-    """Save a list of detections belonging to a particular dataset to
-    the database"""
-
-    cursor = conn.cursor()
-    try:
-        for det in objectlist:
-            ##print "det.serializeAll():",det.serializeAll()
-            ##print "det.serialize()[1]:",det.serialize()[1]
-            ## TODO: how to handle weird fits?
-            ## Here we exclude a position in an image with id 327...
-            ##if ((det.serialize()[0] == 327) and (det.serialize()[1] >
-            # 161.205 and det.serialize()[1] < 161.212) and
-            # (det.serialize()[2] > 21.617 and det.serialize()[2] < 21.628)):
-            ##    print "\nNOTE: Not inserted :\n",det.serialize(), "\n"
-            ##else:
-            procInsert = "CALL InsertSrc(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)" % (
-                dataset.id, ) + det.serialize()
-            ##print procInsert
-            cursor.execute(procInsert)
-            ##cursor.execute("COPY INTO insertedsources " + \
-            ##               "FROM STDIN UNSING DELIMITERS '\r\n','\t' ", (
-            ##det.serialize(),))
-    except db.Error, e:
-        logging.warn("Insert source %s failed" % str((dataset.id, ) +
-                                                     det.serialize()))
-        raise
-    finally:
-        cursor.close()
-    conn.commit()
-
-
-def assoc_in_db(imageid, conn):
-    """Associate the sources found in imageid with the database catalogs"""
-
-    procAssoc = "CALL AssocXSourceByImage(%d)" % (imageid)
-    try:
-        call_proc(conn, procAssoc)
-    except db.Error, e:
-        logging.warn("Associating image %s failed" % (str(imageid),))
-        raise
-
-
-def assoc_xsrc_to_xsrc(imageid, conn):
-    """Associate sources with sources from a previous image"""
-
-    procAssoc = "CALL AssocXSources2XSourcesByImage(%d)" % (imageid)
-    try:
-        call_proc(conn, procAssoc)
-    except db.Error, e:
-        logging.warn("Associating image %s failed." % (str(imageid),))
-        raise
-
-
-def assoc_xsrc_to_cat(imageid, conn):
-    """Associate sources with the current catalog"""
-
-    procAssoc = "CALL AssocXSources2CatByImage(%d)" % (imageid)
-    try:
-        call_proc(conn, procAssoc)
-    except db.Error, e:
-        logging.warn("Associating image %s failed." % (str(imageid), ))
-        raise
+        try:
+            self.connection.close()
+        except monetdb.monetdb_exceptions.Error:
+            pass
+        except AttributeError:
+            pass

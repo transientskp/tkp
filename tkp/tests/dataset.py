@@ -1,4 +1,8 @@
 import unittest
+try:
+    unittest.TestCase.assertIsInstance
+except AttributeError:
+    import unittest2 as unittest
 import sys
 import datetime
 import monetdb

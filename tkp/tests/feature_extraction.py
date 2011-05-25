@@ -17,7 +17,6 @@ from optparse import OptionParser
 from datetime import datetime, timedelta
 import logging
 import numpy
-from tkp.database.database import connection as dbconnection
 from tkp.classification.features import lightcurve
 from tkp.classification.manual.utils import DateTime
 

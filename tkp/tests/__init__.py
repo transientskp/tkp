@@ -1,6 +1,8 @@
 import unittest
 
 testfiles = [
+    'tkp.tests.database',
+    'tkp.tests.dataset',
     'tkp.tests.classification',
     'tkp.tests.config',
     'tkp.tests.coordinates',

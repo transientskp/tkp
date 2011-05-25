@@ -27,6 +27,7 @@ reads of this file.
 
 import ConfigParser
 import os
+import logging
 
 
 _TO_DO = """\
@@ -124,6 +125,12 @@ def set_default_config():
     config.set('source_extraction', 'eps_ra', '0.')
     config.set('source_extraction', 'eps_dec', '0.')
 
+    config.add_section('logging')
+    config.set('logging', 'level', 'ERROR')
+    config.set('logging', 'format',
+               '%%(asctime)s - %%(name)s - %%(levelname)s - %%(message)s')
+    config.set('logging', 'filename', '')
+
     from tkp.tests import __path__ as testpath
     config.add_section('test')
     config.set('test', 'datapath', os.path.join(testpath[0], "data"))
@@ -190,7 +197,7 @@ def parse_config(config):
               ('source_extraction', 'frac_flux_cal_error'),
               ('source_extraction', 'eps_ra'),
               ('source_extraction', 'eps_dec'))
-    configuration.update(dict([(section, dict(config.items(section)))
+    configuration.update(dict([(section, dict(config.items(section, raw=True)))
                                for section in config.sections()]))
     for section, option in booleans:
         try:
@@ -224,6 +231,28 @@ incorrect type for structuring_element in section source_extraction""")
     return configuration
 
 
+def configure_logger(config):
+    """Configure the TKP logger"""
+
+    levels = {
+        'CRITICAL': logging.CRITICAL,
+        'ERROR': logging.ERROR,
+        'WARNING': logging.WARNING,
+        'INFO': logging.INFO,
+        'DEBUG': logging.DEBUG
+        }
+    # Don't simply take the dict as is.
+    # Eg, an empty filename means using a StreamHandler, otherwise a FileHandler
+    if config['filename']:
+        handler = logging.FileHandler(config['filename'])
+    else:
+        handler = logging.StreamHandler()
+    handler.setFormatter(logging.Formatter(config['format']))
+    logger = logging.getLogger('tkp')
+    logger.addHandler(handler)
+    logger.setLevel(levels[config['level'].upper()])
+
+
 # This is a bit of a dirty trick; using some kind of singleton class
 # with a class variable may be better, though I guess it's currently
 # similar: a singleton module with module variable.
@@ -232,6 +261,7 @@ try:
 except NameError, exc:
     config = read_config(set_default_config())
     config = parse_config(config)
+    configure_logger(config['logging'])
     HAS_READ = True
 else:
     pass

@@ -3,6 +3,7 @@
 import unittest
 import tkp.utility.coordinates as coordinates
 
+
 class ratohmsTest(unittest.TestCase):
     knownValues = ((0, (0, 0, 0)),
         (90, (6, 0, 0)),
@@ -54,8 +55,6 @@ class hmstoraTest(unittest.TestCase):
         ((18, 0, 0), 270),
         ((0, 0, 24), 0.1),
         ((0, 4, 0), 1.0),
-        ((36, 0, 0), 180),
-        ((48, 0, 0), 0)
         )
 
     def testknownValues(self):
@@ -67,17 +66,24 @@ class hmstoraTest(unittest.TestCase):
         self.assertRaises(TypeError, coordinates.hmstora, 'a')
 
     def testSanity(self):
-        import random
-        h = random.randrange(0, 24)
-        m = random.randrange(0, 60)
-        s = random.randrange(0, 60)
-        ra = coordinates.hmstora(h, m, s)
-        ch, cm, cs = coordinates.ratohms(ra)
-        self.assertEqual(h, ch)
-        self.assertEqual(m, cm)
-        self.assertAlmostEqual(s, cs)
+        for h in range(0, 24):
+            for m in range(0, 60):
+                for s in range(0, 60):
+                    ra = coordinates.dmstodec(h, m, s)
+                    ch, cm, cs = coordinates.dectodms(ra)
+                    self.assertEqual(h, ch)
+                    self.assertEqual(m, cm)
+                    self.assertAlmostEqual(s, cs)
 
-
+    def testRange(self):
+        self.assertRaises(ValueError, coordinates.hmstora, 24, 0, 1)
+        self.assertRaises(ValueError, coordinates.hmstora, 25, 0, 0)
+        self.assertRaises(ValueError, coordinates.hmstora, -1, 0, 0)
+        self.assertRaises(ValueError, coordinates.hmstora, 0, -1, 0)
+        self.assertRaises(ValueError, coordinates.hmstora, -1, 0, -1)
+        self.assertRaises(ValueError, coordinates.hmstora, 12, 60, 0)
+        self.assertRaises(ValueError, coordinates.hmstora, 12, 0, 60)
+        
 class dmstodecTest(unittest.TestCase):
     knownValues = (((0, 0, 0), 0),
         ((45, 0, 0), 45),
@@ -97,18 +103,31 @@ class dmstodecTest(unittest.TestCase):
         self.assertRaises(TypeError, coordinates.dmstodec, 'a')
 
     def testSanity(self):
-        import random
-        d = random.randrange(-90, 90)
-        m = random.randrange(0, 60)
-        s = random.randrange(0, 60)
-        dec = coordinates.dmstodec(d, m, s)
+        for d in range(-89, 90):
+            for m in range(0, 60):
+                for s in range(0, 60):
+                    dec = coordinates.dmstodec(d, m, s)
+                    cd, cm, cs = coordinates.dectodms(dec)
+                    self.assertEqual(d, cd)
+                    self.assertEqual(m, cm)
+                    self.assertAlmostEqual(s, cs)
+        dec = coordinates.dmstodec(90, 0, 0)
         cd, cm, cs = coordinates.dectodms(dec)
-        self.assertEqual(d, cd)
-        self.assertEqual(m, cm)
-        self.assertAlmostEqual(s, cs)
+        self.assertEqual(90, cd)
+        self.assertEqual(0, cm)
+        self.assertAlmostEqual(0, cs)
+        dec = coordinates.dmstodec(0, -30, 0)
+        cd, cm, cs = coordinates.dectodms(dec)
+        self.assertEqual(0, cd)
+        self.assertEqual(-30, cm)
+        self.assertAlmostEqual(0, cs)
 
     def testRange(self):
         self.assertRaises(ValueError, coordinates.dmstodec, 91, 0, 0)
+        self.assertRaises(ValueError, coordinates.dmstodec, 90, 0, 1)
+        self.assertRaises(ValueError, coordinates.dmstodec, -90, 0, 1)
+        self.assertRaises(ValueError, coordinates.dmstodec, 0, 60, 0)
+        self.assertRaises(ValueError, coordinates.dmstodec, 0, 0, 60)
 
 
 class juliandate(unittest.TestCase):

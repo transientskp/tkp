@@ -173,16 +173,32 @@ def dectodms(decdegs):
 
     """
 
-    if abs(decdegs) > 90:
-        raise ValueError
+    sign = -1 if decdegs < 0 else 1
+    decdegs = abs(decdegs)
+    if decdegs > 90:
+        raise ValueError("coordinate out of range")
     decd = int(decdegs)
-    decm = int((decdegs-decd)*60)
-    decs = (((decdegs-decd)*60)-decm)*60
-    if decd < 0:
-        decm = -decm
-        decs = -decs
-    dec = (decd, decm, decs)
-    return dec
+    decm = int((decdegs - decd) * 60)
+    decs = (((decdegs - decd) * 60) - decm)*60
+    # Necessary because of potential roundoff errors
+    if decs - 60 > -1e-7:
+        decm += 1
+        decs = 0
+        if decm == 60:
+            decd += 1
+            decm = 0
+            if decd > 90:
+                raise ValueError("coordinate out of range")
+            
+    if sign == -1:
+        if decd == 0:
+            if decm == 0:
+                decs = -decs
+            else:
+                decm = -decm
+        else:
+            decd = -decd
+    return (decd, decm, decs)
 
 
 def hmstora(rah, ram, ras):
@@ -196,8 +212,13 @@ def hmstora(rah, ram, ras):
     radegs -- RA in decimal degrees
 
     """
-    hrs = (float(rah)+(float(ram)/60)+(float(ras)/3600.0)) % 24
-
+    if rah > 360 or ram > 59 or ras > 59:
+        raise ValueError("coordinate out of range")
+    if rah < 0 or ram < 0 or ras < 0:
+        raise ValueError("coordinate out of range")
+    hrs = (float(rah)+(float(ram)/60)+(float(ras)/3600.0))
+    if hrs > 24:
+        raise ValueError("coordinate out of range")
     return 15*hrs
 
 
@@ -212,16 +233,18 @@ def dmstodec(decd, decm, decs):
     decdegs -- Dec in decimal degrees
 
     """
-    if decd < 0:
-        decm = -decm
-        decs = -decs
+    if decd > 90 or decd < -90:
+        raise ValueError("degrees out of range")
+    if decm > 59 or decm < -59:
+        raise ValueError("minutes out of range")
+    if decs > 59 or decs < -59:
+        raise ValueError("seconds out of range")
+    sign = -1 if decd < 0 or decm < 0 or decs < 0 else 1
+    decdegs = abs(decd) + abs(decm) / 60. + abs(decs)/3600.
+    if decdegs > 90:
+        raise ValueError("coordinates out of range")
 
-    decdegs = float(decd) + (float(decm) / 60) + (float(decs)/3600.0)
-
-    if abs(decdegs) > 90:
-        raise ValueError
-
-    return decdegs
+    return sign*decdegs
 
 
 def angsep(ra1, dec1, ra2, dec2):

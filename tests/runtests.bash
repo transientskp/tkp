@@ -7,6 +7,7 @@ then
 else
     export PYTHONPATH=${PYTHONPATH}:${pythonpath}
 fi
+
 ld_library_path=./tkp/trunk/external/libwcstools
 if [ -z "$LD_LIBRARY_PATH" ]
 then
@@ -22,6 +23,9 @@ then
 else
     export DYLD_LIBRARY_PATH=${DYLD_LIBRARY_PATH}:${ld_library_path}
 fi
+
+# Extra paths needed on CEP1
+export PYTHONPATH=./tkp/python-packages/lib:${PYTHONPATH}:/opt/pythonlibs/lib/python2.5/site-packages/:/opt/MonetDB/
 
 dir=`dirname $0`
 echo "Running python TKP tests"

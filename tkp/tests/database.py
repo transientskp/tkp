@@ -10,12 +10,18 @@ class TestDatabase(unittest.TestCase):
 
     def setUp(self):
         # Connect and verify that the default database is available
-        self.database = tkp.database.database.DataBase()
+        try:
+            self.database = tkp.database.database.DataBase()
+        except monetdb.monetdb_exceptions.DatabaseError:
+            self.database = None
 
     def tearDown(self):
-        self.database.close()
+        if self.database:
+            self.database.close()
 
     def test_basics(self):
+        if not self.database:
+            self.skipTest("Database not available.")
         self.assertIsInstance(self.database, tkp.database.database.DataBase)
         self.assertIsInstance(self.database.connection,
                               monetdb.sql.connections.Connection)
@@ -23,6 +29,8 @@ class TestDatabase(unittest.TestCase):
                               monetdb.sql.cursors.Cursor)
 
     def test_failures(self):
+        if not self.database:
+            self.skipTest("Database not available.")
         self.assertRaises(monetdb.monetdb_exceptions.DatabaseError,
                           tkp.database.database.DataBase,
                           hostname='localhost',

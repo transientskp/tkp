@@ -1,8 +1,8 @@
 #
 # LOFAR Transients Key Project
-#
-# General purpose astronomical coordinate handling routines.
-#
+"""
+General purpose astronomical coordinate handling routines.
+"""
 
 
 import math
@@ -18,9 +18,8 @@ import ctypes.util
 # Note that wcstools takes a +ve longitude as WEST.
 CORE_LAT = 52.9088
 CORE_LON = -6.8689
-#You'll need the libwcstools library (available in the TKP repostory as
-#external/libwcstools; in theory you just need to run "make") somewhere on
-#the ctypes library search path.
+# We'll need the libwcstools library (available in the TKP repository as
+# external/libwcstools) somewhere on the ctypes library search path.
 WCSTOOLS_NAME = "libwcstools.so"
 
 
@@ -493,7 +492,7 @@ def convert_coordsystem(ra, dec, insys, outsys):
     return c_ra.value, c_dec.value
 
 
-class wcs(wcslib.wcs):
+class WCS(wcslib.wcs):
     """
     wcslib.wcs, extended to support different coordinate systems using
     wcstools.

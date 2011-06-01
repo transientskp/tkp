@@ -1,18 +1,21 @@
 #
 # LOFAR Transients Key Project
 #
+
+# NOTE: use of numpy.squeeze() appears a bad idea, in the case of
+# (unlikely, but not impossible) [1, Y] or [X, 1] shaped images...
+
 """
 Data accessors.
 
 These can be used to populate ImageData objects based on some data source
 (FITS file, array in memory... etc).
 """
-# Python standard library
 import datetime
 import logging
 import dateutil.parser
 import pytz
-# Other external libraries
+from .coordinates import WCS
 import pyfits
 import numpy
 
@@ -29,35 +32,16 @@ class DataAccessor(object):
     def _beamsizeparse(self, bmaj, bmin, bpa):
         """Needs beam parameters, no defaults."""
 
-        self.semimaj = (bmaj / 2.) * (numpy.sqrt(
+        semimaj = (bmaj / 2.) * (numpy.sqrt(
             (numpy.sin(numpy.pi * bpa / 180.) ** 2) /
-            (self.cdelt1 ** 2) + (numpy.cos(numpy.pi * bpa / 180.) ** 2) /
-            (self.cdelt2 ** 2)))
-        self.semimin = (bmin / 2.) * (numpy.sqrt(
+            (self.wcs.cdelt[0] ** 2) + (numpy.cos(numpy.pi * bpa / 180.) ** 2) /
+            (self.wcs.cdelt[1] ** 2)))
+        semimin = (bmin / 2.) * (numpy.sqrt(
             (numpy.cos(numpy.pi * bpa / 180.) ** 2) /
-            (self.cdelt1 ** 2) + (numpy.sin(numpy.pi * bpa / 180.) ** 2) /
-            (self.cdelt2 ** 2)))
-        self.theta = numpy.pi * bpa / 180
-
-
-class DataArray(DataAccessor):
-    """
-    Potential source for :class:`tkp_lib.image.ImageData`, based on an
-    in-memory array.
-    """
-    def __init__(self, data, centrera, centredec, centrerapix, centredecpix,
-        raincr, decincr, ctype1, ctype2):
-        self.data = data
-
-        # And this, children, is why we should always call things by the same
-        # names...
-        self.centrera, self.centredec = centrera, centredec
-        self.crval1, self.crval2 = centrera, centredec
-        self.centrerapix, self.centredecpix = centrerapix, centredecpix
-        self.crpix1, self.crpix2 = centrerapix, centredecpix
-        self.raincr, self.decincr = raincr, decincr
-        self.cdelt1, self.cdelt2 = raincr, decincr
-        self.ctype1, self.ctype2 = ctype1, ctype2
+            (self.wcs.cdelt[0] ** 2) + (numpy.sin(numpy.pi * bpa / 180.) ** 2) /
+            (self.wcs.cdelt[1] ** 2)))
+        theta = numpy.pi * bpa / 180
+        self.beam = (semimaj, semimin, theta)
 
 
 class AIPSppImage(DataAccessor):
@@ -68,27 +52,39 @@ class AIPSppImage(DataAccessor):
     James Miller-Jones provided me with. This is probably not a good
     assumption...
     """
-    def __init__(self, filename, plane=0, beam=False):
+    def __init__(self, filename, plane=0, beam=None):
         self.filename = filename
         self.plane = plane
         self._coordparse()
-        bmaj, bmin, bpa = beam
-        self._beamsizeparse(bmaj, bmin, bpa)
+        if beam:
+            bmaj, bmin, bpa = beam
+            self._beamsizeparse(bmaj, bmin, bpa)
+        else:
+            self.beam = None
 
     def _get_table(self):
         from pyrap.tables import table
         return table(self.filename, ack=False)
 
     def _coordparse(self):
+        self.wcs = WCS()
         my_coordinates = self._get_table().getkeyword('coords')['direction0']
-        self.crval1, self.crval2 = my_coordinates['crval']
-        self.crpix1, self.crpix2 = my_coordinates['crpix']
-        self.cdelt1, self.cdelt2 = my_coordinates['cdelt']
+        self.wcs.crval = my_coordinates['crval']
+        self.wcs.crpix = my_coordinates['crpix']
+        self.wcs.cdelt = my_coordinates['cdelt']
+        self.wcs.ctype = ['unknown', 'unknown']
+        # What about other projections?!
         if my_coordinates['projection'] == "SIN":
             if my_coordinates['axes'][0] == "Right Ascension":
-                self.ctype1 = "RA---SIN"
+                self.wcs.ctype[0] = "RA---SIN"
             if my_coordinates['axes'][1] == "Declination":
-                self.ctype2 = "DEC--SIN"
+                self.wcs.ctype[1] = "DEC--SIN"
+        # Rotation, units? We better set a default
+        self.wcs.crota = (0., 0.)
+        self.wcs.cunits = ('unknown', 'unknown')
+        # Update WCS
+        self.wcs.wcsset()
+        self.pix_to_position = self.wcs.p2s
 
     @property
     def data(self):
@@ -128,8 +124,7 @@ class FitsFile(DataAccessor):
         if not beam:
             self._beamsizeparse(hdulist)
         else:
-            bmaj, bmin, bpa = beam
-            super(FitsFile, self)._beamsizeparse(bmaj, bmin, bpa)
+            super(FitsFile, self)._beamsizeparse(*beam)
 
         # Attempt to do something sane with timestamps.
         try:
@@ -167,22 +162,33 @@ class FitsFile(DataAccessor):
     def _coordparse(self, hdulist):
         """Set some 'shortcut' variables for access to the coordinate
         parameters in the FITS file header.
-
-        @param hdulist: hdulist to parse
-        @type hdulist: hdulist
         """
         # These are maintained for legacy reasons -- better to access by
         # header name through __getattr__?
+        self.wcs = WCS()
+        header = hdulist[0].header
         try:
-            self.centrera = hdulist[0].header['crval1']
-            self.centredec = hdulist[0].header['crval2']
-            self.centrerapix = hdulist[0].header['crpix1']
-            self.centredecpix = hdulist[0].header['crpix2']
-            self.raincr = hdulist[0].header['cdelt1']
-            self.decincr = hdulist[0].header['cdelt2']
-        except KeyError, error:
+            self.wcs.crval = header['crval1'], header['crval2']
+            self.wcs.crpix = header['crpix1'], header['crpix2']
+            self.wcs.cdelt = header['cdelt1'], header['cdelt2']
+        except KeyError:
             logging.warn("Coordinate system not specified in FITS")
             raise
+        try:
+            self.wcs.ctype = header['ctype1'], header['ctype2']
+        except KeyError:
+            self.ws.ctype = 'unknown', 'unknown'
+        try:
+            self.wcs.crota = float(header['crota1']), float(header['crota2'])
+        except KeyError:
+            self.ws.crota = 0., 0.
+        try:
+            self.wcs.cunits = header['cunit1'], header['cunit2']
+        except KeyError:
+            self.wcs.cunits = 'unknown', 'unknown'
+        
+        self.wcs.wcsset()
+        self.pix_to_position = self.wcs.p2s
 
     def _freqparse(self, hdulist):
         """
@@ -290,9 +296,7 @@ class FitsFile(DataAccessor):
                 raise ValueError(
                     "Basic processing is impossible without "
                     "adequate information about the resolution element.")
-
         hdulist.close()
-
         super(FitsFile, self)._beamsizeparse(bmaj, bmin, bpa)
 
     def __getattr__(self, attrname):

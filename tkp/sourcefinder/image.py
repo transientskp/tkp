@@ -39,18 +39,6 @@ class ImageData(object):
     This is your primary contact point for interaction with images: it icludes
     facilities for source extraction and measurement, etc.
 
-    *datasource* should be an instance of
-    :class:`tkp.utility.accessors.DataAccessor` which provides access to some
-    image data for this instance.  Note that requests for instance variables
-    which are not defined in this class are automatically passed through to
-    the data accessor.
-
-    *dataset* is only used if the ImageData is a member of a
-    :class:`tkp.utility.dataset.DataSet`.
-    It is required if this ImageData is to be used in conjunction with a
-    database. It provides a means of ordering images within the database
-    for source association etc.
-    For now, consecutive images (in time) should be processed consecutively.
     """
     ###########################################################################
     #                                                                         #
@@ -60,98 +48,68 @@ class ImageData(object):
     # but should also be pickleable (__getstate__() and __setstate__()).      #
     #                                                                         #
     ###########################################################################
-    def __init__(self, datasource, conn=None, dataset=None):
+    def __init__(self, data, beam, wcs):
         """
         Sets up an ImageData object.
 
-        The ImageData object requires data source (FITS file, HDF5 file,
-        etc) accessed through a DataAccessor.
+        Args:
 
-        :argument datasource: datasource
-        :type datasource: DataAccessor
-        :keyword conn: database connection object
-        :keyword dataset: DataSet object
+            data (2D numpy.ndarray): actual image data
+
+            wcs (utility.coordinates.wcs): world coordinate system
+                specification
+
+            bream (3-tuple): beam shape specification as
+                (semimajor, semiminor, theta)
         """
 
-        self.datasource = datasource
-        self.conn = conn
-        self.dataset = dataset
-        self.beam = (self.semimaj, self.semimin, self.theta)
-        self._localinit()
-        self._id
-
-    @property
-    def _id(self):
-        """An image will be added to the database.
-
-        An image id will be generated (inside db) for every image.
-        An image should belong to a dataset, which will be referenced by
-        the dataset id (ds_id).
-        If the database is not enabled the id is set to "None".
-
-        The DB function
-        'insertImage(ds_id, tau, band, tau_time, freq_eff,
-                     taustart_timestamp, url)'
-        is called. An image id will be generated under the specified ds_id.
-        The function return value is the just generated image id.
-        """
-
-        if self.conn is not None:
-            # params[3] represents the obstime in timestamp format
-            # As from python 2.6 we can use
-            # obstime.strftime("%Y-%m-%d-%H:%M:%S.%f")
-            params = [
-                self.dataset.id,
-                self.datasource.freqeff,
-                self.datasource.freqbw,
-                (self.datasource.obstime.strftime("%Y-%m-%d-%H:%M:%S") +
-                 "." + str(self.datasource.obstime.microsecond)),
-                self.datasource.filename
-                ]
-            try:
-                cursor = self.conn.cursor()
-                cursor.execute("""SELECT insertImage(%s,%s,%s,%s,%s);""",
-                               params)
-                self.conn.commit()
-                self.id = cursor.fetchone()
-                cursor.close()
-            except DBError:
-                logging.warn("Insert Image for ds_id %s failed",
-                             self.dataset.id)
-                raise
-        else:
-            self.id = None
-
-    def _localinit(self):
-        """Perform local initialization of this ImageData's state.
-
-        This is used both by the objects __init__() method *and* by
-        __setstate__() to populate the attributes of the ImageData from its
-        standard sources. It assumes that self.datasource, and
-        self.dataset have already been set when the object was initialised.
-        """
-
+        # Do data, wcs and beam need deepcopy?
+        # Probably not (memory overhead, in particular for data),
+        # but then the user shouldn't change them outside ImageData in the
+        # mean time
+        self.rawdata = data   # a 2D numpy array
+        self.wcs = wcs   # a utility.coordinates.wcs instance
+        self.beam = beam   # tuple of (semimaj, semimin, theta)
         self.clip = {}
         self.labels = {}
         self.freq_low = 1
         self.freq_high = 1
+        #self._localinit()
 
-        # set up the world coordinate system
-        self.wcs = coordinates.wcs()
-        self.wcs.crval = (self.datasource.crval1, self.datasource.crval2)
-        self.wcs.crpix = (self.datasource.crpix1, self.datasource.crpix2)
-        self.wcs.cdelt = (self.datasource.cdelt1, self.datasource.cdelt2)
-        self.wcs.ctype = (self.datasource.ctype1, self.datasource.ctype2)
-        try:
-            self.wcs.crota = (self.datasource.crota1, self.datasource.crota2)
-        except AttributeError:
-            pass
-        try:
-            self.wcs.cunit = (self.datasource.cunit1, self.datasource.cunit2)
-        except AttributeError:
-            pass
-        self.wcs.wcsset()
-        self.pix_to_position = self.wcs.p2s
+#    def _localinit(self):
+#        """Perform local initialization of this ImageData's state.
+#
+#        This is used both by the objects __init__() method *and* by
+#        __setstate__() to populate the attributes of the ImageData from its
+#        standard sources. It assumes that self.datasource, and
+#        self.dataset have already been set when the object was initialised.
+#        """
+#
+#        # Note: where is the __setstate__? Is this a (hidden) inherited method?
+#        # Does it always call _localinit() then?
+#        # I've guessed not, hence _localinit() becomes obsolete.
+#
+#        self.clip = {}
+#        self.labels = {}
+#        self.freq_low = 1
+#        self.freq_high = 1
+#
+#        # set up the world coordinate system
+#        self.wcs = coordinates.wcs()
+#        self.wcs.crval = (self.datasource.crval1, self.datasource.crval2)
+#        self.wcs.crpix = (self.datasource.crpix1, self.datasource.crpix2)
+#        self.wcs.cdelt = (self.datasource.cdelt1, self.datasource.cdelt2)
+#        self.wcs.ctype = (self.datasource.ctype1, self.datasource.ctype2)
+#        try:
+#            self.wcs.crota = (self.datasource.crota1, self.datasource.crota2)
+#        except AttributeError:
+#            pass
+#        try:
+#            self.wcs.cunit = (self.datasource.cunit1, self.datasource.cunit2)
+#        except AttributeError:
+#            pass
+#        self.wcs.wcsset()
+#        self.pix_to_position = self.wcs.p2s
 
     ###########################################################################
     #                                                                         #
@@ -247,11 +205,6 @@ class ImageData(object):
         """Minimum pixel value (pre-background subtraction)"""
         return self.data.min()
 
-    @property
-    def rawdata(self):
-        """Raw numeric image data from accessor"""
-        return self.datasource.data
-
     def clearcache(self):
         """Zap any calculated data stored in this object.
 
@@ -272,13 +225,13 @@ class ImageData(object):
         if hasattr(self, 'residuals_from_deblending'):
             del(self.residuals_from_deblending)
 
-    def __getattr__(self, attrname):
-        """
-        Pass through unknown attributes to datasource.
-
-        @type attrname: string
-        """
-        return getattr(self.datasource, attrname)
+#    def __getattr__(self, attrname):
+#        """
+#        Pass through unknown attributes to datasource.
+#
+#        @type attrname: string
+#        """
+#        return getattr(self.datasource, attrname)
 
     ###########################################################################
     #                                                                         #
@@ -331,21 +284,22 @@ class ImageData(object):
         """
 
         mask = numpy.ones((self.xdim, self.ydim))
-        if max_degradation and self.wcs.ctype == ('RA---SIN', 'DEC--SIN'):
+        wcs = self.wcs
+        if max_degradation and wcs.ctype == ('RA---SIN', 'DEC--SIN'):
             max_angle = numpy.arccos(1./(1. + max_degradation))
             conv_factor = 0.5 * numpy.sqrt(2.) * numpy.sin(max_angle)
-            raincr_rad = numpy.radians(numpy.fabs(self.cdelt1))
-            decincr_rad = numpy.radians(numpy.fabs(self.cdelt2))
+            raincr_rad = numpy.radians(numpy.fabs(wcs.cdelt[0]))
+            decincr_rad = numpy.radians(numpy.fabs(wcs.cdelt[1]))
 
             delta_ra_pix = int(conv_factor/raincr_rad)
             delta_dec_pix = int(conv_factor/decincr_rad)
 
             # One added to lower limits to exclude lower bound.
             limits = numpy.array([
-                self.crpix1-delta_ra_pix,
-                self.crpix1 - 1 + delta_ra_pix,
-                self.crpix2 - delta_dec_pix,
-                self.crpix2 - 1 + delta_dec_pix])
+                wcs.crpix[0] - delta_ra_pix,
+                wcs.crpix[0] - 1 + delta_ra_pix,
+                wcs.crpix[1] - delta_dec_pix,
+                wcs.crpix[1] - 1 + delta_dec_pix])
             limits = numpy.where(limits > 0, limits, 0)
 
             mask[limits[0]:limits[1], limits[2]:limits[3]] = 0

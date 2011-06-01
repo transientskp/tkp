@@ -2,7 +2,7 @@
 
 import unittest
 import numpy
-import tkp.utility.utilities as utilities
+from tkp.utility import utilities
 from tkp.utility.uncertain import Uncertain
 
 class ErrorWeightedMeanTestCase(unittest.TestCase):

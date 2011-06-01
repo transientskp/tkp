@@ -9,7 +9,7 @@ import contextlib
 import monetdb
 import monetdb.sql
 from tkp.config import config
-from ..utility.exceptions import TKPException, TKPDataBaseError
+from ..utility.exceptions import TKPDataBaseError
 
 
 ENABLED = config['database']['enabled']

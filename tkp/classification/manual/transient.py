@@ -10,7 +10,8 @@ A Transient object class, that stores a variety of information related to any ty
 """
 
 
-from .utils import Position, DateTime
+from .utils import Position
+from .utils import DateTime
 
 
 class Transient(object):

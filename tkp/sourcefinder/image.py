@@ -20,6 +20,7 @@ try:
     import ndimage
 except ImportError:
     from scipy import ndimage
+import pyrap.images
 from tkp.config import config
 from tkp.utility import containers
 from tkp.utility import coordinates
@@ -661,7 +662,6 @@ class ImageData(object):
                 sci_labels[chunk] = numpy.where(sci_labels[chunk] == isl,
                                                 0, sci_labels[chunk])
 
-        import pyrap.images
         pyrap.images.image('', values=sci_labels).tofits(filename)
 
         return sci_labels

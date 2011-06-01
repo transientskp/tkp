@@ -4,9 +4,10 @@ import unittest
 import tkp.sourcefinder.gaussian as gaussian
 import numpy
 
+
 class PyrapFitTest(unittest.TestCase):
     def setUp(self):
-        Xin, Yin = numpy.indices((500,500))
+        Xin, Yin = numpy.indices((500, 500))
         self.height = 10
         self.x = 250
         self.y = 250
@@ -24,10 +25,14 @@ class PyrapFitTest(unittest.TestCase):
         except ImportError:
             # If pyrap doesn't exist, forget it.
             return
-        x = numpy.indices((500,500)).transpose().ravel()
+        x = numpy.indices((500, 500)).transpose().ravel()
         y = self.mygauss.transpose().ravel()
         myfit = fitserver()
-        myfit.nonlinear(gaussian2d(params=(self.moments['peak'], self.moments['xbar'], self.moments['ybar'], 2*self.moments['semimajor'], self.moments['semiminor']/self.moments['semimajor'], self.moments['theta'])), x, y)
+        myfit.nonlinear(gaussian2d(params=(
+            self.moments['peak'], self.moments['xbar'], self.moments['ybar'],
+            2*self.moments['semimajor'],
+            self.moments['semiminor']/self.moments['semimajor'],
+            self.moments['theta'])), x, y)
         self.assertAlmostEqual(myfit.solution()[0], self.fit['peak'])
 
 # The units that are tested often require information about the resolution element:
@@ -38,7 +43,7 @@ beam=(2.5,2.,0.5)
 class SimpleGaussTest(unittest.TestCase):
     """Generic, easy-to-fit elliptical Gaussian"""
     def setUp(self):
-        Xin, Yin = numpy.indices((500,500))
+        Xin, Yin = numpy.indices((500, 500))
         self.height = 10
         self.x = 250
         self.y = 250
@@ -80,7 +85,7 @@ class SimpleGaussTest(unittest.TestCase):
 class NegativeGaussTest(SimpleGaussTest):
     """Negative Gaussian"""
     def setUp(self):
-        Xin, Yin = numpy.indices((500,500))
+        Xin, Yin = numpy.indices((500, 500))
         self.height = -10
         self.x = 250
         self.y = 250
@@ -97,7 +102,7 @@ class NegativeGaussTest(SimpleGaussTest):
 class CircularGaussTest(SimpleGaussTest):
     """Circular Gaussian: it makes no sense to measure a rotation angle"""
     def setUp(self):
-        Xin, Yin = numpy.indices((500,500))
+        Xin, Yin = numpy.indices((500, 500))
         self.height = 10
         self.x = 250
         self.y = 250
@@ -117,75 +122,75 @@ class CircularGaussTest(SimpleGaussTest):
 class NarrowGaussTest(SimpleGaussTest):
     """Only 1 pixel wide"""
     def setUp(self):
-        Xin, Yin = numpy.indices((500,500))
+        Xin, Yin = numpy.indices((500, 500))
         self.height = 10
         self.x = 250
         self.y = 250
         self.maj = 40
         self.min = 1
         self.theta = 0
-        self.mygauss = numpy.ma.array(gaussian.gaussian(self.height, self.x, self.y, self.maj, self.min, self.theta)(Xin, Yin))
+        self.mygauss = numpy.ma.array(gaussian.gaussian(
+            self.height, self.x, self.y, self.maj, self.min, self.theta)(Xin, Yin))
         self.moments = gaussian.moments(self.mygauss, beam, 0)
         self.fit = gaussian.fitgaussian(self.mygauss, self.moments)
 
 class RotatedGaussTest(SimpleGaussTest):
     """Rotated by an angle < pi/2"""
     def setUp(self):
-        Xin, Yin = numpy.indices((500,500))
+        Xin, Yin = numpy.indices((500, 500))
         self.height = 10
         self.x = 250
         self.y = 250
         self.maj = 40
         self.min = 20
         self.theta = numpy.pi / 4
-        self.mygauss = numpy.ma.array(gaussian.gaussian(self.height, self.x, self.y, self.maj, self.min, self.theta)(Xin, Yin))
+        self.mygauss = numpy.ma.array(gaussian.gaussian(
+            self.height, self.x, self.y, self.maj, self.min, self.theta)(Xin, Yin))
         self.moments = gaussian.moments(self.mygauss, beam, 0)
         self.fit = gaussian.fitgaussian(self.mygauss, self.moments)
 
 class RotatedGaussTest2(SimpleGaussTest):
     """Rotated by an angle > pi/2; theta becomes negative"""
     def setUp(self):
-        Xin, Yin = numpy.indices((500,500))
+        Xin, Yin = numpy.indices((500, 500))
         self.height = 10
         self.x = 250
         self.y = 250
         self.maj = 40
         self.min = 20
         self.theta = 3 * numpy.pi / 4
-        self.mygauss = numpy.ma.array(gaussian.gaussian(self.height, self.x, self.y, self.maj, self.min, self.theta)(Xin, Yin))
+        self.mygauss = numpy.ma.array(gaussian.gaussian(
+            self.height, self.x, self.y, self.maj, self.min, self.theta)(Xin, Yin))
         self.moments = gaussian.moments(self.mygauss, beam, 0)
         self.fit = gaussian.fitgaussian(self.mygauss, self.moments)
 
     def testMomentAngle(self):
-        from numpy import pi
-        self.assertAlmostEqual(self.moments["theta"], self.theta - pi)
+        self.assertAlmostEqual(self.moments["theta"], self.theta - numpy.pi)
 
     def testFitAngle(self):
-        from numpy import pi
-        self.assertAlmostEqual(self.fit["theta"], self.theta - pi)
+        self.assertAlmostEqual(self.fit["theta"], self.theta - numpy.pi)
 
 class AxesSwapGaussTest(SimpleGaussTest):
     """We declare the axes the wrong way round: the fit should reverse them &
     change the angle"""
     def setUp(self):
-        Xin, Yin = numpy.indices((500,500))
+        Xin, Yin = numpy.indices((500, 500))
         self.height = 10
         self.x = 250
         self.y = 250
         self.maj = 20
         self.min = 40
         self.theta = 0
-        self.mygauss = numpy.ma.array(gaussian.gaussian(self.height, self.x, self.y, self.maj, self.min, self.theta)(Xin, Yin))
+        self.mygauss = numpy.ma.array(gaussian.gaussian(
+            self.height, self.x, self.y, self.maj, self.min, self.theta)(Xin, Yin))
         self.moments = gaussian.moments(self.mygauss, beam, 0)
         self.fit = gaussian.fitgaussian(self.mygauss, self.moments)
 
     def testMomentAngle(self):
-        from numpy import pi
-        self.assertAlmostEqual(self.moments["theta"], -1 * pi/2)
+        self.assertAlmostEqual(self.moments["theta"], -1 * numpy.pi/2)
 
     def testFitAngle(self):
-        from numpy import pi
-        self.assertAlmostEqual(self.fit["theta"], -1 * pi/2)
+        self.assertAlmostEqual(self.fit["theta"], -1 * numpy.pi/2)
 
     def testMomentSize(self):
         self.assertAlmostEqual(self.moments["semiminor"], self.maj, 5)
@@ -199,8 +204,7 @@ class RandomGaussTest(unittest.TestCase):
     """Should not be possible to fit a Gaussian to random data. You can still
     measure moments, though -- things should be fairly evenly distributed."""
     def setUp(self):
-        import numpy
-        Xin, Yin = numpy.indices((500,500))
+        Xin, Yin = numpy.indices((500, 500))
         self.mygauss = numpy.random.random(Xin.shape)
 
     def testMoments(self):

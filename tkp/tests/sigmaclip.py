@@ -1,6 +1,6 @@
 import unittest
 import numpy
-import tkp.utility.sigmaclip as sigmaclip
+from tkp.utility import sigmaclip
 
 
 class TestSigma(unittest.TestCase):

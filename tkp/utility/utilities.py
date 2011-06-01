@@ -3,26 +3,14 @@
 # LOFAR Transients Key Project
 #
 # Generic utility routines; number handling etc.
-#
+
 import pyfits
 import numpy
+from numpy.ma import MaskedArray
+from scipy.special import erf
+from scipy.special import erfcinv
 from tkp.sourcefinder import utils
 from tkp.utility.uncertain import Uncertain
-
-
-# Numpy 1.1 moves from numpy.core.ma to numpy.ma
-try:
-    from numpy.ma import MaskedArray
-except ImportError:
-    from numpy.core.ma import MaskedArray
-
-# SciPy moves the location of functions too
-try:
-    from scipy.special.basic import erf
-    from scipy.special.basic import erfcinv
-except ImportError:
-    from scipy.special import erf
-    from scipy.special import erfcinv
 
 
 # CODE & NUMBER HANDLING ROUTINES

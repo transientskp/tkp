@@ -11,10 +11,12 @@ enough background data is/are available.
 """
 
 
-import sys, os
+import sys
+import os
 import unittest
 from optparse import OptionParser
-from datetime import datetime, timedelta
+from datetime import datetime
+from datetime import timedelta
 import logging
 import numpy
 from tkp.classification.features import lightcurve
@@ -24,7 +26,6 @@ from tkp.classification.manual.utils import DateTime
 # Setting DEBUG to True will produce output through the loggers in the
 # various tkp.classification.features routines
 DEBUG = False
-
 
 
 class TestLightcurve(unittest.TestCase):

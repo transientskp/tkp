@@ -31,8 +31,7 @@ except AttributeError:
     import unittest2 as unittest
 import os
 from tkp.utility import accessors
-import numpy as np
-import tkp.sourcefinder.image as imag 
+from tkp.sourcefinder import image 
 import tkp.config
 
 
@@ -46,9 +45,9 @@ class test_maps(unittest.TestCase):
         corr_map = accessors.FitsFile(os.path.join(DATAPATH, 'CORRELATED_NOISE.FITS'))
         map_with_sources = accessors.FitsFile(os.path.join(DATAPATH, 'TEST_DECONV.FITS'))
 
-        uncorr_image = imag.ImageData(uncorr_map.data, uncorr_map.beam, uncorr_map.wcs)
-        corr_image = imag.ImageData(corr_map.data, uncorr_map.beam, uncorr_map.wcs)
-        image_with_sources = imag.ImageData(map_with_sources.data, map_with_sources.beam, map_with_sources.wcs)
+        uncorr_image = image.ImageData(uncorr_map.data, uncorr_map.beam, uncorr_map.wcs)
+        corr_image = image.ImageData(corr_map.data, uncorr_map.beam, uncorr_map.wcs)
+        image_with_sources = image.ImageData(map_with_sources.data, map_with_sources.beam, map_with_sources.wcs)
 
         self.number_detections_uncorr = len(uncorr_image.fd_extract())
         self.number_detections_corr = len(corr_image.fd_extract())

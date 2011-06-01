@@ -12,6 +12,7 @@ import datetime
 import pytz
 import ctypes
 
+
 # Note that wcstools takes a +ve longitude as WEST.
 CORE_LAT = 52.9088
 CORE_LON = -6.8689

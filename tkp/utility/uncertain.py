@@ -8,6 +8,7 @@
 # http://aspn.activestate.com/ASPN/Cookbook/Python/Recipe/535164
 import math
 
+
 class Uncertain(object):
     """Represents a numeric value with a known small uncertainty (error,
     standard deviation...).

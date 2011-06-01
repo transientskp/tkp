@@ -1,9 +1,14 @@
+import unittest
+try:
+    unittest.TestCase.assertIsInstance
+except AttributeError:
+    import unittest2 as unittest
 from tkp.classification.manual.classification import SlowTransient
 from tkp.classification.manual.classification import GRBPrompt
-from tkp.classification.manual.classification import MainBranch, SpectralBranch
+from tkp.classification.manual.classification import MainBranch
+from tkp.classification.manual.classification import SpectralBranch
 from tkp.classification.manual.classifier import Classifier
 from tkp.classification.manual.transient import Transient
-import unittest
 
 
 

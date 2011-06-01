@@ -1,7 +1,13 @@
 # Test functions used for manipulating coordinates in the TKP pipeline.
 
 import unittest
-import tkp.utility.coordinates as coordinates
+import datetime
+import pytz
+try:
+    unittest.TestCase.assertIsInstance
+except AttributeError:
+    import unittest2 as unittest
+from tkp.utility import coordinates
 
 
 class ratohmsTest(unittest.TestCase):
@@ -131,7 +137,6 @@ class dmstodecTest(unittest.TestCase):
 
 
 class juliandate(unittest.TestCase):
-    import datetime, pytz
     knownValues = (
         (datetime.datetime(2008, 4, 17, 12, 30, tzinfo=pytz.utc), 2454574.0208333),
         (datetime.datetime(2007, 1, 14, 13, 18, 59, 900000, tzinfo=pytz.utc), 2454115.05486),

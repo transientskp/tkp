@@ -13,6 +13,7 @@ from datetime import timedelta
 import logging
 import numpy
 import pygsl.statistics
+import tkp.config
 from tkp.utility.sigmaclip import sigmaclip
 from tkp.utility.sigmaclip import calcsigma
 from tkp.utility.sigmaclip import calcmean
@@ -66,26 +67,23 @@ class LightCurve(object):
             raise ValueError("light curve data arrays are not of equal length")
 
         
-def extract(cursor, sql_args, logger=""):
+def extract(cursor, sql_args):
     """Extract the complete light curve"""
-
-    logger = logging.getLogger(logger)
 
     cursor.execute(sql_lightcurve, sql_args)
     results = zip(*cursor.fetchall())
     #    results = zip(*results)
-    lightcurve = dict(
+    lightcurve = LightCurve(
         obstimes=numpy.array(results[0]),
         inttimes=numpy.array(results[1]),
         fluxes=numpy.array(results[2]),
         errors=numpy.array(results[3]),
-        sourceid=numpy.array(results[4])
+        sourceids=numpy.array(results[4])
         )
     return lightcurve
 
 
-def calc_background(lightcurve, logger="",
-                    niter=-50, kappa=(3, 3)):
+def calc_background(lightcurve, niter=-50, kappa=(5, 5)):
     """Estimate background flux
 
     Uses sigmaclipping to estimate a background. This only works
@@ -95,82 +93,109 @@ def calc_background(lightcurve, logger="",
     deviates from the background (T_zero), and the current duration
     where the light curve is above the background.
 
-    Returns three values:
+    Args:
 
-    - second element is a numpy array of indices giving True where
-      the light curve is at background; False where it deviates from the
-      background.
+        lightcurve (LightCurve): light curve
 
+    Kwargs:
+
+        niter (int): number of iterations. Passed on to sigmaclip()
+
+        kappa (2-tuple of floats): lower and upper kappa
+            values. Passed on to sigmaclip()
+
+    Returns:
+
+        (3-tuple: float, float, numpy.ndarray): mean, sigma, indices
+            where light curve is at background level (True) and where
+            not (False).
     """
 
-    # - working with log(fluxes) may be better for calculating indices.
-    # - unweighted sigma clipping produces better results than weighted
-    #   clipping.
-    logger = logging.getLogger(logger)
-    indices, niter = sigmaclip(
-        lightcurve['fluxes'], errors=lightcurve['errors'], niter=-50,
-        siglow=kappa[0], sighigh=kappa[1], use_median=True)
-    mean, sigma = calcsigma(
-        lightcurve['fluxes'][indices], lightcurve['errors'][indices])
-    obstimes, inttimes = lightcurve['obstimes'], lightcurve['inttimes']
-    #var_times = (lightcurve['obstimes'][-indices],
-    #             lightcurve['inttimes'][-indices])
-    #bkg_times = (lightcurve['obstimes'][indices],
-    #             lightcurve['inttimes'][indices])
-    return mean, sigma, indices
+    logger = logging.getLogger('tkp')
+    indices = numpy.ones(lightcurve.fluxes.shape, dtype=numpy.bool)
+    nniter = -niter if niter < 0 else niter
+    for i in range(nniter):
+        value = numpy.median(lightcurve.fluxes[indices])
+        # Get the sigma from the measured flux errors, instead of
+        # deriving it from the spread in values
+        sigma = numpy.mean(lightcurve.errors[indices])
+        # Throw away all data that are kappa*sigma above the current
+        # background value
+        newindices = numpy.logical_and(
+            lightcurve.fluxes < value + kappa[1] * sigma, indices)
+        if iter < 0:
+            if (newindices == indices).all():  # no change anymore
+                break
+        indices = newindices
+
+    # Now check if there are still data below the background
+    # Above, we have assumed most transients rise above the
+    # background, so we filter out increases in flux, not decreases
+    # We do that here now
+    # We can't do it at the same time as filtering the increase,
+    # because that may filter too much at one
+    for i in range(nniter):
+        value = numpy.median(lightcurve.fluxes[indices])
+        # Get the sigma from the measured flux errors, instead of
+        # deriving it from the spread in values
+        sigma = numpy.mean(lightcurve.errors[indices])
+        # Throw away all data that are kappa*sigma above the current
+        # background value
+        newindices = numpy.logical_and(
+            lightcurve.fluxes > value - kappa[0] * sigma, indices)
+        if iter < 0:
+            if (newindices == indices).all():  # no change anymore
+                break
+        indices = newindices
+    if len(numpy.where(indices)[0]) > 1:
+        value, sigma = calcsigma(lightcurve.fluxes[indices],
+                                lightcurve.errors[indices])
+
+    #var_times = (lightcurve.obstimes[-indices],
+    #             lightcurve.inttimes[-indices])
+    #bkg_times = (lightcurve.obstimes[indices],
+    #             lightcurve.inttimes[indices])
+    return value, sigma, indices
 
 
-def calc_duration(obstimes, inttimes, indices, logger=""):
+def calc_duration(lightcurve):
     """Calculate duration and estimate start of the transient event
 
-    ``indices`` are obtained from ``calc_background``.
+    It calculates two durations:
 
+    - full duration, from first rise above background until last bit
+      above background. This is simply the end time - start time.
+
+    - active duration, where any intermediate returns to the
+      background level are ignored. This takes only the observed bins
+      and multiplies those with their respective integration
+      times. Any observations outside of any transient activity do not
+      contribute to this value.
+      
     """
 
-    logger = logging.getLogger(logger)
+    start = end = duration = active = None
+    value, sigma, indices = calc_background(lightcurve)
     try:
-        # get last background point before transient
-        izero = numpy.where(-indices)[0][0] - 1
-        if izero < 0:  # source started above background
-            timestart = obstimes[0] + timedelta(0, inttimes[0] / 2., 0)
-            error_ts = inttimes[0] / 2.
-        else:  # T_zero between last background & first transient point
-            t0 = obstimes[izero] + timedelta(0, inttimes[izero] / 2., 0)
-            t1 = obstimes[izero+1] + timedelta(0, inttimes[izero+1] / 2., 0)
-            dt = t1 - t0
-            dt = timedelta(dt.days / 2., dt.seconds / 2.)
-            timestart = t0 + dt
-            error_ts = dt
-            error_ts = error_ts.days * SECONDS_IN_DAY + error_ts.seconds
-        # get first background point after transient
-        iend = numpy.where(-indices)[0][-1] + 1
-        if iend >= len(obstimes):  # source still above background
-            timeend = obstimes[-1] + timedelta(0, inttimes[-1] / 2., 0)
-            error_te = inttimes[-1] / 2.
-        else:  # T_end between last transient and first background point
-            t0 = obstimes[iend-1] + timedelta(0, inttimes[iend-1] / 2., 0)
-            t1 = obstimes[iend] + timedelta(0, inttimes[iend] / 2., 0)
-            dt = t1 - t0
-            dt = timedelta(dt.days / 2., dt.seconds / 2.)
-            timeend = t0 + dt
-            error_te = dt
-            error_te = error_te.days * SECONDS_IN_DAY + error_te.seconds
-        duration = timeend - timestart
-        timestart = DateTime(timestart.year, timestart.month, timestart.day,
-                            timestart.hour, timestart.minute, timestart.second,
-                            timestart.microsecond,
-                            error=error_ts)
-        timeend = DateTime(timeend.year, timeend.month, timeend.day,
-                            timeend.hour, timeend.minute, timeend.second,
-                            timeend.microsecond,
-                            error=error_te)
-        duration = duration.days * SECONDS_IN_DAY + duration.seconds
-    except IndexError:  # all values still at background
-        timestart = timeend = duration = None
-    return timestart, timeend, duration
+        start = lightcurve.obstimes[-indices][0]
+        error = lightcurve.inttimes[-indices][0]
+        start = DateTime(year=start.year, month=start.month, day=start.day,
+                         hour=start.hour, minute=start.minute,
+                         second=start.second, error=error/2.)
+        end = lightcurve.obstimes[-indices][-1]
+        error = lightcurve.inttimes[-indices][-1]
+        end = DateTime(year=end.year, month=end.month, day=end.day,
+                       hour=end.hour, minute=end.minute,
+                       second=end.second, error=error/2.)
+        duration = end - start
+        duration = duration.days * 86400. + duration.seconds
+        active = sum(lightcurve.inttimes[-indices])
+    except IndexError:  # only background
+        pass
+    return start, end, duration, active
 
 
-def calc_fluxincrease(lightcurve, background, indices, logger=None):
+def calc_fluxincrease(lightcurve, background, indices):
     """Get the peak flux, its increase (absolute & relative) and
     the peak index
 
@@ -187,13 +212,10 @@ def calc_fluxincrease(lightcurve, background, indices, logger=None):
 
     """
 
-    if logger is None:
-        logger = logging.getLogger()
-        logging.basicConfig(level=logging.CRITICAL)
     if indices.all():
         return 0.0, {}, None
     increase = {}
-    fluxes = lightcurve['fluxes']
+    fluxes = lightcurve.fluxes
     ipeak = abs(fluxes - background['mean']).argmax()
     peakflux = fluxes[ipeak]
     increase['absolute'] = peakflux - background['mean']
@@ -201,7 +223,7 @@ def calc_fluxincrease(lightcurve, background, indices, logger=None):
     return peakflux, increase, ipeak
 
 
-def calc_risefall(lightcurve, background, indices, ipeak, logger=None):
+def calc_risefall(lightcurve, background, indices, ipeak):
     """Calculate the (total) flux increase & decrease
 
     Also calculates the time interval over which the
@@ -226,16 +248,12 @@ def calc_risefall(lightcurve, background, indices, ipeak, logger=None):
     to eg None.
     """
 
-    if logger is None:
-        logger = logging.getLogger()
-        logging.basicConfig(level=logging.CRITICAL)
-
     # If we don't have a clear transient, don't try and calculate nonsense
     if ipeak is None or indices.all():
         return {'time': 0, 'flux': 0}, {'time': 0, 'flux': 0}, 0
 
-    fluxes = lightcurve['fluxes']
-    obstimes = lightcurve['obstimes']
+    fluxes = lightcurve.fluxes
+    obstimes = lightcurve.obstimes
     #L = len(fluxes)
     #if ipeak == L-1:
     #    # Still rising, or still at background
@@ -252,10 +270,10 @@ def calc_risefall(lightcurve, background, indices, ipeak, logger=None):
     else:
         # find first index when returned background for outburst around ipeak
         iback = ibackground[numpy.where(ibackground > ipeak)[0]][0]
-        delta_tfall = ((lightcurve['obstimes'][iback] +
-                        timedelta(0, lightcurve['inttimes'][iback] / 2., 0)) -
-                       (lightcurve['obstimes'][ipeak] +
-                        timedelta(0, lightcurve['inttimes'][ipeak] / 2., 0)))
+        delta_tfall = ((lightcurve.obstimes[iback] +
+                        timedelta(0, lightcurve.inttimes[iback] / 2., 0)) -
+                       (lightcurve.obstimes[ipeak] +
+                        timedelta(0, lightcurve.inttimes[ipeak] / 2., 0)))
         delta_tfall = delta_tfall.days * SECONDS_IN_DAY + delta_tfall.seconds
         fall = {'time': delta_tfall, 'flux': deltaflux}
 
@@ -266,10 +284,10 @@ def calc_risefall(lightcurve, background, indices, ipeak, logger=None):
     else:
         # find last index before rise for outburst around ipeak
         iback = ibackground[numpy.where(ibackground<ipeak)[0]][-1]
-        delta_trise = ((lightcurve['obstimes'][ipeak] +
-                        timedelta(0, lightcurve['inttimes'][ipeak] / 2., 0)) -
-                       (lightcurve['obstimes'][iback] +
-                        timedelta(0, lightcurve['inttimes'][iback] / 2., 0)))
+        delta_trise = ((lightcurve.obstimes[ipeak] +
+                        timedelta(0, lightcurve.inttimes[ipeak] / 2., 0)) -
+                       (lightcurve.obstimes[iback] +
+                        timedelta(0, lightcurve.inttimes[iback] / 2., 0)))
         delta_trise = delta_trise.days * SECONDS_IN_DAY + delta_trise.seconds
         rise = {'time': delta_trise, 'flux': deltaflux}
     if rise['time'] != 0 and fall['time'] != 0:
@@ -282,12 +300,17 @@ def calc_risefall(lightcurve, background, indices, ipeak, logger=None):
     return rise, fall, ratio
 
 
-def stats(lightcurve):
+def stats(lightcurve, indices=None):
     """
     Args:
 
         lightcurve (LightCurve): light curve
 
+    Kwargs:
+
+        indices (numpy.ndarray of bool): specific selection of data to
+            use for calculations
+        
     Returns:
 
         (4-tuple): statistics of the *full* light curve (ie, including
@@ -296,13 +319,15 @@ def stats(lightcurve):
             errors.
     """
 
-    weights = 1. / lightcurve.errors**2
+    if indices is None:
+        indices = numpy.ones(lightcurve.fluxes.shape, dtype=numpy.bool)
+    weights = 1. / lightcurve.errors[indices]**2
     results = {}
-    results['mean'] = pygsl.statistics.wmean(weights, lightcurve.fluxes)
+    results['mean'] = pygsl.statistics.wmean(weights, lightcurve.fluxes[indices])
     results['stddev'] = pygsl.statistics.wsd_m(
-        weights, lightcurve.fluxes, results['mean'])
+        weights, lightcurve.fluxes[indices], results['mean'])
     results['skew'] = pygsl.statistics.wskew_m_sd(
-        weights, lightcurve.fluxes, results['mean'], results['stddev'])
+        weights, lightcurve.fluxes[indices], results['mean'], results['stddev'])
     results['kurtosis'] = pygsl.statistics.wkurtosis_m_sd(
-        weights, lightcurve.fluxes, results['mean'], results['stddev'])
+        weights, lightcurve.fluxes[indices], results['mean'], results['stddev'])
     return results

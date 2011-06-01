@@ -31,26 +31,29 @@ import numpy
 def clip(data, mean, sigma, siglow, sighigh, indices=None):
     """Perform kappa-sigma clipping of data around mean
 
-    :argument data: N-dimensional array of values
-    :type data: numpy.ndarray
-    :argument mean: value around which to clip (does not have to be the mean)
-    :type mean: float
-    :argument sigma: sigma-value for clipping
-    :type sigma: float
-    :argument siglow: lower kappa clipping values
-    :type siglow: float
-    :argument sighigh: higher kappa clipping values
-    :type sighigh: float
+    Args:
 
-    :keyword indices: data selection by indices
-    :type indices: numpy.ndarray
+        data (numpy.ndarray): N-dimensional array of values
 
-    :returns: indices of non-clipped data
-    :rtype: numpy.ndarray
+        mean (float): value around which to clip (does not have to be the mean)
+
+        sigma (float): sigma-value for clipping
+
+        siglow (float): lower kappa clipping values
+
+        sighigh (float): higher kappa clipping values
+
+    Kwargs:
+
+        indices (numpy.ndarray): data selection by indices
+
+    Returns:
+
+        (numpy.ndarray) indices of non-clipped data
 
     """
 
-    if indices != None:
+    if indices is not None::
         ilow = numpy.logical_and(data >= mean - sigma * siglow, indices)
         ihigh = numpy.logical_and(data <= mean + sigma * sighigh, indices)
     else:
@@ -75,33 +78,35 @@ def calcmean(data, errors=None):
 
 
 def calcsigma(data, errors=None, mean=None, axis=None, errors_as_weight=False):
-    """
-    Calculate the sample standard deviation
+    """Calculate the sample standard deviation
 
-    :argument data: Data to be averaged. No conversion from eg a list
-        to a numpy.array is done.
-    :type data: numpy.ndarray
+    Args:
 
-    :keyword errors: Errors for the data. Errors needs to be the same
-            shape as data (this is different than for numpy.average).
-            If you want to use weights instead of errors as input, set
-            errors_as_weight=True.  If not given, all errors (and thus
-            weights) are assumed to be equal to 1.
-    :type errors: numpy.ndarray
+        data (numpy.ndarray): Data to be averaged. No conversion from
+            eg a list to a numpy.array is done.
 
-    :keyword mean: Provide mean if you don't want the mean to be calculated
-        for you. Pay careful attention to the shape if you provide 'axis'.
-    :type mean: float
+    Kwargs:
 
-    :keyword axis: Specify axis along which the mean and sigma are calculated.
-        If not provided, calculations are done over the whole array
-    :type axis: int
+        errors (numpy.ndarray, None): Eerrors for the data. Errors
+            needs to be the same shape as data (this is different than
+            for numpy.average).  If you want to use weights instead of
+            errors as input, set errors_as_weight=True.  If not given,
+            all errors (and thus weights) are assumed to be equal to
+            1.
 
-    :keyword errors_as_weight: Set to True if errors are weights.
-    :type errors_as_weight: bool
+        mean (float): Provide mean if you don't want the mean to be
+            calculated for you. Pay careful attention to the shape if
+            you provide 'axis'.
 
-    :returns: mean and sigma
-    :rtype: tuple
+        axis (int): Specify axis along which the mean and sigma are
+           calculated.  If not provided, calculations are done over
+           the whole array
+
+        errors_as_weight (bool): Set to True if errors are weights.
+
+    Returns:
+
+        (2-tuple of floats) mean and sigma
     """
 
     N = data.shape[axis] if axis else len(data)
@@ -137,38 +142,38 @@ def calcsigma(data, errors=None, mean=None, axis=None, errors_as_weight=False):
 
 def sigmaclip(data, errors=None, niter=0, siglow=3., sighigh=3.,
               use_median=False):
-    """
-    Remove outliers from data which lie more than siglow/sighigh
+    """Remove outliers from data which lie more than siglow/sighigh
     sample standard deviations from mean.
 
-    :argument data: Numpy array containing data values.
-    :type data: numpy.ndarray
+    Args:
 
+        data (numpy.ndarray): Numpy array containing data values.
 
-    :keyword errors: Errors associated with the data values. If None,
-        unweighted mean and standard deviation are used in
-        calculations.
-    :type errors: numpy.ndarray
+    Kwargs:
 
-    :keyword niter: Number of iterations to calculate mean & standard
-        deviation, and reject outliers, If niter is negative,
-        iterations will continue until no more clipping occurs, or
-        until abs('niter') is reached.
-    :type niter: int
+        errors (numpy.ndarray, None): Errors associated with the data
+            values. If None, unweighted mean and standard deviation
+            are used in calculations.
 
-    :keyword siglow: Multiplier for standard deviation. Std * siglow
-        defines the value below of which data are rejected.
-    :type siglow: float
-    :keyword sighigh: Multiplier for standard deviation. Std * sighigh
-        defines the value above of which data are rejected.
-    :type sighigh: float
-    :keyword use_median: Use median of data instead of mean.
-    :type use_median: bool
+        niter (int): Number of iterations to calculate mean & standard
+            deviation, and reject outliers, If niter is negative,
+            iterations will continue until no more clipping occurs or
+            until abs('niter') is reached, whichever is reached first.
 
-    :returns: boolean numpy array of indices indicating which elements
-        are clipped (False), with the same shape as the input; number
-        of iterations
-    :rtype: tuple
+        siglow (float): Kappa multiplier for standard deviation. Std *
+            siglow defines the value below which data are rejected.
+
+        sighigh (float): Kappa multiplier for standard deviation. Std *
+            sighigh defines the value above which data are rejected.
+
+        use_median (bool): Use median of data instead of mean.
+
+    Returns:
+
+        (2-tuple): boolean numpy array of indices indicating which
+            elements are clipped (False), with the same shape as the
+            input; number of iterations
+
     """
 
     # indices keeps track which data should be discarded

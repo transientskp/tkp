@@ -93,7 +93,6 @@ class AIPSppImage(DataAccessor):
         self.wcs.crota = (0., 0.)
         self.wcs.cunits = ('unknown', 'unknown')
         # Update WCS
-        print 'setting wcs', dir(self.wcs)
         self.wcs.wcsset()
         self.pix_to_position = self.wcs.p2s
 

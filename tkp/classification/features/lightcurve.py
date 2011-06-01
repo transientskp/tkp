@@ -12,6 +12,7 @@
 from datetime import timedelta
 import logging
 import numpy
+import pygsl.statistics
 from tkp.utility.sigmaclip import sigmaclip
 from tkp.utility.sigmaclip import calcsigma
 from tkp.utility.sigmaclip import calcmean
@@ -22,6 +23,49 @@ from .sql import lightcurve as sql_lightcurve
 SECONDS_IN_DAY = 86400.
 
 
+
+class LightCurve(object):
+    """Simple class that holds a light curve by means of several numpy
+    arrays
+    """
+
+    def __init__(self, obstimes, inttimes, fluxes, errors, sourceids=None):
+        """
+
+        Args:
+
+            obstimes (list or array of datetime.datetime() instances):
+                (mid) observing times
+                
+            inttimes (list or array of floats): integration times in
+                seconds
+
+            fluxes (list or array of floats): flux levels in Janskys
+
+            errors (list or array of floats): flux errors in Janskys
+
+            sourceids (list or array of ints, None): database id of
+                'extracted source' for each data point. If left to the
+                default of None, this is ignored.
+
+        Raises:
+
+            ValueError: when input arguments are not equal length.
+        """
+        
+        self.obstimes = numpy.array(obstimes)
+        self.inttimes = numpy.array(inttimes)
+        self.fluxes = numpy.array(fluxes)
+        self.errors = numpy.array(errors)
+        if sourceids is None:
+            self.sourceids = numpy.zeros(self.obstimes.shape)
+        else:
+            self.sourceids = numpy.array(sourceids)
+        if not (len(self.obstimes) == len(self.inttimes) == len(self.fluxes) ==
+                len(self.errors) == len(self.sourceids)):
+            raise ValueError("light curve data arrays are not of equal length")
+
+        
 def extract(cursor, sql_args, logger=""):
     """Extract the complete light curve"""
 
@@ -236,3 +280,29 @@ def calc_risefall(lightcurve, background, indices, ipeak, logger=None):
         ratio = 0
 
     return rise, fall, ratio
+
+
+def stats(lightcurve):
+    """
+    Args:
+
+        lightcurve (LightCurve): light curve
+
+    Returns:
+
+        (4-tuple): statistics of the *full* light curve (ie, including
+            background parts): mean, standard deviation, skew,
+            kurtosis. All calculated values are weighted by the flux
+            errors.
+    """
+
+    weights = 1. / lightcurve.errors**2
+    results = {}
+    results['mean'] = pygsl.statistics.wmean(weights, lightcurve.fluxes)
+    results['stddev'] = pygsl.statistics.wsd_m(
+        weights, lightcurve.fluxes, results['mean'])
+    results['skew'] = pygsl.statistics.wskew_m_sd(
+        weights, lightcurve.fluxes, results['mean'], results['stddev'])
+    results['kurtosis'] = pygsl.statistics.wkurtosis_m_sd(
+        weights, lightcurve.fluxes, results['mean'], results['stddev'])
+    return results

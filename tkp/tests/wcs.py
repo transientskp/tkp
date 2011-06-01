@@ -30,7 +30,7 @@ class wcsSin(unittest.TestCase):
 
     def setUp(self):
         # Initialise a wcs object with the above parameters
-        self.wcs = coordinates.wcs()
+        self.wcs = coordinates.WCS()
         self.wcs.crval = self.crval
         self.wcs.crpix = self.crpix
         self.wcs.cdelt = self.cdelt
@@ -77,7 +77,7 @@ class wcsEquinox(unittest.TestCase):
 
     def setUp(self):
         # Initialise a wcs object with the above parameters
-        self.wcs = coordinates.wcs()
+        self.wcs = coordinates.WCS()
         self.wcs.crval = self.crval
         self.wcs.crpix = self.crpix
         self.wcs.cdelt = self.cdelt
@@ -127,7 +127,7 @@ class wcsDetectionEquinox(unittest.TestCase):
 
     def setUp(self):
         # Initialise a wcs object with the above parameters
-        self.wcs = coordinates.wcs()
+        self.wcs = coordinates.WCS()
         self.wcs.crval = self.crval
         self.wcs.crpix = self.crpix
         self.wcs.cdelt = self.cdelt

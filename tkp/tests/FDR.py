@@ -25,6 +25,10 @@
 # in a single map (TEST_DECONV.FITS).
 
 import unittest
+try:
+    unittest.TestCase.assertIsInstance
+except AttributeError:
+    import unittest2 as unittest
 import os
 from tkp.utility import accessors
 import numpy as np
@@ -33,32 +37,32 @@ import tkp.config
 
 
 DATAPATH = tkp.config.config['test']['datapath']
-NUMBER_INSERTED=float(3969)
+NUMBER_INSERTED = float(3969)
 
 
 class test_maps(unittest.TestCase):
     def setUp(self):
-        my_uncorr_map=accessors.FitsFile(os.path.join(DATAPATH, 'UNCORRELATED_NOISE.FITS'))
-        my_corr_map=accessors.FitsFile(os.path.join(DATAPATH, 'CORRELATED_NOISE.FITS'))
-        my_map_with_sources=accessors.FitsFile(os.path.join(DATAPATH, 'TEST_DECONV.FITS'))
+        uncorr_map = accessors.FitsFile(os.path.join(DATAPATH, 'UNCORRELATED_NOISE.FITS'))
+        corr_map = accessors.FitsFile(os.path.join(DATAPATH, 'CORRELATED_NOISE.FITS'))
+        map_with_sources = accessors.FitsFile(os.path.join(DATAPATH, 'TEST_DECONV.FITS'))
 
-        my_uncorr_image=imag.ImageData(my_uncorr_map)
-        my_corr_image=imag.ImageData(my_corr_map)
-        my_image_with_sources=imag.ImageData(my_map_with_sources)
+        uncorr_image = imag.ImageData(uncorr_map.data, uncorr_map.beam, uncorr_map.wcs)
+        corr_image = imag.ImageData(corr_map.data, uncorr_map.beam, uncorr_map.wcs)
+        image_with_sources = imag.ImageData(map_with_sources.data, map_with_sources.beam, map_with_sources.wcs)
 
-        self.number_detections_uncorr=len(my_uncorr_image.fd_extract())
-        self.number_detections_corr=len(my_corr_image.fd_extract())
-        self.number_alpha_10pc=len(my_image_with_sources.fd_extract(alpha=0.1))
-        self.number_alpha_1pc=len(my_image_with_sources.fd_extract(alpha=0.01))
-        self.number_alpha_point1pc=len(my_image_with_sources.fd_extract(alpha=0.001))
+        self.number_detections_uncorr = len(uncorr_image.fd_extract())
+        self.number_detections_corr = len(corr_image.fd_extract())
+        self.number_alpha_10pc = len(image_with_sources.fd_extract(alpha=0.1))
+        self.number_alpha_1pc = len(image_with_sources.fd_extract(alpha=0.01))
+        self.number_alpha_point1pc = len(image_with_sources.fd_extract(alpha=0.001))
         
     def testNumSources(self):
         self.assertEqual(self.number_detections_uncorr, 0)
         self.assertEqual(self.number_detections_corr, 0)
     
-        self.assertTrue((self.number_alpha_10pc-NUMBER_INSERTED)/NUMBER_INSERTED<0.1)
-        self.assertTrue((self.number_alpha_1pc-NUMBER_INSERTED)/NUMBER_INSERTED<0.01)
-        self.assertTrue((self.number_alpha_point1pc-NUMBER_INSERTED)/NUMBER_INSERTED<0.001)
+        self.assertTrue((self.number_alpha_10pc-NUMBER_INSERTED)/NUMBER_INSERTED < 0.1)
+        self.assertTrue((self.number_alpha_1pc-NUMBER_INSERTED)/NUMBER_INSERTED < 0.01)
+        self.assertTrue((self.number_alpha_point1pc-NUMBER_INSERTED)/NUMBER_INSERTED < 0.001)
         
 
 if __name__ == '__main__':

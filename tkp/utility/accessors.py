@@ -72,13 +72,14 @@ class AIPSppImage(DataAccessor):
         self.wcs.crval = my_coordinates['crval']
         self.wcs.crpix = my_coordinates['crpix']
         self.wcs.cdelt = my_coordinates['cdelt']
-        self.wcs.ctype = ['unknown', 'unknown']
+        ctype = ['unknown', 'unknown']
         # What about other projections?!
         if my_coordinates['projection'] == "SIN":
             if my_coordinates['axes'][0] == "Right Ascension":
-                self.wcs.ctype[0] = "RA---SIN"
+                ctype[0] = "RA---SIN"
             if my_coordinates['axes'][1] == "Declination":
-                self.wcs.ctype[1] = "DEC--SIN"
+                ctype[1] = "DEC--SIN"
+        self.wcs.ctype = tuple(ctype)
         # Rotation, units? We better set a default
         self.wcs.crota = (0., 0.)
         self.wcs.cunits = ('unknown', 'unknown')
@@ -186,7 +187,7 @@ class FitsFile(DataAccessor):
             self.wcs.cunits = header['cunit1'], header['cunit2']
         except KeyError:
             self.wcs.cunits = 'unknown', 'unknown'
-        
+
         self.wcs.wcsset()
         self.pix_to_position = self.wcs.p2s
 

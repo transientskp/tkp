@@ -37,7 +37,7 @@ class L15_12hConstObs(unittest.TestCase):
 
     def testSourceProperties(self):
         mysource = self.results.closest_to(1440, 1440)[0]
-        self.assertAlmostEqual(mysource.peak, 1.0*fudgefactor, 1)
+        self.assertAlmostEqual(mysource.peak, 1.0*FUDGEFACTOR, 1)
 
     def tearDown(self):
         del(self.results)
@@ -99,7 +99,7 @@ class L15_12hConstMod(unittest.TestCase):
 
     def testFluxes(self):
         self.results.sort(lambda x, y: cmp(y.peak, x.peak))
-        self.assertAlmostEqual(self.results[0].peak.value, 1.0*fudgefactor, 1)
+        self.assertAlmostEqual(self.results[0].peak.value, 1.0*FUDGEFACTOR, 1)
 
     def tearDown(self):
         del(self.results)

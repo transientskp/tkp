@@ -763,7 +763,7 @@ class ImageData(object):
 
         # Iterate over the list of islands and measure the source in each,
         # appending it to the results list.
-        results = containers.extractionResults()
+        results = containers.ExtractionResults()
         for island in island_list:
             measurement, residual = island.fit()
             try:

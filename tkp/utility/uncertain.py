@@ -6,7 +6,7 @@
 # (c) Robert Jordens <jordens@debian.org>
 # Made available freely under the Python license
 # http://aspn.activestate.com/ASPN/Cookbook/Python/Recipe/535164
-
+import math
 
 class Uncertain(object):
     """Represents a numeric value with a known small uncertainty (error,
@@ -88,7 +88,7 @@ class Uncertain(object):
             v = self.value**other.value
             e = ((self.error * other.value *
                   self.value**(other.value - 1.0))**2 +
-                 (other.error * numpy.log(self.value) *
+                 (other.error * math.log(self.value) *
                   self.value**other.value)**2
             )**.5
             return Uncertain(v, e)
@@ -100,7 +100,7 @@ class Uncertain(object):
         assert not isinstance(other, Uncertain)
             # otherwise other.__pow__ would have been called
         return Uncertain(other**self.value,
-                self.error*numpy.log(other) * other**self.value)
+                self.error * math.log(other) * other**self.value)
 
     def __cmp__(self, compare):
         try:
@@ -109,10 +109,10 @@ class Uncertain(object):
             return cmp(self.value, compare)
 
     def exp(self):
-        return numpy.e**self
+        return math.e**self
 
     def log(self):
-        return Uncertain(numpy.log(self.value), self.error / self.value)
+        return Uncertain(math.log(self.value), self.error / self.value)
 
     def max(self):
         return self.value + self.error

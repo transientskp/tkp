@@ -6,14 +6,11 @@ General purpose astronomical coordinate handling routines.
 
 
 import math
-import numpy
-import scipy
 import wcslib
 import logging
 import datetime
 import pytz
 import ctypes
-import ctypes.util
 
 # Note that wcstools takes a +ve longitude as WEST.
 CORE_LAT = 52.9088
@@ -36,8 +33,8 @@ def julian_date(time=None, modified=False):
         time = datetime.datetime.now(pytz.utc)
     mjdstart = datetime.datetime(1858, 11, 17, tzinfo=pytz.utc)
     mjd = time - mjdstart
-    mjd_daynumber = (mjd.days + mjd.seconds / (24.0 * 60**2) +
-                     mjd.microseconds / (24.0 * 60**2 * 1000**2))
+    mjd_daynumber = (mjd.days + mjd.seconds / (24. * 60**2) +
+                     mjd.microseconds / (24. * 60**2 * 1000**2))
     if modified:
         return mjd_daynumber
     return 2400000.5 + mjd_daynumber
@@ -103,7 +100,7 @@ def old_mjds2lst(MJDs, lon=6.8689):
     l2 = 2.907879e-13
     l3 = -5.302e-22
     # MJD days from 1 Jan 2000  -- compared this to web and it is ok
-    MJD_2000 = MJDs/(24*3600)-t0
+    MJD_2000 = MJDs / (24 * 3600) - t0
     sidereal_time = (l0 + (l1 * MJD_2000) + (l2 * MJD_2000 * MJD_2000) +
                      (l3 * MJD_2000 * MJD_2000) + lon)
     mst = sidereal_time - (360 * math.floor(sidereal_time / 360.0))
@@ -123,7 +120,7 @@ def altaz(mjds, ra, dec, lat=CORE_LAT):
         ha = ha + 360
 
     # convert degrees to radians
-    ha, dec, lat = map(math.radians, (ha, dec, lat))
+    ha, dec, lat = [math.radians(value) for value in (ha, dec, lat)]
 
     # compute altitude in radians
     sin_alt = (math.sin(dec) * math.sin(lat) +
@@ -136,7 +133,7 @@ def altaz(mjds, ra, dec, lat=CORE_LAT):
               (math.cos(alt) * math.cos(lat)))
     az = math.acos(cos_az)
     # convert radians to degrees
-    hrz_altitude, hrz_azimuth = map(math.degrees, (alt, az))
+    hrz_altitude, hrz_azimuth = [math.degrees(value) for value in (alt, az)]
     # choose hemisphere
     if (math.sin(ha) > 0):
         hrz_azimuth = 360 - hrz_azimuth
@@ -179,7 +176,7 @@ def dectodms(decdegs):
         raise ValueError("coordinate out of range")
     decd = int(decdegs)
     decm = int((decdegs - decd) * 60)
-    decs = (((decdegs - decd) * 60) - decm)*60
+    decs = (((decdegs - decd) * 60) - decm) * 60
     # Necessary because of potential roundoff errors
     if decs - 60 > -1e-7:
         decm += 1
@@ -189,7 +186,7 @@ def dectodms(decdegs):
             decm = 0
             if decd > 90:
                 raise ValueError("coordinate out of range")
-            
+
     if sign == -1:
         if decd == 0:
             if decm == 0:
@@ -219,7 +216,7 @@ def hmstora(rah, ram, ras):
     hrs = (float(rah)+(float(ram)/60)+(float(ras)/3600.0))
     if hrs > 24:
         raise ValueError("coordinate out of range")
-    return 15*hrs
+    return 15 * hrs
 
 
 def dmstodec(decd, decm, decs):
@@ -240,11 +237,11 @@ def dmstodec(decd, decm, decs):
     if decs > 59 or decs < -59:
         raise ValueError("seconds out of range")
     sign = -1 if decd < 0 or decm < 0 or decs < 0 else 1
-    decdegs = abs(decd) + abs(decm) / 60. + abs(decs)/3600.
+    decdegs = abs(decd) + abs(decm) / 60. + abs(decs) / 3600.
     if decdegs > 90:
         raise ValueError("coordinates out of range")
 
-    return sign*decdegs
+    return sign * decdegs
 
 
 def angsep(ra1, dec1, ra2, dec2):
@@ -265,7 +262,7 @@ def angsep(ra1, dec1, ra2, dec2):
 
     return (3600 * math.degrees(math.acos(
         (math.cos(b) * math.cos(c)) + (math.sin(b) * math.sin(c) *
-                                       math.cos(math.radians(ra1-ra2))))))
+                                       math.cos(math.radians(ra1 - ra2))))))
 
 
 def alphasep(ra1, ra2, dec1, dec2):
@@ -315,11 +312,11 @@ def alpha(l, m, alpha0, delta0):
 
 
 # Find the RA of a point in a radio image, given l,m and field centre
-def delta(l, m, alpha0, delta0):
-    """Convert a coordinate in l,m into an coordinate in Dec
+def delta(l, m, delta0):
+    """Convert a coordinate in l, m into an coordinate in Dec
 
     Keyword arguments:
-    l,m -- direction cosines, given by (offset in cells) x cellsi (radians)
+    l, m -- direction cosines, given by (offset in cells) x cellsi (radians)
     alpha_0, delta_0 -- centre of the field
 
     Return value:
@@ -331,19 +328,19 @@ def delta(l, m, alpha0, delta0):
 
 
 # Find the declination of a point in a radio image, given l,m and field centre
-def l(ra, dec, cra, cdec, incr):
+def l(ra, dec, cra, incr):
     """Convert a coordinate in RA,Dec into a direction cosine m
 
     Keyword arguments:
     ra,dec -- Source location
-    cra,cdec -- centre of the field
+    cra -- RA centre of the field
     incr -- number of degrees per pixel (negative in the case of RA)
 
     Return value:
     l -- Direction cosine
 
     """
-    return ((math.cos(math.radians(dec)) * math.sin(math.radians(ra-cra))) /
+    return ((math.cos(math.radians(dec)) * math.sin(math.radians(ra - cra))) /
             (math.radians(incr)))
 
 
@@ -400,7 +397,7 @@ def lm_to_radec(ra0, dec0, l, m):
 
 
 def radec_to_lmn(ra0, dec0, ra, dec):
-    l = math.cos(dec) * math.sin(ra-ra0)
+    l = math.cos(dec) * math.sin(ra - ra0)
     sind0 = math.sin(dec0)
     if sind0 != 0:
         # from pandey;  gives same results for casa and cyga
@@ -441,7 +438,7 @@ def eq_to_gal(ra, dec):
     l = math.degrees(math.atan2(sg[1], sg[0]))
 
     if l < 0:
-        l = l+360
+        l += 360
 
     return (l, b)
 

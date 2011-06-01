@@ -11,9 +11,6 @@ lightcurves, detections, sources, etc -- that the pipeline must handle.
 """
 
 import logging
-import numpy
-import pylab
-from ..utility.exceptions import TKPException, TKPDataBaseError
 
 
 class ObjectContainer(list):
@@ -30,28 +27,28 @@ class ObjectContainer(list):
     """
     def closest_to(self, pix_x, pix_y):
         distance, target = False, False
-        logging.debug("Beginning a search for objects near: " +
-                      str(pix_x) + ", " + str(pix_y))
-        logging.debug("I have %d objects" % (len(self),))
-        for my_obj in self:
-            my_dist = (pix_x - my_obj.x)**2 + (pix_y - my_obj.y)**2
-            logging.debug("Object at %f, %f" % (my_obj.x, my_obj.y))
-            logging.debug("Has distance %f" %my_dist)
+        logging.debug("Beginning a search for objects near %.1f, %.1f: ",
+                      pix_x, pix_y)
+        logging.debug("%s contains %d objects", str(self), len(self))
+        for obj in self:
+            tmpdist = (pix_x - obj.x)**2 + (pix_y - obj.y)**2
+            logging.debug("Object at %f, %f", obj.x, obj.y)
+            logging.debug("Has distance %f", tmpdist)
             if not distance:
-                distance = my_dist
-                target = my_obj
+                distance = tmpdist
+                target = obj
             else:
-                if my_dist < distance:
-                    target = my_obj
-                    distance = my_dist
-            logging.debug("Best distance is now %f" % distance)
-            logging.debug("From object " + str(target))
+                if tmpdist < distance:
+                    target = obj
+                    distance = tmpdist
+            logging.debug("Best distance is now %f", distance)
+            logging.debug("From object %s", str(target))
         if not distance:
             return (target, distance)
         else:
             return (target, distance**0.5)
 
-    def __setslice__(self, slice, items):
+    def __setslice__(self, section, items):
         """
         Not implemented.
         """
@@ -86,19 +83,18 @@ class ObjectContainer(list):
 
 
 class ExtractionResults(ObjectContainer):
-    """
-    Container for the results of running source extraction on an ImageData
-    object
-    """
+    """Container for the results of running source extraction on an
+    ImageData object"""
 
     def regionlist(self, radius=5):
         """Output a list of regions suitable for use in DS9.
 
-        @type radius: Numeric
-        @param radius: Size of DS9 marker object.
+        Kwargs:
+
+            radius (float): size of DS9 marker object
         """
-        for o in self:
-            print "circle(%f, %f, %f)" % (o.x, o.y, radius)
+        for obj in self:
+            print "circle(%f, %f, %f)" % (obj.x, obj.y, radius)
 
     def __str__(self):
         return 'ExtractionResults: ' + str(len(self)) + ' detection(s).'

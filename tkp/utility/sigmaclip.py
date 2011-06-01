@@ -88,7 +88,7 @@ def calcsigma(data, errors=None, mean=None, axis=None, errors_as_weight=False):
             errors_as_weight=True.  If not given, all errors (and thus
             weights) are assumed to be equal to 1.
     :type errors: numpy.ndarray
-    
+
     :keyword mean: Provide mean if you don't want the mean to be calculated
         for you. Pay careful attention to the shape if you provide 'axis'.
     :type mean: float
@@ -144,7 +144,7 @@ def sigmaclip(data, errors=None, niter=0, siglow=3., sighigh=3.,
     :argument data: Numpy array containing data values.
     :type data: numpy.ndarray
 
-    
+
     :keyword errors: Errors associated with the data values. If None,
         unweighted mean and standard deviation are used in
         calculations.

@@ -12,6 +12,7 @@ These can be used to populate ImageData objects based on some data source
 (FITS file, array in memory... etc).
 """
 import datetime
+import re
 import logging
 import dateutil.parser
 import pytz
@@ -29,17 +30,24 @@ class DataAccessor(object):
     stored (FITS files, arrays in memory, potentially HDF5, etc).
     """
 
+    def __init__(self, *args, **kwargs):
+        self.beam = kwargs.pop('beam', (None, None, None))
+        self.wcs = kwargs.pop('wcs', WCS())
+        super(DataAccessor, self).__init__(*args, **kwargs)
+
     def _beamsizeparse(self, bmaj, bmin, bpa):
         """Needs beam parameters, no defaults."""
 
         semimaj = (bmaj / 2.) * (numpy.sqrt(
-            (numpy.sin(numpy.pi * bpa / 180.) ** 2) /
-            (self.wcs.cdelt[0] ** 2) + (numpy.cos(numpy.pi * bpa / 180.) ** 2) /
-            (self.wcs.cdelt[1] ** 2)))
+            (numpy.sin(numpy.pi * bpa / 180.)**2) /
+            (self.wcs.cdelt[0]**2) +
+            (numpy.cos(numpy.pi * bpa / 180.)**2) /
+            (self.wcs.cdelt[1]**2)))
         semimin = (bmin / 2.) * (numpy.sqrt(
-            (numpy.cos(numpy.pi * bpa / 180.) ** 2) /
-            (self.wcs.cdelt[0] ** 2) + (numpy.sin(numpy.pi * bpa / 180.) ** 2) /
-            (self.wcs.cdelt[1] ** 2)))
+            (numpy.cos(numpy.pi * bpa / 180.)**2) /
+            (self.wcs.cdelt[0]**2) +
+            (numpy.sin(numpy.pi * bpa / 180.)**2) /
+            (self.wcs.cdelt[1]**2)))
         theta = numpy.pi * bpa / 180
         self.beam = (semimaj, semimin, theta)
 
@@ -53,6 +61,7 @@ class AIPSppImage(DataAccessor):
     assumption...
     """
     def __init__(self, filename, plane=0, beam=None):
+        super(AIPSppImage, self).__init__()
         self.filename = filename
         self.plane = plane
         self._coordparse()
@@ -84,6 +93,7 @@ class AIPSppImage(DataAccessor):
         self.wcs.crota = (0., 0.)
         self.wcs.cunits = ('unknown', 'unknown')
         # Update WCS
+        print 'setting wcs', dir(self.wcs)
         self.wcs.wcsset()
         self.pix_to_position = self.wcs.p2s
 
@@ -125,7 +135,7 @@ class FitsFile(DataAccessor):
         if not beam:
             self._beamsizeparse(hdulist)
         else:
-            super(FitsFile, self)._beamsizeparse(*beam)
+            super(FitsFile, self)._beamsizeparse(beam[0], beam[1], beam[2])
 
         # Attempt to do something sane with timestamps.
         try:
@@ -144,7 +154,7 @@ class FitsFile(DataAccessor):
                     raise KeyError("Timestamp in fits file unreadable")
             try:
                 timezone = pytz.timezone(hdulist[0].header['timesys'])
-            except (pytz.UnknownTimeZoneError, KeyError), error:
+            except (pytz.UnknownTimeZoneError, KeyError):
                 logging.debug(
                     "Timezone not specified in FITS file: assuming UTC")
                 timezone = pytz.utc
@@ -207,7 +217,7 @@ class FitsFile(DataAccessor):
             #self.freqbw = hdulist[0].header['cdelt3']
             self.freqeff = hdulist[0].header['crval4']
             self.freqbw = hdulist[0].header['cdelt4']
-        except KeyError, error:
+        except KeyError:
             logging.warn("Frequency not specified in FITS")
             raise
 
@@ -267,36 +277,42 @@ class FitsFile(DataAccessor):
         """
 
         hdulist = pyfits.open(self.filename)
-        prthdr = hdulist[0].header
-
-        xpix_deg = prthdr['CDELT1']
-        ypix_deg = prthdr['CDELT2']
-
+        header = hdulist[0].header
+        bmaj, bmin, bpa = None, None, None
         try:
-            # Here we check if the key params are in the header (Miriad)
-            bmaj = prthdr['BMAJ']
-            bmin = prthdr['BMIN']
-            bpa = prthdr['BPA']
-        except KeyError, error:
-            # if not found we check whether they are in the HISTORY key (AIPS)
-            found = False
-            for i in range(len(prthdr.ascardlist().keys())):
-                if (prthdr.ascardlist().keys()[i] == 'HISTORY'):
-                    histline = prthdr[i]
-                    if (histline.find('BMAJ') > -1):
-                        found = True
-                        idx_bmaj = histline.find('BMAJ')
-                        idx_bmin = histline.find('BMIN')
-                        idx_bpa = histline.find('BPA')
-                        bmaj = float(histline[idx_bmaj+5:idx_bmin])
-                        bmin = float(histline[idx_bmin+5:idx_bpa])
-                        bpa = float(histline[idx_bpa+4:len(histline)])
-            if found is False:
-                # if not provided and not found we are lost and
-                # have to bomb out.
-                raise ValueError(
-                    "Basic processing is impossible without "
-                    "adequate information about the resolution element.")
+            # MIRIAD FITS file
+            bmaj = header['BMAJ']
+            bmin = header['BMIN']
+            bpa = header['BPA']
+        except KeyError:
+            # AIPS FITS file
+            regex = re.compile(r'''
+                                BMAJ
+                                \s*=\s*
+                                (?P<bmaj>[-\d\.eE]+)
+                                \s*
+                                BMIN
+                                \s*=\s*
+                                (?P<bmin>[-\d\.eE]+)
+                                \s*
+                                BPA
+                                \s*=\s*
+                                (?P<bpa>[-\d\.eE]+)
+                                ''', re.VERBOSE)
+            for i, key in enumerate(header.ascardlist().keys()):
+                if key == 'HISTORY':
+                    #print header[i]
+                    results = regex.search(header[i])
+                    if results:
+                        bmaj, bmin, bpa = [float(results.group(key)) for
+                                           key in ('bmaj', 'bmin', 'bpa')]
+                        break
+        if bmaj is None:
+            # if not provided and not found we are lost and
+            # have to bomb out.
+            raise ValueError("""\
+Basic processing is impossible without adequate information about the \
+resolution element.""")
         hdulist.close()
         super(FitsFile, self)._beamsizeparse(bmaj, bmin, bpa)
 

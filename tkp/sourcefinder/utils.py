@@ -108,3 +108,23 @@ def maximum_pixel_method_variance(semimajor, semiminor, theta):
                 - fudge_max_pix(semimajor, semiminor, theta)**2)
 
     return variance
+
+
+def flatten(lst):
+    """ Nested lists are made in the deblending algorithm
+
+    They're awful. This is a piece of code I grabbed from
+    http://www.daniweb.com/code/snippet216879.html.
+
+    The output from this method is a generator, so make sure to turn
+    it into a list, like this::
+
+        flattened = list(flatten(nested)).
+
+    """
+    for elem in lst:
+        if type(elem) in (tuple, list):
+            for i in flatten(elem):
+                yield i
+        else:
+            yield elem

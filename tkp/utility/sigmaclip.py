@@ -53,7 +53,7 @@ def clip(data, mean, sigma, siglow, sighigh, indices=None):
 
     """
 
-    if indices is not None::
+    if indices is not None:
         ilow = numpy.logical_and(data >= mean - sigma * siglow, indices)
         ihigh = numpy.logical_and(data <= mean + sigma * sighigh, indices)
     else:

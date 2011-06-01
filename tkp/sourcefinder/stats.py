@@ -4,50 +4,15 @@
 #
 # Generic utility routines; number handling etc.
 
-import pyfits
 import numpy
 from numpy.ma import MaskedArray
 from scipy.special import erf
 from scipy.special import erfcinv
-from tkp.sourcefinder import utils
-from tkp.utility.uncertain import Uncertain
+from .utils import calculate_correlation_lengths
 
 
 # CODE & NUMBER HANDLING ROUTINES
 #
-def flatten(lst):
-    """ Nested lists are made in the deblending algorithm
-
-    They're awful. This is a piece of code I grabbed from
-    http://www.daniweb.com/code/snippet216879.html.
-
-    The output from this method is a generator, so make sure to turn
-    it into a list, like this::
-
-        flattened = list(flatten(nested)).
-
-    """
-    for elem in lst:
-        if type(elem) in (tuple, list):
-            for i in flatten(elem):
-                yield i
-        else:
-            yield elem
-
-
-def xfrange(start, stop=None, step=None):
-    """Like xrange, but supports floats."""
-    if stop is None:
-        stop = float(start)
-        start = 0.0
-    if step is None:
-        step = 1.0
-    cur = float(start)
-    while cur < stop:
-        yield cur
-        cur += step
-
-
 def var_helper(N):
     """Correct for the fact the rms noise is computed from a clipped
     distribution.
@@ -62,7 +27,7 @@ def var_helper(N):
 
 
 def indep_pixels(N, beam):
-    corlengthlong, corlengthshort = utils.calculate_correlation_lengths(
+    corlengthlong, corlengthshort = calculate_correlation_lengths(
         beam[0], beam[1])
     correlated_area = 0.25 * numpy.pi * corlengthlong * corlengthshort
     return N / correlated_area
@@ -153,38 +118,3 @@ def sigma_clip(data, beam, sigma=unbiased_sigma, max_iter=100,
                           my_iterations, corr_clip)
     else:
         return newdata, unbiased_std, centre, my_iterations
-
-
-def error_weighted_mean(my_iterator):
-    running_sum = 0.0
-    running_weight = 0.0
-    running_error = 0.0
-    for val in my_iterator:
-        weight = 1.0 / val.error
-        running_sum += weight * val.value
-        running_weight += weight
-        running_error += weight * val.error**2
-    val = running_sum / running_weight
-    err = numpy.sqrt(running_error / running_weight)
-    return Uncertain(val, err)
-
-
-#
-# FILE & IMAGE HANDLING
-#
-def writefits(data, filename, header=None):
-    """
-    Dump a NumPy array to a FITS file.
-
-    Key/value pairs for the FITS header can be supplied in the optional
-    header argument as a dictionary.
-    """
-    if header is None:
-        header = {}
-    if header.__class__.__name__ == 'Header':
-        pyfits.writeto(filename, data.transpose(), header)
-    else:
-        hdu = pyfits.PrimaryHDU(data.transpose())
-        for key in header.iterkeys():
-            hdu.header.update(key, header[key])
-        hdu.writeto(filename)

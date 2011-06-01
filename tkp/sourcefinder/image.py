@@ -24,8 +24,8 @@ import pyrap.images
 from tkp.config import config
 from tkp.utility import containers
 from tkp.utility import coordinates
-from tkp.utility import utilities
 from tkp.sourcefinder import utils
+from tkp.sourcefinder import stats
 import extract
 from monetdb.sql import Error as DBError
 from tkp.utility.memoize import Memoize
@@ -290,25 +290,25 @@ class ImageData(object):
         except ImportError:
             raise NotImplementedError("matplotlib not found")
         pylab.close()
-        scistats = imagestats.ImageStats(self.data, nclip=5)
+        imgstats = imagestats.ImageStats(self.data, nclip=5)
         norm = scipy.stats.normaltest(self.data.ravel())
-        binsize = (scistats.max-scistats.min)/nbins
+        binsize = (imgstats.max-imgstats.min)/nbins
         histogram = imagestats.histogram1d(
-                        self.data, nbins, binsize, scistats.min
+                        self.data, nbins, binsize, imgstats.min
         )
         pylab.plot(
-            numpy.arange(scistats.min, scistats.max, binsize)[0:nbins],
+            numpy.arange(imgstats.min, imgstats.max, binsize)[0:nbins],
             histogram.histogram
         )
         pylab.xlabel("Pixel value")
         pylab.ylabel("Number of pixels")
 
         mystats = {
-            'npix': scistats.npix,
-            'smin': scistats.min,
-            'smax': scistats.max,
-            'stdd': scistats.stddev,
-            'mean': scistats.mean,
+            'npix': imgstats.npix,
+            'smin': imgstats.min,
+            'smax': imgstats.max,
+            'stdd': imgstats.stddev,
+            'mean': imgstats.mean,
             'medi': scipy.stats.median(self.data.ravel()),
             'skew': scipy.stats.skew(self.data.ravel()),
             'kurt': scipy.stats.kurtosis(self.data.ravel()),
@@ -318,7 +318,7 @@ class ImageData(object):
             'time': time.strftime('%c')
             }
 
-        scistats.printStats()
+        imgstats.printStats()
         print "Median            :   " + str(mystats['medi'])
         print "Skew              :   " + str(mystats['skew'])
         print "Kurtosis          :   " + str(mystats['kurt'])
@@ -352,7 +352,7 @@ class ImageData(object):
                     startx:startx + CONFIG['back_sizex'],
                     starty:starty + CONFIG['back_sizey']
                 ].ravel()
-                chunk, sigma, median, no_clip = utilities.sigma_clip(
+                chunk, sigma, median, no_clip = stats.sigma_clip(
                     chunk, self.beam)
                 mean = numpy.mean(chunk)
 
@@ -759,7 +759,7 @@ class ImageData(object):
         if CONFIG['deblend']:
             deblended_list = map(lambda x: x.deblend(), island_list)
             #deblended_list = [x.deblend() for x in island_list]
-            island_list = list(utilities.flatten(deblended_list))
+            island_list = list(utils.flatten(deblended_list))
 
         # Iterate over the list of islands and measure the source in each,
         # appending it to the results list.

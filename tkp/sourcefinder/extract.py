@@ -20,7 +20,6 @@ except ImportError:
 from deconv import deconv
 from tkp.sourcefinder import utils
 import tkp.sourcefinder.gaussian as gaussian
-import tkp.utility.utilities as utilities
 import tkp.utility.coordinates as coordinates
 from tkp.utility.uncertain import Uncertain
 from tkp.config import config
@@ -157,7 +156,7 @@ class Island(object):
                     if niter < CONFIG['deblend_nthresh']:
                         # Apparently, the map command always results in
                         # nested lists.
-                        return list(utilities.flatten(map(
+                        return list(utils.flatten(map(
                             lambda island: island.deblend(niter=niter+1),
                             subislands)))
                     else:
@@ -202,16 +201,16 @@ class ParamSet(DictMixin):
 
     def __init__(self):
         self.values = {
-            'peak': utilities.Uncertain(),
-            'flux': utilities.Uncertain(),
-            'xbar': utilities.Uncertain(),
-            'ybar': utilities.Uncertain(),
-            'semimajor': utilities.Uncertain(),
-            'semiminor': utilities.Uncertain(),
-            'theta': utilities.Uncertain(),
-            'semimaj_deconv': utilities.Uncertain(),
-            'semimin_deconv': utilities.Uncertain(),
-            'theta_deconv': utilities.Uncertain()
+            'peak': Uncertain(),
+            'flux': Uncertain(),
+            'xbar': Uncertain(),
+            'ybar': Uncertain(),
+            'semimajor': Uncertain(),
+            'semiminor': Uncertain(),
+            'theta': Uncertain(),
+            'semimaj_deconv': Uncertain(),
+            'semimin_deconv': Uncertain(),
+            'theta_deconv': Uncertain()
             }
         # This parameter gives the number of components that could not be
         # deconvolved, IERR from deconf.f.
@@ -542,12 +541,12 @@ class ParamSet(DictMixin):
                 else:
                     self['semimin_deconv'].error = numpy.abs(rmin5 - rmin)
             else:
-                self['semimin_deconv'] = utilities.Uncertain(
+                self['semimin_deconv'] = Uncertain(
                     numpy.nan, numpy.nan)
         else:
-            self['semimaj_deconv'] = utilities.Uncertain(numpy.nan, numpy.nan)
-            self['semimin_deconv'] = utilities.Uncertain(numpy.nan, numpy.nan)
-            self['theta_deconv'] = utilities.Uncertain(numpy.nan, numpy.nan)
+            self['semimaj_deconv'] = Uncertain(numpy.nan, numpy.nan)
+            self['semimin_deconv'] = Uncertain(numpy.nan, numpy.nan)
+            self['theta_deconv'] = Uncertain(numpy.nan, numpy.nan)
 
         return self
 
@@ -823,10 +822,10 @@ class Detection(object):
         # Of course, the formula is also valid if theta is measured
         # from the positive y-axis towards positive x
         # and both of these directions are equal (clockwise).
-        self.theta_celes = utilities.Uncertain(
+        self.theta_celes = Uncertain(
             (numpy.degrees(self.theta.value) + yoffset_angle) % 180,
             numpy.degrees(self.theta.error))
-        self.theta_dc_celes = utilities.Uncertain(
+        self.theta_dc_celes = Uncertain(
             (self.theta_dc.value + yoffset_angle) % 180,
             numpy.degrees(self.theta_dc.error))
 

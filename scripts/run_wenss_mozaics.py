@@ -41,7 +41,7 @@ for file in files:
         my_image = image.ImageData(my_fitsfile, dataset = dataset)
         my_image.wcs.coordsys  = 'fk4' 
         my_image.wcs.outputsys = 'fk4'
-        #results = my_image.sextract(det=20)
+        #results = my_image.extract(det=20)
         cursor = conn.cursor()
         #373 sources:
         # orig_catsrcid <> 49964 gave troouble in multiple assocs (this will be taken care of)

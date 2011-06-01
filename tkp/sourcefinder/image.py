@@ -25,7 +25,7 @@ from tkp.utility import containers
 from tkp.utility import coordinates
 from tkp.utility import utilities
 from tkp.sourcefinder import utils
-import sextract
+import extract
 from monetdb.sql import Error as DBError
 from tkp.utility.memoize import Memoize
 
@@ -450,7 +450,7 @@ class ImageData(object):
     # extraction systems.                                                     #
     #                                                                         #
     ###########################################################################
-    def sextract(self, det=None, anl=None, noisemap=None, bgmap=None):
+    def extract(self, det=None, anl=None, noisemap=None, bgmap=None):
         """
         Kick off conventional (ie, RMS island finding) source extraction.
 
@@ -463,7 +463,7 @@ class ImageData(object):
         fitting the source.
 
         The results are returned as an instance of
-        :class:`tkp_lib.containers.SextractionResults`.
+        :class:`tkp_lib.containers.ExtractionResults`.
         """
         if not det:
             det = CONFIG['detection_threshold']
@@ -498,7 +498,7 @@ class ImageData(object):
 
         We need to clear cached data -- backgroung map, cached clips, etc --
         before & after doing this, as they'll interfere with the normal
-        sextraction process. If this is regularly used, we'll want to
+        extraction process. If this is regularly used, we'll want to
         implement a separate cache.
         """
         if not det:
@@ -506,7 +506,7 @@ class ImageData(object):
         self.labels.clear()
         self.clip.clear()
         self.data_bgsubbed *= -1
-        results = self.sextract(det=det)
+        results = self.extract(det=det)
         self.data_bgsubbed *= -1
         self.labels.clear()
         self.clip.clear()
@@ -564,7 +564,7 @@ class ImageData(object):
             index = (numpy.where(prob-compare < 0.)[0]).max()
         except ValueError:
             # Everything below threshold
-            return containers.SextractionResults()
+            return containers.ExtractionResults()
 
         fdr_threshold = numpy.sqrt(-2.0 * numpy.log(n1 * prob[index]))
         # Default we require that all source pixels are above the threshold,
@@ -594,7 +594,7 @@ class ImageData(object):
         is set to ``position``, then the pixel coordinates are fixed
         in the fit.
 
-        Returns an instance of :class:`tkp_lib.sextraction.Detection`.
+        Returns an instance of :class:`tkp_lib.extraction.Detection`.
         """
         # We'll mask out anything below threshold*self.rmsmap from the fit.
         labels, num = self.labels.setdefault(
@@ -624,7 +624,7 @@ class ImageData(object):
         else:
             raise TypeError("Unkown fixed parameter")
 
-        measurement, residuals = sextract.source_profile_and_errors(
+        measurement, residuals = extract.source_profile_and_errors(
             fitme, threshold * self.rmsmap[x, y], self.rmsmap[x, y],
             self.beam, fixed=fixed)
 
@@ -639,7 +639,7 @@ class ImageData(object):
         measurement.sig = (fitme / self.rmsmap[chunk]).max()
 
         if measurement.moments or measurement.gaussian:
-            return sextract.Detection(measurement, self)
+            return extract.Detection(measurement, self)
         else:
             logging.warn("Moments & Gaussian fit failed at %f, %f", x, y)
 
@@ -676,7 +676,7 @@ class ImageData(object):
         :type analysisthresholdmap: numpy.ndarray
 
         :returns:
-        :rtype: cointainers.SextractionResults
+        :rtype: cointainers.ExtractionResults
 
         This is described in detail in the "Source Extraction System" document
         by John Swinbank, available from TKP svn; see that for details.
@@ -739,7 +739,7 @@ class ImageData(object):
                     0.0).filled(fill_value=0.)
                 self.islands_map[chunk] += selected_data
                 island_list.append(
-                    sextract.Island(selected_data,
+                    extract.Island(selected_data,
                                     self.rmsmap[chunk],
                                     chunk,
                                     analysis_threshold,
@@ -763,12 +763,12 @@ class ImageData(object):
 
         # Iterate over the list of islands and measure the source in each,
         # appending it to the results list.
-        results = containers.SextractionResults()
+        results = containers.extractionResults()
         for island in island_list:
             measurement, residual = island.fit()
             try:
                 results.append(
-                    sextract.Detection(measurement, self, chunk=island.chunk)
+                    extract.Detection(measurement, self, chunk=island.chunk)
                 )
                 if CONFIG['residuals']:
                     self.residuals_from_deblending[island.chunk] -= (

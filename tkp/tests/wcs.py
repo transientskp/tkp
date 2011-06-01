@@ -1,8 +1,8 @@
 # Test wcslib wrapper
 
 import unittest
-import tkp.utility.coordinates as coordinates
-import tkp.sourcefinder.sextract as sextract
+from tkp.utility import coordinates
+from tkp.sourcefinder import extract
 from tkp.utility.uncertain import Uncertain
 
 # Specify the number of digits you want to include when checking if positions are equal.
@@ -139,7 +139,7 @@ class wcsDetectionEquinox(unittest.TestCase):
         self.wcs.outputsys = 'fk4'
 
         # Detection object in the above FITS image
-        p = sextract.ParamSet()
+        p = extract.ParamSet()
         p['peak'] = Uncertain(0.000292602468997, 4.48289323799e-05)
         p['flux'] = Uncertain(0.000290788903448, 0.00010260694641)
         p['xbar'] = Uncertain(372.956830487, 0.288912628716)
@@ -153,7 +153,7 @@ class wcsDetectionEquinox(unittest.TestCase):
             def __init__(self, wcs):
                 self.freq_id = None
                 self.wcs = wcs
-        self.det = sextract.Detection(p, ImageDataPlaceholder(self.wcs))
+        self.det = extract.Detection(p, ImageDataPlaceholder(self.wcs))
 
     def testChangeCoords(self):
         # This just tests that some arbitrary coordinates do change under a

@@ -46,8 +46,8 @@ for file in files:
     image = d.ImageData(fitsfile, seq_nr = seq_nr)
     image.wcs.coordsys  = 'fk4' 
     image.wcs.outputsys = 'fk5'
-    results = image.sextract(sigma=4.5, method='python')
-    #results = image.sextract(method='python')
+    results = image.extract(sigma=4.5, method='python')
+    #results = image.extract(method='python')
     imgendtime = time.time()
     imgelapsed = imgendtime - imgstarttime
     print "Image processing time %6.3f seconds" % (imgelapsed)

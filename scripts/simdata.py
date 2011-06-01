@@ -64,8 +64,8 @@ for file in files:
         print "im.obstime:",my_image.obstime
         imid = my_image.id[0]
         print "Image Id:", imid
-        results = my_image.sextract(det=7,anl=4)
-        #results = my_image.sextract(det=95,anl=6)
+        results = my_image.extract(det=7,anl=4)
+        #results = my_image.extract(det=95,anl=6)
         print len(results), " results"
         imgendtime = time.time()
         nsources = len(results)

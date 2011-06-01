@@ -25,7 +25,7 @@ class ObjectContainer(list):
     a given object in a given image stack) and lightcurves (ie, all
     the sources associated with a given object through time).
 
-    You probably don't want to use this on it's own: see SextractionResults,
+    You probably don't want to use this on it's own: see ExtractionResults,
     TargetList or source for more useful derived classes.
     """
     def closest_to(self, pix_x, pix_y):
@@ -85,7 +85,7 @@ class ObjectContainer(list):
         return 'Container: ' + str(len(self)) + ' object(s).'
 
 
-class SextractionResults(ObjectContainer):
+class ExtractionResults(ObjectContainer):
     """
     Container for the results of running source extraction on an ImageData
     object
@@ -101,4 +101,4 @@ class SextractionResults(ObjectContainer):
             print "circle(%f, %f, %f)" % (o.x, o.y, radius)
 
     def __str__(self):
-        return 'SextractionResults: ' + str(len(self)) + ' detection(s).'
+        return 'ExtractionResults: ' + str(len(self)) + ' detection(s).'

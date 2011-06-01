@@ -38,7 +38,7 @@ print conn
 i = 0
 for img in dataset:
     imgstarttime = time.time()
-    results = img.sextract(det=10)
+    results = img.extract(det=10)
     imgendtime = time.time()
     imgelapsed = imgendtime - imgstarttime
     print "Image: ", img.filename, " processing time %6.3f seconds" % (imgelapsed)

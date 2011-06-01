@@ -58,7 +58,7 @@ for file in files:
         print "imageid:", my_image.id[0]
         my_image.wcs.coordsys  = 'fk4' 
         my_image.wcs.outputsys = 'fk5'
-        results = my_image.sextract(det=20)
+        results = my_image.extract(det=20)
         imgendtime = time.time()
         nsources = len(results)
         imgelapsed = imgendtime - imgstarttime

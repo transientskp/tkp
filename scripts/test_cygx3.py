@@ -28,7 +28,7 @@ for file in os.listdir(imagesdir):
     interstarttime = time.clock()
     fitsfile = d.FitsFile(imagesfile)
     image = d.ImageData(fitsfile, seq_nr = seq_nr)
-    results = image.sextract(method='python')
+    results = image.extract(method='python')
     interendtime = time.clock()
     print "Image processing time %.3f seconds" % (interendtime - interstarttime)
     results.savetoDB(conn)

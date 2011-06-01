@@ -66,7 +66,7 @@ for file in files:
         my_image = image.ImageData(my_fitsfile, dataset = dataset)
         my_image.wcs.coordsys  = 'fk4' 
         my_image.wcs.outputsys = 'fk5'
-        results = my_image.sextract(det=10)
+        results = my_image.extract(det=10)
         imgendtime = time.time()
         nsources = len(results)
         imgelapsed = imgendtime - imgstarttime

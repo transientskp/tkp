@@ -275,16 +275,16 @@ while i<=n_of_steps:
  my_fitsfile = access.FitsFile(pathout+'SOURCESINSERTED'+str(i)+'.FITS')
  my_image= imag.ImageData(my_fitsfile)
  # For the source extraction, both the detection and the analysis threshold are set equal to lowerlim in settings.py.
- sextract_results = my_image.sextract()
+ extract_results = my_image.extract()
 
- if len(sextract_results)!=64:
-     print 'len(sextract_results)=',len(sextract_results)
+ if len(extract_results)!=64:
+     print 'len(extract_results)=',len(extract_results)
  else:
      # Only leap to the next image if there were exactly 64 detections.
      ra_values=np.zeros((64),'f')
      dec_values=np.zeros((64),'f')
      k=0
-     for detection in sextract_results:
+     for detection in extract_results:
          measured_fluxes[i-1,k]=detection.peak.value
          reported_flux_errors[i-1,k]=detection.peak.error
          ra_values[k]=detection.ra.value
@@ -299,7 +299,7 @@ while i<=n_of_steps:
      ra_diff[i-1,:]=ra_values-ra_true
      dec_diff[i-1,:]=dec_values-dec_true
      print 'np.std(ra_diff[i-1,:]),np.std(dec_diff[i-1,:])=',np.std(ra_diff[i-1,:]),np.std(dec_diff[i-1,:])
- number_not_64+=len(sextract_results)
+ number_not_64+=len(extract_results)
  print 'number_not_64,np.mod(number_not_64,64)=',number_not_64,np.mod(number_not_64,64)
  """
  i+=1

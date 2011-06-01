@@ -19,13 +19,13 @@ my_fitsfile = access.FitsFile(path+masterfile)
 
 my_image= imag.ImageData(my_fitsfile)
 # print 'tot hier'
-# my_sr=my_image.sextract()
-sextract_results = my_image.sextract()
+# my_sr=my_image.extract()
+extract_results = my_image.extract()
 einde=time.time()
-print 'len(sextract_results)=',len(sextract_results)
+print 'len(extract_results)=',len(extract_results)
 # fluxes = []
 i=0
-for detection in sextract_results:
+for detection in extract_results:
       # print 'peak',detection.peak,'ra',detection.ra,'dec',detection.dec
       i+=1
       # print 'ra,error=',coords.ratohms(detection.ra.value),detection.ra.error*3600.,'dec,error=',\

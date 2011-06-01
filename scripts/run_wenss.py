@@ -50,7 +50,7 @@ for img in dataset:
     imgstarttime = time.time()
     img.wcs.coordsys  = 'fk4' 
     img.wcs.outputsys = 'fk5'
-    results = img.sextract(det=7)
+    results = img.extract(det=7)
     imgendtime = time.time()
     imgelapsed = imgendtime - imgstarttime
     print "Image processing time %6.3f seconds" % (imgelapsed)

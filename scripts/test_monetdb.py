@@ -34,8 +34,8 @@ print conn
 
 for img in dataset:
     imgstarttime = time.time()
-    #results = img.sextract(sigma=4.5, method='python')
-    results = img.sextract()
+    #results = img.extract(sigma=4.5, method='python')
+    results = img.extract()
     imgendtime = time.time()
     imgelapsed = imgendtime - imgstarttime
     print "Image processing time %6.3f seconds" % (imgelapsed)

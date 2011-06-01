@@ -55,9 +55,9 @@ for file in files:
             my_image.wcs.coordsys  = 'fk4' 
             my_image.wcs.outputsys = 'fk5'
             if (j == 0 or j == 3):
-                results = my_image.sextract(det=110)
+                results = my_image.extract(det=110)
             else:
-                results = my_image.sextract(det=100)
+                results = my_image.extract(det=100)
             imgendtime = time.time()
             nsources = len(results)
             imgelapsed = imgendtime - imgstarttime

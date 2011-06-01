@@ -19,14 +19,14 @@ import scipy.stats
 try:
     import ndimage
 except ImportError:
-    import scipy.ndimage as ndimage
-import tkp.utility.containers as containers
-import tkp.utility.coordinates as coordinates
-import tkp.utility.utilities as utilities
-import tkp.sourcefinder.sextract as sextract
-from monetdb.sql import Error as DBError
-from tkp.sourcefinder import utils
+    from scipy import ndimage
 from tkp.config import config
+from tkp.utility import containers
+from tkp.utility import coordinates
+from tkp.utility import utilities
+from tkp.sourcefinder import utils
+import sextract
+from monetdb.sql import Error as DBError
 from tkp.utility.memoize import Memoize
 
 
@@ -74,42 +74,7 @@ class ImageData(object):
         self.labels = {}
         self.freq_low = 1
         self.freq_high = 1
-        #self._localinit()
 
-#    def _localinit(self):
-#        """Perform local initialization of this ImageData's state.
-#
-#        This is used both by the objects __init__() method *and* by
-#        __setstate__() to populate the attributes of the ImageData from its
-#        standard sources. It assumes that self.datasource, and
-#        self.dataset have already been set when the object was initialised.
-#        """
-#
-#        # Note: where is the __setstate__? Is this a (hidden) inherited method?
-#        # Does it always call _localinit() then?
-#        # I've guessed not, hence _localinit() becomes obsolete.
-#
-#        self.clip = {}
-#        self.labels = {}
-#        self.freq_low = 1
-#        self.freq_high = 1
-#
-#        # set up the world coordinate system
-#        self.wcs = coordinates.wcs()
-#        self.wcs.crval = (self.datasource.crval1, self.datasource.crval2)
-#        self.wcs.crpix = (self.datasource.crpix1, self.datasource.crpix2)
-#        self.wcs.cdelt = (self.datasource.cdelt1, self.datasource.cdelt2)
-#        self.wcs.ctype = (self.datasource.ctype1, self.datasource.ctype2)
-#        try:
-#            self.wcs.crota = (self.datasource.crota1, self.datasource.crota2)
-#        except AttributeError:
-#            pass
-#        try:
-#            self.wcs.cunit = (self.datasource.cunit1, self.datasource.cunit2)
-#        except AttributeError:
-#            pass
-#        self.wcs.wcsset()
-#        self.pix_to_position = self.wcs.p2s
 
     ###########################################################################
     #                                                                         #
@@ -123,10 +88,6 @@ class ImageData(object):
     # clearcache() clears all the memoized data, which can get quite large.   #
     # It may be wise to call this, for example, in an exception handler       #
     # dealing with MemoryErrors.                                              #
-    #                                                                         #
-    # In the event that a given attribute is not defined in the ImageData     #
-    # object (either as an attribute or a property), it is passed to          #
-    # __getattr__() which attempts to retrieve it from the DataAccessor.      #
     #                                                                         #
     ###########################################################################
 
@@ -225,13 +186,6 @@ class ImageData(object):
         if hasattr(self, 'residuals_from_deblending'):
             del(self.residuals_from_deblending)
 
-#    def __getattr__(self, attrname):
-#        """
-#        Pass through unknown attributes to datasource.
-#
-#        @type attrname: string
-#        """
-#        return getattr(self.datasource, attrname)
 
     ###########################################################################
     #                                                                         #
@@ -241,6 +195,7 @@ class ImageData(object):
     # maps (in conjuntion with the properties above).                         #
     #                                                                         #
     ###########################################################################
+
     def reliable_window(self, max_degradation=CONFIG['max_degradation']):
         """Calculates limits over which the image may be regarded as
         "reliable".

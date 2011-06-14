@@ -66,9 +66,7 @@ def convert(casa_image, ms, fits_filename=None):
     start_time = MJD0 + datetime.timedelta(0, time_table.getcol('TIME')[0], 0)
     time_table = t0.query("", sortlist="-TIME", limit=1, columns="TIME")
     end_time = MJD0 + datetime.timedelta(0, time_table.getcol('TIME')[0], 0)
-    dt = end_time - start_time
-    mid_time = (start_time +
-                datetime.timedelta(dt.days, dt.seconds, dt.microseconds))
+    mid_time  = start_time + (end_time - start_time) / 2
     header.update('date-obs', start_time.strftime("%Y-%m-%dT%H:%M:%S"),
                   "Start time of observation")
     header.update('STARTUTC', start_time.strftime("%Y-%m-%dT%H:%M:%S"),

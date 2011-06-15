@@ -767,7 +767,7 @@ def _update_runningcatalog(conn):
           FROM temprunningcatalog
         """
         cursor.execute(query)
-        y = cursor.fetchall()
+        results = cursor.fetchall()
         query = """\
 UPDATE runningcatalog
   SET datapoints = %s
@@ -790,30 +790,8 @@ UPDATE runningcatalog
      ,avg_weighted_I_peak_sq = %s
 WHERE xtrsrc_id = %s
 """
-        for k in range(len(y)):
-            #print y[k][0], y[k][1], y[k][2]
-            cursor.execute(query, (y[k][0],
-                                   y[k][1],
-                                   y[k][2],
-                                   y[k][3],
-                                   y[k][4],
-                                   y[k][5],
-                                   y[k][6],
-                                   y[k][7],
-                                   y[k][8],
-                                   y[k][9],
-                                   y[k][10],
-                                   y[k][11],
-                                   y[k][12],
-                                   y[k][13],
-                                   y[k][14],
-                                   y[k][15],
-                                   y[k][16],
-                                   y[k][17],
-                                   y[k][18]
-                                 ))
-            if (k % 100 == 0):
-                print "\t\tUpdate iter:", k
+        for result in results:
+            cursor.execute(query, tuple(result))
         conn.commit()
     except db.Error, e:
         logging.warn("Failed on query nr %s." % query)
@@ -1040,6 +1018,7 @@ def associate_extracted_sources(conn, image_id, deRuiter_r=DERUITER_R):
 def _select_variability_indices(conn, dsid, V_lim, eta_lim):
     """Select sources and variability indices in the running catalog"""
 
+    results = []
     cursor = conn.cursor()
     try:
         query = """\
@@ -1068,20 +1047,16 @@ SELECT xtrsrc_id
        )
 """
         cursor.execute(query, (dsid, V_lim, eta_lim))
-        y = cursor.fetchall()
-        if len(y) > 0:
-            print "Alert!"
-        for i in range(len(y)):
-            print "xtrsrc_id =", y[i][0]
-            print "\tdatapoints =", y[i][2]
-            print "\tv_nu =", y[i][7]
-            print "\teta_nu =", y[i][8]
-        conn.commit()
+        results = cursor.fetchall()
+        results = [dict(sourceid=x[0], npoints=x[2], v_nu=x[7], eta_nu=x[8])
+                   for x in results]
+        #conn.commit()
     except db.Error:
         logging.warn("Failed on query %s", query)
         raise
     finally:
         cursor.close()
+    return results
 
 
 def lightcurve(conn, xtrsrcid):
@@ -1108,12 +1083,12 @@ ORDER BY im.taustart_ts"""
     return results
 
         
-def variability_detection(conn, dsid, V_lim, eta_lim):
+def detect_variable_sources(conn, dsid, V_lim, eta_lim):
     """Detect variability in extracted sources compared to the previous
     detections"""
 
     #sources = _select_variability_indices(conn, dsid, V_lim, eta_lim)
-    _select_variability_indices(conn, dsid, V_lim, eta_lim)
+    return _select_variability_indices(conn, dsid, V_lim, eta_lim)
 
 
 def associate_catalogued_sources_in_area(conn, ra, dec, search_radius):

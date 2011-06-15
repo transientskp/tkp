@@ -90,7 +90,7 @@ class DataSet(object):
 
     # note: 'id' has been replaced by dsid, to avoid confusion with
     # the builtin 'id'
-    def __init__(self, name='', database=None, dsid=None):
+    def __init__(self, name='', dsid=None, data=None, database=None):
         """Create or initialize a dataset
 
         Kwargs:
@@ -112,21 +112,21 @@ class DataSet(object):
             None
         """
 
+
         self.database = database
         self.images = set()
         # Database ID placeholder: see the id() method below.
         self._dsid = dsid
-        self.name = name
         # Initialize the other data
-        for key, value in DataSet.COLUMNS.items():
-            object.__setattr__(self, '_' + key, value)
-        # Create an id in the DB if not available
         if self._dsid is None:
+            # Set some defaults; not stored in database yet
+            for key, value in DataSet.COLUMNS.items():
+                setattr(self, key, value)
+            self._dsinname = self.name = name
             self.dsid
-            self._set_data(data={'dsinname': self.name})
+            self._set_data(data=data)
         else:
-            self._update_data()
-            self._update_images()
+            self._retrieve_from_database()
 
     def __setattr__(self, name, value):
         if name in DataSet.COLUMNS:
@@ -162,26 +162,6 @@ class DataSet(object):
                                  name, self._dsid)
                     raise
 
-    def _retrieve_from_database(self, database=None):
-        """Fill in the dataset details from the datasets table"""
-
-        if database is None:
-            database = self.database
-        connection = database.connection
-        cursor = database.cursor
-        query = ("""SELECT %s FROM datasets WHERE dsid=%%s""" %
-                                  ", ".join(DataSet.COLUMNS.keys()))
-        cursor.execute(query, (self._dsid,))
-        results = cursor.fetchone()
-        for i, desc in enumerate(cursor.description):
-            object.__setattr__(self, '_' + desc[0], results[i])
-        # Set the images
-        cursor.execute(
-            """SELECT imageid FROM images WHERE ds_id=%s""",
-            (self._dsid,))
-        for imageid in cursor.fetchall():
-            self.sources.add(Image(dataset=self, imageid=imageid[0]))
-
     def _set_data(self, data=None):
         """Set one or more 'columns' in the DataSet
 
@@ -214,36 +194,30 @@ WHERE dsid=%s""", (self._rerun, self._dstype, self._process_ts, self._dsinname,
                              self._dsid)
                 raise
 
-    def _update_data(self):
-        """Retrieve data from database. This (re)sets the members,
-        including the name"""
-        try:
-            self.database.cursor.execute("""\
-SELECT rerun, dstype, process_ts, dsinname, dsoutname, description
-FROM datasets
-WHERE dsid=%s""", (self._dsid,))
-        except self.database.Error:
-            logging.warn("""\
-Failed to retrieve data from the database for dataset ID = %s""", self._dsid)
-            raise
-        results = self.database.cursor.fetchone()
-        self._rerun, self._dstype, self._process_ts = results[:3]
-        self._dsinname, self._dsoutname, self._description = results[3:]
+    def _retrieve_from_database(self, database=None):
+        """Fill in the dataset details from the datasets table"""
+
+        if database is None:
+            database = self.database
+        connection = database.connection
+        cursor = database.cursor
+        query = ("""SELECT %s FROM datasets WHERE dsid=%%s""" %
+                                  ", ".join(DataSet.COLUMNS.keys()))
+        cursor.execute(query, (self._dsid,))
+        results = cursor.fetchone()
+        for i, desc in enumerate(cursor.description):
+            object.__setattr__(self, '_' + desc[0], results[i])
         self.name = self._dsinname
+        self._update_images(cursor)
 
-    def _update_images(self):
-        """Update the list of images to those found in the database for
-        this dataset"""
-
-        try:
-            self.database.cursor.execute(
-                """SELECT imageid FROM images WHERE ds_id=%s""",
-                (self._dsid,))
-            for imageid in self.database.cursor.fetchall():
-                Image(dataset=self, imageid=imageid[0])
-        except self.database.Error:
-            raise
-
+    def _update_images(self, cursor):
+        self.images = set()
+        cursor.execute(
+            """SELECT imageid FROM images WHERE ds_id=%s""",
+            (self._dsid,))
+        for imageid in cursor.fetchall():
+            self.images.add(Image(dataset=self, imageid=imageid[0]))
+        
     @property
     def dsid(self):
         """Add a dataset ID to the database
@@ -268,7 +242,22 @@ Failed to retrieve data from the database for dataset ID = %s""", self._dsid)
                 raise
         return self._dsid
 
+    def update(self):
+        """Update the image if the database has changed"""
 
+        # In the future, should this be done automatically
+        # and instanteneously?
+        self.dataset = None
+        self._retrieve_from_database()
+
+    # Fix constants
+    def detect_variables(self,  V_lim=0.2, eta_lim=3.):
+        """Search through the whole dataset for variable sources"""
+
+        return dbu.detect_variable_sources(
+            self.database.connection, self.dsid, V_lim, eta_lim)
+        
+        
 class Image(object):
     """Class corresponding to the image table in the database"""
 
@@ -409,7 +398,6 @@ WHERE imageid=%s""" % (self._imageid,))
         self._freq_bw = results[2]
         self._taustart_ts = results[3]
         self._url = results[4]
-
         if not self.dataset:
             # set the corresponding dataset
             cursor.execute(
@@ -417,14 +405,15 @@ WHERE imageid=%s""" % (self._imageid,))
                 (self._imageid,))
             dsid = cursor.fetchone()[0]
             self.dataset = DataSet(dsid=dsid, database=database)
-            #self.dataset.images.add(self)
-        # Set the sources
+        self._update_sources(cursor)
+
+    def _update_sources(self, cursor):
+        self.sources = set()
         cursor.execute(
             """SELECT xtrsrcid FROM extractedsources WHERE image_id=%s""",
             (self._imageid,))
         for sourceid in cursor.fetchall():
             self.sources.add(Source(image=self, sourceid=sourceid[0]))
-            
 
     @property
     def imageid(self):
@@ -563,7 +552,7 @@ class Source(object):
             #self.image.sources.add(self)
             
     def __str__(self):
-        return "Source %d (%.3f, %.3f)" % (self._sourceid, self.ra, self.dec)
+        return "Source %d (%.3f, %.3f)" % (self._sourceid, self.ra, self.decl)
 
     def __repr__(self):
         return "Source(image=%s, sourceid=%s)" % (
@@ -603,10 +592,9 @@ class Source(object):
             try:
                 # Insert a default source
                 cursor.execute("""\
-INSERT INTO
-  extractedsources
+INSERT INTO extractedsources
     (image_id, zone, ra, decl, ra_err, decl_err, x, y, z, margin, det_sigma)
-  VALUES (%s, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0)""", (self.image.imageid,))
+    VALUES (%s, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0)""", (self.image.imageid,))
                 connection.commit()
                 self._sourceid = cursor.lastrowid
             except self.database.Error:
@@ -632,11 +620,11 @@ INSERT INTO
             (list) list of 5-tuples, each tuple being:
 
                 - observation start time as a datetime.datetime object
-                
+
                 - integration time (float)
-                
+
                 - peak flux (float)
-                
+
                 - peak flux error (float)
 
                 - database ID of this particular source

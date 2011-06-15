@@ -8,6 +8,9 @@ except AttributeError:
 import os
 from tkp.utility import accessors
 import tkp.config
+from tkp.database.database import DataBase
+from tkp.database.dataset import DataSet
+import monetdb
 
 
 DATAPATH = tkp.config.config['test']['datapath']
@@ -44,6 +47,23 @@ class FitsFile(unittest.TestCase):
         self.assertAlmostEqual(image.wcs.cdelt[1], 0.003333333414)
         self.assertTupleEqual(image.wcs.ctype, ('RA---SIN', 'DEC--SIN'))
 
+    def testUtilityFunctions(self):
+        image = accessors.FitsFile(os.path.join(DATAPATH, 'L15_12h_const/observed-all.fits'),
+                                   beam=(54./3600, 54./3600, 0.))
+        sfimage = accessors.sourcefinder_image_from_accessor(image)
+        try:
+            database = DataBase()
+            dataset = DataSet('dataset', database=database)
+            dbimage = accessors.dbimage_from_accessor(dataset, image)
+        except monetdb.monetdb_exceptions.DatabaseError:
+            database = None
+        
+        image = accessors.AIPSppImage(os.path.join(DATAPATH, 'CX3_peeled.image/'),
+                                      beam=(54./3600, 54./3600, 0.))
+        sfimage = accessors.sourcefinder_image_from_accessor(image)
+        if database:
+            dbimage = accessors.dbimage_from_accessor(dataset, image)
+            database.close()
 
 
 if __name__ == '__main__':

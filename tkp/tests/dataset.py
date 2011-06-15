@@ -21,7 +21,7 @@ class TestDataSet(unittest.TestCase):
     def setUp(self):
         try:
             self.database = tkp.database.database.DataBase()
-        except monetdb.monetdb_exceptions.DatabaseError, exc:
+        except monetdb.monetdb_exceptions.DatabaseError:
             self.database = None
 
     def tearDown(self):

@@ -34,6 +34,11 @@ class DataAccessor(object):
         self.beam = kwargs.pop('beam', (None, None, None))
         self.wcs = kwargs.pop('wcs', WCS())
         super(DataAccessor, self).__init__(*args, **kwargs)
+        # Set defaults
+        self.inttime = 0.  # seconds
+        self.obstime = datetime.datetime(1970, 1, 1, 0, 0, 0)
+        self.freqbw = 0.
+        self.freqeff = 0.  # Hertz (? MHz?)
 
     def _beamsizeparse(self, bmaj, bmin, bpa):
         """Needs beam parameters, no defaults."""
@@ -137,6 +142,7 @@ class FitsFile(DataAccessor):
             super(FitsFile, self)._beamsizeparse(beam[0], beam[1], beam[2])
 
         # Attempt to do something sane with timestamps.
+        timezone = pytz.utc
         try:
             try:
                 timestamp = dateutil.parser.parse(
@@ -156,17 +162,22 @@ class FitsFile(DataAccessor):
             except (pytz.UnknownTimeZoneError, KeyError):
                 logging.debug(
                     "Timezone not specified in FITS file: assuming UTC")
-                timezone = pytz.utc
-            #print "timestamp:", timestamp
             timestamp = timestamp.replace(tzinfo=timezone)
             self.utc = pytz.utc.normalize(timestamp.astimezone(pytz.utc))
         except KeyError:
             logging.warn("Timestamp not specified in FITS file; using now")
             self.utc = datetime.datetime.now().replace(tzinfo=pytz.utc)
+        try:
+            endtime = dateutil.parser.parse(hdulist[0].header['end_utc'])
+            endtime = endtime.replace(tzinfo=timezone)
+            self.utc_end = pytz.utc.normalize(endtime.astimezone(pytz.utc))
+            delta = self.utc_end - self.utc
+            self.inttime = delta[0]*86400 + delta[1] + delta[2]/1e6
+        except KeyError:
+            logging.warn("End time not specified or unreadable")
+            self.inttime = 0
         self.obstime = self.utc
-
         self.plane = plane
-
         hdulist.close()
 
     def _coordparse(self, hdulist):
@@ -284,7 +295,7 @@ class FitsFile(DataAccessor):
             bmin = header['BMIN']
             bpa = header['BPA']
         except KeyError:
-            # AIPS FITS file
+            # AIPS FITS file; stored in the history section
             regex = re.compile(r'''
                                 BMAJ
                                 \s*=\s*
@@ -300,7 +311,6 @@ class FitsFile(DataAccessor):
                                 ''', re.VERBOSE)
             for i, key in enumerate(header.ascardlist().keys()):
                 if key == 'HISTORY':
-                    #print header[i]
                     results = regex.search(header[i])
                     if results:
                         bmaj, bmin, bpa = [float(results.group(key)) for
@@ -331,3 +341,49 @@ resolution element.""")
 
     def fitsfile(self):
         return self.filename
+
+
+def dbimage_from_accessor(dataset, image):
+    """Create an entry in the database images table from an image 'accessor'
+
+    Args:
+
+        - dataset (dataset.DataSet): DataSet for the image. Also
+          provides the database connection.
+
+        - image (DataAccessor): FITS/AIPS/HDF5 image available through
+          an accessor
+
+    Returns:
+
+        (dataset.Image): a dataset.Image instance.
+    """
+    from ..database.dataset import Image
+    
+    data = {'tau_time': image.inttime,
+            'freq_eff': image.freqeff,
+            'freq_bw': image.freqbw,
+            'taustart_ts': image.obstime.strftime("%Y-%m-%d-%H:%M:%S.%3f"),
+            'url': image.filename,
+            }
+    image = Image(dataset, data=data)
+    return image
+
+
+def sourcefinder_image_from_accessor(image):
+    """Create a source finder ImageData object from an image 'accessor'
+
+    Args:
+
+        - image (DataAccessor): FITS/AIPS/HDF5 image available through
+          an accessor.
+
+    Returns:
+
+        (sourcefinder.ImageData): a source finder image.
+    """
+
+    from ..sourcefinder.image import ImageData
+    
+    image = ImageData(image.data, image.beam, image.wcs)
+    return image

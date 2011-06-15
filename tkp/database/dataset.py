@@ -69,6 +69,11 @@ database, using the ``dsid`` or ``imageid`` in the initializer:
 from __future__ import with_statement
 import datetime
 import logging
+import utils as dbu
+from ..config import config
+
+
+DERUITER_R = config['source_association']['deruiter_radius']
 
 
 class DataSet(object):
@@ -451,7 +456,36 @@ INSERT INTO
         self.dataset = None
         self._retrieve_from_database()
 
+    def insert_extracted_sources(self, results):
+        """Insert a list of sources
 
+        Args:
+
+            results (list): list of
+                utility.containers.ExtractionResult objects (as
+                returned from
+                sourcefinder.image.ImageData().extract()), or a list
+                of data tuples with the source information (ra, dec,
+                ra_err, dec_err, peak, peak_err, flux, flux_err,
+                det_sigma).
+       """
+        dbu.insert_extracted_sources(
+            self.database.connection, self.imageid, results=results)
+        
+    def associate_extracted_sources(self, deRuiter_r=DERUITER_R):
+        """Associate sources from the last images with previously extracted sources within the same dataset
+
+        Args:
+
+            deRuiter_r (float): The De Ruiter radius for source
+                association. The default value is set through the
+                tkp.config module
+            
+        """
+        dbu.associate_extracted_sources(
+            self.database.connection, self.imageid, deRuiter_r)
+
+        
 class Source(object):
 
     COLUMNS = dict(zone=0, ra=0., decl=0., ra_err=0., decl_err=0.,
@@ -588,3 +622,24 @@ INSERT INTO
         # and instanteneously?
 
         self._retrieve_from_database()
+
+    def lightcurve(self):
+        """Obtain the complete light curve (within the current dataset
+        for this source
+
+        Returns:
+
+            (list) list of 5-tuples, each tuple being:
+
+                - observation start time as a datetime.datetime object
+                
+                - integration time (float)
+                
+                - peak flux (float)
+                
+                - peak flux error (float)
+
+                - database ID of this particular source
+        """
+
+        return dbu.lightcurve(self.database.connection, self.sourceid)

@@ -74,19 +74,19 @@ class TestDataSet(unittest.TestCase):
             self.skipTest("Database not available.")
         dataset1 = tkp.database.dataset.DataSet(
             'dataset with images', database=self.database)
-        self.assertEqual(dataset1.images, [])
+        self.assertEqual(dataset1.images, set())
         image1 = tkp.database.dataset.Image(
             dataset=dataset1)
         # Images are automatically added to their dataset
-        self.assertEqual(dataset1.images, [image1])
+        self.assertEqual(dataset1.images, set([image1]))
         self.assertEqual(image1.tau_time, 0)
         self.assertAlmostEqual(image1.freq_eff, 0.)
         image2 = tkp.database.dataset.Image(
             dataset=dataset1)
-        self.assertEqual(dataset1.images, [image1, image2])
+        self.assertEqual(dataset1.images, set([image1, image2]))
         dataset2 = tkp.database.dataset.DataSet(
             database=self.database, dsid=dataset1.dsid)
-        # Note that we can't test that dataset2.images = [image1, image2],
+        # Note that we can't test that dataset2.images = set([image1, image2]),
         # because dataset2.images are newly created Python objects,
         # with different ids
         self.assertEqual(len(dataset2.images), 2)
@@ -119,7 +119,93 @@ class TestDataSet(unittest.TestCase):
         image2.update()
         self.assertEqual(image2.tau_time, 2500.)
 
+    def test_source_create(self):
+        if not self.database:
+            self.skipTest("Database not available.")
+        dataset1 = tkp.database.dataset.DataSet(
+            'dataset with images', database=self.database)
+        self.assertEqual(dataset1.images, set())
+        image1 = tkp.database.dataset.Image(
+            dataset=dataset1)
+        image2 = tkp.database.dataset.Image(
+            dataset=dataset1)
+        data = {'ra': 123.123, 'decl': 23.23,
+                'ra_err': 0.1, 'decl_err': 0.1}
+        source1 = tkp.database.dataset.Source(
+            image=image1, data=data)
+        data['ra'] = 45.45
+        data['decl'] = 55.55
+        source2 = tkp.database.dataset.Source(
+            image=image1, data=data)
+        self.assertEqual(len(image1.sources), 2)
+        # Source #3 points to the same source as #2
+        source3 = tkp.database.dataset.Source(
+            sourceid=source2.sourceid, database=self.database)
+        # Which means there are no extra sources for image1
+        self.assertEqual(len(image1.sources), 2)
+        sourceids = set([source.sourceid for source in image1.sources])
+        # If, however, we create a new source with
+        # an image reference in the constructor, we get a
+        # 'deep' copy:
+        source4 = tkp.database.dataset.Source(
+            image=image1, sourceid=source2.sourceid)
+        # Now there's a new source for image1!
+        self.assertEqual(len(image1.sources), 3)
+        # But if we filter on the source ids,
+        # we see there are really only two sources
+        sourceids = set([source.sourceid for source in image1.sources])
+        self.assertEqual(set([source1.sourceid, source2.sourceid]),
+                         sourceids)
+
+        data['ra'] = 89.89
+        data['decl'] = 78.78
+        source5 = tkp.database.dataset.Source(
+            image=image2, data=data)
+        self.assertEqual(len(image2.sources), 1)
+        self.assertEqual(image2.sources.pop().sourceid, source5.sourceid)
+
+    def test_source_update(self):
         
-        
+        if not self.database:
+            self.skipTest("Database not available.")
+        dataset1 = tkp.database.dataset.DataSet(
+            'dataset with images', database=self.database)
+        self.assertEqual(dataset1.images, set())
+        image1 = tkp.database.dataset.Image(
+            dataset=dataset1)
+        image2 = tkp.database.dataset.Image(
+            dataset=dataset1)
+        data = {'ra': 123.123, 'decl': 23.23,
+                'ra_err': 0.1, 'decl_err': 0.1}
+        source1 = tkp.database.dataset.Source(
+            image=image1, data=data)
+        data['ra'] = 45.45
+        data['decl'] = 55.55
+        source2 = tkp.database.dataset.Source(
+            image=image1, data=data)
+        self.assertEqual(len(image1.sources), 2)
+        # Source #3 points to the same source as #2
+        source3 = tkp.database.dataset.Source(
+            sourceid=source2.sourceid, database=self.database)
+        # Update source3
+        source3.decl = 44.44
+        # But no change for #1 and #2
+        self.assertAlmostEqual(source1.decl, 23.23)
+        self.assertAlmostEqual(source2.decl, 55.55)
+        self.assertAlmostEqual(source3.decl, 44.44)
+        source1.update()  # nothing changes for #1
+        self.assertAlmostEqual(source1.decl, 23.23)
+        self.assertAlmostEqual(source2.decl, 55.55)
+        self.assertAlmostEqual(source3.decl, 44.44)
+        source3.update()  # still no change 
+        self.assertAlmostEqual(source1.decl, 23.23)
+        self.assertAlmostEqual(source2.decl, 55.55)
+        self.assertAlmostEqual(source3.decl, 44.44)
+        # Now we make sure source #2 takes note of the change done through #3
+        source2.update()
+        self.assertAlmostEqual(source1.decl, 23.23)
+        self.assertAlmostEqual(source1.decl, 23.23)
+        self.assertAlmostEqual(source2.decl, 44.44)
+    
 if __name__ == "__main__":
     unittest.main()

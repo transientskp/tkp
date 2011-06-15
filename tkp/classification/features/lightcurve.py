@@ -158,7 +158,7 @@ def calc_background(lightcurve, niter=-50, kappa=(5, 5)):
     return value, sigma, indices
 
 
-def calc_duration(lightcurve):
+def calc_duration(lightcurve, indices=None):
     """Calculate duration and estimate start of the transient event
 
     It calculates two durations:
@@ -175,23 +175,30 @@ def calc_duration(lightcurve):
     """
 
     start = end = duration = active = None
-    value, sigma, indices = calc_background(lightcurve)
+    if indices is None:
+        value, sigma, indices = calc_background(lightcurve)
+        indices = -indices
+    #elif len(indices) == 0 or indices.any() == False:
+    #    return numpy.nan, numpy.nan, 0, 0
     try:
-        start = lightcurve.obstimes[-indices][0]
-        error = lightcurve.inttimes[-indices][0]
+        start = lightcurve.obstimes[indices][0]
+        error = lightcurve.inttimes[indices][0]
         start = DateTime(year=start.year, month=start.month, day=start.day,
                          hour=start.hour, minute=start.minute,
                          second=start.second, error=error/2.)
-        end = lightcurve.obstimes[-indices][-1]
-        error = lightcurve.inttimes[-indices][-1]
+        end = lightcurve.obstimes[indices][-1]
+        error = lightcurve.inttimes[indices][-1]
         end = DateTime(year=end.year, month=end.month, day=end.day,
                        hour=end.hour, minute=end.minute,
                        second=end.second, error=error/2.)
         duration = end - start
         duration = duration.days * 86400. + duration.seconds
-        active = sum(lightcurve.inttimes[-indices])
+        if len(numpy.where(indices)[0]) == 1:
+            duration = lightcurve.inttimes[indices][0]
+        active = sum(lightcurve.inttimes[indices])
     except IndexError:  # only background
-        pass
+        start = end = numpy.nan
+        duration = active = 0.
     return start, end, duration, active
 
 
@@ -321,8 +328,17 @@ def stats(lightcurve, indices=None):
 
     if indices is None:
         indices = numpy.ones(lightcurve.fluxes.shape, dtype=numpy.bool)
+    # prevent calcuation on empty light curves
+    elif len(indices) == 0 or indices.any() == False:
+        return {'max': numpy.nan, 'mean': numpy.nan, 'stddev': numpy.nan,
+                'skew': numpy.nan, 'kurtosis': numpy.nan}
     weights = 1. / lightcurve.errors[indices]**2
     results = {}
+    try:
+        results['max'] = lightcurve.fluxes[indices].max()
+    except ValueError:
+        print indices, lightcurve.fluxes[indices]
+        raise
     results['mean'] = pygsl.statistics.wmean(weights, lightcurve.fluxes[indices])
     results['stddev'] = pygsl.statistics.wsd_m(
         weights, lightcurve.fluxes[indices], results['mean'])

@@ -1,6 +1,6 @@
 #! /bin/bash
 
-pythonpath=./tkp/python-packages/lib.linux-x86_64-2.6:./tkp/trunk/external/deconv:./tkp/trunk/external/python-wcslib:../tkp/tests
+pythonpath=../../../tkp/python-packages/lib.linux-x86_64-2.6:../../../tkp/trunk/external/deconv:../../../tkp/trunk/external/python-wcslib:../../../../tkp/trunk
 if [ -z "$PYTHONPATH" ]
 then
     export PYTHONPATH=${pythonpath}
@@ -8,7 +8,7 @@ else
     export PYTHONPATH=${PYTHONPATH}:${pythonpath}
 fi
 
-ld_library_path=./tkp/trunk/external/libwcstools
+ld_library_path=../../../tkp/trunk/external/libwcstools
 if [ -z "$LD_LIBRARY_PATH" ]
 then
     export LD_LIBRARY_PATH=${ld_library_path}
@@ -25,8 +25,8 @@ else
 fi
 
 # Extra paths needed on CEP1
-export PYTHONPATH=./tkp/python-packages/lib:${PYTHONPATH}:/opt/pythonlibs/lib/python2.5/site-packages/:/opt/MonetDB/
+export PYTHONPATH=../../../tkp/python-packages/lib:${PYTHONPATH}:/opt/pythonlibs/lib/python2.5/site-packages/:/opt/MonetDB/
 
 dir=`dirname $0`
 echo "Running python TKP tests"
-python ${dir}/test.py
+python ${dir}/test.py "$@"

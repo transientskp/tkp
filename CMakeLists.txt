@@ -1,4 +1,5 @@
 add_subdirectory (external)
+add_subdirectory (tests)
 
 add_custom_target (tkp_python_lib
   ALL

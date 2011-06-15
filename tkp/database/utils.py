@@ -8,6 +8,7 @@
 import monetdb.sql as db
 import logging
 from tkp.config import config
+from tkp.sourcefinder.extract import Detection
 
 
 DERUITER_R = config['source_association']['deruiter_radius']
@@ -61,24 +62,19 @@ def _insert_into_detections(conn, results):
     """
 
     # TODO: COPY INTO is faster.
+    if not results:
+        return
     try:
-        cursor = conn.cursor()
-        query = "INSERT INTO detections VALUES "
-        i = 0
-        if len(results) > 0:
-            for det in results:
-                if i < len(results) - 1:
-                    query += str(det.serialize()) + ","
-                else:
-                    query += str(det.serialize())
-                i += 1
-            cursor.execute(query)
-            conn.commit()
+        query = [str(det.serialize()) if isinstance(det, Detection) else
+                 str(tuple(det)) for det in results]
+        query = "INSERT INTO detections VALUES " + ",".join(query)
+        conn.cursor().execute(query)
+        conn.commit()
     except db.Error, e:
         logging.warn("Failed on query nr %s." % query)
         raise
     finally:
-        cursor.close()
+        conn.cursor().close()
 
 
 def _insert_extractedsources(conn, image_id):
@@ -89,8 +85,8 @@ def _insert_extractedsources(conn, image_id):
 
     """
 
+    cursor = conn.cursor()
     try:
-        cursor = conn.cursor()
         query = """\
 INSERT INTO extractedsources
   (image_id
@@ -137,7 +133,7 @@ def insert_extracted_sources(conn, image_id, results):
     """Insert all extracted sources
 
     Insert the sources that were detected by the Source Extraction
-    procedures into the"extractedsources" table.
+    procedures into the extractedsources table.
 
     Therefore, we use a temporary table containing the"raw" detections,
     from which the sources will then be inserted into extractedsourtces.
@@ -830,8 +826,8 @@ def _count_known_sources(conn, image_id, deRuiter_r):
     """Count number of extracted sources that are know in the running
     catalog"""
 
+    cursor = conn.cursor()
     try:
-        cursor = conn.cursor()
         query = """\
 SELECT COUNT(*)
   FROM extractedsources x0
@@ -873,8 +869,8 @@ def _insert_new_assocs(conn, image_id, deRuiter_r):
     runningcatalog table).
     """
 
+    cursor = conn.cursor()
     try:
-        cursor = conn.cursor()
         query = """\
         INSERT INTO assocxtrsources
           (xtrsrc_id
@@ -922,8 +918,8 @@ def _insert_new_assocs(conn, image_id, deRuiter_r):
 def _insert_new_source_runcat(conn, image_id, deRuiter_r):
     """Insert new sources into the running catalog"""
 
+    cursor = conn.cursor()
     try:
-        cursor = conn.cursor()
         query = """\
 INSERT INTO runningcatalog
   (xtrsrc_id
@@ -1044,8 +1040,8 @@ def associate_extracted_sources(conn, image_id, deRuiter_r=DERUITER_R):
 def _select_variability_indices(conn, dsid, V_lim, eta_lim):
     """Select sources and variability indices in the running catalog"""
 
+    cursor = conn.cursor()
     try:
-        cursor = conn.cursor()
         query = """\
 SELECT xtrsrc_id
       ,ds_id
@@ -1081,13 +1077,37 @@ SELECT xtrsrc_id
             print "\tv_nu =", y[i][7]
             print "\teta_nu =", y[i][8]
         conn.commit()
-    except db.Error, e:
-        logging.warn("Failed on query %s" % query)
+    except db.Error:
+        logging.warn("Failed on query %s", query)
         raise
     finally:
         cursor.close()
 
 
+def lightcurve(conn, xtrsrcid):
+    """Obtain a light curve for a specific source"""
+
+    results = [[]]
+    cursor = conn.cursor()
+    try:
+        query = """\
+SELECT im.taustart_ts, im.tau_time, ex.i_peak, ex.i_peak_err, ex.xtrsrcid
+FROM extractedsources ex, assocxtrsources ax, images im
+WHERE ax.xtrsrc_id IN (
+    SELECT xtrsrc_id FROM assocxtrsources WHERE assoc_xtrsrc_id = %s)
+  AND ex.xtrsrcid = ax.assoc_xtrsrc_id
+  AND ex.image_id = im.imageid
+ORDER BY im.taustart_ts"""
+        cursor.execute(query, (xtrsrcid,))
+        results = cursor.fetchall()
+    except db.Error:
+        logging.warn("Failed to obtain light curve")
+        raise
+    finally:
+        cursor.close()
+    return results
+
+        
 def variability_detection(conn, dsid, V_lim, eta_lim):
     """Detect variability in extracted sources compared to the previous
     detections"""
@@ -1103,3 +1123,4 @@ def associate_catalogued_sources_in_area(conn, ra, dec, search_radius):
     pass
     # the sources in the current image need to be matched to the
     # list of sources from the merged cross-correlated catalogues
+

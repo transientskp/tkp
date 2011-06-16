@@ -52,6 +52,7 @@ FROM
 /* '/home/scheers/tkp-code/pipe/database/catfiles/vlss/VLSS-all_strip.csv' */
 /* '/zfs/heastro-plex/scratch/evert/catfiles/VLSS-all_strip.csv' */
 /* '/export/scratch1/bscheers/code/pipe/database/catfiles/vlss/VLSS-all_strip.csv' */
+/* '/data/scratch/rol/catalogs/VLSS-all_strip.csv' */
 /* '/Users/evert/lofar/data/catalogs/VLSS-all_strip.csv' */
 USING DELIMITERS ';', '\n'
 NULL AS ''

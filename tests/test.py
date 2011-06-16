@@ -6,7 +6,6 @@ try:
 except AttributeError:
     import unittest2 as unittest
 import sys
-print [p for p in sys.path if 'trunk' in p]
 import logging
 import tkp.tests
 
@@ -25,6 +24,10 @@ if args:
 else:
     testfiles = tkp.tests.testfiles
 
-unittest.TextTestRunner(verbosity=2).run(
+result = unittest.TextTestRunner(verbosity=2).run(
     unittest.TestLoader().loadTestsFromNames(testfiles)
-)
+    )
+if result.wasSuccessful():
+    sys.exit(0)
+else:
+    sys.exit(1)

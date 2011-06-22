@@ -131,6 +131,7 @@ class FitsFile(DataAccessor):
         # NB: pyfits bogs down reading parameters from FITS files with very
         # long headers. This code should run in a fraction of a second on most
         # files, but can take several seconds given a huge header.
+        super(FitsFile, self).__init__()
         self.filename = filename
         hdulist = pyfits.open(self.filename)
 
@@ -172,10 +173,12 @@ class FitsFile(DataAccessor):
             endtime = endtime.replace(tzinfo=timezone)
             self.utc_end = pytz.utc.normalize(endtime.astimezone(pytz.utc))
             delta = self.utc_end - self.utc
-            self.inttime = delta[0]*86400 + delta[1] + delta[2]/1e6
+            # In Python 2.7, we can use delta.total_seconds instead
+            self.inttime = (delta.days*86400 + delta.seconds +
+                            delta.microseconds/1e6)
         except KeyError:
             logging.warn("End time not specified or unreadable")
-            self.inttime = 0
+            self.inttime = 0.
         self.obstime = self.utc
         self.plane = plane
         hdulist.close()
@@ -198,11 +201,11 @@ class FitsFile(DataAccessor):
         try:
             self.wcs.ctype = header['ctype1'], header['ctype2']
         except KeyError:
-            self.ws.ctype = 'unknown', 'unknown'
+            self.wcs.ctype = 'unknown', 'unknown'
         try:
             self.wcs.crota = float(header['crota1']), float(header['crota2'])
         except KeyError:
-            self.ws.crota = 0., 0.
+            self.wcs.crota = 0., 0.
         try:
             self.wcs.cunits = header['cunit1'], header['cunit2']
         except KeyError:
@@ -365,6 +368,7 @@ def dbimage_from_accessor(dataset, image):
             'freq_bw': image.freqbw,
             'taustart_ts': image.obstime.strftime("%Y-%m-%d-%H:%M:%S.%3f"),
             'url': image.filename,
+            'band': 0,    # not yet clearly defined
             }
     image = Image(dataset, data=data)
     return image

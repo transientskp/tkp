@@ -261,7 +261,7 @@ WHERE dsid=%s""", (self._rerun, self._dstype, self._process_ts, self._dsinname,
 class Image(object):
     """Class corresponding to the image table in the database"""
 
-    COLUMNS = dict(tau_time=0., freq_eff=0., freq_bw=0.,
+    COLUMNS = dict(tau_time=0., freq_eff=0., freq_bw=0., band=0,
                    taustart_ts=datetime.datetime(1970, 1, 1),
                    url='')
 
@@ -351,6 +351,7 @@ class Image(object):
         self._freq_bw = data.get('freq_bw', self._freq_bw)
         self._taustart_ts = data.get('taustart_ts', self._taustart_ts)
         self._url = data.get('url', self._url)
+        self._band = data.get('band', self._band)
 
         connection = self.database.connection
         cursor = self.database.cursor
@@ -358,9 +359,9 @@ class Image(object):
             try:
                 cursor.execute("""\
 UPDATE images
-    SET tau_time=%s, freq_eff=%s, freq_bw=%s, taustart_ts=%s, url=%s
+    SET tau_time=%s, freq_eff=%s, freq_bw=%s, taustart_ts=%s, url=%s, band=%s
 WHERE imageid=%s""", (self.tau_time, self.freq_eff, self.freq_bw,
-                      self.taustart_ts, self.url, self.imageid))
+                      self.taustart_ts, self.url, self.band, self.imageid))
                 connection.commit()
             except self.database.Error:
                 logging.warn("Failed to set data for Image with id=%s.",
@@ -390,7 +391,7 @@ WHERE imageid=%s""", (self.tau_time, self.freq_eff, self.freq_bw,
         connection = database.connection
         cursor = database.cursor
         cursor.execute("""\
-SELECT tau_time, freq_eff, freq_bw, taustart_ts, url FROM images
+SELECT tau_time, freq_eff, freq_bw, taustart_ts, url, band FROM images
 WHERE imageid=%s""" % (self._imageid,))
         results = cursor.fetchone()
         self._tau_time = results[0]
@@ -398,6 +399,7 @@ WHERE imageid=%s""" % (self._imageid,))
         self._freq_bw = results[2]
         self._taustart_ts = results[3]
         self._url = results[4]
+        self._band = results[5]
         if not self.dataset:
             # set the corresponding dataset
             cursor.execute(
@@ -427,8 +429,8 @@ WHERE imageid=%s""" % (self._imageid,))
                 cursor.execute("""\
 INSERT INTO
     images (ds_id, tau, band, tau_time, freq_eff, freq_bw, taustart_ts, url)
-    VALUES (%s, 0, 0, %s, %s, %s, %s, %s)""",
-                             (self.dataset.dsid, self.tau_time, self.freq_eff,
+    VALUES (%s, %s, %s, %s, %s, %s, %s, %s)""",
+                             (self.dataset.dsid, 0, self.band, self.tau_time, self.freq_eff,
                               self.freq_bw, self.taustart_ts, self.url))
                 connection.commit()
                 self._imageid = self.database.cursor.lastrowid

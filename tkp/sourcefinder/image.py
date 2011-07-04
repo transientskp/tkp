@@ -27,7 +27,6 @@ from tkp.utility import coordinates
 from tkp.sourcefinder import utils
 from tkp.sourcefinder import stats
 import extract
-from monetdb.sql import Error as DBError
 from tkp.utility.memoize import Memoize
 
 
@@ -335,7 +334,7 @@ class ImageData(object):
         This is called automatically when ImageData.backmap,
         ImageData.rmsmap or ImageData.fdrmap is first accessed.
         """
-        
+
         # there's no point in working with the whole of the data array
         # if it's masked.
         useful_chunk = ndimage.find_objects(numpy.where(self.data.mask, 0, 1))
@@ -579,7 +578,7 @@ class ImageData(object):
     def flux_at_pixel(self, x, y, numpix=1):
         """Return the background-subtracted flux at a certain position
         in the map"""
-        
+
         # numpix is the number of pixels to look around the target.
         # e.g. numpix = 1 means a total of 9 pixels, 1 in each direction.
         return self.data_bgsubbed[y-numpix:y+numpix+1,

@@ -35,7 +35,7 @@ def cross_associate_cataloged_sources(conn
         _empty_selected_catsources(conn)
         _empty_tempmergedcatalogs(conn)
         _insert_selected_catsources(conn, c[i], ra_min, ra_max, decl_min, decl_max)
-        _insert_tempmergedcatalogs(conn, c[i], ra_min, ra_max, decl_min, decl_max, deRuiter_r)
+        _insert_tempmergedcatalogs(conn, c[i], deRuiter_r)
         _flag_multiple_counterparts_in_mergedcatalogs(conn)
         _insert_multiple_crossassocs(conn)
         _insert_first_of_multiple_crossassocs(conn)
@@ -179,7 +179,7 @@ INSERT INTO selectedcatsources
     finally:
         cursor.close()
 
-def _insert_tempmergedcatalogs(conn, cat_id, ra_min, ra_max, decl_min, decl_max, deRuiter_r):
+def _insert_tempmergedcatalogs(conn, cat_id, deRuiter_r):
     """Select matched sources
 
     Here we select the extractedsources that have a positional match
@@ -248,7 +248,7 @@ INSERT INTO tempmergedcatalogs
         ,i_int
     FROM (SELECT m0.catsrc_id as catsrc_id
                 ,s0.catsrc_id as assoc_catsrc_id
-                ,s0.cat_id as assoc_cat_id
+                ,%s as assoc_cat_id
                 ,m0.datapoints + 1 AS datapoints
                 ,((m0.datapoints * m0.avg_wra + s0.ra /
                   (s0.ra_err * s0.ra_err)) / (datapoints + 1))
@@ -286,19 +286,12 @@ INSERT INTO tempmergedcatalogs
                 ,s0.i_int
             FROM mergedcatalogs m0
                 ,selectedcatsources s0
-           WHERE s0.cat_id = %s
-             AND s0.zone BETWEEN CAST(FLOOR(CAST(%s AS DOUBLE) - 0.025) as INTEGER)
-                             AND CAST(FLOOR(CAST(%s AS DOUBLE) + 0.025) as INTEGER)
-             AND s0.decl BETWEEN CAST(%s AS DOUBLE) - 0.025
-                             AND CAST(%s AS DOUBLE) + 0.025
-             AND s0.ra BETWEEN CAST(%s AS DOUBLE) - alpha(0.025, %s)
-                           AND CAST(%s AS DOUBLE) + alpha(0.025, %s)
-             AND m0.zone BETWEEN CAST(FLOOR(CAST(%s AS DOUBLE) - 0.025) as INTEGER)
-                             AND CAST(FLOOR(CAST(%s AS DOUBLE) + 0.025) as INTEGER)
-             AND m0.wm_decl BETWEEN CAST(%s AS DOUBLE) - 0.025
-                                AND CAST(%s AS DOUBLE) + 0.025
-             AND m0.wm_ra BETWEEN CAST(%s AS DOUBLE) - alpha(0.025, %s)
-                              AND CAST(%s AS DOUBLE) + alpha(0.025, %s)
+           WHERE m0.zone BETWEEN CAST(FLOOR(s0.decl - 0.025) as INTEGER)
+                             AND CAST(FLOOR(s0.decl + 0.025) as INTEGER)
+             AND m0.wm_decl BETWEEN s0.decl - 0.025
+                                AND s0.decl + 0.025
+             AND m0.wm_ra BETWEEN s0.ra - alpha(0.025,s0.decl)
+                              AND s0.ra + alpha(0.025,s0.decl)
              AND m0.x * s0.x + m0.y * s0.y + m0.z * s0.z > COS(rad(0.025))
              AND SQRT(  (s0.ra * COS(rad(s0.decl)) - m0.wm_ra * COS(rad(m0.wm_decl)))
                       * (s0.ra * COS(rad(s0.decl)) - m0.wm_ra * COS(rad(m0.wm_decl)))
@@ -308,49 +301,11 @@ INSERT INTO tempmergedcatalogs
                      ) < %s
          ) t0
 """
-        cursor.execute(query, (cat_id 
-                              ,decl_min
-                              ,decl_max
-                              ,decl_min
-                              ,decl_max
-                              ,ra_min
-                              ,decl_max
-                              ,ra_max
-                              ,decl_max
-                              ,decl_min
-                              ,decl_max
-                              ,decl_min
-                              ,decl_max
-                              ,ra_min
-                              ,decl_max
-                              ,ra_max
-                              ,decl_max
-                              ,deRuiter_r 
-                              ))
-        #if image_id == 2:
-        #    raise
+        cursor.execute(query, (cat_id, deRuiter_r))
         conn.commit()
     except db.Error, e:
         logging.warn("Failed on query nr %s." % query)
-        hv = [cat_id
-             ,decl_min
-             ,decl_max
-             ,decl_min
-             ,decl_max
-             ,ra_min
-             ,decl_max
-             ,ra_max
-             ,decl_max
-             ,decl_min
-             ,decl_max
-             ,decl_min
-             ,decl_max
-             ,ra_min
-             ,decl_max
-             ,ra_max
-             ,decl_max
-             ,deRuiter_r 
-             ]
+        hv = [cat_id, deRuiter_r]
         logging.warn("host variables: %s" % hv)
         raise
     finally:
@@ -1362,12 +1317,117 @@ SELECT xtrsrc_id
         cursor.close()
 
 
-def variability_detection(conn, dsid, V_lim, eta_lim):
-    """Detect variability in extracted sources compared to the previous
-    detections"""
+def get_merged_catalogs(conn, ra_centr_deg, decl_centr_deg, radius_arcsec=None):
+    """
+    """
+    if not radius_arcsec:
+        radius_arcsec = 90 # default serach radius is 90 arcsec
+    ra_rad = pylab.pi * ra_centr_deg / 180.
+    decl_rad = pylab.pi * decl_centr_deg / 180.
+    radius_deg = radius_arcsec / 3600.
+    radius_rad = pylab.pi * (radius_arcsec / 648000.)
+    try:
+        cursor = conn.cursor()
+        query = """\
+SELECT catsrc_id
+      ,datapoints
+      ,m0.x * COS(%s)*COS(%s) + m0.y * COS(%s) * SIN(%s) + m0.z * SIN(%s)
+       AS distance_arcsec
+      ,wm_ra
+      ,wm_decl
+      ,wm_ra_err
+      ,wm_decl_err
+      ,i_int_vlss
+      ,i_int_wenssm
+      ,i_int_wenssp
+      ,i_int_nvss
+      ,alpha_v_wm
+      ,alpha_v_wp
+      ,alpha_v_n
+      ,alpha_wm_wp
+      ,alpha_wm_n
+      ,alpha_wp_n
+      ,alpha_v_wm_n
+      ,chisq_v_wm_n
+  FROM mergedcatalogs m0
+ WHERE m0.zone BETWEEN CAST(FLOOR(CAST(%s AS DOUBLE) - %s) as INTEGER)
+                   AND CAST(FLOOR(CAST(%s AS DOUBLE) + %s) as INTEGER)
+   AND m0.wm_decl BETWEEN CAST(%s AS DOUBLE) - %s
+                      AND CAST(%s AS DOUBLE) + %s
+   AND m0.wm_ra BETWEEN CAST(%s AS DOUBLE) - alpha(%s, %s)
+                    AND CAST(%s AS DOUBLE) + alpha(%s, %s)
+   AND m0.x * COS(%s)*COS(%s) + m0.y * COS(%s) * SIN(%s) + m0.z * SIN(%s) > COS(%s)
+ORDER BY datapoints DESC
+        ,i_int_vlss DESC
+"""
+        cursor.execute(query, (decl_rad
+                              ,ra_rad
+                              ,decl_rad
+                              ,ra_rad
+                              ,decl_rad
+                              ,decl_centr_deg
+                              ,radius_deg
+                              ,decl_centr_deg
+                              ,radius_deg
+                              ,decl_centr_deg
+                              ,radius_deg
+                              ,decl_centr_deg
+                              ,radius_deg
+                              ,ra_centr_deg
+                              ,radius_deg
+                              ,decl_centr_deg
+                              ,ra_centr_deg
+                              ,radius_deg
+                              ,decl_centr_deg
+                              ,decl_rad
+                              ,ra_rad
+                              ,decl_rad
+                              ,ra_rad
+                              ,decl_rad
+                              ,radius_rad
+                              ))
+        y = cursor.fetchall()
+        if len(y) > 0:
+            for r in range(len(y)):
+                print "r:", r, "y = ", y[r]
+            return y
+        else:
+            print "EMPTY!"
+            hv = [decl_rad
+                 ,ra_rad
+                 ,decl_rad
+                 ,ra_rad
+                 ,decl_rad
+                 ,decl_rad
+                 ,radius_rad
+                 ,decl_rad
+                 ,radius_rad
+                 ,decl_rad
+                 ,radius_rad
+                 ,decl_rad
+                 ,radius_rad
+                 ,ra_rad
+                 ,radius_rad
+                 ,decl_rad
+                 ,ra_rad
+                 ,radius_rad
+                 ,decl_rad
+                 ,decl_rad
+                 ,ra_rad
+                 ,decl_rad
+                 ,ra_rad
+                 ,decl_rad
+                 ,radius_rad
+                 ]
+            print "hv =", hv
+            return None
+    except db.Error, e:
+        logging.warn("Failed on query %s" % query)
+        raise
+    finally:
+        cursor.close()
 
-    #sources = _select_variability_indices(conn, dsid, V_lim, eta_lim)
-    _select_variability_indices(conn, dsid, V_lim, eta_lim)
+
 
 
 def associate_catalogued_sources_in_area(conn, ra, dec, search_radius):

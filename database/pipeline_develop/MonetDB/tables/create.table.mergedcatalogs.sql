@@ -34,13 +34,29 @@ CREATE TABLE mergedcatalogs
   ,z DOUBLE NOT NULL
   ,margin BOOLEAN NOT NULL DEFAULT 0
   ,I_peak_vlss DOUBLE NULL
+  ,I_peak_vlss_err DOUBLE NULL
   ,I_int_vlss DOUBLE NULL
+  ,I_int_vlss_err DOUBLE NULL
   ,I_peak_wenssm DOUBLE NULL
+  ,I_peak_wenssm_err DOUBLE NULL
   ,I_int_wenssm DOUBLE NULL
+  ,I_int_wenssm_err DOUBLE NULL
   ,I_peak_wenssp DOUBLE NULL
+  ,I_peak_wenssp_err DOUBLE NULL
   ,I_int_wenssp DOUBLE NULL
+  ,I_int_wenssp_err DOUBLE NULL
   ,I_peak_nvss DOUBLE NULL
+  ,I_peak_nvss_err DOUBLE NULL
   ,I_int_nvss DOUBLE NULL
+  ,I_int_nvss_err DOUBLE NULL
+  ,alpha_v_wm DOUBLE NULL
+  ,alpha_v_wp DOUBLE NULL
+  ,alpha_v_n DOUBLE NULL
+  ,alpha_wm_wp DOUBLE NULL
+  ,alpha_wm_n DOUBLE NULL
+  ,alpha_wp_n DOUBLE NULL
+  ,alpha_v_wm_n DOUBLE NULL
+  ,chisq_v_wm_n DOUBLE NULL
   )
 ;
 

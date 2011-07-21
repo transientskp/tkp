@@ -88,38 +88,38 @@ def _insert_extractedsources(conn, image_id):
     cursor = conn.cursor()
     try:
         query = """\
-INSERT INTO extractedsources
-  (image_id
-  ,zone
-  ,ra
-  ,decl
-  ,ra_err
-  ,decl_err
-  ,x
-  ,y
-  ,z
-  ,det_sigma
-  ,I_peak
-  ,I_peak_err
-  ,I_int
-  ,I_int_err
-  )
-  SELECT %s
-        ,CAST(FLOOR(ldecl) AS INTEGER)
-        ,lra
-        ,ldecl
-        ,lra_err * 3600
-        ,ldecl_err * 3600
-        ,COS(rad(ldecl)) * COS(rad(lra))
-        ,COS(rad(ldecl)) * SIN(rad(lra))
-        ,SIN(rad(ldecl))
-        ,ldet_sigma
-        ,lI_peak
-        ,lI_peak_err
-        ,lI_int
-        ,lI_int_err
-    FROM detections
-"""
+        INSERT INTO extractedsources
+          (image_id
+          ,zone
+          ,ra
+          ,decl
+          ,ra_err
+          ,decl_err
+          ,x
+          ,y
+          ,z
+          ,det_sigma
+          ,I_peak
+          ,I_peak_err
+          ,I_int
+          ,I_int_err
+          )
+          SELECT %s
+                ,CAST(FLOOR(ldecl) AS INTEGER)
+                ,lra
+                ,ldecl
+                ,lra_err * 3600
+                ,ldecl_err * 3600
+                ,COS(rad(ldecl)) * COS(rad(lra))
+                ,COS(rad(ldecl)) * SIN(rad(lra))
+                ,SIN(rad(ldecl))
+                ,ldet_sigma
+                ,lI_peak
+                ,lI_peak_err
+                ,lI_int
+                ,lI_int_err
+            FROM detections
+        """
         cursor.execute(query, (image_id,))
         conn.commit()
     except db.Error, e:
@@ -190,6 +190,8 @@ def _insert_temprunningcatalog(conn, image_id, deRuiter_r):
 
     try:
         cursor = conn.cursor()
+        # !!TODO!!: Add columns for previous weighted averaged values,
+        # otherwise the assoc_r will be biased.
         query = """\
 INSERT INTO temprunningcatalog
   (xtrsrc_id
@@ -303,13 +305,11 @@ INSERT INTO temprunningcatalog
                                 AND x0.decl + 0.025
              AND b0.wm_ra BETWEEN x0.ra - alpha(0.025,x0.decl)
                               AND x0.ra + alpha(0.025,x0.decl)
-             AND SQRT((x0.ra - b0.wm_ra) * COS(rad(x0.decl))
-                      * (x0.ra - b0.wm_ra) * COS(rad(x0.decl))
-                      /(x0.ra_err * x0.ra_err +
-                        b0.wm_ra_err * b0.wm_ra_err)
-                     +(x0.decl - b0.wm_decl) * (x0.decl - b0.wm_decl)
-                      /(x0.decl_err * x0.decl_err +
-                        b0.wm_decl_err * b0.wm_decl_err)
+             AND SQRT(  (x0.ra * COS(rad(x0.decl)) - b0.wm_ra * COS(rad(b0.wm_decl)))
+                      * (x0.ra * COS(rad(x0.decl)) - b0.wm_ra * COS(rad(b0.wm_decl)))
+                      / (x0.ra_err * x0.ra_err + b0.wm_ra_err * b0.wm_ra_err)
+                     + (x0.decl - b0.wm_decl) * (x0.decl - b0.wm_decl)
+                      / (x0.decl_err * x0.decl_err + b0.wm_decl_err * b0.wm_decl_err)
                      ) < %s
          ) t0
 """
@@ -436,15 +436,35 @@ def _insert_multiple_assocs(conn):
         INSERT INTO assocxtrsources
           (xtrsrc_id
           ,assoc_xtrsrc_id
+          ,assoc_distance_arcsec
+          ,assoc_r
+          ,assoc_lr_method
           )
-          SELECT assoc_xtrsrc_id
-                ,xtrsrc_id
-            FROM temprunningcatalog
-           WHERE xtrsrc_id IN (SELECT xtrsrc_id
-                                 FROM temprunningcatalog
-                               GROUP BY xtrsrc_id
-                               HAVING COUNT(*) > 1
-                              )
+          SELECT t.assoc_xtrsrc_id
+                ,t.xtrsrc_id
+                ,3600 * deg(2 * ASIN(SQRT((r.x - x.x) * (r.x - x.x)
+                                          + (r.y - x.y) * (r.y - x.y)
+                                          + (r.z - x.z) * (r.z - x.z)
+                                          ) / 2) ) AS assoc_distance_arcsec
+                ,3600 * sqrt(
+                    ( (r.wm_ra * cos(rad(r.wm_decl)) - x.ra * cos(rad(x.decl)))
+                     *(r.wm_ra * cos(rad(r.wm_decl)) - x.ra * cos(rad(x.decl)))
+                    ) 
+                    / (r.wm_ra_err * r.wm_ra_err + x.ra_err * x.ra_err)
+                    + ((r.wm_decl - x.decl) * (r.wm_decl - x.decl)) 
+                    / (r.wm_decl_err * r.wm_decl_err + x.decl_err * x.decl_err)
+                            ) as assoc_r
+                ,1
+            FROM temprunningcatalog t
+                ,runningcatalog r
+                ,extractedsources x
+           WHERE t.xtrsrc_id = r.xtrsrc_id
+             AND t.xtrsrc_id = x.xtrsrcid
+             AND t.xtrsrc_id IN (SELECT xtrsrc_id
+                                   FROM temprunningcatalog
+                                 GROUP BY xtrsrc_id
+                                 HAVING COUNT(*) > 1
+                                )
         """
         cursor.execute(query)
         conn.commit()
@@ -468,9 +488,15 @@ def _insert_first_of_assocs(conn):
         INSERT INTO assocxtrsources
           (xtrsrc_id
           ,assoc_xtrsrc_id
+          ,assoc_distance_arcsec
+          ,assoc_r
+          ,assoc_lr_method
           )
           SELECT assoc_xtrsrc_id
                 ,assoc_xtrsrc_id
+                ,0
+                ,0
+                ,2
             FROM temprunningcatalog
            WHERE xtrsrc_id IN (SELECT xtrsrc_id
                                  FROM temprunningcatalog
@@ -628,17 +654,40 @@ def _flag_multiple_assocs(conn):
 
 def _insert_single_assocs(conn):
     """Insert remaining 1-1 associations into assocxtrsources table"""
-
+    #TODO: check whether last row (t.xtrsrc_id = x.xtrsrcid) should be
+    #      t.assocxtrsrc_id = ...)
     try:
         cursor = conn.cursor()
         query = """\
         INSERT INTO assocxtrsources
           (xtrsrc_id
           ,assoc_xtrsrc_id
+          ,assoc_distance_arcsec
+          ,assoc_r
+          ,assoc_lr_method
           )
-          SELECT xtrsrc_id
-                ,assoc_xtrsrc_id
-            FROM temprunningcatalog
+          SELECT t.xtrsrc_id
+                ,t.assoc_xtrsrc_id
+                ,3600 * deg(2 * ASIN(SQRT((r.x - x.x) * (r.x - x.x)
+                                          + (r.y - x.y) * (r.y - x.y)
+                                          + (r.z - x.z) * (r.z - x.z)
+                                          ) / 2) ) AS assoc_distance_arcsec
+                ,3600 * sqrt(
+                    ((r.wm_ra * cos(rad(r.wm_decl)) 
+                     - x.ra * cos(rad(x.decl))) 
+                    * (r.wm_ra * cos(rad(r.wm_decl)) 
+                     - x.ra * cos(rad(x.decl)))) 
+                    / (r.wm_ra_err * r.wm_ra_err + x.ra_err*x.ra_err)
+                    +
+                    ((r.wm_decl - x.decl) * (r.wm_decl - x.decl)) 
+                    / (r.wm_decl_err * r.wm_decl_err + x.decl_err*x.decl_err)
+                            ) as assoc_r
+                ,3
+            FROM temprunningcatalog t
+                ,runningcatalog r
+                ,extractedsources x
+           WHERE t.xtrsrc_id = r.xtrsrc_id
+             AND t.xtrsrc_id = x.xtrsrcid
         """
         cursor.execute(query)
         conn.commit()
@@ -820,12 +869,11 @@ SELECT COUNT(*)
                       AND x0.decl + 0.025
    AND b0.wm_ra BETWEEN x0.ra - alpha(0.025,x0.decl)
                     AND x0.ra + alpha(0.025,x0.decl)
-   AND SQRT((x0.ra - b0.wm_ra) * COS(rad(x0.decl))
-            * (x0.ra - b0.wm_ra) * COS(rad(x0.decl))
+   AND SQRT(  (x0.ra * COS(rad(x0.decl)) - b0.wm_ra * COS(rad(b0.wm_decl)))
+            * (x0.ra * COS(rad(x0.decl)) - b0.wm_ra * COS(rad(b0.wm_decl)))
             / (x0.ra_err * x0.ra_err + b0.wm_ra_err * b0.wm_ra_err)
            + (x0.decl - b0.wm_decl) * (x0.decl - b0.wm_decl)
-            / (x0.decl_err * x0.decl_err + b0.wm_decl_err *
-               b0.wm_decl_err)
+            / (x0.decl_err * x0.decl_err + b0.wm_decl_err * b0.wm_decl_err)
            ) < %s
 """
         cursor.execute(query, (image_id, deRuiter_r))
@@ -853,9 +901,15 @@ def _insert_new_assocs(conn, image_id, deRuiter_r):
         INSERT INTO assocxtrsources
           (xtrsrc_id
           ,assoc_xtrsrc_id
+          ,assoc_distance_arcsec
+          ,assoc_r
+          ,assoc_lr_method
           )
           SELECT x1.xtrsrcid as xtrsrc_id
                 ,x1.xtrsrcid as assoc_xtrsrc_id
+                ,0
+                ,0
+                ,4
             FROM extractedsources x1
            WHERE x1.image_id = %s
              AND x1.xtrsrcid NOT IN (
@@ -872,15 +926,11 @@ def _insert_new_assocs(conn, image_id, deRuiter_r):
                                             AND x0.decl + 0.025
                    AND b0.wm_ra BETWEEN x0.ra - alpha(0.025,x0.decl)
                                           AND x0.ra + alpha(0.025,x0.decl)
-                   AND SQRT((x0.ra - b0.wm_ra) * COS(rad(x0.decl))
-                            * (x0.ra - b0.wm_ra) * COS(rad(x0.decl))
-                            /(x0.ra_err * x0.ra_err
-                             + b0.wm_ra_err * b0.wm_ra_err
-                             )
-                           +(x0.decl - b0.wm_decl) * (x0.decl - b0.wm_decl)
-                            /(x0.decl_err * x0.decl_err
-                             + b0.wm_decl_err * b0.wm_decl_err
-                             )
+                   AND SQRT(  (x0.ra * COS(rad(x0.decl)) - b0.wm_ra * COS(rad(b0.wm_decl)))
+                            * (x0.ra * COS(rad(x0.decl)) - b0.wm_ra * COS(rad(b0.wm_decl)))
+                            / (x0.ra_err * x0.ra_err + b0.wm_ra_err * b0.wm_ra_err)
+                           + (x0.decl - b0.wm_decl) * (x0.decl - b0.wm_decl)
+                            / (x0.decl_err * x0.decl_err + b0.wm_decl_err * b0.wm_decl_err)
                            ) < %s
                                     )
         """
@@ -895,7 +945,7 @@ def _insert_new_assocs(conn, image_id, deRuiter_r):
 
 def _insert_new_source_runcat(conn, image_id, deRuiter_r):
     """Insert new sources into the running catalog"""
-
+    # TODO: check zone cast in search radius!
     cursor = conn.cursor()
     try:
         query = """\
@@ -959,17 +1009,12 @@ INSERT INTO runningcatalog
                                     AND x0.decl + 0.025
            AND b0.wm_ra BETWEEN x0.ra - alpha(0.025,x0.decl)
                                   AND x0.ra + alpha(0.025,x0.decl)
-           AND b0.x * x0.x + b0.y * x0.y + b0.z * x0.z >
-                     COS(rad(0.025))
-           AND SQRT((x0.ra - b0.wm_ra) * COS(rad(x0.decl))
-                    * (x0.ra - b0.wm_ra) * COS(rad(x0.decl))
-                    /(x0.ra_err * x0.ra_err
-                     + b0.wm_ra_err * b0.wm_ra_err
-                     )
-                   +(x0.decl - b0.wm_decl) * (x0.decl - b0.wm_decl)
-                    /(x0.decl_err * x0.decl_err
-                     + b0.wm_decl_err * b0.wm_decl_err
-                     )
+           AND b0.x * x0.x + b0.y * x0.y + b0.z * x0.z > COS(rad(0.025))
+           AND SQRT(  (x0.ra * COS(rad(x0.decl)) - b0.wm_ra * COS(rad(b0.wm_decl)))
+                    * (x0.ra * COS(rad(x0.decl)) - b0.wm_ra * COS(rad(b0.wm_decl)))
+                    / (x0.ra_err * x0.ra_err + b0.wm_ra_err * b0.wm_ra_err)
+                   + (x0.decl - b0.wm_decl) * (x0.decl - b0.wm_decl)
+                    / (x0.decl_err * x0.decl_err + b0.wm_decl_err * b0.wm_decl_err)
                    ) < %s
            )
 """

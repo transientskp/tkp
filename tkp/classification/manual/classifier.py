@@ -45,7 +45,7 @@ class Branch(object):
                 for classification in (getattr(self, test))():
                     self.results.extend(
                         classification(self.transient).classify())
-            except AttributeError:
+            except (AttributeError, TypeError):
                 pass
         return self.results
 
@@ -74,7 +74,7 @@ class ClassifiedTransient(Transient):
                 w = (getattr(self, test))()
                 if w is not None:
                     weight += w
-            except AttributeError:
+            except (AttributeError, TypeError):
                 pass
         return [(self.__doc__, weight)]
 

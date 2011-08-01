@@ -121,3 +121,190 @@ class DateTime(datetime.datetime):
         error = math.sqrt(self.error * self.error + other.error * other.error +
                           precision * precision)
         return (delta < error)
+
+
+
+
+# The following set of classes provide a rather difficult way out
+# of the problem that, in Python 2, None < 0 evaluates to True
+# (Python 3 raises a TypeError).
+# 
+# This problem becomes apparent in the classification part, when a
+# branch tests for an attribute that is not defined: it may return
+# True, while it should just ignore this test instead (since the
+# information is not available).
+#
+# Using the classes below should raise a TypeError (like in Python 3)
+# instead; the classifier should catch this TypeError and ignore the
+# test.
+#
+# It is all rather kludgy; Better to move to Python 3 soon!
+
+class Int(int):
+    """Int that raises a typerror on comparison"""
+
+    def __new__(cls, value):
+        if isinstance(value, (int, basestring)):
+            return int.__new__(cls, value)
+        elif value is None:
+            return int.__new__(cls, 0)
+        else:
+            raise TypeError("%s should be a int or None" % str(value))
+
+    def __init__(self, value):
+        self._None = value is None
+
+    def __lt__(self, other):
+        if self._None:
+            raise TypeError("Cannot compare None and int")
+        else:
+            return int.__lt__(self, other)
+
+    def __gt__(self, other):
+        if self._None:
+            raise TypeError("Cannot compare None and int")
+        else:
+            return int.__gt__(self, other)
+
+    def __le__(self, other):
+        if self._None:
+            raise TypeError("Cannot compare None and int")
+        else:
+            return int.__le__(self, other)
+
+    def __ge__(self, other):
+        if self._None:
+            raise TypeError("Cannot compare None and int")
+        else:
+            return int.__ge__(self, other)
+
+    def __eq__(self, other):
+        if self._None:
+            raise TypeError("Cannot compare None and int")
+        else:
+            return int.__eq__(self, other)
+
+    def __ne__(self, other):
+        if self._None:
+            raise TypeError("Cannot compare None and int")
+        else:
+            return int.__ne__(self, other)
+
+    @property
+    def isNone(self):
+        return self._None
+    
+
+class Float(float):
+    """Float that raises a typerror on comparison"""
+
+    def __new__(cls, value):
+        if isinstance(value, (float, int, long, basestring)):
+            return float.__new__(cls, value)
+        elif value is None:
+            return float.__new__(cls, 0)
+        else:
+            raise TypeError("%s should be a float or None" % str(value))
+
+    def __init__(self, value):
+        self._None = value is None
+
+    def __lt__(self, other):
+        if self._None:
+            raise TypeError("Cannot compare None and float")
+        else:
+            return float.__lt__(self, other)
+
+    def __gt__(self, other):
+        if self._None:
+            raise TypeError("Cannot compare None and float")
+        else:
+            return float.__gt__(self, other)
+
+    def __le__(self, other):
+        if self._None:
+            raise TypeError("Cannot compare None and float")
+        else:
+            return float.__le__(self, other)
+
+    def __ge__(self, other):
+        if self._None:
+            raise TypeError("Cannot compare None and float")
+        else:
+            return float.__ge__(self, other)
+
+    def __eq__(self, other):
+        if self._None:
+            raise TypeError("Cannot compare None and float")
+        else:
+            return float.__eq__(self, other)
+
+    def __ne__(self, other):
+        if self._None:
+            raise TypeError("Cannot compare None and float")
+        else:
+            return float.__ne__(self, other)
+
+    @property
+    def isNone(self):
+        return self._None
+    
+
+class String(str):
+    """String that raises a typerror on comparison"""
+
+    def __new__(cls, value):
+        if isinstance(value, basestring):
+            return str.__new__(cls, value)
+        elif value is None:
+            return str.__new__(cls, '')
+        else:
+            raise TypeError("%s should be a string or None" % str(value))
+
+    def __init__(self, value):
+        self._None = value is None
+
+    def __lt__(self, other):
+        if self._None:
+            raise TypeError("Cannot compare None and string")
+        else:
+            return str.__lt__(self, other)
+
+    def __gt__(self, other):
+        if self._None:
+            raise TypeError("Cannot compare None and string")
+        else:
+            return str.__gt__(self, other)
+
+    def __le__(self, other):
+        if self._None:
+            raise TypeError("Cannot compare None and string")
+        else:
+            return str.__le__(self, other)
+
+    def __ge__(self, other):
+        if self._None:
+            raise TypeError("Cannot compare None and string")
+        else:
+            return str.__ge__(self, other)
+
+    def __eq__(self, other):
+        if self._None:
+            if other is None:
+                return True
+            raise TypeError("Cannot compare None and string")
+        else:
+            return str.__eq__(self, other)
+
+    def __ne__(self, other):
+        if self._None:
+            if other is None:
+                return False
+            raise TypeError("Cannot compare None and string")
+        else:
+            return str.__ne__(self, other)
+    
+    @property
+    def isNone(self):
+        return self._None
+    

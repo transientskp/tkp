@@ -119,7 +119,7 @@ class Transient(object):
         self.position = Undefined() if position is None else position
         self.timezero = Undefined() if timezero is None else timezero
         self.spectralindex = Undefined() if spectralindex is None else spectralindex
-        features = {} if features is None else features
+        self.features = {} if features is None else features
 
     def __str__(self):
         if hasattr(self, 'duration'):
@@ -149,4 +149,6 @@ class Transient(object):
             arglist.append("shape=%s" % self.shape)
         if not isinstance(self.spectralindex, Undefined):
             arglist.append("spectralindex=%.1f" % self.spectralindex)
+        if features != {}:
+            arg.list.append("features=%s" % str(self.features))
         return "%s(%s)" % (self.__class__.__name__, ", ".join(arglist),)

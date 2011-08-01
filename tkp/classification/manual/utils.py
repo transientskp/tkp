@@ -16,25 +16,33 @@ class Position(object):
     def __init__(self, ra, dec, error=0):
         self.ra = ra
         self.dec = dec
-        self.error = error
+        if isinstance(error, tuple):
+            self.ra_err = error[0]
+            self.dec_err = error[1]
+        else:
+            self.ra_err = self.dec_err = error
 
     def __str__(self):
-        return "(%.3f, %.3f)" % (self.ra, self.dec)
+        return "(%.3f, %.3f) +/- (%.4f, %.4f)" % (
+            self.ra, self.dec, self.ra_err, self.dec_err)
 
     def __repr__(self):
-        return "Position(ra=%.3f, dec=%.3f, error=%.3f)" % (
-            self.ra, self.dec, self.error)
+        return "Position(ra=%.3f, dec=%.3f, error=(%.3f, %.3f)" % (
+            self.ra, self.dec, self.ra_err, self.dec_err)
 
     def match(self, other, precision=0):
         """Matches this position object (self) with another (other) position
 
-        :argument other: position to match with
-        :type other: Position instance
-        :keyword precision: positional match accuracy in degrees
-        :type precision: float
+        Args:
 
-        :returns: whether the positions match
-        :rtype: bool
+            other (Position): position to match with
+
+        Kwargs:
+
+            precision (float): positional match accuracy in degrees
+
+        Returns:
+            (bool): whether the positions match within the precision
         
         The parameter precision is combined with the errors on both positions;
         it has the same unit as the error (and ra & dec).
@@ -42,9 +50,10 @@ class Position(object):
 
         dx = self.ra - other.ra
         dy = self.dec - other.dec
-        delta = math.sqrt(dx*dx + dy*dy)
-        error = math.sqrt(self.error * self.error +
-                          other.error * other.error + precision * precision)
+        delta = dx*dx + dy*dy
+        error = (self.ra_err * self.ra_err + self.dec_err * self.dec_err +
+                 other.ra_err * other.ra_err + other.dec_err * other.dec_err +
+                 precision * precision)
         return (delta < error)
 
 

@@ -94,7 +94,7 @@ class LightCurve(object):
         self.background = {'mean': numpy.nan, 'sigma': numpy.nan,
                            'indices': None}
         self.duration = {'start': numpy.nan, 'end': numpy.nan,
-                         'duration': 0, 'active': 0}
+                         'total': 0, 'active': 0}
         self.fluxincrease = {'increase': {'absolute': numpy.nan, 'relative': numpy.nan},
                              'peak': numpy.nan, 'ipeak': None}
         self.risefall = {'rise': {'time': numpy.nan, 'flux': numpy.nan},
@@ -215,7 +215,7 @@ class LightCurve(object):
             duration = active = 0.
         self.duration['start'] = start
         self.duration['end'] = end
-        self.duration['duration'] = duration
+        self.duration['total'] = duration
         self.duration['active'] = active
         return self.duration
     
@@ -365,11 +365,12 @@ class LightCurve(object):
         except ValueError:
             print indices, self.fluxes[indices]
             raise
-        self.stats['mean'] = pygsl.statistics.wmean(weights, self.fluxes[indices])
-        self.stats['stddev'] = pygsl.statistics.wsd_m(
-            weights, self.fluxes[indices], self.stats['mean'])
-        self.stats['skew'] = pygsl.statistics.wskew_m_sd(
-            weights, self.fluxes[indices], self.stats['mean'], self.stats['stddev'])
-        self.stats['kurtosis'] = pygsl.statistics.wkurtosis_m_sd(
-            weights, self.fluxes[indices], self.stats['mean'], self.stats['stddev'])
+        self.stats['wmean'] = pygsl.statistics.wmean(weights, self.fluxes[indices])
+        self.stats['median'] = numpy.median(self.fluxes[indices])
+        self.stats['wstddev'] = pygsl.statistics.wsd_m(
+            weights, self.fluxes[indices], self.stats['wmean'])
+        self.stats['wskew'] = pygsl.statistics.wskew_m_sd(
+            weights, self.fluxes[indices], self.stats['wmean'], self.stats['wstddev'])
+        self.stats['wkurtosis'] = pygsl.statistics.wkurtosis_m_sd(
+            weights, self.fluxes[indices], self.stats['wmean'], self.stats['wstddev'])
         return self.stats

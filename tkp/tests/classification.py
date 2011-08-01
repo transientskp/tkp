@@ -9,9 +9,6 @@ from tkp.classification.manual.classification import MainBranch
 from tkp.classification.manual.classification import SpectralBranch
 from tkp.classification.manual.classifier import Classifier
 from tkp.classification.manual.transient import Transient
-from tkp.classification.manual.transient import Int
-from tkp.classification.manual.transient import Float
-from tkp.classification.manual.transient import String
 
 
 

@@ -45,7 +45,7 @@ class Branch(object):
                 for classification in (getattr(self, test))():
                     self.results.extend(
                         classification(self.transient).classify())
-            except (AttributeError, TypeError):
+            except (AttributeError, TypeError) as e:
                 pass
         return self.results
 
@@ -58,10 +58,19 @@ class ClassifiedTransient(Transient):
         transient attributes"""
 
         if len(args) > 0 and isinstance(args[0], Transient):
-            t = args[0]
-            args = (t.srcid, t.duration, t.variability, t.database, t.position,
-                    t.timezero, t.shape, t.spectralindex) + args[1:]
-        super(ClassifiedTransient, self).__init__(*args, **kwargs)
+            args = list(args)
+            t = args.pop(0)
+            newkwargs = {}
+            for key in ('duration', 'variability', 'database', 'position',
+                        'timezero', 'shape', 'spectralindex'):
+                try:
+                    newkwargs[key] = getattr(t, key)
+                except AttributeError:
+                    newkwargs[key] = None
+            # supplied kwargs override values of the transient object
+            newkwargs.update(kwargs)
+            args.insert(0, t.srcid)
+        super(ClassifiedTransient, self).__init__(*args, **newkwargs)
 
     def classify(self):
         """Obtain and run the test for this specific classification"""
@@ -74,7 +83,7 @@ class ClassifiedTransient(Transient):
                 w = (getattr(self, test))()
                 if w is not None:
                     weight += w
-            except (AttributeError, TypeError):
+            except (AttributeError, TypeError) as e:
                 pass
         return [(self.__doc__, weight)]
 

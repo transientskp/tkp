@@ -701,119 +701,29 @@ def _insert_single_assocs(conn):
 def _update_runningcatalog(conn):
     """Update the running catalog"""
 
-    # Since Jun2010 version we cannot use the massive (but simple) update
-    # statement anymore.
-    # Therefore, unfortunately, we cursor through the tempsources table
-    # TODO: However, it has not been checked yet, whether it is working again
-    # in the latest version.
-    ##+--------------------------------------------
-    ##UPDATE multcatbasesources
-    ##  SET zone = (
-    ##      SELECT zone
-    ##      FROM tempmultcatbasesources
-    ##      WHERE tempmultcatbasesources.xtrsrc_id =
-    ##            multcatbasesources.xtrsrc_id
-    ##      )
-    ##     ,ra_avg = (
-    ##         SELECT ra_avg
-    ##         FROM tempmultcatbasesources
-    ##         WHERE tempmultcatbasesources.xtrsrc_id =
-    ##               multcatbasesources.xtrsrc_id
-    ##         )
-    ##     ,decl_avg = (
-    ##         SELECT decl_avg
-    ##         FROM tempmultcatbasesources
-    ##         WHERE tempmultcatbasesources.xtrsrc_id =
-    ##               multcatbasesources.xtrsrc_id
-    ##         )
-    ##     ,ra_err_avg = (
-    ##         SELECT ra_err_avg
-    ##         FROM tempmultcatbasesources
-    ##         WHERE tempmultcatbasesources.xtrsrc_id =
-    ##               multcatbasesources.xtrsrc_id
-    ##                   )
-    ##     ,decl_err_avg = (
-    ##         SELECT decl_err_avg
-    ##         FROM tempmultcatbasesources
-    ##         WHERE tempmultcatbasesources.xtrsrc_id =
-    ##               multcatbasesources.xtrsrc_id
-    ##                     )
-    ##     ,x = (SELECT x
-    ##             FROM tempmultcatbasesources
-    ##            WHERE tempmultcatbasesources.xtrsrc_id =
-    ##                  multcatbasesources.xtrsrc_id
-    ##          )
-    ##     ,y = (SELECT y
-    ##             FROM tempmultcatbasesources
-    ##            WHERE tempmultcatbasesources.xtrsrc_id =
-    ##                  multcatbasesources.xtrsrc_id
-    ##          )
-    ##     ,z = (SELECT z
-    ##             FROM tempmultcatbasesources
-    ##            WHERE tempmultcatbasesources.xtrsrc_id =
-    ##                  multcatbasesources.xtrsrc_id
-    ##          )
-    ##     ,datapoints = (
-    ##         SELECT datapoints
-    ##         FROM tempmultcatbasesources
-    ##         WHERE tempmultcatbasesources.xtrsrc_id =
-    ##               multcatbasesources.xtrsrc_id
-    ##                   )
-    ##     ,avg_weighted_ra = (
-    ##         SELECT avg_weighted_ra
-    ##         FROM tempmultcatbasesources
-    ##         WHERE tempmultcatbasesources.xtrsrc_id =
-    ##               multcatbasesources.xtrsrc_id
-    ##                        )
-    ##     ,avg_weighted_decl = (
-    ##         SELECT avg_weighted_decl
-    ##         FROM tempmultcatbasesources
-    ##         WHERE tempmultcatbasesources.xtrsrc_id =
-    ##               multcatbasesources.xtrsrc_id
-    ##                          )
-    ##     ,avg_ra_weight = (
-    ##         SELECT avg_ra_weight
-    ##         FROM tempmultcatbasesources
-    ##         WHERE tempmultcatbasesources.xtrsrc_id =
-    ##               multcatbasesources.xtrsrc_id
-    ##                      )
-    ##     ,avg_decl_weight = (
-    ##         SELECT avg_decl_weight
-    ##         FROM tempmultcatbasesources
-    ##         WHERE tempmultcatbasesources.xtrsrc_id =
-    ##         multcatbasesources.xtrsrc_id
-    ##                        )
-    ##WHERE EXISTS (
-    ##    SELECT xtrsrc_id
-    ##    FROM tempmultcatbasesources
-    ##    WHERE tempmultcatbasesources.xtrsrc_id =
-    ##    multcatbasesources.xtrsrc_id
-    ##             )
-    ##+--------------------------------------------
-
     try:
         cursor = conn.cursor()
         query = """\
-        SELECT datapoints
-              ,zone
-              ,wm_ra
-              ,wm_decl
-              ,wm_ra_err
-              ,wm_decl_err
-              ,avg_wra
-              ,avg_wdecl
-              ,avg_weight_ra
-              ,avg_weight_decl
-              ,x
-              ,y
-              ,z
-              ,avg_I_peak
-              ,avg_I_peak_sq
-              ,avg_weight_peak
-              ,avg_weighted_I_peak
-              ,avg_weighted_I_peak_sq
-              ,xtrsrc_id
-          FROM temprunningcatalog
+SELECT datapoints
+      ,zone
+      ,wm_ra
+      ,wm_decl
+      ,wm_ra_err
+      ,wm_decl_err
+      ,avg_wra
+      ,avg_wdecl
+      ,avg_weight_ra
+      ,avg_weight_decl
+      ,x
+      ,y
+      ,z
+      ,avg_I_peak
+      ,avg_I_peak_sq
+      ,avg_weight_peak
+      ,avg_weighted_I_peak
+      ,avg_weighted_I_peak_sq
+      ,xtrsrc_id
+  FROM temprunningcatalog
         """
         cursor.execute(query)
         results = cursor.fetchall()
@@ -1136,11 +1046,5 @@ def detect_variable_sources(conn, dsid, V_lim, eta_lim):
     return _select_variability_indices(conn, dsid, V_lim, eta_lim)
 
 
-def associate_catalogued_sources_in_area(conn, ra, dec, search_radius):
-    """Detection of variability in the extracted sources as
-    compared their previous detections.
-    """
+def associate_catalogued_sources_in_area(conn, ra, dec, radius, deRuiter_r=DERUITER_R):
     pass
-    # the sources in the current image need to be matched to the
-    # list of sources from the merged cross-correlated catalogues
-

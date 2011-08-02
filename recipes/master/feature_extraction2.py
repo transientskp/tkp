@@ -47,25 +47,17 @@ WHERE xtrsrc_id = %s
 """
 
 
-class DBConnectionField(lofaringredient.Field):
-    def is_valid(self, value):
-        return isinstance(value, monetdb.sql.connections.Connection)
-
-
 class DataBaseField(lofaringredient.Field):
     def is_valid(self, value):
         return isinstance(value, tkp.database.database.DataBase)
 
 
-class feature_extraction(BaseRecipe, RemoteCommandRecipeMixIn):
+class feature_extraction2(BaseRecipe, RemoteCommandRecipeMixIn):
 
     inputs = dict(
         dblogin=lofaringredient.DictField(
             '--dblogin',
             help=""),
-#        dbconnection=DBConnectionField(
-#            '--dbconnection',
-#            help=""),
         database=DataBaseField(
             '--database',
             help='DataBase object'
@@ -83,9 +75,8 @@ class feature_extraction(BaseRecipe, RemoteCommandRecipeMixIn):
         )
 
     def go(self):
-        super(feature_extraction, self).go()
+        super(feature_extraction2, self).go()
         self.database = self.inputs['database']
-        self.logger.info("transients = %s" % str(self.inputs['transients']))
 
         clusterdesc = ClusterDesc(self.config.get('cluster', "clusterdesc"))
         if clusterdesc.subclusters:
@@ -128,4 +119,4 @@ class feature_extraction(BaseRecipe, RemoteCommandRecipeMixIn):
 
 
 if __name__ == '__main__':
-    sys.exit(feature_extraction().main())
+    sys.exit(feature_extraction2().main())

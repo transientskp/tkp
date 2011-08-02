@@ -14,6 +14,8 @@ from contextlib import closing
 from lofarpipe.support.lofarnode import LOFARnodeTCP
 from lofarpipe.support.utilities import log_time
 
+
+import tkp
 from tkp.config import config
 from tkp.database.database import DataBase
 from tkp.database.dataset import DataSet
@@ -22,7 +24,7 @@ from tkp.utility.accessors import dbimage_from_accessor
 from tkp.utility.accessors import sourcefinder_image_from_accessor
 
 
-class source_extraction(LOFARnodeTCP):
+class source_extraction2(LOFARnodeTCP):
     """
     Extract sources from a FITS image
     """
@@ -71,4 +73,4 @@ if __name__ == "__main__":
     #                        and pass the rest to the run() method defined above
     # --------------------------------------------------------------------------
     jobid, jobhost, jobport = sys.argv[1:4]
-    sys.exit(source_extraction(jobid, jobhost, jobport).run_with_stored_arguments())
+    sys.exit(source_extraction2(jobid, jobhost, jobport).run_with_stored_arguments())

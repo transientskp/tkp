@@ -27,104 +27,51 @@ from lofarpipe.support.utilities import log_time
 import numpy
 import monetdb
 import tkp.database.database as tkpdb
-from tkp.classification.features.lightcurve import extract as extract_lightcurve
-from tkp.classification.features.lightcurve import calc_background
-from tkp.classification.features.lightcurve import calc_duration
-from tkp.classification.features.lightcurve import calc_fluxincrease
-from tkp.classification.features.lightcurve import calc_risefall
-from tkp.utility.sigmaclip import sigmaclip, calcsigma, calcmean
-from tkp.classification.database import STATUS
-from tkp.classification.manual import (
-    Transient, Position, DateTime)
-from tkp.classification.features.sql import fluxincrease as sql_fluxincrease
-from tkp.classification.features.sql import status as sql_status
+from tkp.classification.features import lightcurve as lcmod
+from tkp.database.dataset import Source
+from tkp.classification.manual.transient import Transient
+from tkp.classification.manual.utils import Position
+from tkp.classification.manual.utils import DateTime
 
 SECONDS_IN_DAY = 86400.
 
 
 
-class feature_extraction(LOFARnodeTCP):
+class feature_extraction2(LOFARnodeTCP):
 
     def run(self, transient, dblogin):
         with nested(log_time(self.logger),
                     closing(tkpdb.DataBase(**dblogin))) as (dummy, database):
                 try:
-                    #transient = self.create_transient()
-                    database.cursor.execute(sql_status, (transient.srcid,))
-                    status = int(self.cursor.fetchone()[0])
-
-                    # estimate flux incrase
-                    database.cursor.execute(sql_fluxincrease,
-                                            (transient.srcid,))
-                    results = database.cursor.fetchall()
-                    delta_t = ((results[0][0] + timedelta(results[0][1]/2.)) - 
-                               (results[1][0] + timedelta(results[1][1]/2.)))
-                    delta_t = delta_t.days + delta_t.seconds/SECONDS_IN_DAY
-                    fluxincrease = (results[0][2]-results[1][2])
-                    transient.fluxincrease_absolute = fluxincrease
-                    transient.fluxincrease_time = delta_t
-                    try:
-                        transient.fluxincrease_relative = (
-                            fluxincrease/delta_t/results[0][2])
-                    except ZeroDivisionError:
-                        transient.fluxincrease_relative = 0.
-        
-                    # get the light curve, and estimate the background
-                    args = (transient.srcid,)
-                    lightcurve = extract_lightcurve(database.cursor, args)
-
-                    mean, sigma, indices = calc_background(
-                        lightcurve)
-                    background = {'mean': mean, 'sigma': sigma}
-                    transient.background = mean
-
-                    tstart, tend, duration = calc_duration(
-                        lightcurve['obstimes'], lightcurve['inttimes'],
-                        indices)
-                    if tstart is not None:
-                        transient.timezero = tstart
-                    if duration is not None:
-                        transient.duration = duration
-        
-                    # Calculate flux increases, over the total & relative time
-                    # interval, absolute and relative increases/decreases
-                    peakflux, increase, ipeak = calc_fluxincrease(
-                        lightcurve, background, indices)
-                    rise, fall, ratio = calc_risefall(
-                        lightcurve, background, indices, ipeak)
-                    transient.peakflux = peakflux
-                    transient.rise = rise
-                    transient.fall = fall
-                    transient.ratio = ratio
-        
-                    # temporory fix; otherwise the algorithm can't work
-                    try:
-                        if (transient.fall['time'] > 0 and
-                            transient.rise['time'] > 0):
-                            # we're back to background; turn active status off
-                            status &= ~(1 << STATUS['ACTIVE'])
-                    except KeyError:
-                        pass
-                    transient.risefall_ratio = transient.ratio
-                    try:
-                        transient.risetime = transient.rise['time']
-                        transient.rise = transient.rise['flux']
-                    except KeyError:
-                        pass
-                    try:
-                        transient.falltime = transient.fall['time']
-                        transient.fall = transient.fall['flux']
-                    except KeyError:
-                        pass
-                    transient.status = status
-                    try:
-                        transient.fluxincrease_total = increase['absolute']
-                    except KeyError:
-                        pass
-                    try:
-                        transient.fluxincrease_totalrelative = increase['percent']
-                    except KeyError:
-                        pass
+                    source = Source(srcid=transient.srcid, database=database)
+                    lightcurve = lcmod.LightCurve(*zip(*source.lightcurve()))
+                    lightcurve.calc_background()
+                    lightcurve.calc_stats()
+                    lightcurve.calc_duration()
+                    lightcurve.calc_fluxincrease()
+                    lightcurve.calc_risefall()
+                    if lightcurve.duration['total']:
+                        variability = (lightcurve.duration['active'] /
+                                       lightcurve.duration['total'])
+                    else:
+                        variability = numpy.NaN
+                    features = {
+                        'duration': lightcurve.duration['total'],
+                        'variability': variability,
+                        'wmean': lightcurve.stats['wmean'],
+                        'median': lightcurve.stats['median'],
+                        'wstddev': lightcurve.stats['wstddev'],
+                        'wskew': lightcurve.stats['wskew'],
+                        'wkurtosis': lightcurve.stats['wkurtosis'],
+                        'max': lightcurve.stats['max'],
+                        'peakflux': lightcurve.fluxincrease['peak'],
+                        'relpeakflux': lightcurve.fluxincrease['increase']['relative'],
+                        'risefallratio': lightcurve.risefall['ratio'],
+                        }
+                    transient.duration = lightcurve.duration['total']
+                    transient.timezero = lightcurve.duration['start']
+                    transient.variability = variability
+                    transient.features = features
                 except Exception, e:
                     self.logger.error(str(e))
                     return 1
@@ -134,4 +81,4 @@ class feature_extraction(LOFARnodeTCP):
 
 if __name__ == "__main__":
     jobid, jobhost, jobport = sys.argv[1:4]
-    sys.exit(feature_extraction(jobid, jobhost, jobport).run_with_stored_arguments())
+    sys.exit(feature_extraction2(jobid, jobhost, jobport).run_with_stored_arguments())

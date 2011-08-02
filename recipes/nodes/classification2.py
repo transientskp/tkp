@@ -21,26 +21,21 @@ import imp
 from lofarpipe.support.lofarnode import LOFARnodeTCP
 from lofarpipe.support.utilities import log_time
 
-from tkp.classification.manual.classification import SlowTransient
-from tkp.classification.manual.classification import GRBPrompt
-from tkp.classification.manual.classification import MainBranch, SpectralBranch
+from tkp.classification.manual.classification import MainBranch
 from tkp.classification.manual.classifier import Classifier
 from tkp.classification.manual.transient import Transient
 #from tkp.classification.manul.classification import Main
 
 
-class classification(LOFARnodeTCP):
+class classification2(LOFARnodeTCP):
 
     def run(self, schema, path, transient, weight_cutoff):
         with log_time(self.logger):
             try:
-#                classification = imp.load_module(
-#                    *(("classification",) + imp.find_module(schema, [path])))
-                self.logger.info("Classifying transient: %d, %s" % (
-                    transient.srcid, repr(transient)))
+                self.logger.info("Classifying transient #%d", 
+                    transient.srcid)
                 classifier = Classifier(transient, MainBranch)
                 results = classifier.classify()
-                self.logger.info("classifier results = %s" % str(results))
                 transient.classification = {}
                 for key, value in results:
                     if value > weight_cutoff:
@@ -55,4 +50,4 @@ class classification(LOFARnodeTCP):
 
 if __name__ == "__main__":
     jobid, jobhost, jobport = sys.argv[1:4]
-    sys.exit(classification(jobid, jobhost, jobport).run_with_stored_arguments())
+    sys.exit(classification2(jobid, jobhost, jobport).run_with_stored_arguments())

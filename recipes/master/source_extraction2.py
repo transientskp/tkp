@@ -26,7 +26,7 @@ class IntOrNoneField(ingredient.Field):
         return int(value)
 
 
-class source_extraction(BaseRecipe, RemoteCommandRecipeMixIn):
+class source_extraction2(BaseRecipe, RemoteCommandRecipeMixIn):
     """
     Extract sources from a FITS image
     """
@@ -63,7 +63,7 @@ class source_extraction(BaseRecipe, RemoteCommandRecipeMixIn):
     
     def go(self):
         self.logger.info("Extracting sources")
-        super(source_extraction, self).go()
+        super(source_extraction2, self).go()
         dataset_id = self.inputs['dataset_id']
         
         # Obtain available nodes
@@ -81,7 +81,7 @@ class source_extraction(BaseRecipe, RemoteCommandRecipeMixIn):
 
         # Get database login details
         dblogin = dict([(key, self.config.get('database', key))
-                      for key in ('dbname', 'user', 'password', 'hostname')])
+                      for key in ('name', 'user', 'password', 'host')])
 
         # Running this on nodes, in case we want to perform source extraction
         # on individual images that are still stored on the compute nodes
@@ -117,4 +117,4 @@ class source_extraction(BaseRecipe, RemoteCommandRecipeMixIn):
             return 0
 
 if __name__ == '__main__':
-    sys.exit(source_extraction().main())
+    sys.exit(source_extraction2().main())

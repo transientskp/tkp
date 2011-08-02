@@ -47,7 +47,6 @@ import tkp.database.database
 import tkp.classification
 import tkp.classification.manual
 from tkp.classification.manual.classifier import Classifier
-#from tkp.classification.manual import ExternalTrigger, DataBase
 from tkp.classification.manual.utils import Position
 from tkp.classification.manual.utils import DateTime
 
@@ -72,17 +71,12 @@ VALUES (%s)
 
 
 
-class DBConnectionField(lofaringredient.Field):
-    def is_valid(self, value):
-        return isinstance(value, monetdb.sql.connections.Connection)
-
-
 class DataBaseField(lofaringredient.Field):
     def is_valid(self, value):
         return isinstance(value, tkp.database.database.DataBase)
 
 
-class classification(BaseRecipe, RemoteCommandRecipeMixIn):
+class classification2(BaseRecipe, RemoteCommandRecipeMixIn):
 
     inputs = dict(
         schema=lofaringredient.StringField(
@@ -94,9 +88,6 @@ class classification(BaseRecipe, RemoteCommandRecipeMixIn):
         transients=lofaringredient.ListField(
             '--transients',
             help="List of transient objects"),
-#        dbconnection=DBConnectionField(
-#            '--dbconnection',
-#            help="Database connection object"),
         database=DataBaseField(
             '--database',
             help="DataBase object"),
@@ -110,15 +101,13 @@ class classification(BaseRecipe, RemoteCommandRecipeMixIn):
         )
 
     def go(self):
-        super(classification, self).go()
+        super(classification2, self).go()
         self.database = self.inputs['database']
         transients = self.inputs['transients']
         weight_cutoff = float(self.inputs['weight_cutoff'])
         # Some dummy data
         position = Position(123.454, 12.342, error=0.0008)
         timezero = DateTime(2010, 2, 3, 16, 35, 31, error=2)
-        #trigger = ExternalTrigger(position=position, timezero=timezero)
-        #database = DataBase(association=False, name="GRB_afterglows")
 
         clusterdesc = ClusterDesc(self.config.get('cluster', "clusterdesc"))
         if clusterdesc.subclusters:
@@ -157,4 +146,4 @@ class classification(BaseRecipe, RemoteCommandRecipeMixIn):
 
 
 if __name__ == '__main__':
-    sys.exit(classification().main())
+    sys.exit(classification2().main())

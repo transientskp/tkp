@@ -90,12 +90,6 @@ WHERE
 )
 
 
-class DBConnectionField(lofaringredient.Field):
-    """Input specifying a database connection"""
-    def is_valid(self, value):
-        return isinstance(value, monetdb.sql.connections.Connection)
-
-
 class DataBaseField(lofaringredient.Field):
     def is_valid(self, value):
         return isinstance(value, tkp.database.database.DataBase)
@@ -119,7 +113,7 @@ class FloatList(lofaringredient.ListField):
         return False
 
 
-class transient_search(BaseRecipe):
+class transient_search2(BaseRecipe):
     """
     Search for transients in the database, for a specific dataset
     """
@@ -136,10 +130,6 @@ class transient_search(BaseRecipe):
                   '(ignore associations with level > closeness level)'),
             default=3.0
         ),
-#        'dbconnection': DBConnectionField(
-#            '--dbconnection',
-#            help='database connection item'
-#        ),
         'database': DataBaseField(
             '--database',
             help='DataBase object'
@@ -165,7 +155,7 @@ class transient_search(BaseRecipe):
         # calculate an average error for now
         error = numpy.sqrt(results[2]*results[2] + results[3]*results[3])
         transient = Transient(srcid=srcid, position=Position(
-            ra=results[0], dec=results[1], error=error))
+            ra=results[0], dec=results[1], error=(results[2], results[3])))
         #transient.status = 1 << STATUS['ACTIVE']
         transient.siglevel = siglevel
         self.database.cursor.execute(SQL['dataset'], (srcid,))
@@ -173,7 +163,7 @@ class transient_search(BaseRecipe):
         return transient
 
     def go(self):
-        super(transient_search, self).go()
+        super(transient_search2, self).go()
         self.logger.info("Selecting transient sources from the database")
         try:
             detection_level = float(self.inputs['detection_level'])
@@ -184,31 +174,30 @@ class transient_search(BaseRecipe):
         except KeyError:
             closeness_level = CLOSENESS_LEVEL
         dataset_id = self.inputs['dataset_id']
-        database = self.inputs['database']
-        dataset = tkp.database.dataset.DataSet(
-            dsid=dataset_id, database=database)
-        #self.database.cursor = db.cursor()
-        #self.database.cursor.execute(SQL['siglevel'], (dataset_id,))
-        #results = self.database.cursor.fetchall()
-        results = dataset.detect_variables()
+        self.database = self.inputs['database']
+        self.dataset = tkp.database.dataset.DataSet(
+            dsid=dataset_id, database=self.database)
+        results = self.dataset.detect_variables()
         transients = []
         if len(results) > 0:
-            # need (want) sorting by sigmu
-            source_ids, npoints, weightedpeaks, eta_nu = tuple(zip(*results))
-            source_ids = numpy.array(source_ids)
-            weightedpeaks, N = numpy.array(weightedpeaks), numpy.array(npoints)-1
-            siglevel = chisqprob(eta_nu * N, N)
+            # need (want) sorting by sigma
+            # This is not pretty, but it works:
+            results = dict((key,  [result[key] for result in results])
+                           for key in ('srcid', 'npoints', 'v_nu', 'eta_nu'))
+            srcids = numpy.array(results['srcid'])
+            weightedpeaks, N = numpy.array(results['v_nu']), numpy.array(results['npoints'])-1
+            siglevel = chisqprob(results['eta_nu'] * N, N)
             selection = siglevel < 1/detection_level
-            transient_ids = numpy.array(source_ids)[selection]
+            transient_ids = numpy.array(srcids)[selection]
             siglevels = siglevel[selection]
             for transient_id, siglevel in zip(transient_ids, siglevels):
                 transient = self.create_transient(int(transient_id),
                                                   float(siglevel))
                 self.database.cursor.execute(SQL['insert'], (transient.srcid,))
-                db.commit()
+                self.database.commit()
                 self.database.cursor.execute(SQL['update'], (
                     transient.srcid, transient.siglevel))
-                db.commit()
+                self.database.commit()
                 transients.append(transient)
         else:
             transient_ids = numpy.array([], dtype=numpy.int)
@@ -221,4 +210,4 @@ class transient_search(BaseRecipe):
 
 
 if __name__ == '__main__':
-    sys.exit(transient_search().main())
+    sys.exit(transient_search2().main())

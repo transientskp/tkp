@@ -81,7 +81,16 @@ class DataBase(object):
             database=self.name, port=self.port)
         self.cursor = self.connection.cursor()
 
+    def commit(self):
+        """Shortcut to self.connection.commit"""
 
+        return self.connection.commit()
+
+    def execute(self, *args):
+        """Shortcut to self.cursor.execute"""
+
+        return self.cursor.execute(*args)
+    
     def close(self):
         """Explicitly close the database connection"""
 

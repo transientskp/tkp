@@ -142,29 +142,29 @@ class TestDataSet(unittest.TestCase):
         self.assertEqual(len(image1.sources), 2)
         # Source #3 points to the same source as #2
         source3 = tkp.database.dataset.Source(
-            sourceid=source2.sourceid, database=self.database)
+            srcid=source2.srcid, database=self.database)
         # Which means there are no extra sources for image1
         self.assertEqual(len(image1.sources), 2)
-        sourceids = set([source.sourceid for source in image1.sources])
+        srcids = set([source.srcid for source in image1.sources])
         # If, however, we create a new source with
         # an image reference in the constructor, we get a
         # 'deep' copy:
         source4 = tkp.database.dataset.Source(
-            image=image1, sourceid=source2.sourceid)
+            image=image1, srcid=source2.srcid)
         # Now there's a new source for image1!
         self.assertEqual(len(image1.sources), 3)
         # But if we filter on the source ids,
         # we see there are really only two sources
-        sourceids = set([source.sourceid for source in image1.sources])
-        self.assertEqual(set([source1.sourceid, source2.sourceid]),
-                         sourceids)
+        srcids = set([source.srcid for source in image1.sources])
+        self.assertEqual(set([source1.srcid, source2.srcid]),
+                         srcids)
 
         data['ra'] = 89.89
         data['decl'] = 78.78
         source5 = tkp.database.dataset.Source(
             image=image2, data=data)
         self.assertEqual(len(image2.sources), 1)
-        self.assertEqual(image2.sources.pop().sourceid, source5.sourceid)
+        self.assertEqual(image2.sources.pop().srcid, source5.srcid)
 
     def test_source_update(self):
         if not self.database:
@@ -187,7 +187,7 @@ class TestDataSet(unittest.TestCase):
         self.assertEqual(len(image1.sources), 2)
         # Source #3 points to the same source as #2
         source3 = tkp.database.dataset.Source(
-            sourceid=source2.sourceid, database=self.database)
+            srcid=source2.srcid, database=self.database)
         # Update source3
         source3.decl = 44.44
         # But no change for #1 and #2

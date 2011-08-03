@@ -414,8 +414,8 @@ WHERE imageid=%s""" % (self._imageid,))
         cursor.execute(
             """SELECT xtrsrcid FROM extractedsources WHERE image_id=%s""",
             (self._imageid,))
-        for sourceid in cursor.fetchall():
-            self.sources.add(Source(image=self, sourceid=sourceid[0]))
+        for srcid in cursor.fetchall():
+            self.sources.add(Source(image=self, srcid=srcid[0]))
 
     @property
     def imageid(self):
@@ -487,18 +487,18 @@ class Source(object):
                    i_int=0., i_int_err=0., q_int=0., q_int_err=0.,
                    u_int=0., u_int_err=0., v_int=0., v_int_err=0.)
 
-    def __init__(self, image=None, sourceid=None, data=None, database=None):
+    def __init__(self, image=None, srcid=None, data=None, database=None):
         self.image = image
         self.database = database
         if self.image:
             if self.image.dataset.database and not self.database:
                 self.database = self.image.dataset.database
             self.image.sources.add(self)
-        self._sourceid = sourceid
-        if self._sourceid is None:
+        self._srcid = srcid
+        if self._srcid is None:
             for key, value in Source.COLUMNS.items():
                 setattr(self, key, value)
-            self.sourceid  # set self._sourceid property
+            self.srcid  # set self._srcid property
             self._set_data(data=data)
         else:
             self._retrieve_from_database()
@@ -519,15 +519,15 @@ class Source(object):
             self.database.connection):
             connection = self.database.connection
             cursor = self.database.cursor
-            if self._sourceid:
+            if self._srcid:
                 try:
                     query = ("UPDATE extractedsources SET %s=%%s WHERE xtrsrcid=%%s" %
                              name)
-                    cursor.execute(query, (value, self._sourceid))
+                    cursor.execute(query, (value, self._srcid))
                     connection.commit()
                 except self.database.Error:
                     logging.warn("Failed to set %s for Source with id=%s.",
-                                 name, self._sourceid)
+                                 name, self._srcid)
                     raise
 
     def _retrieve_from_database(self, database=None):
@@ -540,7 +540,7 @@ class Source(object):
         cursor = database.cursor
         query = ("""SELECT %s FROM extractedsources WHERE xtrsrcid=%%s""" %
                  ", ".join(Source.COLUMNS.keys()))
-        cursor.execute(query, (self.sourceid,))
+        cursor.execute(query, (self.srcid,))
         results = cursor.fetchone()
         for i, desc in enumerate(cursor.description):
             object.__setattr__(self, '_' + desc[0], results[i])
@@ -548,17 +548,17 @@ class Source(object):
             # set the corresponding image
             cursor.execute(
                 """SELECT image_id FROM extractedsources WHERE xtrsrcid=%s""",
-                (self._sourceid,))
+                (self._srcid,))
             imageid = cursor.fetchone()[0]
             self.image = Image(imageid=imageid, database=database)
             #self.image.sources.add(self)
             
     def __str__(self):
-        return "Source %d (%.3f, %.3f)" % (self._sourceid, self.ra, self.decl)
+        return "Source %d (%.3f, %.3f)" % (self._srcid, self.ra, self.decl)
 
     def __repr__(self):
-        return "Source(image=%s, sourceid=%s)" % (
-            repr(self.image), str(self._sourceid))
+        return "Source(image=%s, srcid=%s)" % (
+            repr(self.image), str(self._srcid))
 
     def _set_data(self, data=None):
         if data is None:
@@ -574,21 +574,21 @@ class Source(object):
         query += " WHERE xtrsrcid=%s"
         connection = self.database.connection
         cursor = self.database.cursor
-        if self._sourceid:
-            values.append(self._sourceid)
+        if self._srcid:
+            values.append(self._srcid)
             try:
                 cursor.execute(query, tuple(values))
                 connection.commit()
             except self.database.Error:
                 logging.warn("Failed to set data for Source with id=%s.",
-                             self._sourceid)
+                             self._srcid)
                 raise
 
     @property
-    def sourceid(self):
-        """Add or obtain an sourceid to/from the extractedsources table"""
+    def srcid(self):
+        """Add or obtain an srcid to/from the extractedsources table"""
 
-        if self._sourceid is None:
+        if self._srcid is None:
             connection = self.database.connection
             cursor = self.database.cursor
             try:
@@ -598,12 +598,12 @@ INSERT INTO extractedsources
     (image_id, zone, ra, decl, ra_err, decl_err, x, y, z, margin, det_sigma)
     VALUES (%s, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0)""", (self.image.imageid,))
                 connection.commit()
-                self._sourceid = cursor.lastrowid
+                self._srcid = cursor.lastrowid
             except self.database.Error:
                 logging.warn(
                     "Insertion of default Source() into database failed.")
                 raise
-        return self._sourceid
+        return self._srcid
 
     def update(self):
         """Update the source if the database has changed"""
@@ -632,4 +632,4 @@ INSERT INTO extractedsources
                 - database ID of this particular source
         """
 
-        return dbu.lightcurve(self.database.connection, self.sourceid)
+        return dbu.lightcurve(self.database.connection, self.srcid)

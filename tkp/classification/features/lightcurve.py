@@ -31,29 +31,29 @@ class LightCurve(object):
     """
 
     @classmethod
-    def from_database(cursor, sourceid):
+    def from_database(cursor, srcid):
         """Extract the complete light curve from the database
     
         Args:
     
             - cursor: database cursor
     
-            - sourceid (int): id of the source in the database
+            - srcid (int): id of the source in the database
     
         """
     
-        cursor.execute(sql_lightcurve, sourceid)
+        cursor.execute(sql_lightcurve, srcid)
         results = zip(*cursor.fetchall())
         return LightCurve(
             obstimes=numpy.array(results[0]),
             inttimes=numpy.array(results[1]),
             fluxes=numpy.array(results[2]),
             errors=numpy.array(results[3]),
-            sourceids=numpy.array(results[4])
+            srcids=numpy.array(results[4])
             )
 
 
-    def __init__(self, obstimes, inttimes, fluxes, errors, sourceids=None):
+    def __init__(self, obstimes, inttimes, fluxes, errors, srcids=None):
         """
 
         Args:
@@ -68,7 +68,7 @@ class LightCurve(object):
 
             errors (list or array of floats): flux errors in Janskys
 
-            sourceids (list or array of ints, None): database id of
+            srcids (list or array of ints, None): database id of
                 'extracted source' for each data point. If left to the
                 default of None, this is ignored.
 
@@ -81,12 +81,12 @@ class LightCurve(object):
         self.inttimes = numpy.array(inttimes)
         self.fluxes = numpy.array(fluxes)
         self.errors = numpy.array(errors)
-        if sourceids is None:
-            self.sourceids = numpy.zeros(self.obstimes.shape)
+        if srcids is None:
+            self.srcids = numpy.zeros(self.obstimes.shape)
         else:
-            self.sourceids = numpy.array(sourceids)
+            self.srcids = numpy.array(srcids)
         if not (len(self.obstimes) == len(self.inttimes) == len(self.fluxes) ==
-                len(self.errors) == len(self.sourceids)):
+                len(self.errors) == len(self.srcids)):
             raise ValueError("light curve data arrays are not of equal length")
         self.reset()
         

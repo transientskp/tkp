@@ -1003,7 +1003,7 @@ SELECT xtrsrc_id
 """
         cursor.execute(query, (dsid, V_lim, eta_lim))
         results = cursor.fetchall()
-        results = [dict(sourceid=x[0], npoints=x[2], v_nu=x[7], eta_nu=x[8])
+        results = [dict(srcid=x[0], npoints=x[2], v_nu=x[7], eta_nu=x[8])
                    for x in results]
         #conn.commit()
     except db.Error:

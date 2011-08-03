@@ -51,7 +51,7 @@ class TestLightcurve(unittest.TestCase):
             inttimes=numpy.ones(30, dtype=numpy.float) * 60,
             fluxes=numpy.ones(30, dtype=numpy.float) * 1e-6,
             errors=numpy.ones(30, dtype=numpy.float) * 1e-8,
-            sourceids=numpy.arange(0, 30)
+            srcids=numpy.arange(0, 30)
         )
         # add errors, but not entirely randomly
         # usage of eg numpy.random.normal has shown that this may
@@ -439,7 +439,7 @@ class TestLightcurves(unittest.TestCase):
             inttimes=numpy.ones(npoints, dtype=numpy.float) * inttime,
             fluxes=numpy.ones(npoints, dtype=numpy.float) * 1e-6,
             errors=numpy.ones(npoints, dtype=numpy.float) * 1e-8,
-            sourceids=numpy.arange(0, npoints)
+            srcids=numpy.arange(0, npoints)
         )
         stats = lightcurve.calc_stats()
         self.assertAlmostEqual(stats['wmean']*1e6, 1.)
@@ -464,7 +464,7 @@ class TestLightcurves(unittest.TestCase):
             inttimes=numpy.ones(npoints, dtype=numpy.float) * inttime,
             fluxes=numpy.ones(npoints, dtype=numpy.float) * 1e-6,
             errors=numpy.ones(npoints, dtype=numpy.float) * 1e-8,
-            sourceids=numpy.arange(0, npoints)
+            srcids=numpy.arange(0, npoints)
         )
         fluxes = numpy.ones(npoints, dtype=numpy.float) * 1e-6
 
@@ -512,7 +512,7 @@ class TestLightcurves(unittest.TestCase):
             inttimes=numpy.ones(npoints, dtype=numpy.float) * inttime,
             fluxes=numpy.ones(npoints, dtype=numpy.float) * 1e-6,
             errors=numpy.ones(npoints, dtype=numpy.float) * 1e-8,
-            sourceids=numpy.arange(0, npoints)
+            srcids=numpy.arange(0, npoints)
         )
         fluxes = numpy.ones(npoints, dtype=numpy.float) * 1e-6
         
@@ -643,7 +643,7 @@ class TestLightcurves(unittest.TestCase):
             inttimes=numpy.ones(npoints, dtype=numpy.float) * inttime,
             fluxes=numpy.ones(npoints, dtype=numpy.float) * 1e-6,
             errors=numpy.ones(npoints, dtype=numpy.float) * 1e-8,
-            sourceids=numpy.arange(0, npoints)
+            srcids=numpy.arange(0, npoints)
         )
         fluxes = numpy.ones(npoints, dtype=numpy.float) * 1e-6
         change = numpy.linspace(1, 10, num=fluxes.shape[0])
@@ -725,7 +725,7 @@ class TestLightcurves(unittest.TestCase):
             inttimes=numpy.ones(npoints, dtype=numpy.float) * inttime,
             fluxes=numpy.ones(npoints, dtype=numpy.float) * 1e-6,
             errors=numpy.ones(npoints, dtype=numpy.float) * 1e-8,
-            sourceids=numpy.arange(0, npoints)
+            srcids=numpy.arange(0, npoints)
         )
         fluxes = numpy.ones(npoints, dtype=numpy.float) * 1e-6
         change = numpy.linspace(1, 10, num=fluxes.shape[0])
@@ -757,7 +757,7 @@ class TestLightcurves(unittest.TestCase):
             inttimes=numpy.ones(npoints, dtype=numpy.float) * inttime,
             fluxes=numpy.ones(npoints, dtype=numpy.float) * 1e-6,
             errors=numpy.ones(npoints, dtype=numpy.float) * 1e-8,
-            sourceids=numpy.arange(0, npoints)
+            srcids=numpy.arange(0, npoints)
         )
         fluxes = numpy.ones(npoints, dtype=numpy.float) * 1e-6
         change = numpy.linspace(1, 10, num=fluxes.shape[0])

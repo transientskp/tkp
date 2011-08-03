@@ -1241,9 +1241,9 @@ def store_datasets(datasets, database):
             print db_dataset.detect_variables()
 #            db_image.associate_extracted_sources()
 #            for i, transient in enumerate(db_dataset.detect_variables()):
-#                transients[transient['sourceid']] = transient
-#                source = tkpdb.Source(sourceid=transient['sourceid'], database=database)
-#                sources[source.sourceid] = source
+#                transients[transient['srcid']] = transient
+#                source = tkpdb.Source(srcid=transient['srcid'], database=database)
+#                sources[source.srcid] = source
 #                print i, transient,
 #            print
     return dataset_ids
@@ -1259,8 +1259,8 @@ def get_transients(ids, database):
         #for image in db_dataset.images:
         #    print 'image =', image, type(image)
         for i, transient in enumerate(db_dataset.detect_variables()):
-            source = tkpdb.Source(sourceid=transient['sourceid'], database=database)
-            sources[source.sourceid] = source
+            source = tkpdb.Source(srcid=transient['srcid'], database=database)
+            sources[source.srcid] = source
     print
     print 'sources =', sources
     print
@@ -1269,7 +1269,7 @@ def get_transients(ids, database):
 def extract_features(sources):
     print "==== Extracting features ===="
     transients = []
-    for sourceid, source in sources.iteritems():
+    for srcid, source in sources.iteritems():
         print '>'
         #print source.lightcurve()
         #lightcurve = sources.values()[0].lightcurve()
@@ -1303,7 +1303,7 @@ def extract_features(sources):
             }
         print features
         transients.append(tkp.classification.manual.transient.Transient(
-            srcid=sourceid, position=position,
+            srcid=srcid, position=position,
             duration=lightcurve.duration['total'], variability=variability,
             features=features))
         print transients[-1]
@@ -1341,7 +1341,7 @@ def extract_features(sources):
             inttimes=lc.inttimes,
             fluxes=lc.fluxes,
             errors=lc.errors,
-            sourceids=numpy.arange(0, len(lc.obstimes))
+            srcids=numpy.arange(0, len(lc.obstimes))
             )
         background = lcmod.calc_background(lightcurve)
         stats = lcmod.stats(lightcurve, -background[2])

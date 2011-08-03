@@ -65,6 +65,14 @@ class DataBase(object):
     def __del__(self):
         self.close()
 
+    def __str__(self):
+        return "Database '%s' @ '%s' for user '%s'" % (
+            self.name, self.host, self.user)
+
+    def __repr__(self):
+        return "DataBase(host=%s, name=%s, user=%s, password=%s, port=%d" % (
+            self.host, self.name, self.user, self.password, self.port)
+
     def connect(self):
         """Connect to the database"""
         

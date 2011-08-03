@@ -43,11 +43,12 @@ from lofarpipe.support.remotecommand import RemoteCommandRecipeMixIn
 from lofarpipe.support.remotecommand import ComputeJob
 from lofarpipe.support import lofaringredient
 
+import tkp.database.database
 import tkp.classification
 import tkp.classification.manual
-from tkp.classification.manual import ClassificationSchema
-from tkp.classification.manual import ExternalTrigger, DataBase
-from tkp.classification.manual.utils import Position, DateTime
+from tkp.classification.manual.classifier import Classifier
+from tkp.classification.manual.utils import Position
+from tkp.classification.manual.utils import DateTime
 
 
 SQL = dict(DELETE="""\
@@ -70,9 +71,9 @@ VALUES (%s)
 
 
 
-class DBConnectionField(lofaringredient.Field):
+class DataBaseField(lofaringredient.Field):
     def is_valid(self, value):
-        return isinstance(value, monetdb.sql.connections.Connection)
+        return isinstance(value, tkp.database.database.DataBase)
 
 
 class classification(BaseRecipe, RemoteCommandRecipeMixIn):
@@ -87,9 +88,9 @@ class classification(BaseRecipe, RemoteCommandRecipeMixIn):
         transients=lofaringredient.ListField(
             '--transients',
             help="List of transient objects"),
-        dbconnection=DBConnectionField(
-            '--dbconnection',
-            help="Database connection object"),
+        database=DataBaseField(
+            '--database',
+            help="DataBase object"),
         nproc=lofaringredient.IntField(
             '--nproc',
             default=8,
@@ -101,18 +102,12 @@ class classification(BaseRecipe, RemoteCommandRecipeMixIn):
 
     def go(self):
         super(classification, self).go()
-        self.db = self.inputs['dbconnection']
-        self.cursor = self.db.cursor()
+        self.database = self.inputs['database']
         transients = self.inputs['transients']
         weight_cutoff = float(self.inputs['weight_cutoff'])
         # Some dummy data
         position = Position(123.454, 12.342, error=0.0008)
         timezero = DateTime(2010, 2, 3, 16, 35, 31, error=2)
-        trigger = ExternalTrigger(position=position, timezero=timezero)
-        database = DataBase(association=False, name="GRB_afterglows")
-
-        self.db = self.inputs['dbconnection']
-        self.cursor = self.db.cursor()
 
         clusterdesc = ClusterDesc(self.config.get('cluster', "clusterdesc"))
         if clusterdesc.subclusters:
@@ -136,7 +131,7 @@ class classification(BaseRecipe, RemoteCommandRecipeMixIn):
             jobs.append(
                 ComputeJob(node, command, arguments=[
                 self.inputs['schema'], self.config.get("layout", "parset_directory"),
-                transient, weight_cutoff, trigger, database]))
+                transient, weight_cutoff]))
 
         self.logger.info("Scheduling jobs")
         jobs = self._schedule_jobs(jobs, max_per_node=self.inputs['nproc'])

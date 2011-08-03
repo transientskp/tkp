@@ -36,59 +36,37 @@ class prettyprint(BaseRecipe):
 
     def go(self):
         super(prettyprint, self).go()
+        self.logger.info("\n====== Results ======\n")
         for transient in self.inputs['transients']:
-            try:
-                rise, risetime = transient.rise, transient.risetime
-            except (AttributeError, TypeError):
-                rise = risetime = 0
-            try:
-                fall, falltime = transient.fall, transient.falltime
-            except (AttributeError, TypeError):
-                fall = falltime = 0
-            try:
-                ratio = transient.risefall_ratio
-            except (AttributeError, TypeError):
-                ratio = 0
-            try:
-                timezero = transient.timezero
-            except (AttributeError, TypeError), e:
-                timezero = 'unknown'
-            try:
-                duration = "%.1f" % transient.duration
-            except (AttributeError, TypeError), e:
-                duration = 'unknown'
-            try:
-                fluxincrease_total = "%8.3e" % transient.fluxincrease_total
-            except (AttributeError, TypeError), e:
-                fluxincrease_total = 'unknown'
-            try:
-                fluxincrease_totalrelative = "%8.3e" % transient.fluxincrease_totalrelative
-            except (AttributeError, TypeError):
-                fluxincrease_totalrelative = 'unknown'
-            classification = ""
             indent = 8 * " "
+            features = ""
+            for key, value in sorted(transient.features.iteritems(),
+                                     key=itemgetter(1)):
+                try:
+                    features += "|" + indent + "%s: %.3f\n" % (key, value)
+                except TypeError:  # incorrect format argument
+                    features += "|" + indent + "%s: %s\n" % (key, str(value))
+            classification = ""
             for key, value in sorted(transient.classification.iteritems(),
                                      key=itemgetter(1), reverse=True):
                 classification += "|" + indent + "%s: %.1f\n" % (key, value)
             self.logger.info("""\
 \033[36m
-| transient %d (%s):
-|   T_0: %s  %s
-|   fluxincrease
-|   * total:   %s,   %s
-|   rise & fall:
-|   * rise:   %g,   %g
-|   * fall:   %g,   %g
-|   * ratio:  %f
+| transient #%d (dataset %s):
+|   T0: %s  %s
+|   position: %s
+|   features:
+%s
 |   classification:
 %s
 \033[0m
-""" % (transient.srcid, transient.dataset,
-           timezero, duration,
-           fluxincrease_total, fluxincrease_totalrelative,
-           rise, risetime, fall, falltime, ratio, classification))
-            
-                
+""", transient.srcid, transient.dataset,
+     transient.timezero, transient.duration,
+     transient.position,
+     features,
+     classification)
+
+        self.logger.info("\n--------------------\n")
         return 0
 
 

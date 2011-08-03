@@ -81,7 +81,7 @@ class source_extraction(BaseRecipe, RemoteCommandRecipeMixIn):
 
         # Get database login details
         dblogin = dict([(key, self.config.get('database', key))
-                      for key in ('database', 'username', 'password', 'hostname')])
+                      for key in ('name', 'user', 'password', 'host')])
 
         # Running this on nodes, in case we want to perform source extraction
         # on individual images that are still stored on the compute nodes

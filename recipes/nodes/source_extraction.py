@@ -14,14 +14,15 @@ from contextlib import closing
 from lofarpipe.support.lofarnode import LOFARnodeTCP
 from lofarpipe.support.utilities import log_time
 
-from tkp.settings import DERUITER_R
-from tkp.sourcefinder.accessors import FitsFile
-from tkp.sourcefinder.image import ImageData
+
+import tkp
+from tkp.config import config
+from tkp.database.database import DataBase
 from tkp.database.dataset import DataSet
-import tkp.database.database as tkpdb
-from tkp.database.utils import insertExtractedSources
-from tkp.database.utils import associateExtractedSources
-            
+from tkp.utility.accessors import FitsFile
+from tkp.utility.accessors import dbimage_from_accessor
+from tkp.utility.accessors import sourcefinder_image_from_accessor
+
 
 class source_extraction(LOFARnodeTCP):
     """
@@ -47,25 +48,25 @@ class source_extraction(LOFARnodeTCP):
         """
         
         with log_time(self.logger):
-            with closing(tkpdb.connection(**dblogin)) as dbconnection:
+            with closing(DataBase(**dblogin)) as database:
                 description = 'LOFAR images'
-                dataset = DataSet(description, dbconnection=dbconnection, id=dataset_id)
-                self.logger.info("dataset id = %d" % dataset.id)
-                self.outputs['dataset_id'] = dataset.id
-                image_data = ImageData(FitsFile(image), conn=dbconnection, dataset=dataset)
+                dataset = DataSet(name=description, dsid=dataset_id,
+                                        database=database)
+                self.logger.info("dataset id = %d" % dataset.dsid)
+                self.outputs['dataset_id'] = dataset.dsid
+                fitsimage = FitsFile(image)
+                db_image = dbimage_from_accessor(dataset=dataset,
+                                                 image=fitsimage)
                 self.logger.info("Detecting sources in %s at %f level" % (
                     image, detection_level))
-                results = image_data.sextract(det=detection_level)
+                data_image = sourcefinder_image_from_accessor(fitsimage)
+                results = data_image.extract(det=detection_level)
                 self.logger.info("Detected %d sources" % len(results))
-                insertExtractedSources(dbconnection, image_data.id[0], results)#,
-#                                       logger=self.logger)
-                #tkpdb.savetoDB(dataset=dataset, objectlist=results,
-                #               conn=dbconnection)
+                db_image.insert_extracted_sources(results)
                 self.logger.info("saved extracted sources to database")
-                associateExtractedSources(dbconnection, image_data.id[0],
-                                          deRuiter_r=radius*DERUITER_R,
-                                          logger=self.logger)
-    
+                db_image.associate_extracted_sources(
+                    deRuiter_r=radius*
+                    config['source_association']['deruiter_radius'])
 
 if __name__ == "__main__":
     #   If invoked directly, parse command line arguments for logger information

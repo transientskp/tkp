@@ -31,13 +31,12 @@ from datetime import timedelta
 import pickle
 import itertools
 
-from tkp.classification.manual import (
-    Transient, Position, DateTime)
 from lofarpipe.support.clusterdesc import ClusterDesc, get_compute_nodes
 from lofarpipe.support.baserecipe import BaseRecipe
 from lofarpipe.support.remotecommand import RemoteCommandRecipeMixIn
 from lofarpipe.support.remotecommand import ComputeJob
 from lofarpipe.support import lofaringredient
+import tkp.database.database
 import monetdb.sql.connections
 
 
@@ -48,9 +47,9 @@ WHERE xtrsrc_id = %s
 """
 
 
-class DBConnectionField(lofaringredient.Field):
+class DataBaseField(lofaringredient.Field):
     def is_valid(self, value):
-        return isinstance(value, monetdb.sql.connections.Connection)
+        return isinstance(value, tkp.database.database.DataBase)
 
 
 class feature_extraction(BaseRecipe, RemoteCommandRecipeMixIn):
@@ -59,9 +58,10 @@ class feature_extraction(BaseRecipe, RemoteCommandRecipeMixIn):
         dblogin=lofaringredient.DictField(
             '--dblogin',
             help=""),
-        dbconnection=DBConnectionField(
-            '--dbconnection',
-            help=""),
+        database=DataBaseField(
+            '--database',
+            help='DataBase object'
+        ),
         transients=lofaringredient.ListField(
             '--transients',
             help=""),
@@ -76,9 +76,7 @@ class feature_extraction(BaseRecipe, RemoteCommandRecipeMixIn):
 
     def go(self):
         super(feature_extraction, self).go()
-        self.db = self.inputs['dbconnection']
-        self.cursor = self.db.cursor()
-        self.logger.info("transients = %s" % str(self.inputs['transients']))
+        self.database = self.inputs['database']
 
         clusterdesc = ClusterDesc(self.config.get('cluster', "clusterdesc"))
         if clusterdesc.subclusters:

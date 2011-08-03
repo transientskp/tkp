@@ -26,7 +26,7 @@ class SIP(control):
         dataset_id = None
         with log_time(self.logger):
              for image in images:
-                    outputs = self.run_task("source_extraction2",
+                    outputs = self.run_task("source_extraction",
                                             images=[image],
                                             dataset_id=dataset_id)
                     if dataset_id is None:
@@ -39,12 +39,12 @@ class SIP(control):
                         self.logger.info("%s", str(database))
 
                         outputs.update(
-                            self.run_task("transient_search2", [],
+                            self.run_task("transient_search", [],
                                           dataset_id=dataset_id,
                                           database=database)
                             )
                     outputs.update(
-                        self.run_task("feature_extraction2", [],
+                        self.run_task("feature_extraction", [],
                                       transients=outputs['transients'],
                                       dblogin=dblogin,  # for the compute nodes
                                       database=database)
@@ -57,7 +57,7 @@ class SIP(control):
                                       database=database)
                         )
 
-                    self.run_task("prettyprint2", [], transients=outputs['transients'])
+                    self.run_task("prettyprint", [], transients=outputs['transients'])
 
 if __name__ == '__main__':
     sys.exit(SIP().main())

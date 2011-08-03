@@ -24,52 +24,53 @@ class SIP(control):
         from to_process import datafiles
         
         with log_time(self.logger):
-            storage_mapfile = self.run_task("datamapper_storage", datafiles)['mapfile'] # generate a mapfile mapping them to compute nodes
-            self.logger.info('storage mapfile = %s' % storage_mapfile)
-
-            # Produce a GVDS file describing the data on the storage nodes.
-            self.run_task('vdsmaker', storage_mapfile)
-            
-            # Read metadata (start, end times, pointing direction) from GVDS.
-            vdsinfo = self.run_task("vdsreader")
-            
-            # NDPPP reads the data from the storage nodes, according to the
-            # map. It returns a new map, describing the location of data on
-            # the compute nodes.
-            ndppp_results = self.run_task(
-                "ndppp",
-                storage_mapfile,
-            )            
-            compute_mapfile = ndppp_results['mapfile']
-            
-            ra = quantity(vdsinfo['pointing']['ra']).get_value('deg')
-            dec = quantity(vdsinfo['pointing']['dec']).get_value('deg')
-            central = self.run_task(
-                "skymodel", ra=ra, dec=dec, search_size=2.5
-                )
-            
-            # Patch the name of the central source into the BBS parset for
-            # subtraction.
-            with patched_parset(
-                self.task_definitions.get("bbs", "parset"),
-                {
-                'Step.correct.Model.Sources': '[ "%s" ]' % (central["source_name"]),
-                'Step.solve1.Model.Sources': '[ "%s" ]' % (central["source_name"]),
-                'Step.solve2.Model.Sources': '[ "%s" ]' % (central["source_name"]),
-                'Step.subtract.Model.Sources': '[ "%s" ]' % (central["source_name"])
-                }
-                ) as bbs_parset:
-                self.logger.info("bbs patched parset = %s" % bbs_parset)
-                # BBS modifies data in place, so the map produced by NDPPP
-                # remains valid.
-                self.run_task("bbs", compute_mapfile, parset=bbs_parset)
-
-            # rerun DPPP on calibrated data
-            ndppp_results = self.run_task(
-                "ndppp2",
-                compute_mapfile,
-            )            
-            compute_mapfile = ndppp_results['mapfile']
+            #storage_mapfile = self.run_task("datamapper_storage", datafiles)['mapfile'] # generate a mapfile mapping them to compute nodes
+            #self.logger.info('storage mapfile = %s' % storage_mapfile)
+            #
+            ## Produce a GVDS file describing the data on the storage nodes.
+            #self.run_task('vdsmaker', storage_mapfile)
+            #
+            ## Read metadata (start, end times, pointing direction) from GVDS.
+            #vdsinfo = self.run_task("vdsreader")
+            #
+            ## NDPPP reads the data from the storage nodes, according to the
+            ## map. It returns a new map, describing the location of data on
+            ## the compute nodes.
+            #ndppp_results = self.run_task(
+            #    "ndppp",
+            #    storage_mapfile,
+            #)            
+            #compute_mapfile = ndppp_results['mapfile']
+            #
+            #ra = quantity(vdsinfo['pointing']['ra']).get_value('deg')
+            #dec = quantity(vdsinfo['pointing']['dec']).get_value('deg')
+            #central = self.run_task(
+            #    "skymodel", ra=ra, dec=dec, search_size=2.5
+            #    )
+            #
+            ## Patch the name of the central source into the BBS parset for
+            ## subtraction.
+            #with patched_parset(
+            #    self.task_definitions.get("bbs", "parset"),
+            #    {
+            #    'Step.correct.Model.Sources': '[ "%s" ]' % (central["source_name"]),
+            #    'Step.solve1.Model.Sources': '[ "%s" ]' % (central["source_name"]),
+            #    'Step.solve2.Model.Sources': '[ "%s" ]' % (central["source_name"]),
+            #    'Step.subtract.Model.Sources': '[ "%s" ]' % (central["source_name"])
+            #    }
+            #    ) as bbs_parset:
+            #    self.logger.info("bbs patched parset = %s" % bbs_parset)
+            #    # BBS modifies data in place, so the map produced by NDPPP
+            #    # remains valid.
+            #    self.run_task("bbs", compute_mapfile, parset=bbs_parset)
+            #
+            ## rerun DPPP on calibrated data
+            #ndppp_results = self.run_task(
+            #    "ndppp2",
+            #    compute_mapfile,
+            #)            
+            #compute_mapfile = ndppp_results['mapfile']
+            compute_mapfile = self.run_task("datamapper_storage", datafiles)['mapfile'] # generate a mapfile mapping them to compute nodes
             self.logger.info("compute mapfile = %s" % compute_mapfile)
             # Produce a GVDS file describing the data on the storage nodes.
             gvds_file = self.run_task('vdsmaker', compute_mapfile)['gvds']
@@ -109,13 +110,14 @@ class SIP(control):
                 if dataset_id is None:
                     dataset_id = outputs['dataset_id']
                 dblogin = dict([(key, self.config.get('database', key))
-                                for key in ('database', 'username', 'password',
+                                for key in ('dbname', 'user', 'password',
                                             'hostname')])
-                with closing(tkpdb.connection(**dblogin)) as dbconnection:
+                #database = tkpdb.DataBase(**dblogin)
+                with closing(tkpdb.DataBase(**dblogin)) as database:
                     outputs.update(
                         self.run_task("transient_search", [],
                                       dataset_id=dataset_id,
-                                      dbconnection=dbconnection)
+                                      database=database)
                         )
 
                     outputs.update(
@@ -123,14 +125,14 @@ class SIP(control):
                                       transients=outputs['transients'],
                                       # transient_ids=outputs['transient_ids'],
                                       dblogin=dblogin,  # for the compute nodes
-                                      dbconnection=dbconnection)
+                                      database=database)
                         )
 
                     # run the manual classification on the transient objects
                     outputs.update(
                         self.run_task("classification", [],
                                       transients=outputs['transients'],
-                                      dbconnection=dbconnection)
+                                      database=database)
                         )
 
                 self.logger.info("outputs = %s " % str(outputs))

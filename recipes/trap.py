@@ -21,7 +21,7 @@ SECONDS_IN_DAY = 86400.
 class SIP(control):
     def pipeline_logic(self):
         # Read the datafiles; datafiles is a list of MS paths.
-        from to_process import datafiles
+        from ms_to_process import datafiles
         
         with log_time(self.logger):
             #storage_mapfile = self.run_task("datamapper_storage", datafiles)['mapfile'] # generate a mapfile mapping them to compute nodes

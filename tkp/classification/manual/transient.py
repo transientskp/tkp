@@ -139,7 +139,7 @@ class Transient(object):
             arglist.append("duration=%.1f" % self.duration)
         if not isinstance(self.variability, Undefined):
             arglist.append("variability=%.2f" % self.variability)
-        if len(database):
+        if len(self.database):
             arglist.append("database=%s" % self.database)
         if not isinstance(self.position, Undefined):
             arglist.append("position=%s" % repr(self.position))
@@ -149,6 +149,6 @@ class Transient(object):
             arglist.append("shape=%s" % self.shape)
         if not isinstance(self.spectralindex, Undefined):
             arglist.append("spectralindex=%.1f" % self.spectralindex)
-        if features != {}:
+        if self.features != {}:
             arg.list.append("features=%s" % str(self.features))
         return "%s(%s)" % (self.__class__.__name__, ", ".join(arglist),)

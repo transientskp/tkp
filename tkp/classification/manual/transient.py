@@ -150,5 +150,5 @@ class Transient(object):
         if not isinstance(self.spectralindex, Undefined):
             arglist.append("spectralindex=%.1f" % self.spectralindex)
         if self.features != {}:
-            arg.list.append("features=%s" % str(self.features))
+            arglist.append("features=%s" % str(self.features))
         return "%s(%s)" % (self.__class__.__name__, ", ".join(arglist),)

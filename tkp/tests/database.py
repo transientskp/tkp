@@ -33,8 +33,8 @@ class TestDatabase(unittest.TestCase):
             self.skipTest("Database not available.")
         self.assertRaises(monetdb.monetdb_exceptions.DatabaseError,
                           tkp.database.database.DataBase,
-                          hostname='localhost',
-                          dbname='non_existant_database',
+                          host='localhost',
+                          name='non_existant_database',
                           user='unknown',
                           password='empty')
         

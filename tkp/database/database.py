@@ -16,7 +16,7 @@ ENABLED = config['database']['enabled']
 HOST = config['database']['host']
 USER = config['database']['user']
 PASSWORD = config['database']['password']
-DBASE = config['database']['name']
+NAME = config['database']['name']
 PORT = config['database']['port']
 
 
@@ -30,7 +30,7 @@ class DataBase(object):
     It keeps a a connection object and a cursor object around as well,
     which can readily be accessed. Usage example:
 
-    >>> db = DataBase(host, dbname, user, password)
+    >>> db = DataBase(host, name, user, password)
     >>> db
     <tkp.database.database.DataBase object at 0x1004959d0>
     >>> db.connection
@@ -44,7 +44,7 @@ class DataBase(object):
     # Assign this class variable for convenience
     Error = monetdb.sql.Error
 
-    def __init__(self, hostname=HOST, dbname=DBASE, user=USER,
+    def __init__(self, host=HOST, name=NAME, user=USER,
                  password=PASSWORD, port=PORT):
         """Set up a database connection object
 
@@ -52,8 +52,8 @@ class DataBase(object):
 
         Use defaults from the config module, but the user can override these
         """
-        self.hostname = hostname
-        self.name = dbname
+        self.host = host
+        self.name = name
         self.user = user
         self.password = password
         self.port = port
@@ -69,7 +69,7 @@ class DataBase(object):
         """Connect to the database"""
         
         self.connection = monetdb.sql.connect(
-            hostname=self.hostname, username=self.user, password=self.password,
+            hostname=self.host, username=self.user, password=self.password,
             database=self.name, port=self.port)
         self.cursor = self.connection.cursor()
 

@@ -91,20 +91,6 @@ class DatabaseSource(ClassifiedTransient):
             return 1.0
     
 
-class MainBranch(Branch):
-
-    """Starting point for manual classification tree"""
-    
-    def test1(self):
-        return [SubBranch1a, SubBranch1b]
-
-    def test2(self):
-        return [SubBranch2]
-
-    def test3(self):
-        return [DatabaseSource]
-    
-
 class SubBranch1a(Branch):
 
     def test1(self):
@@ -131,3 +117,19 @@ class SpectralBranch(Branch):
         if self.transient.spectralindex < 0:
             return [SlowTransient, GRBPrompt]
         return []
+
+
+class MainBranch(Branch):
+
+    """Starting point for manual classification tree"""
+    
+    def test1(self):
+        return [SubBranch1a, SubBranch1b]
+
+    def test2(self):
+        return [SubBranch2]
+
+    def test3(self):
+        return [DatabaseSource]
+    
+

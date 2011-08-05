@@ -416,6 +416,25 @@ class TestLightcurve(unittest.TestCase):
         self.assertAlmostEqual(risefall['fall']['time'], 180.0)
         self.assertAlmostEqual(risefall['fall']['flux']*1e6, 7.1997826)
         self.assertAlmostEqual(risefall['ratio'], 1.5)
+
+        # Test bug fix that caused incorrect background indices to be calculated
+        # when at the end of the background calculation, the indices were not
+        # recalculated using the actual estimated background.
+        lc = lcmod.LightCurve(
+            obstimes=numpy.array([self.timezero + timedelta(0, s) for s in 
+                      numpy.arange(0, 7*60, 60, dtype=numpy.float)]),
+            inttimes=numpy.ones(7, dtype=numpy.float) * 60,
+            fluxes=numpy.array([90., 50., 40., 90., 70., 50., 70.]),
+            errors=numpy.array([6., 6., 7., 5., 6., 3., 5.]),
+            srcids=numpy.arange(0, 7)
+        )
+        lc.reset()
+        risefall = lc.calc_risefall()
+        self.assertTrue(numpy.isnan(risefall['rise']['flux']))
+        self.assertTrue(numpy.isnan(risefall['rise']['time']))
+        self.assertTrue(numpy.isnan(risefall['fall']['flux']))
+        self.assertTrue(numpy.isnan(risefall['fall']['time']))
+        self.assertTrue(numpy.isnan(risefall['ratio']))
         
 
 class TestLightcurves(unittest.TestCase):
@@ -740,10 +759,10 @@ class TestLightcurves(unittest.TestCase):
         # Get the stats, but this time without the background section
         lightcurve.calc_background()
         stats = lightcurve.calc_stats(-lightcurve.background['indices'])
-        self.assertAlmostEqual(stats['wmean']*1e7, 4.079486205)
-        self.assertAlmostEqual(stats['wstddev']*1e7, 3.213942131)
-        self.assertAlmostEqual(stats['wskew'], -0.0053052801)
-        self.assertAlmostEqual(stats['wkurtosis'], -2.035518404)
+        self.assertAlmostEqual(stats['wmean']*1e7, 5.628812808)
+        self.assertAlmostEqual(stats['wstddev']*1e7, 3.72659188)
+        self.assertAlmostEqual(stats['wskew'], -0.263062962)
+        self.assertAlmostEqual(stats['wkurtosis'], -1.8192641814)
 
 
         # Increasing the number of points gives a better background estimate,
@@ -776,10 +795,10 @@ class TestLightcurves(unittest.TestCase):
         # more background data
         lightcurve.calc_background()
         stats = lightcurve.calc_stats(-lightcurve.background['indices'])
-        self.assertAlmostEqual(stats['wmean']*1e7, 4.079486205)
-        self.assertAlmostEqual(stats['wstddev']*1e7, 3.213942131)
-        self.assertAlmostEqual(stats['wskew'], -0.0053052801)
-        self.assertAlmostEqual(stats['wkurtosis'], -2.035518404)
+        self.assertAlmostEqual(stats['wmean']*1e7, 5.628812808)
+        self.assertAlmostEqual(stats['wstddev']*1e7, 3.72659188)
+        self.assertAlmostEqual(stats['wskew'], -0.263062962)
+        self.assertAlmostEqual(stats['wkurtosis'], -1.8192641814)
 
     def test_periodic(self):
         """Various periodic light curves"""

@@ -139,7 +139,7 @@ class LightCurve(object):
             # background value
             newindices = numpy.logical_and(
                 self.fluxes < value + kappa[1] * sigma, indices)
-            if iter < 0:
+            if niter < 0:
                 if (newindices == indices).all():  # no change anymore
                     break
             indices = newindices
@@ -159,13 +159,16 @@ class LightCurve(object):
             # background value
             newindices = numpy.logical_and(
                 self.fluxes > value - kappa[0] * sigma, indices)
-            if iter < 0:
+            if niter < 0:
                 if (newindices == indices).all():  # no change anymore
                     break
             indices = newindices
+        
         if len(numpy.where(indices)[0]) > 1:
             value, sigma = calcsigma(self.fluxes[indices],
-                                    self.errors[indices])
+                                     self.errors[indices])
+            # Now that we have the proper background, recalculate the indices
+            indices = (self.fluxes > value - sigma*kappa[0]) & (self.fluxes < value + sigma*kappa[1])
         self.background['mean'] = value
         self.background['sigma'] = sigma
         self.background['indices'] = indices
@@ -363,7 +366,6 @@ class LightCurve(object):
         try:
             self.stats['max'] = self.fluxes[indices].max()
         except ValueError:
-            print indices, self.fluxes[indices]
             raise
         self.stats['wmean'] = pygsl.statistics.wmean(weights, self.fluxes[indices])
         self.stats['median'] = numpy.median(self.fluxes[indices])

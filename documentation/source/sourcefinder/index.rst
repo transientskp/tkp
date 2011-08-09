@@ -11,5 +11,5 @@ Modules from ``tkp.sourcefinder``
    :maxdepth: 2
 
    image
-   sextract
+   extract
    gaussian

@@ -1,7 +1,7 @@
-++++++++++++++++++++++++++++++++++++++++++++
-:mod:`tkp.database.dataset` -- Dataset class
-++++++++++++++++++++++++++++++++++++++++++++
++++++++++++++++++++++++++++++++++++++++++++++++
+:mod:`tkp.database.dataset` -- Dataset classses
++++++++++++++++++++++++++++++++++++++++++++++++
 
 .. automodule:: tkp.database.dataset
-   :synopsis: Dataset class
+   :synopsis: Dataset classses
    :members:

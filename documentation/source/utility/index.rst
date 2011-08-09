@@ -17,4 +17,3 @@ Modules from ``tkp.utility``
    sigmaclip
    fits
    memoize
-   utilities

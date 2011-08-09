@@ -21,16 +21,16 @@ class IntervalField(ingredient.StringField):
     Allowed formats are:
 
         - seconds
-        
+
         - hh:mm:ss
 
         - hh:mm:ss.sss
-        
+
     """
 
     def is_valid(self, value):
         return isinstance(value, float)
-    
+
     def coerce(self, value):
         try:
             hours, minutes, seconds = value.split(':')
@@ -160,12 +160,11 @@ class time_slicing(BaseRecipe, RemoteCommandRecipeMixIn):
                 mapper.setdefault(host, []).append(output)
             with open(mapfile, 'w') as outfile:
                 for host in mapper.keys():
-                    outfile.write("%s = %s" % (host, str(mapper[host])))
-                outfile.write("\n")
+                    outfile.write("%s = %s\n" % (host, str(mapper[host])))
             self.outputs['mapfiles'].append(mapfile)
 
             self.outputs['timesteps'].append((start_time, end_time))
-        
+
         #                Check if we recorded a failing process before returning
         # ----------------------------------------------------------------------
         if self.error.isSet():

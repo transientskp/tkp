@@ -1,6 +1,31 @@
 Setup
 =====
 
+Preamble
+--------
+
+A few variables are used in the documentation below, indicating relevant directories that may differ from system to system:
+
+- ${TKP}: the base TKP directory on your system. On the heastro
+  machines, this would be /opt/tkp/dev/tkp, while on CEP2, this is
+  /home/rol/tkp/dev/tkp.
+
+- ${WORK}: your working directory for the pipeline, that is, where the
+  jobs control is kept. For me, this is ${HOME}/work/trap, while for
+  other people, this is often ${HOME}/pipeline_runtime. This directory
+  contains the jobs/ subdirectory, and in my case, the trap.cfg as
+  well.
+
+- ${CONFIG}: the main configuration file for the pipeline
+  framework. It contains sections such as [DEFAULT], [layout],
+  [cluster], [deploy] and [logging]. At the moment, it also contains a
+  [database] section, but this may be removed (keep an eye on this
+  documentation). My configuration file lives at
+  ${HOME}/work/trap/trap.cfg.
+
+Dependencies
+------------
+
 You will need to make sure the following external dependencies exist
 on your system, since these are not included in the TKP repository &
 installation:
@@ -18,16 +43,13 @@ installation:
   interface. See also the section on :ref:`the database
   <database-section>`.
 
-- `Python Louie <http://pypi.python.org/pypi/Louie/1.1>`_ (to be
-  dropped in future versions).
-
 
 On heastro1
 -----------
 
-The necessary TKP libraries are installed in /opt/tkp/tkp/. The last
+The necessary TKP libraries are installed in /opt/tkp/dev/tkp/. The last
 part of this path is a symbolic link to a nightly build in
-/opt/tkp/tkp-yyyy-mm-dd/; use a specific nightly build if you have
+/opt/tkp/dev/tkp-yyyy-mm-dd/; use a specific nightly build if you have
 long-running jobs or need a specific TKP library version. A similar
 structure holds for /opt/LofIm/lofar, which points to
 /opt/LofIm/lofar-yyyy-mm-dd.  Within the /opt/tkp/tkp/ directory,
@@ -38,8 +60,8 @@ recipes, while the database/ directory contains the necessary database
 setup files.
 
 
-Your :envvar:`PYTHONPATH` (and your ``ppath`` variable in your main
-configuration file) will need to include the
+Your :envvar:`PYTHONPATH` and the ``ppath`` variable in your main
+configuration file will need to include the
 lib/python directory. Other directories to include
 are (following from the dependencies listed above):
 
@@ -62,18 +84,21 @@ Your ``lpath`` in your configuration file (not so much your
 
 
 Now set up your working directory structure and configuration files in
-the usual pipeline way. An example would be 
-:file:`~/work/trap/jobs/<dataset_name>/` for your working
-directory. Example configuration files can be copied and adjusted from
-:file:`/home/evert/work/trap/trap.cfg` and
+the usual pipeline way.  Example configuration files can be copied and
+adjusted from :file:`/home/evert/work/trap/trap.cfg` and
 :file:`/home/evert/work/trap/jobs/example/control/tasks.cfg`.
 
-The recipes directory, :file:`/opt/tkp/tkp/recipes/`, contains practical
-recipes for the TRAP. The main (SIP/TRIP) recipes live
-:file:`/opt/pipeline/recipes`, but some of these have a slightly adjusted
-variant in the TKP recipes directory. The TKP recipes main directory
-also contains an example trap.py, that essentially is an end-to-end
-pipeline run (so it includes the SIP/TRIP step).
+The recipes directory, :file:`${TKP}/recipes/`, contains practical
+recipes for the TRAP; these are in the master and nodes subdirectories
+(frontend and compute node recipes). The main (SIP/TRIP) recipes can
+be found in :file:`/opt/pipeline/recipes`, but some of these have a
+slightly adjusted variant in the TKP recipes directory. The TKP
+recipes main directory also contains example trap.py and
+trap-images.py recipes: the first recipe is essentially is an
+end-to-end pipeline run (so it includes the SIP/TRIP step), while the
+second one takes a list of images as input, and starts at the source
+extraction point (note: the former may not be completely up to date
+anymore; please take care).
 
 It is assumed you know how to edit the :file:`trap.cfg` and :file:`tasks.cfg`
 files, as well as set up parset and other files. For simplicity,
@@ -135,50 +160,33 @@ you have your own MonetDB database, change the login details in the
 scratch one: tkp/tkp/tkp.
 
 
-Now edit :file:`control/runtrap.sh`. This is a simple script that first clears
-directories (since the pipeline won't clobber existing files
-normally), and then runs the TRAP with the correct job ID. Edit the
-paths accordingly.
-
-You will notice there is no :envvar:`PYTHONPATH` in the shell
-script. I use the convenience that for Python 2.6 and 2.7, the python
-executable automatically picks up modules in
-${HOME}/.local/lib/python2.x/site-packages/. Within that directory, I
-have installed a few necessary Python packags (:command:`python
-setup.py install --user` does this for you), and made symlinks to
-other Python packages. You can copy or symlink this directory, or
-simple change the last line in :file:`runtrap.sh` to::
-
-    PYTHONPATH=/home/evert/.local/lib/python2.6/site-packages \
-          python trap.py -d --task-file=./tasks.cfg -j example \
-           -c /home/${HOME}/work/trap/trap.cfg   $1
-
+Now edit :file:`control/runtrap.sh`. This is a simple script that
+first clears directories (since the pipeline won't clobber existing
+files normally), and then runs the TRAP with the correct job ID. Edit
+the paths accordingly. Don't forget to change the job name (value to
+-j option) as well!
 
 Now edit the :file:`control/tasks.cfg` file as necessary. In
 particular, pay attention to the database credentials: for BBS, set
 ``db_name`` to your user name; for the skymodel databse (MonetDB), you
 can use the tkp/tkp/tkp scratch database, or the default I'm using.
 
-Last things to edit are the :file:`control/to_process.py` file and the
-various parsets. Once you are happy with all settings, you can run the
-trap with::
+Last things to edit are the :file:`control/to_process.py` or
+:file:`control/images_to_process.py` files and the various
+parsets. Once you are happy with all settings, you can run the trap
+with::
 
     ./runtrap.sh
 
 
-Of course, the default involves an end-to-end pipeline, including
-time-slicing. If you want only to use sections of the TRAP, edit
-`trap.py <trap_py.rst>`_ accordingly.
 
 
-
-
-On CEP/lfe001
+On CEP2/lhn001
 -------------
 
-The necessary TKP libraries are installed in /home/rol/tkp/tkp/. The
+The necessary TKP libraries are installed in /home/rol/tkp/dev/tkp/. The
 last part of the directory is a symbolic link to a nightly build in
-/home/rol/tkp/tkp-yyyy-mm-dd/; use a specific nightly build if you
+/home/rol/tkp//dev/tkp-yyyy-mm-dd/; use a specific nightly build if you
 have long-running jobs or need a specific TKP library version. Within
 the /home/rol/tkp/tkp/ directory, there exist a lib/, recipes/ and
 databse/ subdirectories. lib/ contains a single library used by the
@@ -190,41 +198,31 @@ database/ directory contains the files necessary for your database
 setup; for the daily scratch database, you need not to worry about
 this directory.
 
-Your :envvar:`PYTHONPATH` (and your ``ppath`` variable in your main
+Your :envvar:`PYTHONPATH` (and your ``engine_ppath`` variable in your main
 configuration file) will need to include the
 lib/python-packages directory. Other directories to include
 are (following from the dependencies listed above):
 
-- /opt/pipeline/framework/lib/python2.5/site-packages
+- /opt/cep/pipeline/framework/lib/python2.6/site-packages
 
-- /opt/LofIm/daily/lofar/lib/python2.5/site-packages
+- /opt/cep/LofIm/daily/lofar/lib/python2.6/dist-packages
 
-- /opt/LofIm/daily/pyrap/lib
+- /opt/cep/LofIm/daily/pyrap/lib
 
-- /opt/pythonlibs/lib/python/site-packages
+- /opt/cep/pythonlibs/lib/python/site-packages
 
-- /opt/pipeline/dependencies/lib/python2.5/site-packages
+- /home/rol/.local/lib/python2.6/site-packages
 
 Other dependencies should have been installed system-wide (eg in /usr
 or /usr/local).
 
-Your :envvar:`LD_LIBRARY_PATH` and ``lpath`` in your configuration file needs to include:
+Your :envvar:`LD_LIBRARY_PATH` and ``engine_lpath`` in your configuration file needs to include:
 
-- /opt/LofIm/daily/lofar/lib
+- /opt/cep/LofIm/daily/pyrap/lib
 
-- /opt/external/boost/boost-1.40.0/lib
+- /opt/cep/LofIm/daily/casacore/lib
 
-- /opt/wcslib/lib
-
-- /opt/LofIm/daily/pyrap/lib
-
-- /opt/LofIm/daily/casarest/build/lib
-
-- /opt/hdf5/lib
-
-- /opt/LofIm/daily/casacore/lib
-
-- /opt/LofIm/external/log4cplus/lib/
+- /opt/cep/hdf5/lib:/opt/cep/wcslib/lib
 
 
 Now set up your working directory structure and configuration files in
@@ -234,19 +232,18 @@ directory. Example configuration files can be copied and adjusted from
 ``/home/rol/work/trap/trap.cfg`` and
 ``/home/rol/work/trap/jobs/example/control/tasks.cfg``.
 
-The recipes directory, /home/rol/tkp/tkp/recipes/, contains practical
-recipes for the TRAP. Main (SIP/TRIP) recipes live
-/home/rol/pipeline/recipes, and some of these have a slightly adjusted
-variant in the TKP recipes directory; for example, the datamapper has
-been adjusted in case you only want to use imaging subcluster
-(subcluster 3:
-/home/rol/tkp/tkp/recipes/master/datamapper_sub3.py). The TKP recipes
-main directory also contains an example trap.py, that essentially is
-an end-to-end pipeline run (so including the SIP/TRIP step).
+The recipes directory, {$TKP}/recipes/, contains practical recipes for
+the TRAP.  The TKP recipes main directory also contains example
+trap.py and trap-images.py recipes: the first recipe is essentially is
+an end-to-end pipeline run (so it includes the SIP/TRIP step), while
+the second one takes a list of images as input, and starts at the
+source extraction point (note: the former may not be completely up to
+date anymore; please take care).
 
-It is assumed you know how to edit the :file:`trap.cfg` and :file:`tasks.cfg`
-files, as well as set up parset and other files. For simplicity,
-however, the example files mentioned in the :ref:`recipes section <recipes-section>` can be used.
+It is assumed you know how to edit the :file:`trap.cfg` and
+:file:`tasks.cfg` files, as well as set up parset and other files. For
+simplicity, however, the example files mentioned in the :ref:`recipes
+section <recipes-section>` can be used.
 
 
 .. _cep-simple-way:
@@ -259,14 +256,14 @@ way section <heastro-simple-way>`. Mainly directory names change, and
 various PATHs are longer, since less software is installed in default
 system directories.
 
-This describes a copy-paste way to get the trap running on CEP/lfe001
+This describes a copy-paste way to get the trap running on CEP2/lhn001
 essentially by copying my setup and adjust a few PATHs
 accordingly. The PATH set up is done slightly different than the
 previous section, but in essence is the same.
 
 Firstly, lay out the usual pipeline directory structure::
 
-    $HOME/work/trap/jobs/<job-id>
+    ${WORK}/jobs/<job-id>
 
 where job-id is probably named after the dataset you want to process.
 
@@ -314,11 +311,12 @@ clears directories (since the pipeline won't clobber existing files
 normally), and then runs the TRAP with the correct job ID. Edit the
 paths to your data directories accordingly. There is both a PYTHONPATH
 and a LD_LIBRARY_PATH in front of the main executable; these should be
-fine.
+fine. Don't forget to change the job name (value to -j option) as
+well!
 
-Now edit the ``control/tasks.cfg`` file as necessary. In particular,
-pay attention to the database credentials. In particular, for BBS, set
-``db_name`` to your user name.
+Now edit the ``control/tasks.cfg`` file as necessary. Pay attention to
+the database credentials. In particular, for BBS, set ``db_name`` to
+your user name.
 
 Last things to edit are the ``control/to_process.py`` file and the
 parsets. Once you are happy with all settings, you can run the trap

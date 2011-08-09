@@ -1,26 +1,28 @@
 Transients Pipeline
 ===================
 
-This document describes the transients pipeline: it's usage,
-configuration and setup.
+This document describes the transients pipeline, the configuration and
+its usage.
 
-The transients pipeline (TRAP), or more accurately, the transients
+The transients pipeline (TraP), or more accurately, the transients
 detection and classification pipeline, is a software pipeline that
-accepts LOFAR imaging data (images or UV data) and tries to find
-variable and new sources in those data.
+accepts LOFAR imaging data (images, or possibly UV data), tries to
+find variable or new sources in those data, and extracts information
+about those sources in an attempt to classify these sources, all fully
+automated.
 
-The TRAP makes use the Transients Key Project (TKP) library, a Python
+The TraP makes use the Transients Key Project (TKP) library, a Python
 package which contains the necessary routines for source finding,
 source associations, determination of source characteristics and
 source classification. These are described in the :ref:`TKP library
 documentation <tkpapi:index>`.
 
 
-The TRAP has several steps; most steps are optional, but leaving out
+The TraP has several steps; most steps are optional, but leaving out
 some will make little sense. The steps are:
 
 - An imaging step. This actually belongs to the standard
-  imaging pipeline (SIP), but can be implemented into the TRAP for
+  imaging pipeline (SIP), but can be implemented into the TraP for
   convenience (so to have an end-to-end pipeline).
 
 - A time slicing routine. This can be used when a long observation
@@ -28,8 +30,8 @@ some will make little sense. The steps are:
   then compared among each other to find transients within the dataset
   (ie, not by comparing with existing catalogs).
 
-  The two routines above are not used when the input to the TRAP
-  consists of a list of individual images. In this case the TRAP will
+  The two routines above are not used when the input to the TraP
+  consists of a list of individual images. In this case the TraP will
   just loop over this list of images.
 
 
@@ -52,8 +54,10 @@ some will make little sense. The steps are:
   differs from their cataloged value.
 
 - Feature extraction. This will attempt to extract various
-  characteristics (peak flux, duration, flux increase and decrease,
-  spectral shape) from any transient detected in the previous routine. 
+  characteristics (peak flux, duration, background level, flux
+  increase and decrease, spectral shape, standard statistical values
+  such as mean, standard deviation, skew and kurtosis) from any
+  transient detected in the previous routine.
 
   Since most algorithms in the above routine rely on a good
   measurement of the average background/steady-state value, these
@@ -65,6 +69,12 @@ some will make little sense. The steps are:
   weight (a threshold can be set to only output classifications above
   a certain weight).
 
-  This routine is very dependent on the results of the feature
+  This routine is obviously very dependent on the results of the feature
   extraction routine. Ie, badly or no extracted features will
   obviously not lead to a (valid) classification. 
+
+  Since, at the moment, there are few to none training data sets for
+  the classification, this step largely follows a simple manual tree
+  classification, where each source gets a value (weight) associated
+  with a certain type of classification. These classification,
+  however, are fully preprogrammed.

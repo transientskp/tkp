@@ -17,12 +17,19 @@ the database server is heastro1 or localhost, on CEP ldb001.
 Be warned that this database gets completely wiped and rebuild every
 night: do not save any essential data here!
 
+Interactive login
+-----------------
+
 You can login to the scratch database using the :command`mclient` command
-(on lfe001, best is probably to use a locally build version:
-:command:`/home/scheers/databases/MonetDB/bin/mclient`. On heastro1,
-it's :command:`/opt/monetdb/bin/mclient`). You will need a
-:file:`$HOME/.monetdb` file that contains the login details (user
-and password). The following should work::
+(on lhn001, best is probably to use a locally build version, eg
+:command:`/home/rol/.local/bin/mclient`. On heastro1,
+it's :command:`/opt/monetdb/bin/mclient`). 
+
+This allows you to manually inspect the data that is stored in the
+database, which is sometimes useful for debugging purposes.
+
+You will need a :file:`$HOME/.monetdb` file that contains the login
+details (user and password). The following should work::
 
     $> cat > ~/.monetdb <<EOF
     user=tkp

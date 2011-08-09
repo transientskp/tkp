@@ -293,7 +293,7 @@ new sources with existing ones.
 
 - inputs:
 
-  - images: list of FITS files.
+  - image: list of (FITS) images.
 
   - detection_level: detection level for sources, in background sigma.
 
@@ -315,10 +315,7 @@ Notes:
 - In a future TRAP version, the source association part may get its
   own recipe.
 
-- A future version may allow for other images than just FITS.
-
-- While the actual source finding is handed over to a compute node, it
-  is a single process, and nproc may disappear in a future version.
+- A future version will allow for other images than just FITS.
 
 
 
@@ -337,7 +334,8 @@ looking for deviations in their light curve.
   - closeness_level: ignore associations with level > closeness
     level. Default = 3.
 
-  - dbconnection: database connection item (an sql.db object).
+  - database: :ref:`Database <tkpapi:tkp.database.database.DataBase>
+    instance, for the database connection.
 
   - dataset_id: The dataset ID, likely obtained from the
     source_extraction recipe.
@@ -349,8 +347,8 @@ looking for deviations in their light curve.
 
   - siglevels: significance levels of the "transientness".
 
-  - transients: list of tkp.classficiation.manual.transient.Transient
-    objects.
+  - transients: list of :ref:`Transient
+    <tkpapi:tkp.classficiation.manual.transient.Transient> objects.
 
 
 This routine is implemented by performing a database search, and thus
@@ -381,16 +379,19 @@ Each feature extraction is run as a separate node.
     dictionary keys are ``database``, ``username``, ``password`` and
     ``hostname``.
 
-  - dbconnection: database connection item (an sql.db object).
+  - database: :ref:`Database <tkpapi:tkp.database.database.DataBase>
+    instance, for the database connection.
 
-  - transients: list of Transient objects, previously obtained with
-    the transient_search recipe.
+  - transients: list of :ref:`Transient
+    <tkpapi:tkp.classification.manual.transient.Transient>` objects,
+    previously obtained with the transient_search recipe.
 
   - nproc: number of maximum simultaneous processors per node.
 
 - outputs:
 
-  - transients: list of Transient objects.
+  - transients: list of :ref:`Transient
+    <tkpapi:tkp.classification.manual.transient.Transient>` objects.
 
 
 classification
@@ -409,15 +410,18 @@ Attempt to classify the detected transients into one or more groups.
   - weight_cutoff: set a cut-off: any classified transient with a
     total classification weight below this value will not be output.
 
+  - database: :ref:`Database <tkpapi:tkp.database.database.DataBase>
+    instance, for the database connection.
 
-  - dbconnection: database connection item (an sql.db object).
-
-  - transients: list of Transient objects, previously obtained with
-    the transient_search recipe.
+  - transients: list of :ref:`Transient
+    <tkpapi:tkp.classification.manual.transient.Transient>` objects,
+    previously obtained with the transient_search recipe.
 
   - nproc: number of maximum simultaneous processors per node.
 
 - outputs:
 
-  - transients: list of Transient objects.
+  - transients: list of :ref:`Transient
+    <tkpapi:tkp.classification.manual.transient.Transient>` objects,
+    amended with their classification.
 

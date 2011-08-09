@@ -334,7 +334,7 @@ looking for deviations in their light curve.
   - closeness_level: ignore associations with level > closeness
     level. Default = 3.
 
-  - database: :ref:`Database <tkpapi:tkp.database.database.DataBase>
+  - database: :ref:`Database <tkpapi:tkp.database.database>`
     instance, for the database connection.
 
   - dataset_id: The dataset ID, likely obtained from the
@@ -348,7 +348,7 @@ looking for deviations in their light curve.
   - siglevels: significance levels of the "transientness".
 
   - transients: list of :ref:`Transient
-    <tkpapi:tkp.classficiation.manual.transient.Transient> objects.
+    <tkpapi:tkp.classification.manual.transient>` objects.
 
 
 This routine is implemented by performing a database search, and thus
@@ -379,11 +379,11 @@ Each feature extraction is run as a separate node.
     dictionary keys are ``database``, ``username``, ``password`` and
     ``hostname``.
 
-  - database: :ref:`Database <tkpapi:tkp.database.database.DataBase>
+  - database: :ref:`Database <tkpapi:tkp.database.database>`
     instance, for the database connection.
 
   - transients: list of :ref:`Transient
-    <tkpapi:tkp.classification.manual.transient.Transient>` objects,
+    <tkpapi:tkp.classification.manual.transient>` objects,
     previously obtained with the transient_search recipe.
 
   - nproc: number of maximum simultaneous processors per node.
@@ -391,7 +391,7 @@ Each feature extraction is run as a separate node.
 - outputs:
 
   - transients: list of :ref:`Transient
-    <tkpapi:tkp.classification.manual.transient.Transient>` objects.
+    <tkpapi:tkp.classification.manual.transient>` objects.
 
 
 classification
@@ -410,11 +410,11 @@ Attempt to classify the detected transients into one or more groups.
   - weight_cutoff: set a cut-off: any classified transient with a
     total classification weight below this value will not be output.
 
-  - database: :ref:`Database <tkpapi:tkp.database.database.DataBase>
+  - database: :ref:`Database <tkpapi:tkp.database.database>`
     instance, for the database connection.
 
   - transients: list of :ref:`Transient
-    <tkpapi:tkp.classification.manual.transient.Transient>` objects,
+    <tkpapi:tkp.classification.manual.transient>` objects,
     previously obtained with the transient_search recipe.
 
   - nproc: number of maximum simultaneous processors per node.
@@ -422,6 +422,6 @@ Attempt to classify the detected transients into one or more groups.
 - outputs:
 
   - transients: list of :ref:`Transient
-    <tkpapi:tkp.classification.manual.transient.Transient>` objects,
+    <tkpapi:tkp.classification.manual.transient>` objects,
     amended with their classification.
 

@@ -182,7 +182,7 @@ with::
 
 
 On CEP2/lhn001
--------------
+--------------
 
 The necessary TKP libraries are installed in /home/rol/tkp/dev/tkp/. The
 last part of the directory is a symbolic link to a nightly build in
@@ -302,7 +302,7 @@ You can use my cluster description file and recipes directories.  If
 you have your own MonetDB database, change the login details in the
 ``[database]`` section accordingly, otherwise use mine or, preferred
 for purely testing if you can run the TRAP, use the default tkp one
-(see the :ref:`databases section <databases-section>`). If you use
+(see the :ref:`databases section <database-section>`). If you use
 your own database, make sure the table definitions are up to scratch.
 
 

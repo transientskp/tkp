@@ -36,7 +36,6 @@ from lofarpipe.support.baserecipe import BaseRecipe
 from lofarpipe.support.remotecommand import RemoteCommandRecipeMixIn
 from lofarpipe.support.remotecommand import ComputeJob
 from lofarpipe.support import lofaringredient
-import tkp.database.database
 import monetdb.sql.connections
 
 
@@ -47,21 +46,9 @@ WHERE xtrsrc_id = %s
 """
 
 
-class DataBaseField(lofaringredient.Field):
-    def is_valid(self, value):
-        return isinstance(value, tkp.database.database.DataBase)
-
-
 class feature_extraction(BaseRecipe, RemoteCommandRecipeMixIn):
 
     inputs = dict(
-        dblogin=lofaringredient.DictField(
-            '--dblogin',
-            help=""),
-        database=DataBaseField(
-            '--database',
-            help='DataBase object'
-        ),
         transients=lofaringredient.ListField(
             '--transients',
             help=""),
@@ -76,8 +63,6 @@ class feature_extraction(BaseRecipe, RemoteCommandRecipeMixIn):
 
     def go(self):
         super(feature_extraction, self).go()
-        self.database = self.inputs['database']
-
         clusterdesc = ClusterDesc(self.config.get('cluster', "clusterdesc"))
         if clusterdesc.subclusters:
             available_nodes = dict(
@@ -102,7 +87,6 @@ class feature_extraction(BaseRecipe, RemoteCommandRecipeMixIn):
                     command,
                     arguments=[
                         transient,
-                        self.inputs['dblogin']
                         ]
                     )
                 )

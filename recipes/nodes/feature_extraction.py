@@ -19,14 +19,14 @@ from datetime import timedelta
 import random
 import time
 import traceback
-from contextlib import nested, closing
+from contextlib import closing
 
 from lofarpipe.support.lofarnode import LOFARnodeTCP
 from lofarpipe.support.utilities import log_time
 
 import numpy
 import monetdb
-import tkp.database.database as tkpdb
+from tkp.database.database import DataBase
 from tkp.classification.features import lightcurve as lcmod
 from tkp.database.dataset import Source
 from tkp.classification.manual.transient import Transient
@@ -39,9 +39,9 @@ SECONDS_IN_DAY = 86400.
 
 class feature_extraction(LOFARnodeTCP):
 
-    def run(self, transient, dblogin):
-        with nested(log_time(self.logger),
-                    closing(tkpdb.DataBase(**dblogin))) as (dummy, database):
+    def run(self, transient):
+        with log_time(self.logger):
+            with closing(DataBase()) as database:
                 try:
                     source = Source(srcid=transient.srcid, database=database)
                     lightcurve = lcmod.LightCurve(*zip(*source.lightcurve()))

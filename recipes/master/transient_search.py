@@ -90,11 +90,6 @@ WHERE
 )
 
 
-class DataBaseField(lofaringredient.Field):
-    def is_valid(self, value):
-        return isinstance(value, tkp.database.database.DataBase)
-
-
 class IntList(lofaringredient.ListField):
     """Input that defines a list of ints"""
     def is_valid(self, value):
@@ -130,10 +125,6 @@ class transient_search(BaseRecipe):
                   '(ignore associations with level > closeness level)'),
             default=3.0
         ),
-        'database': DataBaseField(
-            '--database',
-            help='DataBase object'
-        ),
         'dataset_id': lofaringredient.IntField(
             '--dataset-id',
             help='Dataset ID (as stored in the database)'
@@ -148,7 +139,7 @@ class transient_search(BaseRecipe):
 
     def create_transient(self, srcid, siglevel):
         """Construct a very basic transient object"""
-        
+
         self.database.cursor.execute(SQL['position'], (srcid,))
         results = self.database.cursor.fetchall()
         results = map(float, results[0])
@@ -174,7 +165,7 @@ class transient_search(BaseRecipe):
         except KeyError:
             closeness_level = CLOSENESS_LEVEL
         dataset_id = self.inputs['dataset_id']
-        self.database = self.inputs['database']
+        self.database = tkp.database.database.DataBase()
         self.dataset = tkp.database.dataset.DataSet(
             dsid=dataset_id, database=self.database)
         results = self.dataset.detect_variables()

@@ -43,7 +43,6 @@ from lofarpipe.support.remotecommand import RemoteCommandRecipeMixIn
 from lofarpipe.support.remotecommand import ComputeJob
 from lofarpipe.support import lofaringredient
 
-import tkp.database.database
 import tkp.classification
 import tkp.classification.manual
 from tkp.classification.manual.classifier import Classifier
@@ -71,11 +70,6 @@ VALUES (%s)
 
 
 
-class DataBaseField(lofaringredient.Field):
-    def is_valid(self, value):
-        return isinstance(value, tkp.database.database.DataBase)
-
-
 class classification(BaseRecipe, RemoteCommandRecipeMixIn):
 
     inputs = dict(
@@ -88,9 +82,6 @@ class classification(BaseRecipe, RemoteCommandRecipeMixIn):
         transients=lofaringredient.ListField(
             '--transients',
             help="List of transient objects"),
-        database=DataBaseField(
-            '--database',
-            help="DataBase object"),
         nproc=lofaringredient.IntField(
             '--nproc',
             default=8,
@@ -102,7 +93,6 @@ class classification(BaseRecipe, RemoteCommandRecipeMixIn):
 
     def go(self):
         super(classification, self).go()
-        self.database = self.inputs['database']
         transients = self.inputs['transients']
         weight_cutoff = float(self.inputs['weight_cutoff'])
         # Some dummy data
@@ -127,7 +117,7 @@ class classification(BaseRecipe, RemoteCommandRecipeMixIn):
         nodes = itertools.cycle(nodes)
         for transient in transients:
             node = nodes.next()
-            self.logger.info("Executing classification for transient %s on node %s" % (transient, node))
+            self.logger.info("Executing classification for %s on node %s" % (transient, node))
             jobs.append(
                 ComputeJob(node, command, arguments=[
                 self.inputs['schema'], self.config.get("layout", "parset_directory"),

@@ -29,8 +29,8 @@ class source_extraction(LOFARnodeTCP):
     Extract sources from a FITS image
     """
 
-    def run(self, image, detection_level=5, dataset_id=None,
-            radius=1, dblogin={}):
+    def run(self, image, detection_level=5,
+            dataset_id=None, radius=1):
         """
 
         Args:
@@ -43,12 +43,16 @@ class source_extraction(LOFARnodeTCP):
 
             - dataset_id: dataset to which image belongs
 
-            - dblogin: credentials for database connection/login
+            - source association radius, in multiples of the De Ruiter
+              radius; the latter is defined in the TKP configuration
+              file.
 
         """
         
         with log_time(self.logger):
-            with closing(DataBase(**dblogin)) as database:
+            with closing(DataBase()) as database:
+                #database.execute("SELECT RAD(45.)")
+                #self.logger.info("fetchall = %s", str(database.cursor.fetchall()))
                 description = 'LOFAR images'
                 dataset = DataSet(name=description, dsid=dataset_id,
                                         database=database)
@@ -62,11 +66,13 @@ class source_extraction(LOFARnodeTCP):
                 data_image = sourcefinder_image_from_accessor(fitsimage)
                 results = data_image.extract(det=detection_level)
                 self.logger.info("Detected %d sources" % len(results))
+                self.logger.info("database = %s", str(database))
                 db_image.insert_extracted_sources(results)
                 self.logger.info("saved extracted sources to database")
                 db_image.associate_extracted_sources(
                     deRuiter_r=radius*
                     config['source_association']['deruiter_radius'])
+        return 0
 
 if __name__ == "__main__":
     #   If invoked directly, parse command line arguments for logger information

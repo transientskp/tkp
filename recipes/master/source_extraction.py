@@ -65,7 +65,7 @@ class source_extraction(BaseRecipe, RemoteCommandRecipeMixIn):
         self.logger.info("Extracting sources")
         super(source_extraction, self).go()
         dataset_id = self.inputs['dataset_id']
-        
+
         # Obtain available nodes
         clusterdesc = ClusterDesc(self.config.get('cluster', "clusterdesc"))
         if clusterdesc.subclusters:
@@ -78,10 +78,6 @@ class source_extraction(BaseRecipe, RemoteCommandRecipeMixIn):
                 clusterdesc.name: get_compute_nodes(clusterdesc)
                 }
         nodes = list(itertools.chain(*available_nodes.values()))
-
-        # Get database login details
-        dblogin = dict([(key, self.config.get('database', key))
-                      for key in ('name', 'user', 'password', 'host')])
 
         # Running this on nodes, in case we want to perform source extraction
         # on individual images that are still stored on the compute nodes
@@ -100,14 +96,13 @@ class source_extraction(BaseRecipe, RemoteCommandRecipeMixIn):
                         self.inputs['detection_level'],
                         dataset_id,
                         self.inputs['radius'],
-                        dblogin
                         ]
                     )
                 )
         jobs = self._schedule_jobs(jobs, max_per_node=self.inputs['nproc'])
         dataset_id = jobs[0].results['dataset_id']
         self.outputs['dataset_id'] = dataset_id
-                
+
         #                Check if we recorded a failing process before returning
         # ----------------------------------------------------------------------
         if self.error.isSet():

@@ -2,8 +2,8 @@
 
 A Transient object class, that stores a variety of information related to any type of transient
 
-.. module::
-   :synposis: A Transient object class
+.. module:: transient
+   :synopsis: A Transient object class
    
 .. moduleauthor: Evert Rol, Transient Key Project <software@transientskp.org>
 
@@ -122,13 +122,13 @@ class Transient(object):
         self.features = {} if features is None else features
 
     def __str__(self):
-        if hasattr(self, 'duration'):
-            if hasattr(self, 'variability'):
+        if not isinstance(self.duration, Undefined):
+            if not isinstance(self.variability, Undefined):
                 return "transient with duration %-6g and variability %-6g" % (
                     self.duration, self.variability)
             else:
                 return "transient with duration %-6g" % (self.duration)
-        elif hasattr(self, 'variability'):
+        elif not isinstance(self.variability, Undefined):
             return "transient with variability %-6g" % (self.variability)
         else:
             return "transient source"

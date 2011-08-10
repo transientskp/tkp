@@ -4,24 +4,40 @@ Setup
 Preamble
 --------
 
-A few variables are used in the documentation below, indicating relevant directories that may differ from system to system:
+A few variables are used in the documentation below, indicating
+relevant directories that may differ from system to system:
 
-- ${TKP}: the base TKP directory on your system. On the heastro
-  machines, this would be /opt/tkp/dev/tkp, while on CEP2, this is
-  /home/rol/tkp/dev/tkp.
+- :envvar:`${TKP}`: the base TKP directory on your system. On the heastro
+  machines, this would be :file:`/opt/tkp/dev/tkp`, while on CEP2, this is
+  :file:`/home/rol/tkp/dev/tkp`.
 
-- ${WORK}: your working directory for the pipeline, that is, where the
-  jobs control is kept. For me, this is ${HOME}/work/trap, while for
-  other people, this is often ${HOME}/pipeline_runtime. This directory
+- :envvar:`${WORK}`: your working directory for the pipeline, that is, where the
+  jobs control is kept. For me, this is :file:`${HOME}/work/trap`, while for
+  other people, this is often :file:`${HOME}/pipeline_runtime`. This directory
   contains the jobs/ subdirectory, and in my case, the trap.cfg as
   well.
 
-- ${CONFIG}: the main configuration file for the pipeline
+- :envvar:`${CONFIG}`: the main configuration file for the pipeline
   framework. It contains sections such as [DEFAULT], [layout],
   [cluster], [deploy] and [logging]. At the moment, it also contains a
   [database] section, but this may be removed (keep an eye on this
   documentation). My configuration file lives at
-  ${HOME}/work/trap/trap.cfg.
+  :file:`${HOME}/work/trap/trap.cfg`.
+
+- You will also need a TKP configuration file that has the database
+  login details, unless you can rely upon the default (below), The TKP
+  configuration should be :file:`${HOME}/.tkp.cfg`, and has the same syntaxa
+  as the other pipeline configuration files. The default configuration
+  for the pipeline looks as follows::
+
+    [database]
+    enabled = True
+    host = localhost
+    name = tkp
+    user = tkp
+    password = tkp
+    port = 50000
+
 
 Dependencies
 ------------
@@ -44,15 +60,15 @@ installation:
   <database-section>`.
 
 
-On heastro1
------------
+On heastro1/2
+-------------
 
-The necessary TKP libraries are installed in /opt/tkp/dev/tkp/. The last
+The necessary TKP libraries are installed in :file:`/opt/tkp/dev/tkp/`. The last
 part of this path is a symbolic link to a nightly build in
-/opt/tkp/dev/tkp-yyyy-mm-dd/; use a specific nightly build if you have
+:file:`/opt/tkp/dev/tkp-yyyy-mm-dd/`; use a specific nightly build if you have
 long-running jobs or need a specific TKP library version. A similar
-structure holds for /opt/LofIm/lofar, which points to
-/opt/LofIm/lofar-yyyy-mm-dd.  Within the /opt/tkp/tkp/ directory,
+structure holds for :file:`/opt/LofIm/lofar`, which points to
+:file:`/opt/LofIm/lofar-yyyy-mm-dd`.  Within the :file:`/opt/tkp/tkp/` directory,
 there are three subdirectories: lib/, recipes/ and database/. Lib
 contains libraries, and hols the TKP Python package, in
 lib/python/. The recipes/ directory contains the TRAP specific
@@ -65,22 +81,22 @@ configuration file will need to include the
 lib/python directory. Other directories to include
 are (following from the dependencies listed above):
 
-- /opt/LofIm/lofar/lib/python2.6/dist-packages
+- :file:`/opt/LofIm/lofar/lib/python2.6/dist-packages`
 
-- /opt/monetdb/lib/python2.6/site-packages
+- :file:`/opt/monetdb/lib/python2.6/site-packages`
 
-- /opt/pipeline/framework/lib/python2.6/site-packages
+- :file:`/opt/pipeline/framework/lib/python2.6/site-packages`
 
 Other dependencies are system-wide installed.
 
 Your ``lpath`` in your configuration file (not so much your
 :envvar:`LD_LIBRARY_PATH`, in fact) needs to include:
 
-- /opt/LofIm/lofar/lib
+- :file:`/opt/LofIm/lofar/lib`
 
-- /usr/local/lib
+- :file:`/usr/local/lib`
 
-- /opt/tkp/tkp/lib
+- :file:`/opt/tkp/tkp/lib`
 
 
 Now set up your working directory structure and configuration files in
@@ -114,8 +130,8 @@ Simple way
 (For simplicity, me, myself and I in the following will simply refer to the
 current author of this document.)
 
-This describes a copy-paste way to get the trap running on heastro1,
-essentially by copying my setup and adjust a few PATHs
+This describes a copy-paste way to get the trap running on heastro1 or
+heastro2, essentially by copying my setup and adjust a few PATHs
 accordingly. The PATH set up is done slightly different than the
 previous section, but in essence is the same.
 

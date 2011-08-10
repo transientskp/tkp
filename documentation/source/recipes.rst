@@ -155,10 +155,6 @@ Creates a sky model from the database to be used by BBS.
 
 - inputs:
 
-  - db_host, db_port, db_dbase, db_user, db_password: the (MonetDB)
-    database credentials (note: different than the database settings
-    for BBS, since BBS uses a different database type).
-
   - ra, dec: Right Ascension and declination of the sky model centre
     (in floating point degrees).
 
@@ -334,9 +330,6 @@ looking for deviations in their light curve.
   - closeness_level: ignore associations with level > closeness
     level. Default = 3.
 
-  - database: :ref:`Database <tkpapi:tkp.database.database>`
-    instance, for the database connection.
-
   - dataset_id: The dataset ID, likely obtained from the
     source_extraction recipe.
 
@@ -375,13 +368,6 @@ Each feature extraction is run as a separate node.
 
 - inputs:
 
-  - dblogin: dictionary with database login credentials. The
-    dictionary keys are ``database``, ``username``, ``password`` and
-    ``hostname``.
-
-  - database: :ref:`Database <tkpapi:tkp.database.database>`
-    instance, for the database connection.
-
   - transients: list of :ref:`Transient
     <tkpapi:tkp.classification.manual.transient>` objects,
     previously obtained with the transient_search recipe.
@@ -409,9 +395,6 @@ Attempt to classify the detected transients into one or more groups.
 
   - weight_cutoff: set a cut-off: any classified transient with a
     total classification weight below this value will not be output.
-
-  - database: :ref:`Database <tkpapi:tkp.database.database>`
-    instance, for the database connection.
 
   - transients: list of :ref:`Transient
     <tkpapi:tkp.classification.manual.transient>` objects,

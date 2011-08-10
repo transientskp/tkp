@@ -1,3 +1,5 @@
+.. _tkp.database.database:
+
 +++++++++++++++++++++++++++++++++++++++++++++++++
 :mod:`tkp.database.database` -- Database routines
 +++++++++++++++++++++++++++++++++++++++++++++++++

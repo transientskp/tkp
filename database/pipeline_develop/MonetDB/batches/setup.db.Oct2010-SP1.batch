@@ -178,8 +178,8 @@ mclient -lsql -h${1} -d${2} < $MONETDBTKPHOME/tables/create.table.assocxtrsource
 echo -e "\t\tCreating MonetDB ${2} table lsm"
 mclient -lsql -h${1} -d${2} < $MONETDBTKPHOME/tables/create.table.lsm.sql
 
-#echo -e "\t\tCreating MonetDB ${2} table spectralindices"
-#mclient -lsql -h${1} -d${2} < $MONETDBTKPHOME/tables/create.table.spectralindices.sql
+echo -e "\t\tCreating MonetDB ${2} table spectralindices"
+mclient -lsql -h${1} -d${2} < $MONETDBTKPHOME/tables/create.table.spectralindices.sql
 
 echo -e "\t\tCreating MonetDB ${2} table runningcatalog"
 mclient -lsql -h${1} -d${2} < $MONETDBTKPHOME/tables/create.table.runningcatalog.sql
@@ -271,6 +271,9 @@ mclient -lsql -h${1} -d${2} < $MONETDBTKPHOME/functions/create.function.solidang
 
 #echo -e "\t\tCreating MonetDB ${2} function doPosErrCirclesIntersect"
 #mclient -lsql -h${1} -d${2} < $MONETDBTKPHOME/functions/create.function.doPosErrCirclesIntersect.sql
+
+echo -e "\t\tCreating MonetDB ${2} function nearestNeighborInCat"
+mclient -lsql -h${1} -d${2} < $MONETDBTKPHOME/functions/create.function.nearestNeighborInCat.sql
 
 echo -e "\t\tCreating MonetDB ${2} function getNeighborsinCat"
 mclient -lsql -h${1} -d${2} < $MONETDBTKPHOME/functions/create.function.getNeighborsInCat.sql

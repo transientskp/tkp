@@ -12,9 +12,9 @@ BEGIN
   
   DECLARE izoneheight, itheta, ix, iy, iz DOUBLE;
   
-  SET ix = COS(RADIANS(idecl)) * COS(RADIANS(ira));
-  SET iy = COS(RADIANS(idecl)) * SIN(RADIANS(ira));
-  SET iz = SIN(RADIANS(idecl));
+  SET ix = COS(RAD(idecl)) * COS(RAD(ira));
+  SET iy = COS(RAD(idecl)) * SIN(RAD(ira));
+  SET iz = SIN(RAD(idecl));
 
   /* TODO: 
    * retrieve zoneheight from table ->
@@ -31,7 +31,7 @@ BEGIN
     SELECT catsrcid
           ,catsrcname
           ,i_int_avg
-          ,3600 * DEGREES(2 * ASIN(SQRT((ix - c1.x) * (ix - c1.x)
+          ,3600 * DEG(2 * ASIN(SQRT((ix - c1.x) * (ix - c1.x)
                                        + (iy - c1.y) * (iy - c1.y)
                                        + (iz - c1.z) * (iz - c1.z)
                                        ) / 2) 
@@ -40,7 +40,7 @@ BEGIN
           ,catalogs c0
      WHERE c1.cat_id = c0.catid
        AND c0.catname = icatname
-       AND c1.x * ix + c1.y * iy + c1.z * iz > COS(RADIANS(itheta))
+       AND c1.x * ix + c1.y * iy + c1.z * iz > COS(RAD(itheta))
        AND c1.zone BETWEEN CAST(FLOOR((idecl - itheta) / izoneheight) AS INTEGER)
                        AND CAST(FLOOR((idecl + itheta) / izoneheight) AS INTEGER)
        AND c1.ra BETWEEN ira - alpha(itheta, idecl)

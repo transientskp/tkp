@@ -19,11 +19,11 @@ else
 fi
 # Needs check whether we're on OS X, but setting an extra
 # environment variable should not be a problem
-if [ -z "$DYLD_LIBRARY_PATH" ]
+if [ -z "$DYLD_FALLBACK_LIBRARY_PATH" ]
 then
-    export DYLD_LIBRARY_PATH=${ld_library_path}
+    export DYLD_FALLBACK_LIBRARY_PATH=${ld_library_path}
 else
-    export DYLD_LIBRARY_PATH=${DYLD_LIBRARY_PATH}:${ld_library_path}
+    export DYLD_FALLBACK_LIBRARY_PATH=${DYLD_FALLBACK_LIBRARY_PATH}:${ld_library_path}
 fi
 
 # Extra paths needed on CEP1

@@ -3,8 +3,13 @@ try:
     unittest.TestCase.assertIsInstance
 except AttributeError:
     import unittest2 as unittest
-import tkp.database.database
-import monetdb
+try:
+    import tkp.database.database
+    import monetdb
+except ImportError:
+    # If we fail to import the database modules, the tests will automatically
+    # be skipped.
+    pass
 
 class TestDatabase(unittest.TestCase):
 
@@ -12,6 +17,10 @@ class TestDatabase(unittest.TestCase):
         # Connect and verify that the default database is available
         try:
             self.database = tkp.database.database.DataBase()
+        except NameError:
+            # If we get a NameError, it's likely because we couldn't import
+            # the database modules.
+            self.database = None
         except monetdb.monetdb_exceptions.DatabaseError:
             self.database = None
 
@@ -37,7 +46,7 @@ class TestDatabase(unittest.TestCase):
                           name='non_existant_database',
                           user='unknown',
                           password='empty')
-        
-    
+
+
 if __name__ == "__main__":
     unittest.main()

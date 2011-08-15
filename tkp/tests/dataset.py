@@ -7,10 +7,15 @@ import sys
 import datetime
 import random
 from operator import attrgetter, itemgetter
-import monetdb
-import tkp.database.dataset
-import tkp.database.database
-import tkp.database.utils as dbu
+try:
+    import monetdb
+    import tkp.database.dataset
+    import tkp.database.database
+    import tkp.database.utils as dbu
+except ImportError:
+    # If we fail to import the database modules, the tests will automatically
+    # be skipped.
+    pass
 
 
 # We're cheating here: a unit test shouldn't really depend on an
@@ -21,13 +26,17 @@ class TestDataSet(unittest.TestCase):
     def setUp(self):
         try:
             self.database = tkp.database.database.DataBase()
+        except NameError:
+            # If we get a NameError, it's likely because we couldn't import
+            # the database modules.
+            self.database = None
         except monetdb.monetdb_exceptions.DatabaseError:
             self.database = None
 
     def tearDown(self):
         if self.database:
             self.database.close()
-        
+
     def test_dataset_create(self):
         """Create a new dataset, and retrieve it"""
         if not self.database:
@@ -54,7 +63,7 @@ class TestDataSet(unittest.TestCase):
             'dataset 3', dsid=dsid, database=self.database)
         self.assertEqual(dataset3.name, "dataset 1")
         self.assertEqual(dataset3.dsid, dsid)
-        
+
     def test_dataset_update(self):
         """Update all or individual dataset columns"""
         if not self.database:
@@ -198,7 +207,7 @@ class TestDataSet(unittest.TestCase):
         self.assertAlmostEqual(source1.decl, 23.23)
         self.assertAlmostEqual(source2.decl, 55.55)
         self.assertAlmostEqual(source3.decl, 44.44)
-        source3.update()  # still no change 
+        source3.update()  # still no change
         self.assertAlmostEqual(source1.decl, 23.23)
         self.assertAlmostEqual(source2.decl, 55.55)
         self.assertAlmostEqual(source3.decl, 44.44)

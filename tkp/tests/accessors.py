@@ -8,9 +8,15 @@ except AttributeError:
 import os
 from tkp.utility import accessors
 import tkp.config
-from tkp.database.database import DataBase
-from tkp.database.dataset import DataSet
-import monetdb
+try:
+    from tkp.database.database import DataBase
+    from tkp.database.dataset import DataSet
+    # Do we need monetdb here?
+    import monetdb
+except ImportError:
+    # If we fail to import the database modules, the tests will automatically
+    # be skipped.
+    pass
 
 
 DATAPATH = tkp.config.config['test']['datapath']
@@ -55,9 +61,11 @@ class FitsFile(unittest.TestCase):
             database = DataBase()
             dataset = DataSet('dataset', database=database)
             dbimage = accessors.dbimage_from_accessor(dataset, image)
-        except monetdb.monetdb_exceptions.DatabaseError:
+        except (monetdb.monetdb_exceptions.DatabaseError, NameError):
+            # If we get a NameError, it's likely because we couldn't import
+            # the database modules.
             database = None
-        
+
         image = accessors.AIPSppImage(os.path.join(DATAPATH, 'CX3_peeled.image/'),
                                       beam=(54./3600, 54./3600, 0.))
         sfimage = accessors.sourcefinder_image_from_accessor(image)

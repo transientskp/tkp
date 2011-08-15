@@ -4,22 +4,23 @@
 General purpose astronomical coordinate handling routines.
 """
 
-
 import math
 import wcslib
 import logging
 import datetime
 import pytz
 import ctypes
-
+import sys
 
 # Note that wcstools takes a +ve longitude as WEST.
 CORE_LAT = 52.9088
 CORE_LON = -6.8689
 # We'll need the libwcstools library (available in the TKP repository as
 # external/libwcstools) somewhere on the ctypes library search path.
-WCSTOOLS_NAME = "libwcstools.so"
-
+if sys.platform == "darwin":
+    WCSTOOLS_NAME = "libwcstools.dylib"
+else:
+    WCSTOOLS_NAME = "libwcstools.so"
 
 def julian_date(time=None, modified=False):
     """Return the Julian Date: the number of days (including fractions) which

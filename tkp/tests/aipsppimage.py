@@ -5,6 +5,8 @@ import os
 from tkp.utility import accessors
 from tkp.sourcefinder import image
 import tkp.config
+# This test should not be run unless pyrap is available.
+import pyrap
 
 
 DATAPATH = tkp.config.config['test']['datapath']

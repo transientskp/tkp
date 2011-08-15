@@ -136,8 +136,13 @@ def moments(data, beam, threshold=0):
         # short circuit!
         theta = 0.
     else:
-        theta = math.atan2(2. * xybar , (xxbar - yybar))/2.
-        
+        theta = math.atan(2. * xybar / (xxbar - yybar))/2.
+        if theta * xybar > 0.:
+            if theta < 0.:
+                theta += math.pi / 2.0
+            else:
+                theta -= math.pi / 2.0
+
     ## NB: a dict should give us a bit more flexibility about arguments;
     ## however, all those here are ***REQUIRED***.
     return {

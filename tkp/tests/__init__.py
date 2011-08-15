@@ -14,13 +14,5 @@ testfiles = [
     'tkp.tests.sigmaclip',
     'tkp.tests.source_measurements',
     'tkp.tests.wcs',
+    'tkp.tests.aipsppimage'
 ]
-
-# Pyrap is required for AIPS++ image support, but
-# not necessary for the rest of the library.
-try:
-    import pyrap
-except:
-    pass
-else:
-    testfiles.append('tkp.tests.aipsppimage')

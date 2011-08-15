@@ -5,7 +5,7 @@ ADD_TEST(TKP_Coordinates /bin/bash ${CMAKE_CURRENT_BINARY_DIR}/runtests.bash coo
 ADD_TEST(TKP_Database /bin/bash ${CMAKE_CURRENT_BINARY_DIR}/runtests.bash database)
 ADD_TEST(TKP_Dataset /bin/bash ${CMAKE_CURRENT_BINARY_DIR}/runtests.bash dataset)
 ADD_TEST(TKP_FDR /bin/bash ${CMAKE_CURRENT_BINARY_DIR}/runtests.bash FDR)
-ADD_TEST(TKP_FeatureExtraction /bin/bash ${CMAKE_CURRENT_BINARY_DIR}/runtests.bash feature)
+ADD_TEST(TKP_FeatureExtraction /bin/bash ${CMAKE_CURRENT_BINARY_DIR}/runtests.bash feature_extraction)
 ADD_TEST(TKP_Gaussian /bin/bash ${CMAKE_CURRENT_BINARY_DIR}/runtests.bash gaussian)
 ADD_TEST(TKP_L15_12h_const /bin/bash ${CMAKE_CURRENT_BINARY_DIR}/runtests.bash L15_12h_const)
 ADD_TEST(TKP_Sigmaclip /bin/bash ${CMAKE_CURRENT_BINARY_DIR}/runtests.bash sigmaclip)

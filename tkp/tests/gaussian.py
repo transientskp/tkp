@@ -4,37 +4,6 @@ import unittest
 import tkp.sourcefinder.gaussian as gaussian
 import numpy
 
-
-class PyrapFitTest(unittest.TestCase):
-    def setUp(self):
-        Xin, Yin = numpy.indices((500, 500))
-        self.height = 10
-        self.x = 250
-        self.y = 250
-        self.maj = 40
-        self.min = 20
-        self.theta = 0
-        self.mygauss = numpy.ma.array(gaussian.gaussian(self.height, self.x, self.y, self.maj, self.min, self.theta)(Xin, Yin))
-        self.moments = gaussian.moments(self.mygauss, (1,1,1))
-        self.fit = gaussian.fitgaussian(self.mygauss, self.moments)
-
-    def testPyrap(self):
-        try:
-            from pyrap.functionals import gaussian2d
-            from pyrap.fitting import fitserver
-        except ImportError:
-            # If pyrap doesn't exist, forget it.
-            return
-        x = numpy.indices((500, 500)).transpose().ravel()
-        y = self.mygauss.transpose().ravel()
-        myfit = fitserver()
-        myfit.nonlinear(gaussian2d(params=(
-            self.moments['peak'], self.moments['xbar'], self.moments['ybar'],
-            2*self.moments['semimajor'],
-            self.moments['semiminor']/self.moments['semimajor'],
-            self.moments['theta'])), x, y)
-        self.assertAlmostEqual(myfit.solution()[0], self.fit['peak'])
-
 # The units that are tested often require information about the resolution element:
 # (semimajor(pixels),semiminor(pixels),beam position angle (radians).
 # Please enter some reasonable restoring beam here.

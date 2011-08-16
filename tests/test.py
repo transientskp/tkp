@@ -1,4 +1,4 @@
-# Convenience script to run all TKP unit tests.
+# Convenience script to run TKP unit tests.
 
 import unittest
 try:
@@ -20,18 +20,23 @@ else:
     testfiles = tkp.tests.testfiles
 
 # If we can't import a particular module, we should warn the user and move on
-# with the test suite, rather than bailing out completely.
+# with the test suite, rather than bailing out completely. However, we log
+# this as a failure.
+exit_on_success = 0
 for test in testfiles:
     try:
         __import__(test)
     except ImportError, e:
-        print >>sys.stderr, "WARNING: Not running %s: required module failed to import (%s)" % (test, e)
+        print >>sys.stderr, "ERROR: Not running %s: required module failed to import (%s)" % (test, e)
         testfiles.remove(test)
+        # return non-zero if we have skipped a testfile
+        exit_on_success = 1
 
 result = unittest.TextTestRunner(verbosity=2).run(
     unittest.TestLoader().loadTestsFromNames(testfiles)
     )
+
 if result.wasSuccessful():
-    sys.exit(0)
+    sys.exit(exit_on_success)
 else:
     sys.exit(1)

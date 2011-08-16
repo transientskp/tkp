@@ -29,15 +29,9 @@ from datetime import timedelta
 import logging
 import math
 import numpy
-from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
-from matplotlib.figure import Figure
 from tkp.classification.features import lightcurve as lcmod
 from tkp.classification.manual.utils import DateTime
-
-
-# Set this variable if you want to see what the light curves look like
-ENABLE_PLOTTING = True
-
+from utilities.decorators import requires_module
 
 class TestLightcurve(unittest.TestCase):
     """  """
@@ -46,7 +40,7 @@ class TestLightcurve(unittest.TestCase):
         # create test data
         self.timezero = datetime(2010, 10, 1, 12, 0, 0)
         self.lightcurve = lcmod.LightCurve(
-            obstimes=numpy.array([self.timezero + timedelta(0, s) for s in 
+            obstimes=numpy.array([self.timezero + timedelta(0, s) for s in
                       numpy.arange(0, 30*60, 60, dtype=numpy.float)]),
             inttimes=numpy.ones(30, dtype=numpy.float) * 60,
             fluxes=numpy.ones(30, dtype=numpy.float) * 1e-6,
@@ -67,11 +61,11 @@ class TestLightcurve(unittest.TestCase):
 
     def tearDown(self):
         pass
-        
+
     def test_calc_background(self):
         lc = self.lightcurve
         lc.reset()
-        
+
         background = lc.calc_background()
         self.assertAlmostEqual(background['mean']*1e6, 1.)
         self.assertAlmostEqual(background['sigma']*1e8, 1.14138451921)
@@ -95,7 +89,7 @@ class TestLightcurve(unittest.TestCase):
         self.assertAlmostEqual(background['sigma']*1e8, 1.17504925035)
         self.assertEqual(background['indices'][2:].all(), True)
         self.assertEqual(background['indices'][0:2].any(), False)
-        
+
         # transient near very end
         lc.reset()
         lc.fluxes[0] /= 4.
@@ -138,8 +132,8 @@ class TestLightcurve(unittest.TestCase):
         self.assertEqual(background['indices'][:5].all(), True)
         self.assertEqual(background['indices'][8:].all(), True)
         self.assertEqual(background['indices'][5:8].any(), False)
-        
-        # Double peaked transient        
+
+        # Double peaked transient
         lc.reset()
         lc.fluxes[15] *= 4.
         lc.fluxes[16] *= 8.
@@ -170,12 +164,12 @@ class TestLightcurve(unittest.TestCase):
         self.assertAlmostEqual(background['sigma']*1e8, 1.0)
         self.assertEqual(background['indices'][0], True)
         self.assertEqual(background['indices'][1:].any(), False)
-        
+
 
     def test_calc_duration(self):
         lc = self.lightcurve
         lc.reset()
-        
+
         duration = lc.calc_duration()
         self.assertTrue(numpy.isnan(duration['start']))
         self.assertTrue(numpy.isnan(duration['end']))
@@ -197,7 +191,7 @@ class TestLightcurve(unittest.TestCase):
         lc.fluxes[1] *= 2.
         duration = lc.calc_duration()
         self.assertEqual(duration['start'], DateTime(2010, 10, 1, 12, 0, 0, 0, 30.0))
-        self.assertEqual(duration['end'], DateTime(2010, 10, 1, 12, 1, 0, 0, 30.0))        
+        self.assertEqual(duration['end'], DateTime(2010, 10, 1, 12, 1, 0, 0, 30.0))
         self.assertAlmostEqual(duration['total'], 60.0)
         self.assertAlmostEqual(duration['active'], 120.0)
 
@@ -211,7 +205,7 @@ class TestLightcurve(unittest.TestCase):
         self.assertEqual(duration['end'], DateTime(2010, 10, 1, 12, 29, 0, 0, 30.0))
         self.assertAlmostEqual(duration['total'], 60.)
         self.assertAlmostEqual(duration['active'], 60.)
-        
+
         # transient at last two light curve points
         lc.reset()
         lc.fluxes[-2] *= 2.
@@ -253,7 +247,7 @@ class TestLightcurve(unittest.TestCase):
         self.assertEqual(duration['end'], DateTime(2010, 10, 1, 12, 17, 0, 0, 30.0))
         self.assertAlmostEqual(duration['total'], 720.)
         self.assertAlmostEqual(duration['active'], 360.)
-        
+
 
     def test_calc_fluxincrease(self):
         lc = self.lightcurve
@@ -421,7 +415,7 @@ class TestLightcurve(unittest.TestCase):
         # when at the end of the background calculation, the indices were not
         # recalculated using the actual estimated background.
         lc = lcmod.LightCurve(
-            obstimes=numpy.array([self.timezero + timedelta(0, s) for s in 
+            obstimes=numpy.array([self.timezero + timedelta(0, s) for s in
                       numpy.arange(0, 7*60, 60, dtype=numpy.float)]),
             inttimes=numpy.ones(7, dtype=numpy.float) * 60,
             fluxes=numpy.array([90., 50., 40., 90., 70., 50., 70.]),
@@ -435,7 +429,7 @@ class TestLightcurve(unittest.TestCase):
         self.assertTrue(numpy.isnan(risefall['fall']['flux']))
         self.assertTrue(numpy.isnan(risefall['fall']['time']))
         self.assertTrue(numpy.isnan(risefall['ratio']))
-        
+
 
 class TestLightcurves(unittest.TestCase):
     """Test a variety of light curves, some more or less pathological"""
@@ -453,7 +447,7 @@ class TestLightcurves(unittest.TestCase):
         inttime = 60  # seconds
         timezero = datetime(2010, 10, 1, 12, 0, 0)
         lightcurve = lcmod.LightCurve(
-            obstimes=numpy.array([timezero + timedelta(0, s) for s in 
+            obstimes=numpy.array([timezero + timedelta(0, s) for s in
                       numpy.arange(0, npoints*inttime, inttime, dtype=numpy.float)]),
             inttimes=numpy.ones(npoints, dtype=numpy.float) * inttime,
             fluxes=numpy.ones(npoints, dtype=numpy.float) * 1e-6,
@@ -465,7 +459,7 @@ class TestLightcurves(unittest.TestCase):
         self.assertAlmostEqual(stats['wstddev'], 0.)
         self.assertTrue(numpy.isnan(stats['wskew']))
         self.assertTrue(numpy.isnan(stats['wkurtosis']))
-        
+
     def test_gauss(self):
         """Gaussian shaped light curves
 
@@ -478,7 +472,7 @@ class TestLightcurves(unittest.TestCase):
         inttime = 60  # seconds
         timezero = datetime(2010, 10, 1, 12, 0, 0)
         lightcurve = lcmod.LightCurve(
-            obstimes=numpy.array([timezero + timedelta(0, s) for s in 
+            obstimes=numpy.array([timezero + timedelta(0, s) for s in
                       numpy.arange(0, npoints*inttime, inttime, dtype=numpy.float)]),
             inttimes=numpy.ones(npoints, dtype=numpy.float) * inttime,
             fluxes=numpy.ones(npoints, dtype=numpy.float) * 1e-6,
@@ -526,7 +520,7 @@ class TestLightcurves(unittest.TestCase):
         inttime = 60  # seconds
         timezero = datetime(2010, 10, 1, 12, 0, 0)
         lightcurve = lcmod.LightCurve(
-            obstimes=numpy.array([timezero + timedelta(0, s) for s in 
+            obstimes=numpy.array([timezero + timedelta(0, s) for s in
                       numpy.arange(0, npoints*inttime, inttime, dtype=numpy.float)]),
             inttimes=numpy.ones(npoints, dtype=numpy.float) * inttime,
             fluxes=numpy.ones(npoints, dtype=numpy.float) * 1e-6,
@@ -534,7 +528,7 @@ class TestLightcurves(unittest.TestCase):
             srcids=numpy.arange(0, npoints)
         )
         fluxes = numpy.ones(npoints, dtype=numpy.float) * 1e-6
-        
+
         # Two equal Gaussian peaks, next to each other
         gauss = numpy.exp(-((numpy.arange(-npoints/2, npoints/2, dtype=numpy.float)+20)**2)/25.)
         gauss += numpy.exp(-((numpy.arange(-npoints/2, npoints/2, dtype=numpy.float)-20)**2)/25.)
@@ -626,7 +620,7 @@ class TestLightcurves(unittest.TestCase):
         self.assertAlmostEqual(stats['wstddev']*1e7, 2.5243424)
         self.assertAlmostEqual(stats['wskew'], 1.87494360)
         self.assertAlmostEqual(stats['wkurtosis'], 2.80140004)
-        
+
         # Three unequal Gaussian peaks, overlapping
         gauss = 0.4*numpy.exp(-((numpy.arange(-npoints/2, npoints/2, dtype=numpy.float)+6)**2)/5.)
         gauss += 0.3*numpy.exp(-((numpy.arange(-npoints/2, npoints/2, dtype=numpy.float)-8)**2)/3.)
@@ -637,7 +631,7 @@ class TestLightcurves(unittest.TestCase):
         self.assertAlmostEqual(stats['wstddev']*1e7, 3.13672913)
         self.assertAlmostEqual(stats['wskew'], 1.37923736)
         self.assertAlmostEqual(stats['wkurtosis'], 0.40229112)
-        
+
         # Three unequal Gaussian peaks, overlapping, but shifted compared to previous
         gauss = 0.4*numpy.exp(-((numpy.arange(-npoints/2, npoints/2, dtype=numpy.float)+11)**2)/5.)
         gauss += 0.3*numpy.exp(-((numpy.arange(-npoints/2, npoints/2, dtype=numpy.float)-3)**2)/3.)
@@ -657,7 +651,7 @@ class TestLightcurves(unittest.TestCase):
         inttime = 60  # seconds
         timezero = datetime(2010, 10, 1, 12, 0, 0)
         lightcurve = lcmod.LightCurve(
-            obstimes=numpy.array([timezero + timedelta(0, s) for s in 
+            obstimes=numpy.array([timezero + timedelta(0, s) for s in
                       numpy.arange(0, npoints*inttime, inttime, dtype=numpy.float)]),
             inttimes=numpy.ones(npoints, dtype=numpy.float) * inttime,
             fluxes=numpy.ones(npoints, dtype=numpy.float) * 1e-6,
@@ -674,7 +668,7 @@ class TestLightcurves(unittest.TestCase):
         self.assertAlmostEqual(stats['wstddev']*1e6, 2.664038013)
         self.assertAlmostEqual(stats['wskew'], 0.)
         self.assertAlmostEqual(stats['wkurtosis'], -1.26014481)
-        
+
         # Linear decrease
         lightcurve.fluxes = fluxes * change[::-1]
         stats = lightcurve.calc_stats()
@@ -682,7 +676,7 @@ class TestLightcurves(unittest.TestCase):
         self.assertAlmostEqual(stats['wstddev']*1e6, 2.664038013)
         self.assertAlmostEqual(stats['wskew'], 0.)
         self.assertAlmostEqual(stats['wkurtosis'], -1.26014481)
-        
+
         # Quadratic increase
         lightcurve.fluxes = fluxes * change * change
         stats = lightcurve.calc_stats()
@@ -690,7 +684,7 @@ class TestLightcurves(unittest.TestCase):
         self.assertAlmostEqual(stats['wstddev']*1e5, 2.997230982)
         self.assertAlmostEqual(stats['wskew'], 0.530594134)
         self.assertAlmostEqual(stats['wkurtosis'], -1.0226088379)
-        
+
         # Quadratic decrease
         lightcurve.fluxes = fluxes * change[::-1] * change[::-1]
         stats = lightcurve.calc_stats()
@@ -739,7 +733,7 @@ class TestLightcurves(unittest.TestCase):
         inttime = 60  # seconds
         timezero = datetime(2010, 10, 1, 12, 0, 0)
         lightcurve = lcmod.LightCurve(
-            obstimes=numpy.array([timezero + timedelta(0, s) for s in 
+            obstimes=numpy.array([timezero + timedelta(0, s) for s in
                       numpy.arange(0, npoints*inttime, inttime, dtype=numpy.float)]),
             inttimes=numpy.ones(npoints, dtype=numpy.float) * inttime,
             fluxes=numpy.ones(npoints, dtype=numpy.float) * 1e-6,
@@ -748,7 +742,7 @@ class TestLightcurves(unittest.TestCase):
         )
         fluxes = numpy.ones(npoints, dtype=numpy.float) * 1e-6
         change = numpy.linspace(1, 10, num=fluxes.shape[0])
-        lightcurve.fluxes = fluxes 
+        lightcurve.fluxes = fluxes
         gauss = numpy.exp(-(numpy.arange(-npoints/2, npoints/2, dtype=numpy.float)**2)/3.)
         lightcurve.fluxes = fluxes * (1 - gauss)
         stats = lightcurve.calc_stats()
@@ -770,7 +764,7 @@ class TestLightcurves(unittest.TestCase):
         inttime = 60  # seconds
         timezero = datetime(2010, 10, 1, 12, 0, 0)
         lightcurve = lcmod.LightCurve(
-            obstimes=numpy.array([timezero + timedelta(0, s) for s in 
+            obstimes=numpy.array([timezero + timedelta(0, s) for s in
                       numpy.arange(0, npoints*inttime, inttime,
                                    dtype=numpy.float)]),
             inttimes=numpy.ones(npoints, dtype=numpy.float) * inttime,
@@ -780,7 +774,7 @@ class TestLightcurves(unittest.TestCase):
         )
         fluxes = numpy.ones(npoints, dtype=numpy.float) * 1e-6
         change = numpy.linspace(1, 10, num=fluxes.shape[0])
-        lightcurve.fluxes = fluxes 
+        lightcurve.fluxes = fluxes
         gauss = numpy.exp(-(numpy.arange(-npoints/2, npoints/2,
                                          dtype=numpy.float)**2)/3.)
         lightcurve.fluxes = fluxes * (1 - gauss)

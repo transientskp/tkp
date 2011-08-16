@@ -10,7 +10,7 @@ from tkp.utility import accessors
 import tkp.sourcefinder.image as image
 import tkp.utility.coordinates as coords
 import tkp.config
-
+from utilities.decorators import requires_data
 
 DATAPATH = tkp.config.config['test']['datapath']
 # The simulation code causes a factor of 2 difference in the
@@ -19,7 +19,6 @@ FUDGEFACTOR = 0.5
 
 # The different sections (observed, corrected, model) of the
 # MeasurementSet contain different simulations.
-
 
 class L15_12hConstObs(unittest.TestCase):
     # Single, constant 1 Jy source at centre of image.
@@ -32,13 +31,16 @@ class L15_12hConstObs(unittest.TestCase):
         self.image = image.ImageData(fitsfile.data, fitsfile.beam, fitsfile.wcs)
         self.results = self.image.extract(det=10)
 
+    @requires_data(os.path.join(DATAPATH, 'L15_12h_const/observed-all.fits'))
     def testNumSources(self):
         self.assertEqual(len(self.results), 1)
 
+    @requires_data(os.path.join(DATAPATH, 'L15_12h_const/observed-all.fits'))
     def testSourceProperties(self):
         mysource = self.results.closest_to(1440, 1440)[0]
         self.assertAlmostEqual(mysource.peak, 1.0*FUDGEFACTOR, 1)
 
+    @requires_data(os.path.join(DATAPATH, 'L15_12h_const/observed-all.fits'))
     def tearDown(self):
         del(self.results)
         del(self.image)
@@ -55,9 +57,11 @@ class L15_12hConstCor(unittest.TestCase):
         self.image = image.ImageData(fitsfile.data, fitsfile.beam, fitsfile.wcs)
         self.results  = self.image.extract(det=10)
 
+    @requires_data(os.path.join(DATAPATH, 'L15_12h_const/corrected-all.fits'))
     def testNumSources(self):
         self.assertEqual(len(self.results), 5)
 
+    @requires_data(os.path.join(DATAPATH, 'L15_12h_const/corrected-all.fits'))
     def testFluxes(self):
         # All sources in this image are supposed to have the same flux.
         # But they don't, because the simulation is broken, so this test
@@ -66,6 +70,7 @@ class L15_12hConstCor(unittest.TestCase):
             self.assert_(mysource.peak.value > 0.35)
             self.assert_(mysource.peak.value < 0.60)
 
+    @requires_data(os.path.join(DATAPATH, 'L15_12h_const/corrected-all.fits'))
     def testSeparation(self):
         centre = self.results.closest_to(1440, 1440)[0]
         # How accurate should the '2 degrees' be?
@@ -94,9 +99,11 @@ class L15_12hConstMod(unittest.TestCase):
         self.image = image.ImageData(fitsfile.data, fitsfile.beam, fitsfile.wcs)
         self.results  = self.image.extract(det=5)
 
+    @requires_data(os.path.join(DATAPATH, 'L15_12h_const/model-all.fits'))
     def testNumSources(self):
         self.assertEqual(len(self.results), 1)
 
+    @requires_data(os.path.join(DATAPATH, 'L15_12h_const/model-all.fits'))
     def testFluxes(self):
         self.results.sort(lambda x, y: cmp(y.peak, x.peak))
         self.assertAlmostEqual(self.results[0].peak.value, 1.0*FUDGEFACTOR, 1)
@@ -115,12 +122,14 @@ class FitToPointTestCase(unittest.TestCase):
         self.my_im = image.ImageData(fitsfile.data, fitsfile.beam,
                                      fitsfile.wcs)
 
+    @requires_data(os.path.join(DATAPATH, 'L15_12h_const/corrected-all.fits'))
     def testFixed(self):
         d = self.my_im.fit_to_point(1379.00938273, 1438.38801493, 20,
                                     threshold=2)
         self.assertAlmostEqual(d.x.value, 1379.00938273)
         self.assertAlmostEqual(d.y.value, 1438.38801493)
 
+    @requires_data(os.path.join(DATAPATH, 'L15_12h_const/corrected-all.fits'))
     def testUnFixed(self):
         d = self.my_im.fit_to_point(1379.00938273, 1438.38801493, 20,
                                     threshold=2, fixed=None)

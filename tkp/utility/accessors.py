@@ -362,7 +362,7 @@ def dbimage_from_accessor(dataset, image):
         (dataset.Image): a dataset.Image instance.
     """
     from ..database.dataset import Image
-    
+
     data = {'tau_time': image.inttime,
             'freq_eff': image.freqeff,
             'freq_bw': image.freqbw,
@@ -388,6 +388,6 @@ def sourcefinder_image_from_accessor(image):
     """
 
     from ..sourcefinder.image import ImageData
-    
+
     image = ImageData(image.data, image.beam, image.wcs)
     return image

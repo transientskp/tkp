@@ -7,16 +7,7 @@ import sys
 import datetime
 import random
 from operator import attrgetter, itemgetter
-try:
-    import monetdb
-    import tkp.database.dataset
-    import tkp.database.database
-    import tkp.database.utils as dbu
-except ImportError:
-    # If we fail to import the database modules, the tests will automatically
-    # be skipped.
-    pass
-
+from utilities.decorators import requires_database
 
 # We're cheating here: a unit test shouldn't really depend on an
 # external dependency like the database being up and running
@@ -24,23 +15,20 @@ except ImportError:
 class TestDataSet(unittest.TestCase):
 
     def setUp(self):
-        try:
-            self.database = tkp.database.database.DataBase()
-        except NameError:
-            # If we get a NameError, it's likely because we couldn't import
-            # the database modules.
-            self.database = None
-        except monetdb.monetdb_exceptions.DatabaseError:
-            self.database = None
+        import tkp.database.dataset
+        import tkp.database.database
+        import monetdb
+        self.database = tkp.database.database.DataBase()
 
     def tearDown(self):
-        if self.database:
-            self.database.close()
+        self.database.close()
 
+    @requires_database()
     def test_dataset_create(self):
         """Create a new dataset, and retrieve it"""
-        if not self.database:
-            self.skipTest("Database not available.")
+        import tkp.database.dataset
+        import tkp.database.database
+        import monetdb
         dataset1 = tkp.database.dataset.DataSet(
             'dataset 1', database=self.database)
         dsid = dataset1.dsid
@@ -64,10 +52,12 @@ class TestDataSet(unittest.TestCase):
         self.assertEqual(dataset3.name, "dataset 1")
         self.assertEqual(dataset3.dsid, dsid)
 
+    @requires_database()
     def test_dataset_update(self):
         """Update all or individual dataset columns"""
-        if not self.database:
-            self.skipTest("Database not available.")
+        import tkp.database.dataset
+        import tkp.database.database
+        import monetdb
         dataset1 = tkp.database.dataset.DataSet(
             'dataset 1', database=self.database)
         self.assertEqual(dataset1.name, "dataset 1")
@@ -80,9 +70,11 @@ class TestDataSet(unittest.TestCase):
         self.assertEqual(results[1], "new dataset")
         self.assertEqual(dataset1.name, "new dataset")
 
+    @requires_database()
     def test_image_create(self):
-        if not self.database:
-            self.skipTest("Database not available.")
+        import tkp.database.dataset
+        import tkp.database.database
+        import monetdb
         dataset1 = tkp.database.dataset.DataSet(
             'dataset with images', database=self.database)
         self.assertEqual(dataset1.images, set())
@@ -102,9 +94,11 @@ class TestDataSet(unittest.TestCase):
         # with different ids
         self.assertEqual(len(dataset2.images), 2)
 
+    @requires_database()
     def test_image_update(self):
-        if not self.database:
-            self.skipTest("Database not available.")
+        import tkp.database.dataset
+        import tkp.database.database
+        import monetdb
         dataset1 = tkp.database.dataset.DataSet(
             'dataset with changing images', database=self.database)
         data = dict(tau_time=1000, freq_eff=80e6)
@@ -130,9 +124,11 @@ class TestDataSet(unittest.TestCase):
         image2.update()
         self.assertEqual(image2.tau_time, 2500.)
 
+    @requires_database()
     def test_source_create(self):
-        if not self.database:
-            self.skipTest("Database not available.")
+        import tkp.database.dataset
+        import tkp.database.database
+        import monetdb
         dataset1 = tkp.database.dataset.DataSet(
             'dataset with images', database=self.database)
         self.assertEqual(dataset1.images, set())
@@ -175,9 +171,11 @@ class TestDataSet(unittest.TestCase):
         self.assertEqual(len(image2.sources), 1)
         self.assertEqual(image2.sources.pop().srcid, source5.srcid)
 
+    @requires_database()
     def test_source_update(self):
-        if not self.database:
-            self.skipTest("Database not available.")
+        import tkp.database.dataset
+        import tkp.database.database
+        import monetdb
         dataset1 = tkp.database.dataset.DataSet(
             'dataset with images', database=self.database)
         self.assertEqual(dataset1.images, set())
@@ -217,11 +215,13 @@ class TestDataSet(unittest.TestCase):
         self.assertAlmostEqual(source1.decl, 23.23)
         self.assertAlmostEqual(source2.decl, 44.44)
 
+    @requires_database()
     def test_source_lightcurve(self):
         """This test serves more as an example than as a proper unit
         test"""
-        if not self.database:
-            self.skipTest("Database not available.")
+        import tkp.database.dataset
+        import tkp.database.database
+        import monetdb
         dataset = tkp.database.dataset.DataSet(
             'dataset with images', database=self.database)
         # create 4 images, separated by one day each

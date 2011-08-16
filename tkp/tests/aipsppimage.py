@@ -1,16 +1,21 @@
 # Tests for generic utility functions written for the TKP pipeline.
 
 import unittest
+try:
+    unittest.TestCase.assertIsInstance
+except AttributeError:
+    import unittest2 as unittest
+
+# This test fails if we can't import pyrap.
+import pyrap
 import os
 from tkp.utility import accessors
 from tkp.sourcefinder import image
 import tkp.config
-# This test should not be run unless pyrap is available.
-import pyrap
-
+from utilities.decorators import requires_data
+from utilities.decorators import requires_module
 
 DATAPATH = tkp.config.config['test']['datapath']
-
 
 class AIPSppImage(unittest.TestCase):
     def setUp(self):
@@ -22,6 +27,7 @@ class AIPSppImage(unittest.TestCase):
         self.image = image.ImageData(aipsppim.data, aipsppim.beam,
                                      aipsppim.wcs)
 
+    @requires_data(os.path.join(DATAPATH, 'CX3_peeled.image/'))
     def testExtractPython(self):
         self.image.extract(det=15)
 

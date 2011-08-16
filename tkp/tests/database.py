@@ -3,7 +3,6 @@ try:
     unittest.TestCase.assertIsInstance
 except AttributeError:
     import unittest2 as unittest
-
 from utilities.decorators import requires_database
 
 class TestDatabase(unittest.TestCase):
@@ -11,7 +10,6 @@ class TestDatabase(unittest.TestCase):
     def setUp(self):
         import tkp.database.database
         import monetdb
-        # Connect and verify that the default database is available
         self.database = tkp.database.database.DataBase()
 
     def tearDown(self):

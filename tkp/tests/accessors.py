@@ -5,28 +5,23 @@ try:
     unittest.TestCase.assertIsInstance
 except AttributeError:
     import unittest2 as unittest
-import os
-from tkp.utility import accessors
-import tkp.config
-try:
-    from tkp.database.database import DataBase
-    from tkp.database.dataset import DataSet
-    # Do we need monetdb here?
-    import monetdb
-except ImportError:
-    # If we fail to import the database modules, the tests will automatically
-    # be skipped.
-    pass
 
+from utilities.decorators import requires_data
+from utilities.decorators import requires_database
+from utilities.decorators import requires_module
+
+import os
+import tkp.config
+from tkp.utility import accessors
 
 DATAPATH = tkp.config.config['test']['datapath']
-
 
 class FitsFile(unittest.TestCase):
     # Single, constant 1 Jy source at centre of image.
     def setUp(self):
         pass
 
+    @requires_data(os.path.join(DATAPATH, 'L15_12h_const/observed-all.fits'))
     def testOpen(self):
         # Beam specified by user
         image = accessors.FitsFile(os.path.join(DATAPATH, 'L15_12h_const/observed-all.fits'), beam=(54./3600, 54./3600, 0.))
@@ -53,27 +48,26 @@ class FitsFile(unittest.TestCase):
         self.assertAlmostEqual(image.wcs.cdelt[1], 0.003333333414)
         self.assertTupleEqual(image.wcs.ctype, ('RA---SIN', 'DEC--SIN'))
 
-    def testUtilityFunctions(self):
+    @requires_data(os.path.join(DATAPATH, 'L15_12h_const/observed-all.fits'))
+    def testSFImageFromFITS(self):
         image = accessors.FitsFile(os.path.join(DATAPATH, 'L15_12h_const/observed-all.fits'),
                                    beam=(54./3600, 54./3600, 0.))
         sfimage = accessors.sourcefinder_image_from_accessor(image)
-        try:
-            database = DataBase()
-            dataset = DataSet('dataset', database=database)
-            dbimage = accessors.dbimage_from_accessor(dataset, image)
-        except (monetdb.monetdb_exceptions.DatabaseError, NameError):
-            # If we get a NameError, it's likely because we couldn't import
-            # the database modules.
-            database = None
 
+    @requires_module("pyrap")
+    @requires_data(os.path.join(DATAPATH, 'CX3_peeled.image/'))
+    def testSFImageFromAIPSpp(self):
         image = accessors.AIPSppImage(os.path.join(DATAPATH, 'CX3_peeled.image/'),
                                       beam=(54./3600, 54./3600, 0.))
         sfimage = accessors.sourcefinder_image_from_accessor(image)
-        if database:
-            dbimage = accessors.dbimage_from_accessor(dataset, image)
-            database.close()
 
+    @requires_database()
+    def testDBImageFromAccessor(self):
+        from tkp.database.database import DataBase
+        from tkp.database.dataset import DataSet
+        database = DataBase()
+        dataset = DataSet('dataset', database=database)
+        dbimage = accessors.dbimage_from_accessor(dataset, image)
 
 if __name__ == '__main__':
     unittest.main()
-

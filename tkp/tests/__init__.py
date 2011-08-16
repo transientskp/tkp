@@ -1,5 +1,3 @@
-import unittest
-
 testfiles = [
     'tkp.tests.accessors',
     'tkp.tests.classification',

@@ -20,7 +20,6 @@ try:
     import ndimage
 except ImportError:
     from scipy import ndimage
-import pyrap.images
 from tkp.config import config
 from tkp.utility import containers
 from tkp.utility import coordinates
@@ -643,7 +642,7 @@ class ImageData(object):
         else:
             logging.warn("Moments & Gaussian fit failed at %f, %f", x, y)
 
-    def dump_islands(self, filename, det, anl, minsize=4):
+    def dump_islands(self, det, anl, minsize=4):
         """Identify potential islands"""
 
         sci_clip = numpy.where(self.data_bgsubbed > anl * self.rmsmap, 1, 0)
@@ -660,8 +659,6 @@ class ImageData(object):
                                 subtracted_map[chunk], -999).max() >= 0):
                 sci_labels[chunk] = numpy.where(sci_labels[chunk] == isl,
                                                 0, sci_labels[chunk])
-
-        pyrap.images.image('', values=sci_labels).tofits(filename)
 
         return sci_labels
 

@@ -34,6 +34,11 @@ __last_modification__ = '2010-08-05'
 import sys
 import os
 import itertools
+import datetime
+from contextlib import closing
+
+from tkp.database.database import DataBase
+import tkp.database.utils as dbutils
 
 import monetdb.sql.connections
 
@@ -128,7 +133,19 @@ class classification(BaseRecipe, RemoteCommandRecipeMixIn):
 
         self.logger.info("Getting Transient objects")
         self.outputs['transients'] = [job.results['transient'] for job in jobs.itervalues()]
-
+        # Store or update transients in database
+        # Note: we do this here, to avoid compute nodes blocking each other
+        # Things can probably be done a bit more efficient though
+        with closing(DataBase()) as database:
+            self.logger.info("Storing/updating transient into database")
+            for transient in self.outputs['transients']:
+                if isinstance(transient.timezero, datetime.datetime):
+                    t_start = transient.timezero.datetime()
+                else:
+                    t_start = datetime.datetime(1970, 1, 1)
+                self.logger.info("%d, %s, %s, %s", transient.srcid, str(transient.siglevel), str(transient.timezero), t_start)
+                dbutils.store_transient_source(
+                    database, transient.srcid, transient.siglevel, t_start)
         if self.error.isSet():
             return 1
         else:

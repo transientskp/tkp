@@ -184,11 +184,11 @@ class transient_search(BaseRecipe):
             for transient_id, siglevel in zip(transient_ids, siglevels):
                 transient = self.create_transient(int(transient_id),
                                                   float(siglevel))
-                self.database.cursor.execute(SQL['insert'], (transient.srcid,))
-                self.database.commit()
-                self.database.cursor.execute(SQL['update'], (
-                    transient.srcid, transient.siglevel))
-                self.database.commit()
+                #self.database.cursor.execute(SQL['insert'], (transient.srcid,))
+                #self.database.commit()
+                #self.database.cursor.execute(SQL['update'], (
+                #    transient.srcid, transient.siglevel))
+                #self.database.commit()
                 transients.append(transient)
         else:
             transient_ids = numpy.array([], dtype=numpy.int)

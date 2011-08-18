@@ -18,7 +18,7 @@ The parameters are stored in a dictionary, with each section as keyword.
 Each value in itself is another dictionary, with (option, value) pairs.
 
 The config module can be imported by the various subpackages of the
-TKP package.  Since the '.tpk.cfg' file is only read on first import,
+TKP package.  Since the '.tkp.cfg' file is only read on first import,
 after which the variable HAS_READ is set to False, there are no multiple
 reads of this file.
 
@@ -135,6 +135,20 @@ def set_default_config():
     config.add_section('test')
     config.set('test', 'datapath', os.path.join(testpath[0], "data"))
     return config
+
+
+def write_config(config=None, filename="~/.tkp.cfg"):
+    """
+    Dump configuration to file.
+
+    Convenient for generating an initial template configuration file for the
+    user to edit to suit their requirements.
+    """
+    cfg_file = open(os.path.expanduser(filename), "w")
+    if not config:
+        config=set_default_config()
+    config.write(cfg_file)
+    cfg_file.close()
 
 
 def read_config(default_config):

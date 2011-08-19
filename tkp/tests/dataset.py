@@ -7,7 +7,7 @@ import sys
 import datetime
 import random
 from operator import attrgetter, itemgetter
-from utilities.decorators import requires_database
+from utility.decorators import requires_database
 
 # We're cheating here: a unit test shouldn't really depend on an
 # external dependency like the database being up and running

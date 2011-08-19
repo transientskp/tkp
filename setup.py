@@ -11,6 +11,7 @@ setup(
         'tkp.classification.manual',
         'tkp.classification.features',
         'tkp.tests',
+        'tkp.tests.utility',
         'tkp.utility'
     ],
     description="LOFAR Transients Key Project Python libraries",

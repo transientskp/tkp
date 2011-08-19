@@ -3,7 +3,7 @@ try:
     unittest.TestCase.assertIsInstance
 except AttributeError:
     import unittest2 as unittest
-from utilities.decorators import requires_database
+from utility.decorators import requires_database
 
 class TestDatabase(unittest.TestCase):
 

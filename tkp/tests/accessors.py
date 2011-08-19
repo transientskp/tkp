@@ -6,9 +6,9 @@ try:
 except AttributeError:
     import unittest2 as unittest
 
-from utilities.decorators import requires_data
-from utilities.decorators import requires_database
-from utilities.decorators import requires_module
+from utility.decorators import requires_data
+from utility.decorators import requires_database
+from utility.decorators import requires_module
 
 import os
 import tkp.config

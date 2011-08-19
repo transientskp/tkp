@@ -1,8 +1,8 @@
 #! /bin/bash
 
 pythonpath=../../python-packages/lib.linux-x86_64-2.6:../external/deconv:../external/python-wcslib
-# Add path to unittest2; unittest2 lives in the source tree
-pythonpath=${pythonpath}:../../../../tkp/trunk/tkp/tests
+# Add path to unittest2
+pythonpath=${pythonpath}:../../../../tkp/trunk/tests
 if [ -z "$PYTHONPATH" ]
 then
     export PYTHONPATH=${pythonpath}

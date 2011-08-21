@@ -344,7 +344,21 @@ resolution element.""")
 
     def fitsfile(self):
         return self.filename
+        
+    def writefits(self, data, filename, header = {}):
+        """
+    Dump a NumPy array to a FITS file.
 
+    Key/value pairs for the FITS header can be supplied in the optional
+    header argument as a dictionary.
+        """
+        if header.__class__.__name__=='Header':
+            pyfits.writeto(filename,data.transpose(),header)
+        else:
+            hdu = pyfits.PrimaryHDU(data.transpose())
+            for key in header.iterkeys():
+                hdu.header.update(key, header[key])
+            hdu.writeto(filename)
 
 def dbimage_from_accessor(dataset, image):
     """Create an entry in the database images table from an image 'accessor'

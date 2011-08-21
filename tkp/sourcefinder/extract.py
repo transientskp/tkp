@@ -9,6 +9,7 @@ Source Extraction Helpers.
 These are used in conjunction with image.ImageData.
 """
 import logging
+import math
 # DictMixin may need to be replaced using collections.MutableMapping;
 # see http://docs.python.org/library/userdict.html#UserDict.DictMixin
 from UserDict import DictMixin
@@ -187,8 +188,8 @@ class Island(object):
         """Fit the position"""
         measurement, gauss_residual = source_profile_and_errors(
             self.data, self.threshold(), self.noise(), self.beam)
-        measurement["xbar"] += self.position[0]
-        measurement["ybar"] += self.position[1]
+        measurement["xbar"] += self.position[0] + 1 # address + offset  = address but not address + address 
+        measurement["ybar"] += self.position[1] + 1 # because addresses start at 0
         measurement.sig = self.sig()
         return measurement, gauss_residual
 
@@ -717,6 +718,26 @@ class Detection(object):
             return self.__getattribute__(attrname[3:]).error
         else:
             raise AttributeError(attrname)
+            
+    def printob (self, out= None) :
+        if out  is None:
+             out = sys.stdout;
+        s = "\nPeak =" + str(self.peak )+  " flux "+ str(self.flux)+ "\nx = "+ str(self.x )+ "\ny = " + str(self.y)
+        out.write(s)
+        s = "\nsmaj = "+  str(self.smaj)  + "\nsmin = " + str(self.smin) + "\ntheta = " + str(self.theta) 
+        out.write( s)
+        self._physical_coordinates()
+        s = "\nRA = " + str(self.ra) + " dec = "+  str(self.dec) + "\n" 
+        out.write(s)
+      
+        
+    def printasregion (self) :
+        pi = math.pi
+        return "\nellipse(" + str(self.x.value) + "," +  str(self.y.value) +"," +  str(self.smaj.value *2) + "," +  str(self.smin.value*2) + "," +  str(self.theta.value -pi/2.0 ) + "r ) #color=white"
+             
+             
+        
+        
 
     def _physical_coordinates(self):
         """Convert the pixel parameters for this object into something

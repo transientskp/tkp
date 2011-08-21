@@ -1,9 +1,14 @@
 # Tests for elliptical Gaussian fitting code in the TKP pipeline.
 
 import unittest
-import tkp.sourcefinder.gaussian as gaussian
+#import tkp.sourcefinder.gaussian as gaussian
 import numpy
+import sys
+sys.path.append('/usr/local/lib')
+sys.path.append('/home/john/lofar/currentSourcefinder/sourcefinderTrunk/trunk')
 
+#sys.path.append('/home/john/lofar/sourcefinder/python-packages/tkp')
+import tkp.sourcefinder.gaussian as gaussian
 # The units that are tested often require information about the resolution element:
 # (semimajor(pixels),semiminor(pixels),beam position angle (radians).
 # Please enter some reasonable restoring beam here.

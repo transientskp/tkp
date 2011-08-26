@@ -106,7 +106,11 @@ class time_slicing(BaseRecipe, RemoteCommandRecipeMixIn):
             start_time += timestep
         # last bit gets appenended to previous timestep, ending with
         # a longer timestep instead of a shorter one
-        timesteps[-1] = (timesteps[-1][0], end_time, timesteps[-1][-1])
+        try:
+            timesteps[-1] = (timesteps[-1][0], end_time, timesteps[-1][-1])
+        except IndexError:    # timestep is longer than observing interval!
+            timesteps.append((start_time, end_time,
+                              os.path.join(working_dir, str(int(start_time)))))
         # Obtain available nodes
         clusterdesc = ClusterDesc(self.config.get('cluster', "clusterdesc"))
         if clusterdesc.subclusters:

@@ -4,15 +4,15 @@ from __future__ import with_statement
 
 import sys
 import os
-from contextlib import closing
-from operator import itemgetter
+import datetime
 
 from pyrap.quanta import quantity
 
 from lofarpipe.support.control import control
 from lofarpipe.support.utilities import log_time
 from lofarpipe.support.parset import patched_parset
-import tkp.database.database as tkpdb
+from tkp.database.database import DataBase
+from tkp.database.dataset import DataSet
 
 
 SECONDS_IN_DAY = 86400.
@@ -71,13 +71,15 @@ class SIP(control):
                 compute_mapfile,
             )            
             compute_mapfile = ndppp_results['mapfile']
-            #compute_mapfile = self.run_task("datamapper_storage", datafiles)['mapfile'] # generate a mapfile mapping them to compute nodes
-            self.logger.info("compute mapfile = %s" % compute_mapfile)
             # Produce a GVDS file describing the data on the storage nodes.
             gvds_file = self.run_task('vdsmaker', compute_mapfile)['gvds']
             self.logger.info("GVDS file = %s" % gvds_file)
 
-            dataset_id = None
+            # Create the dataset
+            database = DataBase()
+            dataset = DataSet(name=self.inputs['job_name'], dsid=None,
+                              database=database)
+            dsid = dataset.dsid
             outputs = self.run_task("time_slicing", gvds_file=gvds_file)
             mapfiles = outputs['mapfiles']
             subdirs = ["%d" % int(starttime) for starttime, endtime in
@@ -106,14 +108,14 @@ class SIP(control):
                 outputs.update(
                     self.run_task("source_extraction",
                                   images=outputs['combined_fitsfile'],
-                                  dataset_id=dataset_id)
+                                  dataset_id=dsid)
                     )
 
-                if dataset_id is None:
-                    dataset_id = outputs['dataset_id']
+                if dsid is None:
+                    dsid = outputs['dsid']
                 outputs.update(
                     self.run_task("transient_search", [],
-                                  dataset_id=dataset_id)
+                                  dataset_id=dsid)
                     )
                 outputs.update(
                     self.run_task("feature_extraction", [],
@@ -129,6 +131,9 @@ class SIP(control):
                 self.logger.info("outputs = %s " % str(outputs))
                 self.run_task("prettyprint", [], transients=outputs['transients'])
 
+            dataset.process_ts = datetime.datetime.utcnow()
+            database.close()
 
+            
 if __name__ == '__main__':
     sys.exit(SIP().main())

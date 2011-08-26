@@ -54,10 +54,7 @@ class source_extraction(LOFARnodeTCP):
                 #database.execute("SELECT RAD(45.)")
                 #self.logger.info("fetchall = %s", str(database.cursor.fetchall()))
                 description = 'LOFAR images'
-                dataset = DataSet(name=description, dsid=dataset_id,
-                                        database=database)
-                self.logger.info("dataset id = %d" % dataset.dsid)
-                self.outputs['dataset_id'] = dataset.dsid
+                dataset = DataSet(dsid=dataset_id, database=database)
                 fitsimage = FitsFile(image)
                 db_image = dbimage_from_accessor(dataset=dataset,
                                                  image=fitsimage)

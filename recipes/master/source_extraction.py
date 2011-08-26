@@ -12,20 +12,6 @@ from lofarpipe.support.remotecommand import ComputeJob
 from lofarpipe.support.remotecommand import RemoteCommandRecipeMixIn
 
 
-class IntOrNoneField(ingredient.Field):
-    """
-    Simple class that accepts an int or a None
-    """
-
-    def is_valid(self, value):
-        return isinstance(value, int) or value is None
-    
-    def coerce(self, value):
-        if value is None:
-            return value
-        return int(value)
-
-
 class source_extraction(BaseRecipe, RemoteCommandRecipeMixIn):
     """
     Extract sources from a FITS image
@@ -40,7 +26,7 @@ class source_extraction(BaseRecipe, RemoteCommandRecipeMixIn):
             '--detection-level',
             help='Detection level for sources'
         ),
-        'dataset_id': IntOrNoneField(
+        'dataset_id': ingredient.IntField(
             '--dataset-id',
             help='Dataset to which images belong',
             default=None
@@ -57,10 +43,6 @@ class source_extraction(BaseRecipe, RemoteCommandRecipeMixIn):
         ),
         }
 
-    outputs = {
-        'dataset_id': ingredient.IntField()
-        }
-    
     def go(self):
         self.logger.info("Extracting sources")
         super(source_extraction, self).go()
@@ -100,8 +82,6 @@ class source_extraction(BaseRecipe, RemoteCommandRecipeMixIn):
                     )
                 )
         jobs = self._schedule_jobs(jobs, max_per_node=self.inputs['nproc'])
-        dataset_id = jobs[0].results['dataset_id']
-        self.outputs['dataset_id'] = dataset_id
 
         #                Check if we recorded a failing process before returning
         # ----------------------------------------------------------------------

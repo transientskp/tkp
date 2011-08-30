@@ -123,8 +123,19 @@ class TestDataSet(unittest.TestCase):
         image1.tau_time = 2500
         image2.update()
         self.assertAlmostEqual(image2.tau_time, 2500)
-        #image1.update(tau_time=1000., freq_eff=90e6)
-        #self.assertAlmostEqual(image.tau_time, 1000)
+        image1.update(tau_time=1000., freq_eff=90e6)
+        self.assertAlmostEqual(image1.tau_time, 1000)
+        self.assertAlmostEqual(image1.freq_eff, 90e6)
+        self.assertEqual(image1.taustart_ts, datetime.datetime(1970, 1, 1))
+        self.assertEqual(image2.taustart_ts, datetime.datetime(1970, 1, 1))
+        image2.update(taustart_ts=datetime.datetime(2010, 3, 3))
+        self.assertEqual(image1.taustart_ts, datetime.datetime(1970, 1, 1))
+        self.assertEqual(image2.taustart_ts, datetime.datetime(2010, 3, 3))
+        self.assertAlmostEqual(image2.tau_time, 1000)
+        self.assertAlmostEqual(image2.freq_eff, 90e6)
+        image1.update()
+        self.assertEqual(image1.taustart_ts, datetime.datetime(2010, 3, 3))
+        
         
     @requires_database()
     def test_source_create(self):

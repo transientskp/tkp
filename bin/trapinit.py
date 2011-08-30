@@ -404,7 +404,7 @@ working_directory = %%(default_working_directory)s
 dry_run = False
 mapfile = %%(runtime_directory)s/jobs/%%(job_name)s/parsets/compute_mapfile
 parset = %%(runtime_directory)s/jobs/%%(job_name)s/parsets/ndppp.1.parset
-nproc = 8
+nproc = 1
 
 # This ndppp gets ran after the calibration
 [ndppp2]
@@ -415,7 +415,7 @@ working_directory = %%(default_working_directory)s
 dry_run = False
 mapfile = %%(runtime_directory)s/jobs/%%(job_name)s/parsets/compute_mapfile
 parset = %%(runtime_directory)s/jobs/%%(job_name)s/parsets/ndppp.2.parset
-nproc = 8
+nproc = 1
 
 
 [bbs]
@@ -433,7 +433,7 @@ combinevds = %%(lofarroot)s/bin/combinevds
 makesourcedb = %%(lofarroot)s/bin/makesourcedb
 parmdbm = %%(lofarroot)s/bin/parmdbm
 skymodel = %%(runtime_directory)s/jobs/%%(job_name)s/parsets/bbs.skymodel
-nproc = 8
+nproc = 1
 
 [vdsreader]
 recipe = vdsreader

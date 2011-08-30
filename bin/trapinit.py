@@ -675,6 +675,13 @@ restore_beam = [0.01, 0.01, 0]
             outfile.write("\n]\n")
             self.files_created['ms_to_process'] = filename
 
+    def show_files_created(self):
+        self.logger.info("")
+        self.logger.info("The following files have been created.")
+        self.logger.info("You may want to review and edit them:")
+        for filename in self.files_created.values():
+            self.logger.info("  %s", filename)
+            
     def run(self):
         result = self.check_tkp_installation()
         if result:
@@ -699,8 +706,8 @@ restore_beam = [0.01, 0.01, 0]
                     self.create_default_parsets()
                 if ask("Try to find subbands based on dataset name") == 'y':
                     self.find_subbands()
-        #print self.files_created
-        
+        if self.files_created:
+            self.show_files_created()
         return 0
 
 

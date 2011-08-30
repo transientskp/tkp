@@ -120,7 +120,7 @@ class DataSet(object):
         # Initialize the other data
         if self._dsid is None:
             # Set some defaults; not stored in database yet
-            for key, value in DataSet.COLUMNS.items():
+            for key, value in self.COLUMNS.items():
                 setattr(self, key, value)
             self._dsinname = self.name = name
             self.dsid
@@ -129,7 +129,7 @@ class DataSet(object):
             self._retrieve_from_database()
 
     def __setattr__(self, name, value):
-        if name in DataSet.COLUMNS:
+        if name in self.COLUMNS:
             object.__setattr__(self, '_' + name, value)
             self._set_value(name, value)
             if name == 'dsinname':
@@ -202,7 +202,7 @@ WHERE dsid=%s""", (self._rerun, self._dstype, self._process_ts, self._dsinname,
         connection = database.connection
         cursor = database.cursor
         query = ("""SELECT %s FROM datasets WHERE dsid=%%s""" %
-                                  ", ".join(DataSet.COLUMNS.keys()))
+                                  ", ".join(self.COLUMNS.keys()))
         cursor.execute(query, (self._dsid,))
         results = cursor.fetchone()
         for i, desc in enumerate(cursor.description):
@@ -242,13 +242,24 @@ WHERE dsid=%s""", (self._rerun, self._dstype, self._process_ts, self._dsinname,
                 raise
         return self._dsid
 
-    def update(self):
-        """Update the image if the database has changed"""
+    def update(self, **kwargs):
+        """Update the dataset table with **kwargs;
+        Also updates the DataSet instance if the table has changed
 
-        # In the future, should this be done automatically
-        # and instanteneously?
-        self.dataset = None
+        Firstly, the database row is updated with the values from kwargs
+        If there is an unknown keyword in kwargs, an AttributeError is raised.
+        Secondly, the DataSet instance is updated with the values from the
+        database, in case there were also other changes in the database.
+        
+        """
+
+        valid_keys = self.COLUMNS.keys()
+        data = []
+        for key, value in kwargs.items():
+            if key not in valid_keys:
+                raise AttributeError("%s is not a valid keyword" % key)
         self._retrieve_from_database()
+        self._set_data(data=kwargs)
 
     # Fix constants
     def detect_variables(self,  V_lim=0.2, eta_lim=3.):
@@ -318,7 +329,7 @@ class Image(object):
         self.sources = set()
         self._imageid = imageid
         if self._imageid is None:
-            for key, value in Image.COLUMNS.items():
+            for key, value in self.COLUMNS.items():
                 setattr(self, key, value)
             self.imageid
             self._set_data(data=data)
@@ -326,11 +337,11 @@ class Image(object):
             self._retrieve_from_database()
 
     def __getattr__(self, name):
-        if name in Image.COLUMNS.keys():
+        if name in self.COLUMNS.keys():
             return getattr(self, '_' + name)
 
     def __setattr__(self, name, value):
-        if name in Image.COLUMNS.keys():
+        if name in self.COLUMNS.keys():
             object.__setattr__(self, '_' + name, value)
             self._set_value(name, value)
             if name == 'dsinname':
@@ -439,13 +450,24 @@ INSERT INTO
                 raise
         return self._imageid
 
-    def update(self):
-        """Update the image if the database has changed"""
+    def update(self, **kwargs):
+        """Update the image table with **kwargs;
+        Also updates the Image instance if the table has changed
 
-        # In the future, should this be done automatically
-        # and instanteneously?
-        self.dataset = None
+        Firstly, the database row is updated with the values from kwargs
+        If there is an unknown keyword in kwargs, an AttributeError is raised.
+        Secondly, the Image instance is updated with the values from the
+        database, in case there were also other changes in the database.
+        
+        """
+
+        valid_keys = self.COLUMNS.keys()
+        data = []
+        for key, value in kwargs.items():
+            if key not in valid_keys:
+                raise AttributeError("%s is not a valid keyword" % key)
         self._retrieve_from_database()
+        self._set_data(data=kwargs)
 
     def insert_extracted_sources(self, results):
         """Insert a list of sources
@@ -496,7 +518,7 @@ class Source(object):
             self.image.sources.add(self)
         self._srcid = srcid
         if self._srcid is None:
-            for key, value in Source.COLUMNS.items():
+            for key, value in self.COLUMNS.items():
                 setattr(self, key, value)
             self.srcid  # set self._srcid property
             self._set_data(data=data)
@@ -504,11 +526,11 @@ class Source(object):
             self._retrieve_from_database()
 
     def __getattr__(self, name):
-        if name in Source.COLUMNS.keys():
+        if name in self.COLUMNS.keys():
             return getattr(self, '_' + name)
 
     def __setattr__(self, name, value):
-        if name in Source.COLUMNS.keys():
+        if name in self.COLUMNS.keys():
             object.__setattr__(self, '_' + name, value)
             self._set_value(name, value)
         else:
@@ -539,7 +561,7 @@ class Source(object):
         connection = database.connection
         cursor = database.cursor
         query = ("""SELECT %s FROM extractedsources WHERE xtrsrcid=%%s""" %
-                 ", ".join(Source.COLUMNS.keys()))
+                 ", ".join(self.COLUMNS.keys()))
         cursor.execute(query, (self.srcid,))
         results = cursor.fetchone()
         for i, desc in enumerate(cursor.description):
@@ -561,15 +583,15 @@ class Source(object):
             repr(self.image), str(self._srcid))
 
     def _set_data(self, data=None):
-        if data is None:
-            data = {}
+        if not data:
+            return
         query = []
         values = []
         for key, value in self.COLUMNS.iteritems():
-            object.__setattr__(self, '_' + key,
-                               data.get(key, value))
-            query.append("%s=%%s" % (key,))
-            values.append(getattr(self, key))
+            if key in data:
+                object.__setattr__(self, '_' + key, data[key])
+                query.append("%s=%%s" % (key,))
+                values.append(getattr(self, key))
         query = "UPDATE extractedsources SET " + ", ".join(query)
         query += " WHERE xtrsrcid=%s"
         connection = self.database.connection
@@ -605,14 +627,25 @@ INSERT INTO extractedsources
                 raise
         return self._srcid
 
-    def update(self):
-        """Update the source if the database has changed"""
+    def update(self, **kwargs):
+        """Update the extractedsources table with **kwargs;
+        Also updates the Source instance if the table has changed
 
-        # In the future, should (and can) this be done automatically
-        # and instanteneously?
+        Firstly, the database row is updated with the values from kwargs
+        If there is an unknown keyword in kwargs, an AttributeError is raised.
+        Secondly, the Source instance is updated with the values from the
+        database, in case there were also other changes in the database.
+        
+        """
 
+        valid_keys = self.COLUMNS.keys()
+        data = []
+        for key, value in kwargs.items():
+            if key not in valid_keys:
+                raise AttributeError("%s is not a valid keyword" % key)
         self._retrieve_from_database()
-
+        self._set_data(data=kwargs)
+        
     def lightcurve(self):
         """Obtain the complete light curve (within the current dataset
         for this source

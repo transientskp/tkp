@@ -104,26 +104,28 @@ class TestDataSet(unittest.TestCase):
         data = dict(tau_time=1000, freq_eff=80e6)
         image1 = tkp.database.dataset.Image(
             dataset=dataset1, data=data)
-        self.assertEqual(image1.tau_time, 1000.)
+        self.assertAlmostEqual(image1.tau_time, 1000.)
         self.assertAlmostEqual(image1.freq_eff, 80e6)
         image1.tau_time = 2000.
-        self.assertEqual(image1.tau_time, 2000.)
+        self.assertAlmostEqual(image1.tau_time, 2000.)
 
         # New image, created from the database
         image2 = tkp.database.dataset.Image(
             dataset=dataset1, imageid=image1.imageid)
-        self.assertEqual(image2.tau_time, 2000.)
-        self.assertEqual(image2.freq_eff, 80e6)
+        self.assertAlmostEqual(image2.tau_time, 2000.)
+        self.assertAlmostEqual(image2.freq_eff, 80e6)
         # Same id, so changing image2 changes image1
         # but *only* after calling update()
         image2.tau_time = 1500
-        self.assertEqual(image1.tau_time, 2000.)
+        self.assertAlmostEqual(image1.tau_time, 2000)
         image1.update()
-        self.assertEqual(image1.tau_time, 1500.)
+        self.assertAlmostEqual(image1.tau_time, 1500)
         image1.tau_time = 2500
         image2.update()
-        self.assertEqual(image2.tau_time, 2500.)
-
+        self.assertAlmostEqual(image2.tau_time, 2500)
+        #image1.update(tau_time=1000., freq_eff=90e6)
+        #self.assertAlmostEqual(image.tau_time, 1000)
+        
     @requires_database()
     def test_source_create(self):
         import tkp.database.dataset

@@ -331,8 +331,8 @@ class Image(object):
         if self._imageid is None:
             for key, value in self.COLUMNS.items():
                 setattr(self, key, value)
-            self.imageid
             self._set_data(data=data)
+            self.imageid
         else:
             self._retrieve_from_database()
 
@@ -373,6 +373,11 @@ UPDATE images
     SET tau_time=%s, freq_eff=%s, freq_bw=%s, taustart_ts=%s, url=%s, band=%s
 WHERE imageid=%s""", (self.tau_time, self.freq_eff, self.freq_bw,
                       self.taustart_ts, self.url, self.band, self.imageid))
+                connection.commit()
+                # Need to update the calculated band id as well
+                cursor.execute("""\
+UPDATE images SET band=getBand(%s) WHERE imageid=%s""",
+                               (self._freq_eff, self._imageid))
                 connection.commit()
             except self.database.Error:
                 logging.warn("Failed to set data for Image with id=%s.",
@@ -437,14 +442,11 @@ WHERE imageid=%s""" % (self._imageid,))
         if self._imageid is None:
             try:
                 # Insert a default image
-                cursor.execute("""\
-INSERT INTO
-    images (ds_id, tau, band, tau_time, freq_eff, freq_bw, taustart_ts, url)
-    VALUES (%s, %s, %s, %s, %s, %s, %s, %s)""",
-                             (self.dataset.dsid, 0, self.band, self.tau_time, self.freq_eff,
-                              self.freq_bw, self.taustart_ts, self.url))
+                cursor.execute("SELECT insertImage(%s, %s, %s, %s, %s)",
+                               (self.dataset.dsid, self._freq_eff, self._freq_bw,
+                                self._taustart_ts, self._url))
                 connection.commit()
-                self._imageid = self.database.cursor.lastrowid
+                self._imageid = cursor.fetchone()[0]
             except self.database.Error:
                 logging.warn("Insertion of Image() failed.")
                 raise

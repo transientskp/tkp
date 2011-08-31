@@ -1,5 +1,6 @@
 #! /usr/bin/env python
 
+from __future__ import with_statement
 
 import sys
 import os
@@ -95,7 +96,7 @@ def ask_and_create_directory(dir, message=None, logger=None):
         if ask("Create directory") == 'y':
             try:
                 os.makedirs(path)
-            except OSerror as exc:
+            except OSerror, exc:
                 logger.error("Failed to create directory %s: %s",
                               path, str(exc))
                 raise ConfigError(
@@ -132,12 +133,12 @@ class Setup(object):
     
         config = {}
         user = getpass.getuser()
-        name = socket.gethostname()
+        hostname = socket.gethostname()
         homedir = os.path.expanduser('~')
-        config['hostname'] = name
+        config['hostname'] = hostname
         config['user'] = user
         config['default-dirs'] = {'home': homedir}
-        if name in ('heastro1', 'heastro2'):
+        if hostname in ('heastro1', 'heastro2'):
             tkp_base = '/opt/tkp/dev/tkp'
             lofim_base = '/opt/LofIm/lofar'
             config['database'] = {
@@ -169,6 +170,97 @@ class Setup(object):
             config['cdesc'] = 'heastro.clusterdesc'
             config['sipcfg'] = 'sip.cfg'
             config['postgres'] = {'host': '146.50.10.202'}
+        elif hostname in ('lfe001', 'lfe002'):
+            # LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/opt/LofIm/daily/casacore/lib:/opt/LofIm/daily/pyrap/lib:/opt/hdf5/lib
+            tkp_base = '/home/rol/tkp/dev/tkp'
+            lofim_base = '/opt/LofIm/daily/lofar'
+            config['database'] = {
+                'host': 'ldb001',
+                'name': 'tkp',
+                'user': 'tkp',
+                'password': 'tkp',
+                }
+            config['default-dirs'].update({
+                'tkp': {'base': tkp_base,
+                        'lib': os.path.join(tkp_base, 'lib'),
+                        'python': os.path.join(tkp_base, 'lib/python'),
+                        'bin': os.path.join(tkp_base, 'bin')},
+                'trap': {'recipes': os.path.join(tkp_base, 'recipes')},
+                'database': {'base': os.path.join(tkp_base, 'database')},
+                'lofim': {'base': lofim_base,
+                        'lib': os.path.join(lofim_base, 'lib/python'),
+                        'python': os.path.join(lofim_base, 'lib/python2.5/site-packages'),
+                        'bin': os.path.join(lofim_base, 'bin')},
+                'monetdb': {'python': '/opt/MonetDB/lib/python2.5/site-packages'},
+                'pytz': {'python': '/opt/pythonlibs/lib/python/site-packages'},
+                'pyrap': {'python': '/opt/LofIm/daily/pyrap/lib',
+                          'lib': '/opt/LofIm/daily/pyrap/lib'},
+                'casacore': {'lib': '/opt/LofIm/daily/casacore/lib'},
+                'hdf5': {'lib': '/opt/hdf5/lib'},
+                'sip': {'recipes': '/opt/pipeline/recipes',
+                        'python':
+                        '/opt/pipeline/framework/lib/python2.5/site-packages'},
+                'wcslib': {'lib': '/opt/wcslib/lib'},
+                'boost': {'lib': '/opt/external/boost/boost-1.40.0/lib'},
+                'work': '/data/scratch/%s/trap' % user,
+                'archive': '/data/scratch/%s/archive' % user,
+                'pipeline-runtime': os.path.join(homedir, 'pipeline-runtime'),
+                'jobs': os.path.join(homedir, 'pipeline-runtime', 'jobs'),
+                })
+            config['cdesc'] = 'cep1.clusterdesc'
+            config['sipcfg'] = 'sip.cfg'
+            config['postgres'] = {'host': 'ldb001'}
+        elif hostname in ('lhn001', 'lhn002'):
+            tkp_base = '/home/rol/tkp/dev/tkp'
+            lofim_base = '/opt/cep/LofIm/daily/lofar'
+            config['database'] = {
+                'host': 'ldb001',
+                'name': 'tkp',
+                'user': 'tkp',
+                'password': 'tkp',
+                }
+            config['default-dirs'].update({
+                'tkp': {'base': tkp_base,
+                        'lib': os.path.join(tkp_base, 'lib'),
+                        'python': os.path.join(tkp_base, 'lib/python'),
+                        'bin': os.path.join(tkp_base, 'bin')},
+                'trap': {'recipes': os.path.join(tkp_base, 'recipes')},
+                'database': {'base': os.path.join(tkp_base, 'database')},
+                'lofim': {'base': lofim_base,
+                        'lib': os.path.join(lofim_base, 'lib/python'),
+                        'python': os.path.join(lofim_base, 'lib/python2.6/dist-packages'),
+                        'bin': os.path.join(lofim_base, 'bin')},
+                'monetdb': {'python': '/opt/monetdb/lib/python2.6/site-packages'},
+                'pyrap': {'python': '/opt/cep/pyrap/lib'},
+                'casacore': {'lib': '/opt/cep/LofIm/daily/casacore/lib'},
+                'sip': {'recipes': '/opt/cep/pipeline/recipes',
+                        'python':
+                        '/opt/cep/pipeline/framework/lib/python2.6/site-packages'},
+                'wcslib': {'lib': '/opt/cep/wcslib/builds/wcslib-4.3.3/lib'},
+                'work': '/data/scratch/%s/trap' % user,
+                'archive': '/data/scratch/%s/archive' % user,
+                'pipeline-runtime': os.path.join(homedir, 'pipeline-runtime'),
+                'jobs': os.path.join(homedir, 'pipeline-runtime', 'jobs'),
+                })
+            config['cdesc'] = 'cep2.clusterdesc'
+            config['sipcfg'] = 'sip.cfg'
+            config['postgres'] = {'host': 'ldb001'}
+        # Prepare the PYTHONPATH and LD_LIBRARY_PATH
+        dirs = config['default-dirs']
+        ppath = []
+        lpath = []
+        for package in ('tkp', 'lofim', 'monetdb', 'sip', 'pytz', 'pyrap',
+                        'hdf5', 'casacore', 'wcslib', 'boost'):
+            try:
+                ppath.append(dirs[package]['python'])
+            except KeyError:
+                pass
+            try:
+                lpath.append(dirs[package]['lib'])
+            except KeyError:
+                pass
+        config['ppath'] = ":".join(ppath)
+        config['lpath'] = ":".join(lpath)
         return config
                         
     def create_minimal_tkp_configfile(self, path):
@@ -193,7 +285,7 @@ password = %s
         path = os.path.join(homedir, '.tkp.cfg')
         try:
             open(path)
-        except IOError as exc:
+        except IOError, exc:
             self.logger.warning("Can't read the TKP config file at %s", path)
             if ask("Create a minimal TKP config file") == 'y':
                 # Could use the config creation method in tkp.config,
@@ -229,21 +321,68 @@ password = %s
                        'tkp.utility.sigmaclip', 'tkp.utility.uncertain'):
             try:
                 __import__(module)
-            except ImportError:
-                self.logger.error("TKP module %s could not be loaded."
-                             "Please check and try again", module)
+            except ImportError, exc:
+                self.logger.error("TKP module %s could not be loaded: %s. "
+                             "Please check and try again", module, exc)
+                if str(exc) == ("libwcs.so.4.3: cannot open shared object "
+                                "file: No such file or directory"):
+                    try:
+                        self.logger.info(
+                            "You may need to set your LD_LIBRARY_PATH to %s "
+                            "before running this script", 
+                            self.config['default-dirs']['wcslib']['lib'])
+                    except KeyError:
+                        pass
+                if str(exc) == ("libcasa_images.so: cannot open shared object "
+                                "file: No such file or directory"):
+                    try:
+                        self.logger.info(
+                            "You may need to set your LD_LIBRARY_PATH to %s "
+                            "before running this script", 
+                            self.config['default-dirs']['casacore']['lib'])
+                    except KeyError:
+                        pass
+                if str(exc) == ("libboost_python-gcc42-1_40.so.1.40.0: "
+                                "cannot open shared object file: "
+                                "No such file or directory"):
+                    try:
+                        self.logger.info(
+                            "You may need to set your LD_LIBRARY_PATH to %s "
+                            "before running this script",
+                            self.config['default-dirs']['boost']['lib'])
+                    except KeyError:
+                        pass
+                if str(exc) == ("libpyrap.so: cannot open shared object file: "
+                                "No such file or directory"):
+                    try:
+                        self.logger.info(
+                            "You may need to set your LD_LIBRARY_PATH to %s "
+                            "before running this script",
+                            self.config['default-dirs']['pyrap']['lib'])
+                    except KeyError:
+                        pass
+                if str(exc) == ("libhdf5.so.6: cannot open shared object file: "
+                                "No such file or directory"):
+                    try:
+                        self.logger.info(
+                            "You may need to set your LD_LIBRARY_PATH to %s "
+                            "before running this script",
+                            self.config['default-dirs']['hdf5']['lib'])
+                    except KeyError:
+                        pass
+                    
                 raise
 
     def verify_database(self):
         try:
             import monetdb
-        except ImportError as exc:
+        except ImportError, exc:
             self.logger.error("MonetDB Python can't be imported: %s\n", str(exc))
             raise
         from tkp.database.database import DataBase
         try:
             database = DataBase()
-        except Exception as exc:
+        except Exception, exc:
             self.logger.error("Error connecting to the database: %s\n", str(exc))
             raise ConfigError("error connecting to the database: %s\n" % str(exc))
     
@@ -266,8 +405,16 @@ password = %s
         except ConfigError:
             return 1
         dirs = self.config['default-dirs']
-        sys.path.append(dirs['tkp']['python'])
-        sys.path.append(dirs['monetdb']['python'])
+        sys.path.insert(0, dirs['tkp']['python'])
+        sys.path.insert(0, dirs['monetdb']['python'])
+        try:
+            sys.path.insert(0, dirs['pytz']['python'])
+        except KeyError:
+            pass
+        try:
+            sys.path.insert(0, dirs['pyrap']['python'])
+        except KeyError:
+            pass
         #sys.path.append(dirs['lofim']['python'])
         #sys.path.append(dirs['sip']['python'])
         try:
@@ -292,7 +439,7 @@ password = %s
             ask_and_create_directory(dirs['jobs'])
             dirs['work'] = ask_and_create_directory(
                 dirs['work'], "Enter the working scratch directory")
-        except ConfigError as exc:
+        except ConfigError, exc:
             return 4
         self.config['default-dirs'] = dirs
         return 0
@@ -302,34 +449,67 @@ password = %s
         if host == 'heastro':
             with open(path, 'w') as outfile:
                 outfile.write("""\
-    ClusterName = heastro
-    
-    Compute.Nodes = [ heastro1,heastro2 ]
-    Compute.LocalDisks = [ /zfs/heastro-plex ]
-    """)
+ClusterName = heastro
+
+Compute.Nodes = [ heastro1,heastro2 ]
+Compute.LocalDisks = [ /zfs/heastro-plex ]
+""")
+        if host == 'cep1':
+            with open(path, 'w') as outfile:
+                outfile.write("""\
+ClusterName = sub3
+
+# Storage nodes.
+Storage.Nodes = [ lse007..9 ]
+Storage.LocalDisks = [ /data1..4 ]
+
+# Compute nodes.
+Compute.Nodes = [ lce019..27 ]
+Compute.RemoteDisks = [ /net/sub3/lse007..9/data1..4 ]
+Compute.RemoteFileSys = [ /lse007..9:/data1..4 ]
+Compute.LocalDisks = [ /data ]
+
+# Head nodes.
+Head.Nodes = [ lfe001..2 ]
+Head.LocalDisks = [ /data ]
+""")
+        if host == 'cep2':
+            with open(path, 'w') as outfile:
+                outfile.write("""\
+ClusterName = cep2
+
+# Compute nodes
+Compute.Nodes = [ locus001..100 ]
+Compute.LocalDisks = [ /data ]
+
+# Head nodes
+Head.Nodes = [ lhn001..2 ]
+Head.LocalDisks = [ /data ]
+""")
         self.files_created['clusterdesc'] = path
-        
+            
     def check_clusterdescription(self):
         if not os.path.exists(self.config['cdesc']):
             self.logger.warning("No cluster description file detected")
             if ask("Would you like to have a default one created") == 'y':
                 if self.config['hostname'].startswith('heastro'):
                     self.create_clusterdescription(self.config['cdesc'], 'heastro')
+                elif self.config['hostname'].startswith('lfe'):
+                    self.create_clusterdescription(self.config['cdesc'], 'cep1')
+                elif self.config['hostname'].startswith('lhn'):
+                    self.create_clusterdescription(self.config['cdesc'], 'cep2')
                 self.logger.info("Created default cluster description file %s",
                              self.config['cdesc'])
     
     
     def create_sipcfg(self, path, host):
         dirs = self.config['default-dirs']
-        if host == 'heastro':
-            with open(path, 'w') as outfile:
-                outfile.write("""\
-[DEFAULT]
+        with open(path, 'w') as outfile:
+            outfile.write("""\
+[DEFAULT]5B
 runtime_directory = %s
 recipe_directories = [%s, %s]
-lofarroot = /opt/LofIm/lofar
 lofarroot = %s
-default_working_directory = /zfs/heastro-plex/scratch/evert/trap
 default_working_directory = %s
 task_files = [%%(cwd)s/tasks.cfg]
 
@@ -344,8 +524,8 @@ results_directory = %%(job_directory)s/results/%%(start_time)s
 clusterdesc = %s
 
 [deploy]
-engine_ppath = %s:%s:%s:%s
-engine_lpath = %s:%s:/usr/local/lib
+engine_ppath = %s
+engine_lpath = %s:/usr/local/lib
 
 [logging]
 log_file = %%(runtime_directory)s/jobs/%%(job_name)s/logs/%%(start_time)s/pipeline.log
@@ -353,18 +533,16 @@ format = %%(asctime)s %%(levelname)-7s %%(name)s: %%(message)s
 datefmt = %%Y-%%m-%%d %%H:%%M:%%S
 """ % (dirs['pipeline-runtime'], dirs['trap']['recipes'], dirs['sip']['recipes'],
        dirs['lofim']['base'], dirs['work'], self.config['cdesc'],
-       dirs['tkp']['python'], dirs['lofim']['python'], dirs['monetdb']['python'],
-       dirs['sip']['python'], dirs['tkp']['lib'], dirs['lofim']['lib']))
+       self.config['ppath'], self.config['lpath']))
         self.files_created['trap.cfg'] = path
 
     def check_sipcfg(self):
         if not os.path.exists(self.config['sipcfg']):
             self.logger.warning("No SIP configuration file detected")
             if ask("Would you like to have a default one created") == 'y':
-                if self.config['hostname'].startswith('heastro'):
-                    self.create_sipcfg(self.config['sipcfg'], 'heastro')
+                self.create_sipcfg(self.config['sipcfg'], 'heastro')
                 self.logger.info("Created default SIP configuration file %s",
-                             self.config['sipcfg'])
+                                 self.config['sipcfg'])
     
     
     def create_job_layout(self):
@@ -404,28 +582,28 @@ datefmt = %%Y-%%m-%%d %%H:%%M:%%S
 
 CONTROLDIR=%s
 # Note! The next command spans 3 lines
-PYTHONPATH=%s:%s:%s:%s \\
-LD_LIBRARY_PATH=%s:%s \\
+PYTHONPATH=%s \\
+LD_LIBRARY_PATH=%s \\
 python ${CONTROLDIR}/trap-with-trip.py -d --task-file=${CONTROLDIR}/tasks.cfg -j %s -c %s $1
 """ % (os.path.join(dirs['work'], self.config['dsname']), 
        os.path.join(controldir, 'vds'),
        os.path.join(controldir, 'results'),
        os.path.join(dirs['jobs'], self.config['dsname'], 'statefile'),
-       controldir,
-       dirs['tkp']['python'], dirs['lofim']['python'],
-       dirs['monetdb']['python'], dirs['sip']['python'],
-       dirs['tkp']['lib'], dirs['lofim']['lib'],
+       controldir, self.config['ppath'], self.config['lpath'],
        self.config['dsname'], self.config['sipcfg']))
         self.files_created['runtrap.sh'] = os.path.join(controldir, 'runtrap.sh')
         # tasks.cfg file
+        datamapper_recipe = ('datamapper_storage' 
+                             if self.config['hostname'].startswith('heastro')
+                             else 'datamapper')
         with open(os.path.join(controldir, 'tasks.cfg'), 'w') as outfile:
             outfile.write("""\
 [datamapper_storage]
-recipe = datamapper_heastro
+recipe = %s
 mapfile = %%(runtime_directory)s/jobs/%%(job_name)s/parsets/storage_mapfile
 
 [datamapper_compute]
-recipe = datamapper_heastro
+recipe = %s
 mapfile = %%(runtime_directory)s/jobs/%%(job_name)s/parsets/compute_mapfile
 
 [ndppp]
@@ -502,13 +680,12 @@ unlink = False
 
 [cimager_trap]
 recipe = cimager_trap
-imager_exec = /opt/LofIm/lofar/bin/cimager
-#imager_exec = /opt/LofIm/askapsoft/bin/cimager.sh
-convert_exec = /opt/LofIm/lofar/bin/convertimagerparset
+imager_exec = %%(lofarroot)s/bin/cimager
+convert_exec = %%(lofarroot)/bin/convertimagerparset
 parset = %%(runtime_directory)s/jobs/%%(job_name)s/parsets/mwimager.parset
 parset_type = mwimager
-makevds = /opt/LofIm/lofar/bin/makevds
-combinevds = /opt/LofIm/lofar/bin/combinevds
+makevds = %%(lofarroot)s/bin/makevds
+combinevds = %%(lofarroot)s/bin/combinevds
 #results_dir = %%(runtime_directory)s/jobs/%%(job_name)s/results/
 
 [img2fits]
@@ -534,11 +711,9 @@ weight_cutoff = 0.1
 
 [prettyprint]
 recipe = prettyprint
-""" % (self.config['postgres']['host'],
+""" % (datamapper_recipe, datamapper_recipe, self.config['postgres']['host'],
        self.config['user']))
         self.files_created['tasks.cfg'] = os.path.join(controldir, 'tasks.cfg')
-
-        
 
     def create_default_parsets(self):
         dirs = self.config['default-dirs']
@@ -566,7 +741,7 @@ flag2.type=madflagger
 flag2.threshold=3
 flag2.timewindow=51
 avg2.type = squash
-avg2.timestep = 1          #it compresses the data by a factor of 5 in time
+avg2.timestep = 5          #it compresses the data by a factor of 5 in time
 count.type = counter
 count.showfullyflagged = True
 """)
@@ -656,7 +831,9 @@ restore_beam = [0.01, 0.01, 0]
         self.files_created['mwimager.parset'] = os.path.join(parsetdir, 'mwimager.parset')
 
     def find_subbands(self):
-        if self.config['hostname'].startswith('heastro'):
+        datafiles = []
+        if (self.config['hostname'].startswith('heastro') or 
+            self.config['hostname'].startswith('lhn')):
             archivedir = os.path.join(self.config['default-dirs']['archive'],
                                       self.config['dsname'])
             try:
@@ -664,7 +841,6 @@ restore_beam = [0.01, 0.01, 0]
             except OSError:
                 self.logger.warning("Could not find data files; "
                                "creating an empty data file list")
-                datafiles = []
         # we could dump it with str(datafiles), but let's do it nicely
         filename = os.path.join(self.config['default-dirs']['jobs'],
                                self.config['dsname'], 'control', 'ms_to_process.py')
@@ -674,6 +850,10 @@ restore_beam = [0.01, 0.01, 0]
                                       for datafile in datafiles]))
             outfile.write("\n]\n")
             self.files_created['ms_to_process'] = filename
+            if not datafiles:
+                self.logger.info("No data files were found, "
+                                 "and an empty '%s' file has been created",
+                                 filename)
 
     def show_files_created(self):
         self.logger.info("")

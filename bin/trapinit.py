@@ -9,6 +9,7 @@ import socket
 import ConfigParser
 import shutil
 import logging
+import site
 
 
 #logging.basicConfig(level=logging.INFO,
@@ -230,13 +231,17 @@ class Setup(object):
                         'lib': os.path.join(lofim_base, 'lib/python'),
                         'python': os.path.join(lofim_base, 'lib/python2.6/dist-packages'),
                         'bin': os.path.join(lofim_base, 'bin')},
-                'monetdb': {'python': '/opt/monetdb/lib/python2.6/site-packages'},
-                'pyrap': {'python': '/opt/cep/pyrap/lib'},
+                'monetdb': {'python': '/opt/cep/MonetDB/lib/python/site-packages'},
+                'pytz': {'python': '/opt/cep/pythonlibs/lib/python2.6/site-packages'},
+                'pyrap': {'python': '/opt/cep/LofIm/daily/pyrap/lib',
+                          'lib': '/opt/cep/LofIm/daily/pyrap/lib'},
+                'casacore': {'lib': '/opt/cep/LofIm/daily/casacore/lib'},
+                'hdf5': {'lib': '/opt/cep/hdf5/lib'},
                 'casacore': {'lib': '/opt/cep/LofIm/daily/casacore/lib'},
                 'sip': {'recipes': '/opt/cep/pipeline/recipes',
                         'python':
                         '/opt/cep/pipeline/framework/lib/python2.6/site-packages'},
-                'wcslib': {'lib': '/opt/cep/wcslib/builds/wcslib-4.3.3/lib'},
+                'wcslib': {'lib': '/opt/cep/wcslib/lib'},
                 'work': '/data/scratch/%s/trap' % user,
                 'archive': '/data/scratch/%s/archive' % user,
                 'pipeline-runtime': os.path.join(homedir, 'pipeline-runtime'),
@@ -323,12 +328,12 @@ password = %s
                 __import__(module)
             except ImportError, exc:
                 self.logger.error("TKP module %s could not be loaded: %s. "
-                             "Please check and try again", module, exc)
+                                  "Please check and try again", module, exc)
                 if str(exc) == ("libwcs.so.4.3: cannot open shared object "
                                 "file: No such file or directory"):
                     try:
                         self.logger.info(
-                            "You may need to set your LD_LIBRARY_PATH to %s "
+                            "You may need to add %s to your LD_LIBRARY_PATH "
                             "before running this script", 
                             self.config['default-dirs']['wcslib']['lib'])
                     except KeyError:
@@ -337,7 +342,7 @@ password = %s
                                 "file: No such file or directory"):
                     try:
                         self.logger.info(
-                            "You may need to set your LD_LIBRARY_PATH to %s "
+                            "You may need to add %s to your LD_LIBRARY_PATH "
                             "before running this script", 
                             self.config['default-dirs']['casacore']['lib'])
                     except KeyError:
@@ -347,7 +352,7 @@ password = %s
                                 "No such file or directory"):
                     try:
                         self.logger.info(
-                            "You may need to set your LD_LIBRARY_PATH to %s "
+                            "You may need to add %s to your LD_LIBRARY_PATH "
                             "before running this script",
                             self.config['default-dirs']['boost']['lib'])
                     except KeyError:
@@ -356,7 +361,7 @@ password = %s
                                 "No such file or directory"):
                     try:
                         self.logger.info(
-                            "You may need to set your LD_LIBRARY_PATH to %s "
+                            "You may need to add %s to your LD_LIBRARY_PATH "
                             "before running this script",
                             self.config['default-dirs']['pyrap']['lib'])
                     except KeyError:
@@ -365,7 +370,7 @@ password = %s
                                 "No such file or directory"):
                     try:
                         self.logger.info(
-                            "You may need to set your LD_LIBRARY_PATH to %s "
+                            "You may need to add %s to your LD_LIBRARY_PATH "
                             "before running this script",
                             self.config['default-dirs']['hdf5']['lib'])
                     except KeyError:
@@ -412,7 +417,9 @@ password = %s
         except KeyError:
             pass
         try:
-            sys.path.insert(0, dirs['pyrap']['python'])
+            # Argh; stupid egg and pth files!
+            site.addsitedir(dirs['pyrap']['python'])
+            #sys.path.insert(0, dirs['pyrap']['python'])
         except KeyError:
             pass
         #sys.path.append(dirs['lofim']['python'])

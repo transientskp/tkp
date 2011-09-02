@@ -120,11 +120,12 @@ class DataSet(object):
         # Initialize the other data
         if self._dsid is None:
             # Set some defaults; not stored in database yet
-            for key, value in self.COLUMNS.items():
-                setattr(self, key, value)
+            #for key, value in self.COLUMNS.items():
+            #    setattr(self, key, value)
             self._dsinname = self.name = name
-            self.dsid
-            self._set_data(data=data)
+            self.dsid 
+            #self.dsid = dbu.insert_dataset(self.database.connection, self._dsinname)
+            #self._set_data(data=data)
         else:
             self._retrieve_from_database()
 
@@ -233,10 +234,11 @@ WHERE dsid=%s""", (self._rerun, self._dstype, self._process_ts, self._dsinname,
 
         if self._dsid is None:
             try:
-                self.database.cursor.execute(
-                    """SELECT insertDataset(%s)""", (self.name,))
-                self.database.connection.commit()
-                self._dsid = int(self.database.cursor.fetchone()[0])
+                #self.database.cursor.execute(
+                #    """SELECT insertDataset(%s)""", (self.name,))
+                #self._dsid = int(self.database.cursor.fetchone()[0])
+                #self.database.connection.commit()
+                self._dsid = dbu.insert_dataset(self.database.connection, self._dsinname)
             except self.database.Error:
                 logging.warn("Insert DataSet %s failed.", self.name)
                 raise
@@ -322,6 +324,8 @@ class Image(object):
 
         self.dataset = dataset
         self.database = database
+        print "in Image(): self.data =", self.data
+        self.data = data
         if self.dataset:
             if self.dataset.database and not self.database:
                 self.database = self.dataset.database
@@ -329,10 +333,10 @@ class Image(object):
         self.sources = set()
         self._imageid = imageid
         if self._imageid is None:
-            for key, value in self.COLUMNS.items():
-                setattr(self, key, value)
-            self._set_data(data=data)
+            #for key, value in self.COLUMNS.items():
+            #    setattr(self, key, value)
             self.imageid
+            #self._set_data(data=data)
         else:
             self._retrieve_from_database()
 
@@ -350,8 +354,8 @@ class Image(object):
             object.__setattr__(self, name, value)
 
     def __str__(self):
-        return 'Image: "%s". Image ID: %s with %d source.' % (
-            self.name, str(self._dsid), len(self.sources))
+        return 'Image Dataset: "%s". Image ID: %s with %d source.' % (
+            self.dataset.name, str(self._imageid), len(self.sources))
 
     def _set_data(self, data=None):
 
@@ -437,16 +441,15 @@ WHERE imageid=%s""" % (self._imageid,))
     def imageid(self):
         """Add or obtain an imageid to/from the images table"""
 
-        connection = self.database.connection
-        cursor = self.database.cursor
+        #connection = self.database.connection
+        #cursor = self.database.cursor
         if self._imageid is None:
             try:
                 # Insert a default image
-                cursor.execute("SELECT insertImage(%s, %s, %s, %s, %s)",
-                               (self.dataset.dsid, self._freq_eff, self._freq_bw,
-                                self._taustart_ts, self._url))
-                connection.commit()
-                self._imageid = cursor.fetchone()[0]
+                self._imageid = dbu.insert_image(self.database.connection
+                                                ,self.dataset.dsid
+                                                ,self.data
+                                                )
             except self.database.Error:
                 logging.warn("Insertion of Image() failed.")
                 raise

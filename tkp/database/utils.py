@@ -13,6 +13,52 @@ from tkp.sourcefinder.extract import Detection
 
 DERUITER_R = config['source_association']['deruiter_radius']
 
+def insert_dataset(conn, description):
+    """Insert dataset with discription as given by argument.
+    DB function insertDataset() sets default values.
+    """
+
+    newdsid = None
+    try:
+        cursor = conn.cursor()
+        query = """\
+        SELECT insertDataset(%s)
+        """
+        cursor.execute(query, (description,))
+        newdsid = cursor.fetchone()[0]
+        conn.commit()
+    except db.Error, e:
+        logging.warn("Failed on query: %s." % query)
+        raise
+    finally:
+        conn.cursor().close()
+    return newdsid
+
+def insert_image(conn, dsid, data):
+    """Insert an image for a given dataset with the column values
+    set in data discriptor
+    """
+
+    newimgid = None
+    try:
+        cursor = conn.cursor()
+        query = """\
+        SELECT insertImage(%s, %s, %s, %s, %s)
+        """
+        cursor.execute(query, (dsid
+                              ,data.get('freq_eff')
+                              ,data.get('freq_bw')
+                              ,data.get('taustart_ts')
+                              ,data.get('url')
+                              ))
+        newimgid = cursor.fetchone()[0]
+        conn.commit()
+    except db.Error, e:
+        logging.warn("Failed on query: %s." % query)
+        raise
+    finally:
+        cursor.close()
+    return newimgid
 
 def load_LSM(ira_min, ira_max, idecl_min, idecl_max, cn1, cn2, cn3, conn):
     raise NotImplementedError

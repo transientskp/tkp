@@ -324,7 +324,6 @@ class Image(object):
 
         self.dataset = dataset
         self.database = database
-        print "in Image(): self.data =", self.data
         self.data = data
         if self.dataset:
             if self.dataset.database and not self.database:

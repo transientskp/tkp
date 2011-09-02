@@ -15,11 +15,10 @@ db_dbase = "grb"
 db_user = "grb"
 db_passwd = "grb"
 
-basedir = '/home/scheers/maps/grb030329/pbcor'
+basedir = '/home/bscheers/maps/grb030329/pbcor'
 imagesdir = basedir + '/fits'
 
 db = database.DataBase(name=db_dbase, user=db_user, password=db_passwd)
-print "\nResults will be stored in: ", db
 
 #logtime = time.strftime("%Y%m%d-%H%M")
 #logfile = basedir + '/log/MonetDB_' + db_dbase + '_' + logtime + '.log'
@@ -38,9 +37,9 @@ try:
     else:
         print "LSM NOT Loaded"
 
-    description = 'TRAPPED:  WSRT multifrequency GRB030329'
+    description = 'TRAPPED: WSRT multifrequency GRB030329'
     dataset = ds.DataSet(description, database=db)
-    print "Dataset:", dataset
+    print dataset
 
     i = 0
     files = os.listdir(imagesdir)
@@ -52,7 +51,8 @@ try:
                 print "\ni: ", i, ", file: ", file
                 #my_fitsfile = accessors.FitsFile(imagesdir + '/' + file, beam=(2e-2,2e-2,0))
                 my_fitsfile = accessors.FitsFile(imagesdir + '/' + file)
-                print "my_fitsfile:", my_fitsfile.obstime
+                print "my_fitsfile.obstime:", my_fitsfile.obstime
+                print "my_fitsfile.freqeff:", my_fitsfile.freqeff
                 #my_image = image.ImageData(my_fitsfile.data, my_fitsfile.beam, my_fitsfile.wcs)
                 #my_image = accessors.sourcefinder_image_from_accessor(my_fitsfile)
                 #print "my_image: ", my_image

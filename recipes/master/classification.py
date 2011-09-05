@@ -145,7 +145,7 @@ class classification(BaseRecipe, RemoteCommandRecipeMixIn):
                     t_start = datetime.datetime(1970, 1, 1)
                 self.logger.info("%d, %s, %s, %s", transient.srcid, str(transient.siglevel), str(transient.timezero), t_start)
                 dbutils.store_transient_source(
-                    database, transient.srcid, transient.siglevel, t_start)
+                    database.connection, transient.srcid, transient.siglevel, t_start)
         if self.error.isSet():
             return 1
         else:

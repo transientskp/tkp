@@ -76,11 +76,6 @@ class DataBase(object):
     def connect(self):
         """Connect to the database"""
         
-        print "self.host =", self.host
-        print "self.user =", self.user
-        print "self.password =", self.password
-        print "self.name =", self.name
-        print "self.port =", self.port
         self.connection = monetdb.sql.connect(
             hostname=self.host, username=self.user, password=self.password,
             database=self.name, port=self.port)

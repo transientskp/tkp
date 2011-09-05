@@ -92,7 +92,7 @@ def createRegionByImage(
                    UNION 
                   SELECT 'fk5' AS line 
                    UNION 
-                  SELECT CONCAT('box(', CONCAT(ra, CONCAT(',', CONCAT(decl, CONCAT(',', CONCAT(ra_err/1800, CONCAT(',', CONCAT(decl_err/1800, CONCAT(') #color=', CONCAT(%s, CONCAT(' text={', CONCAT(xtrsrcid, '}')))))))))))) AS line
+                  SELECT CONCAT('box(', CONCAT(ra, CONCAT(',', CONCAT(decl, CONCAT(',', CONCAT(ra_err/2, CONCAT('"', CONCAT(',', CONCAT(decl_err/2, CONCAT('"', CONCAT(',', CONCAT(0, CONCAT(') #color=', CONCAT(%s, CONCAT(' text={', CONCAT(xtrsrcid, '}')))))))))))))))) AS line
                     FROM extractedsources 
                    WHERE image_id = %s 
                  ) t 

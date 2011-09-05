@@ -97,7 +97,7 @@ def ask_and_create_directory(dir, message=None, logger=None):
         if ask("Create directory") == 'y':
             try:
                 os.makedirs(path)
-            except OSerror, exc:
+            except OSError, exc:
                 logger.error("Failed to create directory %s: %s",
                               path, str(exc))
                 raise ConfigError(
@@ -280,7 +280,7 @@ name = %s
 user = %s
 password = %s
 """ % (self.config['database']['host'],
-       self.config['database']['hostname'],       
+       self.config['database']['name'],       
        self.config['database']['user'],
        self.config['database']['password']))
             self.files_created['tkpconfig'] = path
@@ -296,7 +296,7 @@ password = %s
                 # Could use the config creation method in tkp.config,
                 # but that may create a config file that could confuse the
                 # user, since it's abundant in its options
-                create_minimal_tkp_configfile(path, self.config)
+                self.create_minimal_tkp_configfile(path)
         tkpconfig = ConfigParser.SafeConfigParser()
         tkpconfig.read(os.path.expanduser('~/.tkp.cfg'))
         if not tkpconfig.has_section('database'):
@@ -600,7 +600,7 @@ python ${CONTROLDIR}/trap-with-trip.py -d --task-file=${CONTROLDIR}/tasks.cfg -j
        self.config['dsname'], self.config['sipcfg']))
         self.files_created['runtrap.sh'] = os.path.join(controldir, 'runtrap.sh')
         # tasks.cfg file
-        datamapper_recipe = ('datamapper_storage' 
+        datamapper_recipe = ('datamapper_heastro' 
                              if self.config['hostname'].startswith('heastro')
                              else 'datamapper')
         with open(os.path.join(controldir, 'tasks.cfg'), 'w') as outfile:

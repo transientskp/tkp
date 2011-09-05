@@ -332,6 +332,14 @@ class Image(object):
         self.sources = set()
         self._imageid = imageid
         if self._imageid is None:
+            if self.data is None:
+                raise ValueError(
+                    "can't create an image with empty header information")
+            keywords = set(['freq_eff', 'freq_bw', 'taustart_ts', 'url'])
+            data_keys = set(self.data.keys())
+            if not keywords <  data_keys:
+                raise KeyError("missing keyword(s) in data dictionary: %s" %
+                               (tuple(data_keys),))
             #for key, value in self.COLUMNS.items():
             #    setattr(self, key, value)
             self.imageid
@@ -339,10 +347,12 @@ class Image(object):
         else:
             self._retrieve_from_database()
 
-    def __getattr__(self, name):
-        if name in self.COLUMNS.keys():
-            return getattr(self, '_' + name)
-
+    def __getattribute__(self, name):
+        if name in object.__getattribute__(self, 'COLUMNS').keys():
+            return object.__getattribute__(self, '_' + name)
+        else:
+            return object.__getattribute__(self, name)
+        
     def __setattr__(self, name, value):
         if name in self.COLUMNS.keys():
             object.__setattr__(self, '_' + name, value)
@@ -445,9 +455,12 @@ WHERE imageid=%s""" % (self._imageid,))
         if self._imageid is None:
             try:
                 # Insert a default image
-                self._imageid = dbu.insert_image(self.database.connection
-                                                ,self.dataset.dsid
-                                                ,self.data
+                self._imageid = dbu.insert_image(self.database.connection,
+                                                 self.dataset.dsid,
+                                                 self.data['freq_eff'],
+                                                 self.data['freq_bw'],
+                                                 self.data['taustart_ts'],
+                                                 self.data['url']
                                                 )
             except self.database.Error:
                 logging.warn("Insertion of Image() failed.")

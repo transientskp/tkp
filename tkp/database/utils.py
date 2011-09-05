@@ -34,7 +34,7 @@ def insert_dataset(conn, description):
         conn.cursor().close()
     return newdsid
 
-def insert_image(conn, dsid, data):
+def insert_image(conn, dsid, freq_eff, freq_bw, taustart_ts, url):
     """Insert an image for a given dataset with the column values
     set in data discriptor
     """
@@ -46,10 +46,10 @@ def insert_image(conn, dsid, data):
         SELECT insertImage(%s, %s, %s, %s, %s)
         """
         cursor.execute(query, (dsid
-                              ,data.get('freq_eff')
-                              ,data.get('freq_bw')
-                              ,data.get('taustart_ts')
-                              ,data.get('url')
+                              ,freq_eff
+                              ,freq_bw
+                              ,taustart_ts
+                              ,url
                               ))
         newimgid = cursor.fetchone()[0]
         conn.commit()
@@ -1094,3 +1094,22 @@ def detect_variable_sources(conn, dsid, V_lim, eta_lim):
 
 def associate_catalogued_sources_in_area(conn, ra, dec, radius, deRuiter_r=DERUITER_R):
     pass
+
+
+def store_transient_source(conn, srcid, siglevel, t_start):
+    cursor = conn.cursor()
+    try:
+        query = """\
+INSERT INTO transients
+(xtrsrc_id, siglevel, t_start)
+  SELECT rc.xtrsrc_id, '%s', '%s' FROM runningcatalog rc
+  WHERE rc.xtrsrc_id = %%s
+  AND rc.xtrsrc_id NOT IN
+  (SELECT xtrsrc_id FROM transients)""" % (str(siglevel), str(t_start))
+        cursor.execute(query, (srcid,))
+        conn.commit()
+    except db.Error:
+        logging.warn("Query %s failed", query)
+        raise
+    finally:
+        cursor.close()

@@ -8,7 +8,10 @@ import os
 # Other external libraries
 from datetime import datetime
 # Local tkp_lib functionality
-import tkp.database.database as db
+#import tkp.database.database as db
+import monetdb
+import monetdb.sql
+
 
 HDF5PREAMBLE = """# Region file format: DS9 version 4.0
 # Filename: %(filename)s
@@ -66,59 +69,44 @@ def createRegionByImage(
 ):
     """
     Create a region file for the specified image.
+    Be aware that the directory to which the region file is written
+    is ugo+xwr
     """
     try:
-        outfile = dirname + datetime.now().strftime('%Y%m%d-%H%M') + '_img' + str(image_id) + '.reg'  
+        outfile = dirname + '/' + datetime.now().strftime('%Y%m%d-%H%M') + '_img' + str(image_id) + '.reg'  
         if os.path.isfile(outfile):
             os.remove(outfile)
-        file = open(outfile,'w')
-        file.close()
-        os.chmod(outfile,0777)
-        if (db.dbtype == "MySQL"):
-            cursor = conn.cursor()
-            cursor.execute("SELECT '# Region file format: DS9 version 4.0' " + \
-                           " UNION " + \
-                           "SELECT CONCAT('# Filename: ', url) " + \
-                           "  FROM images " + \
-                           " WHERE imageid = %s " + \
-                           " UNION " + \
-                           "SELECT CONCAT('global color=', %s , ' font=\"helvetica 10 normal\" select=1 highlite=1 edit=1 move=1 delete=1 include=1 fixed=0 source') " + \
-                           " UNION " + \
-                           "SELECT 'fk5' " + \
-                           " UNION " + \
-                           "SELECT CONCAT('box(', ra, ',', decl, ',', ra_err/1800, ',', decl_err/1800, ') #color=\'%s\', text={', xtrsrcid,'}') " + \
-                           "  INTO OUTFILE %s " + \
-                           "FIELDS TERMINATED BY ';' " + \
-                           "LINES TERMINATED BY '\\n' " + \
-                           "  FROM extractedsources " + \
-                           " WHERE image_id = %s " , (image_id, icolor, icolor, outfile, image_id))
-            cursor.close()
-            return outfile
-        else:
-            cursor = conn.cursor()
-            cursor.execute("COPY " + \
-                           "SELECT t.line " + \
-                           "  FROM (SELECT '# Region file format: DS9 version 4.0' AS line " + \
-                           "         UNION " + \
-                           "         SELECT CONCAT('# Filename: ', url) AS line " + \
-                           "           FROM images " + \
-                           "          WHERE imageid = %s " + \
-                           "          UNION " + \
-                           "         SELECT CONCAT('global color=', CONCAT(%s , ' font=\"helvetica 10 normal\" select=1 highlite=1 edit=1 move=1 delete=1 include=1 fixed=0 source')) AS line " + \
-                           "          UNION " + \
-                           "         SELECT 'fk5' AS line " + \
-                           "          UNION " + \
-                           "         SELECT CONCAT('box(', CONCAT(ra, CONCAT(',', CONCAT(decl, CONCAT(',', CONCAT(ra_err/1800, CONCAT(',', CONCAT(decl_err/1800, CONCAT(') #color=', CONCAT(%s, CONCAT(' text={', CONCAT(xtrsrcid, '}')))))))))))) AS line" + \
-                           "           FROM extractedsources " + \
-                           "          WHERE image_id = %s " + \
-                           "       ) t " + \
-                           "  INTO %s " + \
-                           " DELIMITERS ';' " + \
-                           "          ,'\\n' " + \
-                           "          ,'' ", (image_id, icolor, icolor, image_id, outfile))
-            cursor.close()
-            return outfile
-    except db.Error, e:
+        cursor = conn.cursor()
+        # region format
+        # box(a,b,c,d,e)
+        #c&d in arcsec c",d" and e in angle degrees
+        query = """\
+          SELECT t.line 
+            FROM (SELECT '# Region file format: DS9 version 4.0' AS line 
+                   UNION
+                  SELECT CONCAT('# Filename: ', url) AS line                                       
+                    FROM images 
+                   WHERE imageid = %s 
+                   UNION 
+                  SELECT CONCAT('global color=', CONCAT(%s , ' font=\helvetica 10 normal\ select=1 highlite=1 dash=0 edit=1 move=1 delete=1 include=1 fixed=0 source=1')) AS line 
+                   UNION 
+                  SELECT 'fk5' AS line 
+                   UNION 
+                  SELECT CONCAT('box(', CONCAT(ra, CONCAT(',', CONCAT(decl, CONCAT(',', CONCAT(ra_err/1800, CONCAT(',', CONCAT(decl_err/1800, CONCAT(') #color=', CONCAT(%s, CONCAT(' text={', CONCAT(xtrsrcid, '}')))))))))))) AS line
+                    FROM extractedsources 
+                   WHERE image_id = %s 
+                 ) t 
+        """
+        cursor.execute(query, (image_id, icolor, icolor, image_id))
+        y = cursor.fetchall()
+        regfile = open(outfile,'w')
+        for i in range(len(y)):
+            regfile.write(str(y[i][0]) + '\n')
+        regfile.close()
+            
+        cursor.close()
+        return outfile
+    except monetdb.monetdb_exceptions.Error, e:
         logger.warn("Creating region file for image %s failed: " % (str(image_id)))
         raise
     

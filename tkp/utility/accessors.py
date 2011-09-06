@@ -227,10 +227,10 @@ class FitsFile(DataAccessor):
         try:
             #TODO WHAT happened here?
             # Check for correct suffix, 3 was used as well
-            self.freqeff = hdulist[0].header['crval3']
-            self.freqbw = hdulist[0].header['cdelt3']
-            #self.freqeff = hdulist[0].header['crval4']
-            #self.freqbw = hdulist[0].header['cdelt4']
+            #self.freqeff = hdulist[0].header['crval3']
+            #self.freqbw = hdulist[0].header['cdelt3']
+            self.freqeff = hdulist[0].header['crval4']
+            self.freqbw = hdulist[0].header['cdelt4']
         except KeyError:
             logging.warn("Frequency not specified in FITS")
             raise
@@ -381,7 +381,7 @@ def dbimage_from_accessor(dataset, image):
     data = {'tau_time': image.inttime,
             'freq_eff': image.freqeff,
             'freq_bw': image.freqbw,
-            'taustart_ts': image.obstime.strftime("%Y-%m-%d-%H:%M:%S.%3f"),
+            'taustart_ts': image.obstime.strftime("%Y-%m-%d-%H:%M:%S.%f"),
             'url': image.filename,
             'band': 0,    # not yet clearly defined
             }

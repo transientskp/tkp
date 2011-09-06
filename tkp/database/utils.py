@@ -1113,3 +1113,49 @@ INSERT INTO transients
         raise
     finally:
         cursor.close()
+
+def concurrency_test_fixedalpha(conn):
+    """Unit test function to test concuurency
+    """
+
+    theta = 0.025
+    decl = 80.
+    alpha = None
+    try:
+        cursor = conn.cursor()
+        query = """\
+        SELECT alpha(%s, %s)
+        """
+        cursor.execute(query, (theta, decl))
+        alpha = cursor.fetchone()[0]
+        conn.commit()
+    except db.Error, e:
+        logging.warn("Failed on query: %s." % query)
+        raise
+    finally:
+        conn.cursor().close()
+    return alpha
+
+def concurrency_test_randomalpha(conn):
+    """Unit test function to test concuurency
+    """
+
+    import random
+    theta = 0.025
+    decl = random.random() * 90
+    alpha = None
+    try:
+        cursor = conn.cursor()
+        query = """\
+        SELECT alpha(%s, %s)
+        """
+        cursor.execute(query, (theta, decl))
+        alpha = cursor.fetchone()[0]
+        conn.commit()
+    except db.Error, e:
+        logging.warn("Failed on query: %s." % query)
+        raise
+    finally:
+        conn.cursor().close()
+    return alpha
+

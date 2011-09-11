@@ -3,8 +3,8 @@
 #import tkp.sourcefinder.image as imag
 import sys
 import os
-
-
+import sys
+from tatl import tatl
 
 import tkp.utility.accessors as access
 import tkp.sourcefinder.image as imag
@@ -12,15 +12,24 @@ import tkp.sourcefinder.utils as util
 from  optparse  import OptionParser # deprecated in Python2.7 
 
 
-writeNoiseMaps = True
-
+writeNoiseMaps = False
+fdr = False
 parser = OptionParser()
-parser.add_option("-n", help= "write noise files", action= "store_true", dest= "writeNoiseMaps")
-#code expects a single arg  - a full path to the fits files to be processed
+parser.add_option("-n", help= "write noise files", action= "store_true", dest= "writeNoiseMaps", default=False)
+parser.add_option("-d", help= "Enable Deblend", action= "store_true", dest= "deblend", default=False)
+parser.add_option("-f", help= "Use false discovery algorithm", action= "store_true", dest= "fdr", default=False )
+(option, args) = parser.parse_args()
+if option.writeNoiseMaps:
+    writeNoiseMaps = True
+if option.deblend:
+    print "Please set this option in your config file"
+if option.fdr:
+    fdr = True
 fp = sys.argv[1:]
 
 if   not fp:
     print "Please enter file path to directory of files(.fits) for processing"
+    sys.exit()
 else:
      fpt = fp[0]
 try:
@@ -39,7 +48,10 @@ for fname in res:
                 my_fitsfile = access.FitsFile(fpath)
                 print "processing ", fpath, " ", my_fitsfile # may be removed ...marks progress
                 my_image = access.sourcefinder_image_from_accessor(my_fitsfile)
-                sextract_results = my_image.extract()
+                if fdr :
+                    sextract_results = my_image.fd_extract()
+                else:
+                    sextract_results = my_image.extract()
                 fnm= os.path.splitext(fpath)[0]
                 name = os.path.split(fnm)[1]
                 filepath = fnm +".reg"
@@ -54,7 +66,7 @@ for fname in res:
                 ds9file.close();
  
                 if writeNoiseMaps:
-                    derived  = os.path.join(fp, "deriveFits")
+                    derived  = os.path.join(fpt, "deriveFits")
                     if not os.path.isdir(derived) :
                         os.makedirs(derived)
                     npath = os.path.join(derived, name)

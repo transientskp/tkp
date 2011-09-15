@@ -36,7 +36,7 @@ For details of all algorithms implemented, the reader is referred to the PhD
 thesis by Spreeuw (University of Amsterdam, 2010,
 <http://dare.uva.nl/en/record/340633>).
 
-It is worth emphasising that there are a number of differences compared to
+It is worth emphasizing that there are a number of differences compared to
 projects such as, for example, BDSM. In particular, the pyse code is made
 available in the form or Python modules, primarily designed for integration
 into a pipeline or other script, rather than for use as an interactive
@@ -79,7 +79,7 @@ option:
 
 
 The --detection argument specifies the multiple of the RMS noise which is
-requried for detection; ie, setting --detection=5 is equivalent to requiring
+required for detection; ie, setting --detection=5 is equivalent to requiring
 pixels used for detecting sources to be at 5 sigma.
 
 The --analysis argument specifies the significance level used when performing
@@ -114,7 +114,7 @@ The Gaussian fitted to sources is defined as:
 
 In other words:
 
-- x and y are the cartesian coordinates of the centre of the Gaussian;
+- x and y are the Cartesian coordinates of the centre of the Gaussian;
 
 - peak is the value at the centre of the Gaussian;
 

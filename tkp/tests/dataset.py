@@ -75,17 +75,25 @@ class TestDataSet(unittest.TestCase):
         import tkp.database.dataset
         import tkp.database.database
         import monetdb
+        default_data = {
+            'freq_eff': 80e6,
+            'freq_bw': 1e6,
+            'taustart_ts': datetime.datetime(1999, 9, 9),
+            'url': '/path/to/image',
+            'tau_time': 0,
+            }
         dataset1 = tkp.database.dataset.DataSet(
             'dataset with images', database=self.database)
+
         self.assertEqual(dataset1.images, set())
         image1 = tkp.database.dataset.Image(
-            dataset=dataset1)
+            dataset=dataset1, data=default_data)
         # Images are automatically added to their dataset
         self.assertEqual(dataset1.images, set([image1]))
         self.assertEqual(image1.tau_time, 0)
-        self.assertAlmostEqual(image1.freq_eff, 0.)
+        self.assertAlmostEqual(image1.freq_eff, 80e6)
         image2 = tkp.database.dataset.Image(
-            dataset=dataset1)
+            dataset=dataset1, data=default_data)
         self.assertEqual(dataset1.images, set([image1, image2]))
         dataset2 = tkp.database.dataset.DataSet(
             database=self.database, dsid=dataset1.dsid)
@@ -101,7 +109,10 @@ class TestDataSet(unittest.TestCase):
         import monetdb
         dataset1 = tkp.database.dataset.DataSet(
             'dataset with changing images', database=self.database)
-        data = dict(tau_time=1000, freq_eff=80e6)
+        data = dict(tau_time=1000, freq_eff=80e6,
+                    url='/',
+                    taustart_ts=datetime.datetime(2001, 1, 1),
+                    freq_bw=1e6)
         image1 = tkp.database.dataset.Image(
             dataset=dataset1, data=data)
         self.assertAlmostEqual(image1.tau_time, 1000.)
@@ -126,10 +137,10 @@ class TestDataSet(unittest.TestCase):
         image1.update(tau_time=1000., freq_eff=90e6)
         self.assertAlmostEqual(image1.tau_time, 1000)
         self.assertAlmostEqual(image1.freq_eff, 90e6)
-        self.assertEqual(image1.taustart_ts, datetime.datetime(1970, 1, 1))
-        self.assertEqual(image2.taustart_ts, datetime.datetime(1970, 1, 1))
+        self.assertEqual(image1.taustart_ts, datetime.datetime(2001, 1, 1))
+        self.assertEqual(image2.taustart_ts, datetime.datetime(2001, 1, 1))
         image2.update(taustart_ts=datetime.datetime(2010, 3, 3))
-        self.assertEqual(image1.taustart_ts, datetime.datetime(1970, 1, 1))
+        self.assertEqual(image1.taustart_ts, datetime.datetime(2001, 1, 1))
         self.assertEqual(image2.taustart_ts, datetime.datetime(2010, 3, 3))
         self.assertAlmostEqual(image2.tau_time, 1000)
         self.assertAlmostEqual(image2.freq_eff, 90e6)
@@ -142,13 +153,20 @@ class TestDataSet(unittest.TestCase):
         import tkp.database.dataset
         import tkp.database.database
         import monetdb
+        default_data = {
+            'freq_eff': 80e6,
+            'freq_bw': 1e6,
+            'taustart_ts': datetime.datetime(1999, 9, 9),
+            'url': '/path/to/image',
+            'tau_time': 0,
+                }
         dataset1 = tkp.database.dataset.DataSet(
             'dataset with images', database=self.database)
         self.assertEqual(dataset1.images, set())
         image1 = tkp.database.dataset.Image(
-            dataset=dataset1)
+            dataset=dataset1, data=default_data)
         image2 = tkp.database.dataset.Image(
-            dataset=dataset1)
+            dataset=dataset1, data=default_data)
         data = {'ra': 123.123, 'decl': 23.23,
                 'ra_err': 0.1, 'decl_err': 0.1}
         source1 = tkp.database.dataset.Source(
@@ -189,13 +207,20 @@ class TestDataSet(unittest.TestCase):
         import tkp.database.dataset
         import tkp.database.database
         import monetdb
+        default_data = {
+            'freq_eff': 80e6,
+            'freq_bw': 1e6,
+            'taustart_ts': datetime.datetime(1999, 9, 9),
+            'url': '/path/to/image',
+            'tau_time': 0,
+                }
         dataset1 = tkp.database.dataset.DataSet(
             'dataset with images', database=self.database)
         self.assertEqual(dataset1.images, set())
         image1 = tkp.database.dataset.Image(
-            dataset=dataset1)
+            dataset=dataset1, data=default_data)
         image2 = tkp.database.dataset.Image(
-            dataset=dataset1)
+            dataset=dataset1, data=default_data)
         data = {'ra': 123.123, 'decl': 23.23,
                 'ra_err': 0.1, 'decl_err': 0.1}
         source1 = tkp.database.dataset.Source(
@@ -242,19 +267,31 @@ class TestDataSet(unittest.TestCase):
             tkp.database.dataset.Image(
                 dataset=dataset,
                 data={'taustart_ts': datetime.datetime(2010, 3, 3),
-                      'tau_time': 3600}),
+                      'tau_time': 3600,
+                      'url': '/',
+                      'freq_eff': 80e6,
+                      'freq_bw': 1e6}),
             tkp.database.dataset.Image(
                 dataset=dataset,
                 data={'taustart_ts': datetime.datetime(2010, 3, 4),
-                      'tau_time': 3600}),
+                      'tau_time': 3600,
+                      'url': '/',
+                      'freq_eff': 80e6,
+                      'freq_bw': 1e6}),
             tkp.database.dataset.Image(
                 dataset=dataset,
                 data={'taustart_ts': datetime.datetime(2010, 3, 5),
-                      'tau_time': 3600}),
+                      'tau_time': 3600,
+                      'url': '/',
+                      'freq_eff': 80e6,
+                      'freq_bw': 1e6}),
             tkp.database.dataset.Image(
                 dataset=dataset,
                 data={'taustart_ts': datetime.datetime(2010, 3, 6),
-                      'tau_time': 3600}),
+                      'tau_time': 3600,
+                      'url': '/',
+                      'freq_eff': 80e6,
+                      'freq_bw': 1e6}),
             ]
         # 3 sources per image, with different coordinates & flux
         data_list = [dict(ra=111.111*i, decl=11.11*i,

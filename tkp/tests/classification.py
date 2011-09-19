@@ -5,7 +5,7 @@ except AttributeError:
     import unittest2 as unittest
 from tkp.classification.manual.classification import SlowTransient
 from tkp.classification.manual.classification import GRBPrompt
-from tkp.classification.manual.classification import MainBranch
+from tkp.classification.manual.classification import Main
 from tkp.classification.manual.classification import SpectralBranch
 from tkp.classification.manual.classifier import Classifier
 from tkp.classification.manual.transient import Transient
@@ -41,11 +41,11 @@ class TestManual(unittest.TestCase):
     def test_all(self):
         """Test for all defined classifications"""
         
-        classifier = Classifier(self.transient1, MainBranch)
+        classifier = Classifier(self.transient1)  # Use default 'Main' branch
         self.assertEqual(classifier.classify(),
                     [('Slow transient', 0.), ('Fast transient', 1.8), ('GRB prompt emission', 1.2),
                      ('Any transient that can be associated with a database', 1.0)])
-        classifier = Classifier(self.transient2, MainBranch)
+        classifier = Classifier(self.transient2)  # Use default 'Main' branch
         self.assertEqual(classifier.classify(),
                     [('Slow transient', 1.8), ('Fast transient', 0.), ('GRB prompt emission', 0),
                      ('Any transient that can be associated with a database', 0.)])

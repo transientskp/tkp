@@ -1,0 +1,9 @@
+{% extends "!layout.html" %}
+{% set logo = "ackbar.png" %}
+{%- block sidebarlogo %}
+  {%- if logo %}
+    <p class="logo"><a href="{{ pathto(master_doc) }}">
+      <img class="logo" src="{{ pathto('_static/' + logo, 1) }}" alt="Ackbar" title="It's a TRAP!" />
+    </a></p>
+  {%- endif %}
+{%- endblock %}

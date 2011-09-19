@@ -24,6 +24,7 @@ The actual classification work is done here, in three parts:
 from .transient import Transient
 import os
 import  itertools
+import imp
 
 
 class Branch(object):
@@ -93,30 +94,59 @@ class Classifier(object):
     """
     The Classifier object is your starting point for classification.
 
-    Feed it a Transient object and a starting point ('base'), which can
-    either be a ClassifiedTransient subclass, or a Branch subclass. It will
-    then follow the logic stream from the base to classify your transient.
+    Feed it a Transient object and optionally a starting point
+    ('base'), which should be a Branch subclass. It will then follow
+    the logic stream from the base to classify your transient.
     """
 
-    def __init__(self, transient, base, *args, **kwargs):
+    def __init__(self, transient, base=None, *args, **kwargs):
         """Initialize the classifier with a transient and a classification
         starting point
 
-        :argument transient: the transient to be classified
-        :type transient: Transient
-        :argument base: The starting class from which the
-            classification logic follows.  The base class normally
-            calls several other classes that classify various
-            transient.
-        :type base: (sub)class of Branch
+        Args:
+
+            transient (Transient): the transient to be classified
+
+        Kwargs:
+
+            base (Branch or None): The starting class from which the
+                classification logic follows.  The base class normally
+                calls several other classes that classify various
+                transient.
+
+                branch can be a Branch or a subclass thereof, or
+                None. In the latter case, the Classifier will try and
+                important a Main branch from a classification
+                module. This module can exist on the user's path in
+                the .transientskp directory (so as
+                '~/.transientkp/classification.py') or, for fallback,
+                in the tkp.classification.manual.classification
+                module.
+
+        Raises:
+
+            ImportError, in case the Main branch can't be found.
+            
         """
 
         self.transient = transient
-        self.base = base
+        self.base = self._get_base(base)
         self.classes = []
         self.results = []
         super(Classifier, self).__init__(*args, **kwargs)
 
+    def _get_base(self, base):
+        if base is not None:
+            return base
+        try:
+            f, p, d = imp.find_module('classification', [os.path.join(
+                os.path.expanduser('~/.transientskp'))])
+            m = imp.load_module('classification', f, p, d)
+        except ImportError:
+            # Fallback: default classification scheme
+            import tkp.classification.manual.classification as m
+        return m.Main
+        
     def classify(self):
         """Start the actual classification
 

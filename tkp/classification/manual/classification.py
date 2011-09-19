@@ -1,4 +1,4 @@
-from .classifier import ClassifiedTransient, Branch
+from tkp.classification.manual.classifier import ClassifiedTransient, Branch
 
 
 """
@@ -119,7 +119,7 @@ class SpectralBranch(Branch):
         return []
 
 
-class MainBranch(Branch):
+class Main(Branch):
 
     """Starting point for manual classification tree"""
     

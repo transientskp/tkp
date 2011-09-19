@@ -337,13 +337,17 @@ class Image(object):
                     "can't create an image with empty header information")
             keywords = set(['freq_eff', 'freq_bw', 'taustart_ts', 'url'])
             data_keys = set(self.data.keys())
-            if not keywords <  data_keys:
+            if not keywords <= data_keys:
                 raise KeyError("missing keyword(s) in data dictionary: %s" %
-                               (tuple(data_keys),))
+                               (tuple(keywords - data_keys),))
             #for key, value in self.COLUMNS.items():
             #    setattr(self, key, value)
             self.imageid
-            #self._set_data(data=data)
+            # Set remaining values, if any
+            tmpdata = dict(self.data)
+            for key in (data_keys & keywords):
+                del tmpdata[key]
+            self.update(**tmpdata)
         else:
             self._retrieve_from_database()
 

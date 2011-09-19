@@ -3,7 +3,9 @@
 The config module stores the default values for various tunable parameters
 in the TKP Python package.
 
-The module also tries to read a '.tkp.cfg' file in the users home directory,
+The module also tries to read (in order)
+- a .transientskp/tkp.cfg file in the users home directory
+- a '.tkp.cfg' file in the users home directory,
 where parameters can be overriden (such as the database login details).
 
 There are three sections in the configuration:
@@ -18,15 +20,16 @@ The parameters are stored in a dictionary, with each section as keyword.
 Each value in itself is another dictionary, with (option, value) pairs.
 
 The config module can be imported by the various subpackages of the
-TKP package.  Since the '.tkp.cfg' file is only read on first import,
-after which the variable HAS_READ is set to False, there are no multiple
-reads of this file.
+TKP package.  Since the '.transientskp/tkp.cfg' or '.tkp.cfg' file is
+only read on first import, after which the variable HAS_READ is set to
+False, there are no multiple reads of this file.
 
 """
 
-
+from __future__ import with_statement
 import ConfigParser
 import os
+import os.path
 import logging
 
 
@@ -40,6 +43,9 @@ To do:
 - (optional) use class instead of dictionary to store options
 
 """
+
+
+TKPCFGFILE = ('~/.transientskp/tkp.cfg', '~/.tkp.cfg')
 
 
 # Avoid eval
@@ -137,25 +143,32 @@ def set_default_config():
     return config
 
 
-def write_config(config=None, filename="~/.tkp.cfg"):
+def write_config(config=None, filename=TKPCFGFILE[0]):
     """
     Dump configuration to file.
 
     Convenient for generating an initial template configuration file for the
     user to edit to suit their requirements.
     """
-    cfg_file = open(os.path.expanduser(filename), "w")
     if not config:
         config=set_default_config()
-    config.write(cfg_file)
-    cfg_file.close()
+    filename = os.path.expanduser(filename)
+    try:
+        os.makedirs(os.path.dirname(filename))
+    except OSError:   # directory already exists, presumably
+        pass
+    with open(filename, "w") as cfg_file:
+        config.write(cfg_file)
 
 
 def read_config(default_config):
     """Attempt to read a user configuration file"""
 
     config = ConfigParser.SafeConfigParser()
-    config.read(os.path.expanduser('~/.tkp.cfg'))
+    # Don't try and read multiple files (which can be done with
+    # ConfigParser.read()); instead, if one is missing, try the other:
+    if not config.read(os.path.expanduser(TKPCFGFILE[0])):
+        config.read(os.path.expanduser(TKPCFGFILE[1]))
 
     # Check for unknown sections or options
     for section in config.sections():

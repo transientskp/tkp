@@ -225,15 +225,16 @@ class FitsFile(DataAccessor):
         # These are maintained for legacy reasons -- better to access by
         # header name through __getattr__?
         try:
-            #TODO WHAT happened here?
-            # Check for correct suffix, 3 was used as well
-            #self.freqeff = hdulist[0].header['crval3']
-            #self.freqbw = hdulist[0].header['cdelt3']
             self.freqeff = hdulist[0].header['crval4']
             self.freqbw = hdulist[0].header['cdelt4']
         except KeyError:
-            logging.warn("Frequency not specified in FITS")
-            raise
+            try:
+                # Try third WCS coordinates instead
+                self.freqeff = hdulist[0].header['crval3']
+                self.freqbw = hdulist[0].header['cdelt3']
+            except KeyError:
+                logging.warn("Frequency not specified in FITS")
+                raise
 
     def __getstate__(self):
         return {

@@ -41,10 +41,12 @@ BEGIN
     SELECT NEXT VALUE FOR seq_frequencybands INTO ifreqbandid;
     INSERT INTO frequencybands
       (freqbandid
+      ,freq_central
       ,freq_low
       ,freq_high
       ) VALUES
       (ifreqbandid
+      ,ifreq_eff
       ,ifreq_eff - (ibandwidth / 2)
       ,ifreq_eff + (ibandwidth / 2)
       )

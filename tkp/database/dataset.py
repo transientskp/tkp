@@ -516,6 +516,7 @@ WHERE imageid=%s""" % (self._imageid,))
                 tkp.config module
             
         """
+        print 'deRuiter_r =', deRuiter_r
         dbu.associate_extracted_sources(
             self.database.connection, self.imageid, deRuiter_r)
 

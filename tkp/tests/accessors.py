@@ -65,6 +65,8 @@ class FitsFile(unittest.TestCase):
     def testDBImageFromAccessor(self):
         from tkp.database.database import DataBase
         from tkp.database.dataset import DataSet
+        image = accessors.AIPSppImage(os.path.join(DATAPATH, 'CX3_peeled.image/'),
+                                      beam=(54./3600, 54./3600, 0.))
         database = DataBase()
         dataset = DataSet('dataset', database=database)
         dbimage = accessors.dbimage_from_accessor(dataset, image)

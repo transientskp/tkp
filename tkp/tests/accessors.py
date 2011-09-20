@@ -17,7 +17,7 @@ from tkp.utility import accessors
 DATAPATH = tkp.config.config['test']['datapath']
 
 class FitsFile(unittest.TestCase):
-    # Single, constant 1 Jy source at centre of image.
+
     def setUp(self):
         pass
 
@@ -61,7 +61,11 @@ class FitsFile(unittest.TestCase):
                                       beam=(54./3600, 54./3600, 0.))
         sfimage = accessors.sourcefinder_image_from_accessor(image)
 
+
+class DataBaseImage(unittest.TestCase):
+
     @requires_database()
+    @requires_data(os.path.join(DATAPATH, 'CX3_peeled.image/'))
     def testDBImageFromAccessor(self):
         from tkp.database.database import DataBase
         from tkp.database.dataset import DataSet
@@ -71,5 +75,36 @@ class FitsFile(unittest.TestCase):
         dataset = DataSet('dataset', database=database)
         dbimage = accessors.dbimage_from_accessor(dataset, image)
 
+
+class FrequencyInformation(unittest.TestCase):
+    
+    @requires_database()
+    @requires_data(os.path.join(DATAPATH, 'L21641_SB098.restored.image'))
+    @requires_data(os.path.join(DATAPATH, 'VLSS.fits'))
+    def testFreqinfo(self):
+        from tkp.database.database import DataBase
+        from tkp.database.dataset import DataSet
+        database = DataBase()
+        dataset = DataSet('dataset', database=database)
+        image = accessors.AIPSppImage(
+            os.path.join(DATAPATH, 'L21641_SB098.restored.image'))
+        self.assertAlmostEqual(image.freqeff/1e6, 156.4453125)
+        self.assertAlmostEqual(image.freqbw, 1.0)
+        self.assertAlmostEqual(image.beam[0], 0.9)
+        self.assertAlmostEqual(image.beam[1], 0.9)
+        self.assertAlmostEqual(image.beam[2], 0.0)
+
+        # image without frequency information
+        image = accessors.FitsFile(os.path.join(DATAPATH, 'VLSS.fits'))
+        # The database requires frequency information
+        self.assertRaises(ValueError, accessors.dbimage_from_accessor,
+                          dataset, image)
+        # But the sourcefinder does not need frequency information
+        self.assertListEqual(
+            list(accessors.sourcefinder_image_from_accessor(image).data.shape),
+            [2048, 2048])
+        
+        database.close()
+        
 if __name__ == '__main__':
     unittest.main()

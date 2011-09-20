@@ -17,6 +17,8 @@ class TestDatabase(unittest.TestCase):
 
     @requires_database()
     def test_basics(self):
+        import tkp.database.database
+        import monetdb
         self.assertIsInstance(self.database, tkp.database.database.DataBase)
         self.assertIsInstance(self.database.connection,
                               monetdb.sql.connections.Connection)
@@ -25,6 +27,8 @@ class TestDatabase(unittest.TestCase):
 
     @requires_database()
     def test_failures(self):
+        import tkp.database.database
+        import monetdb
         self.assertRaises(monetdb.monetdb_exceptions.DatabaseError,
                           tkp.database.database.DataBase,
                           host='localhost',

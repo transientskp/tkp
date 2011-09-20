@@ -6,14 +6,27 @@ try:
 except AttributeError:
     import unittest2 as unittest
 import sys
+import os
 import logging
 import tkp.tests
+import tkp.config
+import argparse
+
 
 # Suppress annoying warning messages -- we'll catch errors
 # due to test failures rather than log messages.
 logging.basicConfig(level=logging.CRITICAL)
 
-args = ['tkp.tests.' + arg for arg in sys.argv[1:]]
+# Catch datapath option; necessary for in-build testing
+parser = argparse.ArgumentParser()
+parser.add_argument('tests', nargs='+')
+parser.add_argument('--datapath')
+args = parser.parse_args()
+if args.datapath:
+    if os.access(args.datapath, os.R_OK):
+        tkp.config.config['test']['datapath'] = args.datapath
+
+args = ['tkp.tests.' + arg for arg in args.tests]
 if args:
     testfiles = [testfile for testfile in tkp.tests.testfiles if testfile in args]
 else:
@@ -27,7 +40,8 @@ for test in testfiles:
     try:
         __import__(test)
     except ImportError, e:
-        print >>sys.stderr, "ERROR: Not running %s: required module failed to import (%s)" % (test, e)
+        sys.stdout.write("ERROR: Not running %s: required module failed to "
+                         "import (%s)\n" % (test, e))
         testfiles.remove(test)
         # return non-zero if we have skipped a testfile
         exit_on_success = 1

@@ -1,7 +1,7 @@
 #! /bin/bash
 
 pythonpath=../../python-packages/lib.linux-x86_64-2.6:../external/deconv:../external/python-wcslib
-# Add path to unittest2
+# Add path for unittest2 & argparse
 pythonpath=${pythonpath}:../../../../tkp/trunk/tests
 if [ -z "$PYTHONPATH" ]
 then
@@ -26,11 +26,18 @@ else
     export DYLD_FALLBACK_LIBRARY_PATH=${DYLD_FALLBACK_LIBRARY_PATH}:${ld_library_path}
 fi
 
+# MonetDB Python path on heastro
+export PYTHONPATH=${PYTHONPATH}:/opt/monetdb/lib/python2.6/site-packages
 # Extra paths needed on CEP1
 export PYTHONPATH=../../python-packages/lib:${PYTHONPATH}:/opt/pythonlibs/lib/python2.5/site-packages/:/opt/MonetDB/
 # Extra paths needed on CEP2
 export PYTHONPATH=${PYTHONPATH}:/opt/cep/MonetDB/lib/python/site-packages:/opt/cep/LofIm/daily/pyrap/lib:/home/rol/sw/lib/python2.6/site-packages
 dir=`dirname $0`
 
-result=`python ${dir}/test.py "$@"`
+datapath=
+if [ -d /zfs/heastro-plex/scratch/evert/testdata ]
+then
+    datapath='--datapath=/zfs/heastro-plex/scratch/evert/testdata'
+fi
+result=`python ${dir}/test.py ${datapath} "$@"`
 exit $result

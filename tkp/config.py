@@ -3,14 +3,17 @@
 The config module stores the default values for various tunable parameters
 in the TKP Python package.
 
-The module also tries to read (in order)
-- a .transientskp/tkp.cfg file in the users home directory
-- a '.tkp.cfg' file in the users home directory,
+The module also tries to read (in order):
+
+- a :file:`.transientskp/tkp.cfg` file in the users home directory
+
+- a :file:`.tkp.cfg` file in the users home directory,
+
 where parameters can be overriden (such as the database login details).
 
 There are three sections in the configuration:
 
-- databse
+- database
 
 - source_association
 
@@ -20,9 +23,10 @@ The parameters are stored in a dictionary, with each section as keyword.
 Each value in itself is another dictionary, with (option, value) pairs.
 
 The config module can be imported by the various subpackages of the
-TKP package.  Since the '.transientskp/tkp.cfg' or '.tkp.cfg' file is
-only read on first import, after which the variable HAS_READ is set to
-False, there are no multiple reads of this file.
+TKP package.  Since the :file:`.transientskp/tkp.cfg` or
+:file:`.tkp.cfg` file is only read on first import, after which the
+variable HAS_READ is set to False, there are no multiple reads of this
+file.
 
 """
 

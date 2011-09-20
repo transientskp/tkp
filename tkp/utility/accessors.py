@@ -57,7 +57,7 @@ class DataAccessor(object):
         self.beam = (semimaj, semimin, theta)
 
 
-class AIPSppImage(DataAccessor):
+class CASAImage(DataAccessor):
     """
     Use pyrap to pull image data out of an AIPS++ table.
 
@@ -66,14 +66,14 @@ class AIPSppImage(DataAccessor):
     assumption...
     """
     def __init__(self, filename, plane=0, beam=None):
-        super(AIPSppImage, self).__init__()  # Set defaults
+        super(CASAImage, self).__init__()  # Set defaults
         self.filename = filename
         self.plane = plane
         self._coordparse()
         self._freqparse()
         if beam:
             bmaj, bmin, bpa = beam
-            super(AIPSppImage, self)._beamsizeparse(bmaj, bmin, bpa)
+            super(CASAImage, self)._beamsizeparse(bmaj, bmin, bpa)
         else:
             self._beamsizeparse()
 
@@ -118,7 +118,7 @@ class AIPSppImage(DataAccessor):
             bmaj = beam_info['major']['value']
             bmin = beam_info['minor']['value']
             bpa = beam_info['positionangle']['value']
-            super(AIPSppImage, self)._beamsizeparse(bmaj, bmin, bpa)
+            super(CASAImage, self)._beamsizeparse(bmaj, bmin, bpa)
         except KeyError:
             raise ValueError("beam size information not available")
     
@@ -138,7 +138,11 @@ class AIPSppImage(DataAccessor):
         self._coordparse()
 
 
-class FitsFile(DataAccessor):
+class AIPSppImage(CASAImage):
+    pass
+
+
+class FITSImage(DataAccessor):
     """
     Use PyFITS to pull image data out of a FITS file.
 
@@ -152,7 +156,7 @@ class FitsFile(DataAccessor):
         # NB: pyfits bogs down reading parameters from FITS files with very
         # long headers. This code should run in a fraction of a second on most
         # files, but can take several seconds given a huge header.
-        super(FitsFile, self).__init__()  # Set defaults
+        super(FITSImage, self).__init__()  # Set defaults
         self.filename = filename
         hdulist = pyfits.open(self.filename)
 
@@ -166,7 +170,7 @@ class FitsFile(DataAccessor):
         if not beam:
             self._beamsizeparse(hdulist)
         else:
-            super(FitsFile, self)._beamsizeparse(beam[0], beam[1], beam[2])
+            super(FITSImage, self)._beamsizeparse(beam[0], beam[1], beam[2])
 
         # Attempt to do something sane with timestamps.
         timezone = pytz.utc
@@ -286,7 +290,7 @@ class FitsFile(DataAccessor):
 
         NOTE: PyFITS reads the data into an array indexed as [y][x]. We
         take the transpose to make this more intuitively reasonable and
-        consistent with (eg) ds9 display of the FitsFile. Transpose back
+        consistent with (eg) ds9 display of the FITSImage. Transpose back
         before viewing the array with RO.DS9, saving to a FITS file,
         etc.
         """
@@ -350,7 +354,7 @@ class FitsFile(DataAccessor):
 Basic processing is impossible without adequate information about the \
 resolution element.""")
         hdulist.close()
-        super(FitsFile, self)._beamsizeparse(bmaj, bmin, bpa)
+        super(FITSImage, self)._beamsizeparse(bmaj, bmin, bpa)
 
     def __getattr__(self, attrname):
         """
@@ -383,6 +387,11 @@ resolution element.""")
             for key in header.iterkeys():
                 hdu.header.update(key, header[key])
             hdu.writeto(filename)
+
+
+class FitsFile(FITSImage):
+    pass
+
 
 def dbimage_from_accessor(dataset, image):
     """Create an entry in the database images table from an image 'accessor'

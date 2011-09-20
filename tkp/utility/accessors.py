@@ -37,9 +37,9 @@ class DataAccessor(object):
         # Set defaults
         self.inttime = 0.  # seconds
         self.obstime = datetime.datetime(1970, 1, 1, 0, 0, 0)
-        self.freqbw = 0.
-        self.freqeff = 0.  # Hertz (? MHz?)
-
+        self.freqbw = None
+        self.freqeff = None  # Hertz (? MHz?)
+        
     def _beamsizeparse(self, bmaj, bmin, bpa):
         """Needs beam parameters, no defaults."""
 
@@ -66,15 +66,16 @@ class AIPSppImage(DataAccessor):
     assumption...
     """
     def __init__(self, filename, plane=0, beam=None):
-        super(AIPSppImage, self).__init__()
+        super(AIPSppImage, self).__init__()  # Set defaults
         self.filename = filename
         self.plane = plane
         self._coordparse()
+        self._freqparse()
         if beam:
             bmaj, bmin, bpa = beam
-            self._beamsizeparse(bmaj, bmin, bpa)
+            super(AIPSppImage, self)._beamsizeparse(bmaj, bmin, bpa)
         else:
-            self.beam = None
+            self._beamsizeparse()
 
     def _get_table(self):
         from pyrap.tables import table
@@ -101,6 +102,26 @@ class AIPSppImage(DataAccessor):
         self.wcs.wcsset()
         self.pix_to_position = self.wcs.p2s
 
+    def _freqparse(self):
+        # This is what one gets from the C-imager
+        try:
+            spectral_info = self._get_table().getkeyword('coords')['spectral2']
+            self.freqeff = spectral_info['wcs']['crval']
+            self.freqbw = spectral_info['wcs']['cdelt']
+        except KeyError:
+            pass
+
+    def _beamsizeparse(self):
+        try:
+            beam_info = self._get_table().getkeyword(
+                'imageinfo')['restoringbeam']
+            bmaj = beam_info['major']['value']
+            bmin = beam_info['minor']['value']
+            bpa = beam_info['positionangle']['value']
+            super(AIPSppImage, self)._beamsizeparse(bmaj, bmin, bpa)
+        except KeyError:
+            raise ValueError("beam size information not available")
+    
     @property
     def data(self):
         return self._get_table().getcellslice("map", 0,
@@ -131,12 +152,17 @@ class FitsFile(DataAccessor):
         # NB: pyfits bogs down reading parameters from FITS files with very
         # long headers. This code should run in a fraction of a second on most
         # files, but can take several seconds given a huge header.
-        super(FitsFile, self).__init__()
+        super(FitsFile, self).__init__()  # Set defaults
         self.filename = filename
         hdulist = pyfits.open(self.filename)
 
         self._coordparse(hdulist)
-        self._freqparse(hdulist)
+        try:
+            self._freqparse(hdulist)
+        except KeyError:
+            # Never mind frequency information then
+            # But be aware when storing this in the database
+            pass
         if not beam:
             self._beamsizeparse(hdulist)
         else:
@@ -222,19 +248,15 @@ class FitsFile(DataAccessor):
         @param hdulist: hdulist to parse
         @type hdulist: hdulist
         """
-        # These are maintained for legacy reasons -- better to access by
-        # header name through __getattr__?
         try:
-            self.freqeff = hdulist[0].header['crval4']
-            self.freqbw = hdulist[0].header['cdelt4']
-        except KeyError:
-            try:
-                # Try third WCS coordinates instead
+            if hdulist[0].header['crtype3'] == 'FREQ':
                 self.freqeff = hdulist[0].header['crval3']
                 self.freqbw = hdulist[0].header['cdelt3']
-            except KeyError:
-                logging.warn("Frequency not specified in FITS")
-                raise
+            elif hdulist[0].header['crtype4'] == 'FREQ':
+                self.freqeff = hdulist[0].header['crval4']
+                self.freqbw = hdulist[0].header['cdelt4']
+        except KeyError:
+            logging.warn("Frequency not specified in FITS")
 
     def __getstate__(self):
         return {
@@ -379,6 +401,8 @@ def dbimage_from_accessor(dataset, image):
     """
     from ..database.dataset import Image
 
+    if image.freqeff is None or image.freqbw is None:
+        raise ValueError("cannot create database image: frequency information missing")
     data = {'tau_time': image.inttime,
             'freq_eff': image.freqeff,
             'freq_bw': image.freqbw,

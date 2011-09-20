@@ -104,7 +104,7 @@ def set_default_config():
     config.set('database', 'port', '50000')
 
     config.add_section('source_association')
-    config.set('source_association', 'deruiter_radius', '0.0010325')
+    config.set('source_association', 'deruiter_radius', '3.7')
 
     config.add_section('source_extraction')
     config.set('source_extraction', 'back_sizex', '32')

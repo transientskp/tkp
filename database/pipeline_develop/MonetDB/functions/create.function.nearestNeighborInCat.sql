@@ -1,4 +1,4 @@
-DROP FUNCTION nearestNeighborInCat;
+--DROP FUNCTION nearestNeighborInCat;
 
 CREATE FUNCTION nearestNeighborInCat(ira DOUBLE
                                      ,idecl DOUBLE

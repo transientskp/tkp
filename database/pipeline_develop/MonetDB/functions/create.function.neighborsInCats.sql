@@ -1,4 +1,4 @@
-DROP FUNCTION neighborsInCats;
+--DROP FUNCTION neighborsInCats;
 
 CREATE FUNCTION neighborsInCats(ira DOUBLE
                                ,idecl DOUBLE

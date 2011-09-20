@@ -62,9 +62,6 @@ class DataBase(object):
             raise TKPDataBaseError("Database is not enabled")
         self.connect()
 
-    def __del__(self):
-        self.close()
-
     def __str__(self):
         return "Database '%s' @ '%s' for user '%s'" % (
             self.name, self.host, self.user)

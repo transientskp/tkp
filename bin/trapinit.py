@@ -688,7 +688,7 @@ unlink = False
 [cimager_trap]
 recipe = cimager_trap
 imager_exec = %%(lofarroot)s/bin/cimager
-convert_exec = %%(lofarroot)/bin/convertimagerparset
+convert_exec = %%(lofarroot)s/bin/convertimagerparset
 parset = %%(runtime_directory)s/jobs/%%(job_name)s/parsets/mwimager.parset
 parset_type = mwimager
 makevds = %%(lofarroot)s/bin/makevds

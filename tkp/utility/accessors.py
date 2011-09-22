@@ -253,10 +253,10 @@ class FITSImage(DataAccessor):
         @type hdulist: hdulist
         """
         try:
-            if hdulist[0].header['crtype3'] == 'FREQ':
+            if hdulist[0].header['ctype3'] == 'FREQ':
                 self.freqeff = hdulist[0].header['crval3']
                 self.freqbw = hdulist[0].header['cdelt3']
-            elif hdulist[0].header['crtype4'] == 'FREQ':
+            elif hdulist[0].header['ctype4'] == 'FREQ':
                 self.freqeff = hdulist[0].header['crval4']
                 self.freqbw = hdulist[0].header['cdelt4']
         except KeyError:

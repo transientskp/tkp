@@ -21,10 +21,9 @@ import imp
 from lofarpipe.support.lofarnode import LOFARnodeTCP
 from lofarpipe.support.utilities import log_time
 
-from tkp.classification.manual.classification import MainBranch
+from tkp.classification.manual.classification import Main
 from tkp.classification.manual.classifier import Classifier
 from tkp.classification.manual.transient import Transient
-#from tkp.classification.manul.classification import Main
 
 
 class classification(LOFARnodeTCP):
@@ -34,7 +33,7 @@ class classification(LOFARnodeTCP):
             try:
                 self.logger.info("Classifying transient #%d", 
                     transient.srcid)
-                classifier = Classifier(transient, MainBranch)
+                classifier = Classifier(transient)
                 results = classifier.classify()
                 transient.classification = {}
                 for key, value in results:

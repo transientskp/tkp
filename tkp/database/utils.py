@@ -150,21 +150,38 @@ def _insert_extractedsources(conn, image_id):
           ,I_int
           ,I_int_err
           )
-          SELECT %s
-                ,CAST(FLOOR(ldecl) AS INTEGER)
-                ,lra
-                ,ldecl
-                ,lra_err * 3600
-                ,ldecl_err * 3600
-                ,COS(rad(ldecl)) * COS(rad(lra))
-                ,COS(rad(ldecl)) * SIN(rad(lra))
-                ,SIN(rad(ldecl))
-                ,ldet_sigma
-                ,lI_peak
-                ,lI_peak_err
-                ,lI_int
-                ,lI_int_err
-            FROM detections
+          SELECT image_id
+                ,zone
+                ,ra
+                ,decl
+                ,ra_err
+                ,decl_err
+                ,x
+                ,y
+                ,z
+                ,det_sigma
+                ,I_peak
+                ,I_peak_err
+                ,I_int
+                ,I_int_err
+           FROM (SELECT %s AS image_id
+                       ,CAST(FLOOR(ldecl) AS INTEGER) AS zone
+                       ,lra AS ra
+                       ,ldecl AS decl
+                       ,lra_err * 3600 AS ra_err
+                       ,ldecl_err * 3600 AS decl_err
+                       ,COS(rad(ldecl)) * COS(rad(lra)) AS x
+                       ,COS(rad(ldecl)) * SIN(rad(lra)) AS y
+                       ,SIN(rad(ldecl)) AS z
+                       ,ldet_sigma AS det_sigma
+                       ,lI_peak AS I_peak 
+                       ,lI_peak_err AS I_peak_err
+                       ,lI_int AS I_int
+                       ,lI_int_err AS I_int_err
+                   FROM detections
+                ) t0
+          /*     ,node n
+          WHERE n.zone = t0.zone*/
         """
         cursor.execute(query, (image_id,))
         conn.commit()
@@ -1127,6 +1144,96 @@ def detect_variable_sources(conn, dsid, V_lim, eta_lim):
     #sources = _select_variability_indices(conn, dsid, V_lim, eta_lim)
     return _select_variability_indices(conn, dsid, V_lim, eta_lim)
 
+
+def associate_with_catalogedsources(conn, image_id, radius=0.025, deRuiter_r=DERUITER_R):
+    """Associate extracted sources in specified image with known sources 
+    in the external catalogues
+
+    radius (typical 90arcsec=0.025deg), is the radius of the area centered
+    at the extracted source which are searched for counterparts in the catalogues.
+    
+    The dimensionless distance between two sources is given by the
+    "De Ruiter radius", see Ch2&3 of thesis Scheers.
+
+    Here we use a default value of deRuiter_r = 3.717/3600. for a
+    reliable association.
+
+    Every found candidate is added to the assoccatsources table.
+    """
+
+    _insert_cat_assocs(conn, image_id, radius, deRuiter_r)
+
+def _insert_cat_assocs(conn, image_id, radius, deRuiter_r):
+    """Insert found xtrsrc--catsrc associations into assoccatsources table.
+
+    The search for cataloged counterpart sources is done in the lsm
+    table, which should have been preloaded with a selection of 
+    the catalogedsources, depending on the expected field of view.
+    
+    """
+    
+    try:
+        cursor = conn.cursor()
+        query = """\
+        INSERT INTO assoccatsources
+          (xtrsrc_id
+          ,assoc_catsrc_id
+          ,assoc_distance_arcsec
+          ,assoc_lr_method
+          ,assoc_r
+          ,assoc_loglr
+          )
+          SELECT xtrsrcid AS xtrsrc_id
+                ,lsmid AS assoc_catsrc_id
+                ,3600 * deg(2 * ASIN(SQRT((x0.x - c0.x) * (x0.x - c0.x)
+                                          + (x0.y - c0.y) * (x0.y - c0.y)
+                                          + (x0.z - c0.z) * (x0.z - c0.z)
+                                          ) / 2) ) AS assoc_distance_arcsec
+                ,3
+                ,3600 * sqrt(
+                    ((x0.ra * cos(rad(x0.decl)) 
+                     - c0.ra * cos(rad(c0.decl))) 
+                    * (x0.ra * cos(rad(x0.decl)) 
+                     - c0.ra * cos(rad(c0.decl)))) 
+                    / (x0.ra_err * x0.ra_err + c0.ra_err*c0.ra_err)
+                    +
+                    ((x0.decl - c0.decl) * (x0.decl - c0.decl)) 
+                    / (x0.decl_err * x0.decl_err + c0.decl_err*c0.decl_err)
+                            ) as assoc_r
+                ,LOG10(EXP((( (x0.ra - c0.ra) * COS(rad(x0.decl)) * (x0.ra - c0.ra) * COS(rad(x0.decl)) 
+                              / (x0.ra_err * x0.ra_err + c0.ra_err * c0.ra_err)
+                             + (x0.decl - c0.decl) * COS(rad(x0.decl)) * (x0.decl - c0.decl) * COS(rad(x0.decl)) 
+                               / (x0.decl_err * x0.decl_err + c0.decl_err * c0.decl_err)
+                            )
+                           ) / 2
+                          )
+                       /
+                       (2 * PI() * SQRT(x0.ra_err * x0.ra_err + c0.ra_err * c0.ra_err) 
+                                 * SQRT(x0.decl_err * x0.decl_err + c0.decl_err * c0.decl_err) * 4.02439375E-06)
+                       ) AS assoc_loglr
+            FROM extractedsources x0
+                ,lsm c0
+           WHERE x0.image_id = %s
+             AND c0.zone BETWEEN CAST(FLOOR(x0.decl - %s) as INTEGER)
+                             AND CAST(FLOOR(x0.decl + %s) as INTEGER)
+             AND c0.decl BETWEEN x0.decl - %s
+                             AND x0.decl + %s
+             AND c0.ra BETWEEN x0.ra - alpha(%s, x0.decl)
+                           AND x0.ra + alpha(%s, x0.decl)
+             AND SQRT(  (x0.ra * COS(rad(x0.decl)) - c0.ra * COS(rad(c0.decl)))
+                      * (x0.ra * COS(rad(x0.decl)) - c0.ra * COS(rad(c0.decl)))
+                      / (x0.ra_err * x0.ra_err + c0.ra_err * c0.ra_err)
+                     + (x0.decl - c0.decl) * (x0.decl - c0.decl)
+                      / (x0.decl_err * x0.decl_err + c0.decl_err * c0.decl_err)
+                     ) < %s
+        """
+        cursor.execute(query, (image_id,radius,radius,radius,radius,radius,radius,deRuiter_r))
+        conn.commit()
+    except db.Error, e:
+        logging.warn("Failed on query nr %s." % query)
+        raise
+    finally:
+        cursor.close()
 
 def associate_catalogued_sources_in_area(conn, ra, dec, radius, deRuiter_r=DERUITER_R):
     pass

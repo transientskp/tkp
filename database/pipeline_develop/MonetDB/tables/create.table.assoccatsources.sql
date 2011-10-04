@@ -26,7 +26,7 @@ CREATE TABLE assoccatsources
   ,assoc_distance_arcsec DOUBLE NULL
   ,assoc_lr_method INT NULL DEFAULT 0
   ,assoc_r DOUBLE NULL
-  ,assoc_lr DOUBLE NULL
+  ,assoc_loglr DOUBLE NULL
   /*,PRIMARY KEY (id)
   ,FOREIGN KEY (xtrsrc_id) REFERENCES extractedsources (xtrsrcid)
   ,FOREIGN KEY (assoc_catsrc_id) REFERENCES catalogedsources (catsrcid)*/

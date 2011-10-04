@@ -60,20 +60,23 @@ def insert_image(conn, dsid, freq_eff, freq_bw, taustart_ts, url):
         cursor.close()
     return newimgid
 
-def load_LSM(ira_min, ira_max, idecl_min, idecl_max, cn1, cn2, cn3, conn):
-    raise NotImplementedError
+def load_LSM(conn, ira_min, ira_max, idecl_min, idecl_max, cat1="NVSS", cat2="VLSS", cat3="WENSS"):
+    #raise NotImplementedError
 
-    ##try:
-    ##    cursor = conn.cursor()
-    ##    procLoadLSM = "CALL LoadLSM(%s,%s,%s,%s,%s,%s,%s)" % (
-    ##            ira_min,ira_max,idecl_min,idecl_max,cn1,cn2,cn3)
-    ##    cursor.execute(procLoadLSM)
-    ##except db.Error, e:
-    ##    logging.warn("Failed to insert lsm by procedure LoadLSM")
-    ##    raise
-    ##finally:
-    ##    cursor.close()
-    ##conn.commit()
+    try:
+        cursor = conn.cursor()
+        query = """\
+        CALL LoadLSM(%s, %s, %s, %s, %s, %s, %s)
+        /*CALL LoadLSM(47, 59, 50, 58, 'NVSS', 'VLSS', 'WENSS')*/
+        """
+        cursor.execute(query, (ira_min,ira_max,idecl_min,idecl_max,cat1,cat2,cat3))
+        #cursor.execute(query)
+        conn.commit()
+    except db.Error, e:
+        logging.warn("Failed to insert lsm by procedure LoadLSM: %s" % e)
+        raise
+    finally:
+        cursor.close()
 
 
 def _empty_detections(conn):

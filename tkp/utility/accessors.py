@@ -419,7 +419,7 @@ def dbimage_from_accessor(dataset, image):
             'url': image.filename,
             'band': 0,    # not yet clearly defined
             }
-    image = Image(dataset, data=data)
+    image = Image(data=data, dataset=dataset)
     return image
 
 

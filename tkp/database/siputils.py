@@ -13,6 +13,7 @@ import logging
 from tkp.config import config
 
 DERUITER_R = config['source_association']['deruiter_radius']
+print "DERUITER_R =",DERUITER_R
 
 def cross_associate_cataloged_sources(conn 
                                      ,c
@@ -35,6 +36,8 @@ def cross_associate_cataloged_sources(conn
         _empty_selected_catsources(conn)
         _empty_tempmergedcatalogs(conn)
         _insert_selected_catsources(conn, c[i], ra_min, ra_max, decl_min, decl_max)
+        #if c[i] == 3:
+        #    sys.exit(1)
         _insert_tempmergedcatalogs(conn, c[i], deRuiter_r)
         _flag_multiple_counterparts_in_mergedcatalogs(conn)
         _insert_multiple_crossassocs(conn)
@@ -161,7 +164,7 @@ INSERT INTO selectedcatsources
                      AND CAST(%s AS DOUBLE) + 0.025
      AND c0.ra BETWEEN CAST(%s AS DOUBLE) - alpha(0.025, %s)
                    AND CAST(%s AS DOUBLE) + alpha(0.025, %s)
-"""
+        """
         cursor.execute(query, (cat_id 
                               ,decl_min 
                               ,decl_max
@@ -1503,4 +1506,28 @@ def fitspectralindex(freq,flux,flux_err):
 
     return index,chisq
 
+def get_bss_skymodel(conn):
+    """Get spectral indices
+    """
+
+    try:
+        cursor = conn.cursor()
+        query = """\
+        SELECT ra2hms(wm_ra)
+              ,decl2dms(wm_decl)
+              ,i_int_vlss
+              ,0 
+              ,0
+              ,0
+              ,i_int_nvss
+              ,-alpha_v_n 
+         FROM mergedcatalogs 
+        WHERE i_int_vlss IS NOT NULL;"""
+        cursor.execute(query)
+        conn.commit()
+    except db.Error, e:
+        logging.warn("Failed on query nr %s." % query)
+        raise
+    finally:
+        cursor.close()
 

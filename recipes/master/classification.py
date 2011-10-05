@@ -140,7 +140,7 @@ class classification(BaseRecipe, RemoteCommandRecipeMixIn):
             self.logger.info("Storing/updating transient into database")
             for transient in self.outputs['transients']:
                 if isinstance(transient.timezero, datetime.datetime):
-                    t_start = transient.timezero.datetime()
+                    t_start = transient.timezero
                 else:
                     t_start = datetime.datetime(1970, 1, 1)
                 self.logger.info("%d, %s, %s, %s", transient.srcid, str(transient.siglevel), str(transient.timezero), t_start)

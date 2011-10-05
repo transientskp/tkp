@@ -39,13 +39,6 @@ from lofarpipe.support import lofaringredient
 import monetdb.sql.connections
 
 
-SQL = """\
-UPDATE transients
-SET status = %s
-WHERE xtrsrc_id = %s
-"""
-
-
 class feature_extraction(BaseRecipe, RemoteCommandRecipeMixIn):
 
     inputs = dict(

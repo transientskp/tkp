@@ -28,7 +28,7 @@ import numpy
 import monetdb
 from tkp.database.database import DataBase
 from tkp.classification.features import lightcurve as lcmod
-from tkp.database.dataset import Source
+from tkp.database.dataset import ExtractedSource
 from tkp.classification.manual.transient import Transient
 from tkp.classification.manual.utils import Position
 from tkp.classification.manual.utils import DateTime
@@ -43,7 +43,7 @@ class feature_extraction(LOFARnodeTCP):
         with log_time(self.logger):
             with closing(DataBase()) as database:
                 try:
-                    source = Source(srcid=transient.srcid, database=database)
+                    source = ExtractedSource(id=transient.srcid, database=database)
                     lightcurve = lcmod.LightCurve(*zip(*source.lightcurve()))
                     lightcurve.calc_background()
                     lightcurve.calc_stats()

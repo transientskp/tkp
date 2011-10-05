@@ -27,7 +27,7 @@ class SIP(control):
 
         # Create the dataset
         database = DataBase()
-        dataset = DataSet(name=self.inputs['job_name'], dsid=None,
+        dataset = DataSet(data={'dsinname': self.inputs['job_name']},
                           database=database)
         with log_time(self.logger):
              for image in images:

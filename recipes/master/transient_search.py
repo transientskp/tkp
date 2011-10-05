@@ -26,7 +26,6 @@ import tkp.database.dataset
 from tkp.classification.manual.transient import Transient
 from tkp.classification.manual.utils import Position
 from tkp.classification.manual.utils import DateTime
-#from tkp.classification.database import STATUS
 
 
 SQL = dict(
@@ -147,7 +146,6 @@ class transient_search(BaseRecipe):
         error = numpy.sqrt(results[2]*results[2] + results[3]*results[3])
         transient = Transient(srcid=srcid, position=Position(
             ra=results[0], dec=results[1], error=(results[2], results[3])))
-        #transient.status = 1 << STATUS['ACTIVE']
         transient.siglevel = siglevel
         self.database.cursor.execute(SQL['dataset'], (srcid,))
         transient.dataset = self.database.cursor.fetchone()[0]
@@ -167,7 +165,7 @@ class transient_search(BaseRecipe):
         dataset_id = self.inputs['dataset_id']
         self.database = tkp.database.database.DataBase()
         self.dataset = tkp.database.dataset.DataSet(
-            dsid=dataset_id, database=self.database)
+            id=dataset_id, database=self.database)
         results = self.dataset.detect_variables()
         transients = []
         if len(results) > 0:

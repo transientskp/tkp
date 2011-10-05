@@ -21,15 +21,16 @@ import imp
 from lofarpipe.support.lofarnode import LOFARnodeTCP
 from lofarpipe.support.utilities import log_time
 
-from tkp.classification.manual.classification import Main
 from tkp.classification.manual.classifier import Classifier
 from tkp.classification.manual.transient import Transient
+import tkp
 
 
 class classification(LOFARnodeTCP):
 
     def run(self, schema, path, transient, weight_cutoff):
         with log_time(self.logger):
+            self.logger.info("tkp.__file__ = %s", tkp.__file__)
             try:
                 self.logger.info("Classifying transient #%d", 
                     transient.srcid)

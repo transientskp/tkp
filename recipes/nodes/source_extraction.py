@@ -19,7 +19,7 @@ import tkp
 from tkp.config import config
 from tkp.database.database import DataBase
 from tkp.database.dataset import DataSet
-from tkp.utility.accessors import FitsFile
+from tkp.utility.accessors import FITSImage
 from tkp.utility.accessors import dbimage_from_accessor
 from tkp.utility.accessors import sourcefinder_image_from_accessor
 
@@ -53,9 +53,8 @@ class source_extraction(LOFARnodeTCP):
             with closing(DataBase()) as database:
                 #database.execute("SELECT RAD(45.)")
                 #self.logger.info("fetchall = %s", str(database.cursor.fetchall()))
-                description = 'LOFAR images'
-                dataset = DataSet(dsid=dataset_id, database=database)
-                fitsimage = FitsFile(image)
+                dataset = DataSet(id=dataset_id, database=database)
+                fitsimage = FITSImage(image)
                 db_image = dbimage_from_accessor(dataset=dataset,
                                                  image=fitsimage)
                 self.logger.info("Detecting sources in %s at %f level" % (

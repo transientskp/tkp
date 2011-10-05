@@ -77,7 +77,7 @@ class SIP(control):
 
             # Create the dataset
             database = DataBase()
-            dataset = DataSet(name=self.inputs['job_name'], dsid=None,
+            dataset = DataSet(data={'dsinname': self.inputs['job_name']},
                               database=database)
             dsid = dataset.dsid
             outputs = self.run_task("time_slicing", gvds_file=gvds_file)

@@ -376,7 +376,8 @@ class TestExtractedSource(unittest.TestCase):
         # Since the light curves are very similar, only eta_nu is different
         results = dataset.detect_variables()
         results = sorted(results, key=itemgetter('eta_nu'))
-        for result, eta_nu in zip(results, (16662.5, 66650.0, 149962.5)):
+        for result, eta_nu in zip(results, (16666.66666667, 66666.666666667,
+                                            150000.0)):
             self.assertEqual(result['npoints'], 4)
             self.assertAlmostEqual(result['eta_nu'], eta_nu)
             self.assertAlmostEqual(result['v_nu'], 0.516397779494)

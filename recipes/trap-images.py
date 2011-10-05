@@ -33,10 +33,10 @@ class SIP(control):
              for image in images:
                 outputs = self.run_task("source_extraction",
                                         images=[image],
-                                        dataset_id=dataset.dsid)
+                                        dataset_id=dataset.id)
                 outputs.update(
                     self.run_task("transient_search", [],
-                                  dataset_id=dataset.dsid))
+                                  dataset_id=dataset.id))
                 outputs.update(
                     self.run_task("feature_extraction", [],
                                   transients=outputs['transients']))

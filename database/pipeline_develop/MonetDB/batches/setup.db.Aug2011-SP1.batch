@@ -405,16 +405,16 @@ echo -e "\t----------------------------------------------"
 #mclient -h${1} -d${2} < $MONETDBTKPHOME/load/copy.catalogedsources.sql
 
 echo -e "\t\tLoad NVSS catalog"
-mclient -h${1} -d${2} < $MONETDBTKPHOME/load/load.cat.nvss.sql
+time mclient -h${1} -d${2} < $MONETDBTKPHOME/load/load.cat.nvss.sql
 date '+%Y-%m-%d-%H:%M:%S'
 
 echo -e "\t\tLoad VLSS catalog"
-mclient -h${1} -d${2} < $MONETDBTKPHOME/load/load.cat.vlss.sql
+time mclient -h${1} -d${2} < $MONETDBTKPHOME/load/load.cat.vlss.sql
 date '+%Y-%m-%d-%H:%M:%S'
 
 echo -e "\t\tLoad WENSS catalog"
-mclient -h${1} -d${2} < $MONETDBTKPHOME/load/load.cat.wenss.sql
-date '+%Y-%m-%d-%H:%M:%S'
+time mclient -h${1} -d${2} < $MONETDBTKPHOME/load/load.cat.wenss.sql
+
 
 #echo -e "\t\tLoad GRB catalog"
 #mclient -h${1} -d${2} < $MONETDBTKPHOME/load/load.cat.grb.sql

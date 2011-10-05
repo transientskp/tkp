@@ -34,6 +34,7 @@ def insert_dataset(conn, description):
         conn.cursor().close()
     return newdsid
 
+
 def insert_image(conn, dsid, freq_eff, freq_bw, taustart_ts, url):
     """Insert an image for a given dataset with the column values
     set in data discriptor
@@ -1043,29 +1044,42 @@ def _select_variability_indices(conn, dsid, V_lim, eta_lim):
     cursor = conn.cursor()
     try:
         query = """\
-SELECT xtrsrc_id
-      ,ds_id
-      ,datapoints
-      ,wm_ra
-      ,wm_decl
-      ,wm_ra_err
-      ,wm_decl_err
-      ,sqrt(datapoints*(avg_I_peak_sq - avg_I_peak*avg_I_peak) /
-            (datapoints-1)) / avg_I_peak as V
-      ,(datapoints/(datapoints-1)) *
-       (avg_weighted_I_peak_sq -
-        avg_weighted_I_peak * avg_weighted_I_peak / avg_weight_peak)
-       as eta
-  FROM runningcatalog
- WHERE ds_id = %s
-   AND datapoints > 1
-   AND (sqrt(datapoints*(avg_I_peak_sq - avg_I_peak*avg_I_peak) /
-             (datapoints-1)) / avg_I_peak > %s
-        OR (datapoints/(datapoints-1)) *
-            (avg_weighted_I_peak_sq -
-             avg_weighted_I_peak * avg_weighted_I_peak /
-             avg_weight_peak) > %s
-       )
+SELECT
+     xtrsrc_id
+    ,ds_id
+    ,datapoints
+    ,wm_ra
+    ,wm_decl
+    ,wm_ra_err
+    ,wm_decl_err
+    ,t1.V_inter / t1.avg_i_peak as V
+    ,t1.eta_inter / t1.avg_weight_peak as eta
+  FROM
+    (SELECT
+          xtrsrc_id
+         ,ds_id
+         ,datapoints
+         ,wm_ra
+         ,wm_decl
+         ,wm_ra_err
+         ,wm_decl_err
+         ,avg_i_peak
+         ,avg_weight_peak
+         ,CASE WHEN datapoints = 1
+               THEN 0
+               ELSE sqrt(cast(datapoints as double) * (avg_I_peak_sq - avg_I_peak*avg_I_peak) / (cast(datapoints as double) - 1.0))
+               END
+          AS V_inter
+         ,CASE WHEN datapoints = 1
+               THEN 0
+               ELSE (datapoints / (datapoints-1.0)) * (avg_weight_peak*avg_weighted_I_peak_sq - avg_weighted_I_peak * avg_weighted_I_peak )
+               END
+          AS eta_inter
+      FROM runningcatalog
+      WHERE ds_id = %s
+      ) t1
+  WHERE t1.V_inter / t1.avg_i_peak > %s
+  AND t1.eta_inter / t1.avg_weight_peak > %s
 """
         cursor.execute(query, (dsid, V_lim, eta_lim))
         results = cursor.fetchall()
@@ -1073,11 +1087,13 @@ SELECT xtrsrc_id
                    for x in results]
         #conn.commit()
     except db.Error:
-        logging.warn("Failed on query %s", query)
+        query = query % (dsid, V_lim, eta_lim)
+        logging.warn("Failed on query:\n%s", query)
         raise
     finally:
         cursor.close()
     return results
+
 
 def select_single_epoch_detection(conn, dsid):
     """Select sources and variability indices in the running catalog"""
@@ -1119,21 +1135,21 @@ SELECT xtrsrc_id
 def lightcurve(conn, xtrsrcid):
     """Obtain a light curve for a specific source"""
 
-    results = [[]]
     cursor = conn.cursor()
     try:
         query = """\
 SELECT im.taustart_ts, im.tau_time, ex.i_peak, ex.i_peak_err, ex.xtrsrcid
 FROM extractedsources ex, assocxtrsources ax, images im
-WHERE ax.xtrsrc_id IN (
-    SELECT xtrsrc_id FROM assocxtrsources WHERE assoc_xtrsrc_id = %s)
+WHERE ax.xtrsrc_id = %s
   AND ex.xtrsrcid = ax.assoc_xtrsrc_id
   AND ex.image_id = im.imageid
 ORDER BY im.taustart_ts"""
         cursor.execute(query, (xtrsrcid,))
         results = cursor.fetchall()
     except db.Error:
+        query = query % xtrsrcid
         logging.warn("Failed to obtain light curve")
+        logging.warn("Failed on query:\n%s", query)
         raise
     finally:
         cursor.close()
@@ -1304,4 +1320,96 @@ def concurrency_test_randomalpha(conn):
     finally:
         conn.cursor().close()
     return alpha
+
+
+def columns_from_table(conn, table, keywords=None, where=None):
+    """Obtain specific column (keywords) values from 'table', with
+    kwargs limitations.
+
+    A very simple helper function, that builds an SQL query to obtain
+    the specified columns from 'table', and then executes that
+    query. Optionally, the WHERE clause can be specified using the
+    where dictionary. It returns a list of a
+    dict (with the originally supplied keywords as dictionary keys),
+    which can be empty.
+
+    Example:
+    
+        >>> columns_from_table(conn, 'images',
+            keywords=['taustart_ts', 'tau_time', 'freq_eff', 'freq_bw'], imageid=1)
+            [{'freq_eff': 133984375.0, 'taustart_ts': datetime.datetime(2010, 10, 9, 9, 4, 2), 'tau_time': 14400.0, 'freq_bw': 1953125.0}]
+
+        This builds the SQL query:
+        "SELECT taustart_ts, tau_time, freq_eff, freq_bw FROM images WHERE imageid=1"
+
+    This function is implemented mainly to abstract and hide the SQL
+    functionality from the Python interface.
+    """
+
+    # Note from the Python docs: If items(), keys(), values(),
+    # iteritems(), iterkeys(), and itervalues() are called with no
+    # intervening modifications to the dictionary, the lists will
+    # directly correspond.
+    results = []
+    if keywords is None:
+        query = "SELECT * FROM " + table
+    else:
+        query = "SELECT " + ", ".join(keywords) + " FROM " + table
+    if where is None:
+        where = {}
+    where_args = tuple(where.itervalues())
+    where = " AND ".join(["%s=%%s" % key for key in where.iterkeys()])
+    if where:
+        query += " WHERE " + where
+    try:
+        cursor = conn.cursor()
+        cursor.execute(query, where_args)
+        results = cursor.fetchall()
+        if keywords is None:
+            keywords = [desc[0] for desc in cursor.description]
+        results = [dict([(keyword, value) for keyword, value in zip(keywords, result)]) for result in results]
+    except db.Error, exc:
+        query = query % where_args
+        logging.warn("Failed on query: %s" % query)
+        raise
+    finally:
+        conn.cursor().close()
+    return results
+
+
+def set_columns_for_table(conn, table, data=None, where=None):
+    """Set specific columns (keywords) for 'table', with 'where'
+    limitations.
+
+    A simple helper function, that builds an SQL query to update the
+    specified columns given by data for 'table', and then executes
+    that query. Optionally, the WHERE clause can be specified using
+    the 'where' dictionary.
+
+    The data argument is a dictionary with the names and corresponding
+    values of the columns that need to be updated.
+    """
+
+    # Note from the Python docs: If items(), keys(), values(),
+    # iteritems(), iterkeys(), and itervalues() are called with no
+    # intervening modifications to the dictionary, the lists will
+    # directly correspond.
+    query = "UPDATE " + table + " SET " + ", ".join(["%s=%%s" % key for key in data.iterkeys()])
+    if where is None:
+        where = {}
+    where_args = tuple(where.itervalues())
+    where = " AND ".join(["%s=%%s" % key for key in where.iterkeys()])
+    values = tuple(data.itervalues())
+    if where:
+        query += " WHERE " + where
+    try:
+        cursor = conn.cursor()
+        cursor.execute(query, values + where_args)
+        conn.commit()
+    except DBError, e:
+        query = query % (values + where_args)
+        logging.warn("Failed on query: %s" % query)
+        raise
+    finally:
+        conn.cursor().close()
 

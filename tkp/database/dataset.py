@@ -76,419 +76,225 @@ from ..config import config
 DERUITER_R = config['source_association']['deruiter_radius']
 
 
-class DataSet(object):
-    """
-    A DataSet contains a list of Image objects which fall logically
-    together as one unit: potentially from the same set of
-    observations, the same HDF5 file or similar. These are therefore
-    associated by having the same dataset id in the database, and thus
-    the same DataSet object.
-    """
+class DBObject(object):
 
-    COLUMNS = dict(rerun=0, dstype=1, process_ts=datetime.datetime(1970, 1, 1),
-                   dsinname='', dsoutname='', description='')
+    def __init__(self, data=None, database=None, id=None):
+        """Basic initialization.
 
-    # note: 'id' has been replaced by dsid, to avoid confusion with
-    # the builtin 'id'
-    def __init__(self, name='', dsid=None, data=None, database=None):
-        """Create or initialize a dataset
+        Inherited classes will implement any actual database action,
+        by calling self._init_data() at the end of their __init__
+        method.
+        """
+        self._id = id
+        self._data = {} if data is None else data.copy()
+        self.database = database
 
-        Kwargs:
+    def _init_data(self):
+        """Set up the data, either by creating a new DBOject or updating it from the database using the id
 
-            name (str): The DataSet name. Ignored if dsid is used to
-                find the dataset in the database. The name is
-                equivalent to the dsinname column in the database.
+        This method should only be called from __init__()
+        """
+        if self._id:
+            self.update()
+        else:
+            for key in self.REQUIRED:
+                if key not in self._data:
+                    raise AttributeError("missing required data key: %s" % key)
+            self.id
 
-            database (tkp.database.DataBase): This contains the
-                connection to the database. If None, the DataSet acts
-                as a dummy object.
+    def __getattr__(self, name):
+        """Obtain the 'name' attribute, where 'name' is a database column name"""
+        # Get here when 'name' is not found as attribute
+        # That likely means it is stored in self._data
+        try:
+            return self._data[name]
+        except KeyError:
+            raise AttributeError("attribute '%s' not found" % name)
+        
+    @property
+    def id(self):
+        """Add or obtain an id to/from the table"""
 
-            dsid (int): The dataset id in the database. If None, a new
-                dataset entry (row) is created in the database, and
-                the current DataSet instance is assigned to it.
+        if self._id is None:
+            query = ("INSERT INTO " + self.TABLE + " (" +
+                     ", ".join(self._data.iterkeys()) + ") VALUES (" +
+                     ", ".join(["%s"] * len(self._data)) + ")")
+            values = tuple(self._data.itervalues())
+            cursor = self.database.cursor
+            try:
+                # Insert a default source
+                cursor.execute(query, values)
+                self.database.connection.commit()
+                self._id = cursor.lastrowid
+            except self.database.Error:
+                logging.warn("Insertion of ExtractedSource() into database "
+                             "failed: %s", (query % values))
+                raise
+        return self._id
 
-        Returns:
+    def update(self, **kwargs):
+        """Update attributes from database, and set database values to
+        kwargs when provided
 
-            None
+        This method performs two functions, the first always and the
+        second optionally:
+
+            - it updates the attributes from the database. That is, it
+              makes sure the Python instance is synchronized with the
+              database.
+
+            - (optional): it sets the column values in the database to
+              the values provided through kwargs, for the associated
+              database row. Attributes for the instance are of course
+              also set to these values. Any kwargs that do not
+              correspond to a column name are simply ignored.
+
+        This function therefore first updates the instance from the
+        database, and then optionally the database from the instance
+        (with the provided keyword arguments).
         """
 
+        self._sync_with_database()
+        self._set_data(**kwargs)
+            
+    def _sync_with_database(self):
+        results = dbu.columns_from_table(
+            self.database.connection, self.TABLE, keywords=None,
+            where={self.ID: self._id})
+        # Shallow copy, but that's ok: all database values are
+        # immutable (including datetime objects)
+        self._data = results[0].copy()
 
-        self.database = database
+    def _set_data(self, **kwargs):
+        if not kwargs:
+            return
+        dbu.set_columns_for_table(self.database.connection, self.TABLE,
+                                  data=kwargs, where={self.ID: self._id})
+        self._data.update(kwargs)
+        
+
+class DataSet(DBObject):
+    """Class corresponding to the dataset table in the database"""
+
+    TABLE = 'datasets'
+    ID = 'dsid'
+    REQUIRED = ('dsinname',)
+    
+    def __init__(self, data=None, database=None, id=None):
+        """If id is supplied, the data and image arguments are ignored."""
+        super(DataSet, self).__init__(
+            data=data, database=database, id=id)
         self.images = set()
-        # Database ID placeholder: see the id() method below.
-        self._dsid = dsid
-        # Initialize the other data
-        if self._dsid is None:
-            # Set some defaults; not stored in database yet
-            #for key, value in self.COLUMNS.items():
-            #    setattr(self, key, value)
-            self._dsinname = self.name = name
-            self.dsid 
-            #self.dsid = dbu.insert_dataset(self.database.connection, self._dsinname)
-            #self._set_data(data=data)
-        else:
-            self._retrieve_from_database()
-
-    def __setattr__(self, name, value):
-        if name in self.COLUMNS:
-            object.__setattr__(self, '_' + name, value)
-            self._set_value(name, value)
-            if name == 'dsinname':
-                self.name = value
-        else:
-            object.__setattr__(self, name, value)
+        if not self.database:
+            raise ValueError(
+                "can't create DataSet object without a DataBase() object")
+        self._init_data()
 
     def __str__(self):
         return 'DataSet: "%s". Database ID: %s %d images.' % (
             self.name, str(self._dsid), len(self.images))
 
-    def _set_value(self, name, value):
-        if self.database and self.database.connection:
-            if self._dsid:
-                try:
-                    # NB: the following won't work, because the value of name
-                    # gets quoted.
-                    # Eg, "UPDATE datasets SET 'rerun'='2' ...", which fails
-                    # #self.database.cursor.execute(
-                    # #    "UPDATE datasets SET %s=%s WHERE dsid=%s",
-                    # #    (name, value, self._dsid))
-                    # So the command string is created first, before sending it
-                    # to cursor.execute()
-                    command = ("UPDATE datasets SET %s=%%s WHERE dsid=%%s" %
-                               name)
-                    self.database.cursor.execute(command, (value, self._dsid))
-                    self.database.connection.commit()
-                except self.database.Error:
-                    logging.warn("Failed to set %s for DataSet with id=%s.",
-                                 name, self._dsid)
-                    raise
-
-    def _set_data(self, data=None):
-        """Set one or more 'columns' in the DataSet
-
-        This is an alternative to using the direct attribute assignment
-        """
-        if data is None:
-            data = {}
-        self._rerun = data.get('rerun', self._rerun)
-        self._dstype = data.get('dstype', self._dstype)
-        self._process_ts = data.get('process_ts', self._process_ts)
-        if 'name' in data:  # ignore 'dsinname'
-            self.name = data['name']
-            self._dsinname = self.name
-        elif 'dsinname' in data:
-            self._dsinname = data['dsinname']
-            self.name = self._dsinname
-        self._dsoutname = data.get('dsoutname', self._dsoutname)
-        self._description = data.get('description', self._description)
-        if self._dsid:
-            try:
-                self.database.cursor.execute("""\
-UPDATE datasets
-  SET rerun=%s, dstype=%s, process_ts=%s, dsinname=%s, dsoutname=%s,
-      description=%s
-WHERE dsid=%s""", (self._rerun, self._dstype, self._process_ts, self._dsinname,
-                   self._dsoutname, self._description, self._dsid))
-                self.database.connection.commit()
-            except self.database.Error:
-                logging.warn("Failed to set data for with id=%s.",
-                             self._dsid)
-                raise
-
-    def _retrieve_from_database(self, database=None):
-        """Fill in the dataset details from the datasets table"""
-
-        if database is None:
-            database = self.database
-        connection = database.connection
-        cursor = database.cursor
-        query = ("""SELECT %s FROM datasets WHERE dsid=%%s""" %
-                                  ", ".join(self.COLUMNS.keys()))
-        cursor.execute(query, (self._dsid,))
-        results = cursor.fetchone()
-        for i, desc in enumerate(cursor.description):
-            object.__setattr__(self, '_' + desc[0], results[i])
-        self.name = self._dsinname
-        self._update_images(cursor)
-
-    def _update_images(self, cursor):
-        self.images = set()
-        cursor.execute(
-            """SELECT imageid FROM images WHERE ds_id=%s""",
-            (self._dsid,))
-        for imageid in cursor.fetchall():
-            self.images.add(Image(dataset=self, imageid=imageid[0]))
-        
+    # Inserting datasets is handled a little different than normal inserts
     @property
-    def dsid(self):
-        """Add a dataset ID to the database
+    def id(self):
+        """Add or obtain an id to/from the table"""
 
-        A dataset will be added to the database. A dataset id will be
-        generated for every dataset name. If the name already exists the
-        rerun value in the table will be incremented by 1. If the database is
-        not enabled the id is set to "None".
-
-        The stored function insertDataset() is called. It takes the name as
-        input and returns the generated id.
-        """
-
-        if self._dsid is None:
+        if self._id is None:
             try:
-                #self.database.cursor.execute(
-                #    """SELECT insertDataset(%s)""", (self.name,))
-                #self._dsid = int(self.database.cursor.fetchone()[0])
-                #self.database.connection.commit()
-                self._dsid = dbu.insert_dataset(self.database.connection, self._dsinname)
-            except self.database.Error:
-                logging.warn("Insert DataSet %s failed.", self.name)
+                self._id = dbu.insert_dataset(self.database.connection,
+                                              self._data['dsinname'])
+            except self.database.Error, e:
+                logging.warn("insertion of DataSet() into the database failed")
                 raise
-        return self._dsid
+        return self._id
 
-    def update(self, **kwargs):
-        """Update the dataset table with **kwargs;
-        Also updates the DataSet instance if the table has changed
+    # Get all images from database; implemented separately from update(),
+    # since normally this would be too much overhead
+    def update_images(self):
+        """Renew the set of images by getting the images for this
+        dataset from the database"""
 
-        Firstly, the database row is updated with the values from kwargs
-        If there is an unknown keyword in kwargs, an AttributeError is raised.
-        Secondly, the DataSet instance is updated with the values from the
-        database, in case there were also other changes in the database.
-        
-        """
-
-        valid_keys = self.COLUMNS.keys()
-        data = []
-        for key, value in kwargs.items():
-            if key not in valid_keys:
-                raise AttributeError("%s is not a valid keyword" % key)
-        self._retrieve_from_database()
-        self._set_data(data=kwargs)
-
-    # Fix constants
+        query = "SELECT imageid FROM images WHERE ds_id = %s"
+        try:
+            self.database.cursor.execute(query, (self._id,))
+            results = self.database.cursor.fetchall()
+        except DBError, e:
+            query = query % self._id
+            logging.warn("database failed on query: %s", query)
+            raise
+        images = set()
+        for result in results:
+            images.add(Image(database=self.database, id=result[0]))
+        self.images = images
+                           
+    # TO DO: Verify constants
     def detect_variables(self,  V_lim=0.2, eta_lim=3.):
         """Search through the whole dataset for variable sources"""
 
         return dbu.detect_variable_sources(
             self.database.connection, self.dsid, V_lim, eta_lim)
-        
-        
-class Image(object):
+
+
+class Image(DBObject):
     """Class corresponding to the image table in the database"""
 
-    COLUMNS = dict(tau_time=0., freq_eff=0., freq_bw=0., band=0,
-                   taustart_ts=datetime.datetime(1970, 1, 1),
-                   url='')
-
-    def __init__(self, dataset=None, imageid=None, data=None,
-                 database=None):
-        """Create an Image object filled with relevant image data
-
-        Args:
-
-            dataset (tkp.database.dataset.DataSet): The
-                DataSet instance in which the image is stored. This
-                also takes care of the database access, since this is
-                done through the dataset. If None, no database
-                interaction is possible, and the dataset (and the
-                obtainment of an imageid) has to be done manually.
-
-        Kwargs:
-
-            imageid (int or None): the id of the image (row) in the
-                database. If None, an id will be created once the data
-                is stored with Image().store()
-
-            data (dict or None): A dict with the relevant image
-                data. The keys correspond to the columns in the
-                database table, except for imageid. Keys not present
-                will be filled with a default empty value ('', 0 or None),
-                while extra keys not present in the table are
-                ignored. If data is None, an empty dict is used.
-
-                Available keys are:
-
-                - tau_time (float)
-
-                - freq_eff (float)
-
-                - freq_bw (float)
-
-                - taustart_ts (datetime.datetime)
-
-                - url (str)
-
-        Returns:
-
-            (None)
-
-        """
-
+    TABLE = 'images'
+    ID = 'imageid'
+    REQUIRED = ('ds_id', 'tau_time', 'freq_eff', 'freq_bw', 'taustart_ts')
+    
+    def __init__(self, data=None, dataset=None, database=None, id=None):
+        """If id is supplied, the data and image arguments are ignored."""
+        super(Image, self).__init__(
+            data=data, database=database, id=id)
+        # Special part to deal when a DataSet() is supplied
         self.dataset = dataset
-        self.database = database
-        self.data = data
         if self.dataset:
             if self.dataset.database and not self.database:
                 self.database = self.dataset.database
             self.dataset.images.add(self)
+            self._data.setdefault('ds_id', self.dataset.id)
         self.sources = set()
-        self._imageid = imageid
-        if self._imageid is None:
-            if self.data is None:
-                raise ValueError(
-                    "can't create an image with empty header information")
-            keywords = set(['freq_eff', 'freq_bw', 'taustart_ts', 'url'])
-            data_keys = set(self.data.keys())
-            if not keywords <= data_keys:
-                raise KeyError("missing keyword(s) in data dictionary: %s" %
-                               (tuple(keywords - data_keys),))
-            #for key, value in self.COLUMNS.items():
-            #    setattr(self, key, value)
-            self.imageid
-            # Set remaining values, if any
-            tmpdata = dict(self.data)
-            for key in (data_keys & keywords):
-                del tmpdata[key]
-            self.update(**tmpdata)
-        else:
-            self._retrieve_from_database()
+        if not self.database:
+            raise ValueError(
+                "can't create Image object without a DataBase() object")
+        self._init_data()
 
-    def __getattribute__(self, name):
-        if name in object.__getattribute__(self, 'COLUMNS').keys():
-            return object.__getattribute__(self, '_' + name)
-        else:
-            return object.__getattribute__(self, name)
-        
-    def __setattr__(self, name, value):
-        if name in self.COLUMNS.keys():
-            object.__setattr__(self, '_' + name, value)
-            self._set_value(name, value)
-            if name == 'dsinname':
-                self.name = value
-        else:
-            object.__setattr__(self, name, value)
-
-    def __str__(self):
-        return 'Image Dataset: "%s". Image ID: %s with %d source.' % (
-            self.dataset.name, str(self._imageid), len(self.sources))
-
-    def _set_data(self, data=None):
-
-        if data is None:
-            data = {}
-        self._tau_time = data.get('tau_time', self._tau_time)
-        self._freq_eff = data.get('freq_eff', self._freq_eff)
-        self._freq_bw = data.get('freq_bw', self._freq_bw)
-        self._taustart_ts = data.get('taustart_ts', self._taustart_ts)
-        self._url = data.get('url', self._url)
-        self._band = data.get('band', self._band)
-
-        connection = self.database.connection
-        cursor = self.database.cursor
-        if self._imageid:
-            try:
-                cursor.execute("""\
-UPDATE images
-    SET tau_time=%s, freq_eff=%s, freq_bw=%s, taustart_ts=%s, url=%s, band=%s
-WHERE imageid=%s""", (self.tau_time, self.freq_eff, self.freq_bw,
-                      self.taustart_ts, self.url, self.band, self.imageid))
-                connection.commit()
-                # Need to update the calculated band id as well
-                cursor.execute("""\
-UPDATE images SET band=getBand(%s) WHERE imageid=%s""",
-                               (self._freq_eff, self._imageid))
-                connection.commit()
-            except self.database.Error:
-                logging.warn("Failed to set data for Image with id=%s.",
-                             self._imageid)
-                raise
-
-    def _set_value(self, name, value):
-        if (self.dataset is not None and self.database and
-            self.database.connection):
-            connection = self.database.connection
-            cursor = self.database.cursor
-            if self._imageid:
-                try:
-                    command = ("UPDATE images SET %s=%%s WHERE imageid=%%s" %
-                               name)
-                    cursor.execute(command, (value, self._imageid))
-                    connection.commit()
-                except self.database.Error:
-                    logging.warn("Failed to set %s for Image with id=%s.",
-                                 name, self._imageid)
-
-    def _retrieve_from_database(self, database=None):
-        """Fill in the image details from a database image table entry"""
-
-        if database is None:
-            database = self.database
-        connection = database.connection
-        cursor = database.cursor
-        cursor.execute("""\
-SELECT tau_time, freq_eff, freq_bw, taustart_ts, url, band FROM images
-WHERE imageid=%s""" % (self._imageid,))
-        results = cursor.fetchone()
-        self._tau_time = results[0]
-        self._freq_eff = results[1]
-        self._freq_bw = results[2]
-        self._taustart_ts = results[3]
-        self._url = results[4]
-        self._band = results[5]
-        if not self.dataset:
-            # set the corresponding dataset
-            cursor.execute(
-                """SELECT ds_id FROM images WHERE imageid=%s""",
-                (self._imageid,))
-            dsid = cursor.fetchone()[0]
-            self.dataset = DataSet(dsid=dsid, database=database)
-        self._update_sources(cursor)
-
-    def _update_sources(self, cursor):
-        self.sources = set()
-        cursor.execute(
-            """SELECT xtrsrcid FROM extractedsources WHERE image_id=%s""",
-            (self._imageid,))
-        for srcid in cursor.fetchall():
-            self.sources.add(Source(image=self, srcid=srcid[0]))
-
+    # Inserting images is handled a little different than normal inserts
     @property
-    def imageid(self):
-        """Add or obtain an imageid to/from the images table"""
+    def id(self):
+        """Add or obtain an id to/from the table"""
 
-        #connection = self.database.connection
-        #cursor = self.database.cursor
-        if self._imageid is None:
+        if self._id is None:
             try:
                 # Insert a default image
-                self._imageid = dbu.insert_image(self.database.connection,
-                                                 self.dataset.dsid,
-                                                 self.data['freq_eff'],
-                                                 self.data['freq_bw'],
-                                                 self.data['taustart_ts'],
-                                                 self.data['url']
-                                                )
-            except self.database.Error:
-                logging.warn("Insertion of Image() failed.")
+                self._id = dbu.insert_image(
+                    self.database.connection, self.dataset.id,
+                    self._data['freq_eff'], self._data['freq_bw'],
+                    self._data['taustart_ts'], self._data['url']
+                )
+            except self.database.Error, e:
+                logging.warn("insertion of Image() into the database failed")
                 raise
-        return self._imageid
+        return self._id
 
-    def update(self, **kwargs):
-        """Update the image table with **kwargs;
-        Also updates the Image instance if the table has changed
+    # Get all sources from database; implemented separately from update(),
+    # since normally this would be too much overhead
+    def update_sources(self):
+        """Renew the set of sources by getting the sources for this
+        image from the database"""
 
-        Firstly, the database row is updated with the values from kwargs
-        If there is an unknown keyword in kwargs, an AttributeError is raised.
-        Secondly, the Image instance is updated with the values from the
-        database, in case there were also other changes in the database.
-        
-        """
-
-        valid_keys = self.COLUMNS.keys()
-        data = []
-        for key, value in kwargs.items():
-            if key not in valid_keys:
-                raise AttributeError("%s is not a valid keyword" % key)
-        self._retrieve_from_database()
-        self._set_data(data=kwargs)
+        query = "SELECT xtrsrcid FROM extractedsources WHERE image_id = %s"
+        try:
+            self.database.cursor.execute(query, (self._id,))
+            results = self.database.cursor.fetchall()
+        except DBError, e:
+            query = query % self._id
+            logging.warn("database failed on query: %s", query)
+            raise
+        sources = set()
+        for result in results:
+            sources.add(ExtractedSource(database=self.database, id=result[0]))
+        self.sources = sources
 
     def insert_extracted_sources(self, results):
         """Insert a list of sources
@@ -504,7 +310,7 @@ WHERE imageid=%s""" % (self._imageid,))
                 det_sigma).
        """
         dbu.insert_extracted_sources(
-            self.database.connection, self.imageid, results=results)
+            self.database.connection, self._id, results=results)
         
     def associate_extracted_sources(self, deRuiter_r=DERUITER_R):
         """Associate sources from the last images with previously extracted sources within the same dataset
@@ -517,156 +323,32 @@ WHERE imageid=%s""" % (self._imageid,))
             
         """
         dbu.associate_extracted_sources(
-            self.database.connection, self.imageid, deRuiter_r)
+            self.database.connection, self._id, deRuiter_r)
 
         
-class Source(object):
 
-    COLUMNS = dict(zone=0, ra=0., decl=0., ra_err=0., decl_err=0.,
-                   x=0, y=0, z=0, margin=False, det_sigma=0.,
-                   semimajor=0., semiminor=0., pa=0.,
-                   i_peak=0., i_peak_err=0., q_peak=0., q_peak_err=0., 
-                   u_peak=0., u_peak_err=0., v_peak=0., v_peak_err=0.,
-                   i_int=0., i_int_err=0., q_int=0., q_int_err=0.,
-                   u_int=0., u_int_err=0., v_int=0., v_int_err=0.)
+class ExtractedSource(DBObject):
 
-    def __init__(self, image=None, srcid=None, data=None, database=None):
+    TABLE = 'extractedsources'
+    ID = 'xtrsrcid'
+    REQUIRED = ('image_id', 'zone', 'ra', 'decl', 'ra_err', 'decl_err', 'x', 'y', 'z', 'det_sigma')
+
+    def __init__(self, data=None, image=None, database=None, id=None):
+        """If id is supplied, the data and image arguments are ignored."""
+        super(ExtractedSource, self).__init__(
+            data=data, database=database, id=id)
+        # Special part to deal when an Image() is supplied
         self.image = image
-        self.database = database
         if self.image:
             if self.image.dataset.database and not self.database:
                 self.database = self.image.dataset.database
             self.image.sources.add(self)
-        self._srcid = srcid
-        if self._srcid is None:
-            for key, value in self.COLUMNS.items():
-                setattr(self, key, value)
-            self.srcid  # set self._srcid property
-            self._set_data(data=data)
-        else:
-            self._retrieve_from_database()
+            self._data.setdefault('image_id', self.image.id)
+        if not self.database:
+            raise ValueError(
+                "can't create ExtractedSource object without a DataBase() object")
+        self._init_data()
 
-    def __getattr__(self, name):
-        if name in self.COLUMNS.keys():
-            return getattr(self, '_' + name)
-
-    def __setattr__(self, name, value):
-        if name in self.COLUMNS.keys():
-            object.__setattr__(self, '_' + name, value)
-            self._set_value(name, value)
-        else:
-            object.__setattr__(self, name, value)
-
-    def _set_value(self, name, value):
-        if (self.image.dataset is not None and self.database and
-            self.database.connection):
-            connection = self.database.connection
-            cursor = self.database.cursor
-            if self._srcid:
-                try:
-                    query = ("UPDATE extractedsources SET %s=%%s WHERE xtrsrcid=%%s" %
-                             name)
-                    cursor.execute(query, (value, self._srcid))
-                    connection.commit()
-                except self.database.Error:
-                    logging.warn("Failed to set %s for Source with id=%s.",
-                                 name, self._srcid)
-                    raise
-
-    def _retrieve_from_database(self, database=None):
-        """Fill in the source details from a database extractedsources
-        table entry"""
-
-        if database is None:
-            database = self.database
-        connection = database.connection
-        cursor = database.cursor
-        query = ("""SELECT %s FROM extractedsources WHERE xtrsrcid=%%s""" %
-                 ", ".join(self.COLUMNS.keys()))
-        cursor.execute(query, (self.srcid,))
-        results = cursor.fetchone()
-        for i, desc in enumerate(cursor.description):
-            object.__setattr__(self, '_' + desc[0], results[i])
-        if not self.image:
-            # set the corresponding image
-            cursor.execute(
-                """SELECT image_id FROM extractedsources WHERE xtrsrcid=%s""",
-                (self._srcid,))
-            imageid = cursor.fetchone()[0]
-            self.image = Image(imageid=imageid, database=database)
-            #self.image.sources.add(self)
-            
-    def __str__(self):
-        return "Source %d (%.3f, %.3f)" % (self._srcid, self.ra, self.decl)
-
-    def __repr__(self):
-        return "Source(image=%s, srcid=%s)" % (
-            repr(self.image), str(self._srcid))
-
-    def _set_data(self, data=None):
-        if not data:
-            return
-        query = []
-        values = []
-        for key, value in self.COLUMNS.iteritems():
-            if key in data:
-                object.__setattr__(self, '_' + key, data[key])
-                query.append("%s=%%s" % (key,))
-                values.append(getattr(self, key))
-        query = "UPDATE extractedsources SET " + ", ".join(query)
-        query += " WHERE xtrsrcid=%s"
-        connection = self.database.connection
-        cursor = self.database.cursor
-        if self._srcid:
-            values.append(self._srcid)
-            try:
-                cursor.execute(query, tuple(values))
-                connection.commit()
-            except self.database.Error:
-                logging.warn("Failed to set data for Source with id=%s.",
-                             self._srcid)
-                raise
-
-    @property
-    def srcid(self):
-        """Add or obtain an srcid to/from the extractedsources table"""
-
-        if self._srcid is None:
-            connection = self.database.connection
-            cursor = self.database.cursor
-            try:
-                # Insert a default source
-                cursor.execute("""\
-INSERT INTO extractedsources
-    (image_id, zone, ra, decl, ra_err, decl_err, x, y, z, margin, det_sigma)
-    VALUES (%s, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0)""", (self.image.imageid,))
-                connection.commit()
-                self._srcid = cursor.lastrowid
-            except self.database.Error:
-                logging.warn(
-                    "Insertion of default Source() into database failed.")
-                raise
-        return self._srcid
-
-    def update(self, **kwargs):
-        """Update the extractedsources table with **kwargs;
-        Also updates the Source instance if the table has changed
-
-        Firstly, the database row is updated with the values from kwargs
-        If there is an unknown keyword in kwargs, an AttributeError is raised.
-        Secondly, the Source instance is updated with the values from the
-        database, in case there were also other changes in the database.
-        
-        """
-
-        valid_keys = self.COLUMNS.keys()
-        data = []
-        for key, value in kwargs.items():
-            if key not in valid_keys:
-                raise AttributeError("%s is not a valid keyword" % key)
-        self._retrieve_from_database()
-        self._set_data(data=kwargs)
-        
     def lightcurve(self):
         """Obtain the complete light curve (within the current dataset
         for this source
@@ -686,4 +368,4 @@ INSERT INTO extractedsources
                 - database ID of this particular source
         """
 
-        return dbu.lightcurve(self.database.connection, self.srcid)
+        return dbu.lightcurve(self.database.connection, self._id)

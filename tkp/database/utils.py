@@ -1072,7 +1072,7 @@ SELECT
           AS V_inter
          ,CASE WHEN datapoints = 1
                THEN 0
-               ELSE (datapoints / (datapoints-1.0)) * (avg_weight_peak*avg_weighted_I_peak_sq - avg_weighted_I_peak * avg_weighted_I_peak )
+               ELSE (cast(datapoints as double) / (cast(datapoints as double)-1.0)) * (avg_weight_peak*avg_weighted_I_peak_sq - avg_weighted_I_peak * avg_weighted_I_peak )
                END
           AS eta_inter
       FROM runningcatalog

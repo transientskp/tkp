@@ -79,7 +79,7 @@ class SIP(control):
             database = DataBase()
             dataset = DataSet(data={'dsinname': self.inputs['job_name']},
                               database=database)
-            dsid = dataset.dsid
+            dsid = dataset.id
             outputs = self.run_task("time_slicing", gvds_file=gvds_file)
             mapfiles = outputs['mapfiles']
             subdirs = ["%d" % int(starttime) for starttime, endtime in

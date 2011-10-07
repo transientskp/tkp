@@ -39,14 +39,14 @@ from the database.
 # Here, dataset indirectly holds the database connection
 >>> image1 = Image(data={'freq_eff': '80e6', 'freq_bw': 1e6,
     'taustart_ts': datetime(2011, 5, 1, 0, 0, 0), 'tau_time': 1800., 'url': '/'},
-	dataset=dataset)  # initialize with defaults
+    dataset=dataset)  # initialize with defaults
 >>> image1.tau_time
 1800.
 >>> image1.taustart_ts
 datetime.datetime(2011, 5, 1, 0, 0, 0)
 >>> image2 = Image(data={'freq_eff': '80e6', 'freq_bw': 1e6,
     'taustart_ts': datetime(2011, 5, 1, 0, 1, 0), 'tau_time': 1500., 'url': '/'},
-	dataset=dataset)
+    dataset=dataset)
 >>> image2.tau_time
 1500
 >>> image2.taustart_ts
@@ -102,15 +102,15 @@ DERUITER_R = config['source_association']['deruiter_radius']
 
 
 class DBObject(object):
-	"""Generic mini-ORM object
+    """Generic mini-ORM object
 
-	Derived objects will need to implement __init__, which for
-	practical reasons is split up in __init__ and _init_data: the
-	latter is called at the end __init__, so a derived __init__ would
-	have super(Derived, self).__init__() at the start and
-	super(Derived, self)._init_data() at the end.
-	"""
-	
+    Derived objects will need to implement __init__, which for
+    practical reasons is split up in __init__ and _init_data: the
+    latter is called at the end __init__, so a derived __init__ would
+    have super(Derived, self).__init__() at the start and
+    super(Derived, self)._init_data() at the end.
+    """
+
     def __init__(self, data=None, database=None, id=None):
         """Basic initialization.
 
@@ -128,8 +128,8 @@ class DBObject(object):
 
         This method should only be called from __init__(), probably at the end.
 
-		Note that this does prevent proper (multi) inheritance,
-		because it would get called several times then.
+        Note that this does prevent proper (multi) inheritance,
+        because it would get called several times then.
         """
         if self._id:
             self.update()
@@ -152,9 +152,9 @@ class DBObject(object):
     def id(self):
         """Add or obtain an id to/from the table
 
-		The id is generated if self._id does not exist, effectively
-		creating a new row in the database.
-		"""
+        The id is generated if self._id does not exist, effectively
+        creating a new row in the database.
+        """
 
         if self._id is None:
             query = ("INSERT INTO " + self.TABLE + " (" +
@@ -199,7 +199,7 @@ class DBObject(object):
         self._set_data(**kwargs)
             
     def _sync_with_database(self):
-		"""Update object attributes from the database"""
+        """Update object attributes from the database"""
         results = dbu.columns_from_table(
             self.database.connection, self.TABLE, keywords=None,
             where={self.ID: self._id})
@@ -208,12 +208,12 @@ class DBObject(object):
         self._data = results[0].copy()
 
     def _set_data(self, **kwargs):
-		"""Update the database with the supplied **kwargs.
+        """Update the database with the supplied **kwargs.
 
-		Supplied keywords that do not exist in the database will lead
-		to a database error.
-		"""
-		
+        Supplied keywords that do not exist in the database will lead
+        to a database error.
+        """
+
         if not kwargs:
             return
         dbu.set_columns_for_table(self.database.connection, self.TABLE,
@@ -331,10 +331,10 @@ class Image(DBObject):
         """Renew the set of sources by getting the sources for this
         image from the database
 
-		This method is separately implemented, because it's not always necessary
-		and potentially (for an image with dozens or more sources) time & memeory
-		consuming. 
-		"""
+        This method is separately implemented, because it's not always necessary
+        and potentially (for an image with dozens or more sources) time & memeory
+        consuming. 
+        """
 
         query = "SELECT xtrsrcid FROM extractedsources WHERE image_id = %s"
         try:
@@ -379,10 +379,9 @@ class Image(DBObject):
             self.database.connection, self._id, deRuiter_r)
 
         
-
 class ExtractedSource(DBObject):
     """Class corresponding to the extractedsources table in the database"""
-	
+
     TABLE = 'extractedsources'
     ID = 'xtrsrcid'
     REQUIRED = ('image_id', 'zone', 'ra', 'decl', 'ra_err', 'decl_err', 'x', 'y', 'z', 'det_sigma')

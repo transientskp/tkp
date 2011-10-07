@@ -95,6 +95,7 @@ from __future__ import with_statement
 import datetime
 import logging
 import utils as dbu
+import monetdb.sql as db
 from ..config import config
 
 
@@ -266,7 +267,7 @@ class DataSet(DBObject):
         try:
             self.database.cursor.execute(query, (self._id,))
             results = self.database.cursor.fetchall()
-        except DBError, e:
+        except db.Error, e:
             query = query % self._id
             logging.warn("database failed on query: %s", query)
             raise
@@ -340,7 +341,7 @@ class Image(DBObject):
         try:
             self.database.cursor.execute(query, (self._id,))
             results = self.database.cursor.fetchall()
-        except DBError, e:
+        except db.Error, e:
             query = query % self._id
             logging.warn("database failed on query: %s", query)
             raise

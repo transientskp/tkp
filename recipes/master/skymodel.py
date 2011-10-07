@@ -2,6 +2,7 @@ from __future__ import with_statement
 from contextlib import closing
 
 import sys
+import math
 import monetdb.sql as db
 from monetdb.sql import Error as Error
 import traceback
@@ -81,7 +82,7 @@ query_central = """
 SELECT
     catsrcname, i_int
 FROM
-    nearestNeighborInCat(%s,%s,'%s')
+    nearestNeighborInCat(%s,%s,%s)
 """
 
 
@@ -129,9 +130,48 @@ class skymodel(BaseRecipe):
         try:
             with closing(DataBase()) as database:
                 with closing(database.cursor) as db_cursor:
+                    self.logger.info("%s, %s", str(self.inputs['ra']), str(self.inputs['dec']))
+                    query = """\
+SELECT t.catsrcname, t.i_int_avg FROM
+(
+SELECT catsrcid
+      ,catsrcname
+      ,i_int_avg
+      ,3600 * DEG(2 * ASIN(SQRT((%s - c1.x) * (%s - c1.x)
+                                   + (%s - c1.y) * (%s - c1.y)
+                                   + (%s - c1.z) * (%s - c1.z)
+                                   ) / 2) 
+                     ) AS distance_arcsec
+  FROM catalogedsources c1
+      ,catalogs c0
+ WHERE c1.cat_id = c0.catid
+   AND c0.catname = %s
+   AND c1.x * %s + c1.y * %s + c1.z * %s > COS(RAD(1.0))
+   AND c1.zone BETWEEN CAST(FLOOR((%s - 1.0) / 1.0) AS INTEGER)
+                   AND CAST(FLOOR((%s + 1.0) / 1.0) AS INTEGER)
+   AND c1.ra BETWEEN %s - alpha(1.0, %s)
+                 AND %s + alpha(1.0, %s)
+   AND c1.decl BETWEEN %s - 1.0
+                   AND %s + 1.0
+) as t
+ORDER BY t.distance_arcsec ASC
+LIMIT 1
+"""
+                    ra = float(self.inputs['ra'])
+                    decl = float(self.inputs['dec'])
+                    x = math.cos(decl/180*math.pi) * math.cos(ra/180*math.pi)
+                    y = math.cos(decl/180*math.pi) * math.sin(ra/180*math.pi)
+                    z = math.sin(decl/180*math.pi)
+                    # Prevent 'too many digits' MonetDB error
+                    ra = "%.3f" % float(ra)
+                    decl = "%.3f" % float(decl)
+                    # Following statement fails because of failure of
+                    # SQL function 'nearestNeighborInCat'
+                    #db.cursor.execute(query_central, (ra, decl, "VLSS"))
+                    # Replaced by actual SQL query
                     db_cursor.execute(
-                        query_central % (float(self.inputs['ra']), float(self.inputs['dec']), "VLSS")
-                    )
+                        query, (x, x, y, y, z, z, "VLSS", x, y, z,
+                                decl, decl, ra, decl, ra, decl, decl, decl))
                     central_source = db_cursor.fetchone()
                     if central_source:
                         self.outputs["source_name"], self.outputs["source_flux"] = central_source
@@ -144,7 +184,7 @@ class skymodel(BaseRecipe):
                         (self.outputs["source_name"], self.outputs["source_flux"])
                     )
                     db_cursor.execute(
-                        query_skymodel % (
+                        query_skymodel, (
                             4, 4, # Only using VLSS for now
                             float(ra_min),
                             float(ra_max),

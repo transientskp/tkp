@@ -23,46 +23,71 @@ Usage
 
 In practice, a DataSet object is created, and separate Images are
 created referencing that DataSet() instance; ids are automatically
-assigned where necessary:
+assigned where necessary.
+
+Objects can also be created using an existing id; data is then taken
+from the database.
+
 
 >>> database = tkp.database.database.DataBase()
->>> dataset = DataSet('some name', database=database)
->>> image1 = Image(dataset=dataset)  # initialize with defaults
+# Each object type takes a data dictionary, which for newly objects
+# has some required keys (& values). For a DataSet, this is only 'dsinname';
+# for an Image, the keys are 'freq_eff', 'freq_bw_', 'taustart_ts',
+# 'tau_time' & 'url'
+# database holds the connection to the database
+>>> dataset = DataSet(data={'dsinname': 'a dataset'}, database=database)
+# Here, dataset indirectly holds the database connection
+>>> image1 = Image(data={'freq_eff': '80e6', 'freq_bw': 1e6,
+    'taustart_ts': datetime(2011, 5, 1, 0, 0, 0), 'tau_time': 1800., 'url': '/'},
+	dataset=dataset)  # initialize with defaults
 >>> image1.tau_time
-0
+1800.
 >>> image1.taustart_ts
-datetime.datetime(1970, 1, 1, 0, 0, 0)
->>> image2 = Image(dataset=dataset, data={'tau_time': 1500,
-                        'taustart_ts': datetime.datetime(2011, 5, 1, 0, 0, 0)})
+datetime.datetime(2011, 5, 1, 0, 0, 0)
+>>> image2 = Image(data={'freq_eff': '80e6', 'freq_bw': 1e6,
+    'taustart_ts': datetime(2011, 5, 1, 0, 1, 0), 'tau_time': 1500., 'url': '/'},
+	dataset=dataset)
 >>> image2.tau_time
 1500
 >>> image2.taustart_ts
-datetime.datetime(2011, 5, 1, 0, 0, 0)
+datetime.datetime(2011, 5, 1, 0, 1, 0)
+# Images created with a dataset object, are automatically added to that dataset:
 >>> dataset.images
 [<tkp.database.dataset.Image object at 0x10151ce10>,
  <tkp.database.dataset.Image object at 0x10151cc90>]
 
-Changes in the images are immediately reflected in the database;
-changes in the database, on the other hand, do require a call to
-update() for the Image() instance to be updated to its corresponding
-images row.
+To update objects, use the update() method.
+This method works 2 ways: it (firstly) updates from the database to the object
+(so if there have been changes in the database, the object will reflect that after
+an update()); it (secondly) updates the object (and the database) with values
+supplied by the user. The latter values are optional.
 
->>> image2.tau_time = 2500    # updates the database as well
+
+>>> image2.update(tau_time=2500)    # updates the database as well
+>>> image2.tau_time
+2500
 >>> database.cursor.execute("SELECT tau_time FROM images WHERE imageid=%s" %
                              (image2.imageid,))
 >>> database.cursors.fetchone()[0]
 2500
-
-At the moment, similar functionality is lacking for the DataSet class.
+>>> database.cursor.execute("UPDATE images SET tau_time=2000.0 imageid=%s" %
+                             (image2.imageid,))
+>>> image2.tau_time   # not updated yet!
+2500
+>>> image2.update()
+>>> image2.tau_time
+2000
 
 
 It is also possible to create a DataSet or Image instance from the
-database, using the ``dsid`` or ``imageid`` in the initializer:
+database, using the ``id`` in the initializer:
 
->>> dataset2 = DataSet(dsid=dataset.dsid)
->>> image3 = Image(imageid=image2.imageid)
+>>> dataset2 = DataSet(id=dataset.id, database=database)
+>>> image3 = Image(imageid=image2.imageid, database=database)
 >>> image3.tau_time
-2500
+2000
+
+If an ``id`` is supplied, ``data`` is ignored.
 
 """
 
@@ -77,7 +102,15 @@ DERUITER_R = config['source_association']['deruiter_radius']
 
 
 class DBObject(object):
+	"""Generic mini-ORM object
 
+	Derived objects will need to implement __init__, which for
+	practical reasons is split up in __init__ and _init_data: the
+	latter is called at the end __init__, so a derived __init__ would
+	have super(Derived, self).__init__() at the start and
+	super(Derived, self)._init_data() at the end.
+	"""
+	
     def __init__(self, data=None, database=None, id=None):
         """Basic initialization.
 
@@ -90,9 +123,13 @@ class DBObject(object):
         self.database = database
 
     def _init_data(self):
-        """Set up the data, either by creating a new DBOject or updating it from the database using the id
+        """Set up the data, either by creating a new DBOject or
+        updating it from the database using the id
 
-        This method should only be called from __init__()
+        This method should only be called from __init__(), probably at the end.
+
+		Note that this does prevent proper (multi) inheritance,
+		because it would get called several times then.
         """
         if self._id:
             self.update()
@@ -113,7 +150,11 @@ class DBObject(object):
         
     @property
     def id(self):
-        """Add or obtain an id to/from the table"""
+        """Add or obtain an id to/from the table
+
+		The id is generated if self._id does not exist, effectively
+		creating a new row in the database.
+		"""
 
         if self._id is None:
             query = ("INSERT INTO " + self.TABLE + " (" +
@@ -158,6 +199,7 @@ class DBObject(object):
         self._set_data(**kwargs)
             
     def _sync_with_database(self):
+		"""Update object attributes from the database"""
         results = dbu.columns_from_table(
             self.database.connection, self.TABLE, keywords=None,
             where={self.ID: self._id})
@@ -166,6 +208,12 @@ class DBObject(object):
         self._data = results[0].copy()
 
     def _set_data(self, **kwargs):
+		"""Update the database with the supplied **kwargs.
+
+		Supplied keywords that do not exist in the database will lead
+		to a database error.
+		"""
+		
         if not kwargs:
             return
         dbu.set_columns_for_table(self.database.connection, self.TABLE,
@@ -236,7 +284,7 @@ class DataSet(DBObject):
 
 
 class Image(DBObject):
-    """Class corresponding to the image table in the database"""
+    """Class corresponding to the images table in the database"""
 
     TABLE = 'images'
     ID = 'imageid'
@@ -281,7 +329,12 @@ class Image(DBObject):
     # since normally this would be too much overhead
     def update_sources(self):
         """Renew the set of sources by getting the sources for this
-        image from the database"""
+        image from the database
+
+		This method is separately implemented, because it's not always necessary
+		and potentially (for an image with dozens or more sources) time & memeory
+		consuming. 
+		"""
 
         query = "SELECT xtrsrcid FROM extractedsources WHERE image_id = %s"
         try:
@@ -328,7 +381,8 @@ class Image(DBObject):
         
 
 class ExtractedSource(DBObject):
-
+    """Class corresponding to the extractedsources table in the database"""
+	
     TABLE = 'extractedsources'
     ID = 'xtrsrcid'
     REQUIRED = ('image_id', 'zone', 'ra', 'decl', 'ra_err', 'decl_err', 'x', 'y', 'z', 'det_sigma')

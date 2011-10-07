@@ -5,13 +5,16 @@
 #
 
 # Local tkp_lib functionality
-import monetdb.sql as db
+import math
 import logging
+import monetdb.sql as db
 from tkp.config import config
 from tkp.sourcefinder.extract import Detection
 
 
 DERUITER_R = config['source_association']['deruiter_radius']
+BG_DENSITY = config['source_association']['bg-density']
+
 
 def insert_dataset(conn, description):
     """Insert dataset with discription as given by argument.
@@ -1004,7 +1007,7 @@ INSERT INTO runningcatalog
         cursor.close()
 
 
-def associate_extracted_sources(conn, image_id, deRuiter_r=DERUITER_R):
+def associate_extracted_sources(conn, image_id, deRuiter_r=DERUITER_R/3600.):
     """Associate extracted sources with sources detected in the running
     catalog
 
@@ -1164,7 +1167,7 @@ def detect_variable_sources(conn, dsid, V_lim, eta_lim):
     return _select_variability_indices(conn, dsid, V_lim, eta_lim)
 
 
-def associate_with_catalogedsources(conn, image_id, radius=0.025, deRuiter_r=DERUITER_R):
+def associate_with_catalogedsources(conn, image_id, radius=0.025, deRuiter_r=DERUITER_R/3600.):
     """Associate extracted sources in specified image with known sources 
     in the external catalogues
 
@@ -1254,7 +1257,7 @@ def _insert_cat_assocs(conn, image_id, radius, deRuiter_r):
     finally:
         cursor.close()
 
-def associate_catalogued_sources_in_area(conn, ra, dec, radius, deRuiter_r=DERUITER_R):
+def associate_catalogued_sources_in_area(conn, ra, dec, radius, deRuiter_r=DERUITER_R/3600.):
     pass
 
 
@@ -1406,10 +1409,137 @@ def set_columns_for_table(conn, table, data=None, where=None):
         cursor = conn.cursor()
         cursor.execute(query, values + where_args)
         conn.commit()
-    except DBError, e:
+    except db.Error, e:
         query = query % (values + where_args)
         logging.warn("Failed on query: %s" % query)
         raise
     finally:
         conn.cursor().close()
 
+
+
+def match_nearest_in_catalogs(conn, ra, decl, ra_err, decl_err, radius=1,
+                              catalogid=None, assoc_r=DERUITER_R/3600.):
+    """Match a source with position ra, decl with catalogedsources
+    within radius
+
+    Args:
+
+        ra, decl, ra_err, decl_err (float): position of the source
+
+    Kwargs:
+    
+        radius (float): search radius around the source to search, in
+        degrees
+
+        catalogid (int or list of ints): the catalog(s) to search. If
+        none, all catalogs are searched for. A single integer
+        specifies one catalog, while a list of integers specifies
+        multiple catalogs.
+
+        assoc_r (float): dimensionless search radius, in units of the
+        De Ruiter radius. 3.7/3600. is a good value, though the
+        default is 180 (which will match all sources). Assoc_r sets a
+        cut off for the found sources.
+        
+    The return values are ordered first by catalog, then by
+    assoc_r. So the first source in the list is the closest match for
+    a catalog.
+    """
+    zoneheight = 1
+    
+    x = math.cos(decl/180.*math.pi) * math.cos(ra/180.*math.pi);
+    y = math.cos(decl/180.*math.pi) * math.sin(ra/180.*math.pi);
+    z = math.sin(decl/180.*math.pi);
+
+    catalog_filter = ""
+    if catalogid is None:
+        catalog_filter = ""
+    else:
+        try:
+            iter(catalogid)
+            # Note: cast to int, to ensure proper type
+            catalog_filter = (
+                "c.catid in (%s) AND " % ", ".join(
+                [str(int(catid)) for catid in catalogid]))
+        except TypeError:
+            catalog_filter = "c.catid = %d AND " % catalogid
+    
+    subquery = """\
+SELECT
+    cs.catsrcid
+   ,c.catid
+   ,c.catname
+   ,cs.catsrcname
+   ,cs.ra
+   ,cs.decl
+   ,cs.ra_err
+   ,cs.decl_err
+   ,3600 * deg(2 * ASIN(SQRT(
+       (%%s - cs.x) * (%%s - cs.x)
+       + (%%s - cs.y) * (%%s - cs.y)
+       + (%%s - cs.z) * (%%s - cs.z)
+       ) / 2)
+   ) AS assoc_distance_arcsec
+   ,SQRT( (%%s - cs.ra) * COS(rad(%%s)) * (%%s - cs.ra) * COS(rad(%%s))
+   / (%%s * %%s + cs.ra_err * cs.ra_err)
+   + (%%s - cs.decl) * (%%s - cs.decl)
+   / (%%s * %%s + cs.decl_err * cs.decl_err)
+   ) AS assoc_r
+FROM
+     catalogedsources cs
+    ,catalogs c
+WHERE
+      %(catalog_filter)s
+  cs.cat_id = c.catid
+  AND cs.x * %%s + cs.y * %%s + cs.z * %%s > COS(rad(%%s))
+  AND cs.zone BETWEEN CAST(FLOOR((%%s - %%s) / %%s) AS INTEGER)
+                  AND CAST(FLOOR((%%s + %%s) / %%s) AS INTEGER)
+  AND cs.ra BETWEEN %%s - alpha(%%s, %%s)
+                AND %%s + alpha(%%s, %%s)
+  AND cs.decl BETWEEN %%s - %%s
+                  AND %%s + %%s
+""" % {'catalog_filter': catalog_filter}
+    query = """\
+SELECT 
+    t.catsrcid
+   ,t.catsrcname
+   ,t.catid
+   ,t.catname
+   ,t.ra
+   ,t.decl
+   ,t.ra_err
+   ,t.decl_err
+   ,t.assoc_distance_arcsec
+   ,t.assoc_r
+FROM (%(subquery)s) as t
+WHERE t.assoc_r < %%s
+ORDER BY t.catid ASC, t.assoc_r ASC
+""" % {'subquery': subquery}
+    results = []
+    try:
+        cursor = conn.cursor()
+        cursor.execute(query,  (
+            x, x, y, y, z, z, ra, decl, ra, decl, ra_err, ra_err, decl, decl,
+            decl_err, decl_err, x, y, z, radius, decl, radius,
+            zoneheight, decl, radius, zoneheight, ra, radius, decl, ra, radius,
+            decl, decl, radius, decl, radius, assoc_r))
+        results = cursor.fetchall()
+        results = [
+            {'catsrcid': result[0], 'catsrcname': result[1],
+             'catid': result[2], 'catname': result[3],
+             'ra': result[4], 'dec': result[5],
+             'ra_err': result[6], 'dec_err': result[7],
+             'dist_arcsec': result[8], 'assoc_r': result[9]}
+            for result in results]
+    except db.Error, e:
+        query = query % (
+            x, x, y, y, z, z, ra, decl, ra, decl, ra_err, ra_err, decl, decl,
+            decl_err, decl_err, x, y, z, radius, decl, radius,
+            zoneheight, decl, radius, zoneheight, ra, radius, decl, ra, radius,
+            decl, decl, radius, decl, radius, assoc_r)
+        logging.warn("Failed on query %s:", query)
+        raise
+    finally:
+        cursor.close()
+    return results

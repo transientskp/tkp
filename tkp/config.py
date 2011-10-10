@@ -105,6 +105,7 @@ def set_default_config():
 
     config.add_section('source_association')
     config.set('source_association', 'deruiter_radius', '3.7')
+    config.set('source_association', 'bg-density', '4.02439375e-06')  # VLSS density
 
     config.add_section('source_extraction')
     config.set('source_extraction', 'back_sizex', '32')

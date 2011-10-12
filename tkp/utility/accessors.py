@@ -415,7 +415,7 @@ def dbimage_from_accessor(dataset, image):
     data = {'tau_time': image.inttime,
             'freq_eff': image.freqeff,
             'freq_bw': image.freqbw,
-            'taustart_ts': image.obstime.strftime("%Y-%m-%d-%H:%M:%S.%f"),
+            'taustart_ts': image.obstime.strftime("%Y-%m-%d %H:%M:%S.%f"),
             'url': image.filename,
             'band': 0,    # not yet clearly defined
             }

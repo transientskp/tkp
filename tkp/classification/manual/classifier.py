@@ -25,6 +25,7 @@ from .transient import Transient
 import os
 import  itertools
 import imp
+import tkp.config
 
 
 class Branch(object):
@@ -139,8 +140,10 @@ class Classifier(object):
         if base is not None:
             return base
         try:
-            f, p, d = imp.find_module('classification', [os.path.join(
-                os.path.expanduser('~/.transientskp'))])
+            paths = [os.path.join(os.path.expanduser('~/.transientskp'))]
+            if tkp.config.CONFIGDIR:
+                paths.insert(0, tkp.config.CONFIGDIR)
+            f, p, d = imp.find_module('classification', paths)
             m = imp.load_module('classification', f, p, d)
         except ImportError:
             # Fallback: default classification scheme

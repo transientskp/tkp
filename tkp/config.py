@@ -49,8 +49,13 @@ To do:
 """
 
 
-TKPCFGFILE = ('~/.transientskp/tkp.cfg', '~/.tkp.cfg')
-
+CONFIGFILE = ''
+CONFIGDIR = ''
+CONFIGFILES = ['~/.transientskp/tkp.cfg', '~/.tkp.cfg']
+if 'TKPCONFIGDIR' in os.environ:
+    CONFIGDIR = os.environ['TKPCONFIGDIR']
+    if os.path.exists(os.path.join(CONFIGDIR, 'tkp.cfg')):
+        CONFIGFILES.insert(0, os.path.join(CONFIGDIR, 'tkp.cfg'))
 
 # Avoid eval
 # This is very simple, and likely may be fooled by incorrect
@@ -102,7 +107,7 @@ def set_default_config():
     config.set('database', 'user', 'tkp')
     config.set('database', 'password', 'tkp')
     config.set('database', 'port', '50000')
-
+    
     config.add_section('source_association')
     config.set('source_association', 'deruiter_radius', '3.7')
     config.set('source_association', 'bg-density', '4.02439375e-06')  # VLSS density
@@ -148,7 +153,7 @@ def set_default_config():
     return config
 
 
-def write_config(config=None, filename=TKPCFGFILE[0]):
+def write_config(config=None, filename=CONFIGFILES[0]):
     """
     Dump configuration to file.
 
@@ -169,11 +174,14 @@ def write_config(config=None, filename=TKPCFGFILE[0]):
 def read_config(default_config):
     """Attempt to read a user configuration file"""
 
+    global CONFIGFILE
     config = ConfigParser.SafeConfigParser()
     # Don't try and read multiple files (which can be done with
     # ConfigParser.read()); instead, if one is missing, try the other:
-    if not config.read(os.path.expanduser(TKPCFGFILE[0])):
-        config.read(os.path.expanduser(TKPCFGFILE[1]))
+    for filename in CONFIGFILES:
+        if config.read(os.path.expanduser(filename)):
+            CONFIGFILE = os.path.expanduser(filename)
+            break
 
     # Check for unknown sections or options
     for section in config.sections():

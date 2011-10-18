@@ -155,6 +155,7 @@ class Setup(object):
                         'bin': os.path.join(tkp_base, 'bin')},
                 'trap': {'recipes': os.path.join(tkp_base, 'recipes')},
                 'database': {'base': os.path.join(tkp_base, 'database')},
+                'casacore': {'lib': '/opt/casacore/lib'},
                 'lofim': {'base': lofim_base,
                         'lib': os.path.join(lofim_base, 'lib/python'),
                         'python': os.path.join(lofim_base, 'lib/python2.6/dist-packages'),

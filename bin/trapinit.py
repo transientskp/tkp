@@ -156,10 +156,14 @@ class Setup(object):
                 'trap': {'recipes': os.path.join(tkp_base, 'recipes')},
                 'database': {'base': os.path.join(tkp_base, 'database')},
                 'casacore': {'lib': '/opt/casacore/lib'},
+                'casarest': {'lib': '/opt/casarest/lib'},
                 'lofim': {'base': lofim_base,
                         'lib': os.path.join(lofim_base, 'lib/python'),
                         'python': os.path.join(lofim_base, 'lib/python2.6/dist-packages'),
                         'bin': os.path.join(lofim_base, 'bin')},
+                'pyrap': {'python': '/opt/pyrap/lib/python2.6/dist-packages',
+                          'lib': '/opt/pyrap/lib'},
+                'wcslib': {'lib': '/opt/wcslib/lib'},
                 'monetdb': {'python': '/opt/monetdb/lib/python2.6/site-packages'},
                 'sip': {'recipes': '/opt/pipeline/recipes',
                         'python':
@@ -238,7 +242,6 @@ class Setup(object):
                           'lib': '/opt/cep/LofIm/daily/pyrap/lib'},
                 'casacore': {'lib': '/opt/cep/LofIm/daily/casacore/lib'},
                 'hdf5': {'lib': '/opt/cep/hdf5/lib'},
-                'casacore': {'lib': '/opt/cep/LofIm/daily/casacore/lib'},
                 'sip': {'recipes': '/opt/cep/pipeline/recipes',
                         'python':
                         '/opt/cep/pipeline/framework/lib/python2.6/site-packages'},
@@ -256,7 +259,7 @@ class Setup(object):
         ppath = []
         lpath = []
         for package in ('tkp', 'lofim', 'monetdb', 'sip', 'pytz', 'pyrap',
-                        'hdf5', 'casacore', 'wcslib', 'boost'):
+                        'hdf5', 'casacore', 'casarest', 'wcslib', 'boost'):
             try:
                 ppath.append(dirs[package]['python'])
             except KeyError:

@@ -107,6 +107,7 @@ def set_default_config():
     config.set('database', 'user', 'tkp')
     config.set('database', 'password', 'tkp')
     config.set('database', 'port', '0')
+    config.set('database', 'autocommit', 'False')
     config.set('database', 'engine', 'monetdb')
     
     config.add_section('source_association')

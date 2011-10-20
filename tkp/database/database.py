@@ -57,7 +57,8 @@ class DataBase(object):
     Error = engine.Error
 
     def __init__(self, host=HOST, name=NAME, user=USER,
-                 password=PASSWORD, port=PORT):
+                 password=PASSWORD, port=PORT,
+                 autocommit=False):
         """Set up a database connection object
 
         Raises an exception if not enabled.
@@ -70,6 +71,7 @@ class DataBase(object):
         self.password = password
         self.port = port
         self.connection = None
+        self.autocommit = autocommit
         if not ENABLED:
             raise TKPDataBaseError("Database is not enabled")
         self.connect()
@@ -85,9 +87,12 @@ class DataBase(object):
     def connect(self):
         """Connect to the database"""
 
-        self.connection = engine.connect(
+        kwargs = dict(
             host=self.host, user=self.user, password=self.password,
             database=self.name, port=self.port)
+        if ENGINE == 'monetdb':  # PostgreSQL doesn't have autocommit
+            kwargs['autocommit'] = self.autocommit
+        self.connection = engine.connect(**kwargs)
         self.cursor = self.connection.cursor()
 
     def commit(self):

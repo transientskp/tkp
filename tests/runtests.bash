@@ -11,6 +11,8 @@ else
 fi
 
 ld_library_path=../../../tkp/trunk/external/libwcstools:/opt/cep/LofIm/daily/casacore/lib:/opt/cep/LofIm/daily/pyrap/lib
+# extra paths on heastro
+ld_library_path=${ld_library_path}:/opt/wcslib/lib:/opt/casacore/lib:/opt/casarest/lib:/opt/pyrap/lib
 if [ -z "$LD_LIBRARY_PATH" ]
 then
     export LD_LIBRARY_PATH=${ld_library_path}
@@ -27,7 +29,7 @@ else
 fi
 
 # MonetDB Python path on heastro
-export PYTHONPATH=${PYTHONPATH}:/opt/monetdb/lib/python2.6/site-packages
+export PYTHONPATH=${PYTHONPATH}:/opt/monetdb/lib/python2.6/site-packages:/opt/pyrap/lib/python2.6/dist-packages
 # Extra paths needed on CEP1
 export PYTHONPATH=../../python-packages/lib:${PYTHONPATH}:/opt/pythonlibs/lib/python2.5/site-packages/:/opt/MonetDB/
 # Extra paths needed on CEP2

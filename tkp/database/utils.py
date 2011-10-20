@@ -10,6 +10,7 @@ import logging
 import monetdb.sql as db
 from tkp.config import config
 from tkp.sourcefinder.extract import Detection
+from .database import ENGINE
 
 
 DERUITER_R = config['source_association']['deruiter_radius']
@@ -1070,12 +1071,12 @@ SELECT
          ,avg_weight_peak
          ,CASE WHEN datapoints = 1
                THEN 0
-               ELSE sqrt(cast(datapoints as double) * (avg_I_peak_sq - avg_I_peak*avg_I_peak) / (cast(datapoints as double) - 1.0))
+               ELSE sqrt(cast(datapoints as double precision) * (avg_I_peak_sq - avg_I_peak*avg_I_peak) / (cast(datapoints as double precision) - 1.0))
                END
           AS V_inter
          ,CASE WHEN datapoints = 1
                THEN 0
-               ELSE (cast(datapoints as double) / (cast(datapoints as double)-1.0)) * (avg_weight_peak*avg_weighted_I_peak_sq - avg_weighted_I_peak * avg_weighted_I_peak )
+               ELSE (cast(datapoints as double precision) / (cast(datapoints as double precision)-1.0)) * (avg_weight_peak*avg_weighted_I_peak_sq - avg_weighted_I_peak * avg_weighted_I_peak )
                END
           AS eta_inter
       FROM runningcatalog
@@ -1418,7 +1419,7 @@ def set_columns_for_table(conn, table, data=None, where=None):
 
 
 
-def match_nearest_in_catalogs(conn, ra, decl, ra_err, decl_err, radius=1,
+def match_nearest_in_catalogs(conn, ra, decl, ra_err, decl_err, radius=1.0,
                               catalogid=None, assoc_r=DERUITER_R/3600.):
     """Match a source with position ra, decl with catalogedsources
     within radius
@@ -1446,8 +1447,7 @@ def match_nearest_in_catalogs(conn, ra, decl, ra_err, decl_err, radius=1,
     assoc_r. So the first source in the list is the closest match for
     a catalog.
     """
-    zoneheight = 1
-    
+    zoneheight = 1.0
     x = math.cos(decl/180.*math.pi) * math.cos(ra/180.*math.pi);
     y = math.cos(decl/180.*math.pi) * math.sin(ra/180.*math.pi);
     z = math.sin(decl/180.*math.pi);
@@ -1482,9 +1482,9 @@ SELECT
        ) / 2)
    ) AS assoc_distance_arcsec
    ,SQRT( (%%s - cs.ra) * COS(rad(%%s)) * (%%s - cs.ra) * COS(rad(%%s))
-   / (%%s * %%s + cs.ra_err * cs.ra_err)
+   / (cast(%%s as double precision) * %%s + cs.ra_err * cs.ra_err)
    + (%%s - cs.decl) * (%%s - cs.decl)
-   / (%%s * %%s + cs.decl_err * cs.decl_err)
+   / (cast(%%s as double precision) * %%s + cs.decl_err * cs.decl_err)
    ) AS assoc_r
 FROM
      catalogedsources cs
@@ -1493,8 +1493,8 @@ WHERE
       %(catalog_filter)s
   cs.cat_id = c.catid
   AND cs.x * %%s + cs.y * %%s + cs.z * %%s > COS(rad(%%s))
-  AND cs.zone BETWEEN CAST(FLOOR((%%s - %%s) / %%s) AS INTEGER)
-                  AND CAST(FLOOR((%%s + %%s) / %%s) AS INTEGER)
+  AND cs.zone BETWEEN CAST(FLOOR(cast(%%s - %%s as double precision) / %%s) AS INTEGER)
+                  AND CAST(FLOOR(cast(%%s + %%s as double precision) / %%s) AS INTEGER)
   AND cs.ra BETWEEN %%s - alpha(%%s, %%s)
                 AND %%s + alpha(%%s, %%s)
   AND cs.decl BETWEEN %%s - %%s
@@ -1528,8 +1528,8 @@ ORDER BY t.catid ASC, t.assoc_r ASC
         results = [
             {'catsrcid': result[0], 'catsrcname': result[1],
              'catid': result[2], 'catname': result[3],
-             'ra': result[4], 'dec': result[5],
-             'ra_err': result[6], 'dec_err': result[7],
+             'ra': result[4], 'decl': result[5],
+             'ra_err': result[6], 'decl_err': result[7],
              'dist_arcsec': result[8], 'assoc_r': result[9]}
             for result in results]
     except db.Error, e:

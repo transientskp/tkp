@@ -97,6 +97,7 @@ import logging
 import utils as dbu
 import monetdb.sql as db
 from ..config import config
+from .database import ENGINE
 
 
 DERUITER_R = config['source_association']['deruiter_radius']
@@ -132,7 +133,7 @@ class DBObject(object):
         Note that this does prevent proper (multi) inheritance,
         because it would get called several times then.
         """
-        if self._id:
+        if self._id is not None:
             self.update()
         else:
             for key in self.REQUIRED:
@@ -161,6 +162,8 @@ class DBObject(object):
             query = ("INSERT INTO " + self.TABLE + " (" +
                      ", ".join(self._data.iterkeys()) + ") VALUES (" +
                      ", ".join(["%s"] * len(self._data)) + ")")
+            if ENGINE == 'postgresql':
+                query += " RETURNING " + self.ID
             values = tuple(self._data.itervalues())
             cursor = self.database.cursor
             try:
@@ -168,9 +171,11 @@ class DBObject(object):
                 cursor.execute(query, values)
                 self.database.connection.commit()
                 self._id = cursor.lastrowid
+                if ENGINE == 'postgresql':
+                    self._id = cursor.fetchone()[0]
             except self.database.Error:
-                logging.warn("Insertion of ExtractedSource() into database "
-                             "failed: %s", (query % values))
+                logging.warn("insertion into database failed: %s",
+                             (query % values))
                 raise
         return self._id
 

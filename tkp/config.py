@@ -50,7 +50,7 @@ To do:
 
 
 CONFIGFILE = ''
-CONFIGDIR = ''
+CONFIGDIR = None
 CONFIGFILES = ['~/.transientskp/tkp.cfg', '~/.tkp.cfg']
 if 'TKPCONFIGDIR' in os.environ:
     CONFIGDIR = os.environ['TKPCONFIGDIR']
@@ -106,7 +106,8 @@ def set_default_config():
     config.set('database', 'name', 'tkp')
     config.set('database', 'user', 'tkp')
     config.set('database', 'password', 'tkp')
-    config.set('database', 'port', '50000')
+    config.set('database', 'port', '0')
+    config.set('database', 'engine', 'monetdb')
     
     config.add_section('source_association')
     config.set('source_association', 'deruiter_radius', '3.7')

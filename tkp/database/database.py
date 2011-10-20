@@ -6,12 +6,11 @@
 
 import logging
 import contextlib
-import monetdb
-import monetdb.sql
 from tkp.config import config
 from ..utility.exceptions import TKPDataBaseError
 
 
+ENGINE = config['database']['engine']
 ENABLED = config['database']['enabled']
 HOST = config['database']['host']
 USER = config['database']['user']
@@ -19,6 +18,19 @@ PASSWORD = config['database']['password']
 NAME = config['database']['name']
 PORT = config['database']['port']
 
+
+if ENGINE == 'monetdb':
+    import monetdb
+    import monetdb.sql as engine
+    if PORT == 0:
+        PORT = 50000
+elif ENGINE == 'postgresql':
+    import psycopg2 as engine
+    if PORT == 0:
+        PORT = 5432
+else:
+    raise TypeError("unknown engine %s" % ENGINE)
+    
 
 class DataBase(object):
     """An object representing a database connection
@@ -42,7 +54,7 @@ class DataBase(object):
     """
 
     # Assign this class variable for convenience
-    Error = monetdb.sql.Error
+    Error = engine.Error
 
     def __init__(self, host=HOST, name=NAME, user=USER,
                  password=PASSWORD, port=PORT):
@@ -72,9 +84,9 @@ class DataBase(object):
 
     def connect(self):
         """Connect to the database"""
-        
-        self.connection = monetdb.sql.connect(
-            hostname=self.host, username=self.user, password=self.password,
+
+        self.connection = engine.connect(
+            host=self.host, user=self.user, password=self.password,
             database=self.name, port=self.port)
         self.cursor = self.connection.cursor()
 
@@ -91,9 +103,4 @@ class DataBase(object):
     def close(self):
         """Explicitly close the database connection"""
 
-        try:
-            self.connection.close()
-        except monetdb.monetdb_exceptions.Error:
-            pass
-        except AttributeError:
-            pass
+        self.connection.close()

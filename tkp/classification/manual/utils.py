@@ -78,7 +78,8 @@ class DateTime(datetime.datetime):
                  microsecond=0, error=0):
         super(DateTime, self).__init__()
         self.error = error
-
+        self.datetime = datetime.datetime.combine(self.date(), self.time())
+        
     def __reduce__(self):
         """Override this function to pickle correctly
 

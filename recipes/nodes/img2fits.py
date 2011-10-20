@@ -6,13 +6,15 @@ import sys
 
 from lofarpipe.support.lofarnode import LOFARnodeTCP
 from lofarpipe.support.utilities import log_time
-import tkp.utility.fits
 
 
 class img2fits(LOFARnodeTCP):
     #                 Handles running a single cimager process on a compute node
     # --------------------------------------------------------------------------
-    def run(self, image, ms, fitsfile=None):
+    def run(self, image, ms, fitsfile=None, tkpconfigdir=None):
+        if tkpconfigdir:   # allow nodes to pick up the TKPCONFIGDIR
+            os.environ['TKPCONFIGDIR'] = tkpconfigdir
+        import tkp.utility.fits
         """Convert a CASA image to a FITS image
 
         Args:

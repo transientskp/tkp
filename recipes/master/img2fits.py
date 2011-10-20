@@ -10,6 +10,7 @@ from lofarpipe.support.remotecommand import ComputeJob
 from lofarpipe.support.remotecommand import RemoteCommandRecipeMixIn
 
 import tkp.utility.fits
+import tkp.config
 
 
 class img2fits(BaseRecipe, RemoteCommandRecipeMixIn):
@@ -70,7 +71,8 @@ class img2fits(BaseRecipe, RemoteCommandRecipeMixIn):
                     arguments=[
                         path,
                         ms,
-                        fitsfile
+                        fitsfile,
+                        tkp.config.CONFIGDIR
                         ]
                     )
                 )

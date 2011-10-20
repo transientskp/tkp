@@ -3,8 +3,6 @@ from contextlib import closing
 
 import sys
 import math
-import monetdb.sql as db
-from monetdb.sql import Error as Error
 import traceback
 import lofarpipe.support.lofaringredient as ingredient
 from lofarpipe.support.baserecipe import BaseRecipe
@@ -17,7 +15,7 @@ header_line = """\
 """
 
 query_skymodel = """
-SELECT t0.catsrcname, t0.src_type, ra2bbshms(t0.ra), decl2bbsdms(t0.decl), t0.i, t0.q, t0.u, t0.v, t0.MajorAxis, t0.MinorAxis, t0.Orientation, t0.ReferenceFrequency, t0.SpectralIndexDegree, t0.SpectralIndex_0
+SELECT t0.catsrcname, t0.src_type, ra2bbshms(cast(t0.ra as double precision)), decl2bbsdms(cast(t0.decl as double precision)), t0.i, t0.q, t0.u, t0.v, t0.MajorAxis, t0.MinorAxis, t0.Orientation, t0.ReferenceFrequency, t0.SpectralIndexDegree, t0.SpectralIndex_0
 FROM (
     SELECT CAST(
         TRIM(c1.catsrcname) AS VARCHAR(20)
@@ -195,8 +193,8 @@ LIMIT 1
                     )
                     results = db_cursor.fetchall()
 
-        except db.Error, my_error:
-            self.logger.warn("Failed to build sky model: %s " % (my_error))
+        except DataBase.Error, e:
+            self.logger.warn("Failed to build sky model: %s " % (e))
             self.logger.info("traceback = %s", traceback.format_exc())
             return 1
 

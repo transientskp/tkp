@@ -36,7 +36,9 @@ from lofarpipe.support.baserecipe import BaseRecipe
 from lofarpipe.support.remotecommand import RemoteCommandRecipeMixIn
 from lofarpipe.support.remotecommand import ComputeJob
 from lofarpipe.support import lofaringredient
-import monetdb.sql.connections
+
+import tkp.config
+from tkp.database.database import ENGINE
 
 
 class feature_extraction(BaseRecipe, RemoteCommandRecipeMixIn):
@@ -56,6 +58,7 @@ class feature_extraction(BaseRecipe, RemoteCommandRecipeMixIn):
 
     def go(self):
         super(feature_extraction, self).go()
+        self.logger.info("ENGINE = %s", ENGINE)
         clusterdesc = ClusterDesc(self.config.get('cluster', "clusterdesc"))
         if clusterdesc.subclusters:
             available_nodes = dict(
@@ -80,6 +83,7 @@ class feature_extraction(BaseRecipe, RemoteCommandRecipeMixIn):
                     command,
                     arguments=[
                         transient,
+                        tkp.config.CONFIGDIR
                         ]
                     )
                 )

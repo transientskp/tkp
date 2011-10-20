@@ -14,7 +14,6 @@ __last_modification__ = '2010-08-24'
 import sys
 import os
 
-import monetdb.sql.connections
 from scipy.stats import chisqprob
 import numpy
 
@@ -140,8 +139,8 @@ class transient_search(BaseRecipe):
         """Construct a very basic transient object"""
 
         self.database.cursor.execute(SQL['position'], (srcid,))
-        results = self.database.cursor.fetchall()
-        results = map(float, results[0])
+        results = self.database.cursor.fetchone()
+        #results = map(float, results[0])
         # calculate an average error for now
         error = numpy.sqrt(results[2]*results[2] + results[3]*results[3])
         transient = Transient(srcid=srcid, position=Position(

@@ -15,22 +15,23 @@ from lofarpipe.support.lofarnode import LOFARnodeTCP
 from lofarpipe.support.utilities import log_time
 
 
-import tkp
-from tkp.config import config
-from tkp.database.database import DataBase
-from tkp.database.dataset import DataSet
-from tkp.utility.accessors import FITSImage
-from tkp.utility.accessors import dbimage_from_accessor
-from tkp.utility.accessors import sourcefinder_image_from_accessor
-
-
 class source_extraction(LOFARnodeTCP):
     """
     Extract sources from a FITS image
     """
 
     def run(self, image, detection_level=5,
-            dataset_id=None, radius=1):
+            dataset_id=None, radius=1, tkpconfigdir=None):
+        if tkpconfigdir:   # allow nodes to pick up the TKPCONFIGDIR
+            os.environ['TKPCONFIGDIR'] = tkpconfigdir
+        import tkp
+        from tkp.config import config
+        from tkp.database.database import DataBase
+        from tkp.database.database import ENGINE
+        from tkp.database.dataset import DataSet
+        from tkp.utility.accessors import FITSImage
+        from tkp.utility.accessors import dbimage_from_accessor
+        from tkp.utility.accessors import sourcefinder_image_from_accessor
         """
 
         Args:
@@ -51,8 +52,7 @@ class source_extraction(LOFARnodeTCP):
         
         with log_time(self.logger):
             with closing(DataBase()) as database:
-                #database.execute("SELECT RAD(45.)")
-                #self.logger.info("fetchall = %s", str(database.cursor.fetchall()))
+                self.logger.info("ENGINE = %s", ENGINE)
                 dataset = DataSet(id=dataset_id, database=database)
                 fitsimage = FITSImage(image)
                 db_image = dbimage_from_accessor(dataset=dataset,

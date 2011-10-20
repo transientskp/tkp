@@ -26,12 +26,7 @@ from lofarpipe.support.utilities import log_time
 
 import numpy
 import monetdb
-from tkp.database.database import DataBase
-from tkp.classification.features import lightcurve as lcmod
-from tkp.database.dataset import ExtractedSource
-from tkp.classification.manual.transient import Transient
-from tkp.classification.manual.utils import Position
-from tkp.classification.manual.utils import DateTime
+
 
 SECONDS_IN_DAY = 86400.
 
@@ -39,9 +34,20 @@ SECONDS_IN_DAY = 86400.
 
 class feature_extraction(LOFARnodeTCP):
 
-    def run(self, transient):
+    def run(self, transient, tkpconfigdir=None):
+        if tkpconfigdir:   # allow nodes to pick up the TKPCONFIGDIR
+            os.environ['TKPCONFIGDIR'] = tkpconfigdir
+        from tkp.database.database import DataBase
+        from tkp.database.database import ENGINE
+        from tkp.classification.features import lightcurve as lcmod
+        from tkp.classification.features import catalogs as catmod
+        from tkp.database.dataset import ExtractedSource
+        from tkp.classification.manual.transient import Transient
+        from tkp.classification.manual.utils import Position
+        from tkp.classification.manual.utils import DateTime
         with log_time(self.logger):
             with closing(DataBase()) as database:
+                self.logger.info("ENGINE = %s", ENGINE)
                 try:
                     source = ExtractedSource(id=transient.srcid, database=database)
                     lightcurve = lcmod.LightCurve(*zip(*source.lightcurve()))
@@ -72,9 +78,9 @@ class feature_extraction(LOFARnodeTCP):
                     transient.timezero = lightcurve.duration['start']
                     transient.variability = variability
                     transient.features = features
+                    transient.catalogs = catmod.match_catalogs(transient)
                 except Exception, e:
-                    self.logger.error(str(e))
-                    return 1
+                    raise
         self.outputs['transient'] = transient
         return 0
 

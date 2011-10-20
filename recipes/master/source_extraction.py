@@ -11,6 +11,9 @@ from lofarpipe.support.clusterdesc import ClusterDesc, get_compute_nodes
 from lofarpipe.support.remotecommand import ComputeJob
 from lofarpipe.support.remotecommand import RemoteCommandRecipeMixIn
 
+import tkp.config
+from tkp.database.database import ENGINE
+
 
 class source_extraction(BaseRecipe, RemoteCommandRecipeMixIn):
     """
@@ -46,6 +49,7 @@ class source_extraction(BaseRecipe, RemoteCommandRecipeMixIn):
     def go(self):
         self.logger.info("Extracting sources")
         super(source_extraction, self).go()
+        self.logger.info("ENGINE = %s", ENGINE)
         dataset_id = self.inputs['dataset_id']
 
         # Obtain available nodes
@@ -78,6 +82,7 @@ class source_extraction(BaseRecipe, RemoteCommandRecipeMixIn):
                         self.inputs['detection_level'],
                         dataset_id,
                         self.inputs['radius'],
+                        tkp.config.CONFIGDIR
                         ]
                     )
                 )

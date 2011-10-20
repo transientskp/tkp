@@ -40,14 +40,14 @@ from contextlib import closing
 from tkp.database.database import DataBase
 import tkp.database.utils as dbutils
 
-import monetdb.sql.connections
-
 from lofarpipe.support.clusterdesc import ClusterDesc, get_compute_nodes
 from lofarpipe.support.baserecipe import BaseRecipe
 from lofarpipe.support.remotecommand import RemoteCommandRecipeMixIn
 from lofarpipe.support.remotecommand import ComputeJob
 from lofarpipe.support import lofaringredient
 
+import tkp.config
+from tkp.database.database import ENGINE
 import tkp.classification
 import tkp.classification.manual
 from tkp.classification.manual.classifier import Classifier
@@ -97,6 +97,7 @@ class classification(BaseRecipe, RemoteCommandRecipeMixIn):
         )
 
     def go(self):
+        self.logger.info("ENGINE = %s", ENGINE)
         super(classification, self).go()
         transients = self.inputs['transients']
         weight_cutoff = float(self.inputs['weight_cutoff'])
@@ -126,7 +127,7 @@ class classification(BaseRecipe, RemoteCommandRecipeMixIn):
             jobs.append(
                 ComputeJob(node, command, arguments=[
                 self.inputs['schema'], self.config.get("layout", "parset_directory"),
-                transient, weight_cutoff]))
+                transient, weight_cutoff, tkp.config.CONFIGDIR]))
 
         self.logger.info("Scheduling jobs")
         jobs = self._schedule_jobs(jobs, max_per_node=self.inputs['nproc'])
@@ -139,11 +140,12 @@ class classification(BaseRecipe, RemoteCommandRecipeMixIn):
         with closing(DataBase()) as database:
             self.logger.info("Storing/updating transient into database")
             for transient in self.outputs['transients']:
-                if isinstance(transient.timezero, datetime.datetime):
+                if isinstance(transient.timezero, DateTime):
+                    t_start = transient.timezero.datetime
+                elif isinstance(transient.timezero, datetime.datetime):
                     t_start = transient.timezero
                 else:
                     t_start = datetime.datetime(1970, 1, 1)
-                self.logger.info("%d, %s, %s, %s", transient.srcid, str(transient.siglevel), str(transient.timezero), t_start)
                 dbutils.store_transient_source(
                     database.connection, transient.srcid, transient.siglevel, t_start)
         if self.error.isSet():

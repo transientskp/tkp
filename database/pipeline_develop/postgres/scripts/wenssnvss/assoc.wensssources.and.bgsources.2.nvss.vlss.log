@@ -1,0 +1,43 @@
+calling LoadWenssSourceAndBGFields()
+Timer  194862.081 msec 
+calling LoadLSM(0, 360, -90, 90, 'NVSS', 'VLSS', '')
+Timer    5553.761 msec 
+calling AssocWenssSources2CatByZones(1)
+Timer 1570536.816 msec 
+calling AssocWenssSources2CatByZones(2)
+Timer   94655.823 msec 
+calling AssocWenssSources2CatByZones(3)
+Timer 1609658.609 msec 
+calling AssocWenssSources2CatByZones(4)
+Timer   94744.469 msec 
+calling AssocWenssSources2CatByZones(5)
+Timer 1577269.012 msec 
+calling AssocWenssSources2CatByZones(6)
+Timer   94025.683 msec 
+calling AssocWenssSources2CatByZones(7)
+Timer 1571715.227 msec 
+calling AssocWenssSources2CatByZones(8)
+Timer   93714.060 msec 
+calling AssocWenssSources2CatByZones(9)
+Timer 1562775.147 msec 
+calling AssocWenssSources2CatByZones(10)
+Timer   94636.529 msec 
+calling AssocWenssSources2CatByZones(11)
+Timer 1557599.221 msec 
+calling AssocWenssSources2CatByZones(12)
+Timer   93897.683 msec 
+calling AssocWenssSources2CatByZones(13)
+Timer 1572549.313 msec 
+calling AssocWenssSources2CatByZones(14)
+Timer   94005.901 msec 
+calling AssocWenssSources2CatByZones(15)
+Timer 1578922.457 msec 
+calling AssocWenssSources2CatByZones(16)
+Timer   94215.999 msec 
+calling AssocWenssSources2CatByZones(17)
+Timer 1571647.255 msec 
+calling AssocWenssSources2CatByZones(18)
+Timer   93770.853 msec 
+-----
+READY
+-----

@@ -1,0 +1,230 @@
+#!/bin/sh
+# This script loads the DDLs for the MonetDB pipeline_develop DB
+# 
+echo "---------------------------------"
+echo "MonetDB pipeline_develop database"
+echo "---------------------------------"
+
+
+echo "\tDropping MonetDB pipeline_develop database"
+/usr/local/bin/mclient -lsql -umonetdb -Pmonetdb < ../drop.database.pipeline_develop.sql
+
+echo "\tCreating MonetDB pipeline_develop database"
+/usr/local/bin/mclient -lsql -umonetdb -Pmonetdb < ../create.database.pipeline_develop.sql
+
+
+echo "\t----------------------------------------"
+echo "\tCreating MonetDB pipeline_develop tables"
+echo "\t----------------------------------------"
+
+echo "\t\tCreating MonetDB pipeline_develop table versions"
+/usr/local/bin/mclient -lsql -ulofar -Pcs1 -dpipeline_develop < ../tables/create.table.versions.sql
+
+echo "\t\tCreating MonetDB pipeline_develop table frequencybands"
+/usr/local/bin/mclient -lsql -ulofar -Pcs1 -dpipeline_develop < ../tables/create.table.frequencybands.sql
+
+echo "\t\tCreating MonetDB pipeline_develop table datasets"
+/usr/local/bin/mclient -lsql -ulofar -Pcs1 -dpipeline_develop < ../tables/create.table.datasets.sql
+
+echo "\t\tCreating MonetDB pipeline_develop table images"
+/usr/local/bin/mclient -lsql -ulofar -Pcs1 -dpipeline_develop < ../tables/create.table.images.sql
+
+echo "\t\tCreating MonetDB pipeline_develop table associationclass"
+/usr/local/bin/mclient -lsql -ulofar -Pcs1 -dpipeline_develop < ../tables/create.table.associationclass.sql
+
+echo "\t\tCreating MonetDB pipeline_develop table catalogs"
+/usr/local/bin/mclient -lsql -ulofar -Pcs1 -dpipeline_develop < ../tables/create.table.catalogs.sql
+
+echo "\t\tCreating MonetDB pipeline_develop table catalogedsources"
+/usr/local/bin/mclient -lsql -ulofar -Pcs1 -dpipeline_develop < ../tables/create.table.catalogedsources.sql
+
+echo "\t\tCreating MonetDB pipeline_develop table extractedsources"
+/usr/local/bin/mclient -lsql -ulofar -Pcs1 -dpipeline_develop < ../tables/create.table.extractedsources.sql
+
+echo "\t\tCreating MonetDB pipeline_develop table assoccatsources"
+/usr/local/bin/mclient -lsql -ulofar -Pcs1 -dpipeline_develop < ../tables/create.table.assoccatsources.sql
+
+echo "\t\tCreating MonetDB pipeline_develop table assocxtrsources"
+/usr/local/bin/mclient -lsql -ulofar -Pcs1 -dpipeline_develop < ../tables/create.table.assocxtrsources.sql
+
+echo "\t\tCreating MonetDB pipeline_develop table lsm"
+/usr/local/bin/mclient -lsql -ulofar -Pcs1 -dpipeline_develop < ../tables/create.table.lsm.sql
+
+echo "\t\tCreating MonetDB pipeline_develop table zoneheight"
+/usr/local/bin/mclient -lsql -ulofar -Pcs1 -dpipeline_develop < ../tables/create.table.zoneheight.sql
+
+echo "\t\tCreating MonetDB pipeline_develop table zones"
+/usr/local/bin/mclient -lsql -ulofar -Pcs1 -dpipeline_develop < ../tables/create.table.zones.sql
+
+echo "\t-------------------------------------------------------------------------"
+echo "\tCreating MonetDB pipeline_develop tables for multiple catalog association"
+echo "\t-------------------------------------------------------------------------"
+
+echo "\t\tCreating MonetDB pipeline_develop table multiplecatalogsources"
+/usr/local/bin/mclient -lsql -ulofar -Pcs1 -dpipeline_develop < ../tables/create.table.multiplecatalogsources.sql
+
+echo "\t\tCreating MonetDB pipeline_develop table multiplecatalogassocs"
+/usr/local/bin/mclient -lsql -ulofar -Pcs1 -dpipeline_develop < ../tables/create.table.multiplecatalogassocs.sql
+
+
+echo "\t-------------------------------------------"
+echo "\tCreating MonetDB pipeline_develop functions"
+echo "\t-------------------------------------------"
+
+echo "\t\tCreating MonetDB pipeline_develop math functions"
+/usr/local/bin/mclient -lsql -ulofar -Pcs1 -dpipeline_develop < ~/databases/MonetDB/share/MonetDB/sql/math.sql
+
+echo "\t\tCreating MonetDB pipeline_develop date functions"
+/usr/local/bin/mclient -lsql -ulofar -Pcs1 -dpipeline_develop < ~/databases/MonetDB/share/MonetDB/sql/date.sql
+
+echo "\t\tCreating MonetDB pipeline_develop times functions"
+/usr/local/bin/mclient -lsql -ulofar -Pcs1 -dpipeline_develop < ~/databases/MonetDB/share/MonetDB/sql/times.sql
+
+#echo "\t\tCreating MonetDB pipeline_develop mtime functions"
+#/usr/local/bin/mclient -lsql -ulofar -Pcs1 -dpipeline_develop < ~/databases/MonetDB/share/MonetDB/sql/mtime.sql
+
+echo "\t\tCreating MonetDB pipeline_develop function alpha"
+/usr/local/bin/mclient -lsql -ulofar -Pcs1 -dpipeline_develop < ../functions/create.function.alpha.sql
+
+#echo "\t\tCreating MonetDB pipeline_develop function getVectorLength"
+#/usr/local/bin/mclient -lsql -ulofar -Pcs1 -dpipeline_develop < ../functions/create.function.getVectorLength.sql
+
+echo "\t\tCreating MonetDB pipeline_develop function getDistanceArcsec"
+/usr/local/bin/mclient -lsql -ulofar -Pcs1 -dpipeline_develop < ../functions/create.function.getDistanceArcsec.sql
+
+echo "\t\tCreating MonetDB pipeline_develop function solidangle_arcsec2"
+/usr/local/bin/mclient -lsql -ulofar -Pcs1 -dpipeline_develop < ../functions/create.function.solidangle_arcsec2.sql
+
+echo "\t\tCreating MonetDB pipeline_develop function getWeightRectIntersection"
+/usr/local/bin/mclient -lsql -ulofar -Pcs1 -dpipeline_develop < ../functions/create.function.getWeightRectIntersection.sql
+
+echo "\t\tCreating MonetDB pipeline_develop function doSourcesIntersect"
+/usr/local/bin/mclient -lsql -ulofar -Pcs1 -dpipeline_develop < ../functions/create.function.doSourcesIntersect.sql
+
+echo "\t\tCreating MonetDB pipeline_develop function doPosErrCirclesIntersect"
+/usr/local/bin/mclient -lsql -ulofar -Pcs1 -dpipeline_develop < ../functions/create.function.doPosErrCirclesIntersect.sql
+
+echo "\t\tCreating MonetDB pipeline_develop function getNearestNeighborInCat"
+/usr/local/bin/mclient -lsql -ulofar -Pcs1 -dpipeline_develop < ../functions/create.function.getNearestNeighborInCat.sql
+
+echo "\t\tCreating MonetDB pipeline_develop function getBand"
+/usr/local/bin/mclient -lsql -ulofar -Pcs1 -dpipeline_develop < ../functions/create.function.getBand.sql
+
+#echo "\t\tCreating MonetDB pipeline_develop function decl2deg"
+#/usr/local/bin/mclient -lsql -ulofar -Pcs1 -dpipeline_develop < ../functions/create.function.decl2deg.sql
+
+#echo "\t\tCreating MonetDB pipeline_develop function decl2dms"
+#/usr/local/bin/mclient -lsql -ulofar -Pcs1 -dpipeline_develop < ../functions/create.function.decl2dms.sql
+
+echo "\t\tCreating MonetDB pipeline_develop function insertDataset"
+/usr/local/bin/mclient -lsql -ulofar -Pcs1 -dpipeline_develop < ../functions/create.function.insertDataset.sql
+
+echo "\t\tCreating MonetDB pipeline_develop function insertImage"
+/usr/local/bin/mclient -lsql -ulofar -Pcs1 -dpipeline_develop < ../functions/create.function.insertImage.sql
+
+echo "\t\tCreating MonetDB pipeline_develop function ra2deg"
+/usr/local/bin/mclient -lsql -ulofar -Pcs1 -dpipeline_develop < ../functions/create.function.ra2deg.sql
+
+echo "\t\tCreating MonetDB pipeline_develop function ra2hms"
+/usr/local/bin/mclient -lsql -ulofar -Pcs1 -dpipeline_develop < ../functions/create.function.ra2hms.sql
+
+echo "\t\tCreating MonetDB pipeline_develop function getSkyDensity_deg2"
+/usr/local/bin/mclient -lsql -ulofar -Pcs1 -dpipeline_develop < ../functions/create.function.getSkyDensity_sr.sql
+
+echo "\t\tCreating MonetDB pipeline_develop function getHuynhSkyDensity_deg2"
+/usr/local/bin/mclient -lsql -ulofar -Pcs1 -dpipeline_develop < ../functions/create.function.getHuynhSkyDensity_deg2.sql
+
+echo "\t\tCreating MonetDB pipeline_develop function localSourceDensityInCat_deg2"
+/usr/local/bin/mclient -lsql -ulofar -Pcs1 -dpipeline_develop < ../functions/create.function.localSourceDensityInCat_deg2.sql
+
+
+echo "\t----------------------------------------------------"
+echo "\tCreating MonetDB pipeline_develop general procedures"
+echo "\t----------------------------------------------------"
+
+echo "\t\tCreating MonetDB pipeline_develop general procedure AssocXSources2XSourcesByImage"
+/usr/local/bin/mclient -lsql -ulofar -Pcs1 -dpipeline_develop < ../procedures/create.procedure.AssocXSources2XSourcesByImage.sql
+
+echo "\t\tCreating MonetDB pipeline_develop general procedure AssocXSources2CatByImage"
+/usr/local/bin/mclient -lsql -ulofar -Pcs1 -dpipeline_develop < ../procedures/create.procedure.AssocXSources2CatByImage.sql
+
+echo "\t\tCreating MonetDB pipeline_develop general procedure AssocXSources2CatByZones"
+/usr/local/bin/mclient -lsql -ulofar -Pcs1 -dpipeline_develop < ../procedures/create.procedure.AssocXSources2CatByZones.sql
+
+echo "\t\tCreating MonetDB pipeline_develop general procedure AssocWenssSources2Cat"
+/usr/local/bin/mclient -lsql -ulofar -Pcs1 -dpipeline_develop < ../procedures/create.procedure.AssocWenssSources2Cat.sql
+
+echo "\t\tCreating MonetDB pipeline_develop general procedure AssocWenssSources2CatByZones"
+/usr/local/bin/mclient -lsql -ulofar -Pcs1 -dpipeline_develop < ../procedures/create.procedure.AssocWenssSources2CatByZones.sql
+
+echo "\t\tCreating MonetDB pipeline_develop general procedure BuildAssociationClass"
+/usr/local/bin/mclient -lsql -ulofar -Pcs1 -dpipeline_develop < ../procedures/create.procedure.BuildAssociationClass.sql
+
+echo "\t\tCreating MonetDB pipeline_develop general procedure BuildFrequencyBands"
+/usr/local/bin/mclient -lsql -ulofar -Pcs1 -dpipeline_develop < ../procedures/create.procedure.BuildFrequencyBands.sql
+
+echo "\t\tCreating MonetDB pipeline_develop general procedure BuildZones"
+/usr/local/bin/mclient -lsql -ulofar -Pcs1 -dpipeline_develop < ../procedures/create.procedure.BuildZones.sql
+
+echo "\t\tCreating MonetDB pipeline_develop general procedure InsertVersion"
+/usr/local/bin/mclient -lsql -ulofar -Pcs1 -dpipeline_develop < ../procedures/create.procedure.InsertVersion.sql
+
+echo "\t\tCreating MonetDB pipeline_develop general procedure InsertSrc"
+/usr/local/bin/mclient -lsql -ulofar -Pcs1 -dpipeline_develop < ../procedures/create.procedure.InsertSrc.sql
+
+echo "\t\tCreating MonetDB pipeline_develop general procedure LoadLSM"
+/usr/local/bin/mclient -lsql -ulofar -Pcs1 -dpipeline_develop < ../procedures/create.procedure.LoadLSM.sql
+
+echo "\t\tCreating MonetDB pipeline_develop general procedure LoadWenssSourceAndBGFields"
+/usr/local/bin/mclient -lsql -ulofar -Pcs1 -dpipeline_develop < ../procedures/create.procedure.LoadWenssSourceAndBGFields.sql
+
+
+echo "\t-----------------------------------------------------------------------------"
+echo "\tCreating MonetDB pipeline_develop procedures for multiple catalog association"
+echo "\t-----------------------------------------------------------------------------"
+
+echo "\t\tCreating MonetDB pipeline_develop specific procedure MultipleCatMatchingInit"
+/usr/local/bin/mclient -lsql -ulofar -Pcs1 -dpipeline_develop < ../procedures/create.procedure.MultipleCatMatchingInit.sql
+
+#echo "\t\tCreating MonetDB pipeline_develop specific procedure MultipleCatMatching"
+#/usr/local/bin/mclient -lsql -ulofar -Pcs1 -dpipeline_develop < ../procedures/create.procedure.MultipleCatMatching.sql
+
+
+echo "\t-----------------------------------"
+echo "\tInitialize MonetDB pipeline_develop"
+echo "\t-----------------------------------"
+
+echo "\t\tInitialize MonetDB pipeline_develop tables"
+/usr/local/bin/mclient -lsql -ulofar -Pcs1 -dpipeline_develop < ../init/init.tables.sql
+
+
+echo "\t----------------------------------------------"
+echo "\tLoading catalogs into MonetDB pipeline_develop"
+echo "\t----------------------------------------------"
+
+date '+%Y-%m-%d-%H:%M:%S'
+
+#echo "\t\tLoad catalogs"
+#~/databases/MonetDB/bin/mclient -lsql -ulofar -Pcs1 -dpipeline_develop < ../load/copy.catalogs.sql
+#echo "\t\tLoad catalogedsources"
+#~/databases/MonetDB/bin/mclient -lsql -ulofar -Pcs1 -dpipeline_develop < ../load/copy.catalogedsources.sql
+
+echo "\t\tLoad NVSS catalog"
+/usr/local/bin/mclient -lsql -ulofar -Pcs1 -dpipeline_develop < ../load/load.cat.nvss.sql
+date '+%Y-%m-%d-%H:%M:%S'
+
+echo "\t\tLoad VLSS catalog"
+/usr/local/bin/mclient -lsql -ulofar -Pcs1 -dpipeline_develop < ../load/load.cat.vlss.sql
+date '+%Y-%m-%d-%H:%M:%S'
+
+echo "\t\tLoad WENSS catalog"
+/usr/local/bin/mclient -lsql -ulofar -Pcs1 -dpipeline_develop < ../load/load.cat.wenss.sql
+date '+%Y-%m-%d-%H:%M:%S'
+
+#echo "\t\tLoad 2XMMi-Slim WENSS catalog"
+#/usr/local/bin/mclient -lsql -ulofar -Pcs1 -dpipeline_develop < ../load/load.cat.2XMMi-slim.sql
+#date '+%Y-%m-%d-%H:%M:%S'
+
+echo "-----"
+echo "READY"
+echo "-----"

@@ -1,0 +1,70 @@
+--DROP FUNCTION decl2dms;
+
+/**
+ * This function converts decl from degrees into ddMMSS format.
+ * The input format must be double precision:
+ */
+CREATE FUNCTION decl2dms(ideclDEG double precision) RETURNS VARCHAR(13) as $$
+BEGIN
+
+  DECLARE declDD, declMM, declSS double precision;
+  DECLARE declDDstr, declMMstr VARCHAR(2);
+  DECLARE declSSstr VARCHAR(6);
+  DECLARE odecldms VARCHAR(13);
+  
+  IF ABS(ideclDEG) < 10 THEN
+16
+17
+    SET declDD = CAST(TRUNCATE(ABS(ideclDEG), 1) AS double precision);
+17
+19
+    SET declDDstr = CONCAT('0', declDD);
+  ELSE
+19
+22
+    SET declDD = CAST(TRUNCATE(ABS(ideclDEG), 2) AS double precision);
+20
+24
+    SET declDDstr = CAST(declDD AS VARCHAR(2));
+  END IF;
+  
+23
+28
+  SET declMM = CAST(TRUNCATE((ABS(ideclDEG) - declDD) * 60, 2) AS double precision);
+  IF declMM < 10 THEN
+25
+31
+    SET declMMstr = CONCAT('0', declMM);
+  ELSE 
+27
+34
+    SET declMMstr = CAST(declMM AS VARCHAR(2));
+  END IF;
+  
+30
+38
+  SET declSS = ROUND((((ABS(ideclDEG) - declDD) * 60) - declMM) * 60, 3);
+  IF declSS < 10 THEN
+32
+41
+    SET declSSstr = CAST(CONCAT('0', TRUNCATE(declSS, 5)) AS VARCHAR(6));
+  ELSE
+34
+44
+    SET declSSstr = CAST(TRUNCATE(declSS, 6) AS VARCHAR(6));
+  END IF;
+
+  IF ideclDEG < 0 THEN
+38
+49
+    SET odecldms = CONCAT('-', CONCAT(declDDstr, CONCAT(':', CONCAT(declMMstr, CONCAT(':', declSSstr))))); 
+  ELSE
+40
+52
+    SET odecldms = CONCAT('+', CONCAT(declDDstr, CONCAT(':', CONCAT(declMMstr, CONCAT(':', declSSstr))))); 
+  END IF;
+
+  RETURN odecldms;
+
+END;
+$$ language plpgsql;

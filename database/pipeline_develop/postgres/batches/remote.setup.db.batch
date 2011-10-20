@@ -1,0 +1,293 @@
+#!/usr/bin/env bash
+
+# assume:
+# - $MONETDBCLIENT/mclient/monetdb are in path
+# - user/pass is monetdb
+
+# script performs:
+# - if meroport and meropass are set, (re)create database and initialise
+# - scrambling administrator account to something else for sugagurity
+# - create voc user/schema
+# - load voc dataset
+# - create webdemo user with password webdemo in schema webdemo
+# - create views for tables from voc set in webdemo schema
+
+# arguments:
+# $1 host
+# $2 port
+# $3 database
+# $4 meroport
+# $5 meropass
+# $6 usradmin
+# $7 adminpw
+
+
+# An example call of this script could be:
+# %> ./setup.db.batch host port database meroport meropass useradminname adminpassword
+# %> ./setup.db.batch localhost 50000 pipeline_develop 50001 58ZrTxaJBf6XDl3VqOj82uEqj lofar cs1
+# %> ./remote.setup.db.batch ldb001 50000 pipeline_wenssnvss 50001 tjbai1ZkXFvBiquhYEITcK0IcJVaTq7cx7 wenssnvss ch3
+# to create database on host, which can be controlled over port
+# 50001 using control passphrase $#$#.  Port 50000 on host is
+# used for $MONETDBCLIENT/mclient to connect to the database database and populate it.
+# You better make sure you save the output of this script (or remember your command)
+# as it resets the username and password of the admin user (which by default is
+# monetdb/monetdb).
+
+
+if [[ -n $4 && -n $5 ]] ; then
+	echo "(re)creating ${3} at ${1}"
+	#monetdb -h$1 -p$4 -P$5 stop ${3}
+	$MONETDBCLIENT/monetdb -h$1 -p$4 -P$5 stop ${3}
+	$MONETDBCLIENT/monetdb -h$1 -p$4 -P$5 destroy -f ${3}  # use the force, better have $3 sane
+	$MONETDBCLIENT/monetdb -h$1 -p$4 -P$5 create ${3} || exit 1
+	# still in maintenance so start manually
+	$MONETDBCLIENT/monetdb -h$1 -p$4 -P$5 start ${3} || exit 1
+fi
+
+admuser=${6}
+admpasswd=${7}
+
+echo "changing monetdb/monetdb user/password into:"
+echo "user: ${admuser}"
+echo "pass: ${admpasswd}"
+$MONETDBCLIENT/mclient -lsql -h$1 -p$2 -d$3 -umonetdb -Pmonetdb <<-EOF
+ALTER USER "monetdb" RENAME TO "${admuser}";
+ALTER USER SET PASSWORD '${admpasswd}' USING OLD PASSWORD 'monetdb';
+CREATE SCHEMA "${3}" AUTHORIZATION "${admuser}";
+ALTER USER "${admuser}" SET SCHEMA "${3}";
+EOF
+
+echo -e "\t----------------------------------------"
+echo -e "\tCreating MonetDB ${3} tables"
+echo -e "\t----------------------------------------"
+
+echo -e "\t\tCreating MonetDB ${3} table versions"
+$MONETDBCLIENT/mclient -lsql -h$1 -u${admuser} -P${admpasswd} -d${3} < $MONETDBTKPHOME/tables/create.table.versions.sql
+
+echo -e "\t\tCreating MonetDB ${3} table frequencybands"
+$MONETDBCLIENT/mclient -lsql -h$1 -u${admuser} -P${admpasswd} -d${3} < $MONETDBTKPHOME/tables/create.table.frequencybands.sql
+
+echo -e "\t\tCreating MonetDB ${3} table datasets"
+$MONETDBCLIENT/mclient -lsql -h$1 -u${admuser} -P${admpasswd} -d${3} < $MONETDBTKPHOME/tables/create.table.datasets.sql
+
+echo -e "\t\tCreating MonetDB ${3} table images"
+$MONETDBCLIENT/mclient -lsql -h$1 -u${admuser} -P${admpasswd} -d${3} < $MONETDBTKPHOME/tables/create.table.images.sql
+
+echo -e "\t\tCreating MonetDB ${3} table associationclass"
+$MONETDBCLIENT/mclient -lsql -h$1 -u${admuser} -P${admpasswd} -d${3} < $MONETDBTKPHOME/tables/create.table.associationclass.sql
+
+echo -e "\t\tCreating MonetDB ${3} table catalogs"
+$MONETDBCLIENT/mclient -lsql -h$1 -u${admuser} -P${admpasswd} -d${3} < $MONETDBTKPHOME/tables/create.table.catalogs.sql
+
+echo -e "\t\tCreating MonetDB ${3} table catalogedsources"
+$MONETDBCLIENT/mclient -lsql -h$1 -u${admuser} -P${admpasswd} -d${3} < $MONETDBTKPHOME/tables/create.table.catalogedsources.sql
+
+echo -e "\t\tCreating MonetDB ${3} table extractedsources"
+$MONETDBCLIENT/mclient -lsql -h$1 -u${admuser} -P${admpasswd} -d${3} < $MONETDBTKPHOME/tables/create.table.extractedsources.sql
+
+echo -e "\t\tCreating MonetDB ${3} table assoccatsources"
+$MONETDBCLIENT/mclient -lsql -h$1 -u${admuser} -P${admpasswd} -d${3} < $MONETDBTKPHOME/tables/create.table.assoccatsources.sql
+
+echo -e "\t\tCreating MonetDB ${3} table assocxtrsources"
+$MONETDBCLIENT/mclient -lsql -h$1 -u${admuser} -P${admpasswd} -d${3} < $MONETDBTKPHOME/tables/create.table.assocxtrsources.sql
+
+echo -e "\t\tCreating MonetDB ${3} table lsm"
+$MONETDBCLIENT/mclient -lsql -h$1 -u${admuser} -P${admpasswd} -d${3} < $MONETDBTKPHOME/tables/create.table.lsm.sql
+
+echo -e "\t\tCreating MonetDB ${3} table zoneheight"
+$MONETDBCLIENT/mclient -lsql -h$1 -u${admuser} -P${admpasswd} -d${3} < $MONETDBTKPHOME/tables/create.table.zoneheight.sql
+
+echo -e "\t\tCreating MonetDB ${3} table zones"
+$MONETDBCLIENT/mclient -lsql -h$1 -u${admuser} -P${admpasswd} -d${3} < $MONETDBTKPHOME/tables/create.table.zones.sql
+
+#echo -e "\t-------------------------------------------------------------------------"
+#echo -e "\tCreating MonetDB ${3} tables for multiple catalog association"
+#echo -e "\t-------------------------------------------------------------------------"
+
+#echo -e "\t\tCreating MonetDB ${3} table multiplecatalogsources"
+#$MONETDBCLIENT/mclient -lsql -h$1 -u${admuser} -P${admpasswd} -d${3} < $MONETDBTKPHOME/tables/create.table.multiplecatalogsources.sql
+
+#echo -e "\t\tCreating MonetDB ${3} table multiplecatalogassocs"
+#$MONETDBCLIENT/mclient -lsql -h$1 -u${admuser} -P${admpasswd} -d${3} < $MONETDBTKPHOME/tables/create.table.multiplecatalogassocs.sql
+
+
+echo -e "\t-------------------------------------------"
+echo -e "\tCreating MonetDB ${3} functions"
+echo -e "\t-------------------------------------------"
+
+echo -e "\t\tCreating MonetDB ${3} math functions"
+$MONETDBCLIENT/mclient -lsql -h$1 -u${admuser} -P${admpasswd} -d${3} < $MONETDBCLIENT/../share/MonetDB/sql/math.sql
+
+echo -e "\t\tCreating MonetDB ${3} date functions"
+$MONETDBCLIENT/mclient -lsql -h$1 -u${admuser} -P${admpasswd} -d${3} < $MONETDBCLIENT/../share/MonetDB/sql/date.sql
+
+echo -e "\t\tCreating MonetDB ${3} times functions"
+$MONETDBCLIENT/mclient -lsql -h$1 -u${admuser} -P${admpasswd} -d${3} < $MONETDBCLIENT/../share/MonetDB/sql/times.sql
+
+#echo -e "\t\tCreating MonetDB ${3} mtime functions"
+#$MONETDBCLIENT/mclient -lsql -h$1 -u${admuser} -P${admpasswd} -d${3} < /scratch/bscheers/databases/MonetDB/share/MonetDB/sql/mtime.sql
+
+echo -e "\t\tCreating MonetDB ${3} function alpha"
+$MONETDBCLIENT/mclient -lsql -h$1 -u${admuser} -P${admpasswd} -d${3} < $MONETDBTKPHOME/functions/create.function.alpha.sql
+
+#echo -e "\t\tCreating MonetDB ${3} function getVectorLength"
+#$MONETDBCLIENT/mclient -lsql -h$1 -u${admuser} -P${admpasswd} -d${3} < $MONETDBTKPHOME/functions/create.function.getVectorLength.sql
+
+echo -e "\t\tCreating MonetDB ${3} function getDistanceArcsec"
+$MONETDBCLIENT/mclient -lsql -h$1 -u${admuser} -P${admpasswd} -d${3} < $MONETDBTKPHOME/functions/create.function.getDistanceArcsec.sql
+
+echo -e "\t\tCreating MonetDB ${3} function solidangle_arcsec2"
+$MONETDBCLIENT/mclient -lsql -h$1 -u${admuser} -P${admpasswd} -d${3} < $MONETDBTKPHOME/functions/create.function.solidangle_arcsec2.sql
+
+echo -e "\t\tCreating MonetDB ${3} function getWeightRectIntersection"
+$MONETDBCLIENT/mclient -lsql -h$1 -u${admuser} -P${admpasswd} -d${3} < $MONETDBTKPHOME/functions/create.function.getWeightRectIntersection.sql
+
+echo -e "\t\tCreating MonetDB ${3} function doSourcesIntersect"
+$MONETDBCLIENT/mclient -lsql -h$1 -u${admuser} -P${admpasswd} -d${3} < $MONETDBTKPHOME/functions/create.function.doSourcesIntersect.sql
+
+echo -e "\t\tCreating MonetDB ${3} function doPosErrCirclesIntersect"
+$MONETDBCLIENT/mclient -lsql -h$1 -u${admuser} -P${admpasswd} -d${3} < $MONETDBTKPHOME/functions/create.function.doPosErrCirclesIntersect.sql
+
+echo -e "\t\tCreating MonetDB ${3} function getNearestNeighborInCat"
+$MONETDBCLIENT/mclient -lsql -h$1 -u${admuser} -P${admpasswd} -d${3} < $MONETDBTKPHOME/functions/create.function.getNearestNeighborInCat.sql
+
+echo -e "\t\tCreating MonetDB ${3} function getBand"
+$MONETDBCLIENT/mclient -lsql -h$1 -u${admuser} -P${admpasswd} -d${3} < $MONETDBTKPHOME/functions/create.function.getBand.sql
+
+echo -e "\t\tCreating MonetDB ${3} function decl2deg"
+$MONETDBCLIENT/mclient -lsql -h$1 -u${admuser} -P${admpasswd} -d${3} < $MONETDBTKPHOME/functions/create.function.decl2deg.sql
+
+echo -e "\t\tCreating MonetDB ${3} function decl2dms"
+$MONETDBCLIENT/mclient -lsql -h$1 -u${admuser} -P${admpasswd} -d${3} < $MONETDBTKPHOME/functions/create.function.decl2dms.sql
+
+echo -e "\t\tCreating MonetDB ${3} function insertDataset"
+$MONETDBCLIENT/mclient -lsql -h$1 -u${admuser} -P${admpasswd} -d${3} < $MONETDBTKPHOME/functions/create.function.insertDataset.sql
+
+echo -e "\t\tCreating MonetDB ${3} function insertImage"
+$MONETDBCLIENT/mclient -lsql -h$1 -u${admuser} -P${admpasswd} -d${3} < $MONETDBTKPHOME/functions/create.function.insertImage.sql
+
+echo -e "\t\tCreating MonetDB ${3} function ra2deg"
+$MONETDBCLIENT/mclient -lsql -h$1 -u${admuser} -P${admpasswd} -d${3} < $MONETDBTKPHOME/functions/create.function.ra2deg.sql
+
+echo -e "\t\tCreating MonetDB ${3} function ra2hms"
+$MONETDBCLIENT/mclient -lsql -h$1 -u${admuser} -P${admpasswd} -d${3} < $MONETDBTKPHOME/functions/create.function.ra2hms.sql
+
+echo -e "\t\tCreating MonetDB ${3} function getSkyDensity_deg2"
+$MONETDBCLIENT/mclient -lsql -h$1 -u${admuser} -P${admpasswd} -d${3} < $MONETDBTKPHOME/functions/create.function.getSkyDensity_sr.sql
+
+echo -e "\t\tCreating MonetDB ${3} function getHuynhSkyDensity_deg2"
+$MONETDBCLIENT/mclient -lsql -h$1 -u${admuser} -P${admpasswd} -d${3} < $MONETDBTKPHOME/functions/create.function.getHuynhSkyDensity_deg2.sql
+
+echo -e "\t\tCreating MonetDB ${3} function localSourceDensityInCat_deg2"
+$MONETDBCLIENT/mclient -lsql -h$1 -u${admuser} -P${admpasswd} -d${3} < $MONETDBTKPHOME/functions/create.function.localSourceDensityInCat_deg2.sql
+
+
+echo -e "\t----------------------------------------------------"
+echo -e "\tCreating MonetDB ${3} general procedures"
+echo -e "\t----------------------------------------------------"
+
+#echo -e "\t\tCreating MonetDB ${3} general procedure AssocXSources2XSourcesByImage"
+#$MONETDBCLIENT/mclient -lsql -h$1 -u${admuser} -P${admpasswd} -d${3} < $MONETDBTKPHOME/procedures/create.procedure.AssocXSources2XSourcesByImage.sql
+
+#echo -e "\t\tCreating MonetDB ${3} general procedure AssocXSources2CatByImage"
+#$MONETDBCLIENT/mclient -lsql -h$1 -u${admuser} -P${admpasswd} -d${3} < $MONETDBTKPHOME/procedures/create.procedure.AssocXSources2CatByImage.sql
+
+#echo -e "\t\tCreating MonetDB ${3} general procedure AssocXSources2CatByZones"
+#$MONETDBCLIENT/mclient -lsql -h$1 -u${admuser} -P${admpasswd} -d${3} < $MONETDBTKPHOME/procedures/create.procedure.AssocXSources2CatByZones.sql
+
+echo -e "\t\tCreating MonetDB ${3} general procedure AssocXSrc2XSrc"
+$MONETDBCLIENT/mclient -lsql -h$1 -u${admuser} -P${admpasswd} -d${3} < $MONETDBTKPHOME/procedures/create.procedure.AssocXSrc2XSrc.sql
+
+echo -e "\t\tCreating MonetDB ${3} general procedure AssocXSrc2XCat"
+$MONETDBCLIENT/mclient -lsql -h$1 -u${admuser} -P${admpasswd} -d${3} < $MONETDBTKPHOME/procedures/create.procedure.AssocXSrc2Cat.sql
+
+#echo -e "\t\tCreating MonetDB ${3} general procedure AssocWenssSources2Cat"
+#$MONETDBCLIENT/mclient -lsql -h$1 -u${admuser} -P${admpasswd} -d${3} < $MONETDBTKPHOME/procedures/create.procedure.AssocWenssSources2Cat.sql
+
+echo -e "\t\tCreating MonetDB ${3} general procedure AssocWenssSources2CatByZones"
+$MONETDBCLIENT/mclient -lsql -h$1 -u${admuser} -P${admpasswd} -d${3} < $MONETDBTKPHOME/procedures/create.procedure.AssocWenssSources2CatByZones.sql
+
+echo -e "\t\tCreating MonetDB ${3} general procedure BuildAssociationClass"
+$MONETDBCLIENT/mclient -lsql -h$1 -u${admuser} -P${admpasswd} -d${3} < $MONETDBTKPHOME/procedures/create.procedure.BuildAssociationClass.sql
+
+echo -e "\t\tCreating MonetDB ${3} general procedure BuildFrequencyBands"
+$MONETDBCLIENT/mclient -lsql -h$1 -u${admuser} -P${admpasswd} -d${3} < $MONETDBTKPHOME/procedures/create.procedure.BuildFrequencyBands.sql
+
+echo -e "\t\tCreating MonetDB ${3} general procedure BuildZones"
+$MONETDBCLIENT/mclient -lsql -h$1 -u${admuser} -P${admpasswd} -d${3} < $MONETDBTKPHOME/procedures/create.procedure.BuildZones.sql
+
+echo -e "\t\tCreating MonetDB ${3} general procedure InsertVersion"
+$MONETDBCLIENT/mclient -lsql -h$1 -u${admuser} -P${admpasswd} -d${3} < $MONETDBTKPHOME/procedures/create.procedure.InsertVersion.sql
+
+echo -e "\t\tCreating MonetDB ${3} general procedure InsertSrc"
+$MONETDBCLIENT/mclient -lsql -h$1 -u${admuser} -P${admpasswd} -d${3} < $MONETDBTKPHOME/procedures/create.procedure.InsertSrc.sql
+
+echo -e "\t\tCreating MonetDB ${3} general procedure LoadLSM"
+$MONETDBCLIENT/mclient -lsql -h$1 -u${admuser} -P${admpasswd} -d${3} < $MONETDBTKPHOME/procedures/create.procedure.LoadLSM.sql
+
+echo -e "\t\tCreating MonetDB ${3} general procedure LoadWenssSourceAndBGFields"
+$MONETDBCLIENT/mclient -lsql -h$1 -u${admuser} -P${admpasswd} -d${3} < $MONETDBTKPHOME/procedures/create.procedure.LoadWenssSourceAndBGFields.sql
+
+
+#echo -e "\t-----------------------------------------------------------------------------"
+#echo -e "\tCreating MonetDB ${3} procedures for multiple catalog association"
+#echo -e "\t-----------------------------------------------------------------------------"
+
+#echo -e "\t\tCreating MonetDB ${3} specific procedure MultipleCatMatchingInit"
+#$MONETDBCLIENT/mclient -lsql -h$1 -u${admuser} -P${admpasswd} -d${3} < $MONETDBTKPHOME/procedures/create.procedure.MultipleCatMatchingInit.sql
+
+#echo -e "\t\tCreating MonetDB ${3} specific procedure MultipleCatMatching"
+#$MONETDBCLIENT/mclient -lsql -h$1 -u${admuser} -P${admpasswd} -d${3} < $MONETDBTKPHOME/procedures/create.procedure.MultipleCatMatching.sql
+
+
+echo -e "\t-----------------------------------"
+echo -e "\tInitialize MonetDB ${3}"
+echo -e "\t-----------------------------------"
+
+echo -e "\t\tInitialize MonetDB ${3} tables"
+$MONETDBCLIENT/mclient -lsql -h$1 -u${admuser} -P${admpasswd} -d${3} < $MONETDBTKPHOME/init/init.tables.sql
+
+
+echo -e "\t----------------------------------------------"
+echo -e "\tLoading catalogs into MonetDB ${3}"
+echo -e "\t----------------------------------------------"
+
+date '+%Y-%m-%d-%H:%M:%S'
+
+#echo -e "\t\tLoad catalogs"
+#$MONETDBCLIENT/mclient -lsql -h$1 -u${admuser} -P${admpasswd} -d${3} < $MONETDBTKPHOME/load/copy.catalogs.sql
+#echo -e "\t\tLoad catalogedsources"
+#$MONETDBCLIENT/mclient -lsql -h$1 -u${admuser} -P${admpasswd} -d${3} < $MONETDBTKPHOME/load/copy.catalogedsources.sql
+
+echo -e "\t\tLoad NVSS catalog"
+$MONETDBCLIENT/mclient -lsql -h$1 -u${admuser} -P${admpasswd} -d${3} < $MONETDBTKPHOME/load/load.cat.nvss.sql
+date '+%Y-%m-%d-%H:%M:%S'
+
+echo -e "\t\tLoad VLSS catalog"
+$MONETDBCLIENT/mclient -lsql -h$1 -u${admuser} -P${admpasswd} -d${3} < $MONETDBTKPHOME/load/load.cat.vlss.sql
+date '+%Y-%m-%d-%H:%M:%S'
+
+echo -e "\t\tLoad WENSS catalog"
+$MONETDBCLIENT/mclient -lsql -h$1 -u${admuser} -P${admpasswd} -d${3} < $MONETDBTKPHOME/load/load.cat.wenss.sql
+date '+%Y-%m-%d-%H:%M:%S'
+
+#echo -e "\t\tLoad SIMDATA catalog"
+#$MONETDBCLIENT/mclient -lsql -h$1 -u${admuser} -P${admpasswd} -d${3} < $MONETDBTKPHOME/load/load.cat.simdata.sql
+#date '+%Y-%m-%d-%H:%M:%S'
+
+#echo -e "\t\tLoad 2XMMi-Slim catalog"
+#$MONETDBCLIENT/mclient -lsql -h$1 -u${admuser} -P${admpasswd} -d${3} < $MONETDBTKPHOME/load/load.cat.2XMMi-slim.sql
+#date '+%Y-%m-%d-%H:%M:%S'
+
+echo -e "\t----------------------------"
+echo -e "\tRelease MonetDB ${3}"
+echo -e "\t----------------------------"
+
+if [[ -n $4 && -n $5 ]] ; then
+    # to be able to login as non-root, we need to be out of maintenance
+    $MONETDBCLIENT/monetdb -h$1 -p$4 -P$5 release ${3} || exit 1
+fi
+
+echo -e "-----"
+echo -e "READY"
+echo -e "-----"

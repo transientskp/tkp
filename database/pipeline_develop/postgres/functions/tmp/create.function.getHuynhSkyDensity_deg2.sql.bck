@@ -1,0 +1,110 @@
+--DROP FUNCTION getHuynhSkyDensity_deg2;
+
+/*
+ */
+CREATE FUNCTION getHuynhSkyDensity_deg2(ifreq double precision
+                                       ,iSnu_min double precision
+                                       ) RETURNS double precision as $$
+BEGIN
+
+  DECLARE a0, a1, a2, a3, a4, a5, a6 double precision;
+  DECLARE scale, Snu_first, fac1, sum, dSnu, mdSnu, Smax double precision;
+  DECLARE N, dN double precision;
+  DECLARE l, block INT;
+
+15
+16
+  SET scale = POWER(ifreq / 1400, 0.7);
+16
+18
+  SET N = 0;
+17
+20
+  SET dN = 0;
+18
+22
+  SET sum = 0;
+19
+24
+  SET dSnu = 0;
+20
+26
+  SET mdSnu = 0;
+21
+28
+  SET Smax = 10;
+22
+30
+  SET block = 0;
+23
+32
+  SET a0 = 0.841;
+24
+34
+  SET a1 = 0.540;
+25
+36
+  SET a2 = 0.364;
+26
+38
+  SET a3 = -0.063;
+27
+40
+  SET a4 = -0.107;
+28
+42
+  SET a5 = 0.052;
+29
+44
+  SET a6 = -0.007;
+
+  WHILE (mdSnu <= Smax) DO
+32
+48
+    SET Snu_first = iSnu_min * POWER(10, block);
+33
+50
+    SET dSnu = Snu_first / 10;
+34
+52
+    SET mdSnu = Snu_first;
+35
+54
+    SET l = 0;
+    WHILE (l < 90 AND mdSnu <= Smax) DO
+37
+57
+        SET fac1 = 1 / POWER(scale * mdSnu, 2.5);
+38
+59
+        SET sum =   a0 * POWER(LOG10(scale * mdSnu * 1000), 0)
+                  + a1 * POWER(LOG10(scale * mdSnu * 1000), 1)
+                  + a2 * POWER(LOG10(scale * mdSnu * 1000), 2)
+                  + a3 * POWER(LOG10(scale * mdSnu * 1000), 3)
+                  + a4 * POWER(LOG10(scale * mdSnu * 1000), 4)
+                  + a5 * POWER(LOG10(scale * mdSnu * 1000), 5)
+                  + a6 * POWER(LOG10(scale * mdSnu * 1000), 6);
+45
+67
+        SET dN = fac1 * POWER(10, sum) * scale * dSnu;
+        IF mdSnu > iSnu_min / 3 THEN
+47
+70
+            SET N = N + dN;
+        END IF;
+49
+73
+        SET mdSnu = mdSnu + dSnu;
+50
+75
+        SET l = l + 1;
+    END WHILE;
+52
+78
+    SET block = block + 1;
+  END WHILE;
+
+  RETURN PI() * PI() * N / 32400;
+
+END;
+$$ language plpgsql;

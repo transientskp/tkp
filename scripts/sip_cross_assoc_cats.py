@@ -11,11 +11,11 @@ from monetdb.sql import Error as Error
 #host = sys.argv[1] # db host name
 
 db_type = "MonetDB"
-db_host = "heastro1"
-db_port = 60000
-db_dbase = "sipgsm"
-db_user = "sipgsm"
-db_passwd = "sipgsm"
+db_host = "togano"
+db_port = 60200
+db_dbase = "sipfull"
+db_user = "sipfull"
+db_passwd = "sipfull"
 
 conn = db.connect(hostname=db_host,port=db_port,database=db_dbase,username=db_user,password=db_passwd)
 
@@ -48,11 +48,12 @@ try:
     #decl_max = 9.
     ra_min = 0.
     ra_max = 360.
-    decl_min = 44.
-    decl_max = 64.
+    zone_min = -41
+    zone_max = 90
     #c = [4, 5, 6, 3] # You have to know the ids ;) VLSS, WENSS main, WENSS polar, NVSS, resp.
     c = [4, 5, 6, 3] 
-    sip.cross_associate_cataloged_sources(conn, c, ra_min, ra_max, decl_min, decl_max)
+    #sip.load_lite_catalogedsources(conn, c, ra_min, ra_max, decl_min, decl_max)
+    sip.cross_associate_cataloged_sources(conn, c, zone_min, zone_max)
     #dbu.variability_detection(conn, dataset.id, 0.2, 3.0)
     t_proc = time.time() - t_start
     print "processing: t =", str(t_proc), "s"

@@ -84,7 +84,7 @@ INTO aux_catalogedsources
 FROM
 /* '/scratch/scheers/tkp-code/pipe/database/catfiles/wenss/wenss-all_strip.csv' */
 /* '/home/scheers/tkp-code/pipe/database/catfiles/wenss/WENSS-all_strip.csv' */
-/* '/export/scratch1/bscheers/code/pipe/database/catfiles/wenss/WENSS-all_strip.csv' */
+/* '/export/scratch1/bscheers/code/database/trunk/database/catfiles/wenss/WENSS-all_strip.csv' */
 /* '/zfs/heastro-plex/scratch/evert/catfiles/WENSS-all_strip.csv' */
 /* '/data/scratch/rol/catalogs/WENSS-all_strip.csv' */
 /* '/Users/evert/lofar/data/catalogs/WENSS-all_strip.csv' */
@@ -132,8 +132,8 @@ INSERT INTO catalogedsources
         ,CASE WHEN a_I / arms >= 10 
               THEN 1.5
               ELSE CASE WHEN amajor <> 0
-                        THEN SQRT(2.25 + arms * arms * (amajor * amajor * SIN(rad(apa)) * SIN(rad(apa)) 
-                                                       + aminor * aminor * COS(rad(apa)) * COS(rad(apa))
+                        THEN SQRT(2.25 + arms * arms * (amajor * amajor * SIN(RADIANS(apa)) * SIN(RADIANS(apa)) 
+                                                       + aminor * aminor * COS(RADIANS(apa)) * COS(RADIANS(apa))
                                                        ) / (1.69 * a_I * a_I))
                         ELSE SQRT(2.25 + arms * arms * 2916 / (1.69 * a_I * a_I))
                    END
@@ -141,11 +141,11 @@ INSERT INTO catalogedsources
         ,CASE WHEN a_I / arms >= 10 
               THEN 1.5
               ELSE CASE WHEN amajor <> 0
-                        THEN SQRT(2.25 + arms * arms * (amajor * amajor * COS(rad(apa)) * COS(rad(apa)) 
-                                                       + aminor * aminor * SIN(rad(apa)) * SIN(rad(apa))
+                        THEN SQRT(2.25 + arms * arms * (amajor * amajor * COS(RADIANS(apa)) * COS(RADIANS(apa)) 
+                                                       + aminor * aminor * SIN(RADIANS(apa)) * SIN(RADIANS(apa))
                                                        ) / (1.69 * a_I * a_I)) 
                         ELSE SQRT(2.25 + arms * arms * 2916 
-                                 / (1.69 * a_I * a_I * SIN(rad(aviz_DEJ2000)) * SIN(rad(aviz_DEJ2000)))
+                                 / (1.69 * a_I * a_I * SIN(RADIANS(aviz_DEJ2000)) * SIN(RADIANS(aviz_DEJ2000)))
                                  )
                    END
          END
@@ -153,9 +153,9 @@ INSERT INTO catalogedsources
               THEN ifreq_eff_main
               ELSE ifreq_eff_pole
          END
-        ,COS(rad(aviz_DEJ2000)) * COS(rad(aviz_RAJ2000))
-        ,COS(rad(aviz_DEJ2000)) * SIN(rad(aviz_RAJ2000))
-        ,SIN(rad(aviz_DEJ2000))
+        ,COS(RADIANS(aviz_DEJ2000)) * COS(RADIANS(aviz_RAJ2000))
+        ,COS(RADIANS(aviz_DEJ2000)) * SIN(RADIANS(aviz_RAJ2000))
+        ,SIN(RADIANS(aviz_DEJ2000))
         ,aflg1
         ,CASE WHEN aflg2 = '*'
               THEN aflg2

@@ -51,7 +51,7 @@ FROM
 /* '/scratch/scheers/tkp-code/pipe/database/catfiles/vlss/vlss-all_strip.csv' */
 /* '/home/scheers/tkp-code/pipe/database/catfiles/vlss/VLSS-all_strip.csv' */
 /* '/zfs/heastro-plex/scratch/evert/catfiles/VLSS-all_strip.csv' */
-/* '/export/scratch1/bscheers/code/pipe/database/catfiles/vlss/VLSS-all_strip.csv' */
+/* '/export/scratch1/bscheers/code/database/trunk/database/catfiles/vlss/VLSS-all_strip.csv' */
 /* '/data/scratch/rol/catalogs/VLSS-all_strip.csv' */
 /* '/Users/evert/lofar/data/catalogs/VLSS-all_strip.csv' */
 USING DELIMITERS ';', '\n'
@@ -90,22 +90,12 @@ INSERT INTO catalogedsources
         ,aviz_RAJ2000
         ,aviz_DEJ2000
         ,CAST(FLOOR(aviz_DEJ2000) AS INTEGER)
-        /*,3600 * DEGREES(2 * ASIN(SQRT((COS(rad(aviz_DEJ2000)) * COS(rad(aviz_RAJ2000 + ae_RAJ2000 / 480)) - COS(rad(aviz_DEJ2000)) * COS(rad(aviz_RAJ2000)))
-                                      *
-                                      (COS(rad(aviz_DEJ2000)) * COS(rad(aviz_RAJ2000 + ae_RAJ2000 / 480)) - COS(rad(aviz_DEJ2000)) * COS(rad(aviz_RAJ2000)))
-                                     +
-                                      (COS(rad(aviz_DEJ2000)) * SIN(rad(aviz_RAJ2000 + ae_RAJ2000 / 480)) - COS(rad(aviz_DEJ2000)) * SIN(rad(aviz_RAJ2000)))
-                                      *
-                                      (COS(rad(aviz_DEJ2000)) * SIN(rad(aviz_RAJ2000 + ae_RAJ2000 / 480)) - COS(rad(aviz_DEJ2000)) * SIN(rad(aviz_RAJ2000)))
-                                     ) / 2
-                                )
-                       )*/
-        ,15 * ae_RAJ2000 * COS(rad(aviz_DEJ2000))
+        ,15 * ae_RAJ2000 * COS(RADIANS(aviz_DEJ2000))
         ,ae_DEJ2000 
         ,i_freq_eff
-        ,COS(rad(aviz_DEJ2000)) * COS(rad(aviz_RAJ2000))
-        ,COS(rad(aviz_DEJ2000)) * SIN(rad(aviz_RAJ2000))
-        ,SIN(rad(aviz_DEJ2000))
+        ,COS(RADIANS(aviz_DEJ2000)) * COS(RADIANS(aviz_RAJ2000))
+        ,COS(RADIANS(aviz_DEJ2000)) * SIN(RADIANS(aviz_RAJ2000))
+        ,SIN(RADIANS(aviz_DEJ2000))
         ,aPA
         ,ae_PA
         ,aMajAx

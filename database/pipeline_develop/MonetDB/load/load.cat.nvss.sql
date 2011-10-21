@@ -60,7 +60,7 @@ FROM
 /* '/scratch/bscheers/tkp-code/pipe/database/catfiles/nvss/nvss-few.csv' */
 /* '${TKPDBCODE}/catfiles/nvss/nvss-all_strip.csv' */
 /* '/home/scheers/tkp-code/pipe/database/catfiles/nvss/NVSS-all_strip.csv' */
-/* '/export/scratch1/bscheers/code/pipe/database/catfiles/nvss/NVSS-all_strip.csv' */
+/* '/export/scratch1/bscheers/code/database/trunk/database/catfiles/nvss/NVSS-all_strip.csv' */
 /* '/zfs/heastro-plex/scratch/evert/catfiles/NVSS-all_strip.csv' */
 /* '/data/scratch/rol/catalogs/NVSS-all_strip.csv' */
 /* '/Users/evert/lofar/data/catalogs/NVSS-all_strip.csv' */
@@ -102,23 +102,12 @@ INSERT INTO catalogedsources
         ,aviz_RAJ2000
         ,aviz_DEJ2000
         ,CAST(FLOOR(aviz_DEJ2000) AS INTEGER)
-        /*,3600 * deg(2 * ASIN(SQRT((COS(rad(aviz_DEJ2000)) * COS(rad(aviz_RAJ2000 + ae_RAJ2000 / 480)) - COS(rad(aviz_DEJ2000)) * COS(rad(aviz_RAJ2000))) 
-                                      * 
-                                      (COS(rad(aviz_DEJ2000)) * COS(rad(aviz_RAJ2000 + ae_RAJ2000 / 480)) - COS(rad(aviz_DEJ2000)) * COS(rad(aviz_RAJ2000)))
-                                     +
-                                      (COS(rad(aviz_DEJ2000)) * SIN(rad(aviz_RAJ2000 + ae_RAJ2000 / 480)) - COS(rad(aviz_DEJ2000)) * SIN(rad(aviz_RAJ2000)))
-                                      *
-                                      (COS(rad(aviz_DEJ2000)) * SIN(rad(aviz_RAJ2000 + ae_RAJ2000 / 480)) - COS(rad(aviz_DEJ2000)) * SIN(rad(aviz_RAJ2000)))
-                                     )
-                                / 2
-                                )
-                       )*/
-        ,15 * ae_RAJ2000 * COS(rad(aviz_DEJ2000))
+        ,15 * ae_RAJ2000 * COS(RADIANS(aviz_DEJ2000))
         ,ae_DEJ2000 
         ,i_freq_eff
-        ,COS(rad(aviz_DEJ2000)) * COS(rad(aviz_RAJ2000))
-        ,COS(rad(aviz_DEJ2000)) * SIN(rad(aviz_RAJ2000))
-        ,SIN(rad(aviz_DEJ2000))
+        ,COS(RADIANS(aviz_DEJ2000)) * COS(RADIANS(aviz_RAJ2000))
+        ,COS(RADIANS(aviz_DEJ2000)) * SIN(RADIANS(aviz_RAJ2000))
+        ,SIN(RADIANS(aviz_DEJ2000))
         ,af_resFlux 
         ,aPA
         ,ae_PA
@@ -134,4 +123,3 @@ INSERT INTO catalogedsources
 
 DROP TABLE aux_catalogedsources;
 
---SELECT NOW();

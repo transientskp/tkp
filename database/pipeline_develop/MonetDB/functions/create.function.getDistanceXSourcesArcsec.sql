@@ -12,7 +12,7 @@ BEGIN
 
   DECLARE dist DOUBLE;
 
-  SELECT 3600 * deg(2 * ASIN(SQRT((x1.x - x2.x) * (x1.x - x2.x)  
+  SELECT 3600 * DEGREES(2 * ASIN(SQRT((x1.x - x2.x) * (x1.x - x2.x)  
                                      + (x1.y - x2.y) * (x1.y - x2.y)  
                                      + (x1.z - x2.z) * (x1.z - x2.z)  
                                      ) / 2) ) AS distance_arcsec

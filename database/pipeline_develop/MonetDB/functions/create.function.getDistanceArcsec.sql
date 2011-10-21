@@ -16,25 +16,25 @@ BEGIN
   DECLARE d1, d2, d3 DOUBLE;
   DECLARE resu DOUBLE;
 
-  SET cosd = COS(rad(idecl1));
-  SET u1 = COS(rad(idecl1)) * COS(rad(ira1));
-  SET u2 = COS(rad(idecl1)) * SIN(rad(ira1));
-  SET u3 = SIN(rad(idecl1));
+  SET cosd = COS(RADIANS(idecl1));
+  SET u1 = COS(RADIANS(idecl1)) * COS(RADIANS(ira1));
+  SET u2 = COS(RADIANS(idecl1)) * SIN(RADIANS(ira1));
+  SET u3 = SIN(RADIANS(idecl1));
 
-  SET cosd = COS(rad(idecl2));
-  SET v1 = COS(rad(idecl2)) * COS(rad(ira2));
-  SET v2 = COS(rad(idecl2)) * SIN(rad(ira2));
-  SET v3 = SIN(rad(idecl2));
+  SET cosd = COS(RADIANS(idecl2));
+  SET v1 = COS(RADIANS(idecl2)) * COS(RADIANS(ira2));
+  SET v2 = COS(RADIANS(idecl2)) * SIN(RADIANS(ira2));
+  SET v3 = SIN(RADIANS(idecl2));
   
-  /*SET d1 = COS(rad(idecl2)) * COS(rad(ira2)) - COS(rad(idecl1)) * COS(rad(ira1));
-  SET d2 = COS(rad(idecl2)) * SIN(rad(ira2)) - COS(rad(idecl1)) * SIN(rad(ira1));
-  SET d3 = SIN(rad(idecl2)) - SIN(rad(idecl1));*/
+  /*SET d1 = COS(RADIANS(idecl2)) * COS(RADIANS(ira2)) - COS(RADIANS(idecl1)) * COS(RADIANS(ira1));
+  SET d2 = COS(RADIANS(idecl2)) * SIN(RADIANS(ira2)) - COS(RADIANS(idecl1)) * SIN(RADIANS(ira1));
+  SET d3 = SIN(RADIANS(idecl2)) - SIN(RADIANS(idecl1));*/
   /*SET resu = d1+d2+d3;*/
   
   /*RETURN d1 + d2 + d3;*/
   /*RETURN SQRT(POWER(d1, 2) + POWER(d2, 2) + POWER(d3, 2));incorrect result*/
   /*RETURN 3600 * degrees(2 * ASIN(getVectorLength(v1 - u1, v2 - u2, v3 - u3) / 2));*/
-  RETURN 3600 * deg(2 * ASIN(SQRT((u1 - v1) * (u1 - v1) + (u2 - v2) * (u2 - v2) + (u3 - v3) * (u3 - v3)) / 2));
+  RETURN 3600 * DEGREES(2 * ASIN(SQRT((u1 - v1) * (u1 - v1) + (u2 - v2) * (u2 - v2) + (u3 - v3) * (u3 - v3)) / 2));
   /*RETURN resu;*/
   
 END;

@@ -10,6 +10,6 @@ BEGIN
   IF ABS(decl) + theta > 89.9 THEN 
     RETURN 180;
   ELSE 
-    RETURN deg(ABS(ATAN(SIN(rad(theta)) / SQRT(ABS(COS(rad(decl - theta)) * COS(rad(decl + theta))))))) ; 
+    RETURN DEGREES(ABS(ATAN(SIN(RADIANS(theta)) / SQRT(ABS(COS(RADIANS(decl - theta)) * COS(RADIANS(decl + theta))))))) ; 
   END IF ;
 END;

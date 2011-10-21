@@ -20,6 +20,7 @@ CREATE TABLE images
   ,ds_id INT NOT NULL
   ,tau INT NOT NULL
   ,band INT NOT NULL
+  ,stokes CHAR(1) NOT NULL DEFAULT 'I'
   ,tau_time DOUBLE NOT NULL
   ,freq_eff DOUBLE NOT NULL
   ,freq_bw DOUBLE NULL

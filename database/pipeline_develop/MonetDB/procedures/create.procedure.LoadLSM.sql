@@ -24,7 +24,7 @@ BEGIN
     INTO izoneheight
     FROM zoneheight 
   ;*/
-  SET izoneheight = 1;
+  SET izoneheight = 1.0;
 
   INSERT INTO lsm
     SELECT cs.* 

@@ -22,7 +22,7 @@ BEGIN
   /* itheta determines the radius of the area (with the ixtrsrcid source 
    * at its centre. caparea is the curved surface area of the spherical cap
    */
-  SET caparea = 64800 * (1 - COS(rad(itheta))) / PI();
+  SET caparea = 64800 * (1 - COS(RADIANS(itheta))) / PI();
 
   /*TODO
   SELECT zoneheight
@@ -39,7 +39,7 @@ BEGIN
    WHERE c1.cat_id = c0.catid
      AND c0.catname = UPPER(icatname)
      AND x1.xtrsrcid = ixtrsrcid
-     AND c1.x * x1.x + c1.y * x1.y + c1.z * x1.z > COS(rad(itheta))
+     AND c1.x * x1.x + c1.y * x1.y + c1.z * x1.z > COS(RADIANS(itheta))
      AND c1.zone BETWEEN FLOOR((x1.decl - itheta) / izoneheight)
                      AND FLOOR((x1.decl + itheta) / izoneheight)
      AND c1.ra BETWEEN x1.ra - alpha(itheta, x1.decl)

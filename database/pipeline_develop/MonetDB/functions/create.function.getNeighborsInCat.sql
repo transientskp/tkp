@@ -22,7 +22,7 @@ BEGIN
   RETURN TABLE 
   (
     SELECT catsrcid
-          ,3600 * deg(2 * ASIN(SQRT((x1.x - c1.x) * (x1.x - c1.x)
+          ,3600 * DEGREES(2 * ASIN(SQRT((x1.x - c1.x) * (x1.x - c1.x)
                                        + (x1.y - c1.y) * (x1.y - c1.y)
                                        + (x1.z - c1.z) * (x1.z - c1.z)
                                        ) / 2) 
@@ -33,7 +33,7 @@ BEGIN
      WHERE c1.cat_id = c0.catid
        AND c0.catname = icatname
        AND x1.xtrsrcid = ixtrsrcid
-       AND c1.x * x1.x + c1.y * x1.y + c1.z * x1.z > COS(rad(itheta))
+       AND c1.x * x1.x + c1.y * x1.y + c1.z * x1.z > COS(RADIANS(itheta))
        AND c1.zone BETWEEN CAST(FLOOR((x1.decl - itheta) / izoneheight) AS INTEGER)
                        AND CAST(FLOOR((x1.decl + itheta) / izoneheight) AS INTEGER)
        AND c1.ra BETWEEN x1.ra - alpha(itheta, x1.decl)

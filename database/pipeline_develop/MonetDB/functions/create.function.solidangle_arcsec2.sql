@@ -23,6 +23,6 @@ CREATE FUNCTION solidangle_arcsec2(ra_min DOUBLE
                                   ) RETURNS DOUBLE 
 BEGIN
 
-  RETURN 2332800000 * (ra_max - ra_min) * (sin(rad(decl_max)) - sin(rad(decl_min))) / PI();
+  RETURN 2332800000 * (ra_max - ra_min) * (SIN(RADIANS(decl_max)) - SIN(RADIANS(decl_min))) / PI();
 
 END;

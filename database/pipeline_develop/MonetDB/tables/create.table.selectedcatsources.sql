@@ -14,20 +14,22 @@
  * TODO: Probably it is better not te set catsrcid to auto_incr,
  * because we will copy them from the catalog database.
  */
-CREATE TABLE selectedcatsources (
-  catsrc_id INT NOT NULL,
-  cat_id INT NOT NULL,
-  zone INT NOT NULL,
-  ra DOUBLE NOT NULL,
-  decl DOUBLE NOT NULL,
-  ra_err DOUBLE NOT NULL,
-  decl_err DOUBLE NOT NULL,
-  x DOUBLE NOT NULL,
-  y DOUBLE NOT NULL,
-  z DOUBLE NOT NULL,
-  margin BOOLEAN NOT NULL DEFAULT 0,
-  I_peak DOUBLE NULL,
-  I_peak_err DOUBLE NULL,
-  I_int DOUBLE NULL,
-  I_int_err DOUBLE NULL
-);
+CREATE TABLE selectedcatsources 
+  (catsrc_id INT NOT NULL
+  ,cat_id INT NOT NULL
+  ,zone INT NOT NULL
+  ,ra DOUBLE NOT NULL
+  ,decl DOUBLE NOT NULL
+  ,ra_err DOUBLE NOT NULL
+  ,decl_err DOUBLE NOT NULL
+  ,x DOUBLE NOT NULL
+  ,y DOUBLE NOT NULL
+  ,z DOUBLE NOT NULL
+  ,margin BOOLEAN NOT NULL DEFAULT 0
+  ,I_peak DOUBLE NULL
+  ,I_peak_err DOUBLE NULL
+  ,I_int DOUBLE NULL
+  ,I_int_err DOUBLE NULL
+  )
+;
+

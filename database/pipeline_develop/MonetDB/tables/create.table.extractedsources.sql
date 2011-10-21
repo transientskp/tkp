@@ -39,7 +39,30 @@
  *                  Fluxes and flux errors are in Jy
  * 
  */
-CREATE SEQUENCE "seq_extractedsources" AS INTEGER;
+
+--@single node database
+CREATE SEQUENCE "seq_extractedsources" AS INTEGER
+;
+
+/*
+--@node1
+CREATE SEQUENCE "seq_extractedsources" AS INTEGER 
+  START WITH 1
+  INCREMENT BY 3
+;
+
+--@node2
+CREATE SEQUENCE "seq_extractedsources" AS INTEGER 
+  START WITH 2
+  INCREMENT BY 3
+;
+
+--@node3
+CREATE SEQUENCE "seq_extractedsources" AS INTEGER 
+  START WITH 3
+  INCREMENT BY 3
+;
+*/
 
 CREATE TABLE extractedsources 
   (xtrsrcid INT DEFAULT NEXT VALUE FOR "seq_extractedsources"

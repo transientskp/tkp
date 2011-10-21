@@ -1,4 +1,4 @@
-DROP FUNCTION getNeighborBrightestInCat;
+--DROP FUNCTION getNeighborBrightestInCat;
 /*
 CREATE FUNCTION testReturnTable(catname VARCHAR(50)
                                ,ira DOUBLE
@@ -34,10 +34,13 @@ BEGIN
   
   DECLARE izoneheight DOUBLE;
 
-  SELECT zoneheight 
+  /*SELECT zoneheight 
     INTO izoneheight
     FROM zoneheight
   ;
+  */
+
+  SET izoneheight = 1.0;
 
   RETURN TABLE 
     (
@@ -47,12 +50,12 @@ BEGIN
           ,c1.freq_eff
           ,c1.i_int_avg
           ,c1.i_int_avg_err
-          ,3600 * DEGREES(2 * ASIN(SQRT( (c1.x - COS(radians(idecl)) * COS(radians(ira))) 
-                                         * (c1.x - COS(radians(idecl)) * COS(radians(ira))) 
-                                       + (c1.y - COS(radians(idecl)) * SIN(radians(ira)))
-                                         * (c1.y - COS(radians(idecl)) * SIN(radians(ira)))
-                                       + (c1.z - SIN(radians(idecl))) 
-                                         * (c1.z - SIN(radians(idecl)))
+          ,3600 * DEGREES(2 * ASIN(SQRT( (c1.x - COS(RADIANS(idecl)) * COS(RADIANS(ira))) 
+                                         * (c1.x - COS(RADIANS(idecl)) * COS(RADIANS(ira))) 
+                                       + (c1.y - COS(RADIANS(idecl)) * SIN(RADIANS(ira)))
+                                         * (c1.y - COS(RADIANS(idecl)) * SIN(RADIANS(ira)))
+                                       + (c1.z - SIN(RADIANS(idecl))) 
+                                         * (c1.z - SIN(RADIANS(idecl)))
                                        ) 
                                   / 2
                                   )

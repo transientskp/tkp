@@ -17,6 +17,7 @@ USER = config['database']['user']
 PASSWORD = config['database']['password']
 NAME = config['database']['name']
 PORT = config['database']['port']
+AUTO_COMMIT = config['database']['autocommit']
 
 
 if ENGINE == 'monetdb':
@@ -58,7 +59,7 @@ class DataBase(object):
 
     def __init__(self, host=HOST, name=NAME, user=USER,
                  password=PASSWORD, port=PORT,
-                 autocommit=False):
+                 autocommit=AUTO_COMMIT):
         """Set up a database connection object
 
         Raises an exception if not enabled.
@@ -70,6 +71,7 @@ class DataBase(object):
         self.user = user
         self.password = password
         self.port = port
+        self.autocommit = autocommit
         self.connection = None
         self.autocommit = autocommit
         if not ENABLED:
@@ -81,15 +83,15 @@ class DataBase(object):
             self.name, self.host, self.user)
 
     def __repr__(self):
-        return "DataBase(host=%s, name=%s, user=%s, password=%s, port=%d" % (
-            self.host, self.name, self.user, self.password, self.port)
+        return "DataBase(host=%s, name=%s, user=%s, password=%s, port=%d, autocommit=%s" % (
+            self.host, self.name, self.user, self.password, self.port, self.autocommit)
 
     def connect(self):
         """Connect to the database"""
 
         kwargs = dict(
             host=self.host, user=self.user, password=self.password,
-            database=self.name, port=self.port)
+            database=self.name, port=self.port, autocommit=self.autocommit)
         if ENGINE == 'monetdb':  # PostgreSQL doesn't have autocommit
             kwargs['autocommit'] = self.autocommit
         self.connection = engine.connect(**kwargs)

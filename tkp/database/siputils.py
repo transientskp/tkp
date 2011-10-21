@@ -3,7 +3,7 @@
 #
 # LOFAR Transients Key Project
 #
-import sys, pylab
+import sys, pylab, time
 from scipy import *
 from scipy import optimize
 import numpy as np
@@ -12,15 +12,13 @@ import monetdb.sql as db
 import logging
 from tkp.config import config
 
-DERUITER_R = config['source_association']['deruiter_radius']
+DERUITER_R = config['source_association']['deruiter_radius']/3600.
 print "DERUITER_R =",DERUITER_R
 
 def cross_associate_cataloged_sources(conn 
                                      ,c
-                                     ,ra_min 
-                                     ,ra_max 
-                                     ,decl_min 
-                                     ,decl_max 
+                                     ,zone_min 
+                                     ,zone_max 
                                      ,deRuiter_r=None 
                                      ):
 
@@ -31,35 +29,65 @@ def cross_associate_cataloged_sources(conn
     #c = [4, 5, 6, 3]
     #c = [3, 4, 5, 6]
     #c = [4, 5, 6, 3]
-    for i in range(len(c)):
-        print "Busy with cat_id = ", c[i]
-        _empty_selected_catsources(conn)
-        _empty_tempmergedcatalogs(conn)
-        _insert_selected_catsources(conn, c[i], ra_min, ra_max, decl_min, decl_max)
-        #if c[i] == 3:
-        #    sys.exit(1)
-        _insert_tempmergedcatalogs(conn, c[i], deRuiter_r)
-        _flag_multiple_counterparts_in_mergedcatalogs(conn)
-        _insert_multiple_crossassocs(conn)
-        _insert_first_of_multiple_crossassocs(conn)
-        _flag_swapped_multiple_crossassocs(conn)
-        _insert_multiple_crossassocs_mergedcat(conn)
-        _flag_old_multiple_assocs_mergedcat(conn)
-        _flag_multiple_assocs(conn)
-        #+-----------------------------------------------------+
-        #| After all this, we are now left with the 1-1 assocs |
-        #+-----------------------------------------------------+
-        _insert_single_crossassocs(conn)
-        _update_mergedcatalogs(conn)
-        _empty_tempmergedcatalogs(conn)
-        _count_known_sources(conn, deRuiter_r)
-        _insert_new_assocs(conn, deRuiter_r)
-        _insert_new_source_mergedcatalogs(conn, c[i], ra_min, ra_max, decl_min, decl_max, deRuiter_r)
-        #if i > 0:
-        #    sys.exit('Stopppp')
-    _empty_selected_catsources(conn)
-    _update_fluxes_mergedcatalogs(conn, c)
-    _update_spectralindices_mergedcatalogs(conn, c)
+    
+    ra_lims = [[0.0, 90.0], [90.0, 180.0], [180.0, 270.0], [270.0, 360.0]]
+    # Here we override the ra_min/max
+    zones = range(zone_min, zone_max, 1)
+    for zone in zones:
+        print "Working in zone =", zone
+        for i in range(len(c)):
+            print "\tBusy with cat_id = ", c[i]
+            for j in range(len(ra_lims)):
+                ra_min, ra_max = ra_lims[j]
+                print "\t\tBusy with ra_lims = [", ra_min, ",", ra_max, ")"
+                print "\t\t\t(1): " + time.strftime("%Y-%m-%d %H:%M:%S")
+                _empty_selected_catsources(conn)
+                print "\t\t\t(2): " + time.strftime("%Y-%m-%d %H:%M:%S")
+                _empty_tempmergedcatalogs(conn)
+                print "\t\t\t(3): " + time.strftime("%Y-%m-%d %H:%M:%S")
+                _insert_selected_catsources(conn, c[i], zone, ra_min, ra_max)
+                print "\t\t\t\tNumber of seletedcatsources: ", _count_selectedcatsources(conn)
+                print "\t\t\t\tNumber of merged cataloged sources in this area: ", _count_mergedcatalogs(conn, zone, ra_min,ra_max)
+                print "\t\t\t(4): " + time.strftime("%Y-%m-%d %H:%M:%S")
+                _insert_tempmergedcatalogs(conn, c[i], zone, ra_min, ra_max, deRuiter_r)
+                print "\t\t\t(5): " + time.strftime("%Y-%m-%d %H:%M:%S")
+                _flag_multiple_counterparts_in_mergedcatalogs(conn)
+                print "\t\t\t(6): " + time.strftime("%Y-%m-%d %H:%M:%S")
+                _insert_multiple_crossassocs(conn)
+                print "\t\t\t(7): " + time.strftime("%Y-%m-%d %H:%M:%S")
+                _insert_first_of_multiple_crossassocs(conn)
+                print "\t\t\t(8): " + time.strftime("%Y-%m-%d %H:%M:%S")
+                _flag_swapped_multiple_crossassocs(conn)
+                print "\t\t\t(9): " + time.strftime("%Y-%m-%d %H:%M:%S")
+                _insert_multiple_crossassocs_mergedcat(conn)
+                print "\t\t\t(10): " + time.strftime("%Y-%m-%d %H:%M:%S")
+                _flag_old_multiple_assocs_mergedcat(conn)
+                print "\t\t\t(11): " + time.strftime("%Y-%m-%d %H:%M:%S")
+                _flag_multiple_assocs(conn)
+                print "\t\t\t(12): " + time.strftime("%Y-%m-%d %H:%M:%S")
+                #+-----------------------------------------------------+
+                #| After all this, we are now left with the 1-1 assocs |
+                #+-----------------------------------------------------+
+                _insert_single_crossassocs(conn)
+                print "\t\t\t(13): " + time.strftime("%Y-%m-%d %H:%M:%S")
+                _update_mergedcatalogs(conn)
+                print "\t\t\t(14): " + time.strftime("%Y-%m-%d %H:%M:%S")
+                _empty_tempmergedcatalogs(conn)
+                print "\t\t\t(15): " + time.strftime("%Y-%m-%d %H:%M:%S")
+                _count_known_sources(conn, zone, ra_min, ra_max, deRuiter_r)
+                print "\t\t\t(16): " + time.strftime("%Y-%m-%d %H:%M:%S")
+                _insert_new_assocs(conn, zone, ra_min, ra_max, deRuiter_r)
+                print "\t\t\t(17): " + time.strftime("%Y-%m-%d %H:%M:%S")
+                _insert_new_source_mergedcatalogs(conn, c[i], zone, ra_min, ra_max, deRuiter_r)
+                print "\t\t\t(18): " + time.strftime("%Y-%m-%d %H:%M:%S")
+                _empty_selected_catsources(conn)
+                print "\t\t\t(19): " + time.strftime("%Y-%m-%d %H:%M:%S")
+                _update_fluxes_mergedcatalogs(conn, c, zone, ra_min, ra_max)
+                print "\t\t\t(20): " + time.strftime("%Y-%m-%d %H:%M:%S")
+                _update_spectralindices_mergedcatalogs(conn, c, zone, ra_min, ra_max)
+                print "\t\t\t(21): " + time.strftime("%Y-%m-%d %H:%M:%S")
+        print "Number of merged cataloged sources in this zone: ", _count_mergedcatalogs(conn, zone)
+    print "Number of merged cataloged sources: ", _count_mergedcatalogs(conn)
 
 def _empty_selected_catsources(conn):
     """Initialize the temporary storage table
@@ -97,7 +125,7 @@ def _empty_tempmergedcatalogs(conn):
     finally:
         cursor.close()
 
-def _insert_selected_catsources(conn, cat_id, ra_min, ra_max, decl_min, decl_max):
+def _insert_selected_catsources(conn, cat_id, zone, ra_min, ra_max):
     """Select matched sources
 
     Here we select the extractedsources that have a positional match
@@ -158,22 +186,21 @@ INSERT INTO selectedcatsources
         ,c0.i_int_avg_err
     FROM catalogedsources c0
    WHERE c0.cat_id = %s
-     AND c0.zone BETWEEN CAST(FLOOR(CAST(%s AS DOUBLE) - 0.025) as INTEGER)
-                     AND CAST(FLOOR(CAST(%s AS DOUBLE) + 0.025) as INTEGER)
-     AND c0.decl BETWEEN CAST(%s AS DOUBLE) - 0.025
-                     AND CAST(%s AS DOUBLE) + 0.025
-     AND c0.ra BETWEEN CAST(%s AS DOUBLE) - alpha(0.025, %s)
-                   AND CAST(%s AS DOUBLE) + alpha(0.025, %s)
+     AND c0.zone = %s
+     AND c0.ra >= %s 
+     AND c0.ra < %s
         """
+     # Taken out to work by zones
+     #AND c0.zone BETWEEN CAST(FLOOR(CAST(%s AS DOUBLE) - 0.025) as INTEGER)
+     #                AND CAST(FLOOR(CAST(%s AS DOUBLE) + 0.025) as INTEGER)
+     #AND c0.decl BETWEEN CAST(%s AS DOUBLE) - 0.025
+     #                AND CAST(%s AS DOUBLE) + 0.025
+     #AND c0.ra BETWEEN CAST(%s AS DOUBLE) - alpha(0.025, %s)
+     #              AND CAST(%s AS DOUBLE) + alpha(0.025, %s)
         cursor.execute(query, (cat_id 
-                              ,decl_min 
-                              ,decl_max
-                              ,decl_min
-                              ,decl_max
+                              ,zone
                               ,ra_min
-                              ,decl_max
                               ,ra_max
-                              ,decl_max
                               ))
         conn.commit()
     except db.Error, e:
@@ -182,7 +209,7 @@ INSERT INTO selectedcatsources
     finally:
         cursor.close()
 
-def _insert_tempmergedcatalogs(conn, cat_id, deRuiter_r):
+def _insert_tempmergedcatalogs(conn, cat_id, zone, ra_min, ra_max, deRuiter_r):
     """Select matched sources
 
     Here we select the extractedsources that have a positional match
@@ -231,80 +258,95 @@ INSERT INTO tempmergedcatalogs
   ,i_peak
   ,i_int
   )
-  SELECT t0.catsrc_id
-        ,t0.assoc_catsrc_id
-        ,t0.assoc_cat_id
-        ,t0.datapoints
-        ,CAST(FLOOR(t0.wm_decl/1) AS INTEGER)
-        ,t0.wm_ra
-        ,t0.wm_decl
-        ,t0.wm_ra_err
-        ,t0.wm_decl_err
-        ,t0.avg_wra
-        ,t0.avg_wdecl
-        ,t0.avg_weight_ra
-        ,t0.avg_weight_decl
-        ,COS(rad(t0.wm_decl)) * COS(rad(t0.wm_ra))
-        ,COS(rad(t0.wm_decl)) * SIN(rad(t0.wm_ra))
-        ,SIN(rad(t0.wm_decl))
+  SELECT catsrc_id
+        ,assoc_catsrc_id
+        ,assoc_cat_id
+        ,datapoints
+        ,zone
+        ,wm_ra
+        ,wm_decl
+        ,wm_ra_err
+        ,wm_decl_err
+        ,avg_wra
+        ,avg_wdecl
+        ,avg_weight_ra
+        ,avg_weight_decl
+        ,x
+        ,y
+        ,z
         ,i_peak
         ,i_int
-    FROM (SELECT m0.catsrc_id as catsrc_id
-                ,s0.catsrc_id as assoc_catsrc_id
-                ,%s as assoc_cat_id
-                ,m0.datapoints + 1 AS datapoints
-                ,((m0.datapoints * m0.avg_wra + s0.ra /
-                  (s0.ra_err * s0.ra_err)) / (datapoints + 1))
-                 /
-                 ((datapoints * m0.avg_weight_ra + 1 /
-                   (s0.ra_err * s0.ra_err)) / (datapoints + 1))
-                 AS wm_ra
-                ,((datapoints * m0.avg_wdecl + s0.decl /
-                  (s0.decl_err * s0.decl_err)) / (datapoints + 1))
-                 /
-                 ((datapoints * m0.avg_weight_decl + 1 /
-                   (s0.decl_err * s0.decl_err)) / (datapoints + 1))
-                 AS wm_decl
-                ,SQRT(1 / ((datapoints + 1) *
-                  ((datapoints * m0.avg_weight_ra +
-                    1 / (s0.ra_err * s0.ra_err)) / (datapoints + 1))
-                          )
-                     ) AS wm_ra_err
-                ,SQRT(1 / ((datapoints + 1) *
-                  ((datapoints * m0.avg_weight_decl +
-                    1 / (s0.decl_err * s0.decl_err)) / (datapoints + 1))
-                          )
-                     ) AS wm_decl_err
-                ,(datapoints * m0.avg_wra + s0.ra / (s0.ra_err * s0.ra_err))
-                 / (datapoints + 1) AS avg_wra
-                ,(datapoints * m0.avg_wdecl + s0.decl / (s0.decl_err * s0.decl_err))
-                 / (datapoints + 1) AS avg_wdecl
-                ,(datapoints * m0.avg_weight_ra + 1 /
-                  (s0.ra_err * s0.ra_err))
-                 / (datapoints + 1) AS avg_weight_ra
-                ,(datapoints * m0.avg_weight_decl + 1 /
-                  (s0.decl_err * s0.decl_err))
-                 / (datapoints + 1) AS avg_weight_decl
-                ,s0.i_peak
-                ,s0.i_int
-            FROM mergedcatalogs m0
-                ,selectedcatsources s0
-           WHERE m0.zone BETWEEN CAST(FLOOR(s0.decl - 0.025) as INTEGER)
-                             AND CAST(FLOOR(s0.decl + 0.025) as INTEGER)
-             AND m0.wm_decl BETWEEN s0.decl - 0.025
-                                AND s0.decl + 0.025
-             AND m0.wm_ra BETWEEN s0.ra - alpha(0.025,s0.decl)
-                              AND s0.ra + alpha(0.025,s0.decl)
-             AND m0.x * s0.x + m0.y * s0.y + m0.z * s0.z > COS(rad(0.025))
-             AND SQRT(  (s0.ra * COS(rad(s0.decl)) - m0.wm_ra * COS(rad(m0.wm_decl)))
-                      * (s0.ra * COS(rad(s0.decl)) - m0.wm_ra * COS(rad(m0.wm_decl)))
-                      / (s0.ra_err * s0.ra_err + m0.wm_ra_err * m0.wm_ra_err)
-                     + (s0.decl - m0.wm_decl) * (s0.decl - m0.wm_decl)
-                      / (s0.decl_err * s0.decl_err + m0.wm_decl_err * m0.wm_decl_err)
-                     ) < %s
-         ) t0
+    FROM (SELECT t0.catsrc_id
+                ,t0.assoc_catsrc_id
+                ,t0.assoc_cat_id
+                ,t0.datapoints
+                ,CAST(FLOOR(t0.wm_decl/1.0) AS INTEGER) AS zone
+                ,t0.wm_ra
+                ,t0.wm_decl
+                ,t0.wm_ra_err
+                ,t0.wm_decl_err
+                ,t0.avg_wra
+                ,t0.avg_wdecl
+                ,t0.avg_weight_ra
+                ,t0.avg_weight_decl
+                ,COS(RADIANS(t0.wm_decl)) * COS(RADIANS(t0.wm_ra)) AS x
+                ,COS(RADIANS(t0.wm_decl)) * SIN(RADIANS(t0.wm_ra)) AS y
+                ,SIN(RADIANS(t0.wm_decl)) AS z
+                ,i_peak
+                ,i_int
+            FROM (SELECT m0.catsrc_id as catsrc_id
+                        ,s0.catsrc_id as assoc_catsrc_id
+                        ,%s as assoc_cat_id
+                        ,datapoints + 1 AS datapoints
+                        ,(datapoints * m0.avg_wra * s0.ra_err * s0.ra_err + s0.ra)
+                         /
+                         (datapoints * m0.avg_weight_ra * s0.ra_err * s0.ra_err + 1.0)
+                         AS wm_ra
+                        ,(datapoints * m0.avg_wdecl * s0.decl_err * s0.decl_err + s0.decl)
+                         /
+                         (datapoints * m0.avg_weight_decl * s0.decl_err * s0.decl_err + 1.0)
+                         AS wm_decl
+                        ,SQRT(1.0 
+                             / (datapoints * m0.avg_weight_ra + 1 / (s0.ra_err * s0.ra_err))
+                             ) AS wm_ra_err
+                        ,SQRT(1.0 
+                             / (datapoints * m0.avg_weight_decl + 1 / (s0.decl_err * s0.decl_err)) 
+                             ) AS wm_decl_err
+                        ,(datapoints * m0.avg_wra + s0.ra / (s0.ra_err * s0.ra_err))
+                         / (datapoints + 1) AS avg_wra
+                        ,(datapoints * m0.avg_wdecl + s0.decl / (s0.decl_err * s0.decl_err))
+                         / (datapoints + 1) AS avg_wdecl
+                        ,(datapoints * m0.avg_weight_ra + 1 / (s0.ra_err * s0.ra_err))
+                         / (datapoints + 1) AS avg_weight_ra
+                        ,(datapoints * m0.avg_weight_decl + 1 / (s0.decl_err * s0.decl_err))
+                         / (datapoints + 1) AS avg_weight_decl
+                        ,s0.i_peak
+                        ,s0.i_int
+                    FROM mergedcatalogs m0
+                        ,selectedcatsources s0
+                   WHERE m0.zone BETWEEN %s - 1
+                                     AND %s + 1
+                     AND m0.wm_decl BETWEEN %s - 0.025
+                                        AND %s + 1.025
+                     AND m0.wm_ra BETWEEN %s - alpha(0.025, %s)
+                                      AND %s + alpha(0.025, %s)
+                     AND SQRT(  (s0.ra * COS(RADIANS(s0.decl)) - m0.wm_ra * COS(RADIANS(m0.wm_decl)))
+                              * (s0.ra * COS(RADIANS(s0.decl)) - m0.wm_ra * COS(RADIANS(m0.wm_decl)))
+                              / (s0.ra_err * s0.ra_err + m0.wm_ra_err * m0.wm_ra_err)
+                             + (s0.decl - m0.wm_decl) * (s0.decl - m0.wm_decl)
+                              / (s0.decl_err * s0.decl_err + m0.wm_decl_err * m0.wm_decl_err)
+                             ) < %s
+                 ) t0
+         ) t1
 """
-        cursor.execute(query, (cat_id, deRuiter_r))
+        # NOTE for above query: Since we use zone as input param
+        # to set the decl boundaries we look 90" below the zone (zone - 0.025)
+        # and 90" above the zone (zone + 1.025)!
+
+        # Taken out, might slow query down:
+        # AND m0.x * s0.x + m0.y * s0.y + m0.z * s0.z > 0.9999999048070578
+        print "\t\t\t\tExecuting _insert_tempmergedcatalogs() ..."
+        cursor.execute(query, (cat_id, zone, zone, zone, zone, ra_min, zone+0.5, ra_max, zone+0.5, deRuiter_r))
         conn.commit()
     except db.Error, e:
         logging.warn("Failed on query nr %s." % query)
@@ -343,8 +385,8 @@ def _flag_multiple_counterparts_in_mergedcatalogs(conn):
         SELECT t1.catsrc_id
               ,t1.assoc_catsrc_id
           FROM (SELECT tm0.assoc_catsrc_id
-                      ,MIN(SQRT((s0.ra - m0.wm_ra) * COS(rad(s0.decl))
-                                * (s0.ra - m0.wm_ra) * COS(rad(s0.decl))
+                      ,MIN(SQRT((s0.ra - m0.wm_ra) * COS(RADIANS(s0.decl))
+                                * (s0.ra - m0.wm_ra) * COS(RADIANS(s0.decl))
                                 / (s0.ra_err * s0.ra_err + m0.wm_ra_err *
                                    m0.wm_ra_err)
                                + (s0.decl - m0.wm_decl) *
@@ -367,8 +409,8 @@ def _flag_multiple_counterparts_in_mergedcatalogs(conn):
                ) t0
               ,(SELECT tm1.catsrc_id
                       ,tm1.assoc_catsrc_id
-                      ,SQRT( (s1.ra - m1.wm_ra) * COS(rad(s1.decl))
-                            *(s1.ra - m1.wm_ra) * COS(rad(s1.decl))
+                      ,SQRT( (s1.ra - m1.wm_ra) * COS(RADIANS(s1.decl))
+                            *(s1.ra - m1.wm_ra) * COS(RADIANS(s1.decl))
                             / (s1.ra_err * s1.ra_err +
                                m1.wm_ra_err * m1.wm_ra_err)
                            + (s1.decl - m1.wm_decl) * (s1.decl - m1.wm_decl)
@@ -434,13 +476,13 @@ def _insert_multiple_crossassocs(conn):
           )
           SELECT t.assoc_catsrc_id
                 ,t.catsrc_id
-                ,3600 * deg(2 * ASIN(SQRT((m.x - s.x) * (m.x - s.x)
+                ,3600 * DEGREES(2 * ASIN(SQRT((m.x - s.x) * (m.x - s.x)
                                           + (m.y - s.y) * (m.y - s.y)
                                           + (m.z - s.z) * (m.z - s.z)
                                           ) / 2) ) AS assoc_distance_arcsec
                 ,3600 * sqrt(
-                    ( (m.wm_ra * cos(rad(m.wm_decl)) - s.ra * cos(rad(s.decl)))
-                     *(m.wm_ra * cos(rad(m.wm_decl)) - s.ra * cos(rad(s.decl)))
+                    ( (m.wm_ra * cos(RADIANS(m.wm_decl)) - s.ra * cos(RADIANS(s.decl)))
+                     *(m.wm_ra * cos(RADIANS(m.wm_decl)) - s.ra * cos(RADIANS(s.decl)))
                     ) 
                     / (m.wm_ra_err * m.wm_ra_err + s.ra_err * s.ra_err)
                     + ((m.wm_decl - s.decl) * (m.wm_decl - s.decl)) 
@@ -647,15 +689,15 @@ def _insert_single_crossassocs(conn):
           )
           SELECT t.catsrc_id
                 ,t.assoc_catsrc_id
-                ,3600 * deg(2 * ASIN(SQRT((m.x - s.x) * (m.x - s.x)
+                ,3600 * DEGREES(2 * ASIN(SQRT((m.x - s.x) * (m.x - s.x)
                                           + (m.y - s.y) * (m.y - s.y)
                                           + (m.z - s.z) * (m.z - s.z)
                                           ) / 2) ) AS assoc_distance_arcsec
                 ,3600 * sqrt(
-                    ((m.wm_ra * cos(rad(m.wm_decl)) 
-                     - s.ra * cos(rad(s.decl))) 
-                    * (m.wm_ra * cos(rad(m.wm_decl)) 
-                     - s.ra * cos(rad(s.decl)))) 
+                    ((m.wm_ra * cos(RADIANS(m.wm_decl)) 
+                     - s.ra * cos(RADIANS(s.decl))) 
+                    * (m.wm_ra * cos(RADIANS(m.wm_decl)) 
+                     - s.ra * cos(RADIANS(s.decl)))) 
                     / (m.wm_ra_err * m.wm_ra_err + s.ra_err*s.ra_err)
                     +
                     ((m.wm_decl - s.decl) * (m.wm_decl - s.decl)) 
@@ -791,6 +833,7 @@ def _update_mergedcatalogs(conn):
         """
         cursor.execute(query)
         y = cursor.fetchall()
+        print "\t\t\t\tHave to iterate over UPDATE " + str(len(y)) + " times..."
         query = """\
 UPDATE mergedcatalogs
   SET datapoints = %s
@@ -826,7 +869,7 @@ WHERE catsrc_id = %s
                                   ,y[k][13]
                                  ))
             if (k % 100 == 0):
-                print "\t\tUpdate iter:", k
+                print "\t\t\t\t\tUpdate iter:", k
         conn.commit()
     except db.Error, e:
         logging.warn("Failed on query nr %s." % query)
@@ -835,32 +878,32 @@ WHERE catsrc_id = %s
         cursor.close()
 
 
-def _count_known_sources(conn, deRuiter_r):
-    """Count number of extracted sources that are know in the running
-    catalog"""
+def _count_known_sources(conn, zone, ra_min, ra_max, deRuiter_r):
+    """Count number of sources that are already known 
+    in the mergedcatalogs"""
 
     try:
         cursor = conn.cursor()
         query = """\
-SELECT COUNT(*)
+SELECT s0.catsrc_id
   FROM selectedcatsources s0
       ,mergedcatalogs m0
- WHERE m0.zone BETWEEN s0.zone - cast(0.025 as integer)
-                   AND s0.zone + cast(0.025 as integer)
-   AND m0.wm_decl BETWEEN s0.decl - 0.025
-                      AND s0.decl + 0.025
-   AND m0.wm_ra BETWEEN s0.ra - alpha(0.025,s0.decl)
-                    AND s0.ra + alpha(0.025,s0.decl)
-   AND SQRT(  (s0.ra * COS(rad(s0.decl)) - m0.wm_ra * COS(rad(m0.wm_decl)))
-            * (s0.ra * COS(rad(s0.decl)) - m0.wm_ra * COS(rad(m0.wm_decl)))
+ WHERE m0.zone BETWEEN %s - 1
+                   AND %s + 1
+   AND m0.wm_decl BETWEEN %s - 0.025
+                      AND %s + 1.025
+   AND m0.wm_ra BETWEEN %s - alpha(0.025, %s)
+                    AND %s + alpha(0.025, %s)
+   AND SQRT(  (s0.ra * COS(RADIANS(s0.decl)) - m0.wm_ra * COS(RADIANS(m0.wm_decl)))
+            * (s0.ra * COS(RADIANS(s0.decl)) - m0.wm_ra * COS(RADIANS(m0.wm_decl)))
             / (s0.ra_err * s0.ra_err + m0.wm_ra_err * m0.wm_ra_err)
            + (s0.decl - m0.wm_decl) * (s0.decl - m0.wm_decl)
             / (s0.decl_err * s0.decl_err + m0.wm_decl_err * m0.wm_decl_err)
            ) < %s
 """
-        cursor.execute(query, (deRuiter_r,))
+        cursor.execute(query, (zone, zone, zone, zone, ra_min, zone+0.5, ra_max, zone+0.5, deRuiter_r))
         y = cursor.fetchall()
-        print "\t\tNumber of known selectedcatsources (or sources in NOT IN): ", y[0][0]
+        print "\t\t\t\tNumber of selectedcatsources known in meregdcatalogs (or sources in NOT IN): ", len(y)
         conn.commit()
     except db.Error, e:
         logging.warn("Failed on query nr %s." % query)
@@ -869,7 +912,7 @@ SELECT COUNT(*)
         cursor.close()
 
 
-def _insert_new_assocs(conn, deRuiter_r):
+def _insert_new_assocs(conn, zone, ra_min, ra_max, deRuiter_r):
     """Insert new associations for unknown sources
 
     This inserts new associations for the sources that were not known
@@ -896,21 +939,22 @@ def _insert_new_assocs(conn, deRuiter_r):
            WHERE s1.catsrc_id NOT IN (SELECT s0.catsrc_id
                                         FROM selectedcatsources s0
                                             ,mergedcatalogs m0
-                                       WHERE m0.zone BETWEEN s0.zone - cast(0.025 as integer)
-                                                         AND s0.zone + cast(0.025 as integer)
-                                         AND m0.wm_decl BETWEEN s0.decl - 0.025
-                                                            AND s0.decl + 0.025
-                                         AND m0.wm_ra BETWEEN s0.ra - alpha(0.025,s0.decl)
-                                                          AND s0.ra + alpha(0.025,s0.decl)
-                                         AND SQRT(  (s0.ra * COS(rad(s0.decl)) - m0.wm_ra * COS(rad(m0.wm_decl)))
-                                                  * (s0.ra * COS(rad(s0.decl)) - m0.wm_ra * COS(rad(m0.wm_decl)))
+                                       WHERE m0.zone BETWEEN %s - 1
+                                                         AND %s + 1
+                                         AND m0.wm_decl BETWEEN %s - 0.025
+                                                            AND %s + 1.025
+                                         AND m0.wm_ra BETWEEN %s - alpha(0.025, %s)
+                                                          AND %s + alpha(0.025, %s)
+                                         AND SQRT(  (s0.ra * COS(RADIANS(s0.decl)) - m0.wm_ra * COS(RADIANS(m0.wm_decl)))
+                                                  * (s0.ra * COS(RADIANS(s0.decl)) - m0.wm_ra * COS(RADIANS(m0.wm_decl)))
                                                   / (s0.ra_err * s0.ra_err + m0.wm_ra_err * m0.wm_ra_err)
                                                  + (s0.decl - m0.wm_decl) * (s0.decl - m0.wm_decl)
                                                   / (s0.decl_err * s0.decl_err + m0.wm_decl_err * m0.wm_decl_err)
                                                  ) < %s
                                      )
         """
-        cursor.execute(query, (deRuiter_r,))
+        print "\t\t\t\tExecuting _insert_new_assocs() ..."
+        cursor.execute(query, (zone, zone, zone, zone, ra_min, zone+0.5, ra_max, zone+0.5, deRuiter_r))
         conn.commit()
     except db.Error, e:
         logging.warn("Failed on query nr %s." % query)
@@ -918,8 +962,70 @@ def _insert_new_assocs(conn, deRuiter_r):
     finally:
         cursor.close()
 
+def _count_selectedcatsources(conn):
+    """Simply count the number of sources 
+    that are currently in the mergedcatalogs table.
 
-def _insert_new_source_mergedcatalogs(conn, cat_id, ra_min, ra_max, decl_min, decl_max, deRuiter_r):
+    """
+
+    nr_of_sources = 0
+    try:
+        cursor = conn.cursor()
+        query = """\
+        SELECT COUNT(*)
+          FROM selectedcatsources
+        """
+        cursor.execute(query)
+        nr_of_sources = cursor.fetchall()[0]
+        conn.commit()
+    except db.Error, e:
+        logging.warn("Failed on query nr %s; for reason %s" % (query, e))
+        raise
+    finally:
+        cursor.close()
+    return nr_of_sources
+
+def _count_mergedcatalogs(conn, zone=None, ra_min=None, ra_max=None):
+    """Simply count the number of sources 
+    that are currently in the mergedcatalogs table.
+
+    """
+    
+    nr_of_sources = 0
+    try:
+        cursor = conn.cursor()
+        if not zone and not ra_min and not ra_max:
+            query = """\
+            SELECT COUNT(*)
+              FROM mergedcatalogs
+            """
+            cursor.execute(query)
+        elif not ra_min and not ra_max:
+            query = """\
+            SELECT COUNT(*)
+              FROM mergedcatalogs
+             WHERE zone = %s
+            """
+            cursor.execute(query, (int(zone),))
+        else:
+            query = """\
+            SELECT COUNT(*)
+              FROM mergedcatalogs
+             WHERE zone = %s
+               AND wm_ra BETWEEN %s AND %s
+            """
+            cursor.execute(query, (int(zone),ra_min, ra_max))
+        nr_of_sources = cursor.fetchall()[0][0]
+        conn.commit()
+    except db.Error, e:
+        logging.warn("Failed on query nr %s; for reason %s." % (query, e))
+        raise
+    finally:
+        cursor.close()
+    return nr_of_sources
+
+
+def _insert_new_source_mergedcatalogs(conn, cat_id, zone, ra_min, ra_max, deRuiter_r):
     """Insert new sources into the running catalog"""
 
     try:
@@ -961,47 +1067,22 @@ INSERT INTO mergedcatalogs
                                 FROM selectedcatsources s0
                                     ,mergedcatalogs m0
                                WHERE s0.cat_id = %s
-                                 AND s0.zone BETWEEN CAST(FLOOR(CAST(%s AS DOUBLE) - 0.025) as INTEGER)
-                                                 AND CAST(FLOOR(CAST(%s AS DOUBLE) + 0.025) as INTEGER)
-                                 AND s0.decl BETWEEN CAST(%s AS DOUBLE) - 0.025
-                                                 AND CAST(%s AS DOUBLE) + 0.025
-                                 AND s0.ra BETWEEN CAST(%s AS DOUBLE) - alpha(0.025, %s)
-                                               AND CAST(%s AS DOUBLE) + alpha(0.025, %s)
-                                 AND m0.zone BETWEEN CAST(FLOOR(CAST(%s AS DOUBLE) - 0.025) as INTEGER)
-                                                 AND CAST(FLOOR(CAST(%s AS DOUBLE) + 0.025) as INTEGER)
-                                 AND m0.wm_decl BETWEEN CAST(%s AS DOUBLE) - 0.025
-                                                    AND CAST(%s AS DOUBLE) + 0.025
-                                 AND m0.wm_ra BETWEEN CAST(%s AS DOUBLE) - alpha(0.025, %s)
-                                                  AND CAST(%s AS DOUBLE) + alpha(0.025, %s)
-                                 AND m0.x * s0.x + m0.y * s0.y + m0.z * s0.z > COS(rad(0.025))
-                                 AND SQRT(  (s0.ra * COS(rad(s0.decl)) - m0.wm_ra * COS(rad(m0.wm_decl)))
-                                          * (s0.ra * COS(rad(s0.decl)) - m0.wm_ra * COS(rad(m0.wm_decl)))
+                                 AND m0.zone BETWEEN %s - 1
+                                                 AND %s + 1
+                                 AND m0.wm_decl BETWEEN %s - 0.025
+                                                    AND %s + 1.025
+                                 AND m0.wm_ra BETWEEN %s - alpha(0.025, %s)
+                                                  AND %s + alpha(0.025, %s)
+                                 AND SQRT(  (s0.ra * COS(RADIANS(s0.decl)) - m0.wm_ra * COS(RADIANS(m0.wm_decl)))
+                                          * (s0.ra * COS(RADIANS(s0.decl)) - m0.wm_ra * COS(RADIANS(m0.wm_decl)))
                                           / (s0.ra_err * s0.ra_err + m0.wm_ra_err * m0.wm_ra_err)
                                          + (s0.decl - m0.wm_decl) * (s0.decl - m0.wm_decl)
                                           / (s0.decl_err * s0.decl_err + m0.wm_decl_err * m0.wm_decl_err)
                                          ) < %s
                             )
 """
-        cursor.execute(query, (cat_id \
-                              ,cat_id \
-                              ,decl_min \
-                              ,decl_max \
-                              ,decl_min \
-                              ,decl_max \
-                              ,ra_min \
-                              ,decl_max \
-                              ,ra_max \
-                              ,decl_max \
-                              ,decl_min \
-                              ,decl_max \
-                              ,decl_min \
-                              ,decl_max \
-                              ,ra_min \
-                              ,decl_max \
-                              ,ra_max \
-                              ,decl_max \
-                              ,deRuiter_r \
-                              ))
+        print "\t\t\t\tExecuting _insert_new_source_mergedcatalogs() ..."
+        cursor.execute(query, (cat_id, cat_id, zone, zone, zone, zone, ra_min, zone+0.5, ra_max, zone+0.5, deRuiter_r))
         conn.commit()
     except db.Error, e:
         logging.warn("Failed on query nr %s." % query)
@@ -1010,166 +1091,230 @@ INSERT INTO mergedcatalogs
         cursor.close()
 
 
-def _update_fluxes_mergedcatalogs(conn, c):
-    """ """
+def _update_fluxes_mergedcatalogs(conn, c, zone, ra_min, ra_max):
+    """ Reduce the number of sources to update by selecting the 
+    region under inpsection for this zone and ra_lims
+    """
 
-    try:
-        cursor = conn.cursor()
-        query = """\
-        select a.catsrc_id
-              ,a.assoc_catsrc_id
-              ,c.catsrcid
-              ,c.cat_id
-              ,c.i_peak_avg
-              ,c.i_peak_avg_err
-              ,c.i_int_avg 
-              ,c.i_int_avg_err
-          from assoccrosscatsources a
-              ,catalogedsources c 
-         where a.assoc_catsrc_id = c.catsrcid 
-           and c.cat_id = %s
-        order by a.catsrc_id
-        """
-        for i in range(len(c)):
-            print "c[", i, "] =", c[i]
-            cursor.execute(query, (c[i],))
+    query = """\
+    SELECT a.catsrc_id
+          ,a.assoc_catsrc_id
+          ,c.catsrcid
+          ,c.cat_id
+          ,c.i_peak_avg
+          ,c.i_peak_avg_err
+          ,c.i_int_avg 
+          ,c.i_int_avg_err
+      FROM assoccrosscatsources a
+          ,catalogedsources c 
+     WHERE a.assoc_catsrc_id = c.catsrcid 
+       AND c.cat_id = %s
+       AND c.zone BETWEEN %s - 1
+                      AND %s + 1
+       AND c.decl BETWEEN %s - 0.025
+                      AND %s + 1.025
+       AND c.ra BETWEEN %s - alpha(0.025, %s)
+                    AND %s + alpha(0.025, %s)
+    ORDER BY a.catsrc_id
+    """
+    print "\t\t\t\tExecuting _update_fluxes_mergedcatalogs() ..."
+    for i in range(len(c)):
+        print "\t\t\t\t\tc[", i, "] =", c[i]
+        try:
+            cursor = conn.cursor()
+            cursor.execute(query, (c[i], zone, zone, zone, zone, ra_min, zone+0.5, ra_max, zone+0.5))
             results = zip(*cursor.fetchall())
-            if len(results) != 0:
-                catsrc_id = results[0]
-                assoc_catsrc_id = results[1]
-                catsrcid = results[2]
-                cat_id = results[3]
-                i_peak = results[4]
-                i_peak_err = results[5]
-                i_int = results[6]
-                i_int_err = results[7]
-                for j in range(len(catsrc_id)):
-                    #print "catsrc_id[", j, "] =", catsrc_id[j] 
-                    #      "\ni_peak[", j, "] =", i_peak[j] \
-                    #      "\ni_int[", j, "] =", i_int[j]
-                    if c[i] == 3:
-                        uquery = """\
-                        update mergedcatalogs
-                           set i_peak_nvss = %s
-                              ,i_peak_nvss_err = %s
-                              ,i_int_nvss = %s
-                              ,i_int_nvss_err = %s
-                         where catsrc_id = %s
-                        """
-                    elif c[i] == 4:
-                        uquery = """\
-                        update mergedcatalogs
-                           set i_peak_vlss = %s
-                              ,i_peak_vlss_err = %s
-                              ,i_int_vlss = %s
-                              ,i_int_vlss_err = %s
-                         where catsrc_id = %s
-                        """
-                    elif c[i] == 5:
-                        uquery = """\
-                        update mergedcatalogs
-                           set i_peak_wenssm = %s
-                              ,i_peak_wenssm_err = %s
-                              ,i_int_wenssm = %s
-                              ,i_int_wenssm_err = %s
-                         where catsrc_id = %s
-                        """
-                    elif c[i] == 6:
-                        uquery = """\
-                        update mergedcatalogs
-                           set i_peak_wenssp = %s
-                              ,i_peak_wenssp_err = %s
-                              ,i_int_wenssp = %s
-                              ,i_int_wenssp_err = %s
-                         where catsrc_id = %s
-                        """
-                    else:
-                        logging.warn("No such catalogue %s for results %s" % c[i], catsrc_id[i])
-                        raise
+        except db.Error, e:
+            logging.warn("Failed on query %s; for reason %s " % (query,e))
+            raise
+        
+        if len(results) != 0:
+            catsrc_id = results[0]
+            assoc_catsrc_id = results[1]
+            catsrcid = results[2]
+            cat_id = results[3]
+            i_peak = results[4]
+            i_peak_err = results[5]
+            i_int = results[6]
+            i_int_err = results[7]
+            print "\t\t\t\t\t\tUpdating", len(catsrc_id), " records ..."
+            for j in range(len(catsrc_id)):
+                #print "catsrc_id[", j, "] =", catsrc_id[j], \
+                #      "\ncat_id[", j, "] =", cat_id[j], \
+                #      "\ni_peak[", j, "] =", i_peak[j], \
+                #      "\ni_int[", j, "] =", i_int[j]
+                if c[i] == 3:
+                    uquery = """\
+                    update mergedcatalogs
+                       set i_peak_nvss = %s
+                          ,i_peak_nvss_err = %s
+                          ,i_int_nvss = %s
+                          ,i_int_nvss_err = %s
+                     where catsrc_id = %s
+                    """
+                elif c[i] == 4:
+                    uquery = """\
+                    update mergedcatalogs
+                       set i_peak_vlss = %s
+                          ,i_peak_vlss_err = %s
+                          ,i_int_vlss = %s
+                          ,i_int_vlss_err = %s
+                     where catsrc_id = %s
+                    """
+                elif c[i] == 5:
+                    uquery = """\
+                    update mergedcatalogs
+                       set i_peak_wenssm = %s
+                          ,i_peak_wenssm_err = %s
+                          ,i_int_wenssm = %s
+                          ,i_int_wenssm_err = %s
+                     where catsrc_id = %s
+                    """
+                elif c[i] == 6:
+                    uquery = """\
+                    update mergedcatalogs
+                       set i_peak_wenssp = %s
+                          ,i_peak_wenssp_err = %s
+                          ,i_int_wenssp = %s
+                          ,i_int_wenssp_err = %s
+                     where catsrc_id = %s
+                    """
+                else:
+                    logging.warn("No such catalogue %s for results %s" % c[i], catsrc_id[i])
+                    raise
+                
+                try:
                     cursor.execute(uquery, (i_peak[j], i_peak_err[j], i_int[j], i_int_err[j], catsrc_id[j]))
                     conn.commit()
-    except db.Error, e:
-        logging.warn("Failed on query %s" % query)
-        raise
-    finally:
+                except db.Error, e:
+                    pquery = uquery % (i_peak[j], i_peak_err[j], i_int[j], i_int_err[j], catsrc_id[j])
+                    logging.warn("Failed on query %s; for reason %s " % (pquery, e))
+                    raise
+    try:
         cursor.close()
+    except db.Error, e:
+        logging.warn("Failed closing cursor for reason %s " % (e,))
+        raise
 
-def _update_spectralindices_mergedcatalogs(conn, c):
+def _update_spectralindices_mergedcatalogs(conn, c, zone, ra_min, ra_max):
     """ """
 
+    print "\t\t\t\t\tExecuting _update_spectralindices_mergedcatalogs() ..."
     queries = []
     v_wm_query = """\
-    select catsrc_id
+    SELECT catsrc_id
           ,i_int_vlss
           ,i_int_wenssm
-      from mergedcatalogs 
-     where i_int_vlss is not null 
-       and i_int_wenssm is not null
+      FROM mergedcatalogs 
+     WHERE i_int_vlss IS NOT NULL 
+       AND i_int_wenssm IS NOT NULL
+       AND zone BETWEEN %s - 1
+                    AND %s + 1
+       AND wm_decl BETWEEN %s - 0.025
+                       AND %s + 1.025
+       AND wm_ra BETWEEN %s - alpha(0.025, %s)
+                     AND %s + alpha(0.025, %s)
     """
     queries.append(v_wm_query)
     v_wp_query = """\
-    select catsrc_id
+    SELECT catsrc_id
           ,i_int_vlss
           ,i_int_wenssp
-      from mergedcatalogs 
-     where i_int_vlss is not null 
-       and i_int_wenssp is not null
+      FROM mergedcatalogs 
+     WHERE i_int_vlss IS NOT NULL 
+       AND i_int_wenssp IS NOT NULL
+       AND zone BETWEEN %s - 1
+                    AND %s + 1
+       AND wm_decl BETWEEN %s - 0.025
+                       AND %s + 1.025
+       AND wm_ra BETWEEN %s - alpha(0.025, %s)
+                     AND %s + alpha(0.025, %s)
     """
     queries.append(v_wp_query)
     v_n_query = """\
-    select catsrc_id
+    SELECT catsrc_id
           ,i_int_vlss
           ,i_int_nvss
-      from mergedcatalogs 
-     where i_int_vlss is not null 
-       and i_int_nvss is not null
+      FROM mergedcatalogs 
+     WHERE i_int_vlss IS NOT NULL 
+       AND i_int_nvss IS NOT NULL
+       AND zone BETWEEN %s - 1
+                    AND %s + 1
+       AND wm_decl BETWEEN %s - 0.025
+                       AND %s + 1.025
+       AND wm_ra BETWEEN %s - alpha(0.025, %s)
+                     AND %s + alpha(0.025, %s)
     """
     queries.append(v_n_query)
     wm_wp_query = """\
-    select catsrc_id
+    SELECT catsrc_id
           ,i_int_wenssm
           ,i_int_wenssp
-      from mergedcatalogs 
-     where i_int_wenssm is not null 
-       and i_int_wenssp is not null
+      FROM mergedcatalogs 
+     WHERE i_int_wenssm IS NOT NULL 
+       AND i_int_wenssp IS NOT NULL
+       AND zone BETWEEN %s - 1
+                    AND %s + 1
+       AND wm_decl BETWEEN %s - 0.025
+                       AND %s + 1.025
+       AND wm_ra BETWEEN %s - alpha(0.025, %s)
+                     AND %s + alpha(0.025, %s)
     """
     queries.append(wm_wp_query)
     wm_n_query = """\
-    select catsrc_id
+    SELECT catsrc_id
           ,i_int_wenssm
           ,i_int_nvss
-      from mergedcatalogs 
-     where i_int_wenssm is not null 
-       and i_int_nvss is not null
+      FROM mergedcatalogs 
+     WHERE i_int_wenssm IS NOT NULL 
+       AND i_int_nvss IS NOT NULL
+       AND zone BETWEEN %s - 1
+                    AND %s + 1
+       AND wm_decl BETWEEN %s - 0.025
+                       AND %s + 1.025
+       AND wm_ra BETWEEN %s - alpha(0.025, %s)
+                     AND %s + alpha(0.025, %s)
     """
     queries.append(wm_n_query)
     wp_n_query = """\
-    select catsrc_id
+    SELECT catsrc_id
           ,i_int_wenssp
           ,i_int_nvss
-      from mergedcatalogs 
-     where i_int_wenssp is not null 
-       and i_int_nvss is not null
+      FROM mergedcatalogs 
+     WHERE i_int_wenssp IS NOT NULL 
+       AND i_int_nvss IS NOT NULL
+       AND zone BETWEEN %s - 1
+                    AND %s + 1
+       AND wm_decl BETWEEN %s - 0.025
+                       AND %s + 1.025
+       AND wm_ra BETWEEN %s - alpha(0.025, %s)
+                     AND %s + alpha(0.025, %s)
     """
     queries.append(wp_n_query)
     v_wm_n_query = """\
-    select catsrc_id
+    SELECT catsrc_id
           ,i_int_vlss
           ,i_int_wenssm
           ,i_int_nvss
           ,i_int_vlss_err
           ,i_int_wenssm_err
           ,i_int_nvss_err
-      from mergedcatalogs 
-     where i_int_vlss is not null 
-       and i_int_wenssm is not null
-       and i_int_nvss is not null
+      FROM mergedcatalogs 
+     WHERE i_int_vlss IS NOT NULL 
+       AND i_int_wenssm IS NOT NULL
+       AND i_int_nvss IS NOT NULL
+       AND zone BETWEEN %s - 1
+                    AND %s + 1
+       AND wm_decl BETWEEN %s - 0.025
+                       AND %s + 1.025
+       AND wm_ra BETWEEN %s - alpha(0.025, %s)
+                     AND %s + alpha(0.025, %s)
     """
     queries.append(v_wm_n_query)
     try:
         cursor = conn.cursor()
         for i in range(len(queries)):
-            cursor.execute(queries[i])
+            cursor.execute(queries[i], (zone, zone, zone, zone, ra_min, zone+0.5, ra_max, zone+0.5))
             results = zip(*cursor.fetchall())
             if len(results) != 0:
                 if queries[i] == v_wm_n_query:
@@ -1253,9 +1398,9 @@ def _update_spectralindices_mergedcatalogs(conn, c):
                         f = np.array([i_int1[j], i_int2[j], i_int3[j]])
                         f_e = np.array([i_int_err1[j], i_int_err2[j], i_int_err3[j]])
                         alpha, chisq = fitspectralindex(nu, f, f_e)
-                        print "catsrc_id [", j, "] = ", catsrc_id[j], \
-                              "\tspectral_index = ", -alpha, \
-                              "\tchi_square = ", chisq
+                        #print "catsrc_id [", j, "] = ", catsrc_id[j], \
+                        #      "\tspectral_index = ", -alpha, \
+                        #      "\tchi_square = ", chisq
                         #alpha = -pylab.log10(i_int1[j]/i_int2[j]) / pylab.log10(352./1400.)
                         uquery = """\
                         update mergedcatalogs
@@ -1324,7 +1469,7 @@ def get_merged_catalogs(conn, ra_centr_deg, decl_centr_deg, radius_arcsec=None):
     """
     """
     if not radius_arcsec:
-        radius_arcsec = 90 # default serach radius is 90 arcsec
+        radius_arcsec = 90 # default search radius is 90 arcsec
     ra_rad = pylab.pi * ra_centr_deg / 180.
     decl_rad = pylab.pi * decl_centr_deg / 180.
     radius_deg = radius_arcsec / 3600.

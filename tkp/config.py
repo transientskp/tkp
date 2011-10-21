@@ -109,10 +109,13 @@ def set_default_config():
     config.set('database', 'port', '0')
     config.set('database', 'autocommit', 'False')
     config.set('database', 'engine', 'monetdb')
-    
+    config.set('database', 'autocommit', 'False')
+
     config.add_section('source_association')
     config.set('source_association', 'deruiter_radius', '3.7')
-    config.set('source_association', 'bg-density', '4.02439375e-06')  # VLSS density
+    #config.set('source_association', 'deruiter_radius', '0.00112')
+    #config.set('source_association', 'deruiter_radius', '0.065')
+    config.set('source_association', 'bg-density', '4.02439375e-06')  # NVSS density
 
     config.add_section('source_extraction')
     config.set('source_extraction', 'back_sizex', '32')

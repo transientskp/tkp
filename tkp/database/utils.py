@@ -14,7 +14,7 @@ from .database import ENGINE
 
 
 DERUITER_R = config['source_association']['deruiter_radius']
-BG_DENSITY = config['source_association']['bg-density']
+#BG_DENSITY = config['source_association']['bg-density']
 
 
 def insert_dataset(conn, description):
@@ -30,7 +30,7 @@ def insert_dataset(conn, description):
         """
         cursor.execute(query, (description,))
         newdsid = cursor.fetchone()[0]
-        conn.commit()
+        #conn.commit()
     except db.Error, e:
         logging.warn("Failed on query: %s." % query)
         raise
@@ -57,7 +57,7 @@ def insert_image(conn, dsid, freq_eff, freq_bw, taustart_ts, url):
                               ,url
                               ))
         newimgid = cursor.fetchone()[0]
-        conn.commit()
+        #conn.commit()
     except db.Error, e:
         logging.warn("Failed on query: %s." % query)
         raise
@@ -76,7 +76,7 @@ def load_LSM(conn, ira_min, ira_max, idecl_min, idecl_max, cat1="NVSS", cat2="VL
         """
         cursor.execute(query, (ira_min,ira_max,idecl_min,idecl_max,cat1,cat2,cat3))
         #cursor.execute(query)
-        conn.commit()
+        #conn.commit()
     except db.Error, e:
         logging.warn("Failed to insert lsm by procedure LoadLSM: %s" % e)
         raise
@@ -99,7 +99,7 @@ def _empty_detections(conn):
         DELETE FROM detections
         """
         cursor.execute(query)
-        conn.commit()
+        #conn.commit()
     except db.Error, e:
         logging.warn("Failed on query nr %s." % query)
         raise
@@ -123,7 +123,7 @@ def _insert_into_detections(conn, results):
                  str(tuple(det)) for det in results]
         query = "INSERT INTO detections VALUES " + ",".join(query)
         conn.cursor().execute(query)
-        conn.commit()
+        #conn.commit()
     except db.Error, e:
         logging.warn("Failed on query nr %s." % query)
         raise
@@ -159,7 +159,7 @@ def _insert_extractedsources(conn, image_id):
           ,I_int_err
           )
           SELECT image_id
-                ,zone
+                ,t0.zone
                 ,ra
                 ,decl
                 ,ra_err
@@ -178,9 +178,9 @@ def _insert_extractedsources(conn, image_id):
                        ,ldecl AS decl
                        ,lra_err * 3600 AS ra_err
                        ,ldecl_err * 3600 AS decl_err
-                       ,COS(rad(ldecl)) * COS(rad(lra)) AS x
-                       ,COS(rad(ldecl)) * SIN(rad(lra)) AS y
-                       ,SIN(rad(ldecl)) AS z
+                       ,COS(RADIANS(ldecl)) * COS(RADIANS(lra)) AS x
+                       ,COS(RADIANS(ldecl)) * SIN(RADIANS(lra)) AS y
+                       ,SIN(RADIANS(ldecl)) AS z
                        ,ldet_sigma AS det_sigma
                        ,lI_peak AS I_peak 
                        ,lI_peak_err AS I_peak_err
@@ -188,11 +188,11 @@ def _insert_extractedsources(conn, image_id):
                        ,lI_int_err AS I_int_err
                    FROM detections
                 ) t0
-          /*     ,node n
-          WHERE n.zone = t0.zone*/
+               ,node n
+          WHERE n.zone = t0.zone
         """
         cursor.execute(query, (image_id,))
-        conn.commit()
+        #conn.commit()
     except db.Error, e:
         logging.warn("Failed on query nr %s." % query)
         raise
@@ -227,7 +227,7 @@ def _empty_temprunningcatalog(conn):
         cursor = conn.cursor()
         query = """DELETE FROM temprunningcatalog"""
         cursor.execute(query)
-        conn.commit()
+        #conn.commit()
     except db.Error, e:
         logging.warn("Failed on query nr %s." % query)
         raise
@@ -268,6 +268,7 @@ INSERT INTO temprunningcatalog
   (xtrsrc_id
   ,assoc_xtrsrc_id
   ,ds_id
+  ,band
   ,datapoints
   ,zone
   ,wm_ra
@@ -290,8 +291,9 @@ INSERT INTO temprunningcatalog
   SELECT t0.xtrsrc_id
         ,t0.assoc_xtrsrc_id
         ,t0.ds_id
+        ,t0.band
         ,t0.datapoints
-        ,CAST(FLOOR(t0.wm_decl/1) AS INTEGER)
+        ,CAST(FLOOR(t0.wm_decl/1.0) AS INTEGER)
         ,t0.wm_ra
         ,t0.wm_decl
         ,t0.wm_ra_err
@@ -300,9 +302,9 @@ INSERT INTO temprunningcatalog
         ,t0.avg_wdecl
         ,t0.avg_weight_ra
         ,t0.avg_weight_decl
-        ,COS(rad(t0.wm_decl)) * COS(rad(t0.wm_ra))
-        ,COS(rad(t0.wm_decl)) * SIN(rad(t0.wm_ra))
-        ,SIN(rad(t0.wm_decl))
+        ,COS(RADIANS(t0.wm_decl)) * COS(RADIANS(t0.wm_ra))
+        ,COS(RADIANS(t0.wm_decl)) * SIN(RADIANS(t0.wm_ra))
+        ,SIN(RADIANS(t0.wm_decl))
         ,t0.avg_I_peak
         ,t0.avg_I_peak_sq
         ,t0.avg_weight_peak
@@ -311,6 +313,7 @@ INSERT INTO temprunningcatalog
     FROM (SELECT b0.xtrsrc_id as xtrsrc_id
                 ,x0.xtrsrcid as assoc_xtrsrc_id
                 ,im0.ds_id
+                ,im0.band
                 ,b0.datapoints + 1 AS datapoints
                 ,((datapoints * b0.avg_wra + x0.ra /
                   (x0.ra_err * x0.ra_err)) / (datapoints + 1))
@@ -376,8 +379,8 @@ INSERT INTO temprunningcatalog
                                 AND x0.decl + 0.025
              AND b0.wm_ra BETWEEN x0.ra - alpha(0.025,x0.decl)
                               AND x0.ra + alpha(0.025,x0.decl)
-             AND SQRT(  (x0.ra * COS(rad(x0.decl)) - b0.wm_ra * COS(rad(b0.wm_decl)))
-                      * (x0.ra * COS(rad(x0.decl)) - b0.wm_ra * COS(rad(b0.wm_decl)))
+             AND SQRT(  (x0.ra * COS(RADIANS(x0.decl)) - b0.wm_ra * COS(RADIANS(b0.wm_decl)))
+                      * (x0.ra * COS(RADIANS(x0.decl)) - b0.wm_ra * COS(RADIANS(b0.wm_decl)))
                       / (x0.ra_err * x0.ra_err + b0.wm_ra_err * b0.wm_ra_err)
                      + (x0.decl - b0.wm_decl) * (x0.decl - b0.wm_decl)
                       / (x0.decl_err * x0.decl_err + b0.wm_decl_err * b0.wm_decl_err)
@@ -385,9 +388,7 @@ INSERT INTO temprunningcatalog
          ) t0
 """
         cursor.execute(query, (image_id, deRuiter_r))
-        #if image_id == 2:
-        #    raise
-        conn.commit()
+        #conn.commit()
     except db.Error, e:
         logging.warn("Failed on query nr %s." % query)
         raise
@@ -423,8 +424,8 @@ def _flag_multiple_counterparts_in_runningcatalog(conn):
         SELECT t1.xtrsrc_id
               ,t1.assoc_xtrsrc_id
           FROM (SELECT tb0.assoc_xtrsrc_id
-                      ,MIN(SQRT((x0.ra - b0.wm_ra) * COS(rad(x0.decl))
-                                * (x0.ra - b0.wm_ra) * COS(rad(x0.decl))
+                      ,MIN(SQRT((x0.ra - b0.wm_ra) * COS(RADIANS(x0.decl))
+                                * (x0.ra - b0.wm_ra) * COS(RADIANS(x0.decl))
                                 / (x0.ra_err * x0.ra_err + b0.wm_ra_err *
                                    b0.wm_ra_err)
                                + (x0.decl - b0.wm_decl) *
@@ -447,8 +448,8 @@ def _flag_multiple_counterparts_in_runningcatalog(conn):
                ) t0
               ,(SELECT tb1.xtrsrc_id
                       ,tb1.assoc_xtrsrc_id
-                      ,SQRT( (x1.ra - b1.wm_ra) * COS(rad(x1.decl))
-                            *(x1.ra - b1.wm_ra) * COS(rad(x1.decl))
+                      ,SQRT( (x1.ra - b1.wm_ra) * COS(RADIANS(x1.decl))
+                            *(x1.ra - b1.wm_ra) * COS(RADIANS(x1.decl))
                             / (x1.ra_err * x1.ra_err +
                                b1.wm_ra_err * b1.wm_ra_err)
                            + (x1.decl - b1.wm_decl) * (x1.decl - b1.wm_decl)
@@ -483,7 +484,7 @@ def _flag_multiple_counterparts_in_runningcatalog(conn):
             """
             for j in range(len(xtrsrc_id)):
                 cursor.execute(query, (xtrsrc_id[j], assoc_xtrsrc_id[j]))
-            conn.commit()
+            #conn.commit()
     except db.Error, e:
         logging.warn("Failed on query nr %s." % query)
         raise
@@ -513,13 +514,13 @@ def _insert_multiple_assocs(conn):
           )
           SELECT t.assoc_xtrsrc_id
                 ,t.xtrsrc_id
-                ,3600 * deg(2 * ASIN(SQRT((r.x - x.x) * (r.x - x.x)
+                ,3600 * DEGREES(2 * ASIN(SQRT((r.x - x.x) * (r.x - x.x)
                                           + (r.y - x.y) * (r.y - x.y)
                                           + (r.z - x.z) * (r.z - x.z)
                                           ) / 2) ) AS assoc_distance_arcsec
                 ,3600 * sqrt(
-                    ( (r.wm_ra * cos(rad(r.wm_decl)) - x.ra * cos(rad(x.decl)))
-                     *(r.wm_ra * cos(rad(r.wm_decl)) - x.ra * cos(rad(x.decl)))
+                    ( (r.wm_ra * cos(RADIANS(r.wm_decl)) - x.ra * cos(RADIANS(x.decl)))
+                     *(r.wm_ra * cos(RADIANS(r.wm_decl)) - x.ra * cos(RADIANS(x.decl)))
                     ) 
                     / (r.wm_ra_err * r.wm_ra_err + x.ra_err * x.ra_err)
                     + ((r.wm_decl - x.decl) * (r.wm_decl - x.decl)) 
@@ -538,7 +539,7 @@ def _insert_multiple_assocs(conn):
                                 )
         """
         cursor.execute(query)
-        conn.commit()
+        #conn.commit()
     except db.Error, e:
         logging.warn("Failed on query nr %s." % query)
         raise
@@ -576,7 +577,7 @@ def _insert_first_of_assocs(conn):
                               )
         """
         cursor.execute(query)
-        conn.commit()
+        #conn.commit()
     except db.Error, e:
         logging.warn("Failed on query nr %s." % query)
         raise
@@ -604,7 +605,7 @@ def _flag_swapped_assocs(conn):
                             )
         """
         cursor.execute(query)
-        conn.commit()
+        #conn.commit()
     except db.Error, e:
         logging.warn("Failed on query nr %s." % query)
         raise
@@ -621,6 +622,7 @@ def _insert_multiple_assocs_runcat(conn):
         INSERT INTO runningcatalog
           (xtrsrc_id
           ,ds_id
+          ,band
           ,datapoints
           ,zone
           ,wm_ra
@@ -642,6 +644,7 @@ def _insert_multiple_assocs_runcat(conn):
           )
           SELECT assoc_xtrsrc_id
                 ,ds_id
+                ,band
                 ,datapoints
                 ,zone
                 ,wm_ra
@@ -668,7 +671,7 @@ def _insert_multiple_assocs_runcat(conn):
                               )
         """
         cursor.execute(query)
-        conn.commit()
+        #conn.commit()
     except db.Error, e:
         logging.warn("Failed on query nr %s." % query)
         raise
@@ -692,7 +695,7 @@ def _flag_old_assocs_runcat(conn):
                             )
         """
         cursor.execute(query)
-        conn.commit()
+        #conn.commit()
     except db.Error, e:
         logging.warn("Failed on query nr %s." % query)
         raise
@@ -715,7 +718,7 @@ def _flag_multiple_assocs(conn):
                             )
         """
         cursor.execute(query)
-        conn.commit()
+        #conn.commit()
     except db.Error, e:
         logging.warn("Failed on query nr %s." % query)
         raise
@@ -739,15 +742,15 @@ def _insert_single_assocs(conn):
           )
           SELECT t.xtrsrc_id
                 ,t.assoc_xtrsrc_id
-                ,3600 * deg(2 * ASIN(SQRT((r.x - x.x) * (r.x - x.x)
+                ,3600 * DEGREES(2 * ASIN(SQRT((r.x - x.x) * (r.x - x.x)
                                           + (r.y - x.y) * (r.y - x.y)
                                           + (r.z - x.z) * (r.z - x.z)
                                           ) / 2) ) AS assoc_distance_arcsec
                 ,3600 * sqrt(
-                    ((r.wm_ra * cos(rad(r.wm_decl)) 
-                     - x.ra * cos(rad(x.decl))) 
-                    * (r.wm_ra * cos(rad(r.wm_decl)) 
-                     - x.ra * cos(rad(x.decl)))) 
+                    ((r.wm_ra * cos(RADIANS(r.wm_decl)) 
+                     - x.ra * cos(RADIANS(x.decl))) 
+                    * (r.wm_ra * cos(RADIANS(r.wm_decl)) 
+                     - x.ra * cos(RADIANS(x.decl)))) 
                     / (r.wm_ra_err * r.wm_ra_err + x.ra_err*x.ra_err)
                     +
                     ((r.wm_decl - x.decl) * (r.wm_decl - x.decl)) 
@@ -761,7 +764,7 @@ def _insert_single_assocs(conn):
              AND t.xtrsrc_id = x.xtrsrcid
         """
         cursor.execute(query)
-        conn.commit()
+        #conn.commit()
     except db.Error, e:
         logging.warn("Failed on query nr %s." % query)
         raise
@@ -822,7 +825,7 @@ WHERE xtrsrc_id = %s
 """
         for result in results:
             cursor.execute(query, tuple(result))
-        conn.commit()
+        #conn.commit()
     except db.Error, e:
         logging.warn("Failed on query nr %s." % query)
         raise
@@ -850,8 +853,8 @@ SELECT COUNT(*)
                       AND x0.decl + 0.025
    AND b0.wm_ra BETWEEN x0.ra - alpha(0.025,x0.decl)
                     AND x0.ra + alpha(0.025,x0.decl)
-   AND SQRT(  (x0.ra * COS(rad(x0.decl)) - b0.wm_ra * COS(rad(b0.wm_decl)))
-            * (x0.ra * COS(rad(x0.decl)) - b0.wm_ra * COS(rad(b0.wm_decl)))
+   AND SQRT(  (x0.ra * COS(RADIANS(x0.decl)) - b0.wm_ra * COS(RADIANS(b0.wm_decl)))
+            * (x0.ra * COS(RADIANS(x0.decl)) - b0.wm_ra * COS(RADIANS(b0.wm_decl)))
             / (x0.ra_err * x0.ra_err + b0.wm_ra_err * b0.wm_ra_err)
            + (x0.decl - b0.wm_decl) * (x0.decl - b0.wm_decl)
             / (x0.decl_err * x0.decl_err + b0.wm_decl_err * b0.wm_decl_err)
@@ -860,7 +863,7 @@ SELECT COUNT(*)
         cursor.execute(query, (image_id, deRuiter_r))
         y = cursor.fetchall()
         #print "\t\tNumber of known sources (or sources in NOT IN): ", y[0][0]
-        conn.commit()
+        #conn.commit()
     except db.Error, e:
         logging.warn("Failed on query nr %s." % query)
         raise
@@ -907,8 +910,8 @@ def _insert_new_assocs(conn, image_id, deRuiter_r):
                                             AND x0.decl + 0.025
                    AND b0.wm_ra BETWEEN x0.ra - alpha(0.025,x0.decl)
                                           AND x0.ra + alpha(0.025,x0.decl)
-                   AND SQRT(  (x0.ra * COS(rad(x0.decl)) - b0.wm_ra * COS(rad(b0.wm_decl)))
-                            * (x0.ra * COS(rad(x0.decl)) - b0.wm_ra * COS(rad(b0.wm_decl)))
+                   AND SQRT(  (x0.ra * COS(RADIANS(x0.decl)) - b0.wm_ra * COS(RADIANS(b0.wm_decl)))
+                            * (x0.ra * COS(RADIANS(x0.decl)) - b0.wm_ra * COS(RADIANS(b0.wm_decl)))
                             / (x0.ra_err * x0.ra_err + b0.wm_ra_err * b0.wm_ra_err)
                            + (x0.decl - b0.wm_decl) * (x0.decl - b0.wm_decl)
                             / (x0.decl_err * x0.decl_err + b0.wm_decl_err * b0.wm_decl_err)
@@ -916,7 +919,7 @@ def _insert_new_assocs(conn, image_id, deRuiter_r):
                                     )
         """
         cursor.execute(query, (image_id, image_id, deRuiter_r))
-        conn.commit()
+        #conn.commit()
     except db.Error, e:
         logging.warn("Failed on query nr %s." % query)
         raise
@@ -933,6 +936,7 @@ def _insert_new_source_runcat(conn, image_id, deRuiter_r):
 INSERT INTO runningcatalog
   (xtrsrc_id
   ,ds_id
+  ,band
   ,datapoints
   ,zone
   ,wm_ra
@@ -954,6 +958,7 @@ INSERT INTO runningcatalog
   )
   SELECT x1.xtrsrcid
         ,im1.ds_id
+        ,band
         ,1
         ,x1.zone
         ,x1.ra
@@ -990,9 +995,9 @@ INSERT INTO runningcatalog
                                     AND x0.decl + 0.025
            AND b0.wm_ra BETWEEN x0.ra - alpha(0.025,x0.decl)
                                   AND x0.ra + alpha(0.025,x0.decl)
-           AND b0.x * x0.x + b0.y * x0.y + b0.z * x0.z > COS(rad(0.025))
-           AND SQRT(  (x0.ra * COS(rad(x0.decl)) - b0.wm_ra * COS(rad(b0.wm_decl)))
-                    * (x0.ra * COS(rad(x0.decl)) - b0.wm_ra * COS(rad(b0.wm_decl)))
+           AND b0.x * x0.x + b0.y * x0.y + b0.z * x0.z > COS(RADIANS(0.025))
+           AND SQRT(  (x0.ra * COS(RADIANS(x0.decl)) - b0.wm_ra * COS(RADIANS(b0.wm_decl)))
+                    * (x0.ra * COS(RADIANS(x0.decl)) - b0.wm_ra * COS(RADIANS(b0.wm_decl)))
                     / (x0.ra_err * x0.ra_err + b0.wm_ra_err * b0.wm_ra_err)
                    + (x0.decl - b0.wm_decl) * (x0.decl - b0.wm_decl)
                     / (x0.decl_err * x0.decl_err + b0.wm_decl_err * b0.wm_decl_err)
@@ -1000,7 +1005,7 @@ INSERT INTO runningcatalog
            )
 """
         cursor.execute(query, (image_id, image_id, deRuiter_r))
-        conn.commit()
+        #conn.commit()
     except db.Error, e:
         logging.warn("Failed on query nr %s." % query)
         raise
@@ -1008,7 +1013,7 @@ INSERT INTO runningcatalog
         cursor.close()
 
 
-def associate_extracted_sources(conn, image_id, deRuiter_r=DERUITER_R/3600.):
+def associate_extracted_sources(conn, ds_id, image_id, deRuiter_r=DERUITER_R/3600.):
     """Associate extracted sources with sources detected in the running
     catalog
 
@@ -1019,8 +1024,6 @@ def associate_extracted_sources(conn, image_id, deRuiter_r=DERUITER_R/3600.):
     reliable association.
     """
 
-    #if image_id == 2:
-    #    raise
     _empty_temprunningcatalog(conn)
     _insert_temprunningcatalog(conn, image_id, deRuiter_r)
     _flag_multiple_counterparts_in_runningcatalog(conn)
@@ -1039,7 +1042,55 @@ def associate_extracted_sources(conn, image_id, deRuiter_r=DERUITER_R/3600.):
     _count_known_sources(conn, image_id, deRuiter_r)
     _insert_new_assocs(conn, image_id, deRuiter_r)
     _insert_new_source_runcat(conn, image_id, deRuiter_r)
+    _associate_across_frequencies(conn, ds_id, image_id, deRuiter_r)
 
+def _associate_across_frequencies(conn, ds_id, image_id, deRuiter_r=DERUITER_R/3600.):
+    """Associate sources in running catalog across frequency bands
+
+    The dimensionless distance between two sources is given by the
+    "De Ruiter radius", see Ch2&3 of thesis Scheers.
+
+    Here we use a default value of deRuiter_r = 3.717/3600. for a
+    reliable association.
+    """
+    pass
+    try:
+        cursor = conn.cursor()
+        query = """\
+        SELECT COUNT(*)
+              /*r1.xtrsrc_id AS runcat_id
+              ,r1.band AS band
+              ,r2.xtrsrc_id AS assoc_runcat_id
+              ,r2.band AS assoc_band*/
+          FROM runningcatalog r1
+              ,runningcatalog r2
+              ,images im1
+         WHERE r1.ds_id = %s
+           AND im1.imageid = %s
+           AND r1.band = im1.band
+           AND r2.ds_id = r1.ds_id
+           AND r2.band <> r1.band
+           AND r2.zone BETWEEN CAST(FLOOR(r1.decl - 0.025) AS INTEGER)
+                           AND CAST(FLOOR(r1.decl + 0.025) AS INTEGER)
+           AND r2.decl BETWEEN r1.decl - 0.025
+                           AND r1.decl + 0.025
+           AND r2.ra BETWEEN r1.ra - alpha(0.025, r1.decl)
+                         AND r1.ra + alpha(0.025, r1.decl)
+           AND SQRT( ((r1.ra * COS(RADIANS(r1.decl)) - r2.ra * COS(RADIANS(r2.decl))) 
+                      * (r1.ra * COS(RADIANS(r1.decl)) - r2.ra * COS(RADIANS(r2.decl))))
+                     / (r1.ra_err * r1.ra_err + r2.ra_err * r2.ra_err)
+                   + ((r1.decl - r2.decl) * (r1.decl - r2.decl))
+                    / (r1.decl_err * r1.decl_err + r2.decl_err * r2.decl_err)
+                   ) < %s
+        """
+        cursor.execute(query, (ds_id, image_id, deRuiter_r))
+        print "Cross-freq matches:" + cursor.fetchall()[0]
+        #conn.commit()
+    except db.Error, e:
+        logging.warn("Failed on query nr %s; for reason %s" % (query, e))
+        raise
+    finally:
+        cursor.close()
 
 def _select_variability_indices(conn, dsid, V_lim, eta_lim):
     """Select sources and variability indices in the running catalog"""
@@ -1083,7 +1134,7 @@ SELECT
       WHERE ds_id = %s
       ) t1
   WHERE t1.V_inter / t1.avg_i_peak > %s
-  AND t1.eta_inter / t1.avg_weight_peak > %s
+    AND t1.eta_inter / t1.avg_weight_peak > %s
 """
         cursor.execute(query, (dsid, V_lim, eta_lim))
         results = cursor.fetchall()
@@ -1208,24 +1259,24 @@ def _insert_cat_assocs(conn, image_id, radius, deRuiter_r):
           )
           SELECT xtrsrcid AS xtrsrc_id
                 ,lsmid AS assoc_catsrc_id
-                ,3600 * deg(2 * ASIN(SQRT((x0.x - c0.x) * (x0.x - c0.x)
+                ,3600 * DEGREES(2 * ASIN(SQRT((x0.x - c0.x) * (x0.x - c0.x)
                                           + (x0.y - c0.y) * (x0.y - c0.y)
                                           + (x0.z - c0.z) * (x0.z - c0.z)
                                           ) / 2) ) AS assoc_distance_arcsec
                 ,3
                 ,3600 * sqrt(
-                    ((x0.ra * cos(rad(x0.decl)) 
-                     - c0.ra * cos(rad(c0.decl))) 
-                    * (x0.ra * cos(rad(x0.decl)) 
-                     - c0.ra * cos(rad(c0.decl)))) 
+                    ((x0.ra * cos(RADIANS(x0.decl)) 
+                     - c0.ra * cos(RADIANS(c0.decl))) 
+                    * (x0.ra * cos(RADIANS(x0.decl)) 
+                     - c0.ra * cos(RADIANS(c0.decl)))) 
                     / (x0.ra_err * x0.ra_err + c0.ra_err*c0.ra_err)
                     +
                     ((x0.decl - c0.decl) * (x0.decl - c0.decl)) 
                     / (x0.decl_err * x0.decl_err + c0.decl_err*c0.decl_err)
                             ) as assoc_r
-                ,LOG10(EXP((( (x0.ra - c0.ra) * COS(rad(x0.decl)) * (x0.ra - c0.ra) * COS(rad(x0.decl)) 
+                ,LOG10(EXP((( (x0.ra - c0.ra) * COS(RADIANS(x0.decl)) * (x0.ra - c0.ra) * COS(RADIANS(x0.decl)) 
                               / (x0.ra_err * x0.ra_err + c0.ra_err * c0.ra_err)
-                             + (x0.decl - c0.decl) * COS(rad(x0.decl)) * (x0.decl - c0.decl) * COS(rad(x0.decl)) 
+                             + (x0.decl - c0.decl) * COS(RADIANS(x0.decl)) * (x0.decl - c0.decl) * COS(RADIANS(x0.decl)) 
                                / (x0.decl_err * x0.decl_err + c0.decl_err * c0.decl_err)
                             )
                            ) / 2
@@ -1243,15 +1294,15 @@ def _insert_cat_assocs(conn, image_id, radius, deRuiter_r):
                              AND x0.decl + %s
              AND c0.ra BETWEEN x0.ra - alpha(%s, x0.decl)
                            AND x0.ra + alpha(%s, x0.decl)
-             AND SQRT(  (x0.ra * COS(rad(x0.decl)) - c0.ra * COS(rad(c0.decl)))
-                      * (x0.ra * COS(rad(x0.decl)) - c0.ra * COS(rad(c0.decl)))
+             AND SQRT(  (x0.ra * COS(RADIANS(x0.decl)) - c0.ra * COS(RADIANS(c0.decl)))
+                      * (x0.ra * COS(RADIANS(x0.decl)) - c0.ra * COS(RADIANS(c0.decl)))
                       / (x0.ra_err * x0.ra_err + c0.ra_err * c0.ra_err)
                      + (x0.decl - c0.decl) * (x0.decl - c0.decl)
                       / (x0.decl_err * x0.decl_err + c0.decl_err * c0.decl_err)
                      ) < %s
         """
         cursor.execute(query, (image_id,radius,radius,radius,radius,radius,radius,deRuiter_r))
-        conn.commit()
+        #conn.commit()
     except db.Error, e:
         logging.warn("Failed on query nr %s." % query)
         raise
@@ -1273,7 +1324,7 @@ INSERT INTO transients
   AND rc.xtrsrc_id NOT IN
   (SELECT xtrsrc_id FROM transients)""" % (str(siglevel), str(t_start))
         cursor.execute(query, (srcid,))
-        conn.commit()
+        #conn.commit()
     except db.Error:
         logging.warn("Query %s failed", query)
         raise
@@ -1294,7 +1345,7 @@ def concurrency_test_fixedalpha(conn):
         """
         cursor.execute(query, (theta, decl))
         alpha = cursor.fetchone()[0]
-        conn.commit()
+        #conn.commit()
     except db.Error, e:
         logging.warn("Failed on query: %s." % query)
         raise
@@ -1317,7 +1368,7 @@ def concurrency_test_randomalpha(conn):
         """
         cursor.execute(query, (theta, decl))
         alpha = cursor.fetchone()[0]
-        conn.commit()
+        #conn.commit()
     except db.Error, e:
         logging.warn("Failed on query: %s." % query)
         raise
@@ -1409,7 +1460,7 @@ def set_columns_for_table(conn, table, data=None, where=None):
     try:
         cursor = conn.cursor()
         cursor.execute(query, values + where_args)
-        conn.commit()
+        #conn.commit()
     except db.Error, e:
         query = query % (values + where_args)
         logging.warn("Failed on query: %s" % query)
@@ -1475,13 +1526,13 @@ SELECT
    ,cs.decl
    ,cs.ra_err
    ,cs.decl_err
-   ,3600 * deg(2 * ASIN(SQRT(
+   ,3600 * DEGREES(2 * ASIN(SQRT(
        (%%s - cs.x) * (%%s - cs.x)
        + (%%s - cs.y) * (%%s - cs.y)
        + (%%s - cs.z) * (%%s - cs.z)
        ) / 2)
    ) AS assoc_distance_arcsec
-   ,SQRT( (%%s - cs.ra) * COS(rad(%%s)) * (%%s - cs.ra) * COS(rad(%%s))
+   ,SQRT( (%%s - cs.ra) * COS(RADIANS(%%s)) * (%%s - cs.ra) * COS(RADIANS(%%s))
    / (cast(%%s as double precision) * %%s + cs.ra_err * cs.ra_err)
    + (%%s - cs.decl) * (%%s - cs.decl)
    / (cast(%%s as double precision) * %%s + cs.decl_err * cs.decl_err)
@@ -1492,9 +1543,9 @@ FROM
 WHERE
       %(catalog_filter)s
   cs.cat_id = c.catid
-  AND cs.x * %%s + cs.y * %%s + cs.z * %%s > COS(rad(%%s))
-  AND cs.zone BETWEEN CAST(FLOOR(cast(%%s - %%s as double precision) / %%s) AS INTEGER)
-                  AND CAST(FLOOR(cast(%%s + %%s as double precision) / %%s) AS INTEGER)
+  AND cs.x * %%s + cs.y * %%s + cs.z * %%s > COS(RADIANS(%%s))
+  AND cs.zone BETWEEN CAST(FLOOR((CAST(%%s AS DOUBLE) - %%s) / %%s) AS INTEGER)
+                  AND CAST(FLOOR((CAST(%%s AS DOUBLE) + %%s) / %%s) AS INTEGER)
   AND cs.ra BETWEEN %%s - alpha(%%s, %%s)
                 AND %%s + alpha(%%s, %%s)
   AND cs.decl BETWEEN %%s - %%s

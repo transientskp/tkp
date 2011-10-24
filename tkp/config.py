@@ -109,7 +109,6 @@ def set_default_config():
     config.set('database', 'port', '0')
     config.set('database', 'autocommit', 'False')
     config.set('database', 'engine', 'monetdb')
-    config.set('database', 'autocommit', 'False')
 
     config.add_section('source_association')
     config.set('source_association', 'deruiter_radius', '3.7')
@@ -216,7 +215,8 @@ def parse_config(config):
     # the options, and then does the parsing behind the scenes
     configuration = dict(database={}, source_association={},
                          source_extraction={})
-    booleans = (('database', 'enabled'), ('source_extraction', 'deblend'),
+    booleans = (('database', 'enabled'), ('database', 'autocommit'),
+                ('source_extraction', 'deblend'),
                 ('source_extraction', 'residuals'))
     integers = (('database', 'port'), ('source_extraction', 'back_sizex'),
                 ('source_extraction', 'back_sizey'),

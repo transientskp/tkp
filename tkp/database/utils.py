@@ -13,6 +13,7 @@ from tkp.sourcefinder.extract import Detection
 from .database import ENGINE
 
 
+AUTOCOMMIT = config['database']['autocommit']
 DERUITER_R = config['source_association']['deruiter_radius']
 #BG_DENSITY = config['source_association']['bg-density']
 
@@ -30,7 +31,8 @@ def insert_dataset(conn, description):
         """
         cursor.execute(query, (description,))
         newdsid = cursor.fetchone()[0]
-        #conn.commit()
+        if not AUTOCOMMIT:
+            conn.commit()
     except db.Error, e:
         logging.warn("Failed on query: %s." % query)
         raise
@@ -57,7 +59,8 @@ def insert_image(conn, dsid, freq_eff, freq_bw, taustart_ts, url):
                               ,url
                               ))
         newimgid = cursor.fetchone()[0]
-        #conn.commit()
+        if not AUTOCOMMIT:
+            conn.commit()
     except db.Error, e:
         logging.warn("Failed on query: %s." % query)
         raise
@@ -76,7 +79,8 @@ def load_LSM(conn, ira_min, ira_max, idecl_min, idecl_max, cat1="NVSS", cat2="VL
         """
         cursor.execute(query, (ira_min,ira_max,idecl_min,idecl_max,cat1,cat2,cat3))
         #cursor.execute(query)
-        #conn.commit()
+        if not AUTOCOMMIT:
+            conn.commit()
     except db.Error, e:
         logging.warn("Failed to insert lsm by procedure LoadLSM: %s" % e)
         raise
@@ -99,7 +103,8 @@ def _empty_detections(conn):
         DELETE FROM detections
         """
         cursor.execute(query)
-        #conn.commit()
+        if not AUTOCOMMIT:
+            conn.commit()
     except db.Error, e:
         logging.warn("Failed on query nr %s." % query)
         raise
@@ -123,7 +128,8 @@ def _insert_into_detections(conn, results):
                  str(tuple(det)) for det in results]
         query = "INSERT INTO detections VALUES " + ",".join(query)
         conn.cursor().execute(query)
-        #conn.commit()
+        if not AUTOCOMMIT:
+            conn.commit()
     except db.Error, e:
         logging.warn("Failed on query nr %s." % query)
         raise
@@ -192,7 +198,8 @@ def _insert_extractedsources(conn, image_id):
           WHERE n.zone = t0.zone
         """
         cursor.execute(query, (image_id,))
-        #conn.commit()
+        if not AUTOCOMMIT:
+            conn.commit()
     except db.Error, e:
         logging.warn("Failed on query nr %s." % query)
         raise
@@ -227,7 +234,8 @@ def _empty_temprunningcatalog(conn):
         cursor = conn.cursor()
         query = """DELETE FROM temprunningcatalog"""
         cursor.execute(query)
-        #conn.commit()
+        if not AUTOCOMMIT:
+            conn.commit()
     except db.Error, e:
         logging.warn("Failed on query nr %s." % query)
         raise
@@ -388,7 +396,8 @@ INSERT INTO temprunningcatalog
          ) t0
 """
         cursor.execute(query, (image_id, deRuiter_r))
-        #conn.commit()
+        if not AUTOCOMMIT:
+            conn.commit()
     except db.Error, e:
         logging.warn("Failed on query nr %s." % query)
         raise
@@ -484,7 +493,8 @@ def _flag_multiple_counterparts_in_runningcatalog(conn):
             """
             for j in range(len(xtrsrc_id)):
                 cursor.execute(query, (xtrsrc_id[j], assoc_xtrsrc_id[j]))
-            #conn.commit()
+                if not AUTOCOMMIT:
+                    conn.commit()
     except db.Error, e:
         logging.warn("Failed on query nr %s." % query)
         raise
@@ -539,7 +549,8 @@ def _insert_multiple_assocs(conn):
                                 )
         """
         cursor.execute(query)
-        #conn.commit()
+        if not AUTOCOMMIT:
+            conn.commit()
     except db.Error, e:
         logging.warn("Failed on query nr %s." % query)
         raise
@@ -577,7 +588,8 @@ def _insert_first_of_assocs(conn):
                               )
         """
         cursor.execute(query)
-        #conn.commit()
+        if not AUTOCOMMIT:
+            conn.commit()
     except db.Error, e:
         logging.warn("Failed on query nr %s." % query)
         raise
@@ -605,7 +617,8 @@ def _flag_swapped_assocs(conn):
                             )
         """
         cursor.execute(query)
-        #conn.commit()
+        if not AUTOCOMMIT:
+            conn.commit()
     except db.Error, e:
         logging.warn("Failed on query nr %s." % query)
         raise
@@ -671,7 +684,8 @@ def _insert_multiple_assocs_runcat(conn):
                               )
         """
         cursor.execute(query)
-        #conn.commit()
+        if not AUTOCOMMIT:
+            conn.commit()
     except db.Error, e:
         logging.warn("Failed on query nr %s." % query)
         raise
@@ -695,7 +709,8 @@ def _flag_old_assocs_runcat(conn):
                             )
         """
         cursor.execute(query)
-        #conn.commit()
+        if not AUTOCOMMIT:
+            conn.commit()
     except db.Error, e:
         logging.warn("Failed on query nr %s." % query)
         raise
@@ -718,7 +733,8 @@ def _flag_multiple_assocs(conn):
                             )
         """
         cursor.execute(query)
-        #conn.commit()
+        if not AUTOCOMMIT:
+            conn.commit()
     except db.Error, e:
         logging.warn("Failed on query nr %s." % query)
         raise
@@ -764,7 +780,8 @@ def _insert_single_assocs(conn):
              AND t.xtrsrc_id = x.xtrsrcid
         """
         cursor.execute(query)
-        #conn.commit()
+        if not AUTOCOMMIT:
+            conn.commit()
     except db.Error, e:
         logging.warn("Failed on query nr %s." % query)
         raise
@@ -825,7 +842,8 @@ WHERE xtrsrc_id = %s
 """
         for result in results:
             cursor.execute(query, tuple(result))
-        #conn.commit()
+            if not AUTOCOMMIT:
+                conn.commit()
     except db.Error, e:
         logging.warn("Failed on query nr %s." % query)
         raise
@@ -863,7 +881,8 @@ SELECT COUNT(*)
         cursor.execute(query, (image_id, deRuiter_r))
         y = cursor.fetchall()
         #print "\t\tNumber of known sources (or sources in NOT IN): ", y[0][0]
-        #conn.commit()
+        if not AUTOCOMMIT:
+            conn.commit()
     except db.Error, e:
         logging.warn("Failed on query nr %s." % query)
         raise
@@ -919,7 +938,8 @@ def _insert_new_assocs(conn, image_id, deRuiter_r):
                                     )
         """
         cursor.execute(query, (image_id, image_id, deRuiter_r))
-        #conn.commit()
+        if not AUTOCOMMIT:
+            conn.commit()
     except db.Error, e:
         logging.warn("Failed on query nr %s." % query)
         raise
@@ -1005,7 +1025,8 @@ INSERT INTO runningcatalog
            )
 """
         cursor.execute(query, (image_id, image_id, deRuiter_r))
-        #conn.commit()
+        if not AUTOCOMMIT:
+            conn.commit()
     except db.Error, e:
         logging.warn("Failed on query nr %s." % query)
         raise
@@ -1085,7 +1106,8 @@ def _associate_across_frequencies(conn, ds_id, image_id, deRuiter_r=DERUITER_R/3
         """
         cursor.execute(query, (ds_id, image_id, deRuiter_r))
         print "Cross-freq matches:" + cursor.fetchall()[0]
-        #conn.commit()
+        if not AUTOCOMMIT:
+            conn.commit()
     except db.Error, e:
         logging.warn("Failed on query nr %s; for reason %s" % (query, e))
         raise
@@ -1140,7 +1162,8 @@ SELECT
         results = cursor.fetchall()
         results = [dict(srcid=x[0], npoints=x[2], v_nu=x[7], eta_nu=x[8])
                    for x in results]
-        #conn.commit()
+        if not AUTOCOMMIT:
+            conn.commit()
     except db.Error:
         query = query % (dsid, V_lim, eta_lim)
         logging.warn("Failed on query:\n%s", query)
@@ -1178,7 +1201,8 @@ SELECT xtrsrc_id
         results = cursor.fetchall()
         results = [dict(srcid=x[0], npoints=x[2], v_nu=x[7], eta_nu=x[8])
                    for x in results]
-        #conn.commit()
+        if not AUTOCOMMIT:
+            conn.commit()
     except db.Error:
         logging.warn("Failed on query %s", query)
         raise
@@ -1302,7 +1326,8 @@ def _insert_cat_assocs(conn, image_id, radius, deRuiter_r):
                      ) < %s
         """
         cursor.execute(query, (image_id,radius,radius,radius,radius,radius,radius,deRuiter_r))
-        #conn.commit()
+        if not AUTOCOMMIT:
+            conn.commit()
     except db.Error, e:
         logging.warn("Failed on query nr %s." % query)
         raise
@@ -1324,7 +1349,8 @@ INSERT INTO transients
   AND rc.xtrsrc_id NOT IN
   (SELECT xtrsrc_id FROM transients)""" % (str(siglevel), str(t_start))
         cursor.execute(query, (srcid,))
-        #conn.commit()
+        if not AUTOCOMMIT:
+            conn.commit()
     except db.Error:
         logging.warn("Query %s failed", query)
         raise
@@ -1345,7 +1371,8 @@ def concurrency_test_fixedalpha(conn):
         """
         cursor.execute(query, (theta, decl))
         alpha = cursor.fetchone()[0]
-        #conn.commit()
+        if not AUTOCOMMIT:
+            conn.commit()
     except db.Error, e:
         logging.warn("Failed on query: %s." % query)
         raise
@@ -1368,7 +1395,8 @@ def concurrency_test_randomalpha(conn):
         """
         cursor.execute(query, (theta, decl))
         alpha = cursor.fetchone()[0]
-        #conn.commit()
+        if not AUTOCOMMIT:
+            conn.commit()
     except db.Error, e:
         logging.warn("Failed on query: %s." % query)
         raise
@@ -1460,7 +1488,8 @@ def set_columns_for_table(conn, table, data=None, where=None):
     try:
         cursor = conn.cursor()
         cursor.execute(query, values + where_args)
-        #conn.commit()
+        if not AUTOCOMMIT:
+            conn.commit()
     except db.Error, e:
         query = query % (values + where_args)
         logging.warn("Failed on query: %s" % query)

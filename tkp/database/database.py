@@ -73,7 +73,6 @@ class DataBase(object):
         self.port = port
         self.autocommit = autocommit
         self.connection = None
-        self.autocommit = autocommit
         if not ENABLED:
             raise TKPDataBaseError("Database is not enabled")
         self.connect()
@@ -83,15 +82,16 @@ class DataBase(object):
             self.name, self.host, self.user)
 
     def __repr__(self):
-        return "DataBase(host=%s, name=%s, user=%s, password=%s, port=%d, autocommit=%s" % (
-            self.host, self.name, self.user, self.password, self.port, self.autocommit)
+        return ("DataBase(host=%s, name=%s, user=%s, password=%s, port=%d, "
+                "autocommit=%s" % (self.host, self.name, self.user,
+                self.password, self.port, self.autocommit))
 
     def connect(self):
         """Connect to the database"""
 
         kwargs = dict(
             host=self.host, user=self.user, password=self.password,
-            database=self.name, port=self.port, autocommit=self.autocommit)
+            database=self.name, port=self.port)
         if ENGINE == 'monetdb':  # PostgreSQL doesn't have autocommit
             kwargs['autocommit'] = self.autocommit
         self.connection = engine.connect(**kwargs)

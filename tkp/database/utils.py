@@ -15,7 +15,7 @@ from .database import ENGINE
 
 AUTOCOMMIT = config['database']['autocommit']
 DERUITER_R = config['source_association']['deruiter_radius']
-#BG_DENSITY = config['source_association']['bg-density']
+BG_DENSITY = config['source_association']['bg-density']
 
 
 def insert_dataset(conn, description):
@@ -1239,7 +1239,6 @@ def detect_variable_sources(conn, dsid, V_lim, eta_lim):
     """Detect variability in extracted sources compared to the previous
     detections"""
 
-    #sources = _select_variability_indices(conn, dsid, V_lim, eta_lim)
     return _select_variability_indices(conn, dsid, V_lim, eta_lim)
 
 
@@ -1260,6 +1259,7 @@ def associate_with_catalogedsources(conn, image_id, radius=0.025, deRuiter_r=DER
     """
 
     _insert_cat_assocs(conn, image_id, radius, deRuiter_r)
+
 
 def _insert_cat_assocs(conn, image_id, radius, deRuiter_r):
     """Insert found xtrsrc--catsrc associations into assoccatsources table.
@@ -1307,7 +1307,7 @@ def _insert_cat_assocs(conn, image_id, radius, deRuiter_r):
                           )
                        /
                        (2 * PI() * SQRT(x0.ra_err * x0.ra_err + c0.ra_err * c0.ra_err) 
-                                 * SQRT(x0.decl_err * x0.decl_err + c0.decl_err * c0.decl_err) * 4.02439375E-06)
+                                 * SQRT(x0.decl_err * x0.decl_err + c0.decl_err * c0.decl_err) * %s)
                        ) AS assoc_loglr
             FROM extractedsources x0
                 ,lsm c0
@@ -1325,7 +1325,8 @@ def _insert_cat_assocs(conn, image_id, radius, deRuiter_r):
                       / (x0.decl_err * x0.decl_err + c0.decl_err * c0.decl_err)
                      ) < %s
         """
-        cursor.execute(query, (image_id,radius,radius,radius,radius,radius,radius,deRuiter_r))
+        cursor.execute(query, (BG_DENSITY, image_id, radius, radius, radius,
+                               radius, radius, radius, deRuiter_r))
         if not AUTOCOMMIT:
             conn.commit()
     except db.Error, e:

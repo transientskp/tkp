@@ -1574,8 +1574,8 @@ WHERE
       %(catalog_filter)s
   cs.cat_id = c.catid
   AND cs.x * %%s + cs.y * %%s + cs.z * %%s > COS(RADIANS(%%s))
-  AND cs.zone BETWEEN CAST(FLOOR((CAST(%%s AS DOUBLE) - %%s) / %%s) AS INTEGER)
-                  AND CAST(FLOOR((CAST(%%s AS DOUBLE) + %%s) / %%s) AS INTEGER)
+  AND cs.zone BETWEEN CAST(FLOOR((CAST(%%s AS DOUBLE precision) - %%s) / %%s) AS INTEGER)
+                  AND CAST(FLOOR((CAST(%%s AS DOUBLE precision) + %%s) / %%s) AS INTEGER)
   AND cs.ra BETWEEN %%s - alpha(%%s, %%s)
                 AND %%s + alpha(%%s, %%s)
   AND cs.decl BETWEEN %%s - %%s

@@ -1074,7 +1074,7 @@ def _associate_across_frequencies(conn, ds_id, image_id, deRuiter_r=DERUITER_R/3
     Here we use a default value of deRuiter_r = 3.717/3600. for a
     reliable association.
     """
-    pass
+    return
     try:
         cursor = conn.cursor()
         query = """\

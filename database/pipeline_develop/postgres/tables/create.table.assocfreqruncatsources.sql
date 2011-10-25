@@ -1,3 +1,4 @@
+--drop table assocfreqruncatsources;
 /**
  * This table stores the information about the sources that
  * could be associated.
@@ -9,15 +10,15 @@
  *                  associated to a previously detection 
  *                  (corresponding to assoc_xtrsrcid)
  */
-CREATE TABLE associatedsources (
-  id SERIAL PRIMARY KEY,
-  xtrsrc_id INT NOT NULL,
-  assoc_type CHAR(1) NOT NULL,
-  assoc_xtrsrc_id INT NULL,
-  assoc_catsrc_id INT NULL,
-  assoc_weight double precision NULL,
-  assoc_distance_arcsec double precision NULL,
-  FOREIGN KEY (xtrsrc_id) REFERENCES extractedsources (xtrsrcid),
-  FOREIGN KEY (assoc_xtrsrc_id) REFERENCES extractedsources (xtrsrcid),
-  FOREIGN KEY (assoc_catsrc_id) REFERENCES catalogedsources (catsrcid)
-);
+
+CREATE TABLE assocfreqruncatsources
+  (xtrsrc_id INT NOT NULL
+  ,band INT NOT NULL
+  ,assoc_xtrsrc_id INT NOT NULL
+  ,assoc_band INT NOT NULL
+  ,assoc_method INT NULL DEFAULT 0
+  ,assoc_distance_arcsec DOUBLE NULL
+  ,assoc_r DOUBLE precision NULL
+  ,assoc_loglr DOUBLE precision NULL
+  )
+;

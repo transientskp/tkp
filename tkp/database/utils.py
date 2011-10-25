@@ -1034,7 +1034,7 @@ INSERT INTO runningcatalog
         cursor.close()
 
 
-def associate_extracted_sources(conn, ds_id, image_id, deRuiter_r=DERUITER_R/3600.):
+def associate_extracted_sources(conn, image_id, deRuiter_r=DERUITER_R/3600.):
     """Associate extracted sources with sources detected in the running
     catalog
 
@@ -1063,7 +1063,8 @@ def associate_extracted_sources(conn, ds_id, image_id, deRuiter_r=DERUITER_R/360
     _count_known_sources(conn, image_id, deRuiter_r)
     _insert_new_assocs(conn, image_id, deRuiter_r)
     _insert_new_source_runcat(conn, image_id, deRuiter_r)
-    _associate_across_frequencies(conn, ds_id, image_id, deRuiter_r)
+    #_associate_across_frequencies(conn, ds_id, image_id, deRuiter_r)
+
 
 def _associate_across_frequencies(conn, ds_id, image_id, deRuiter_r=DERUITER_R/3600.):
     """Associate sources in running catalog across frequency bands
@@ -1105,7 +1106,6 @@ def _associate_across_frequencies(conn, ds_id, image_id, deRuiter_r=DERUITER_R/3
                    ) < %s
         """
         cursor.execute(query, (ds_id, image_id, deRuiter_r))
-        print "Cross-freq matches:" + cursor.fetchall()[0]
         if not AUTOCOMMIT:
             conn.commit()
     except db.Error, e:

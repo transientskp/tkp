@@ -11,7 +11,7 @@ CREATE FUNCTION getDistanceXSource2CatArcsec(ixtrsrcid INT
   DECLARE dist double precision;
 
 BEGIN
-  SELECT 3600.0 * deg(2 * ASIN(SQRT((x1.x - c1.x) * (x1.x - c1.x.y - c1.y) * (x1.y - c1.y)  
+  SELECT 3600.0 * degrees(2 * ASIN(SQRT((x1.x - c1.x) * (x1.x - c1.x.y - c1.y) * (x1.y - c1.y)  
                                      + (x1.z - c1.z) * (x1.z - c1.z)  
                                      ) / 2) ) AS distance_arcsec
     INTO dist

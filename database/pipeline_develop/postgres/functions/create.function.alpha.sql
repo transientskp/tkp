@@ -10,7 +10,7 @@ BEGIN
   IF ABS(decl) + theta > 89.9 THEN 
     RETURN 180;
   ELSE 
-    RETURN deg(ABS(ATAN(SIN(rad(theta)) / SQRT(ABS(COS(rad(decl - theta)) * COS(rad(decl + theta))))))) ; 
+    RETURN degrees(ABS(ATAN(SIN(radians(theta)) / SQRT(ABS(COS(radians(decl - theta)) * COS(radians(decl + theta))))))) ; 
   END IF ;
 END;
 $$ language plpgsql;

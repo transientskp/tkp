@@ -10,6 +10,7 @@ CREATE TABLE temprunningcatalog
   (xtrsrc_id INT NOT NULL
   ,assoc_xtrsrc_id INT NOT NULL
   ,ds_id INT NOT NULL
+  ,band INT NOT NULL
   ,datapoints INT NOT NULL
   ,zone INT NOT NULL
   ,wm_ra double precision NOT NULL

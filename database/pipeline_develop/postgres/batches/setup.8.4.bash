@@ -191,10 +191,10 @@ echo -e "\t-------------------------------------------"
 #psql  -h ${HOST} -d ${NAME} -U ${USER}  < /scratch/bscheers/databases/MonetDB/share/MonetDB/sql/mtime.sql
 
 echo -e "\t\tCreating ${NAME} function deg"
-psql  -h ${HOST} -d ${NAME} -U ${USER}  < $DATABASETKPHOME/functions/create.function.deg.sql
+psql  -h ${HOST} -d ${NAME} -U ${USER}  < $DATABASETKPHOME/functions/create.function.degrees.sql
 
 echo -e "\t\tCreating ${NAME} function rad"
-psql  -h ${HOST} -d ${NAME} -U ${USER}  < $DATABASETKPHOME/functions/create.function.rad.sql
+psql  -h ${HOST} -d ${NAME} -U ${USER}  < $DATABASETKPHOME/functions/create.function.radians.sql
 
 echo -e "\t\tCreating ${NAME} function alpha"
 psql  -h ${HOST} -d ${NAME} -U ${USER}  < $DATABASETKPHOME/functions/create.function.alpha.sql

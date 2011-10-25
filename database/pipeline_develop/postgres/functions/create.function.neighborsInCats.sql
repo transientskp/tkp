@@ -25,9 +25,9 @@ declare iz double precision;
 BEGIN
   
   
-  ix := COS(rad(idecl)) * COS(rad(ira));
-  iy := COS(rad(idecl)) * SIN(rad(ira));
-  iz := SIN(rad(idecl));
+  ix := COS(radians(idecl)) * COS(radians(ira));
+  iy := COS(radians(idecl)) * SIN(radians(ira));
+  iz := SIN(radians(idecl));
 
   /* TODO: 
    * retrieve zoneheight from table ->
@@ -53,7 +53,7 @@ BEGIN
           ,i_peak_avg_err
           ,i_int_avg
           ,i_int_avg_err
-          ,3600 * deg(2 * ASIN(SQRT((ix - c1.x) * (ix - c1.x)
+          ,3600 * degrees(2 * ASIN(SQRT((ix - c1.x) * (ix - c1.x)
                                     + (iy - c1.y) * (iy - c1.y)
                                     + (iz - c1.z) * (iz - c1.z)
                                    ) / 2) 
@@ -61,7 +61,7 @@ BEGIN
       FROM catalogedsources c1
           ,catalogs c0
      WHERE c1.cat_id = c0.catid
-       AND c1.x * ix + c1.y * iy + c1.z * iz > COS(rad(itheta))
+       AND c1.x * ix + c1.y * iy + c1.z * iz > COS(radians(itheta))
        AND c1.zone BETWEEN CAST(FLOOR((idecl - itheta) / izoneheight) AS INTEGER)
                        AND CAST(FLOOR((idecl + itheta) / izoneheight) AS INTEGER)
        AND c1.ra BETWEEN ira - alpha(itheta, idecl)

@@ -1,4 +1,4 @@
---DROP FUNCTION rad;
+--DROP FUNCTION radians;
 
 /**
  */

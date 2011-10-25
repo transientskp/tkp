@@ -6,7 +6,7 @@
  * 03 45 23.2 is ok as well as
  * 03:45:23.22 is ok as well as
  */
-CREATE or replace FUNCTION ra2deg(iraHMS VARCHAR(12)) RETURNS double precision as $$
+CREATE or replace FUNCTION ra2degrees(iraHMS VARCHAR(12)) RETURNS double precision as $$
   DECLARE ss double precision;
   declare mm double precision;
 declare hh double precision;

@@ -1,4 +1,4 @@
---DROP FUNCTION deg;
+--DROP FUNCTION degrees;
 
 /**
  */

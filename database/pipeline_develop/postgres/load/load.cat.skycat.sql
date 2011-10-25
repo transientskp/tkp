@@ -76,8 +76,8 @@ INSERT INTO catalogedsources
         ,aname
         ,icatid
         ,iband
-        ,ra2deg(aRAJ2000)
-        ,decl2deg(aDEJ2000)
+        ,ra2degrees(aRAJ2000)
+        ,decl2degrees(aDEJ2000)
         ,CAST(FLOOR(aDEJ2000) AS INTEGER)
         ,0.01
         ,0.01

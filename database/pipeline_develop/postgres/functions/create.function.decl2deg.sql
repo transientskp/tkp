@@ -6,7 +6,7 @@
  * 03 45 23.2 is ok as well as
  * -03:45:23.22 is ok as well as
  */
-CREATE or replace FUNCTION decl2deg(ideclDMS VARCHAR(12)) RETURNS double precision as $$
+CREATE or replace FUNCTION decl2degrees(ideclDMS VARCHAR(12)) RETURNS double precision as $$
   DECLARE decldeg double precision;
 
 BEGIN

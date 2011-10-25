@@ -80,22 +80,22 @@ INSERT INTO catalogedsources
         ,aviz_RAJ2000
         ,aviz_DEJ2000
         ,CAST(FLOOR(aviz_DEJ2000) AS INTEGER)
-        /*,3600 * DEGREES(2 * ASIN(SQRT((COS(rad(aviz_DEJ2000)) * COS(rad(aviz_RAJ2000 + ae_RAJ2000 / 480)) - COS(rad(aviz_DEJ2000)) * COS(rad(aviz_RAJ2000)))
+        /*,3600 * DEGREES(2 * ASIN(SQRT((COS(radians(aviz_DEJ2000)) * COS(radians(aviz_RAJ2000 + ae_RAJ2000 / 480)) - COS(radians(aviz_DEJ2000)) * COS(radians(aviz_RAJ2000)))
                                       *
-                                      (COS(rad(aviz_DEJ2000)) * COS(rad(aviz_RAJ2000 + ae_RAJ2000 / 480)) - COS(rad(aviz_DEJ2000)) * COS(rad(aviz_RAJ2000)))
+                                      (COS(radians(aviz_DEJ2000)) * COS(radians(aviz_RAJ2000 + ae_RAJ2000 / 480)) - COS(radians(aviz_DEJ2000)) * COS(radians(aviz_RAJ2000)))
                                      +
-                                      (COS(rad(aviz_DEJ2000)) * SIN(rad(aviz_RAJ2000 + ae_RAJ2000 / 480)) - COS(rad(aviz_DEJ2000)) * SIN(rad(aviz_RAJ2000)))
+                                      (COS(radians(aviz_DEJ2000)) * SIN(radians(aviz_RAJ2000 + ae_RAJ2000 / 480)) - COS(radians(aviz_DEJ2000)) * SIN(radians(aviz_RAJ2000)))
                                       *
-                                      (COS(rad(aviz_DEJ2000)) * SIN(rad(aviz_RAJ2000 + ae_RAJ2000 / 480)) - COS(rad(aviz_DEJ2000)) * SIN(rad(aviz_RAJ2000)))
+                                      (COS(radians(aviz_DEJ2000)) * SIN(radians(aviz_RAJ2000 + ae_RAJ2000 / 480)) - COS(radians(aviz_DEJ2000)) * SIN(radians(aviz_RAJ2000)))
                                      ) / 2
                                 )
                        )*/
-        ,15 * ae_RAJ2000 * COS(rad(aviz_DEJ2000))
+        ,15 * ae_RAJ2000 * COS(radians(aviz_DEJ2000))
         ,ae_DEJ2000 
         ,73800000
-        ,COS(rad(aviz_DEJ2000)) * COS(rad(aviz_RAJ2000))
-        ,COS(rad(aviz_DEJ2000)) * SIN(rad(aviz_RAJ2000))
-        ,SIN(rad(aviz_DEJ2000))
+        ,COS(radians(aviz_DEJ2000)) * COS(radians(aviz_RAJ2000))
+        ,COS(radians(aviz_DEJ2000)) * SIN(radians(aviz_RAJ2000))
+        ,SIN(radians(aviz_DEJ2000))
         ,aPA
         ,ae_PA
         ,aMajAx

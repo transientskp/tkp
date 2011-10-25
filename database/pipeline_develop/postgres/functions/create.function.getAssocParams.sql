@@ -7,21 +7,21 @@ create function getAssocParams(ixtrsrcid1 INT
 
 begin
   return query
-    select 3600 * deg(2 * ASIN(SQRT( (x1.x - x2.x) * (x1.x - x2.x)
+    select 3600 * degrees(2 * ASIN(SQRT( (x1.x - x2.x) * (x1.x - x2.x)
                                    + (x1.y - x2.y) * (x1.y - x2.y)
                                    + (x1.z - x2.z) * (x1.z - x2.z)
                                    )
                                / 2
                               )
                      ) AS assoc_distance_arcsec
-          ,SQRT( (x1.ra - x2.ra) * COS(rad(x1.decl)) * (x1.ra - x2.ra) * COS(rad(x1.decl)) 
+          ,SQRT( (x1.ra - x2.ra) * COS(radians(x1.decl)) * (x1.ra - x2.ra) * COS(radians(x1.decl)) 
                  / (x1.ra_err * x1.ra_err + x2.ra_err * x2.ra_err)
-               + (x1.decl - x2.decl) * COS(rad(x1.decl)) * (x1.decl - x2.decl) * COS(rad(x1.decl)) 
+               + (x1.decl - x2.decl) * COS(radians(x1.decl)) * (x1.decl - x2.decl) * COS(radians(x1.decl)) 
                  / (x1.decl_err * x1.decl_err + x2.decl_err * x2.decl_err)
                ) AS assoc_r
-          ,LOG10(EXP((( (x1.ra - x2.ra) * COS(rad(x1.decl)) * (x1.ra - x2.ra) * COS(rad(x1.decl)) 
+          ,LOG10(EXP((( (x1.ra - x2.ra) * COS(radians(x1.decl)) * (x1.ra - x2.ra) * COS(radians(x1.decl)) 
                         / (x1.ra_err * x1.ra_err + x2.ra_err * x2.ra_err)
-                       + (x1.decl - x2.decl) * COS(rad(x1.decl)) * (x1.decl - x2.decl) * COS(rad(x1.decl)) 
+                       + (x1.decl - x2.decl) * COS(radians(x1.decl)) * (x1.decl - x2.decl) * COS(radians(x1.decl)) 
                         / (x1.decl_err * x1.decl_err + x2.decl_err * x2.decl_err)
                       )
                      ) / 2

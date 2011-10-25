@@ -7,6 +7,7 @@
  */
 CREATE TABLE zones (
   zone PRIMARY KEY, 
+  zoneheight double precision not null,
   decl_min double precision, 
   decl_max double precision, 
 );

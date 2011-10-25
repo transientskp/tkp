@@ -113,8 +113,8 @@ INSERT INTO catalogedsources
         ,CASE WHEN a_I / arms >= 10 
               THEN 1.5
               ELSE CASE WHEN amajor <> 0
-                        THEN SQRT(2.25 + arms * arms * (amajor * amajor * SIN(rad(apa)) * SIN(rad(apa)) 
-                                                       + aminor * aminor * COS(rad(apa)) * COS(rad(apa))
+                        THEN SQRT(2.25 + arms * arms * (amajor * amajor * SIN(radians(apa)) * SIN(radians(apa)) 
+                                                       + aminor * aminor * COS(radians(apa)) * COS(radians(apa))
                                                        ) / (1.69 * a_I * a_I))
                         ELSE SQRT(2.25 + arms * arms * 2916 / (1.69 * a_I * a_I))
                    END
@@ -122,11 +122,11 @@ INSERT INTO catalogedsources
         ,CASE WHEN a_I / arms >= 10 
               THEN 1.5
               ELSE CASE WHEN amajor <> 0
-                        THEN SQRT(2.25 + arms * arms * (amajor * amajor * COS(rad(apa)) * COS(rad(apa)) 
-                                                       + aminor * aminor * SIN(rad(apa)) * SIN(rad(apa))
+                        THEN SQRT(2.25 + arms * arms * (amajor * amajor * COS(radians(apa)) * COS(radians(apa)) 
+                                                       + aminor * aminor * SIN(radians(apa)) * SIN(radians(apa))
                                                        ) / (1.69 * a_I * a_I)) 
                         ELSE SQRT(2.25 + arms * arms * 2916 
-                                 / (1.69 * a_I * a_I * SIN(rad(aviz_DEJ2000)) * SIN(rad(aviz_DEJ2000)))
+                                 / (1.69 * a_I * a_I * SIN(radians(aviz_DEJ2000)) * SIN(radians(aviz_DEJ2000)))
                                  )
                    END
          END
@@ -134,9 +134,9 @@ INSERT INTO catalogedsources
               THEN 325000000.0
               ELSE 325000000.0
          END
-        ,COS(rad(aviz_DEJ2000)) * COS(rad(aviz_RAJ2000))
-        ,COS(rad(aviz_DEJ2000)) * SIN(rad(aviz_RAJ2000))
-        ,SIN(rad(aviz_DEJ2000))
+        ,COS(radians(aviz_DEJ2000)) * COS(radians(aviz_RAJ2000))
+        ,COS(radians(aviz_DEJ2000)) * SIN(radians(aviz_RAJ2000))
+        ,SIN(radians(aviz_DEJ2000))
         ,aflg1
         ,CASE WHEN aflg2 = '*'
               THEN aflg2

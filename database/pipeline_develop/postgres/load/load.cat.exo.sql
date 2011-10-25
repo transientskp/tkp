@@ -72,9 +72,9 @@ INSERT INTO catalogedsources
         ,CAST(aDEJ2000 AS DOUBLE)
         ,CAST(ae_RAJ2000 AS DOUBLE)
         ,CAST(ae_DEJ2000 AS DOUBLE)
-        ,COS(rad(CAST(aDEJ2000 AS DOUBLE))) * COS(rad(CAST(aRAJ2000 AS DOUBLE)))
-        ,COS(rad(CAST(aDEJ2000 AS DOUBLE))) * SIN(rad(CAST(aRAJ2000 AS DOUBLE)))
-        ,SIN(rad(CAST(aDEJ2000 AS DOUBLE)))
+        ,COS(radians(CAST(aDEJ2000 AS DOUBLE))) * COS(radians(CAST(aRAJ2000 AS DOUBLE)))
+        ,COS(radians(CAST(aDEJ2000 AS DOUBLE))) * SIN(radians(CAST(aRAJ2000 AS DOUBLE)))
+        ,SIN(radians(CAST(aDEJ2000 AS DOUBLE)))
         ,CAST(aFlux AS DOUBLE)
         ,CAST(aFlux_err AS DOUBLE)
     FROM aux_catalogedsources

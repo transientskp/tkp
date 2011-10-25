@@ -56,8 +56,8 @@ SET
   ,freq_eff = 327000000
   /*,ra = @viz_RAJ2000
   ,decl = @viz_DEJ2000*/
-  ,ra = ra2deg(@wsrt_RAB1950)
-  ,decl = decl2deg(@wsrt_DEB1950)
+  ,ra = ra2degrees(@wsrt_RAB1950)
+  ,decl = decl2degrees(@wsrt_DEB1950)
   ,zone = FLOOR(decl)
   ,ra_err = 54/7200
   ,decl_err = 54/(7200*SIN(RADIANS(decl)))

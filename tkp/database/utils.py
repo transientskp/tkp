@@ -194,8 +194,8 @@ def _insert_extractedsources(conn, image_id):
                        ,lI_int_err AS I_int_err
                    FROM detections
                 ) t0
-               ,node n
-          WHERE n.zone = t0.zone
+/*               ,node n
+          WHERE n.zone = t0.zone */
         """
         cursor.execute(query, (image_id,))
         if not AUTOCOMMIT:

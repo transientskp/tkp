@@ -169,7 +169,8 @@ class DBObject(object):
             try:
                 # Insert a default source
                 cursor.execute(query, values)
-                self.database.connection.commit()
+                if not self.database.autocommit:
+                    self.database.connection.commit()
                 self._id = cursor.lastrowid
                 if ENGINE == 'postgresql':
                     self._id = cursor.fetchone()[0]

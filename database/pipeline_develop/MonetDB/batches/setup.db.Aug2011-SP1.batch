@@ -240,10 +240,10 @@ echo -e "\t-------------------------------------------"
 #mclient -h${1} -d${2} < /scratch/bscheers/databases/MonetDB/share/MonetDB/sql/mtime.sql
 
 echo -e "\t\tCreating MonetDB ${2} function deg"
-mclient -h${1} -d${2} < $MONETDBTKPHOME/functions/create.function.deg.sql
+mclient -h${1} -d${2} < $MONETDBTKPHOME/functions/create.function.degrees.sql
 
 echo -e "\t\tCreating MonetDB ${2} function rad"
-mclient -h${1} -d${2} < $MONETDBTKPHOME/functions/create.function.rad.sql
+mclient -h${1} -d${2} < $MONETDBTKPHOME/functions/create.function.radians.sql
 
 echo -e "\t\tCreating MonetDB ${2} function alpha"
 mclient -h${1} -d${2} < $MONETDBTKPHOME/functions/create.function.alpha.sql

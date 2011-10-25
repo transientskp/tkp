@@ -17,7 +17,7 @@ USER = config['database']['user']
 PASSWORD = config['database']['password']
 NAME = config['database']['name']
 PORT = config['database']['port']
-AUTO_COMMIT = config['database']['autocommit']
+AUTOCOMMIT = config['database']['autocommit']
 
 
 if ENGINE == 'monetdb':
@@ -26,6 +26,7 @@ if ENGINE == 'monetdb':
     if PORT == 0:
         PORT = 50000
 elif ENGINE == 'postgresql':
+    AUTOCOMMIT = False  # PostgreSQL does not have autocommit
     import psycopg2 as engine
     if PORT == 0:
         PORT = 5432
@@ -59,7 +60,7 @@ class DataBase(object):
 
     def __init__(self, host=HOST, name=NAME, user=USER,
                  password=PASSWORD, port=PORT,
-                 autocommit=AUTO_COMMIT):
+                 autocommit=AUTOCOMMIT):
         """Set up a database connection object
 
         Raises an exception if not enabled.
@@ -71,7 +72,7 @@ class DataBase(object):
         self.user = user
         self.password = password
         self.port = port
-        self.autocommit = autocommit
+        self.autocommit = autocommit if ENGINE != 'postgresql' else False
         self.connection = None
         if not ENABLED:
             raise TKPDataBaseError("Database is not enabled")
@@ -92,7 +93,7 @@ class DataBase(object):
         kwargs = dict(
             host=self.host, user=self.user, password=self.password,
             database=self.name, port=self.port)
-        if ENGINE == 'monetdb':  # PostgreSQL doesn't have autocommit
+        if ENGINE != 'postgresql':  # PostgreSQL doesn't have autocommit
             kwargs['autocommit'] = self.autocommit
         self.connection = engine.connect(**kwargs)
         self.cursor = self.connection.cursor()

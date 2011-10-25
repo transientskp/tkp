@@ -272,7 +272,9 @@ def parse_config(config):
         raise ValueError("""\
 incorrect type for structuring_element in section source_extraction""")
     configuration['source_extraction']['structuring_element'] = elements
-
+    if configuration['database']['engine'] == 'postgresql':
+        # PostgreSQL does not have autocommit
+        configuration['database']['autocommit'] = False
     return configuration
 
 

@@ -1502,14 +1502,14 @@ def set_columns_for_table(conn, table, data=None, where=None):
 
 
 
-def match_nearest_in_catalogs(conn, ra, decl, ra_err, decl_err, radius=1.0,
+def match_nearest_in_catalogs(conn, srcid, radius=1.0,
                               catalogid=None, assoc_r=DERUITER_R/3600.):
     """Match a source with position ra, decl with catalogedsources
     within radius
 
     Args:
 
-        ra, decl, ra_err, decl_err (float): position of the source
+        srcid: xtrsrc_id in runningcatalog
 
     Kwargs:
     
@@ -1531,9 +1531,9 @@ def match_nearest_in_catalogs(conn, ra, decl, ra_err, decl_err, radius=1.0,
     a catalog.
     """
     zoneheight = 1.0
-    x = math.cos(decl/180.*math.pi) * math.cos(ra/180.*math.pi);
-    y = math.cos(decl/180.*math.pi) * math.sin(ra/180.*math.pi);
-    z = math.sin(decl/180.*math.pi);
+    #x = math.cos(decl/180.*math.pi) * math.cos(ra/180.*math.pi);
+    #y = math.cos(decl/180.*math.pi) * math.sin(ra/180.*math.pi);
+    #z = math.sin(decl/180.*math.pi);
 
     catalog_filter = ""
     if catalogid is None:
@@ -1559,29 +1559,31 @@ SELECT
    ,cs.ra_err
    ,cs.decl_err
    ,3600 * DEGREES(2 * ASIN(SQRT(
-       (%%s - cs.x) * (%%s - cs.x)
-       + (%%s - cs.y) * (%%s - cs.y)
-       + (%%s - cs.z) * (%%s - cs.z)
+       (rc.x - cs.x) * (rc.x - cs.x)
+       + (rc.y - cs.y) * (rc.y - cs.y)
+       + (rc.z - cs.z) * (rc.z - cs.z)
        ) / 2)
    ) AS assoc_distance_arcsec
-   ,SQRT( (%%s - cs.ra) * COS(RADIANS(%%s)) * (%%s - cs.ra) * COS(RADIANS(%%s))
-   / (cast(%%s as double precision) * %%s + cs.ra_err * cs.ra_err)
-   + (%%s - cs.decl) * (%%s - cs.decl)
-   / (cast(%%s as double precision) * %%s + cs.decl_err * cs.decl_err)
+   ,SQRT( (rc.wm_ra - cs.ra) * COS(RADIANS(rc.wm_decl)) * (rc.wm_ra - cs.ra) * COS(RADIANS(rc.wm_decl))
+   / (cast(rc.wm_ra_err as double precision) * rc.wm_ra_err + cs.ra_err * cs.ra_err)
+   + (rc.wm_decl - cs.decl) * (rc.wm_decl - cs.decl)
+   / (cast(rc.wm_decl_err as double precision) * rc.wm_decl_err + cs.decl_err * cs.decl_err)
    ) AS assoc_r
 FROM
      catalogedsources cs
     ,catalogs c
+    ,runningcatalog rc
 WHERE
       %(catalog_filter)s
   cs.cat_id = c.catid
-  AND cs.x * %%s + cs.y * %%s + cs.z * %%s > COS(RADIANS(%%s))
-  AND cs.zone BETWEEN CAST(FLOOR((CAST(%%s AS DOUBLE precision) - %%s) / %%s) AS INTEGER)
-                  AND CAST(FLOOR((CAST(%%s AS DOUBLE precision) + %%s) / %%s) AS INTEGER)
-  AND cs.ra BETWEEN %%s - alpha(%%s, %%s)
-                AND %%s + alpha(%%s, %%s)
-  AND cs.decl BETWEEN %%s - %%s
-                  AND %%s + %%s
+  AND rc.xtrsrc_id = %%s
+  AND cs.x * rc.x + cs.y * rc.y + cs.z * rc.z > COS(RADIANS(%%s))
+  AND cs.zone BETWEEN CAST(FLOOR((rc.wm_decl - %%s) / %%s) AS INTEGER)
+                  AND CAST(FLOOR((rc.wm_decl + %%s) / %%s) AS INTEGER)
+  AND cs.ra BETWEEN rc.wm_ra - alpha(%%s, rc.wm_decl)
+                AND rc.wm_ra + alpha(%%s, rc.wm_decl)
+  AND cs.decl BETWEEN rc.wm_decl - %%s
+                  AND rc.wm_decl + %%s
 """ % {'catalog_filter': catalog_filter}
     query = """\
 SELECT 
@@ -1602,11 +1604,9 @@ ORDER BY t.catid ASC, t.assoc_r ASC
     results = []
     try:
         cursor = conn.cursor()
-        cursor.execute(query,  (
-            x, x, y, y, z, z, ra, decl, ra, decl, ra_err, ra_err, decl, decl,
-            decl_err, decl_err, x, y, z, radius, decl, radius,
-            zoneheight, decl, radius, zoneheight, ra, radius, decl, ra, radius,
-            decl, decl, radius, decl, radius, assoc_r))
+        cursor.execute(query,  (srcid, radius, radius, zoneheight,
+                                radius, zoneheight, radius, radius,
+                                radius, radius, assoc_r))
         results = cursor.fetchall()
         results = [
             {'catsrcid': result[0], 'catsrcname': result[1],
@@ -1616,11 +1616,8 @@ ORDER BY t.catid ASC, t.assoc_r ASC
              'dist_arcsec': result[8], 'assoc_r': result[9]}
             for result in results]
     except db.Error, e:
-        query = query % (
-            x, x, y, y, z, z, ra, decl, ra, decl, ra_err, ra_err, decl, decl,
-            decl_err, decl_err, x, y, z, radius, decl, radius,
-            zoneheight, decl, radius, zoneheight, ra, radius, decl, ra, radius,
-            decl, decl, radius, decl, radius, assoc_r)
+        query = query % (srcid, radius, radius, zoneheight, radius, zoneheight,
+                         radius, radius, radius, radius, assoc_r)
         logging.warn("Failed on query %s:", query)
         raise
     finally:

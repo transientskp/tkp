@@ -22,11 +22,10 @@ def match_catalogs(transient):
     # Hardcode the catalogs for now
     catalogs = {3: 'NVSS', 4: 'VLSS', 5: 'WENSS', 6: 'WENSS'} 
     database = DataBase()
-    pos = transient.position
     results = {}
     for key, value in catalogs.iteritems():
         results[value] = match_nearest_in_catalogs(
-            database.connection, pos.ra, pos.dec, pos.ra_err, pos.dec_err,
+            database.connection, transient.srcid,
             radius=1, catalogid=key, assoc_r=.1)
         if len(results[value]) > 0:
             results[value] = results[value][0]

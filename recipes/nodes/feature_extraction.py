@@ -20,10 +20,8 @@ import random
 import time
 import traceback
 from contextlib import closing
-
 from lofarpipe.support.lofarnode import LOFARnodeTCP
 from lofarpipe.support.utilities import log_time
-
 import numpy
 import monetdb
 
@@ -38,7 +36,6 @@ class feature_extraction(LOFARnodeTCP):
         if tkpconfigdir:   # allow nodes to pick up the TKPCONFIGDIR
             os.environ['TKPCONFIGDIR'] = tkpconfigdir
         from tkp.database.database import DataBase
-        from tkp.database.database import ENGINE
         from tkp.classification.features import lightcurve as lcmod
         from tkp.classification.features import catalogs as catmod
         from tkp.database.dataset import ExtractedSource
@@ -47,7 +44,6 @@ class feature_extraction(LOFARnodeTCP):
         from tkp.classification.manual.utils import DateTime
         with log_time(self.logger):
             with closing(DataBase()) as database:
-                self.logger.info("ENGINE = %s", ENGINE)
                 try:
                     source = ExtractedSource(id=transient.srcid, database=database)
                     lightcurve = lcmod.LightCurve(*zip(*source.lightcurve()))

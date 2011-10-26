@@ -30,9 +30,7 @@ class classification(LOFARnodeTCP):
         from tkp.classification.manual.classifier import Classifier
         from tkp.classification.manual.transient import Transient
         import tkp
-        from tkp.database.database import ENGINE
         with log_time(self.logger):
-            self.logger.info("ENGINE = %s", ENGINE)
             try:
                 self.logger.info("Classifying transient #%d", 
                     transient.srcid)

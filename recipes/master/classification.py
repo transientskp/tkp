@@ -47,32 +47,11 @@ from lofarpipe.support.remotecommand import ComputeJob
 from lofarpipe.support import lofaringredient
 
 import tkp.config
-from tkp.database.database import ENGINE
 import tkp.classification
 import tkp.classification.manual
 from tkp.classification.manual.classifier import Classifier
 from tkp.classification.manual.utils import Position
 from tkp.classification.manual.utils import DateTime
-
-
-SQL = dict(DELETE="""\
-DELETE FROM classification
-WHERE transient_id = (
-   SELECT transientid
-   FROM transients
-   WHERE xtrsrc_id = %s)
-""",
-           INSERT="""\
-INSERT INTO classification
-(transient_id, classification, weight)
-VALUES ((SELECT transientid FROM transients WHERE xtrsrc_id=%s), %s, %s)
-""",
-           INSERT2="""\
-INSERT INTO classification
-(transient_id, classification, weight)
-VALUES (%s)
-""")
-
 
 
 class classification(BaseRecipe, RemoteCommandRecipeMixIn):
@@ -97,7 +76,6 @@ class classification(BaseRecipe, RemoteCommandRecipeMixIn):
         )
 
     def go(self):
-        self.logger.info("ENGINE = %s", ENGINE)
         super(classification, self).go()
         transients = self.inputs['transients']
         weight_cutoff = float(self.inputs['weight_cutoff'])

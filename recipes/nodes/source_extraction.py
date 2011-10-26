@@ -27,7 +27,6 @@ class source_extraction(LOFARnodeTCP):
         import tkp
         from tkp.config import config
         from tkp.database.database import DataBase
-        from tkp.database.database import ENGINE
         from tkp.database.dataset import DataSet
         from tkp.utility.accessors import FITSImage
         from tkp.utility.accessors import dbimage_from_accessor
@@ -52,7 +51,6 @@ class source_extraction(LOFARnodeTCP):
         
         with log_time(self.logger):
             with closing(DataBase()) as database:
-                self.logger.info("ENGINE = %s", ENGINE)
                 dataset = DataSet(id=dataset_id, database=database)
                 fitsimage = FITSImage(image)
                 db_image = dbimage_from_accessor(dataset=dataset,

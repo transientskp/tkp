@@ -1160,7 +1160,9 @@ SELECT
 """
         cursor.execute(query, (dsid, V_lim, eta_lim))
         results = cursor.fetchall()
-        results = [dict(srcid=x[0], npoints=x[2], v_nu=x[7], eta_nu=x[8])
+        results = [dict(
+            srcid=x[0], npoints=x[2], v_nu=x[7], eta_nu=x[8], dataset=x[1],
+            ra=x[3], dec=x[4], ra_err=x[5], dec_err=x[6])
                    for x in results]
         if not AUTOCOMMIT:
             conn.commit()

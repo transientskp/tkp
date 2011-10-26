@@ -27,67 +27,6 @@ from tkp.classification.manual.utils import Position
 from tkp.classification.manual.utils import DateTime
 
 
-SQL = dict(
-    position="""\
-SELECT
-     ra, decl, ra_err, decl_err
-FROM
-    extractedsources x1
-WHERE
-    x1.xtrsrcid = %s
-""",
-    dataset="""\
-SELECT
-    ds.dsinname
-FROM
-    extractedsources x, images im, datasets ds
-WHERE
-    x.xtrsrcid = %s
-  AND x.image_id = im.imageid
-  AND im.ds_id = ds.dsid
-""",
-    siglevel="""\
-SELECT
-   xtrsrc_id
-  ,datapoints
-  ,sqrt(datapoints*(avg_I_peak_sq - avg_I_peak*avg_I_peak)/(datapoints-1)) /avg_I_peak as V
-  ,(datapoints/(datapoints-1)) * (avg_weighted_I_peak_sq - avg_weighted_I_peak*avg_weighted_I_peak/avg_weight_peak) as eta
-FROM runningcatalog
-WHERE
-    ds_id = %s
-  AND
-    datapoints > 1
-ORDER BY eta DESC
-""",
-    insert="""\
-INSERT INTO transients
-  (xtrsrc_id, status)
-  SELECT
-    b.xtrsrc_id, 1
-  FROM
-    runningcatalog b
-  WHERE
-    b.xtrsrc_id = %s
-   AND
-    b.xtrsrc_id NOT IN
-    (
-      SELECT
-        xtrsrc_id
-      FROM
-        transients
-    )
-""",
-    update="""\
-UPDATE 
-    transients
-SET
-    siglevel = %s
-WHERE
-    xtrsrc_id = %s
-"""
-)
-
-
 class IntList(lofaringredient.ListField):
     """Input that defines a list of ints"""
     def is_valid(self, value):
@@ -135,21 +74,6 @@ class transient_search(BaseRecipe):
         'transients': lofaringredient.ListField(),
         }
 
-    def create_transient(self, srcid, siglevel):
-        """Construct a very basic transient object"""
-
-        self.database.cursor.execute(SQL['position'], (srcid,))
-        results = self.database.cursor.fetchone()
-        #results = map(float, results[0])
-        # calculate an average error for now
-        error = numpy.sqrt(results[2]*results[2] + results[3]*results[3])
-        transient = Transient(srcid=srcid, position=Position(
-            ra=results[0], dec=results[1], error=(results[2], results[3])))
-        transient.siglevel = siglevel
-        self.database.cursor.execute(SQL['dataset'], (srcid,))
-        transient.dataset = self.database.cursor.fetchone()[0]
-        return transient
-
     def go(self):
         super(transient_search, self).go()
         self.logger.info("Selecting transient sources from the database")
@@ -170,22 +94,22 @@ class transient_search(BaseRecipe):
         if len(results) > 0:
             # need (want) sorting by sigma
             # This is not pretty, but it works:
-            results = dict((key,  [result[key] for result in results])
+            tmpresults = dict((key,  [result[key] for result in results])
                            for key in ('srcid', 'npoints', 'v_nu', 'eta_nu'))
-            srcids = numpy.array(results['srcid'])
-            weightedpeaks, N = numpy.array(results['v_nu']), numpy.array(results['npoints'])-1
-            siglevel = chisqprob(results['eta_nu'] * N, N)
+            srcids = numpy.array(tmpresults['srcid'])
+            weightedpeaks, N = (numpy.array(tmpresults['v_nu']),
+                                numpy.array(tmpresults['npoints'])-1)
+            siglevel = chisqprob(tmpresults['eta_nu'] * N, N)
             selection = siglevel < 1/detection_level
             transient_ids = numpy.array(srcids)[selection]
+            selected_results = numpy.array(results)[selection]
             siglevels = siglevel[selection]
-            for transient_id, siglevel in zip(transient_ids, siglevels):
-                transient = self.create_transient(int(transient_id),
-                                                  float(siglevel))
-                #self.database.cursor.execute(SQL['insert'], (transient.srcid,))
-                #self.database.commit()
-                #self.database.cursor.execute(SQL['update'], (
-                #    transient.srcid, transient.siglevel))
-                #self.database.commit()
+            for siglevel, result in zip(siglevels, selected_results):
+                position = Position(ra=result['ra'], dec=result['dec'],
+                                    error=(result['ra_err'], result['dec_err']))
+                transient = Transient(srcid=result['srcid'], position=position)
+                transient.siglevel = siglevel
+                transient.dataset = result['dataset']
                 transients.append(transient)
         else:
             transient_ids = numpy.array([], dtype=numpy.int)

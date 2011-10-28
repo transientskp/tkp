@@ -5,6 +5,7 @@
 #
 
 # Local tkp_lib functionality
+import sys
 import math
 import logging
 import monetdb.sql as db
@@ -1531,10 +1532,6 @@ def match_nearest_in_catalogs(conn, srcid, radius=1.0,
     a catalog.
     """
     zoneheight = 1.0
-    #x = math.cos(decl/180.*math.pi) * math.cos(ra/180.*math.pi);
-    #y = math.cos(decl/180.*math.pi) * math.sin(ra/180.*math.pi);
-    #z = math.sin(decl/180.*math.pi);
-
     catalog_filter = ""
     if catalogid is None:
         catalog_filter = ""
@@ -1569,22 +1566,36 @@ SELECT
    + (rc.wm_decl - cs.decl) * (rc.wm_decl - cs.decl)
    / (cast(rc.wm_decl_err as double precision) * rc.wm_decl_err + cs.decl_err * cs.decl_err)
    ) AS assoc_r
-FROM
-     catalogedsources cs
+FROM (
+     SELECT
+     wm_ra - alpha(%%s, wm_decl) as ra_min
+    ,wm_ra + alpha(%%s, wm_decl) as ra_max
+    ,CAST(FLOOR((wm_decl - %%s) / %%s) AS INTEGER) as zone_min
+    ,CAST(FLOOR((wm_decl + %%s) / %%s) AS INTEGER) as zone_max
+    ,wm_decl - %%s as decl_min
+    ,wm_decl + %%s as decl_max
+    ,x
+    ,y
+    ,z
+    ,wm_ra
+    ,wm_decl
+    ,wm_ra_err
+    ,wm_decl_err
+    FROM runningcatalog
+    WHERE xtrsrc_id = %%s
+    ) rc
+    ,catalogedsources cs
     ,catalogs c
-    ,runningcatalog rc
 WHERE
       %(catalog_filter)s
   cs.cat_id = c.catid
-  AND rc.xtrsrc_id = %%s
+  AND cs.zone BETWEEN rc.zone_min AND rc.zone_max
+  AND cs.ra BETWEEN rc.ra_min and rc.ra_max
+  AND cs.decl BETWEEN rc.decl_min and rc.decl_max
   AND cs.x * rc.x + cs.y * rc.y + cs.z * rc.z > COS(RADIANS(%%s))
-  AND cs.zone BETWEEN CAST(FLOOR((rc.wm_decl - %%s) / %%s) AS INTEGER)
-                  AND CAST(FLOOR((rc.wm_decl + %%s) / %%s) AS INTEGER)
-  AND cs.ra BETWEEN rc.wm_ra - alpha(%%s, rc.wm_decl)
-                AND rc.wm_ra + alpha(%%s, rc.wm_decl)
-  AND cs.decl BETWEEN rc.wm_decl - %%s
-                  AND rc.wm_decl + %%s
 """ % {'catalog_filter': catalog_filter}
+#  AND cs.ra BETWEEN rc.wm_ra - alpha(%%s, rc.wm_decl)
+#                AND rc.wm_ra + alpha(%%s, rc.wm_decl)
     query = """\
 SELECT 
     t.catsrcid
@@ -1604,9 +1615,9 @@ ORDER BY t.catid ASC, t.assoc_r ASC
     results = []
     try:
         cursor = conn.cursor()
-        cursor.execute(query,  (srcid, radius, radius, zoneheight,
+        cursor.execute(query,  (radius, radius, radius, zoneheight,
                                 radius, zoneheight, radius, radius,
-                                radius, radius, assoc_r))
+                                srcid, radius, assoc_r))
         results = cursor.fetchall()
         results = [
             {'catsrcid': result[0], 'catsrcname': result[1],
@@ -1616,8 +1627,9 @@ ORDER BY t.catid ASC, t.assoc_r ASC
              'dist_arcsec': result[8], 'assoc_r': result[9]}
             for result in results]
     except db.Error, e:
-        query = query % (srcid, radius, radius, zoneheight, radius, zoneheight,
-                         radius, radius, radius, radius, assoc_r)
+        query = query % (radius, radius, radius, zoneheight,
+                         radius, zoneheight,
+                         radius, radius, srcid, radius, assoc_r)
         logging.warn("Failed on query %s:", query)
         raise
     finally:

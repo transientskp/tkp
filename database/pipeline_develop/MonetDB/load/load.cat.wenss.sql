@@ -88,6 +88,7 @@ FROM
 /* '/zfs/heastro-plex/scratch/evert/catfiles/WENSS-all_strip.csv' */
 /* '/data/scratch/rol/catalogs/WENSS-all_strip.csv' */
 /* '/Users/evert/lofar/data/catalogs/WENSS-all_strip.csv' */
+/* '/home/ts3e11/code/tkp_data/catfiles/WENSS-all_strip.csv' */
 USING DELIMITERS ';', '\n' 
 ;
 

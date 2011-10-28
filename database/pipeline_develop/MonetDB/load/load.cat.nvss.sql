@@ -64,6 +64,7 @@ FROM
 /* '/zfs/heastro-plex/scratch/evert/catfiles/NVSS-all_strip.csv' */
 /* '/data/scratch/rol/catalogs/NVSS-all_strip.csv' */
 /* '/Users/evert/lofar/data/catalogs/NVSS-all_strip.csv' */
+/* '/home/ts3e11/code/tkp_data/catfiles/NVSS-all_strip.csv' */
 USING DELIMITERS ';', '\n'
 NULL AS ''
 ;

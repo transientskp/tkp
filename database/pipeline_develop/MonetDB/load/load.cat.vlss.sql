@@ -54,6 +54,7 @@ FROM
 /* '/export/scratch1/bscheers/code/database/trunk/database/catfiles/vlss/VLSS-all_strip.csv' */
 /* '/data/scratch/rol/catalogs/VLSS-all_strip.csv' */
 /* '/Users/evert/lofar/data/catalogs/VLSS-all_strip.csv' */
+/* '/home/ts3e11/code/tkp_data/catfiles/VLSS-all_strip.csv' */
 USING DELIMITERS ';', '\n'
 NULL AS ''
 ;

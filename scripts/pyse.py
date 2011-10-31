@@ -25,6 +25,7 @@ from optparse import OptionParser
 
 from tkp.utility.accessors import FitsFile
 from tkp.utility.accessors import sourcefinder_image_from_accessor
+from tkp.utility.accessors import writefits
 
 def regions(sourcelist):
     """
@@ -57,7 +58,7 @@ def summary(filename, sourcelist):
         print >>output, "Semi-major axis (arcsec): %s" % (str(source.smaj_asec))
         print >>output, "Semi-minor axis (arcsec): %s" % (str(source.smin_asec))
         print >>output, "Position angle: %s" % (str(source.theta_celes))
-        print >>output, "Peak: %s\n" % (str(source.peak))
+        print >>output, "Flux: %s\n" % (str(source.flux))
     return output.getvalue()
 
 def handle_args():
@@ -70,7 +71,7 @@ def handle_args():
     parser.add_option("--detection", default=10, type="float", help="Detection threshold")
     parser.add_option("--analysis", default=3, type="float", help="Analysis threshold")
     parser.add_option("--regions", action="store_true", help="Generate DS9 region file(s)")
-    parser.add_option("--regionext", default=".reg", help="Extension for DS9 region file(s)")
+    parser.add_option("--residuals", action="store_true", help="Generate residual maps")
     parser.add_option("--bmaj", type="float", help="Major axis of beam")
     parser.add_option("--bmin", type="float", help="Minor axis of beam")
     parser.add_option("--bpa", type="float", help="Beam position angle")
@@ -92,8 +93,9 @@ def set_configuration(options):
 def run_sourcefinder(files, options):
     """
     Iterate over the list of files, running a sourcefinding step on each in
-    turn. If specified, a DS9-compatible region file is dumped for each file.
-    A string containing a human readable list of sources is found.
+    turn. If specified, a DS9-compatible region file and/or a FITS file
+    showing the residuals after Gaussian fitting are dumped for each file.
+    A string containing a human readable list of sources is returned.
     """
     output = StringIO()
     for counter, filename in enumerate(files):
@@ -109,10 +111,13 @@ def run_sourcefinder(files, options):
         imagedata = sourcefinder_image_from_accessor(ff)
         sr = imagedata.extract(options.detection, options.analysis)
         if options.regions:
-            regionfile = os.path.splitext(os.path.basename(filename))[0] + options.regionext
+            regionfile = os.path.splitext(os.path.basename(filename))[0] + ".reg"
             regionfile = open(regionfile, 'w')
             regionfile.write(regions(sr))
             regionfile.close()
+        if options.residuals:
+            residualfile = os.path.splitext(os.path.basename(filename))[0] + ".residuals.fits"
+            writefits(imagedata.residuals_from_gauss_fitting, residualfile)
         print >>output, summary(filename, sr),
     return output.getvalue()
 

@@ -117,6 +117,11 @@ def run_sourcefinder(files, options):
             regionfile.close()
         if options.residuals:
             residualfile = os.path.splitext(os.path.basename(filename))[0] + ".residuals.fits"
+            try:
+                os.unlink(residualfile)
+            except OSError:
+                # Thrown if file didn't exist
+                pass
             writefits(imagedata.residuals_from_gauss_fitting, residualfile)
         print >>output, summary(filename, sr),
     return output.getvalue()

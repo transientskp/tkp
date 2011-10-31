@@ -135,7 +135,7 @@ SELECT t.catsrcname, t.i_int_avg FROM
 SELECT catsrcid
       ,catsrcname
       ,i_int_avg
-      ,3600 * DEG(2 * ASIN(SQRT((%s - c1.x) * (%s - c1.x)
+      ,3600 * DEGREES(2 * ASIN(SQRT((%s - c1.x) * (%s - c1.x)
                                    + (%s - c1.y) * (%s - c1.y)
                                    + (%s - c1.z) * (%s - c1.z)
                                    ) / 2) 
@@ -144,7 +144,7 @@ SELECT catsrcid
       ,catalogs c0
  WHERE c1.cat_id = c0.catid
    AND c0.catname = %s
-   AND c1.x * %s + c1.y * %s + c1.z * %s > COS(RAD(1.0))
+   AND c1.x * %s + c1.y * %s + c1.z * %s > COS(RADIANS(1.0))
    AND c1.zone BETWEEN CAST(FLOOR((%s - 1.0) / 1.0) AS INTEGER)
                    AND CAST(FLOOR((%s + 1.0) / 1.0) AS INTEGER)
    AND c1.ra BETWEEN %s - alpha(1.0, %s)

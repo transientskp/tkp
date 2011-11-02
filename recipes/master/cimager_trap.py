@@ -120,8 +120,8 @@ class cimager_trap(BaseRecipe, RemoteCommandRecipeMixIn):
         inputs['nproc'] = self.inputs['nproc']
         inputs['directory'] = os.path.dirname(gvds_file)
         outputs = LOFARoutput(self.inputs)
-        if self.cook_recipe('new_vdsmaker', inputs, outputs):
-            self.logger.warn("new_vdsmaker reports failure")
+        if self.cook_recipe('vdsmaker', inputs, outputs):
+            self.logger.warn("vdsmaker reports failure")
             return 1
         self.logger.debug("cimager GVDS is %s" % (gvds_file,))
         self.outputs['gvds'] = gvds_file

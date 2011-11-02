@@ -34,7 +34,6 @@ IFS="
 "
 for filename in $wenss_files
 do
-#  echo "$filename"
   catfile=${filename#"/* '"}
   catfile=${catfile%"' */"}
   if [[ -e "$catfile" && -f "$catfile" && -s "$catfile" ]]
@@ -45,8 +44,7 @@ do
 done
 if [[ -z "$wenss_catfile" ]]
 then
-  echo "Error: can't find WENSS catalog file"
-  exit 1;
+  echo "Warning: can't find WENSS catalog file"
 fi
 echo "WENSS local catalogus file: $wenss_catfile"
 sed -i.bck "s#/\* '${wenss_catfile}' \*/#'${wenss_catfile}'#" ${dir}/../load/load.cat.wenss.sql
@@ -72,8 +70,7 @@ do
 done
 if [[ -z "$nvss_catfile" ]]
 then
-  echo "Error: can't find NVSS catalog file"
-  exit 1;
+  echo "Warning: can't find NVSS catalog file"
 fi
 echo "NVSS local catalogus file: $nvss_catfile"
 sed -i.bck "s#/\* '${nvss_catfile}' \*/#'${nvss_catfile}'#" ${dir}/../load/load.cat.nvss.sql
@@ -98,8 +95,7 @@ do
 done
 if [[ -z "$vlss_catfile" ]]
 then
-  echo "Error: can't find VLSS catalog file"
-  exit 1;
+  echo "Warning: can't find VLSS catalog file"
 fi
 echo "VLSS local catalogus file: $vlss_catfile"
 sed -i.bck "s#/\* '${vlss_catfile}' \*/#'${vlss_catfile}'#" ${dir}/../load/load.cat.vlss.sql

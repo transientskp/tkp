@@ -1,6 +1,6 @@
 #!/bin/sh
 
-export LD_LIBRARY_PATH=/opt/pythonlibs/lib:/opt/wcslib/lib:/home/swinbank/sourcefinder/tkp/lib
+export LD_LIBRARY_PATH=/opt/pythonlibs/lib:/opt/cep/wcslib/lib:/home/swinbank/sourcefinder/tkp/lib
 export PYTHONPATH=/opt/pythonlibs/lib/python/site-packages:/home/swinbank/sourcefinder/deps/lib/python2.5/site-packages:/home/swinbank/sourcefinder/tkp/lib/python
 
 

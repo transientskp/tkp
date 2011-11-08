@@ -42,4 +42,9 @@ then
     datapath='--datapath=/zfs/heastro-plex/scratch/evert/testdata'
 fi
 result=`python ${dir}/test.py ${datapath} "$@"`
+if [[ -n $result ]]; then
+  echo "********** ERROR: **************"
+  echo "$result" 
+  echo "********************************"
+fi
 exit $result

@@ -7,17 +7,7 @@ import logging
 import os
 # Other external libraries
 from datetime import datetime
-# Local tkp_lib functionality
-#import tkp.database.database as db
-import monetdb
-import monetdb.sql
-
-
-HDF5PREAMBLE = """# Region file format: DS9 version 4.0
-# Filename: %(filename)s
-global color=%(icolor)s font="helvetica 10 normal" select=1 highlite=1 edit=1 move=1 delete=1 include=1 fixed=0 source
-fk5
-"""
+import monetdb.sql as db
 
 def createRegionFromCat(
     icatname, ira_min, ira_max, idecl_min, idecl_max, conn, dirname, icolor='green', logger=logging.getLogger()
@@ -62,52 +52,56 @@ def createRegionFromCat(
     except db.Error, e:
         logger.warn("Creating region file for catalog %s failed: " % (str(icatname)))
         raise
-    
 
-def createRegionByImage(
-    image_id, conn, dirname, icolor='green', logger=logging.getLogger()
-):
+def createRegionFileForImage(image_id, conn, dirname, icolor='green'):
     """
     Create a region file for the specified image.
-    Be aware that the directory to which the region file is written
-    is ugo+xwr
     """
     try:
         outfile = dirname + '/' + datetime.now().strftime('%Y%m%d-%H%M') + '_img' + str(image_id) + '.reg'  
         if os.path.isfile(outfile):
             os.remove(outfile)
-        cursor = conn.cursor()
-        # region format
-        # box(a,b,c,d,e)
-        #c&d in arcsec c",d" and e in angle degrees
-        query = """\
-          SELECT t.line 
-            FROM (SELECT '# Region file format: DS9 version 4.0' AS line 
-                   UNION
-                  SELECT CONCAT('# Filename: ', url) AS line                                       
-                    FROM images 
-                   WHERE imageid = %s 
-                   UNION 
-                  SELECT CONCAT('global color=', CONCAT(%s , ' font=\helvetica 10 normal\ select=1 highlite=1 dash=0 edit=1 move=1 delete=1 include=1 fixed=0 source=1')) AS line 
-                   UNION 
-                  SELECT 'fk5' AS line 
-                   UNION 
-                  SELECT CONCAT('box(', CONCAT(ra, CONCAT(',', CONCAT(decl, CONCAT(',', CONCAT(ra_err/2, CONCAT('"', CONCAT(',', CONCAT(decl_err/2, CONCAT('"', CONCAT(',', CONCAT(0, CONCAT(') #color=', CONCAT(%s, CONCAT(' text={', CONCAT(xtrsrcid, '}')))))))))))))))) AS line
-                    FROM extractedsources 
-                   WHERE image_id = %s 
-                 ) t 
-        """
-        cursor.execute(query, (image_id, icolor, icolor, image_id))
-        y = cursor.fetchall()
+        
         regfile = open(outfile,'w')
-        for i in range(len(y)):
-            regfile.write(str(y[i][0]) + '\n')
+        regfile.write('# Region file format: DS9 version 4.1\n')
+        
+        cursor = conn.cursor()
+        query = """\
+        SELECT xtrsrcid
+              ,ra
+              ,decl
+              ,ra_err/2
+              ,decl_err/2
+              ,url
+          FROM extractedsources
+              ,images
+         WHERE imageid = %s
+           AND image_id = imageid
+        """
+        cursor.execute(query, (image_id,))
+        results = zip(*cursor.fetchall())
+        cursor.close()
+        
+        if len(results) != 0:
+            xtrsrcid = results[0]
+            ra = results[1]
+            decl = results[2]
+            width = results[3]
+            height = results[4]
+            url = results[5]
+        if len(results) != 0:
+            regfile.write('# Filename: %s \n' % (url[0],))
+            regfile.write('global color=%s dashlist=8 3 width=1 font="helvetica 10 normal roman" select=1 highlite=1 dash=0 fixed=0 edit=1 move=1 delete=1 include=1 source=1\n' % (icolor,))
+            regfile.write('fk5\n')
+            for i in range(len(xtrsrcid)):
+                # region file format: box(ra,decl,width,height,angle)
+                row = "box(" + str(ra[i]) + ", " + str(decl[i]) + ", " + str(width[i]) + "\", " + str(height[i]) + "\", " + "0.0) # color=" + icolor + " text={" + str(xtrsrcid[i]) + "}\n"
+                regfile.write(row)
         regfile.close()
             
-        cursor.close()
         return outfile
-    except monetdb.monetdb_exceptions.Error, e:
-        logger.warn("Creating region file for image %s failed: " % (str(image_id)))
+    except db.Error, e:
+        logging.warn("Failed on Query %s \nfor reason: %s" % (query, e))
         raise
     
 

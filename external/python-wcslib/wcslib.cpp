@@ -134,8 +134,7 @@ struct wcs
     vector<int> stat(ncoord);
 
     for(int i = 0; i < ntotal; ++i)
-      // C & Python indices are counted from 0
-      pixcrd[i] = 1 + extract<double>(arg[i]);
+      pixcrd[i] = extract<double>(arg[i]);
 
     err = wcsp2s(_wcs, ncoord, _wcs->naxis, &pixcrd[0], &imgcrd[0],
 		 &phi[0], &theta[0], &world[0], &stat[0]);
@@ -183,8 +182,7 @@ struct wcs
 
     list res;
     for(int i = 0; i < ntotal; ++i)
-      // C & Python indices are counted from 0
-      res.append(pixcrd[i] - 1);
+      res.append(pixcrd[i]);
 
     return res;
   }

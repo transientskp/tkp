@@ -5,6 +5,7 @@ from itertools import count
 import logging
 import tkp.database.database as database
 import tkp.database.dataset as ds
+import tkp.database.dbregion as reg
 import tkp.database.utils as dbu
 from tkp.sourcefinder import image
 from tkp.config import config
@@ -24,12 +25,11 @@ db_dbase = config['database']['name']
 db_port = config['database']['port']
 db_autocommit = config['database']['autocommit']
 
-basedir = '/home/bscheers/maps/bell'
-#basedir = '/export/scratch1/bscheers/maps/bell'
+basedir = config['test']['datapath']
 imagesdir = basedir + '/fits'
+regionfilesdir = basedir + '/regions'
 
 db = database.DataBase(host=db_host, name=db_dbase, user=db_user, password=db_passwd, port=db_port, autocommit=db_autocommit)
-#db = database.DataBase(host=db_host, name=db_dbase, port=db_port, autocommit=db_autocommit)
 
 #logtime = time.strftime("%Y%m%d-%H%M")
 #logfile = basedir + '/log/MonetDB_' + db_dbase + '_' + logtime + '.log'
@@ -49,19 +49,18 @@ try:
     files = os.listdir(imagesdir)
     files.sort()
     for file in files:
-        print "\ni: ", i, ", file: ", file
         my_fitsfile = accessors.FitsFile(imagesdir + '/' + file)
         my_image = accessors.sourcefinder_image_from_accessor(my_fitsfile)
         dbimg = accessors.dbimage_from_accessor(dataset, my_fitsfile)
-        print "dbimg: ", dbimg
-        print "dbimg._imageid: ", dbimg.id
+        print "\ni: ", i, "\nfile: ", file, "; dbimg.id: ", dbimg.id
         results = my_image.extract()
         print results
         dbu.insert_extracted_sources(db.connection, dbimg.id, results)
-        #dbu.associate_extracted_sources(db.connection, dbimg.id, deRuiter_r=18.5/3600.)
-        dbu.associate_extracted_sources(db.connection, dataset.id, dbimg.id)
-        #dbu.associate_across_frequencies(db.connection, dataset.id, dbimg.id, deRuiter_r=0.0112)
-        #dbu.associate_with_catalogedsources(db.connection, dbimg.id)
+        dbu.associate_extracted_sources(db.connection, dbimg.id)
+        dbu.associate_with_catalogedsources(db.connection, dbimg.id)
+        print "xtrsrc: ", reg.extractedsourcesInImage(db.connection, dbimg.id, regionfilesdir)
+        print "assoccatsrc: ", reg.assoccatsourcesInImage(db.connection, dbimg.id, regionfilesdir)
+        print "catsrc: ", reg.catsourcesInRegion(db.connection, dbimg.id, 47.0, 59.0, 50.0, 58.0, regionfilesdir,flux_lim=0.09)
         #if i>2: #dbu.variability_detection(conn, dataset.id)
         my_image.clearcache()
         i += 1

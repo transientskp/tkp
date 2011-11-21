@@ -288,6 +288,9 @@ mclient -p$port -h$host -d${dbname} < $MONETDBTKPHOME/functions/create.function.
 echo -e "\t\tCreating MonetDB ${dbname} function getAssocParams"
 mclient -p$port -h$host -d${dbname} < $MONETDBTKPHOME/functions/create.function.getAssocParams.sql || exit 1
 
+echo -e "\t\tCreating MonetDB ${dbname} function getAssocParamsByPos"
+mclient -p$port -h$host -d${dbname} < $MONETDBTKPHOME/functions/create.function.getAssocParamsByPos.sql || exit 1
+
 echo -e "\t\tCreating MonetDB ${dbname} function ra2deg"
 mclient -p$port -h$host -d${dbname} < $MONETDBTKPHOME/functions/create.function.ra2deg.sql || exit 1
 

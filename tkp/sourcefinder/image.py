@@ -462,8 +462,9 @@ class ImageData(object):
         fitting the source.
 
         The results are returned as an instance of
-        :class:`tkp_lib.containers.ExtractionResults`.
+        :class:`tkp.utility.containers.ExtractionResults`.
         """
+
         if not det:
             det = CONFIG['detection_threshold']
         if not anl:
@@ -593,8 +594,9 @@ class ImageData(object):
         is set to ``position``, then the pixel coordinates are fixed
         in the fit.
 
-        Returns an instance of :class:`tkp_lib.extraction.Detection`.
+        Returns an instance of :class:`tkp.sourcefinder.extract.Detection`.
         """
+        
         # We'll mask out anything below threshold*self.rmsmap from the fit.
         labels, num = self.labels.setdefault(
             threshold, ndimage.label(
@@ -637,10 +639,39 @@ class ImageData(object):
         measurement['ybar'] += y-boxsize/2.0
         measurement.sig = (fitme / self.rmsmap[chunk]).max()
 
-        if measurement.moments or measurement.gaussian:
-            return extract.Detection(measurement, self)
-        else:
+        if not measurement.moments and not measurement.gaussian:
             logging.warn("Moments & Gaussian fit failed at %f, %f", x, y)
+            return None
+        return extract.Detection(
+            measurement, self)
+    
+    def fit_fixed_positions(self, sources, boxsize, threshold=0.0, fixed='position'):
+        """Convenience function to fit a list of sources at the given positions
+
+        This function wraps around fit_to_point().
+        
+        Sources is a list of (ra, dec) tuples (not pixel coordinates).
+
+        All other arguments are the same as in fit_to_point(). In
+        particular, boxsize is in pixel coordinates as in
+        fit_to_point, not in sky coordinates.
+        """
+
+        detections = []
+        for source in sources:
+            try:
+                x, y, = self.wcs.s2p(source)
+                detections.append(self.fit_to_point(
+                    x, y, boxsize=boxsize, threshold=threshold, fixed=fixed))
+            except RuntimeError, e:
+                if str(e) == ("wcsp2s error: 8: One or more of the pixel "
+                              "coordinates were invalid"):
+                    logging.warning("Input coordinates (%.2f, %.2f) outside "
+                                    "of image", source[0], source[1])
+                    detections.append(None)
+                else:
+                    raise
+        return detections
 
     def dump_islands(self, det, anl, minsize=4):
         """Identify potential islands"""
@@ -773,5 +804,4 @@ class ImageData(object):
             except RuntimeError:
                 logging.warn("Island not processed; unphysical?")
                 raise
-
         return results

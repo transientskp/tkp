@@ -612,7 +612,6 @@ Unable to estimate gaussian parameters. Proceeding with defaults %s""",
     if (numpy.fabs(xmax-xmin)>2) and (numpy.fabs(ymax-ymin)>2):
         # Now we can do Gauss fitting if the island or subisland has a
         # thickness of more than 2 in both dimensions.
-
         try:
             param.update(gaussian.fitgaussian(data, param, fixed=fixed))
             param.gaussian = True
@@ -707,7 +706,7 @@ class Detection(object):
 
         try:
             self._physical_coordinates()
-        except RuntimeError:
+        except RuntimeError, e:
             logging.warn("Physical coordinates failed at %f, %f" % (
                 self.x, self.y))
             raise
@@ -761,7 +760,6 @@ class Detection(object):
         # The cross product of the local north vector and the local east
         # vector will always be aligned with the center_position vector.
         local_north_position = numpy.array([0., 0., 1./center_position[2]])
-
         # Next, determine the orientation of the y-axis wrt local north
         # by incrementing y by a small amount and converting that
         # to celestial coordinates. That small increment is conveniently
@@ -947,15 +945,17 @@ class Detection(object):
         @rtype: tuple
         """
 
-        # in order to let accept MonetDB the values we convert float64 to float
-        # by float(self.ra.value)
-        return (self.ra.value,
-            self.dec.value,
-            self.ra.error,
-            self.dec.error,
-            self.peak.value,
-            self.peak.error,
-            self.flux.value,
-            self.flux.error,
-            self.sig
+        # The database doesn't recognize numpy.float64 values, so
+        # in order to let the database accept the values, we convert them
+        # to float
+        return (
+            float(self.ra.value),
+            float(self.dec.value),
+            float(self.ra.error),
+            float(self.dec.error),
+            float(self.peak.value),
+            float(self.peak.error),
+            float(self.flux.value),
+            float(self.flux.error),
+            float(self.sig)
         )

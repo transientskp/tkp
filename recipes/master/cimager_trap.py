@@ -184,7 +184,7 @@ class cimager_trap(BaseRecipe, RemoteCommandRecipeMixIn):
                         os.path.basename(vds_data.getString('FileName')).split('.')[0],
                         vds_data.getString("FileName"),
                         str(frequency_range),
-                        vds_data.getString("Extra.FieldDirectionType"),
+                        vds_data.getStringVector("Extra.FieldDirectionType")[0],
                         vds_data.getStringVector("Extra.FieldDirectionRa")[0],
                         vds_data.getStringVector("Extra.FieldDirectionDec")[0],
                         'True', # cimager bug: non-restored image unusable

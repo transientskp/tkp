@@ -4,19 +4,56 @@ import unittest
 from tkp.utility import coordinates
 from tkp.sourcefinder import extract
 from tkp.utility.uncertain import Uncertain
+import wcslib
 
 # Specify the number of digits you want to include when checking if positions are equal.
 nod=12
 
-class wcsSin(unittest.TestCase):
-    # Test of SIN projection in wcslib.
+class Sanity(unittest.TestCase):
+    """Some sanity checks because of issue #2787.
 
+    Previously, 1 was added or subtracted in the
+    pixel <-> sky conversion, resulting in positions
+    being one pixel off in both x and y
+    """
+    
+    def setUp(self):
+        self.wcs = wcslib.wcs()
+        self.wcs.crota = [0, 0]
+        self.wcs.cdelt = [1, 1]
+        self.wcs.crpix = [10, 10]
+        self.wcs.crval = [10, 10]
+        
+    def tests2p(self):
+        x, y = self.wcs.s2p([10, 10])
+        self.assertAlmostEqual(x, 10)
+        self.assertAlmostEqual(y, 10)
+        x, y = self.wcs.s2p([0, 0])
+        self.assertAlmostEqual(x, 0)
+        self.assertAlmostEqual(y, 0)
+        x, y = self.wcs.s2p([1, 1])
+        self.assertAlmostEqual(x, 1)
+        self.assertAlmostEqual(y, 1)
+
+    def testp2s(self):
+        r, d = self.wcs.p2s([10, 10])
+        self.assertAlmostEqual(r, 10)
+        self.assertAlmostEqual(d, 10)
+        r, d = self.wcs.p2s([0, 0])
+        self.assertAlmostEqual(r, 0)
+        self.assertAlmostEqual(d, 0)
+        r, d = self.wcs.p2s([1, 1])
+        self.assertAlmostEqual(r, 1)
+        self.assertAlmostEqual(d, 1)
+
+
+class wcsSin(unittest.TestCase):
     known_values = (
-        ([1441.0, 1441.0], [350.78556352994889, 58.848317299883192],),
-        ([1440.0, 1500.0], [350.85000000000002, 60.815406379421418],),
-        ([1440.0, 1380.0], [350.85000000000002, 56.814593620578577],),
-        ([1380.0, 1440.0], [354.70898191482644, 58.757358624100824],),
-        ([1500.0, 1440.0], [346.99101808517361, 58.757358624100824],),
+        ([1442.0, 1442.0], [350.785563529949, 58.848317299883],),
+        ([1441.0, 1501.0], [350.85000000000002, 60.815406379421418],),
+        ([1441.0, 1381.0], [350.85000000000002, 56.814593620578577],),
+        ([1381.0, 1441.0], [354.70898191482644, 58.757358624100824],),
+        ([1501.0, 1441.0], [346.99101808517361, 58.757358624100824],),
     )
 
     # "header" parameters for this test
@@ -59,11 +96,11 @@ class wcsEquinox(unittest.TestCase):
     # Test change of equinox
 
     known_values = (
-        ([1441.0, 1441.0], [350.78556352994889, 58.848317299883192],),
-        ([1440.0, 1500.0], [350.85000000000002, 60.815406379421418],),
-        ([1440.0, 1380.0], [350.85000000000002, 56.814593620578577],),
-        ([1380.0, 1440.0], [354.70898191482644, 58.757358624100824],),
-        ([1500.0, 1440.0], [346.99101808517361, 58.757358624100824],),
+        ([1442.0, 1442.0], [350.78556352994889, 58.848317299883192],),
+        ([1441.0, 1501.0], [350.85000000000002, 60.815406379421418],),
+        ([1441.0, 1381.0], [350.85000000000002, 56.814593620578577],),
+        ([1381.0, 1441.0], [354.70898191482644, 58.757358624100824],),
+        ([1501.0, 1441.0], [346.99101808517361, 58.757358624100824],),
     )
 
     # "header" parameters for this test

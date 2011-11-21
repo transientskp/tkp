@@ -41,7 +41,8 @@ class DataAccessor(object):
         self.freqeff = None  # Hertz (? MHz?)
         
     def _beamsizeparse(self, bmaj, bmin, bpa):
-        """Needs beam parameters, no defaults."""
+        """Calculate beam in pixels and radians.
+        Needs beam parameters, no defaults."""
 
         semimaj = (bmaj / 2.) * (numpy.sqrt(
             (numpy.sin(numpy.pi * bpa / 180.)**2) /

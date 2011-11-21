@@ -287,7 +287,7 @@ class DataSet(DBObject):
         """Search through the whole dataset for variable sources"""
 
         return dbu.detect_variable_sources(
-            self.database.connection, self.dsid, V_lim, eta_lim)
+            self.database.connection, self._id, V_lim, eta_lim)
 
 
 class Image(DBObject):
@@ -373,18 +373,54 @@ class Image(DBObject):
             self.database.connection, self._id, results=results)
         
     def associate_extracted_sources(self, deRuiter_r=DERUITER_R):
-        """Associate sources from the last images with previously extracted sources within the same dataset
+        """Associate sources from the last images with previously
+        extracted sources within the same dataset
 
         Args:
 
             deRuiter_r (float): The De Ruiter radius for source
                 association. The default value is set through the
                 tkp.config module
-            
         """
         dbu.associate_extracted_sources(
             self.database.connection, self._id, deRuiter_r)
 
+    def match_monitoringlist(self, update_image_column=True,
+                             assoc_r=DERUITER_R, mindistance=30):
+        """Match sources found in the current image with those in the
+        monitoringlist"""
+        
+        image_id = self._id if update_image_column else -1
+        dbu.match_runningcatalog_monitoringlist(
+            self.database.connection, self.dataset.id, image_id,
+            assoc_r=assoc_r, mindistance=mindistance)
+
+    def monitoringsources(self, include_current=False):
+        """Return a list of monitoring sources
+
+        Kwargs:
+
+            include_current (bool): should the method return sources
+            that already have matched sources for this image?
+        """
+
+        exclude_image_id = None if include_current else self._id
+        return dbu.list_monitoringsources(self.database.connection,
+                                          dataset_id=self.ds_id,
+                                          exclude_image_id=exclude_image_id)
+
+    def insert_monitoring_sources(self, results):
+        """Insert the list of measured monitoring sources for this image into
+        extractedsources and runningcatalog
+
+        Note that the insertion into runningcatalog can be done by
+        xtrsrc_id from monitoringlist. In case it is negative, it is
+        appended to runningcatalog, and xtrsrc_id is updated in the
+        monitoringlist.
+        """
+
+        dbu.insert_monitoring_sources(self.database.connection, results, self._id)
+        
         
 class ExtractedSource(DBObject):
     """Class corresponding to the extractedsources table in the database"""

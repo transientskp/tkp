@@ -4,7 +4,6 @@
 # LOFAR Transients Key Project
 #
 
-# Local tkp_lib functionality
 import sys
 import math
 import logging
@@ -214,7 +213,7 @@ def insert_extracted_sources(conn, image_id, results):
     Insert the sources that were detected by the Source Extraction
     procedures into the extractedsources table.
 
-    Therefore, we use a temporary table containing the"raw" detections,
+    Therefore, we use a temporary table containing the "raw" detections,
     from which the sources will then be inserted into extractedsourtces.
     """
 
@@ -1354,25 +1353,6 @@ def associate_catalogued_sources_in_area(conn, ra, dec, radius, deRuiter_r=DERUI
     pass
 
 
-def store_transient_source(conn, srcid, siglevel, t_start):
-    cursor = conn.cursor()
-    try:
-        query = """\
-INSERT INTO transients
-(xtrsrc_id, siglevel, t_start)
-  SELECT rc.xtrsrc_id, '%s', '%s' FROM runningcatalog rc
-  WHERE rc.xtrsrc_id = %%s
-  AND rc.xtrsrc_id NOT IN
-  (SELECT xtrsrc_id FROM transients)""" % (str(siglevel), str(t_start))
-        cursor.execute(query, (srcid,))
-        if not AUTOCOMMIT:
-            conn.commit()
-    except db.Error:
-        logging.warn("Query %s failed", query)
-        raise
-    finally:
-        cursor.close()
-
 def concurrency_test_fixedalpha(conn):
     """Unit test function to test concuurency
     """
@@ -1508,11 +1488,28 @@ def set_columns_for_table(conn, table, data=None, where=None):
             conn.commit()
     except db.Error, e:
         query = query % (values + where_args)
-        logging.warn("Failed on query: %s" % query)
+        logging.warn("Failed on query: %s", query)
         raise
     finally:
-        conn.cursor().close()
+        cursor.close()
 
+
+def get_files_for_ids(conn, image_ids):
+    where_string = ", ".join(["%s"] * len(image_ids))
+    where_tuple = tuple(image_ids)
+    query = ("""SELECT imageid, url FROM images WHERE imageid in (%s)""" % 
+             where_string)
+    cursor = conn.cursor()
+    try:
+        cursor.execute(query, where_tuple)
+        results = cursor.fetchall()
+    except db.Error, e:
+        query = query % where_tuple
+        logging.warn("Query failed: %s", query)
+        raise
+    finally:
+        cursor.close()
+    return results
 
 
 def match_nearest_in_catalogs(conn, srcid, radius=1.0,
@@ -1647,3 +1644,633 @@ ORDER BY t.catid ASC, t.assoc_r ASC
     finally:
         cursor.close()
     return results
+
+
+def match_runningcatalog_monitoringlist(conn, dataset_id, image_id=-1,
+                                        assoc_r=DERUITER_R, mindistance=30):
+    """Match sources that were extracted, with sources in the
+    monitoring list that have no match yet (ie, xtrsrc_id < 0)
+
+    Sources that have no match yet, are normally sources that are "user inserted",
+    most likely with position derived from elsewhere. Hence the userentry flag
+    will remain true, and the position should not be updated to those found by
+    the source finder. The sources will need to be matched to sources in the
+    runningcatalog (and thus have a light curve).
+
+    Args:
+
+        dataset_id (int): the dataset concerned. A monitoring list is only maintained
+            for a specific dataset. Any sources that one wishes to be monitored in
+            a next dataset, should be (re)inserted by hand.
+            
+    Kwargs:
+
+        image_id (int): if image_id is positive, the 'image_id' column of the
+            monitoringlist will also be updated for matched sources
+
+        assoc_r (float): the minimum dimensionless association value. Since the
+            positions in the monitoring list do not bother with positional errors
+            (not relevant for monitoring positions), the assoc_r is calculated
+            using only the errors in the runningcatalog (ie, the matching catalog)
+
+        mindistance (float): while an overall cutoff is set using assoc_r, this value
+            can be quite generous if the errors of the calculated source are large
+            (eg, in the case of low flux levels, which are expected for some of the
+            monitoring sources). mindistance sets the real cutoff for the association:
+            if the minimum calculated distance (in arcsec) is not less than this
+            mindistance, the association fails and the source in the monitoring list
+            is not matched. Note that mindistance will be very frequency and array
+            configuration (or, overall, telescope) dependent.
+            
+    """
+
+    # We need to turn off autocommit, since we use a temporary table and
+    # we need to keep the data in that table around for the next query as well
+    # Ie, the two queries should be in one transaction, and autocommit would
+    # ruin that.
+    conn.set_autocommit(False)
+    cursor = conn.cursor()
+    # This matches sources in the monitoringlist and runningcatalog, based on their
+    # assoc_r. Only for sources that are user inserted (thus ra & decl are obtained
+    # from the monitoringlist), and within the current dataset. No cutoffs are
+    # set for distance or other criteria.
+    query1 = """\
+CREATE LOCAL TEMPORARY TABLE temp_monitoringlist
+AS
+  SELECT
+     t1.monitorid
+    ,t1.xtrsrc_id AS ml_xtrsrc_id
+    ,rc.xtrsrc_id AS rc_xtrsrc_id
+    ,rc.wm_ra AS rc_ra
+    ,rc.wm_decl AS rc_decl
+    ,t1.ra AS ml_ra
+    ,t1.decl AS ml_decl
+    ,3600 * DEGREES(2 * ASIN(SQRT(
+       (rc.x - t1.x) * (rc.x - t1.x)
+       + (rc.y - t1.y) * (rc.y - t1.y)
+       + (rc.z - t1.z) * (rc.z - t1.z)
+       ) / 2)
+       ) AS assoc_distance_arcsec
+    ,SQRT( (rc.wm_ra - t1.ra) * COS(RADIANS(rc.wm_decl)) * (rc.wm_ra - t1.ra) * COS(RADIANS(rc.wm_decl))
+       / (cast(rc.wm_ra_err AS DOUBLE PRECISION) * rc.wm_ra_err)
+       + (rc.wm_decl - t1.decl) * (rc.wm_decl - t1.decl)
+       / (cast(rc.wm_decl_err AS DOUBLE PRECISION) * rc.wm_decl_err)
+       ) AS assoc_r
+    ,rc.ds_id AS ds_id
+  FROM (
+    SELECT
+       ml.monitorid
+      ,ml.xtrsrc_id
+      ,ml.ra
+      ,ml.decl
+      ,ml.COS(RADIANS(decl)) * COS(RADIANS(ra)) AS x
+      ,ml.COS(RADIANS(decl)) * SIN(RADIANS(ra)) AS y
+      ,ml.SIN(RADIANS(decl)) AS z
+   FROM
+     monitoringlist ml,
+     runningcatalog rc
+   WHERE
+     ml.xtrsrc_id = rc.xtrsrc_id
+   AND
+     rc.ds_id = %s
+   ) AS t1, runningcatalog AS rc
+  WHERE rc.ds_id = %s
+  WITH DATA
+"""
+
+    # Every monitor source (ie, every monitorid) may have multiple
+    # associations: we group by monitorid for the minimum distance,
+    # and then use an inner join to get other columns from the table
+    # We match the distance to the minimum distance by float
+    # matching, instead of using 'equal' (which would be imprecise)
+    DOUBLE_PRECISION_CUTOFF = 1e-7
+    query2 = """\
+SELECT
+   t1.monitorid
+  ,assoc_distance_arcsec
+  ,rc_xtrsrc_id
+  ,ml_xtrsrc_id
+  ,ml_ra
+  ,ml_decl
+  ,rc_ra
+  ,rc_decl
+  ,assoc_r
+  ,ds_id
+FROM temp_monitoringlist t1 
+INNER JOIN
+    (SELECT monitorid, MIN(assoc_distance_arcsec) AS mindistance 
+    FROM temp_monitoringlist WHERE assoc_r < %s 
+    GROUP BY monitorid) AS t2 ON
+       t1.monitorid = t2.monitorid
+       AND
+       ABS(t1.assoc_distance_arcsec - t2.mindistance) < 1e-7
+"""
+    try:
+        cursor.execute(query1, (dataset_id, dataset_id))
+        cursor.execute(query2, (assoc_r,))
+        conn.commit()
+        results = cursor.fetchall()  
+    except db.Error, e:
+        query1 = query1 % (dataset_id, dataset_id)
+        query2 = query2 % (assoc_r,)
+        logging.warn("query failed: %s\n%s", query1, query2)
+        cursor.close()
+        raise
+        # For convience, we get a few more columns than is really necessary
+    try:
+        # Now we can get rid of the temporary table
+        cursor.execute("""DROP TABLE temp_monitoringlist""")
+        conn.commit()
+    except db.Error, e:
+        logging.warn("query failed: DROP TABLE temp_monitoringlist")
+        cursor.close()
+        raise
+##     # Perform the same query, but now for sources that have their
+##     # RA & Dec stored in the runningcatalog
+##     # This is largely done to update old xtrsrc_ids in the monitoringlist
+##     # Note that this part could actually be removed:
+##     # old xtrsrc_ids in the monitoringlist belong to an old dataset,
+##     # and should not be around. Or rather, be avoided for the current
+##     # dataset altogether
+##     cursor.execute("""\
+## CREATE LOCAL TEMPORARY TABLE temp_monitoringlist
+## AS
+##   SELECT
+##      t1.monitorid
+##     ,t1.xtrsrc_id AS ml_xtrsrc_id
+##     ,rc.xtrsrc_id AS rc_xtrsrc_id
+##     ,rc.wm_ra AS rc_ra
+##     ,rc.wm_decl AS rc_decl
+##     ,t1.ra AS ml_ra
+##     ,t1.decl AS ml_decl
+##     ,3600 * DEGREES(2 * ASIN(SQRT(
+##        (rc.x - t1.x) * (rc.x - t1.x)
+##        + (rc.y - t1.y) * (rc.y - t1.y)
+##        + (rc.z - t1.z) * (rc.z - t1.z)
+##        ) / 2)
+##        ) AS assoc_distance_arcsec
+##     ,SQRT( (rc.wm_ra - t1.ra) * COS(RADIANS(rc.wm_decl)) * (rc.wm_ra - t1.ra) * COS(RADIANS(rc.wm_decl))
+##        / (cast(rc.wm_ra_err AS DOUBLE PRECISION) * rc.wm_ra_err)
+##        + (rc.wm_decl - t1.decl) * (rc.wm_decl - t1.decl)
+##        / (cast(rc.wm_decl_err AS DOUBLE PRECISION) * rc.wm_decl_err)
+##        ) AS assoc_r
+##     ,rc.ds_id AS ds_id
+##   FROM (
+##     SELECT
+##        ml.monitorid
+##       ,rc.xtrsrc_id
+##       ,rc.wm_ra
+##       ,rc.wm_decl
+##       ,rc.x
+##       ,rc.y
+##       ,rc.z
+##    FROM monitoringlist ml, runningcatalog rc
+##    WHERE ml.xtrsrc_id = rc.xtrsrc_id
+##    ) AS t1, runningcatalog AS rc
+##   WHERE rc.ds_id = %s
+##   WITH DATA
+##   """, (dataset_id,))
+## 
+##     # Every monitor source (ie, every monitorid) may have multiple
+##     # associations: we group by monitorid for the minimum distance,
+##     # and then use an inner join to get other columns from the table
+##     # We match the distance to the minimum distance by float
+##     # matching, instead of using 'equal' (which would be imprecise)
+##     DOUBLE_PRECISION_CUTOFF = 1e-7
+##     cursor.execute("""\
+## SELECT
+##    t1.monitorid
+##   ,assoc_distance_arcsec
+##   ,rc_xtrsrc_id
+##   ,ml_xtrsrc_id
+##   ,ml_ra
+##   ,ml_decl
+##   ,rc_ra
+##   ,rc_decl
+##   ,assoc_r
+##   ,ds_id
+## FROM temp_monitoringlist t1 
+## INNER JOIN
+##     (SELECT monitorid, MIN(assoc_distance_arcsec) AS mindistance 
+##     FROM temp_monitoringlist WHERE assoc_r < %s 
+##     GROUP BY monitorid) AS t2 ON
+##        t1.monitorid = t2.monitorid
+##        AND
+##        ABS(t1.assoc_distance_arcsec - t2.mindistance) < 1e-7
+##        """, (assoc_r,))
+##     conn.commit()
+##     # For convience, we get a few more columns than is really necessary
+##     results.extend(cursor.fetchall())
+##     # Now we can get rid of the temporary table
+##     cursor.execute("""DROP TABLE temp_monitoringlist""")
+##     conn.commit()
+
+    # And set autocommit to its default behaviour again
+    conn.set_autocommit(AUTOCOMMIT)
+
+    # Step through our results, checking the last condition
+    # whether the closest matched sources is within mindistance
+    # as given by the user
+    # If so, update that monitor source by setting xtrsrc_id to
+    # that in the runningcatalog
+    # Also update the image_id column when applicable
+    if image_id > -1:
+        update_image_query = ", image_id = %s" 
+        update_image_tuple = (image_id,)
+    else:
+        update_image_query, update_image_tuple = "", ()
+    query = ("""UPDATE monitoringlist SET xtrsrc_id = %%s%s WHERE """
+             """monitorid = %%s""" % update_image_query)
+    for result in results:
+        if result[1] < mindistance:
+            try:
+                cursor.execute(query,
+                               (results[2],) + update_image_tuple + (results[0],))
+                if not AUTOCOMMIT:
+                    conn.commit()
+            except db.Error, e:
+                query = query % (results[2],) + update_image_tuple + (results[0],)
+                logging.warn("query failed: %s", query)
+                cursor.close()
+                raise
+    cursor.close()
+
+
+def is_monitored(conn, srcid):
+    """Return whether a source is in the monitoring list"""
+
+    cursor = conn.cursor()
+    try:
+        query = """\
+SELECT COUNT(*) FROM monitoringlist WHERE xtrsrc_id = %s"""
+        cursor.execute(query, (srcid,))
+        result = bool(cursor.fetchone()[0])
+    except db.Error, e:
+        query = query % srcid
+        logging.warn("query failed: %s", query)
+        raise
+    finally:
+        cursor.close()
+    return result
+
+
+def list_monitoringsources(conn, dataset_id, exclude_image_id=None):
+    """Return a list of sources positions from the monitoringlist
+
+    Args:
+
+        dataset_id (int): the dataset under consideration
+
+    Kwargs:
+
+        exclude_image_id (int or None): if None, return positions from
+            all sources. Otherwise, exclude the sources which have their
+            image_id column set to exclude_image_id.
+    """
+
+    cursor = conn.cursor()
+    if exclude_image_id is not None:
+        query = """\
+SELECT
+    ra,
+    decl,
+    xtrsrc_id,
+    monitorid
+FROM
+    monitoringlist
+WHERE
+    userentry = true
+  AND image_id <> %s
+"""
+        try:
+            cursor.execute(query, (exclude_image_id,))
+        except db.Error, e:
+            query = query % exclude_image_id
+            logging.warn("query failed: %s", query)
+            cursor.close()
+            raise
+    else:
+        query = """\
+SELECT
+    ra,
+    decl,
+    xtrsrc_id,
+    monitorid
+FROM
+    monitoringlist
+WHERE
+    userentry = true
+"""
+        try:
+            cursor.execute(query)
+        except db.Error, e:
+            logging.warn("query failed: %s", query)
+            cursor.close()
+            raise
+    results = cursor.fetchall()
+    if exclude_image_id is not None:
+        query = """\
+SELECT
+    rc.wm_ra,
+    rc.wm_decl,
+    ml.xtrsrc_id,
+    ml.monitorid
+FROM
+    runningcatalog rc,
+    monitoringlist ml
+WHERE
+    ml.userentry = false
+  AND rc.xtrsrc_id = ml.xtrsrc_id
+  AND rc.ds_id = %s
+  AND image_id <> %s
+"""
+        try:
+            cursor.execute(query, (dataset_id, exclude_image_id))
+        except db.Error, e:
+            query = query % exclude_image_id
+            logging.warn("query failed: %s", query)
+            cursor.close()
+            raise
+    else:
+        query = """\
+SELECT
+    rc.wm_ra,
+    rc.wm_decl,
+    ml.xtrsrc_id,
+    ml.monitorid
+FROM
+    runningcatalog rc,
+    monitoringlist ml
+WHERE
+    ml.userentry = false
+  AND rc.xtrsrc_id = ml.xtrsrc_id
+  AND rc.ds_id = %s
+"""
+        try:
+            cursor.execute(query, (dataset_id,))
+        except db.Error, e:
+            logging.warn("query failed: %s", query)
+            cursor.close()
+            raise
+    results.extend(cursor.fetchall())
+    cursor.close()
+    return results
+
+
+def insert_monitoring_sources(conn, results, image_id):
+    """Insert the list of measured monitoring sources for this image into
+    extractedsources and runningcatalog
+    
+    Note that the insertion into runningcatalog can be done by
+    xtrsrc_id from monitoringlist. In case it is negative, it is
+    appended to runningcatalog, and xtrsrc_id is updated in the
+    monitoringlist.
+    """
+
+    cursor = conn.cursor()
+    for xtrsrc_id, monitorid, result in results:
+        ra, dec, ra_err, dec_err, peak, peak_err, flux, flux_err, sigma = \
+            result.serialize()
+        x = math.cos(math.radians(dec)) * math.cos(math.radians(ra))
+        y = math.cos(math.radians(dec)) * math.sin(math.radians(ra))
+        z = math.sin(math.radians(dec))
+        query = """\
+        INSERT INTO extractedsources
+          (image_id
+          ,zone
+          ,ra
+          ,decl
+          ,ra_err
+          ,decl_err
+          ,x
+          ,y
+          ,z
+          ,det_sigma
+          ,I_peak
+          ,I_peak_err
+          ,I_int
+          ,I_int_err
+          )
+          VALUES
+          (%s
+          ,%s
+          ,%s
+          ,%s
+          ,%s
+          ,%s
+          ,%s
+          ,%s
+          ,%s
+          ,%s
+          ,%s
+          ,%s
+          ,%s
+          ,%s
+          )
+"""
+        try:
+            cursor.execute(
+                query, (image_id, int(math.floor(dec)), ra, dec, ra_err, dec_err,
+                        x, y, z, sigma, peak, peak_err, flux, flux_err))
+            if not AUTOCOMMIT:
+                conn.commit()
+            xtrsrcid = cursor.lastrowid
+        except db.Error, e:
+            query = query % (
+                image_id, int(math.floor(dec)), ra, dec, ra_err, dec_err,
+                x, y, z, sigma, peak, peak_err, flux, flux_err)
+            logging.warn("query failed: %s", query)
+            cursor.close()
+            raise
+        if xtrsrc_id < 0:
+            # Insert as new source into the running catalog
+            # and update the monitoringlist.xtrsrc_id
+            query = """\
+INSERT INTO runningcatalog
+    (xtrsrc_id
+    ,ds_id
+    ,band
+    ,datapoints
+    ,zone
+    ,wm_ra
+    ,wm_decl
+    ,wm_ra_err
+    ,wm_decl_err
+    ,avg_wra
+    ,avg_wdecl
+    ,avg_weight_ra
+    ,avg_weight_decl
+    ,x
+    ,y
+    ,z
+    ,avg_I_peak
+    ,avg_I_peak_sq
+    ,avg_weight_peak
+    ,avg_weighted_I_peak
+    ,avg_weighted_I_peak_sq
+    )
+    SELECT
+        t0.xtrsrcid
+        ,im.ds_id
+        ,im.band
+        ,1
+        ,t0.zone
+        ,t0.ra
+        ,t0.decl
+        ,t0.ra_err
+        ,t0.decl_err
+        ,t0.ra
+        ,t0.decl
+        ,t0.ra_err
+        ,t0.decl_err
+        ,t0.x
+        ,t0.y
+        ,t0.z
+        ,t0.flux
+        ,t0.flux_sq
+        ,t0.flux
+        ,t0.flux
+        ,t0.flux_sq
+    FROM (SELECT
+        ex.image_id
+        ,ex.xtrsrcid
+        ,ex.zone
+        ,ex.ra
+        ,ex.decl
+        ,ex.ra_err
+        ,ex.decl_err
+        ,ex.x
+        ,ex.y
+        ,ex.z 
+        ,ex.i_peak as flux
+        ,ex.i_peak * ex.i_peak as flux_sq
+        FROM extractedsources ex
+        WHERE ex.xtrsrcid = %s
+        ) as t0, images im
+    WHERE im.imageid = %s
+"""
+            try:
+                cursor.execute(query, (xtrsrcid, image_id))
+                if not AUTOCOMMIT:
+                    conn.commit()
+            except db.Error, e:
+                query = query % (image_id, xtrsrcid)
+                logging.warn("query failed: %s", query)
+                cursor.close()
+                raise
+            # Add it to the association table as well
+            query = """\
+INSERT INTO assocxtrsources
+  (
+  xtrsrc_id,
+  assoc_xtrsrc_id,
+  assoc_weight,
+  assoc_distance_arcsec,
+  assoc_lr_method,
+  assoc_r, assoc_lr
+  )
+VALUES
+  (%s, %s, 0, 0, 0, 0, 0)"""
+            try:
+                cursor.execute(query, (xtrsrcid, xtrsrcid))
+                if not AUTOCOMMIT:
+                    conn.commit()
+            except db.Error, e:
+                query = query % (xtrsrcid, xtrsrcid)
+                logging.warn("query failed: %s", query)
+                cursor.close()
+                raise
+            # Now update the monitoringlist.xtrsrc_id
+            # (note: the original negative xtrsrc_id
+            #  is still held safely in memory)
+            query = """\
+UPDATE monitoringlist SET xtrsrc_id=%s, image_id=%s WHERE monitorid=%s"""
+            try:
+                cursor.execute(query, (xtrsrcid, image_id, monitorid))
+                if not AUTOCOMMIT:
+                    conn.commit()
+            except db.Error, e:
+                query = query % (xtrsrcid, xtrsrc_id)
+                logging.warn("query failed: %s", query)
+                cursor.close()
+                raise                    
+        else:
+            # We don't update the runningcatalog:
+            # - the fluxes are below the detection limit, and
+            #   add little to nothing
+            # - the positions will have large errors, and
+            #   contribute very litte to the average position
+            # We thus only need to update the association table,
+            # and the image_id in the monitoringlist
+            # the xtrsrc_id from the monitoringlist already
+            # points to the original/first point
+            query = """\
+INSERT INTO assocxtrsources (xtrsrc_id, assoc_xtrsrc_id, assoc_weight, assoc_distance_arcsec, assoc_lr_method, assoc_r, assoc_lr)
+VALUES (%s, %s, 0, 0, 0, 0, 0)"""
+            try:
+                cursor.execute(query, (xtrsrc_id, xtrsrcid))
+                if not AUTOCOMMIT:
+                    conn.commit()
+            except db.Error, e:
+                query = query % (xtrsrc_id, xtrsrcid)
+                logging.warn("query failed: %s", query)
+                cursor.close()
+                raise
+            query = """\
+UPDATE monitoringlist SET image_id=%s WHERE monitorid=%s"""
+            try:
+                cursor.execute(query, (image_id, monitorid))
+                if not AUTOCOMMIT:
+                    conn.commit()
+            except db.Error, e:
+                query = query % (xtrsrcid, xtrsrc_id)
+                logging.warn("query failed: %s", query)
+                cursor.close()
+                raise                    
+    cursor.close()
+    
+
+def insert_transient(conn, srcid):
+    """Insert a transient source in the database.
+    Transients are stored both in the monitoring list and
+    in the transients table.
+    Do not store if already there.
+    """
+
+    cursor = conn.cursor()
+    try:
+        query = """\
+INSERT INTO transients
+(xtrsrc_id)
+  SELECT rc.xtrsrc_id FROM runningcatalog rc
+  WHERE rc.xtrsrc_id = %s
+  AND rc.xtrsrc_id NOT IN
+  (SELECT xtrsrc_id FROM transients)
+"""
+        cursor.execute(query, (srcid,))
+        if not AUTOCOMMIT:
+            conn.commit()
+    except db.Error:
+        query = query % srcid
+        logging.warn("Query %s failed", query)
+        cursor.close()
+        raise
+    try:
+        query = """\
+INSERT INTO monitoringlist
+(xtrsrc_id, ra, decl, image_id)
+  SELECT ex.xtrsrcid, 0, 0, ex.image_id
+  FROM extractedsources ex
+  WHERE ex.xtrsrcid = %s
+  AND ex.xtrsrcid NOT IN
+  (SELECT xtrsrc_id FROM monitoringlist)
+"""
+        cursor.execute(query, (srcid,))
+        if not AUTOCOMMIT:
+            conn.commit()
+    except db.Error:
+        query = query % srcid
+        logging.warn("Query %s failed", query)
+        cursor.close()
+        raise
+    cursor.close()

@@ -22,6 +22,7 @@ from lofarpipe.support import lofaringredient
 
 import tkp.database.database
 import tkp.database.dataset
+import tkp.database.utils as dbu
 from tkp.classification.manual.transient import Transient
 from tkp.classification.manual.utils import Position
 from tkp.classification.manual.utils import DateTime
@@ -110,6 +111,9 @@ class transient_search(BaseRecipe):
                 transient = Transient(srcid=result['srcid'], position=position)
                 transient.siglevel = siglevel
                 transient.dataset = result['dataset']
+                transient.monitored = dbu.is_monitored(
+                    self.database.connection, transient.srcid)
+                dbu.insert_transient(self.database.connection, transient.srcid)
                 transients.append(transient)
         else:
             transient_ids = numpy.array([], dtype=numpy.int)

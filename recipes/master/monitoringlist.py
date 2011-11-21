@@ -1,40 +1,52 @@
 from __future__ import with_statement
-from contextlib import contextmanager
+from __future__ import division
 
-import os
+
+__author__ = 'Evert Rol / TKP software group'
+__email__ = 'evert.astro@gmail.com'
+__contact__ = __author__ + ', ' + __email__
+__copyright__ = '2011, University of Amsterdam'
+__version__ = '0.1'
+__last_modification__ = '2011-11-09'
+
+
+
 import sys
+import os
+from contextlib import closing
 import itertools
 import lofarpipe.support.lofaringredient as ingredient
 from lofarpipe.support.baserecipe import BaseRecipe
 from lofarpipe.support.clusterdesc import ClusterDesc, get_compute_nodes
 from lofarpipe.support.remotecommand import ComputeJob
 from lofarpipe.support.remotecommand import RemoteCommandRecipeMixIn
-import tkp.config
+
+import tkp.database.database
+import tkp.database.dataset
+import tkp.database.utils as dbu
+from tkp.classification.manual.transient import Transient
+from tkp.classification.manual.utils import Position
+from tkp.classification.manual.utils import DateTime
+from tkp.database.database import DataBase
+from tkp.database.dataset import DataSet
 
 
-class source_extraction(BaseRecipe, RemoteCommandRecipeMixIn):
+class monitoringlist(BaseRecipe, RemoteCommandRecipeMixIn):
     """
-    Extract sources from a FITS image
+    Update the monitoring list with newly found transients.
+    Transients that are already in the monitoring list will get
+    their position updated from the runningcatalog.
     """
-
+    
     inputs = {
-        'images': ingredient.ListField(
-            '--images',
-            help="List of FITS images"
-        ),
-        'detection_level': ingredient.FloatField(
-            '--detection-level',
-            help='Detection level for sources'
+        'image_ids': ingredient.ListField(
+            '--image-ids',
+            help="List of database image ids"
         ),
         'dataset_id': ingredient.IntField(
             '--dataset-id',
-            help='Dataset to which images belong',
+            help='Dataset ID for images under consideration',
             default=None
-        ),
-        'radius': ingredient.FloatField(
-            '--radius',
-            help='relative radius for source association',
-            default=1
         ),
         'nproc': ingredient.IntField(
             '--nproc',
@@ -42,15 +54,14 @@ class source_extraction(BaseRecipe, RemoteCommandRecipeMixIn):
             default=8
         ),
         }
-    outputs = {
-        'image_ids': ingredient.ListField()
-        }
-
+    
     def go(self):
-        self.logger.info("Extracting sources")
-        super(source_extraction, self).go()
-        dataset_id = self.inputs['dataset_id']
-
+        super(monitoringlist, self).go()
+        # Get image_ids and their file names
+        with closing(DataBase()) as database:
+            ids_filenames = dbu.get_files_for_ids(
+                database.connection, self.inputs['image_ids'])
+            
         # Obtain available nodes
         clusterdesc = ClusterDesc(self.config.get('cluster', "clusterdesc"))
         if clusterdesc.subclusters:
@@ -71,29 +82,27 @@ class source_extraction(BaseRecipe, RemoteCommandRecipeMixIn):
         command = "python %s" % self.__file__.replace('master', 'nodes')
         jobs = []
         hosts = itertools.cycle(nodes)
-        for image in self.inputs['images']:
+        for image_id, filename in ids_filenames:
             host = hosts.next()
             jobs.append(
                 ComputeJob(
                     host, command,
                     arguments=[
-                        image,
-                        self.inputs['detection_level'],
-                        dataset_id,
-                        self.inputs['radius'],
+                        filename,
+                        image_id,
                         tkp.config.CONFIGDIR
                         ]
                     )
                 )
         jobs = self._schedule_jobs(jobs, max_per_node=self.inputs['nproc'])
-        self.outputs['image_ids'] = [job.results['image_id'] for job in jobs.itervalues()]
+
         #                Check if we recorded a failing process before returning
         # ----------------------------------------------------------------------
         if self.error.isSet():
             self.logger.warn("Failed source extraction process detected")
             return 1
-        else:
-            return 0
+        return 0
+
 
 if __name__ == '__main__':
-    sys.exit(source_extraction().main())
+    sys.exit(transient_search().main())

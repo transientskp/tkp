@@ -38,6 +38,9 @@ class SIP(control):
                     self.run_task("transient_search", [],
                                   dataset_id=dataset.id))
                 outputs.update(
+                    self.run_task("monitoringlist",
+                                  image_ids=outputs['image_ids']))
+                outputs.update(
                     self.run_task("feature_extraction", [],
                                   transients=outputs['transients']))
 

@@ -124,8 +124,6 @@ class classification(BaseRecipe, RemoteCommandRecipeMixIn):
                     t_start = transient.timezero
                 else:
                     t_start = datetime.datetime(1970, 1, 1)
-                dbutils.store_transient_source(
-                    database.connection, transient.srcid, transient.siglevel, t_start)
         if self.error.isSet():
             return 1
         else:

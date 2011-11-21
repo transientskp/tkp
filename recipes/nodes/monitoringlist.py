@@ -1,6 +1,6 @@
 #                                             LOFAR TRANSIENT DETECTION PIPELINE
 #
-#                                                         Source extraction node
+#                          Node recipe to extract sources in the monitoring list
 #                                                                Evert Rol, 2011
 #                                                          evert.astro@gmail.com
 # ------------------------------------------------------------------------------
@@ -15,19 +15,20 @@ from lofarpipe.support.lofarnode import LOFARnodeTCP
 from lofarpipe.support.utilities import log_time
 
 
+BOX_IN_BEAMPIX = 10
+
 class source_extraction(LOFARnodeTCP):
     """
     Extract sources from a FITS image
     """
 
-    def run(self, image, detection_level=5,
-            dataset_id=None, radius=1, tkpconfigdir=None):
+    def run(self, filename, image_id, tkpconfigdir=None):
         if tkpconfigdir:   # allow nodes to pick up the TKPCONFIGDIR
             os.environ['TKPCONFIGDIR'] = tkpconfigdir
-        import tkp
         from tkp.config import config
         from tkp.database.database import DataBase
         from tkp.database.dataset import DataSet
+        from tkp.database.dataset import Image as DBImage
         from tkp.utility.accessors import FITSImage
         from tkp.utility.accessors import dbimage_from_accessor
         from tkp.utility.accessors import sourcefinder_image_from_accessor
@@ -37,38 +38,30 @@ class source_extraction(LOFARnodeTCP):
 
             - image: FITS filename
 
-        Kwargs:
-        
-            - detection_level: minimum detection level
-
             - dataset_id: dataset to which image belongs
-
-            - source association radius, in multiples of the De Ruiter
-              radius; the latter is defined in the TKP configuration
-              file.
 
         """
         
         with log_time(self.logger):
             with closing(DataBase()) as database:
-                dataset = DataSet(id=dataset_id, database=database)
-                fitsimage = FITSImage(image)
-                db_image = dbimage_from_accessor(dataset=dataset,
-                                                 image=fitsimage)
-                self.logger.info("Detecting sources in %s at %f level", 
-                                 image, detection_level)
+                # Obtain the list of sources to be monitored (and not already
+                # detected) for this image
+                fitsimage = FITSImage(filename)
+                db_image = DBImage(id=image_id, database=database)
+                sources = db_image.monitoringsources()
+                self.logger.info("# of undetected monitoring sources = %d",
+                                 len(sources))
                 data_image = sourcefinder_image_from_accessor(fitsimage)
-                results = data_image.extract(det=detection_level)
-                self.logger.info("Detected %d sources", len(results))
-                self.logger.info("database = %s", str(database))
-                db_image.insert_extracted_sources(results)
-                self.logger.info("saved extracted sources to database")
-                deRuiter_r = (radius *
-                              config['source_association']['deruiter_radius'])
-                db_image.associate_extracted_sources(deRuiter_r=deRuiter_r)
-                db_image.match_monitoringlist(update_image_column=True,
-                     assoc_r=deRuiter_r, mindistance=30)
-                self.outputs['image_id'] = db_image.id
+                # Run the source finder on these sources
+                self.logger.info("finding sources")
+                results = data_image.fit_fixed_positions(
+                    [(source[0], source[1]) for source in sources],
+                    boxsize=BOX_IN_BEAMPIX*max(data_image.beam[0], data_image.beam[1]))
+                # Filter out the bad ones, and combines with xtrsrc_ids
+                results = [(source[2], source[3], result) for source, result in zip(sources, results) if result is not None]
+                self.logger.info("found %d sources", len(results))
+                db_image.insert_monitoring_sources(results)
+                
         return 0
 
 if __name__ == "__main__":

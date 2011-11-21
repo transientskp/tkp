@@ -217,6 +217,9 @@ echo -e "\t---------------------------------------------------------------------
 echo -e "\tCreating MonetDB ${dbname} tables to store detected transients & classifications "
 echo -e "\t----------------------------------------------------------------------------"
 
+echo -e "\t\tCreating MonetDB ${dbname} table monitoringlist"
+mclient -p$port -h$host -d${dbname} < $MONETDBTKPHOME/tables/create.table.monitoringlist.sql || exit 1
+
 echo -e "\t\tCreating MonetDB ${dbname} table transients"
 mclient -p$port -h$host -d${dbname} < $MONETDBTKPHOME/tables/create.table.transients.sql || exit 1
 

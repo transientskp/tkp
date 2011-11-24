@@ -151,6 +151,12 @@ def set_default_config():
                '%%(asctime)s - %%(name)s - %%(levelname)s - %%(message)s')
     config.set('logging', 'filename', '')
 
+    config.add_section('alerts')
+    config.set('alerts', 'login', '')
+    config.set('alerts', 'password', '')
+    config.set('alerts', 'server', '')
+    config.set('alerts', 'port', '')
+
     from tkp.tests import __path__ as testpath
     config.add_section('test')
     config.set('test', 'datapath', os.path.join(testpath[0], "data"))
@@ -222,7 +228,9 @@ def parse_config(config):
                 ('source_extraction', 'back_sizey'),
                 ('source_extraction', 'median_filter'),
                 ('source_extraction', 'interpolate_order'),
-                ('source_extraction', 'deblend_nthresh'))
+                ('source_extraction', 'deblend_nthresh'),
+                ('alerts', 'port'),
+                )
     floats = (('source_association', 'deruiter_radius'),
               ('source_extraction', 'mf_threshold'),
               ('source_extraction', 'margin'),

@@ -273,8 +273,13 @@ class Setup(object):
         return config
                         
     def create_minimal_tkp_configfile(self, path):
-        """Write a minimal .tkp.cfg file"""
-        
+        """Write a minimal tkp.cfg file"""
+
+        try:
+            os.mkdir(os.path.dirname(path))
+        except OSError, e:
+            if e.errno != 17:  # Directory already exists
+                raise
         with open(path, 'w') as outfile:
             outfile.write("""\
 [database]
@@ -291,7 +296,7 @@ password = %s
 
     def check_tkp_configfile(self):
         homedir = self.config['default-dirs']['home']
-        path = os.path.join(homedir, '.tkp.cfg')
+        path = os.path.join(homedir, '.transientskp', 'tkp.cfg')
         try:
             open(path)
         except IOError, exc:
@@ -333,8 +338,10 @@ password = %s
             except ImportError, exc:
                 self.logger.error("TKP module %s could not be loaded: %s. "
                                   "Please check and try again", module, exc)
-                if str(exc) == ("libwcs.so.4.3: cannot open shared object "
-                                "file: No such file or directory"):
+                if (str(exc) == ("libwcs.so.4.3: cannot open shared object "
+                                 "file: No such file or directory") or
+                    str(exc) == ("libwcs.so.4: cannot open shared object "
+                                 "file: No such file or directory")):
                     try:
                         self.logger.info(
                             "You may need to add %s to your LD_LIBRARY_PATH "

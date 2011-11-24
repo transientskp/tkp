@@ -155,7 +155,7 @@ def set_default_config():
     config.set('alerts', 'login', '')
     config.set('alerts', 'password', '')
     config.set('alerts', 'server', '')
-    config.set('alerts', 'port', '')
+    config.set('alerts', 'port', '0')
 
     from tkp.tests import __path__ as testpath
     config.add_section('test')

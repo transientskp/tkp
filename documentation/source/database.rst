@@ -83,3 +83,32 @@ command will tell you which catalogs have been loaded (currently,
 March 2011, there are four, since the WENSS comes in two parts). The
 third command will tell you how many catalog sources there are (March
 2011, 2071205 sources).
+
+
+Installation
+------------
+
+If there is no working database on your system, you will have to install MonetDB yourself. Grab the most recent (stable) release from www.monetdb.org, then install in the usual way::
+
+    $> ./configure 
+    $> make
+    ($> make check)
+    $> (sudo) make install
+
+Make sure the installation `bin` directory is in your path, then start up the database server::
+
+    $> monetdbd start
+
+(notice the extra 'd' at the end: monetdb daemon.)
+
+You can check the status of any databases on your system::
+
+    $> monetdb status
+
+You can easily create and then start a database::
+
+    $> monetdb create <name>
+    $> monetdb release <name>
+    $> monetdb start <name>
+
+Normally, the setup script in the `batches/` subdirectory of the database directory will create the database automatically for you.

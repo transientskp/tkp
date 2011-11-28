@@ -12,11 +12,14 @@ Contents:
    :maxdepth: 2
 
    introduction
+   installation
    cookbook
    setup
    database
    trap_py
    recipes
+   monitoringlist
+   
 
 Indices and tables
 ==================

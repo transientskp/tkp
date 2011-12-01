@@ -7,6 +7,8 @@ CALL InsertVersion();
 --SELECT NOW();
 CALL BuildFrequencyBands();
 
+CALL BuildNodes(-90,89);
+
 --SELECT NOW();
 --CALL BuildAssociationClass();
 

@@ -8,6 +8,7 @@ CREATE TABLE node
   )
 ;
 
+/*
 --@node1
 INSERT INTO node
   (zone)
@@ -31,4 +32,4 @@ VALUES (56)
       ,(57)
       ,(58)
 ;
-
+*/

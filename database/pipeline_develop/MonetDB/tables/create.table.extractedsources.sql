@@ -41,16 +41,17 @@
  */
 
 --@single node database
-CREATE SEQUENCE "seq_extractedsources" AS INTEGER
+--CREATE SEQUENCE "seq_extractedsources" AS INTEGER
+--;
+
+
+--@node n
+CREATE SEQUENCE "seq_extractedsources" AS INTEGER 
+  START WITH $start
+  INCREMENT BY $incr
 ;
 
 /*
---@node1
-CREATE SEQUENCE "seq_extractedsources" AS INTEGER 
-  START WITH 1
-  INCREMENT BY 3
-;
-
 --@node2
 CREATE SEQUENCE "seq_extractedsources" AS INTEGER 
   START WITH 2

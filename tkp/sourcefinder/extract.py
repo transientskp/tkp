@@ -21,6 +21,7 @@ except ImportError:
 from deconv import deconv
 from tkp.sourcefinder import utils
 import tkp.sourcefinder.gaussian as gaussian
+import tkp.sourcefinder.fitting as fitting
 import tkp.utility.coordinates as coordinates
 from tkp.utility.uncertain import Uncertain
 from tkp.config import config
@@ -409,7 +410,7 @@ class ParamSet(DictMixin):
         # The peak from "moments" is just the value of the maximum pixel
         # times a correction, fudge_max_pix, for the fact that the
         # centre of the Gaussian is not at the centre of the pixel.
-        # This correction is performed in gaussian.py. The maximum pixel
+        # This correction is performed in fitting.py. The maximum pixel
         # method introduces a peak dependent error corresponding to the last
         # term in the expression below for errorpeaksq.
         # To this, we add, in quadrature, the errors corresponding
@@ -570,7 +571,7 @@ def source_profile_and_errors(data, threshold, noise, beam, fixed=None):
     :type threshold: float
     :argument noise: Noise level in data
     :type noise: float
-    :argument fixed: passed on to gaussian.fitgaussian(): this will
+    :argument fixed: passed on to fitting.fitgaussian(): this will
         lock fit to only occur at that pixel coordinate.
     :type fixed: dict
 
@@ -583,7 +584,7 @@ def source_profile_and_errors(data, threshold, noise, beam, fixed=None):
     param = ParamSet()
 
     try:
-        param.update(gaussian.moments(data, beam, threshold))
+        param.update(fitting.moments(data, beam, threshold))
         param.moments = True
     except ValueError:
         # If this happens, we have two choices:
@@ -613,7 +614,7 @@ Unable to estimate gaussian parameters. Proceeding with defaults %s""",
         # Now we can do Gauss fitting if the island or subisland has a
         # thickness of more than 2 in both dimensions.
         try:
-            param.update(gaussian.fitgaussian(data, param, fixed=fixed))
+            param.update(fitting.fitgaussian(data, param, fixed=fixed))
             param.gaussian = True
             logging.info('Gauss fitting was successful.')
         except ValueError:

@@ -1,8 +1,10 @@
 # Tests for elliptical Gaussian fitting code in the TKP pipeline.
 
 import unittest
-import tkp.sourcefinder.gaussian as gaussian
 import numpy
+
+from tkp.sourcefinder.gaussian import gaussian
+from tkp.sourcefinder.fitting import moments, fitgaussian
 
 # The units that are tested often require information about the resolution element:
 # (semimajor(pixels),semiminor(pixels),beam position angle (radians).
@@ -19,9 +21,9 @@ class SimpleGaussTest(unittest.TestCase):
         self.maj = 40
         self.min = 20
         self.theta = 0
-        self.mygauss = numpy.ma.array(gaussian.gaussian(self.height, self.x, self.y, self.maj, self.min, self.theta)(Xin, Yin))
-        self.moments = gaussian.moments(self.mygauss, beam, 0)
-        self.fit = gaussian.fitgaussian(self.mygauss, self.moments)
+        self.mygauss = numpy.ma.array(gaussian(self.height, self.x, self.y, self.maj, self.min, self.theta)(Xin, Yin))
+        self.moments = moments(self.mygauss, beam, 0)
+        self.fit = fitgaussian(self.mygauss, self.moments)
 
     def testHeight(self):
         self.assertEqual(self.mygauss.max(), self.height)
@@ -61,9 +63,9 @@ class NegativeGaussTest(SimpleGaussTest):
         self.maj = 40
         self.min = 20
         self.theta = 0
-        self.mygauss = numpy.ma.array(gaussian.gaussian(self.height, self.x, self.y, self.maj, self.min, self.theta)(Xin, Yin))
-        self.moments = gaussian.moments(self.mygauss, beam, 0)
-        self.fit = gaussian.fitgaussian(self.mygauss, self.moments)
+        self.mygauss = numpy.ma.array(gaussian(self.height, self.x, self.y, self.maj, self.min, self.theta)(Xin, Yin))
+        self.moments = moments(self.mygauss, beam, 0)
+        self.fit = fitgaussian(self.mygauss, self.moments)
 
     def testHeight(self):
         self.assertEqual(self.mygauss.min(), self.height)
@@ -78,9 +80,9 @@ class CircularGaussTest(SimpleGaussTest):
         self.maj = 40
         self.min = 40
         self.theta = 0
-        self.mygauss = numpy.ma.array(gaussian.gaussian(self.height, self.x, self.y, self.maj, self.min, self.theta)(Xin, Yin))
-        self.moments = gaussian.moments(self.mygauss, beam, 0)
-        self.fit = gaussian.fitgaussian(self.mygauss, self.moments)
+        self.mygauss = numpy.ma.array(gaussian(self.height, self.x, self.y, self.maj, self.min, self.theta)(Xin, Yin))
+        self.moments = moments(self.mygauss, beam, 0)
+        self.fit = fitgaussian(self.mygauss, self.moments)
 
     def testMomentAngle(self):
         pass
@@ -98,10 +100,10 @@ class NarrowGaussTest(SimpleGaussTest):
         self.maj = 40
         self.min = 1
         self.theta = 0
-        self.mygauss = numpy.ma.array(gaussian.gaussian(
+        self.mygauss = numpy.ma.array(gaussian(
             self.height, self.x, self.y, self.maj, self.min, self.theta)(Xin, Yin))
-        self.moments = gaussian.moments(self.mygauss, beam, 0)
-        self.fit = gaussian.fitgaussian(self.mygauss, self.moments)
+        self.moments = moments(self.mygauss, beam, 0)
+        self.fit = fitgaussian(self.mygauss, self.moments)
 
 class RotatedGaussTest(SimpleGaussTest):
     """Rotated by an angle < pi/2"""
@@ -113,10 +115,10 @@ class RotatedGaussTest(SimpleGaussTest):
         self.maj = 40
         self.min = 20
         self.theta = numpy.pi / 4
-        self.mygauss = numpy.ma.array(gaussian.gaussian(
+        self.mygauss = numpy.ma.array(gaussian(
             self.height, self.x, self.y, self.maj, self.min, self.theta)(Xin, Yin))
-        self.moments = gaussian.moments(self.mygauss, beam, 0)
-        self.fit = gaussian.fitgaussian(self.mygauss, self.moments)
+        self.moments = moments(self.mygauss, beam, 0)
+        self.fit = fitgaussian(self.mygauss, self.moments)
 
 class RotatedGaussTest2(SimpleGaussTest):
     """Rotated by an angle > pi/2; theta becomes negative"""
@@ -128,10 +130,10 @@ class RotatedGaussTest2(SimpleGaussTest):
         self.maj = 40
         self.min = 20
         self.theta = 3 * numpy.pi / 4
-        self.mygauss = numpy.ma.array(gaussian.gaussian(
+        self.mygauss = numpy.ma.array(gaussian(
             self.height, self.x, self.y, self.maj, self.min, self.theta)(Xin, Yin))
-        self.moments = gaussian.moments(self.mygauss, beam, 0)
-        self.fit = gaussian.fitgaussian(self.mygauss, self.moments)
+        self.moments = moments(self.mygauss, beam, 0)
+        self.fit = fitgaussian(self.mygauss, self.moments)
 
     def testMomentAngle(self):
         self.assertAlmostEqual(self.moments["theta"], self.theta - numpy.pi)
@@ -150,10 +152,10 @@ class AxesSwapGaussTest(SimpleGaussTest):
         self.maj = 20
         self.min = 40
         self.theta = 0
-        self.mygauss = numpy.ma.array(gaussian.gaussian(
+        self.mygauss = numpy.ma.array(gaussian(
             self.height, self.x, self.y, self.maj, self.min, self.theta)(Xin, Yin))
-        self.moments = gaussian.moments(self.mygauss, beam, 0)
-        self.fit = gaussian.fitgaussian(self.mygauss, self.moments)
+        self.moments = moments(self.mygauss, beam, 0)
+        self.fit = fitgaussian(self.mygauss, self.moments)
 
     def testMomentAngle(self):
         self.assertAlmostEqual(self.moments["theta"], -1 * numpy.pi/2)
@@ -178,7 +180,7 @@ class RandomGaussTest(unittest.TestCase):
 
     def testMoments(self):
         try:
-            gaussian.moments(self.mygauss, beam, 0)
+            moments(self.mygauss, beam, 0)
         except:
             fail('Moments method failed to run.')
 

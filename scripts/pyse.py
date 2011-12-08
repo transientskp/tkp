@@ -27,6 +27,8 @@ from tkp.utility.accessors import FitsFile
 from tkp.utility.accessors import sourcefinder_image_from_accessor
 from tkp.utility.accessors import writefits as tkp_writefits
 
+from tkp.sourcefinder.utils import generate_result_maps
+
 def regions(sourcelist):
     """
     Return a string containing a DS9-compatible region file describing all the
@@ -126,12 +128,14 @@ def run_sourcefinder(files, options):
             regionfile = open(regionfile, 'w')
             regionfile.write(regions(sr))
             regionfile.close()
+        if options.residuals or options.islands:
+            gaussian_map, residual_map = generate_result_maps(imagedata.data, sr)
         if options.residuals:
             residualfile = os.path.splitext(os.path.basename(filename))[0] + ".residuals.fits"
-            writefits(residualfile, imagedata.data_with_islands_subtracted)
+            writefits(residualfile, residual_map)
         if options.islands:
             islandfile = os.path.splitext(os.path.basename(filename))[0] + ".islands.fits"
-            writefits(islandfile, imagedata.gaussian_map)
+            writefits(islandfile, gaussian_map)
         print >>output, summary(filename, sr),
     return output.getvalue()
 

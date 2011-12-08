@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 """
-.. module:: gaussian
+.. module:: image
 
 .. moduleauthor:: TKP, Hanno Spreeuw <software@transientskp.org>
 
@@ -28,9 +28,7 @@ from tkp.sourcefinder import stats
 import extract
 from tkp.utility.memoize import Memoize
 
-
 CONFIG = config['source_extraction']
-
 
 class ImageData(object):
     """Encapsulates an image in terms of a numpy array + metadata.
@@ -778,8 +776,6 @@ class ImageData(object):
         if CONFIG['residuals']:
             self.residuals_from_gauss_fitting = numpy.zeros(self.data.shape)
             self.residuals_from_deblending = numpy.zeros(self.data.shape)
-            self.gaussian_map = numpy.zeros(self.data.shape)
-            self.data_with_islands_subtracted = numpy.array(self.data)
             for island in island_list:
                 self.residuals_from_deblending[island.chunk] += (
                     island.data.filled(fill_value=0.))
@@ -803,17 +799,6 @@ class ImageData(object):
                     self.residuals_from_deblending[island.chunk] -= (
                         island.data.filled(fill_value=0.))
                     self.residuals_from_gauss_fitting[island.chunk] += residual
-                    from tkp.sourcefinder.gaussian import gaussian
-                    local_gaussian = gaussian(
-                        measurement['peak'].value,
-                        measurement['xbar'].value - 1, # FITS pixel vs
-                        measurement['ybar'].value - 1, # numpy array coordinates
-                        measurement['semimajor'].value,
-                        measurement['semiminor'].value,
-                        measurement['theta'].value
-                    )(*numpy.indices(self.data.shape))
-                    self.gaussian_map += local_gaussian
-                    self.data_with_islands_subtracted -= local_gaussian
             except RuntimeError:
                 logging.warn("Island not processed; unphysical?")
                 raise

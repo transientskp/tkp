@@ -8,6 +8,28 @@ This module contain utilities for the source finding routines
 
 import numpy
 import scipy.integrate
+from .gaussian import gaussian
+
+def generate_result_maps(data, sourcelist):
+    """
+    Given a data array (image) and list of sources, return two images, one
+    showing the sources themselves and the other the residual after the
+    sources have been removed from the input data.
+    """
+    residual_map = numpy.array(data) # array constructor copies by default
+    gaussian_map = numpy.zeros(residual_map.shape)
+    for src in sourcelist:
+        local_gaussian = gaussian(
+            src.peak.value,
+            src.x.value - 1, # FITS pixel vs
+            src.y.value - 1, # numpy array coordinates
+            src.smaj.value,
+            src.smin.value,
+            src.theta.value
+        )(*numpy.indices(residual_map.shape))
+        gaussian_map += local_gaussian
+        residual_map -= local_gaussian
+    return gaussian_map, residual_map
 
 
 def calculate_correlation_lengths(semimajor, semiminor):
@@ -40,7 +62,6 @@ def calculate_beamsize(semimajor, semiminor):
 
 def fudge_max_pix(semimajor, semiminor, theta):
     """
-
     Previously, we adopted Rengelink's correction for the
     underestimate of the peak of the Gaussian by the maximum pixel
     method: fudge_max_pix = 1.06. See the WENSS paper

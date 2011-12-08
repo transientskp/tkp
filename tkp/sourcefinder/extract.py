@@ -19,12 +19,12 @@ try:
 except ImportError:
     from scipy import ndimage
 from deconv import deconv
-from tkp.sourcefinder import utils
-import tkp.sourcefinder.gaussian as gaussian
-import tkp.sourcefinder.fitting as fitting
-import tkp.utility.coordinates as coordinates
-from tkp.utility.uncertain import Uncertain
-from tkp.config import config
+from ..utility import coordinates
+from ..config import config
+from ..utility.uncertain import Uncertain
+from .gaussian import gaussian
+from . import fitting
+from . import utils
 
 
 CONFIG = config['source_extraction']
@@ -636,7 +636,7 @@ Unable to estimate gaussian parameters. Proceeding with defaults %s""",
                      param["semimajor"].value,
                      param["semiminor"].value,
                      param["theta"].value)
-        gauss_resid = -(gaussian.gaussian(*gauss_arg)(
+        gauss_resid = -(gaussian(*gauss_arg)(
             *numpy.indices(data.shape)) - data).filled(fill_value=0.)
     else:
         gauss_resid = None

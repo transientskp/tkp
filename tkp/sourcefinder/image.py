@@ -20,13 +20,13 @@ try:
     import ndimage
 except ImportError:
     from scipy import ndimage
-from tkp.config import config
-from tkp.utility import containers
-from tkp.utility import coordinates
-from tkp.sourcefinder import utils
-from tkp.sourcefinder import stats
-import extract
-from tkp.utility.memoize import Memoize
+from ..config import config
+from ..utility import containers
+from ..utility import coordinates
+from ..utility.memoize import Memoize
+from . import utils
+from . import stats
+from . import extract
 
 CONFIG = config['source_extraction']
 

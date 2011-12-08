@@ -72,6 +72,7 @@ def handle_args():
     parser.add_option("--analysis", default=3, type="float", help="Analysis threshold")
     parser.add_option("--regions", action="store_true", help="Generate DS9 region file(s)")
     parser.add_option("--residuals", action="store_true", help="Generate residual maps")
+    parser.add_option("--islands", action="store_true", help="Generate island maps")
     parser.add_option("--bmaj", type="float", help="Major axis of beam")
     parser.add_option("--bmin", type="float", help="Minor axis of beam")
     parser.add_option("--bpa", type="float", help="Beam position angle")
@@ -123,6 +124,27 @@ def run_sourcefinder(files, options):
                 # Thrown if file didn't exist
                 pass
             writefits(imagedata.residuals_from_gauss_fitting, residualfile)
+        if options.islands:
+            islandfile = os.path.splitext(os.path.basename(filename))[0] + ".islands.fits"
+            try:
+                os.unlink(islandfile)
+            except OSError:
+                # Thrown if file didn't exist
+                pass
+            writefits(imagedata.gaussian_map, islandfile,
+                {
+                    "ctype1": "RA---SIN",
+                    "ctype2": "DEC--SIN",
+                    "cunit1": "deg",
+                    "cunit2": "deg",
+                    "crval1": imagedata.wcs.crval[0],
+                    "crval2": imagedata.wcs.crval[1],
+                    "crpix1": imagedata.wcs.crpix[0],
+                    "crpix2": imagedata.wcs.crpix[1],
+                    "cdelt1": imagedata.wcs.cdelt[0],
+                    "cdelt2": imagedata.wcs.cdelt[1],
+                }
+            )
         print >>output, summary(filename, sr),
     return output.getvalue()
 

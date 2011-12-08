@@ -778,6 +778,7 @@ class ImageData(object):
         if CONFIG['residuals']:
             self.residuals_from_gauss_fitting = numpy.zeros(self.data.shape)
             self.residuals_from_deblending = numpy.zeros(self.data.shape)
+            self.gaussian_map = numpy.zeros(self.data.shape)
             for island in island_list:
                 self.residuals_from_deblending[island.chunk] += (
                     island.data.filled(fill_value=0.))
@@ -801,6 +802,15 @@ class ImageData(object):
                     self.residuals_from_deblending[island.chunk] -= (
                         island.data.filled(fill_value=0.))
                     self.residuals_from_gauss_fitting[island.chunk] += residual
+                    from tkp.sourcefinder.gaussian import gaussian
+                    self.gaussian_map += gaussian(
+                        measurement['peak'].value,
+                        measurement['xbar'].value,
+                        measurement['ybar'].value,
+                        measurement['semimajor'].value,
+                        measurement['semiminor'].value,
+                        measurement['theta'].value
+                    )(*numpy.indices(self.data.shape))
             except RuntimeError:
                 logging.warn("Island not processed; unphysical?")
                 raise

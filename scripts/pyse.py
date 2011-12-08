@@ -25,7 +25,7 @@ from optparse import OptionParser
 
 from tkp.utility.accessors import FitsFile
 from tkp.utility.accessors import sourcefinder_image_from_accessor
-from tkp.utility.accessors import writefits
+from tkp.utility.accessors import writefits as tkp_writefits
 
 def regions(sourcelist):
     """
@@ -90,6 +90,16 @@ def set_configuration(options):
     config = config['source_extraction']
     config['back_sizex'] = options.grid
     config['back_sizey'] = options.grid
+    if options.residuals or options.islands:
+        config['residuals'] = True
+
+def writefits(filename, data):
+    try:
+        os.unlink(filename)
+    except OSError:
+        # Thrown if file didn't exist
+        pass
+    tkp_writefits(data, filename)
 
 def run_sourcefinder(files, options):
     """
@@ -106,9 +116,9 @@ def run_sourcefinder(files, options):
             and isinstance(options.bmin, float)
             and isinstance(options.bpa, float)
         ):
-            ff = FitsFile(sys.argv[1], beam=(options.bmaj, options.bmin, options.bpa))
+            ff = FitsFile(filename, beam=(options.bmaj, options.bmin, options.bpa))
         else:
-            ff = FitsFile(sys.argv[1])
+            ff = FitsFile(filename)
         imagedata = sourcefinder_image_from_accessor(ff)
         sr = imagedata.extract(options.detection, options.analysis)
         if options.regions:
@@ -118,33 +128,10 @@ def run_sourcefinder(files, options):
             regionfile.close()
         if options.residuals:
             residualfile = os.path.splitext(os.path.basename(filename))[0] + ".residuals.fits"
-            try:
-                os.unlink(residualfile)
-            except OSError:
-                # Thrown if file didn't exist
-                pass
-            writefits(imagedata.residuals_from_gauss_fitting, residualfile)
+            writefits(residualfile, imagedata.data_with_islands_subtracted)
         if options.islands:
             islandfile = os.path.splitext(os.path.basename(filename))[0] + ".islands.fits"
-            try:
-                os.unlink(islandfile)
-            except OSError:
-                # Thrown if file didn't exist
-                pass
-            writefits(imagedata.gaussian_map, islandfile,
-                {
-                    "ctype1": "RA---SIN",
-                    "ctype2": "DEC--SIN",
-                    "cunit1": "deg",
-                    "cunit2": "deg",
-                    "crval1": imagedata.wcs.crval[0],
-                    "crval2": imagedata.wcs.crval[1],
-                    "crpix1": imagedata.wcs.crpix[0],
-                    "crpix2": imagedata.wcs.crpix[1],
-                    "cdelt1": imagedata.wcs.cdelt[0],
-                    "cdelt2": imagedata.wcs.cdelt[1],
-                }
-            )
+            writefits(islandfile, imagedata.gaussian_map)
         print >>output, summary(filename, sr),
     return output.getvalue()
 

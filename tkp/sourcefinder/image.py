@@ -596,7 +596,7 @@ class ImageData(object):
 
         Returns an instance of :class:`tkp.sourcefinder.extract.Detection`.
         """
-        
+
         # We'll mask out anything below threshold*self.rmsmap from the fit.
         labels, num = self.labels.setdefault(
             threshold, ndimage.label(
@@ -644,12 +644,12 @@ class ImageData(object):
             return None
         return extract.Detection(
             measurement, self)
-    
+
     def fit_fixed_positions(self, sources, boxsize, threshold=0.0, fixed='position'):
         """Convenience function to fit a list of sources at the given positions
 
         This function wraps around fit_to_point().
-        
+
         Sources is a list of (ra, dec) tuples (not pixel coordinates).
 
         All other arguments are the same as in fit_to_point(). In
@@ -779,6 +779,7 @@ class ImageData(object):
             self.residuals_from_gauss_fitting = numpy.zeros(self.data.shape)
             self.residuals_from_deblending = numpy.zeros(self.data.shape)
             self.gaussian_map = numpy.zeros(self.data.shape)
+            self.data_with_islands_subtracted = numpy.array(self.data)
             for island in island_list:
                 self.residuals_from_deblending[island.chunk] += (
                     island.data.filled(fill_value=0.))
@@ -803,14 +804,16 @@ class ImageData(object):
                         island.data.filled(fill_value=0.))
                     self.residuals_from_gauss_fitting[island.chunk] += residual
                     from tkp.sourcefinder.gaussian import gaussian
-                    self.gaussian_map += gaussian(
+                    local_gaussian = gaussian(
                         measurement['peak'].value,
-                        measurement['xbar'].value,
-                        measurement['ybar'].value,
+                        measurement['xbar'].value - 1, # FITS pixel vs
+                        measurement['ybar'].value - 1, # numpy array coordinates
                         measurement['semimajor'].value,
                         measurement['semiminor'].value,
                         measurement['theta'].value
                     )(*numpy.indices(self.data.shape))
+                    self.gaussian_map += local_gaussian
+                    self.data_with_islands_subtracted -= local_gaussian
             except RuntimeError:
                 logging.warn("Island not processed; unphysical?")
                 raise

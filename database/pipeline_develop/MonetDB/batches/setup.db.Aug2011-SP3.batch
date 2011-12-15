@@ -170,7 +170,7 @@ mclient -p$port -h$host -d${dbname} < $MONETDBTKPHOME/tables/create.table.catalo
 
 echo -e "\t\tCreating MonetDB ${dbname} table extractedsources"
 #mclient -p$port -h$host -d${dbname} < $MONETDBTKPHOME/tables/create.table.extractedsources.sql || exit 1
-$MONETDBTKPHOME/tables/create.table.extractedsources.sh $host $dbname $port 1 1 || exit 1
+bash $MONETDBTKPHOME/tables/create.table.extractedsources.sh $host $dbname $port 1 1 || exit 1
 
 echo -e "\t\tCreating MonetDB ${dbname} table assoccatsources"
 mclient -p$port -h$host -d${dbname} < $MONETDBTKPHOME/tables/create.table.assoccatsources.sql || exit 1

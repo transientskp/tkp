@@ -11,8 +11,11 @@ install (DIRECTORY .
 	 FILES_MATCHING PATTERN "*.batch"
   	 PATTERN ".svn" EXCLUDE
 	 )
-install (FILES load/update_catalog_locations.bash tables/create.table.extractedsources.sh
+install (FILES load/update_catalog_locations.bash 
 	 DESTINATION ${CMAKE_INSTALL_PREFIX}/database/load
+	 )
+install (FILES tables/create.table.extractedsources.sh
+	 DESTINATION ${CMAKE_INSTALL_PREFIX}/database/tables
 	 )
 install (CODE
 #         "message(\"hello wordl\")")

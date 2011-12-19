@@ -1,10 +1,10 @@
-# -*- coding: utf-8 -*-
+Software# -*- coding: utf-8 -*-
 
 """
 
 .. module:: sigmaclip
 
-.. moduleauthor:: TKP, Evert rol <software@transientskp.org>
+.. moduleauthor:: TKP, Evert Rol <discovery@transientskp.org>
 
 
 :synposis: Generic sigmaclip routine

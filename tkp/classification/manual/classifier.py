@@ -3,9 +3,10 @@
 Classify a Transient object, according to a user classification tree.
 
 .. module::
-   :synposis: Classify a Transient object, according to a user classification tree.
-   
-.. moduleauthor: Evert Rol, Transient Key Project <software@transientskp.org>
+   :synposis: Classify a Transient object, according to a user classification
+   tree.
+
+.. moduleauthor: Evert Rol, Transient Key Project <discovery@transientskp.org>
 
 
 The actual classification work is done here, in three parts:
@@ -39,7 +40,7 @@ class Branch(object):
     def classify(self):
         """Classify the transient by stepping through the classification
         tree"""
-        
+
         tests = list(itertools.ifilter(
             lambda x: x.startswith('test'), dir(self)))
         for test in tests:
@@ -127,7 +128,7 @@ class Classifier(object):
         Raises:
 
             ImportError, in case the Main branch can't be found.
-            
+
         """
 
         self.transient = transient
@@ -149,7 +150,7 @@ class Classifier(object):
             # Fallback: default classification scheme
             import tkp.classification.manual.classification as m
         return m.Main
-        
+
     def classify(self):
         """Start the actual classification
 
@@ -157,6 +158,6 @@ class Classifier(object):
             containing a description and a weight
         :rtype: list of two-tuples
         """
-        
+
         self.results = self.base(self.transient).classify()
         return self.results

@@ -3,7 +3,7 @@
 """
 .. module:: image
 
-.. moduleauthor:: TKP, Hanno Spreeuw <software@transientskp.org>
+.. moduleauthor:: TKP, Hanno Spreeuw <discovery@transientskp.org>
 
 
 :synposis: Simple image handling

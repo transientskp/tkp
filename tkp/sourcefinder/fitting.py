@@ -4,7 +4,7 @@
 
 .. module:: fitting
 
-.. moduleauthor:: TKP, Hanno Spreeuw <software@transientskp.org>
+.. moduleauthor:: TKP, Hanno Spreeuw <discovery@transientskp.org>
 
 
 :synposis: Source fitting algorithms

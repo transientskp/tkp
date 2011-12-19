@@ -4,8 +4,8 @@ A Transient object class, that stores a variety of information related to any ty
 
 .. module:: transient
    :synopsis: A Transient object class
-   
-.. moduleauthor: Evert Rol, Transient Key Project <software@transientskp.org>
+
+.. moduleauthor: Evert Rol, Transient Key Project <discovery@transientskp.org>
 
 """
 
@@ -30,31 +30,31 @@ class Undefined(object):
     http://docs.python.org/release/3.0.1/whatsnew/3.0.html#ordering-comparisons
 
     """
-    
+
     # Note: special methods are bypassed by the Python interprester,
     # so there can't be a catch-all way of using eg __getattribute__
     # (http://docs.python.org/reference/datamodel.html#\
     # special-method-lookup-for-old-style-classes) We'll have to
     # define all those we want to catch
-    
+
     def __lt__(self, other):
         raise TypeError("Cannot compare an undefined value")
-    
+
     def __gt__(self, other):
         raise TypeError("Cannot compare an undefined value")
-    
+
     def __le__(self, other):
         raise TypeError("Cannot compare an undefined value")
-    
+
     def __ge__(self, other):
         raise TypeError("Cannot compare an undefined value")
-    
+
     def __eq__(self, other):
         raise TypeError("Cannot compare an undefined value")
-    
+
     def __ne__(self, other):
         raise TypeError("Cannot compare an undefined value")
-    
+
     def __contains__(self, other):
         raise TypeError("Cannot compare an undefined value")
 

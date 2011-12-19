@@ -2,7 +2,7 @@
 
 """
 
-.. moduleauthor:: TKP <software@transientskp.org>
+.. moduleauthor:: TKP <discovery@transientskp.org>
 © 2011, LOFAR Transients Key Project
 
 

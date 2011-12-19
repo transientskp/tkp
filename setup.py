@@ -9,7 +9,7 @@ setup(
         'recipes.nodes',
     ],
     description="LOFAR Transients Key Project pipeline recipes",
-    author="TKP Software WG",
-    author_email="software@transientskp.org",
+    author="TKP Discovery WG",
+    author_email="discovery@transientskp.org",
     url="http://www.transientskp.org/",
 )

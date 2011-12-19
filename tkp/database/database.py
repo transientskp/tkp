@@ -107,6 +107,34 @@ class DataBase(object):
         """Shortcut to self.cursor.execute"""
 
         return self.cursor.execute(*args)
+
+    def fetchall(self):
+        """Shortcut to self.cursor.fetchall"""
+
+        return self.cursor.fetchall()
+
+    def fetchone(self):
+        """Shortcut to self.cursor.fetchone"""
+
+        return self.cursor.fetchone()
+    
+    def get(self, *args):
+        """Execute() and fetchall() in one
+
+        Not always recommendable.
+        """
+
+        self.cursor.execute(*args)
+        return self.cursor.fetchall()
+    
+    def getone(self, *args):
+        """Execute() and fetchone() in one
+
+        Not always recommendable.
+        """
+
+        self.cursor.execute(*args)
+        return self.cursor.fetchone()
     
     def close(self):
         """Explicitly close the database connection"""

@@ -1885,11 +1885,11 @@ INNER JOIN
         if result[1] < mindistance:
             try:
                 cursor.execute(query,
-                               (results[2],) + update_image_tuple + (results[0],))
+                               (result[2],) + update_image_tuple + (result[0],))
                 if not AUTOCOMMIT:
                     conn.commit()
             except db.Error, e:
-                query = query % (results[2],) + update_image_tuple + (results[0],)
+                query = query % (result[2],) + update_image_tuple + (result[0],)
                 logging.warn("query failed: %s", query)
                 cursor.close()
                 raise

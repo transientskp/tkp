@@ -1,3 +1,5 @@
+.. _installation:
+
 Installation
 ============
 
@@ -13,6 +15,11 @@ transients pipeline and the TKP library:
 
 + wcslib
 
++ boost
+
+  The boost libraries, in particular the python one, to convert the wcslib
+  library (or rather, part thereof) into a Python module.
+
 + the LOFAR pipeline framework
 
   Since the pipeline framework and the occasional part of the
@@ -21,13 +28,24 @@ transients pipeline and the TKP library:
   imaging pipeline as well, you're probably best off installing all of
   the LOFAR imaging software (the LofIm package).
 
-+ MonetDB
++ MonetDB, including the Python module (installed by default).
 
   This is the database that the transients pipeline uses. Note that
   for the imaging pipeline, you will also need a PostgreSQL
   database. MonetDB can be obtained from `http://www.monetdb.org`
   (please use the latest version. As of 2011-11-28, this is version
   11.5.9 (the August 2011 SP3 build).
+
++ numpy and scipy
+
+  These Python modules are used throughout the TKP modules.
+
+  In addition, f2py that comes with scipy is used to turn a FORTRAN routine
+  into a Python module.
+
++ The Gnu Scientific Library, and the Python module `pygsql`.
+
+  This is used by the classification module in the TKP library
 
 
 
@@ -152,11 +170,18 @@ in more detail what it does, you can build and install the pipeline
 manually (in fact, stepping through the :file:`build.bash` script will
 show you exactly what to do).
 
-Firstly, make a build directory (simply called :file:`build`); within the root of the SVN repository is probably fine (just don't check it in). Inside that :file:`build` directory, execute::
+Firstly, make a build directory (simply called :file:`build`); within the root
+of the SVN repository is probably fine (just don't check it in). Inside that
+:file:`build` directory, execute::
 
     cmake <path-to-main-CMakeLists.txt-file> -DCMAKE_INSTALL_PREFIX=<root-dir-of-installation> -DTKP_DEVELOP
 
-Once that completes, run make (:option:`-j` added for parallel = faster build)::
+If this fails, carefully read the output of cmake; it likely did not find
+a dependency. Check you have the required dependencies, then possibly edit the
+corresponding :file:`Find<package>.cmake` file to ensure cmake can find your
+installation.
+
+Once the configuration completes, run make (:option:`-j` added for parallel = faster build)::
 
     make -j
 
@@ -174,6 +199,9 @@ If the make step fails, try adding the `VERBOSE=1` flag for more information::
 Setting up the database
 -----------------------
 
+Notes on actually installing the MonetDB database system are :ref:`here
+<database-section>`.
+
 Before you run the database setup script, you need to check that the
 database can actually find the catalog files, since these are not
 included in the repository. The install script will try to search for
@@ -190,7 +218,7 @@ subdirectory and run one of the corresponding bash scripts. Currently
 (2011-10-20), that would be the :file:`setup.db.Aug2011-SP1.batch`
 script. It requires four arguments::
 
-    $> ./setup.db.Aug2011-SP1.batch <hostname> <database-name> <username> <password>
+    $> ./setup.db.batch <hostname> <database-name> <username> <password>
 
 which you probably should have, either from the person who set up the
 database for you, or when you created the database. Of course, this
@@ -198,6 +226,12 @@ all assumes your MonetDB is running fine; you can check this with
 
     $> monetdbd status
 
+and::
+
+    $> monetdb status
+
+provided you have the rights to run the MonetDB commands (meaning you should be
+in the `monetdb` system group).
 
 It will take a couple of minutes to load the catalogs. You can always
 perform a quick check to see if things went ok by going into the
@@ -246,12 +280,11 @@ database (replace trap with the corresponding database and login)::
 .. note::
 
     The build script in the root of the repository now (2011-11-28)
-    will actually try and install the database. For that to work,
-    however, it will still need to know where the catalog files
-    are. If you are making regular (nightly) builds instead of just a
-    one-time setup, you could choose to edit the three corresponding
-    files, add the path to your catalog files and then commit those
-    changes into the repository.
+    will actually try and install the development database `tkpdev`. For that
+    to work, however, it will still need to know where the catalog files are.
+    If you are making regular (nightly) builds instead of just a one-time
+    setup, you could choose to edit the three corresponding files, add the path
+    to your catalog files and then commit those changes into the repository.
 
 
 Testing the installation

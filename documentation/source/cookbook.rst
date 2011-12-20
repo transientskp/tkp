@@ -1,3 +1,5 @@
+.. _cookbook:
+
 Transients Pipeline Cookbook
 ============================
 
@@ -18,9 +20,9 @@ initialisation script should tell you which paths to add).
 Setting up the directory structure and configuration files
 ----------------------------------------------------------
 
-Locate the TKP directory (the development version); on heastro, it's
-in :file:`/opt/tkp/dev/tkp`. On CEP 1, it's in
-:file:`/home/rol/tkp/dev/tkp`.  In the :file:`bin` subdirectory,
+Locate the TKP directory (the evelopment version); on heastro, it's
+in :file:`/opt/tkp/tkp`. On CEP 1, it's in
+:file:`/home/rol/tkp/tkp`.  In the :file:`bin` subdirectory,
 you'll find the TRAP initialisation script: :file:`trapinit.py`.
 
 Run :file:`trapinit.py`::
@@ -57,7 +59,7 @@ A complete run could look like this::
     Checking modules
     
     The following setup has been detected on the system:
-    TKP / TRAP main directory:        /opt/tkp/dev/tkp
+    TKP / TRAP main directory:        /opt/tkp/tkp
     Database (MonetDB) python module: /opt/monetdb/lib/python2.6/site-packages
     Pipeline framework:               /opt/pipeline/framework/lib/python2.6/site-packages
     LofIm main directory:             /opt/LofIm/lofar
@@ -135,8 +137,8 @@ Then the :file:`runtrap.sh` file::
     
     CONTROLDIR=/home/evert/pipeline-runtime/jobs/L2010_21641/control
     # Note! The next command spans 3 lines
-    PYTHONPATH=/opt/tkp/dev/tkp/lib/python:/opt/LofIm/lofar/lib/python2.6/dist-packages:/opt/monetdb/lib/python2.6/site-packages:/opt/pipeline/framework/lib/python2.6/site-packages \
-    LD_LIBRARY_PATH=/opt/tkp/dev/tkp/lib:/opt/LofIm/lofar/lib/python \
+    PYTHONPATH=/opt/tkp/tkp/lib/python:/opt/LofIm/lofar/lib/python2.6/dist-packages:/opt/monetdb/lib/python2.6/site-packages:/opt/pipeline/framework/lib/python2.6/site-packages \
+    LD_LIBRARY_PATH=/opt/tkp/tkp/lib:/opt/LofIm/lofar/lib/python \
     python ${CONTROLDIR}/trap-with-trip.py -d --task-file=${CONTROLDIR}/tasks.cfg -j L2010_21641 -c /home/evert/pipeline-runtime/sip.cfg $1
 
 This file sets up the environment to start the pipeline, and then
@@ -158,7 +160,7 @@ Then, there are a bunch of configuration files. First up is
 have one already (in the above example, I had one already, so none was
 created), a new, very basic config file is created. Most important
 part to check here are the database login details. By default, this is
-`tkpdev`, but you may want to use a different database.
+`tkp`, but you may want to use a different database.
 
 Then, there is the sip configuration file, :file:`sip.cfg`, which
 holds the configuration details for the pipeline framework. Most
@@ -166,7 +168,7 @@ values there should be fine, but always check. Keep in mind that the
 TKP recipes directories needs to come before the pipeline recipes
 directory::
 
-    recipe_directories = [/opt/tkp/dev/tkp/recipes, /opt/pipeline/recipes]
+    recipe_directories = [/opt/tkp/tkp/recipes, /opt/pipeline/recipes]
 
 to avoid conflicts with identically named recipes.
 

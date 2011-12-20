@@ -1,8 +1,8 @@
 Transients Pipeline
 ===================
 
-This document describes the transients pipeline, the configuration and
-its usage.
+This document describes the transients pipeline, the installation,
+configuration and its usage.
 
 The transients pipeline (TraP), or more accurately, the transients
 detection and classification pipeline, is a software pipeline that
@@ -44,14 +44,21 @@ some will make little sense. The steps are:
   up into two steps for clarity (extraction and association are quite
   different steps).
 
-- Transient detection. All existing light curves (ie, associated
-  sources from the previous step) will be examined to determine if
-  sources are variable. (The basic algorithm for this is a chi-squared
-  calculation and check for significant deviations from the average.)
+- Monitor existing or user-added sources. This takes care of measuring fluxes
+  of transient sources, even when these have disappeared below the detection
+  threshold, so that the light curve is measured with upper limits instead.
+  This step also takes care of sources that were obtained from elsewhere and
+  manually added, such as a new X-ray source: the pipeline will now monitor
+  this position so the full LOFAR light curve for this source can be measured.
+  
+- Transient detection. All existing light curves (ie, associated sources from
+  the previous step) will be examined to determine if sources are variable.
+  (The basic algorithm for this is a chi-squared calculation and check for
+  significant deviations from the average.)
 
   Not implemented yet, but in a future version: sources will be
-  compared to cataloged sources, to determine if their flux level
-  differs from their cataloged value.
+  compared to sources in the LOFAR global sky model, to determine if their flux
+  level differs from their cataloged value.
 
 - Feature extraction. This will attempt to extract various
   characteristics (peak flux, duration, background level, flux
@@ -78,3 +85,10 @@ some will make little sense. The steps are:
   classification, where each source gets a value (weight) associated
   with a certain type of classification. These classification,
   however, are fully preprogrammed.
+
+- An alert system. This will send emails to interested parties, depending on
+  criteria set beforehand (which are compared to the results found in the
+  classification step). In the future, this step should be replaced by sending
+  out VOEvents, and the current implementation is essentially a simple way of
+  alerting people to possible transients detected by the pipeline.
+

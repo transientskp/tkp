@@ -8,8 +8,8 @@ A few variables are used in the documentation below, indicating
 relevant directories that may differ from system to system:
 
 - :envvar:`${TKP}`: the base TKP directory on your system. On the heastro
-  machines, this would be :file:`/opt/tkp/dev/tkp`, while on CEP2, this is
-  :file:`/home/rol/tkp/dev/tkp`.
+  machines, this would be :file:`/opt/tkp/tkp`, while on CEP2, this is
+  :file:`/home/rol/tkp/tkp`.
 
 - :envvar:`${WORK}`: your working directory for the pipeline, that is, where the
   jobs control is kept. For me, this is :file:`${HOME}/work/trap`, while for
@@ -60,12 +60,12 @@ installation:
   <database-section>`.
 
 
-On heastro1/2
--------------
+On heastro
+----------
 
-The necessary TKP libraries are installed in :file:`/opt/tkp/dev/tkp/`. The last
+The necessary TKP libraries are installed in :file:`/opt/tkp/tkp/`. The last
 part of this path is a symbolic link to a nightly build in
-:file:`/opt/tkp/dev/tkp-yyyy-mm-dd/`; use a specific nightly build if you have
+:file:`/opt/tkp/tkp-yyyy-mm-dd/`; use a specific nightly build if you have
 long-running jobs or need a specific TKP library version. A similar
 structure holds for :file:`/opt/LofIm/lofar`, which points to
 :file:`/opt/LofIm/lofar-yyyy-mm-dd`.  Within the :file:`/opt/tkp/tkp/` directory,
@@ -200,9 +200,9 @@ with::
 On CEP2/lhn001
 --------------
 
-The necessary TKP libraries are installed in /home/rol/tkp/dev/tkp/. The
+The necessary TKP libraries are installed in :file:`/home/rol/tkp/tkp/`. The
 last part of the directory is a symbolic link to a nightly build in
-/home/rol/tkp//dev/tkp-yyyy-mm-dd/; use a specific nightly build if you
+:file:`/home/rol/tkp/tkp-yyyy-mm-dd/`; use a specific nightly build if you
 have long-running jobs or need a specific TKP library version. Within
 the /home/rol/tkp/tkp/ directory, there exist a lib/, recipes/ and
 databse/ subdirectories. lib/ contains a single library used by the
@@ -349,12 +349,21 @@ time-slicing. If you want only to use sections of the TRAP, edit
 Additional setup
 ----------------
 
-There are two parts that you may want to set up for using the pipeline that are not part of the transients pipeline. The first part is passwordless ssh, the second part is the postgres database for using BBS (the calibration software). This information can also be found in the LOFAR imaging cookbook (sections 1.3.2 and 1.4).
+There are two parts that you may want to set up for using the pipeline that are
+not part of the transients pipeline. The first part is passwordless ssh, the
+second part is the postgres database for using BBS (the calibration software).
+This information can also be found in :ref:`the LOFAR imaging cookbook (sections
+1.3.2 and 1.4)<http://www.astron.nl/radio-observatory/lofar/lofar-imaging-cookbook>`
 
 Passwordless ssh
 ~~~~~~~~~~~~~~~~
 
-When using the pipeline over the cluster, it generally uses ssh connections. Since you do not want to type in your password for every connection it makes, you create authorization keys with a blank password (if you find that insecure, you can also use something like ssh-agent to store the password. On most clusters, however, the security comes from your initial login to the frontend node anyway). To do this::
+When using the pipeline over the cluster, it generally uses ssh connections.
+Since you do not want to type in your password for every connection it makes,
+you create authorization keys with a blank password (if you find that insecure,
+you can also use something like ssh-agent to store the password. On most
+clusters, however, the security comes from your initial login to the frontend
+node anyway). To do this::
 
     $> ssh-keygen -t dsa
 
@@ -362,9 +371,13 @@ Enter a blank password (just press return). Then::
 
     $> cat ~/.ssh/id_dsa.pub >> ~/.ssh/authorized_keys
 
-Since the `.ssh` directory is located in your home directory, the `authorized_keys` file is available on all cluster nodes, and you should now have a passwordless login to every cluster node.
+Since the `.ssh` directory is located in your home directory, the
+`authorized_keys` file is available on all cluster nodes, and you should now
+have a passwordless login to every cluster node.
 
-You also want to disable the host key check that ssh performs every first time you log in to a node. You can do that by setting StrictHostKeyChecking to 'no'::
+You also want to disable the host key check that ssh performs every first time
+you log in to a node. You can do that by setting StrictHostKeyChecking to
+'no'::
 
     $> cat >> ~/.ssh/config 
     StrictHostKeyChecking no
@@ -374,9 +387,14 @@ You also want to disable the host key check that ssh performs every first time y
 postgres
 ~~~~~~~~
 
-This assumes you have a postgres database running, and can access that as root (through the postgres account). 
+This assumes you have a postgres database running, and can access that as
+postgres root (through the postgres account). 
 
 First, you need to obtain the bbs-sql.tgz file that contains the
 various table definitions. This can for example be downloaded from
 `http://www. lofar.org/wiki/lib/exe/fetch.php?media=engineering:software:tools:bbs:bbs-sql.tgz`.
+
+Unzip and untar the file, enter the newly created :file:`bbs-sql` directory, then execute::
+
+    psql -h <hostname> -U postgres -d <databasename> -f create_blackboard.sql
 

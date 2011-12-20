@@ -140,13 +140,13 @@ class Setup(object):
         config['user'] = user
         config['default-dirs'] = {'home': homedir}
         if hostname in ('heastro1', 'heastro2'):
-            tkp_base = '/opt/tkp/dev/tkp'
+            tkp_base = '/opt/tkp/tkp'
             lofim_base = '/opt/LofIm/lofar'
             config['database'] = {
                 'host': 'heastro1',
-                'name': 'tkpdev',
-                'user': 'tkpdev',
-                'password': 'tkpdev',
+                'name': 'tkp',
+                'user': 'tkp',
+                'password': 'tkp',
                 }
             config['default-dirs'].update({
                 'tkp': {'base': tkp_base,
@@ -178,7 +178,7 @@ class Setup(object):
             config['postgres'] = {'host': '146.50.10.202'}
         elif hostname in ('lfe001', 'lfe002'):
             # LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/opt/LofIm/daily/casacore/lib:/opt/LofIm/daily/pyrap/lib:/opt/hdf5/lib
-            tkp_base = '/home/rol/tkp/dev/tkp'
+            tkp_base = '/home/rol/tkp/tkp'
             lofim_base = '/opt/LofIm/daily/lofar'
             config['database'] = {
                 'host': 'ldb001',
@@ -217,7 +217,7 @@ class Setup(object):
             config['sipcfg'] = 'sip.cfg'
             config['postgres'] = {'host': 'ldb001'}
         elif hostname in ('lhn001', 'lhn002'):
-            tkp_base = '/home/rol/tkp/dev/tkp'
+            tkp_base = '/home/rol/tkp/tkp'
             lofim_base = '/opt/cep/LofIm/daily/lofar'
             config['database'] = {
                 'host': 'ldb001',

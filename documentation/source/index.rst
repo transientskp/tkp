@@ -19,6 +19,7 @@ Contents:
    trap_py
    recipes
    monitoringlist
+   alerts
    
 
 Indices and tables

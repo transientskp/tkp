@@ -1,3 +1,6 @@
+.. _classification-manual-classifier:
+
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 :mod:`tkp.classification.manual.classifier` -- The classification routines
 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 

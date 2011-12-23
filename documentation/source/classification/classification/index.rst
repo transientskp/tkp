@@ -1,5 +1,4 @@
-.. _manual_classification_module:
-
+.. _manual-classification-module:
 
 +++++++++++++++++++++++++++++
 Manual classification package

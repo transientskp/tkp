@@ -1,3 +1,5 @@
+.. _utility-containers:
+
 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 :mod:`tkp.utility.containers` -- Generic container classes
 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++

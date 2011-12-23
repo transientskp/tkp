@@ -1,4 +1,4 @@
-.. _tkp.classification.manual.transient:
+.. _classification-manual-transient:
 
 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 :mod:`tkp.classification.manual.transient` -- Classification Transient object

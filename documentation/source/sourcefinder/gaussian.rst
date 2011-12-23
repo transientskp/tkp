@@ -1,8 +1,10 @@
+.. _sourcefinder-gaussian:
+
 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 :mod:`tkp.sourcefinder.gaussian` -- Gaussian fit routines
 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 
 .. automodule:: tkp.sourcefinder.gaussian
-   :synopsis: Gaussian fit routines
+   :synopsis: Definition of the elliptical Gaussian function.
    :members:

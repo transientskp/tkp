@@ -1,3 +1,5 @@
+.. _sourcefinder-extract:
+
 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 :mod:`tkp.sourcefinder.extract` -- Source extraction routines
 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++

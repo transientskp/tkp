@@ -1,4 +1,4 @@
-.. _utility_package:
+.. _utility-package:
 
 +++++++++++++++
 Utility package

@@ -14,6 +14,8 @@ Contents:
 .. toctree::
    :maxdepth: 2
 
+   introduction
+   developing
    config
    database/index
    sourcefinder/index

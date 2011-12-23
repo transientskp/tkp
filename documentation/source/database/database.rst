@@ -1,9 +1,9 @@
-.. _tkp.database.database:
+.. _database-database:
 
-+++++++++++++++++++++++++++++++++++++++++++++++++
-:mod:`tkp.database.database` -- Database routines
-+++++++++++++++++++++++++++++++++++++++++++++++++
+++++++++++++++++++++++++++++++++++++++++++++++++++
+:mod:`tkp.database.database` -- Database interface
+++++++++++++++++++++++++++++++++++++++++++++++++++
 
 .. automodule:: tkp.database.database
-   :synopsis: Database routines
+   :synopsis: Interface to the MonetDB database
    :members:

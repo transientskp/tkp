@@ -1,3 +1,5 @@
+.. _utility-coordinates:
+
 +++++++++++++++++++++++++++++++++++++++++++++++++++++
 :mod:`tkp.utility.coordinates` -- Coordinate routines
 +++++++++++++++++++++++++++++++++++++++++++++++++++++

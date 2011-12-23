@@ -1,3 +1,5 @@
+.. _classification-features-lightcurve:
+
 :mod:`tkp.classification.features.lightcurve` -- Lightcurve feature extraction utilities
 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 

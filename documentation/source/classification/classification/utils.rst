@@ -1,3 +1,5 @@
+.. _classification-manual-utils:
+
 :mod:`tkp.classification.manual.utils` -- Manual classification Utility objects
 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 

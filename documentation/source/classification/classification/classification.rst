@@ -1,3 +1,6 @@
+.. _classification-manual-classification:
+
++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 :mod:`tkp.classification.manual.classification` -- Example classification schemas
 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 

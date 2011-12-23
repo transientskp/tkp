@@ -23,7 +23,7 @@ import numpy
 
 class DataAccessor(object):
     """
-    Base class for accessors used with :class:`tkp_lib.image.ImageData`.
+    Base class for accessors used with :class:`..sourcefinder.image.ImageData`.
 
     Data accessors provide a uniform way for the ImageData class (ie, generic
     image representation) to access the various ways in which images may be

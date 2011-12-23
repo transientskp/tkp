@@ -1,49 +1,45 @@
 # -*- coding: utf-8 -*-
+#
+# LOFAR Transients Key Project
+#
+# Hanno Spreeuw
+#
+# discovery@transientskp.org
+#
+#
+# Some generic utility routines for number handling and
+# calculating (specific) variances
+#
 
-"""
-
-.. module:: gaussian
-
-.. moduleauthor:: TKP, Hanno Spreeuw <discovery@transientskp.org>
-
-
-:synposis: Definition of the elliptical Gaussian function.
-
-"""
 
 from numpy import exp, log, cos, sin
 
+
 FIT_PARAMS = ('peak', 'xbar', 'ybar', 'semimajor', 'semiminor', 'theta')
+
 
 def gaussian(height, center_x, center_y, semimajor, semiminor, theta):
     """Return a 2D Gaussian function with the given parameters.
 
-    :argument height: (z-)value of the 2D Gaussian
-    :type height: float
+    Args:
 
-    :argument center_x: x center of the Gaussian
-    :type center_x: float
+        height (float): (z-)value of the 2D Gaussian
 
-    :argument center_y: y center of the Gaussian
-    :type center_y: float
+        center_x (float): x center of the Gaussian
 
-    :argument semimajor: major axis of the Gaussian
-    :type semimajor: float
+        center_y (float): y center of the Gaussian
 
-    :argument semiminor: minor axis of the Gaussian
-    :type semiminor: float
+        semimajor (float): major axis of the Gaussian
 
-    :argument theta: angle of the 2D Gaussian in radians, measured
-        between the semi-major and y axes, in counterclockwise
-        direction
-    :type theta: float
+        semiminor (float): minor axis of the Gaussian
 
-    Theta is the angle between the semi-major & y axes measured in
-    radians, measured counterclockwise.
+        theta (float): angle of the 2D Gaussian in radians, measured
+            between the semi-major and y axes, in counterclockwise
+            direction.
 
-    :returns: 2D Gaussian
-    :rtype: function
+    Returns:
 
+        (function): 2D Gaussian
     """
 
     return lambda x, y: height * exp(

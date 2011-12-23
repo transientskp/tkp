@@ -1,15 +1,15 @@
 # -*- coding: utf-8 -*-
+#
+# LOFAR Transients Key Project
+#
+# Hanno Spreeuw
+#
+# discovery@transientskp.org
+#
+#
+# Source fitting algorithms
+#
 
-"""
-
-.. module:: fitting
-
-.. moduleauthor:: TKP, Hanno Spreeuw <discovery@transientskp.org>
-
-
-:synposis: Source fitting algorithms
-
-"""
 
 import math
 import numpy
@@ -18,20 +18,28 @@ from .gaussian import gaussian
 from ..utility.uncertain import Uncertain
 import utils
 
+
 FIT_PARAMS = ('peak', 'xbar', 'ybar', 'semimajor', 'semiminor', 'theta')
+
 
 def moments(data, beam, threshold=0):
     """Calculate source positional values using moments
 
-    :argument data: values
-    :type data: numpy.ndarray
-    :argument beam: beam/psf information, with semi-major and semi-minor axes
-    :type beam: (3-list, 3-tuple)
+    Args:
 
-    :returns: peak, total, xbar, ybar, semimajor axis, semiminor axis, theta
-    :rtype: dict
+        data (numpy.ndarray): Actual 2D image data
 
-    :raises: ValueError (in case of NaN in input)
+        beam (3-tuple): beam (psf) information, with semi-major and
+            semi-minor axes
+
+    Returns:
+
+        (dict): peak, total, x barycenter, y barycenter, semimajor
+            axis, semiminor axis, theta
+
+    Raises:
+
+        ValueError (in case of NaN in input)
 
     Use the first moment of the distribution is the barycenter of an
     ellipse. The second moments are used to estimate the rotation angle
@@ -117,20 +125,27 @@ def moments(data, beam, threshold=0):
 def fitgaussian(data, params, fixed=None, maxfev=0):
     """Calculate source positional values by fitting a 2D Gaussian
 
-    :argument data: pixel values
-    :type data: numpy.ndarray
-    :argument params:  initial fit parameters (possibly estimated
-        using the moments function
-    :type params: dict
-    :keyword fixed: parameters to be kept frozen (ie, not fitted)
-    :type fixed: dict
-    :keyword maxfew: maximum number of calls to the error function
-    :type maxfew: int
+    Args:
 
-    :returns: peak, total, xbar, ybar, semimajor, semiminor, theta
-    :rtype: dict
+        data (numpy.ndarray): Actual 2D data
 
-    :raises: ValueError (in case of a bad fit)
+        params (dict): initial fit parameters (possibly estimated
+            using the moments function
+
+    Kwargs:
+
+        fixed (dict): parameters to be kept frozen (ie, not fitted)
+
+        maxfew (int): maximum number of calls to the error function
+
+    Returns:
+
+        (dict): peak, total, x barycenter, y barycenter, semimajor,
+            semiminor, theta
+
+    Raises:
+
+        ValueError (in case of a bad fit)
 
     Perform a least squares fit to an elliptical Gaussian. Uses the
     moments() method to generate an initial estimate of the solution. Based on
@@ -179,12 +194,13 @@ def fitgaussian(data, params, fixed=None, maxfev=0):
                 gaussian_args.append(fixed[param])
             else:
                 gaussian_args.append(paramlist.pop(0))
+
         # The .compressed() below is essential so the Gaussian fit
         # will not take account of the masked values (=below
         # threshold) at the edges and corners of data (=(masked)
         # array, so rectangular in shape).
-        return (gaussian(*gaussian_args)(*numpy.indices(data.shape)) - data
-                ).compressed()
+        return (gaussian(*gaussian_args)(*numpy.indices(data.shape)) -
+                data ).compressed()
 
     solution, icov_x, infodict, mesg, success = scipy.optimize.leastsq(
         errorfunction, my_pars, fixed, full_output=True, maxfev=maxfev)

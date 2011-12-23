@@ -1,5 +1,12 @@
 # -*- coding: utf-8 -*-
-
+#
+# LOFAR Transients Key Project
+#
+# discovery@transientskp.org
+#
+#
+# Source finder utilities
+#
 """
 
 This module contain utilities for the source finding routines
@@ -10,8 +17,10 @@ import numpy
 import scipy.integrate
 from .gaussian import gaussian
 
+
 def generate_result_maps(data, sourcelist):
-    """
+    """Return a source and residual image
+    
     Given a data array (image) and list of sources, return two images, one
     showing the sources themselves and the other the residual after the
     sources have been removed from the input data.
@@ -42,7 +51,7 @@ def calculate_correlation_lengths(semimajor, semiminor):
     later generalized by Hopkins et al. (2003, AJ 125, 465) for
     correlation areas which are not axisymmetric.
 
-    Basically one has theta_N**2 = theta_B*theta_b.
+    Basically one has theta_N^2 = theta_B*theta_b.
 
     Good estimates in general are:
 
@@ -61,7 +70,8 @@ def calculate_beamsize(semimajor, semiminor):
 
 
 def fudge_max_pix(semimajor, semiminor, theta):
-    """
+    """Estimate peak flux correction at pixel of maximum flux
+    
     Previously, we adopted Rengelink's correction for the
     underestimate of the peak of the Gaussian by the maximum pixel
     method: fudge_max_pix = 1.06. See the WENSS paper
@@ -95,8 +105,8 @@ def fudge_max_pix(semimajor, semiminor, theta):
 
 
 def maximum_pixel_method_variance(semimajor, semiminor, theta):
-    """
-
+    """Estimate variance for peak flux at pixel position of maximum
+    
     When we use the maximum pixel method, with a correction
     fudge_max_pix, there should be no bias, unless the peaks of the
     Gaussians are not randomly distributed, but relatively close to
@@ -105,11 +115,10 @@ def maximum_pixel_method_variance(semimajor, semiminor, theta):
 
     Disregarding the latter effect and noise, we can compute the
     variance of the maximum pixel method by integrating (the true
-    flux- the average true flux)**2 = (the true flux-fudge_max_pix)**2
+    flux-the average true flux)^2 = (the true flux-fudge_max_pix)^2
     over the pixel area and dividing by the pixel area ( = 1).  This
-    is just equal to integral of the true flux **2 over the pixel area
-    - fudge_max_pix**2.
-
+    is just equal to integral of the true flux^2 over the pixel area
+    - fudge_max_pix^2.
     """
 
     # scipy.integrate.dblquad: Computes a double integral
@@ -131,20 +140,20 @@ def maximum_pixel_method_variance(semimajor, semiminor, theta):
     return variance
 
 
-def flatten(lst):
-    """ Nested lists are made in the deblending algorithm
+def flatten(nested_list):
+    """Flatten a nested list
 
-    They're awful. This is a piece of code I grabbed from
+    Nested lists are made in the deblending algorithm. They're
+    awful. This is a piece of code I grabbed from
     http://www.daniweb.com/code/snippet216879.html.
 
     The output from this method is a generator, so make sure to turn
     it into a list, like this::
 
         flattened = list(flatten(nested)).
-
     """
-    for elem in lst:
-        if type(elem) in (tuple, list):
+    for elem in nested_list:
+        if isinstance(elem, (tuple, list, numpy.ndarray)):
             for i in flatten(elem):
                 yield i
         else:

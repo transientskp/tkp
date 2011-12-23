@@ -1,13 +1,19 @@
 # -*- coding: utf-8 -*-
-
 #
 # LOFAR Transients Key Project
 #
+# discovery@transientskp.org
+#
+#
+# Source fitting algorithms
+#
+
 """
 Source Extraction Helpers.
 
 These are used in conjunction with image.ImageData.
 """
+
 import logging
 import math
 # DictMixin may need to be replaced using collections.MutableMapping;
@@ -561,22 +567,30 @@ def source_profile_and_errors(data, threshold, noise, beam, fixed=None):
     from Gauss fitting and export these to a residual map.  And it
     will make a map of the decomposed sources.
 
-    :argumenet data: array of pixel values, can be a masked array, which is
-        necessary for proper Gauss fitting, because the pixels below
-        the threshold in the corners and along the edges should not be
-        included in the fitting process
-    :type data: numpy.ndarray
-    :argument threshold: Threshold used for selecting pixels for the source (ie,
-        building an island)
-    :type threshold: float
-    :argument noise: Noise level in data
-    :type noise: float
-    :argument fixed: passed on to fitting.fitgaussian(): this will
-        lock fit to only occur at that pixel coordinate.
-    :type fixed: dict
+    Args:
 
-    :returns: A populated ParamSet, and a residual array.
-    :rtype: tuple 
+        data (numpy.ndarray): array of pixel values, can be a masked
+            array, which is necessary for proper Gauss fitting,
+            because the pixels below the threshold in the corners and
+            along the edges should not be included in the fitting
+            process
+
+        threshold (float): Threshold used for selecting pixels for the
+            source (ie, building an island)
+
+        noise (float): Noise level in data
+
+        beam (3-tuple of float): beam parameters
+        
+    Kwargs:
+
+        fixed (dict): parameters to keep fixed while fitting. passed
+            on to fitting.fitgaussian(): this will lock fit to only
+            occur at that pixel coordinate.
+
+    Returns:
+
+        (tuple): a populated ParamSet, and a residual array.
     """
 
     if fixed is None:
@@ -600,7 +614,7 @@ def source_profile_and_errors(data, threshold, noise, beam, fixed=None):
             "semiminor": 1,
             "theta": 0
             })
-        logging.warn("""
+        logging.warn("""\
 Unable to estimate gaussian parameters. Proceeding with defaults %s""",
                      str(param))
 
@@ -610,7 +624,7 @@ Unable to estimate gaussian parameters. Proceeding with defaults %s""",
     ymin = min(ranges[1])
     ymax = max(ranges[1])
 
-    if (numpy.fabs(xmax-xmin)>2) and (numpy.fabs(ymax-ymin)>2):
+    if (numpy.fabs(xmax-xmin) > 2) and (numpy.fabs(ymax-ymin) > 2):
         # Now we can do Gauss fitting if the island or subisland has a
         # thickness of more than 2 in both dimensions.
         try:
@@ -622,7 +636,7 @@ Unable to estimate gaussian parameters. Proceeding with defaults %s""",
     else:
         if fixed:
             # moments can't handle fixed params
-            raise ValueError("Sorry, can't fit with those fixed parameters")
+            raise ValueError("fit failed with given fixed parameters")
 
     beamsize = utils.calculate_beamsize(beam[0], beam[1])
     param["flux"] = (numpy.pi * param["peak"] * param["semimajor"] *
@@ -645,9 +659,7 @@ Unable to estimate gaussian parameters. Proceeding with defaults %s""",
 
 
 class Detection(object):
-    """
-    The result of a measurement at a given position in a given image.
-    """
+    """The result of a measurement at a given position in a given image."""
 
     def __init__(self, paramset, imagedata, chunk=None):
         self.imagedata = imagedata
@@ -719,26 +731,26 @@ class Detection(object):
         else:
             raise AttributeError(attrname)
             
-    def printob (self, out= None) :
-        if out  is None:
-             out = sys.stdout;
-        s = "\nPeak =" + str(self.peak )+  " flux "+ str(self.flux)+ "\nx = "+ str(self.x )+ "\ny = " + str(self.y)
-        out.write(s)
-        s = "\nsmaj = "+  str(self.smaj)  + "\nsmin = " + str(self.smin) + "\ntheta = " + str(self.theta) 
-        out.write( s)
+    def printob(self, output=None):
+        if output is None:
+             output = sys.stdout;
+        output.write("\nPeak =" + str(self.peak ) + " flux " +
+            str(self.flux) +  "\nx = "+ str(self.x )+ "\ny = " +
+            str(self.y))
+        output.write("\nsmaj = "+ str(self.smaj) + "\nsmin = " +
+            str(self.smin) + "\ntheta = " + str(self.theta) )
         self._physical_coordinates()
-        s = "\nRA = " + str(self.ra) + " dec = "+  str(self.dec) + "\n" 
-        out.write(s)
-      
-        
-    def printasregion (self) :
-        pi = math.pi
-        return "\nellipse(" + str(self.x.value) + "," +  str(self.y.value) +"," +  str(self.smaj.value *2) + "," +  str(self.smin.value*2) + "," +  str(self.theta.value -pi/2.0 ) + "r ) #color=white"
-             
-             
-        
-        
+        output.write("\nRA = " + str(self.ra) + " dec = "+
+            str(self.dec) + "\n")
 
+    def printasregion(self):
+        """Output to DS9 region format"""
+        pi = math.pi
+        return ("\nellipse(" + str(self.x.value) + "," +
+            str(self.y.value) +"," + str(self.smaj.value *2) + "," +
+            str(self.smin.value*2) + "," + str(self.theta.value
+            -pi/2.0 ) + "r ) #color=white")
+             
     def _physical_coordinates(self):
         """Convert the pixel parameters for this object into something
         physical."""

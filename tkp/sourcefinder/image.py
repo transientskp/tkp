@@ -1,15 +1,15 @@
 # -*- coding: utf-8 -*-
-
-"""
-.. module:: image
-
-.. moduleauthor:: TKP, Hanno Spreeuw <discovery@transientskp.org>
-
-
-:synposis: Simple image handling
-
-This module provides simple access to an image, without database overhead.
-"""
+#
+# LOFAR Transients Key Project
+#
+# Hanno Spreeuw
+#
+# discovery@transientskp.org
+#
+#
+# Some generic utility routines for number handling and
+# calculating (specific) variances
+#
 
 from __future__ import with_statement
 import time
@@ -28,10 +28,12 @@ from . import utils
 from . import stats
 from . import extract
 
+
 CONFIG = config['source_extraction']
 
+
 class ImageData(object):
-    """Encapsulates an image in terms of a numpy array + metadata.
+    """Encapsulates an image in terms of a numpy array + meta/headerdata.
 
     This is your primary contact point for interaction with images: it icludes
     facilities for source extraction and measurement, etc.
@@ -46,8 +48,7 @@ class ImageData(object):
     #                                                                         #
     ###########################################################################
     def __init__(self, data, beam, wcs):
-        """
-        Sets up an ImageData object.
+        """Sets up an ImageData object.
 
         Args:
 
@@ -87,7 +88,6 @@ class ImageData(object):
     # dealing with MemoryErrors.                                              #
     #                                                                         #
     ###########################################################################
-
     @Memoize
     def _grids(self):
         """Gridded RMS and background data for interpolating"""
@@ -197,12 +197,16 @@ class ImageData(object):
         """Calculates limits over which the image may be regarded as
         "reliable".
 
-        :keyword max_degradation: astronometry accuracy allowed. See
-            description below
-        :type max_degradation: float
+        Kwargs:
+        
+            keyword max_degradation (float): astrometry accuracy
+                allowed. See description below
 
-        :returns: masked window where the FITS image astrometry is valid
-        :rtype: numpy.ndarray
+        Returns:
+
+            (numpy.ndarray): masked window where the FITS image
+                astrometry is valid
+
 
         This code calculates a window within a FITS image that is "reliable",
         i.e.  the mapping from pixel coordinates to celestial coordinates is
@@ -264,19 +268,31 @@ class ImageData(object):
 
         return mask
 
+    # Deprecated (see note below)
     def stats(self, nbins=100, plot=True):
         """Produce brief statistical report on this image, suitable for
         printing.
 
-        :keyword nbins: how many bins to divide the pixel values into for
-            building a historgram.
-        :type nbins: int
-        :keyword plot: print histogram?
-        :type plot: bool
+        Kwargs:
 
-        :returns: None
+            nbins (int): how many bins to divide the pixel values into
+                for building a historgram.
+
+            plot (bool): print histogram?
+
+        Deprecated.
         """
 
+        # Note (23-12-2011, ER):
+        # This uses the imagestats module, which is not really
+        # described anywhere. I can find either one at
+        # http://stsdas.stsci.edu/stsci_python_epydoc/imagestats/index.html
+        # (presumably the correct one) or
+        # http://www.pythonware.com/library/pil/handbook/imagestat.htm.
+        # Overall, it appears that this method is rarely called, and
+        # certainly not in a normal pipeline run. It's merely to be
+        # used in testing. I've therefore indicated it as being
+        # deprecated.
         try:
             import imagestats
         except ImportError:
@@ -313,7 +329,6 @@ class ImageData(object):
             'filename': self.filename.split('/')[-1].replace('_', '\_'),
             'time': time.strftime('%c')
             }
-
         imgstats.printStats()
         print "Median            :   " + str(mystats['medi'])
         print "Skew              :   " + str(mystats['skew'])
@@ -387,15 +402,23 @@ class ImageData(object):
         """
         Interpolate a grid to produce a map of the dimensions of the image.
 
+        Args:
+
+            grid (numpy.ma.array)
+
+        Kwargs:
+
+            roundup (bool)
+
+        Returns:
+
+            (numpy.ndarray)
+            
         Used to transform the RMS, background or FDR grids produced by
         L{_grids()} to a map we can compare with the image data.
 
         If roundup is true, values of the resultant map which are lower than
         the input grid are trimmed.
-
-        @type grid: numpy.ma.array
-        @type roundup: Boolean
-        @rtype: numpy.array
         """
         my_filter = CONFIG['median_filter']
         mf_threshold = CONFIG['mf_threshold']
@@ -451,21 +474,28 @@ class ImageData(object):
         """
         Kick off conventional (ie, RMS island finding) source extraction.
 
-        *det* is the detection threshold, as a multiple of the RMS noise. At
-        least one pixel in a source must exceed this for it to be regarded as
-        significant.
+        Kwargs:
 
-        *anl* is the analysis threshold, as a multiple of the RMS noise. All
-        the pixels within the island that exceed this will be used when
-        fitting the source.
+            det (float): detection threshold, as a multiple of the RMS
+                noise. At least one pixel in a source must exceed this
+                for it to be regarded as significant.
 
-        The results are returned as an instance of
-        :class:`tkp.utility.containers.ExtractionResults`.
+            anl (float): analysis threshold, as a multiple of the RMS
+                noise. All the pixels within the island that exceed
+                this will be used when fitting the source.
+
+            noisemap (numpy.ndarray):
+
+            bgmap (numpy.ndarray):
+            
+        Returns:
+
+             (..utility.containers.ExtractionResults): 
         """
 
-        if not det:
+        if det is None:
             det = CONFIG['detection_threshold']
-        if not anl:
+        if anl is None:
             anl = CONFIG['analysis_threshold']
         if anl > det:
             logging.warn(
@@ -583,8 +613,7 @@ class ImageData(object):
                                   x-numpix:x+numpix+1].max()
 
     def fit_to_point(self, x, y, boxsize, threshold=0.0, fixed='position'):
-        """
-        Fit an elliptical Gaussian to a specified point on the image.
+        """Fit an elliptical Gaussian to a specified point on the image.
 
         The fit is carried on a square section of the image, of length
         *boxsize* & centred at pixel coordinates *x*, *y*. Any data
@@ -695,16 +724,18 @@ class ImageData(object):
         """
         Run Python-based source extraction on this image.
 
-        :argument detectionthresholdmap:
-        :type detectionthresholdmap: numpy.ndarray
-        :argument analysisthresholdmap:
-        :type analysisthresholdmap: numpy.ndarray
+        Args:
 
-        :returns:
-        :rtype: cointainers.ExtractionResults
+            detectionthresholdmap (numpy.ndarray):
+
+            analysisthresholdmap (numpy.ndarray):
+
+        Returns:
+
+            (..utility.containers.ExtractionResults):
 
         This is described in detail in the "Source Extraction System" document
-        by John Swinbank, available from TKP svn; see that for details.
+        by John Swinbank, available from TKP svn.
         """
 
         structuring_element = CONFIG['structuring_element']

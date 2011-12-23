@@ -3,15 +3,19 @@
 #
 # LOFAR Transients Key Project
 #
+# Bart Scheers, Evert Rol
+#
+# discovery@transientskp.org
+#
 
 import sys
 import math
 import logging
 import monetdb.sql as db
 from tkp.config import config
+# To do: any way we can get rid of this dependency?
 from tkp.sourcefinder.extract import Detection
 from .database import ENGINE
-
 
 AUTOCOMMIT = config['database']['autocommit']
 DERUITER_R = config['source_association']['deruiter_radius']
@@ -20,7 +24,8 @@ BG_DENSITY = config['source_association']['bg-density']
 
 def insert_dataset(conn, description):
     """Insert dataset with discription as given by argument.
-    DB function insertDataset() sets default values.
+
+    DB function insertDataset() sets the necessary default values.
     """
 
     newdsid = None
@@ -43,7 +48,7 @@ def insert_dataset(conn, description):
 
 def insert_image(conn, dsid, freq_eff, freq_bw, taustart_ts, url):
     """Insert an image for a given dataset with the column values
-    set in data discriptor
+    given in the argument list.
     """
 
     newimgid = None
@@ -68,6 +73,7 @@ def insert_image(conn, dsid, freq_eff, freq_bw, taustart_ts, url):
         cursor.close()
     return newimgid
 
+
 def load_LSM(conn, ira_min, ira_max, idecl_min, idecl_max, cat1="NVSS", cat2="VLSS", cat3="WENSS"):
     #raise NotImplementedError
 
@@ -88,13 +94,17 @@ def load_LSM(conn, ira_min, ira_max, idecl_min, idecl_max, cat1="NVSS", cat2="VL
         cursor.close()
 
 
+# The following set of functions are private to the module
+# these are called by insert_extracted_sources(), and should
+# only be used that way
 def _empty_detections(conn):
     """Empty the detections table
 
     Initialize the detections table by
     deleting all entries.
 
-    It is used at the beginning and the end.
+    It is used at the beginning and the end
+    when detected sources are inserted.
     """
 
     try:
@@ -223,6 +233,9 @@ def insert_extracted_sources(conn, image_id, results):
     _empty_detections(conn)
 
 
+# The following set of functions are private to the module;
+# these are called by associate_extracted_sources, and should
+# only be used in that way
 def _empty_temprunningcatalog(conn):
     """Initialize the temporary storage table
 
@@ -880,7 +893,6 @@ def _count_known_sources(conn, image_id, deRuiter_r):
         """
         cursor.execute(query, (image_id, deRuiter_r/3600.))
         y = cursor.fetchall()
-        #print "\t\tNumber of known sources (or sources in NOT IN): ", y[0][0]
         if not AUTOCOMMIT:
             conn.commit()
     except db.Error, e:
@@ -1034,40 +1046,6 @@ INSERT INTO runningcatalog
         cursor.close()
 
 
-def associate_extracted_sources(conn, image_id, deRuiter_r=DERUITER_R):
-    """Associate extracted sources with sources detected in the running
-    catalog
-
-    The dimensionless distance between two sources is given by the
-    "De Ruiter radius", see Ch2&3 of thesis Scheers.
-
-    Here we use a default value of deRuiter_r = 3.717/3600. for a
-    reliable association.
-    """
-
-    _empty_temprunningcatalog(conn)
-    _insert_temprunningcatalog(conn, image_id, deRuiter_r)
-    _flag_multiple_counterparts_in_runningcatalog(conn)
-    #if image_id == 2:
-    #    sys.exit(1)
-    _insert_multiple_assocs(conn)
-    _insert_first_of_assocs(conn)
-    _flag_swapped_assocs(conn)
-    _insert_multiple_assocs_runcat(conn)
-    _flag_old_assocs_runcat(conn)
-    _flag_multiple_assocs(conn)
-    #+-----------------------------------------------------+
-    #| After all this, we are now left with the 1-1 assocs |
-    #+-----------------------------------------------------+
-    _insert_single_assocs(conn)
-    _update_runningcatalog(conn)
-    _empty_temprunningcatalog(conn)
-    _count_known_sources(conn, image_id, deRuiter_r)
-    _insert_new_assocs(conn, image_id, deRuiter_r)
-    _insert_new_source_runcat(conn, image_id, deRuiter_r)
-    #_associate_across_frequencies(conn, ds_id, image_id, deRuiter_r)
-
-
 def _associate_across_frequencies(conn, ds_id, image_id, deRuiter_r=DERUITER_R):
     """Associate sources in running catalog across frequency bands
 
@@ -1116,9 +1094,143 @@ def _associate_across_frequencies(conn, ds_id, image_id, deRuiter_r=DERUITER_R):
     finally:
         cursor.close()
 
-def _select_variability_indices(conn, dsid, V_lim, eta_lim):
+
+def associate_extracted_sources(conn, image_id, deRuiter_r=DERUITER_R):
+    """Associate extracted sources with sources detected in the running
+    catalog
+
+    The dimensionless distance between two sources is given by the
+    "De Ruiter radius", see Ch2&3 of thesis Scheers.
+
+    Here we use a default value of deRuiter_r = 3.717/3600. for a
+    reliable association.
+    """
+
+    _empty_temprunningcatalog(conn)
+    _insert_temprunningcatalog(conn, image_id, deRuiter_r)
+    _flag_multiple_counterparts_in_runningcatalog(conn)
+    _insert_multiple_assocs(conn)
+    _insert_first_of_assocs(conn)
+    _flag_swapped_assocs(conn)
+    _insert_multiple_assocs_runcat(conn)
+    _flag_old_assocs_runcat(conn)
+    _flag_multiple_assocs(conn)
+    #+-----------------------------------------------------+
+    #| After all this, we are now left with the 1-1 assocs |
+    #+-----------------------------------------------------+
+    _insert_single_assocs(conn)
+    _update_runningcatalog(conn)
+    _empty_temprunningcatalog(conn)
+    _count_known_sources(conn, image_id, deRuiter_r)
+    _insert_new_assocs(conn, image_id, deRuiter_r)
+    _insert_new_source_runcat(conn, image_id, deRuiter_r)
+    #_associate_across_frequencies(conn, ds_id, image_id, deRuiter_r)
+
+
+def select_single_epoch_detection(conn, dsid):
     """Select sources and variability indices in the running catalog"""
 
+    results = []
+    cursor = conn.cursor()
+    try:
+        query = """\
+SELECT xtrsrc_id
+      ,ds_id
+      ,datapoints
+      ,wm_ra
+      ,wm_decl
+      ,wm_ra_err
+      ,wm_decl_err
+      ,sqrt(datapoints*(avg_I_peak_sq - avg_I_peak*avg_I_peak) /
+            (datapoints-1)) / avg_I_peak as V
+      ,(datapoints/(datapoints-1)) *
+       (avg_weighted_I_peak_sq -
+        avg_weighted_I_peak * avg_weighted_I_peak / avg_weight_peak)
+       as eta
+  FROM runningcatalog
+ WHERE ds_id = %s
+   AND datapoints = 1
+"""
+        cursor.execute(query, (dsid, ))
+        results = cursor.fetchall()
+        results = [dict(srcid=x[0], npoints=x[2], v_nu=x[7], eta_nu=x[8])
+                   for x in results]
+        if not AUTOCOMMIT:
+            conn.commit()
+    except db.Error:
+        logging.warn("Failed on query %s", query)
+        raise
+    finally:
+        cursor.close()
+    return results
+
+
+def lightcurve(conn, xtrsrcid):
+    """Obtain a light curve for a specific extractedsource
+
+    Args:
+
+        xtrsrcid (int): the source identifier that corresponds to a
+        point on the light curve. Note that the point does not have to
+        be the start (first) point of the light curve.
+
+    Returns:
+
+        A list of 5-tuples, each tuple containing (in order):
+
+            - observation start time as a datetime.datetime object
+            
+            - integration time (float)
+            
+            - peak flux (float)
+            
+            - peak flux error (float)
+            
+            - database ID of this particular source
+    """
+
+    cursor = conn.cursor()
+    try:
+        query = """\
+SELECT im.taustart_ts, im.tau_time, ex.i_peak, ex.i_peak_err, ex.xtrsrcid
+FROM extractedsources ex, assocxtrsources ax, images im
+WHERE ax.xtrsrc_id in
+    (SELECT xtrsrc_id FROM assocxtrsources WHERE assoc_xtrsrc_id = %s)
+  AND ex.xtrsrcid = ax.assoc_xtrsrc_id
+  AND ex.image_id = im.imageid
+ORDER BY im.taustart_ts"""
+        cursor.execute(query, (xtrsrcid,))
+        results = cursor.fetchall()
+    except db.Error:
+        query = query % xtrsrcid
+        logging.warn("Failed to obtain light curve")
+        logging.warn("Failed on query:\n%s", query)
+        raise
+    finally:
+        cursor.close()
+    return results
+
+
+# This function is private to the module, and is only called by
+# 
+def _select_variability_indices(conn, dsid, V_lim, eta_lim):
+    """Select sources and variability indices in the running catalog
+
+    This comes relatively easily, since we have kept track of the
+    average fluxes and the variance measures, and thus can quickly
+    obtain any sources that exceed a constant flux by a certain amount.
+
+    Args:
+
+        dsid (int): dataset of interest
+
+        V_lim ():
+
+        eta_lim ():
+    """
+
+    # To do: explain V_lim and eta_lim
+    
     results = []
     cursor = conn.cursor()
     try:
@@ -1133,7 +1245,7 @@ SELECT
     ,wm_decl_err
     ,t1.V_inter / t1.avg_i_peak as V
     ,t1.eta_inter / t1.avg_weight_peak as eta
-  FROM
+FROM
     (SELECT
           xtrsrc_id
          ,ds_id
@@ -1176,93 +1288,12 @@ SELECT
         cursor.close()
     return results
 
-
-def select_single_epoch_detection(conn, dsid):
-    """Select sources and variability indices in the running catalog"""
-
-    results = []
-    cursor = conn.cursor()
-    try:
-        query = """\
-SELECT xtrsrc_id
-      ,ds_id
-      ,datapoints
-      ,wm_ra
-      ,wm_decl
-      ,wm_ra_err
-      ,wm_decl_err
-      ,sqrt(datapoints*(avg_I_peak_sq - avg_I_peak*avg_I_peak) /
-            (datapoints-1)) / avg_I_peak as V
-      ,(datapoints/(datapoints-1)) *
-       (avg_weighted_I_peak_sq -
-        avg_weighted_I_peak * avg_weighted_I_peak / avg_weight_peak)
-       as eta
-  FROM runningcatalog
- WHERE ds_id = %s
-   AND datapoints = 1
-"""
-        cursor.execute(query, (dsid, ))
-        results = cursor.fetchall()
-        results = [dict(srcid=x[0], npoints=x[2], v_nu=x[7], eta_nu=x[8])
-                   for x in results]
-        if not AUTOCOMMIT:
-            conn.commit()
-    except db.Error:
-        logging.warn("Failed on query %s", query)
-        raise
-    finally:
-        cursor.close()
-    return results
-
-
-def lightcurve(conn, xtrsrcid):
-    """Obtain a light curve for a specific source"""
-
-    cursor = conn.cursor()
-    try:
-        query = """\
-SELECT im.taustart_ts, im.tau_time, ex.i_peak, ex.i_peak_err, ex.xtrsrcid
-FROM extractedsources ex, assocxtrsources ax, images im
-WHERE ax.xtrsrc_id = %s
-  AND ex.xtrsrcid = ax.assoc_xtrsrc_id
-  AND ex.image_id = im.imageid
-ORDER BY im.taustart_ts"""
-        cursor.execute(query, (xtrsrcid,))
-        results = cursor.fetchall()
-    except db.Error:
-        query = query % xtrsrcid
-        logging.warn("Failed to obtain light curve")
-        logging.warn("Failed on query:\n%s", query)
-        raise
-    finally:
-        cursor.close()
-    return results
-
         
 def detect_variable_sources(conn, dsid, V_lim, eta_lim):
     """Detect variability in extracted sources compared to the previous
     detections"""
 
     return _select_variability_indices(conn, dsid, V_lim, eta_lim)
-
-
-def associate_with_catalogedsources(conn, image_id, radius=0.025, deRuiter_r=DERUITER_R):
-    """Associate extracted sources in specified image with known sources 
-    in the external catalogues
-
-    radius (typical 90arcsec=0.025deg), is the radius of the area centered
-    at the extracted source which are searched for counterparts in the catalogues.
-    
-    The dimensionless distance between two sources is given by the
-    "De Ruiter radius", see Ch2&3 of thesis Scheers.
-
-    Here we use a default value of deRuiter_r = 3.717/3600. for a
-    reliable association.
-
-    Every found candidate is added to the assoccatsources table.
-    """
-
-    _insert_cat_assocs(conn, image_id, radius, deRuiter_r)
 
 
 def _insert_cat_assocs(conn, image_id, radius, deRuiter_r):
@@ -1349,12 +1380,34 @@ def _insert_cat_assocs(conn, image_id, radius, deRuiter_r):
     finally:
         cursor.close()
 
+
+def associate_with_catalogedsources(conn, image_id, radius=0.025, deRuiter_r=DERUITER_R):
+    """Associate extracted sources in specified image with known sources 
+    in the external catalogues
+
+    radius (typical 90arcsec=0.025deg), is the radius of the area centered
+    at the extracted source which are searched for counterparts in the catalogues.
+    
+    The dimensionless distance between two sources is given by the
+    "De Ruiter radius", see Ch2&3 of thesis Scheers.
+
+    Here we use a default value of deRuiter_r = 3.717/3600. for a
+    reliable association.
+
+    Every found candidate is added to the assoccatsources table.
+    """
+
+    _insert_cat_assocs(conn, image_id, radius, deRuiter_r)
+
+
 def associate_catalogued_sources_in_area(conn, ra, dec, radius, deRuiter_r=DERUITER_R/3600.):
     pass
 
 
+# To do: move these two functions to unit tests
+# Are these being used anyway? They appear to be defined, but not used
 def concurrency_test_fixedalpha(conn):
-    """Unit test function to test concuurency
+    """Unit test function to test concurrency
     """
 
     theta = 0.025
@@ -1375,6 +1428,7 @@ def concurrency_test_fixedalpha(conn):
     finally:
         conn.cursor().close()
     return alpha
+
 
 def concurrency_test_randomalpha(conn):
     """Unit test function to test concuurency
@@ -1415,7 +1469,7 @@ def columns_from_table(conn, table, keywords=None, where=None):
     Example:
     
         >>> columns_from_table(conn, 'images',
-            keywords=['taustart_ts', 'tau_time', 'freq_eff', 'freq_bw'], imageid=1)
+            keywords=['taustart_ts', 'tau_time', 'freq_eff', 'freq_bw'], where={'imageid': 1})
             [{'freq_eff': 133984375.0, 'taustart_ts': datetime.datetime(2010, 10, 9, 9, 4, 2), 'tau_time': 14400.0, 'freq_bw': 1953125.0}]
 
         This builds the SQL query:
@@ -1423,6 +1477,28 @@ def columns_from_table(conn, table, keywords=None, where=None):
 
     This function is implemented mainly to abstract and hide the SQL
     functionality from the Python interface.
+
+    Args:
+
+        conn: database connection object
+
+        table (string): database table name
+
+    Kwargs:
+
+        keywords (list): column names to select from the table. None indicates all ('*')
+
+        where (dict): where clause for the query, specified as a set
+            of 'key = value' comparisons. Comparisons are and-ed
+            together. Obviously, only 'is equal' comparisons are
+            possible.
+
+    Returns:
+
+        (list): list of dicts. Each dict contains the given keywords,
+            or all if keywords=None. Each element of the list
+            corresponds to a table row.
+        
     """
 
     # Note from the Python docs: If items(), keys(), values(),
@@ -1494,7 +1570,12 @@ def set_columns_for_table(conn, table, data=None, where=None):
         cursor.close()
 
 
-def get_files_for_ids(conn, image_ids):
+def get_imagefiles_for_ids(conn, image_ids):
+    """Return a list of image filenames for the give image ids
+
+    The actual returned list contains 2-tuples of (id, url)
+    """
+    
     where_string = ", ".join(["%s"] * len(image_ids))
     where_tuple = tuple(image_ids)
     query = ("""SELECT imageid, url FROM images WHERE imageid in (%s)""" % 
@@ -1512,11 +1593,17 @@ def get_files_for_ids(conn, image_ids):
     return results
 
 
-def match_nearest_in_catalogs(conn, srcid, radius=1.0,
+def match_nearests_in_catalogs(conn, srcid, radius=1.0,
                               catalogid=None, assoc_r=DERUITER_R/3600.):
     """Match a source with position ra, decl with catalogedsources
     within radius
 
+    The function does not return the best match, but a list of sources
+    that are contained within radius, ordered by distance.
+
+    One can limit the list of matches using assoc_r for a
+    goodness-of-match measure.
+    
     Args:
 
         srcid: xtrsrc_id in runningcatalog
@@ -1785,85 +1872,6 @@ INNER JOIN
         logging.warn("query failed: DROP TABLE temp_monitoringlist")
         cursor.close()
         raise
-##     # Perform the same query, but now for sources that have their
-##     # RA & Dec stored in the runningcatalog
-##     # This is largely done to update old xtrsrc_ids in the monitoringlist
-##     # Note that this part could actually be removed:
-##     # old xtrsrc_ids in the monitoringlist belong to an old dataset,
-##     # and should not be around. Or rather, be avoided for the current
-##     # dataset altogether
-##     cursor.execute("""\
-## CREATE LOCAL TEMPORARY TABLE temp_monitoringlist
-## AS
-##   SELECT
-##      t1.monitorid
-##     ,t1.xtrsrc_id AS ml_xtrsrc_id
-##     ,rc.xtrsrc_id AS rc_xtrsrc_id
-##     ,rc.wm_ra AS rc_ra
-##     ,rc.wm_decl AS rc_decl
-##     ,t1.ra AS ml_ra
-##     ,t1.decl AS ml_decl
-##     ,3600 * DEGREES(2 * ASIN(SQRT(
-##        (rc.x - t1.x) * (rc.x - t1.x)
-##        + (rc.y - t1.y) * (rc.y - t1.y)
-##        + (rc.z - t1.z) * (rc.z - t1.z)
-##        ) / 2)
-##        ) AS assoc_distance_arcsec
-##     ,SQRT( (rc.wm_ra - t1.ra) * COS(RADIANS(rc.wm_decl)) * (rc.wm_ra - t1.ra) * COS(RADIANS(rc.wm_decl))
-##        / (cast(rc.wm_ra_err AS DOUBLE PRECISION) * rc.wm_ra_err)
-##        + (rc.wm_decl - t1.decl) * (rc.wm_decl - t1.decl)
-##        / (cast(rc.wm_decl_err AS DOUBLE PRECISION) * rc.wm_decl_err)
-##        ) AS assoc_r
-##     ,rc.ds_id AS ds_id
-##   FROM (
-##     SELECT
-##        ml.monitorid
-##       ,rc.xtrsrc_id
-##       ,rc.wm_ra
-##       ,rc.wm_decl
-##       ,rc.x
-##       ,rc.y
-##       ,rc.z
-##    FROM monitoringlist ml, runningcatalog rc
-##    WHERE ml.xtrsrc_id = rc.xtrsrc_id
-##    ) AS t1, runningcatalog AS rc
-##   WHERE rc.ds_id = %s
-##   WITH DATA
-##   """, (dataset_id,))
-## 
-##     # Every monitor source (ie, every monitorid) may have multiple
-##     # associations: we group by monitorid for the minimum distance,
-##     # and then use an inner join to get other columns from the table
-##     # We match the distance to the minimum distance by float
-##     # matching, instead of using 'equal' (which would be imprecise)
-##     DOUBLE_PRECISION_CUTOFF = 1e-7
-##     cursor.execute("""\
-## SELECT
-##    t1.monitorid
-##   ,assoc_distance_arcsec
-##   ,rc_xtrsrc_id
-##   ,ml_xtrsrc_id
-##   ,ml_ra
-##   ,ml_decl
-##   ,rc_ra
-##   ,rc_decl
-##   ,assoc_r
-##   ,ds_id
-## FROM temp_monitoringlist t1 
-## INNER JOIN
-##     (SELECT monitorid, MIN(assoc_distance_arcsec) AS mindistance 
-##     FROM temp_monitoringlist WHERE assoc_r < %s 
-##     GROUP BY monitorid) AS t2 ON
-##        t1.monitorid = t2.monitorid
-##        AND
-##        ABS(t1.assoc_distance_arcsec - t2.mindistance) < 1e-7
-##        """, (assoc_r,))
-##     conn.commit()
-##     # For convience, we get a few more columns than is really necessary
-##     results.extend(cursor.fetchall())
-##     # Now we can get rid of the temporary table
-##     cursor.execute("""DROP TABLE temp_monitoringlist""")
-##     conn.commit()
 
     # And set autocommit to its default behaviour again
     conn.set_autocommit(AUTOCOMMIT)

@@ -2,7 +2,12 @@
 #
 # LOFAR Transients Key Project
 #
-# Generic utility routines; number handling etc.
+# discovery@transientskp.org
+#
+#
+# Some generic utility routines for number handling and
+# calculating (specific) variances
+#
 
 import numpy
 from numpy.ma import MaskedArray
@@ -27,6 +32,7 @@ def var_helper(N):
 
 
 def indep_pixels(N, beam):
+    """ """
     corlengthlong, corlengthshort = calculate_correlation_lengths(
         beam[0], beam[1])
     correlated_area = 0.25 * numpy.pi * corlengthlong * corlengthshort
@@ -40,15 +46,17 @@ def unbiased_sigma(N_indep):
     clipping should be such that the noise is not biased by
     it. Consequently, the clipping boundaries should be such that
     exactly half an independent pixel should exceed it if the map were
-    source free. A rigid boundary of 3 sigma is appropiate only if the
-    number of independent pixels is about 185. (The number of
+    source free. A rigid boundary of 3 sigma is appropriate only if the
+    number of independent pixels is about 185 (the number of
     independent pixels equals the number of pixels divided by the
-    beamsize in pixels.) The condition that kappa, sigma clipping may
-    not bias the noise is translated in the formula below, using
-    Gaussian statistics. A disadvantage of this is that more
-    iterations of kappa, sigma clipping are needed, compared to 3
-    sigma clipping. However, the noise values derived are generally
-    significantly different (lower) compared to 3 sigma clipping.
+    beamsize in pixels).
+
+    The condition that kappa, sigma clipping may not bias the noise is
+    translated in the formula below, using Gaussian statistics. A
+    disadvantage of this is that more iterations of kappa, sigma
+    clipping are needed, compared to 3 sigma clipping. However, the
+    noise values derived are generally significantly different (lower)
+    compared to 3 sigma clipping.
     """
 
     return 1.4142135623730951 * erfcinv(0.5 / N_indep)
@@ -57,8 +65,7 @@ def unbiased_sigma(N_indep):
 def sigma_clip(data, beam, sigma=unbiased_sigma, max_iter=100,
                centref=numpy.median, distf=numpy.var, my_iterations=0,
                corr_clip=1.):
-    """
-    Iterative clipping
+    """Iterative clipping
 
     By default, this performs clipping of the standard deviation about the
     median of the data. But by tweaking centref/distf, it could be much

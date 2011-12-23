@@ -1,93 +1,140 @@
-"""
-This module contains container objects that corresponds to a dataset
-and image in the database The correspondence is matched through the
-private _dsid and _imageid attributes.
+# -*- coding: utf-8 -*-
 
-Each dataset contains several database Images; database Images
-correspond to the images table in the databse, *not* to sourcefinder
-images or actual image data files on disk (this distinction is
-important; while there are certainly parts in common, several are
-not). This is in contrast to earlier versions of this module, where a
-sourcefinder could basically not exist without a database.
+#
+# LOFAR Transients Key Project
+#
+# Evert Rol
+#
+# discovery@transientskp.org
+#
+#
+# Simplified miniature ORM to deal with the most basic and essential
+# database tables.
+#
+
+"""
+This module contains container objects that corresponds to a dataset,
+image or extracted source in the database; it is actually a mini
+Object Relation Mapper (ORM). The correspondence between the object
+and table row is matched through the private _id attributes.
+
+Each dataset contains several database Images; each Image contains a
+number of ExtractedSources. The database Images correspond to the
+images table in the database, *not* to sourcefinder images or actual
+image data files on disk (this distinction is important; while there
+are certainly parts in common, several are not).
+
 
 The current setup is done in large part to keep the database and
 sourcefinder (and other parts of the TKP package) separate; tightly
-integrated database tables/sourcefinder images/data files make it more
+integrated database tables/sourcefinder images/disk files make it more
 difficult to improve the code or distribute parts separately. While
 not tested, it seems unlikely this will have a noticable influence on
-the functioning of the actual TKP pipeline (TRAP).
+the functioning of the actual TKP pipeline (TraP).
 
+Every container object inherits from DBObject, which forms the
+starting point for any new container objects created. See the doc
+strings for DBOject for more information on how to do this.
 
 Usage
 =====
 
 In practice, a DataSet object is created, and separate Images are
 created referencing that DataSet() instance; ids are automatically
-assigned where necessary.
+assigned where necessary (i.e., on creation of a new entry (row) in
+the database).
 
 Objects can also be created using an existing id; data is then taken
-from the database.
+from the corresponding table row in the database.
 
 
->>> database = tkp.database.database.DataBase()
-# Each object type takes a data dictionary, which for newly objects
-# has some required keys (& values). For a DataSet, this is only 'dsinname';
-# for an Image, the keys are 'freq_eff', 'freq_bw_', 'taustart_ts',
-# 'tau_time' & 'url'
-# database holds the connection to the database
->>> dataset = DataSet(data={'dsinname': 'a dataset'}, database=database)
-# Here, dataset indirectly holds the database connection
->>> image1 = Image(data={'freq_eff': '80e6', 'freq_bw': 1e6,
-    'taustart_ts': datetime(2011, 5, 1, 0, 0, 0), 'tau_time': 1800., 'url': '/'},
-    dataset=dataset)  # initialize with defaults
->>> image1.tau_time
-1800.
->>> image1.taustart_ts
-datetime.datetime(2011, 5, 1, 0, 0, 0)
->>> image2 = Image(data={'freq_eff': '80e6', 'freq_bw': 1e6,
-    'taustart_ts': datetime(2011, 5, 1, 0, 1, 0), 'tau_time': 1500., 'url': '/'},
-    dataset=dataset)
->>> image2.tau_time
-1500
->>> image2.taustart_ts
-datetime.datetime(2011, 5, 1, 0, 1, 0)
-# Images created with a dataset object, are automatically added to that dataset:
->>> dataset.images
-[<tkp.database.dataset.Image object at 0x10151ce10>,
- <tkp.database.dataset.Image object at 0x10151cc90>]
+Creating new objects
+====================
+
+The following code is an usage example, but should not be used as a
+doc test (since the database value can differ, and thus the test would
+fail)::
+
+    # database sets up and holds the connection to the actual database
+    >>> database = tkp.database.database.DataBase()
+
+    # Each object type takes a data dictionary on creation, which for newly objects
+    # has some required keys (& values). For a DataSet, this is only 'dsinname';
+    # for an Image, the keys are 'freq_eff', 'freq_bw_', 'taustart_ts',
+    # 'tau_time' & 'url'
+    # The required values are stored in the the REQUIRED attribute
+    >>> dataset = DataSet(data={'dsinname': 'a dataset'}, database=database)
+
+    # Here, dataset indirectly holds the database connection:
+    >>> dataset.database
+    DataBase(host=heastro1, name=trap, user=trap, ...)
+    >>> image1 = Image(data={'freq_eff': '80e6', 'freq_bw': 1e6,
+        'taustart_ts': datetime(2011, 5, 1, 0, 0, 0), 'tau_time': 1800., 'url': '/'},
+        dataset=dataset)  # initialize with defaults
+        # note the dataset kwarg, which holds the database connection
+    >>> image1.tau_time
+    1800.
+    >>> image1.taustart_ts
+    datetime.datetime(2011, 5, 1, 0, 0, 0)
+    >>> image2 = Image(data={'freq_eff': '80e6', 'freq_bw': 1e6,
+        'taustart_ts': datetime(2011, 5, 1, 0, 1, 0), 'tau_time': 1500., 'url': '/'},
+        dataset=dataset)
+    >>> image2.tau_time
+    1500
+    >>> image2.taustart_ts
+    datetime.datetime(2011, 5, 1, 0, 1, 0)
+    # Images created with a dataset object, are automatically added to that dataset:
+    >>> dataset.images
+    set([<tkp.database.dataset.Image object at 0x26fb6d0>, <tkp.database.dataset.Image object at 0x26fb790>])
+
+Updating objects
+================
 
 To update objects, use the update() method.
-This method works 2 ways: it (firstly) updates from the database to the object
-(so if there have been changes in the database, the object will reflect that after
-an update()); it (secondly) updates the object (and the database) with values
-supplied by the user. The latter values are optional.
+
+This method does two things, in the following order:
+
+1. it updates from the database to the object: if there have been
+changes in the database, the object will reflect that after executing
+update()
+
+2. then, it updates the object (and the database) with values supplied
+by the user. The latter values are optional; no supplied values simply
+means there aren't any updates.
 
 
->>> image2.update(tau_time=2500)    # updates the database as well
->>> image2.tau_time
-2500
->>> database.cursor.execute("SELECT tau_time FROM images WHERE imageid=%s" %
-                             (image2.imageid,))
->>> database.cursors.fetchone()[0]
-2500
->>> database.cursor.execute("UPDATE images SET tau_time=2000.0 imageid=%s" %
-                             (image2.imageid,))
->>> image2.tau_time   # not updated yet!
-2500
->>> image2.update()
->>> image2.tau_time
-2000
+    >>> image2.update(tau_time=2500)    # updates the database as well
+    >>> image2.tau_time
+    2500
+    >>> database.cursor.execute("SELECT tau_time FROM images WHERE imageid=%s" %
+                                 (image2.imageid,))
+    >>> database.cursors.fetchone()[0]
+    2500
+    # Manually update the database
+    >>> database.cursor.execute("UPDATE images SET tau_time=2000.0 imageid=%s" %
+                                 (image2.imageid,))
+    >>> image2.tau_time   # not updated yet!
+    2500
+    >>> image2.update()
+    >>> image2.tau_time
+    2000
 
 
-It is also possible to create a DataSet or Image instance from the
-database, using the ``id`` in the initializer:
+Assigning objects to a table row on creation
+============================================
 
->>> dataset2 = DataSet(id=dataset.id, database=database)
->>> image3 = Image(imageid=image2.imageid, database=database)
->>> image3.tau_time
-2000
+It is also possible to create a DataSet, Image or ExtractedSource instance from the
+database, using the ``id`` in the initializer::
 
+    >>> dataset2 = DataSet(id=dataset.id, database=database)
+    >>> image3 = Image(imageid=image2.imageid, database=database)
+    >>> image3.tau_time
+    2000
+    
 If an ``id`` is supplied, ``data`` is ignored.
+
+
+
 
 """
 
@@ -111,15 +158,22 @@ class DBObject(object):
     latter is called at the end __init__, so a derived __init__ would
     have super(Derived, self).__init__() at the start and
     super(Derived, self)._init_data() at the end.
+
+    __init__ takes care of setting the id, the supplied `data` dictionary
+    and the connection to the database.
+
+    _init_data sets the actual data either from the database (in case
+    of a supplied id) or from the `data` dictionary.
     """
 
     def __init__(self, data=None, database=None, id=None):
         """Basic initialization.
 
-        Inherited classes will implement any actual database action,
+        Inherited classes need to implement any actual database action,
         by calling self._init_data() at the end of their __init__
         method.
         """
+        # Call the id property to set the _id attribute
         self._id = id
         self._data = {} if data is None else data.copy()
         self.database = database
@@ -132,10 +186,17 @@ class DBObject(object):
 
         Note that this does prevent proper (multi) inheritance,
         because it would get called several times then.
+
+        Raises:
+
+            AttributeError if a required data keyword is missing.
+            
         """
         if self._id is not None:
+            # object created using an existing table row
             self.update()
         else:
+            # Verify required data keys
             for key in self.REQUIRED:
                 if key not in self._data:
                     raise AttributeError("missing required data key: %s" % key)
@@ -156,6 +217,9 @@ class DBObject(object):
 
         The id is generated if self._id does not exist, effectively
         creating a new row in the database.
+
+        Several containers have their specific SQL function to create
+        a new object, so this property will need to overridden.
         """
 
         if self._id is None:
@@ -185,7 +249,7 @@ class DBObject(object):
         kwargs when provided
 
         This method performs two functions, the first always and the
-        second optionally:
+        second optionally after the first:
 
             - it updates the attributes from the database. That is, it
               makes sure the Python instance is synchronized with the
@@ -252,7 +316,10 @@ class DataSet(DBObject):
     # Inserting datasets is handled a little different than normal inserts
     @property
     def id(self):
-        """Add or obtain an id to/from the table"""
+        """Add or obtain an id to/from the table
+
+        This uses the SQL function insertDataset().
+        """
 
         if self._id is None:
             try:
@@ -317,7 +384,10 @@ class Image(DBObject):
     # Inserting images is handled a little different than normal inserts
     @property
     def id(self):
-        """Add or obtain an id to/from the table"""
+        """Add or obtain an id to/from the table
+
+        This uses the SQL function insertImage()
+        """
 
         if self._id is None:
             try:
@@ -339,7 +409,7 @@ class Image(DBObject):
         image from the database
 
         This method is separately implemented, because it's not always necessary
-        and potentially (for an image with dozens or more sources) time & memeory
+        and potentially (for an image with dozens or more sources) time & memory
         consuming. 
         """
 
@@ -419,7 +489,8 @@ class Image(DBObject):
         monitoringlist.
         """
 
-        dbu.insert_monitoring_sources(self.database.connection, results, self._id)
+        dbu.insert_monitoring_sources(self.database.connection, results,
+                                      self._id)
         
         
 class ExtractedSource(DBObject):
@@ -427,7 +498,8 @@ class ExtractedSource(DBObject):
 
     TABLE = 'extractedsources'
     ID = 'xtrsrcid'
-    REQUIRED = ('image_id', 'zone', 'ra', 'decl', 'ra_err', 'decl_err', 'x', 'y', 'z', 'det_sigma')
+    REQUIRED = ('image_id', 'zone', 'ra', 'decl', 'ra_err', 'decl_err',
+                'x', 'y', 'z', 'det_sigma')
 
     def __init__(self, data=None, image=None, database=None, id=None):
         """If id is supplied, the data and image arguments are ignored."""
@@ -446,8 +518,8 @@ class ExtractedSource(DBObject):
         self._init_data()
 
     def lightcurve(self):
-        """Obtain the complete light curve (within the current dataset
-        for this source
+        """Obtain the complete light curve (within the current dataset)
+        for this source.
 
         Returns:
 

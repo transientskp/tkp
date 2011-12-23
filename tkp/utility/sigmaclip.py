@@ -3,11 +3,8 @@
 """
 
 .. module:: sigmaclip
-
+   :synopsis: Generic sigmaclip routine
 .. moduleauthor:: TKP, Evert Rol <discovery@transientskp.org>
-
-
-:synposis: Generic sigmaclip routine
 
 Note: this does *not* replace the specialized sigma_clip function in
 utilities.py

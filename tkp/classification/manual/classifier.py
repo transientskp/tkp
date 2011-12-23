@@ -3,11 +3,9 @@
 Classify a Transient object, according to a user classification tree.
 
 .. module::
-   :synposis: Classify a Transient object, according to a user classification
+   :synopsis: Classify a Transient object, according to a user classification
    tree.
-
 .. moduleauthor: Evert Rol, Transient Key Project <discovery@transientskp.org>
-
 
 The actual classification work is done here, in three parts:
 

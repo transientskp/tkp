@@ -59,7 +59,7 @@ class monitoringlist(BaseRecipe, RemoteCommandRecipeMixIn):
         super(monitoringlist, self).go()
         # Get image_ids and their file names
         with closing(DataBase()) as database:
-            ids_filenames = dbu.get_files_for_ids(
+            ids_filenames = dbu.get_imagefiles_for_ids(
                 database.connection, self.inputs['image_ids'])
             
         # Obtain available nodes

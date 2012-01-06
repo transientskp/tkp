@@ -100,7 +100,7 @@ Checking and editing the various configuration files
 ----------------------------------------------------
 
 As you see, the script will tell you which files have been created
-(and implicitly which directories). As suggested, we review a view of
+(and implicitly which directories). As suggested, we review a few of
 those files. Let's start with the :file:`ms_to_process.py` file, which
 may look something like::
 
@@ -250,6 +250,3 @@ Note that the images are processed in the order they are listed, which
 most logically would be in time order. Note that you can pick any
 preferred job name (the :option:`-j` option in :file:`runtrap.sh`),
 which is what gets entered into the database for these images.
-
-
-

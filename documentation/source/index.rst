@@ -14,6 +14,7 @@ Contents:
    introduction
    installation
    cookbook
+   troubleshooting
    setup
    database
    trap_py

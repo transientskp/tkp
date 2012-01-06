@@ -259,5 +259,5 @@ epub_copyright = u'2011, LOFAR Transients Key Project'
 # Example configuration for intersphinx: refer to the Python standard library.
 intersphinx_mapping = {
     'python': ('http://docs.python.org/', None),
-    'tkpapi': ('http://docs.transientskp.org/tkp/dev', None),
+    'tkpapi': ('http://docs.transientskp.org/tkp', None),
     }

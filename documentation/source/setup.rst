@@ -352,8 +352,8 @@ Additional setup
 There are two parts that you may want to set up for using the pipeline that are
 not part of the transients pipeline. The first part is passwordless ssh, the
 second part is the postgres database for using BBS (the calibration software).
-This information can also be found in :ref:`the LOFAR imaging cookbook (sections
-1.3.2 and 1.4)<http://www.astron.nl/radio-observatory/lofar/lofar-imaging-cookbook>`
+This information can also be found in `the LOFAR imaging cookbook (sections
+1.3.2 and 1.4) <http://www.astron.nl/radio-observatory/lofar/lofar-imaging-cookbook>`_
 
 Passwordless ssh
 ~~~~~~~~~~~~~~~~

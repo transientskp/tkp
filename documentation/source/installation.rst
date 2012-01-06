@@ -126,7 +126,7 @@ afterwards, eg for redoing a build with different settings::
     ./build.bash --prefix /opt/tkp --install --develop --daily --test --testlog /opt/tkp/unittests.log
 
 
-If all goes well, you should end with the following directory structure (not all directories are shown):
+If all goes well, you should end with the following directory structure (not all directories are shown)::
 
     tkp/
     tkp/bin/
@@ -181,7 +181,7 @@ a dependency. Check you have the required dependencies, then possibly edit the
 corresponding :file:`Find<package>.cmake` file to ensure cmake can find your
 installation.
 
-Once the configuration completes, run make (:option:`-j` added for parallel = faster build)::
+Once the configuration completes, run make (:option:`-j` added for parallel (= faster) build)::
 
     make -j
 

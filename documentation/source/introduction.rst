@@ -1,5 +1,6 @@
-Transients Pipeline
-===================
++++++++++++++++++++++++
+The Transients Pipeline
++++++++++++++++++++++++
 
 This document describes the transients pipeline, the installation,
 configuration and its usage.
@@ -81,9 +82,9 @@ some will make little sense. The steps are:
   obviously not lead to a (valid) classification. 
 
   Since, at the moment, there are few to none training data sets for
-  the classification, this step largely follows a simple manual tree
+  the classification, this step follows a simple manual tree
   classification, where each source gets a value (weight) associated
-  with a certain type of classification. These classification,
+  with a certain type of classification. The possible classifications,
   however, are fully preprogrammed.
 
 - An alert system. This will send emails to interested parties, depending on

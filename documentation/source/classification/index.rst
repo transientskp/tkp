@@ -10,5 +10,6 @@ Modules from ``tkp.classification``
 .. toctree::
    :maxdepth: 2
 
+   introduction
    features/index
-   classification/index
+   manual/index

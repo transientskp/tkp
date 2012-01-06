@@ -10,6 +10,7 @@ Modules from ``tkp.classification.manual``
 .. toctree::
    :maxdepth: 2
 
+   introduction
    classifier
    transient
    utils

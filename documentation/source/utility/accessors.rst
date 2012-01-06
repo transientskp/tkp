@@ -5,5 +5,5 @@
 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 .. automodule:: tkp.utility.accessors
-   :synopsis: Image container classes
+   :synopsis: Accessor (image container) classes
    :members:

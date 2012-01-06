@@ -1,3 +1,5 @@
+.. _developing:
+
 ++++++++++++++++++++++++++++++++++++++
 Developing for the Transients Pipeline
 ++++++++++++++++++++++++++++++++++++++
@@ -7,7 +9,7 @@ Transients Pipeline, either the TraP part (recipes) or the underlying
 modules (the TKP package).
 
 TraP
-----
+====
 
 The Transients Pipeline is formed by a set of master-node recipes
 within the standard pipeline framework. Each master recipe is in
@@ -54,7 +56,7 @@ outputs definitions)::
         super(classification, self).go()
 	# Obtain the available compute nodes
         clusterdesc = ClusterDesc(self.config.get('cluster', "clusterdesc"))
-       available_nodes = {
+        available_nodes = {
             clusterdesc.name: get_compute_nodes(clusterdesc)
             }
         nodes = list(itertools.chain(*available_nodes.values()))
@@ -83,19 +85,19 @@ outputs definitions)::
 
 Keep in mind that a master recipe does not have to call a compute node
 recipe (which then eliminates all of the above code). For example, the
-`transient_search` recipe consists only of a master recipe: any
-computational intensive work is actually done on the database, and the
-overhead of starting up a compute node to interact with the database
-is probably more than calling the database directly from the master
-(front end) node.
+:ref:`transient search <trap:transient-search-recipe>` recipe consists
+only of a master recipe: any computational intensive work is actually
+done inside the database, and the overhead of starting up a compute
+node to interact with the database is probably more than calling the
+database directly from the master (front end) node.
 
 
 A note on database connections: these cannot be transferred from the
 master to the node recipes (cannot be pickled, and thus cannot be
 transferred across the ssh connection), so each compute node has to
 open its own database connection, and close it again. The most obvious
-way (if the TKP configuration file is configured for the correct
-database) is simply using::
+way (if the TKP configuration file is configured correctly) is simply
+done on the compute nodes as follows::
 
     from contextlib import closing
     def run(self, *args):
@@ -105,7 +107,7 @@ database) is simply using::
 
 
 TKP
----
+===
 
 The TKP package is a set of modules (or actually modules within four
 subpackages) that implement the algorithms used by the transients
@@ -193,9 +195,70 @@ task follows:
   - exceptions: a few (rarely used) TKP exception classes
 
 
+Builds
+======
+
+The installation procedure is described in :ref:`the TRAP installation
+documentation <trap:installation>`. This section just gives the
+information on the nightly builds as they are currently occurring on
+the heastro system.
+
+A cron job starts up the overall script in
+:file:`/home/evert/.local/bin/daily_tkp_build.bash`::
+
+    10 4 *  *   *   PATH=${PATH}:/opt/monetdb/bin /home/evert/.local/bin/daily_tkp_build.bash > /home/evert/.local/logs/tkp_daily_build-`date +\%F`.log 2>&1
+
+The :file:`daily_tkp_build.bash` script first updates the Subversion
+repository in the scratch area (this repository is only used for the
+installation, not for updating code); it removes any files that do not
+belong to the repository (such as the :file:`build` directory), then
+builds the development version of the pipeline (the "milestone 1"
+stable release and the special database release builds are skipped
+nowadays).
+
+The build will run the :file:`build.bash` script, which in turns does
+the following:
+
+- configure the build
+
+- build (compile) the actual code
+
+- test the code *in the build directory*. This uses an separate test
+  database, which is created and destroyed on the fly. Testing takes
+  quite a bit of time: up to 20 minutes.
+
+- Install all the code in the development directory
+  (:file:`/opt/tkp/dev/tkp-<date>` on heastro; a symlink
+  :file:`/opt/tkp/dev/tkp` is created to this daily build).
+
+- Destroy and recreate the `tkpdev` MonetDB database.
+
+The following log files are created during the build process:
+
+- :file:`/home/evert/.local/logs/tkp_daily_build-<date>.log`: the
+  overall process log file. This file is almost empty, but would show
+  if there was a problem updating the Subversion repository.
+
+- :file:`/opt/tkp/build_develop-<date>.log`: the overall build log
+  file. This is the main file to look to see where the build process
+  would have failed.
+
+- :file:`/opt/tkp/testing-<date>.log`: the results of the unit tests.
+
+
+.. note::
+
+   Whenever the development build is deemed "good and stable enough"
+   (rather a subjective measure), a symbolic link is made from
+   :file:`/opt/tkp/tkp-<date>` to :file:`/opt/tkp/dev/tkp-<date>`, and
+   from :file:`/opt/tkp/tkp-<date>` to :file:`/opt/tkp/tkp`. This will
+   bring the more stable version of the pipeline up to the current
+   release. Be sure to upgrade the necessary databases (`tkp` and
+   possible user databases) as well.
+
 
 Coding guideline
-----------------
+================
 
 We try to follow PEP 8 as much as possible, although at times, this is
 flexible (e.g., short variable names sometimes make more sense in the
@@ -229,6 +292,8 @@ There currently exists two main sections of documentation:
 - TKP: this section deals with the underlying modules and algorithms
   used in the transients pipeline.
 
+Using the intersphinx extension, links can be and are created between
+the two documentation sections.
 
 Doc strings
 -----------
@@ -239,7 +304,10 @@ docstring. The documentation of the arguments and keyword arguments
 follow roughly the convention suggested `by Google
 <http://google-styleguide.googlecode.com/svn/trunk/pyguide.html?showone=Comments#Comments>`_
 (`see also
-<http://packages.python.org/an_example_pypi_project/sphinx.html#function-definitions>`_).
+<http://packages.python.org/an_example_pypi_project/sphinx.html#function-definitions>`_);
+this is different than the `Sphinx supported style
+<http://sphinx.pocoo.org/markup/desc.html#info-field-lists>`_, but
+feels more readable.
 
 
 
@@ -247,10 +315,68 @@ follow roughly the convention suggested `by Google
 Testing
 =======
 
+No (good) piece of software can be without proper tests. In the case
+of the TKP library, a (presumably) most tests have come after the fact
+(i.e., first the problem was solved, then it was tested if that really
+worked properly), and often tests were initially practical use cases,
+and not so much stylized unit tests.
+
+As a result, there are probably still many routines that lack proper
+unit tests, although more unit tests are still being added.
+
+I suggest to follow at least one simple rule:
+
+.. pull-quote::
+
+   **If a bug shows up and is fixed, or a function is changed, write a
+   unit tests, detailing the bug (and its fix) or the change.**
+
+
 Unit tests
 ----------
+
+The unit tests use the :mod:`unittest2` module. For Python 2.7, this
+is the built-in :mod:`unittest` module, but for earlier versions, the
+module needs to be installed separately. The unit tests have the
+following check at the import level for this::
+
+    import unittest
+    try:
+        unittest.TestCase.assertIsInstance
+    except AttributeError:
+        import unittest2 as unittest
+
+Running the unit tests
+----------------------
+
+To run the unit tests, there exists a test subdirectory outside of the
+TKP package (at :file:`tkp/trunk/tests`). The :file:`runtests.bash`
+script sets up the necessary paths and allows to call the various unit
+tests as an argument to the script. In the end, this was done to
+`ctest` can automatically run each unit test as a separate test (the
+various path settings inside the script are optimized for in-build
+testing with cmake and ctest).
+
+To run all the tests at once, one can also use the :file:`test.py`
+script, provided all the paths are set correctly.
+
 
 Pipeline tests
 --------------
 
+Ultimately, the only way to know if everything works correctly (or as
+correct as can be deduced), is by running the transients
+pipeline. Work is still in progress to set up a set of simulated data
+that will test the various aspects of the pipeline, including proper
+source finding, association and classification, even under rare (bad),
+but controlled (simulated) circumstances.
+
+For now, I would suggest to have a look at
+:file:`/home/evert/work/trap/jobs/bell/control/runtrap.sh`, and work
+back from this file for the necessary setup. I have been using this
+(small) dataset to at least test the basic functionality of the
+transients pipeline. Practically, running these data through the
+pipeline should produce about five transients (although none of them
+are real: they are just artefacts of, liekely, flux calibration
+problems).
 

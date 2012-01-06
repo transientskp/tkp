@@ -1,7 +1,7 @@
 .. _database_module:
 
 ++++++++++++++++
-database package
+Database package
 ++++++++++++++++
 
 Modules from the ``tkp.database`` package.

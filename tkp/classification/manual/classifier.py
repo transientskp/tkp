@@ -1,15 +1,15 @@
 """
-
 Classify a Transient object, according to a user classification tree.
 
-.. module::
-   :synopsis: Classify a Transient object, according to a user classification
-   tree.
-.. moduleauthor: Evert Rol, Transient Key Project <discovery@transientskp.org>
+This module contains the necessary classes to classify a transient,
+using the decision tree set up in the classification module.
 
-The actual classification work is done here, in three parts:
 
-- The Classifier class picks up the transient and classification tree
+The actual classification work is done in three parts:
+
+- The Classifier class picks up the
+  :py:class:`~tkp.classification.manual.transient.Transient` and
+  :py:class:`classification tree <tkp.classification.manual.classifier.Main>`.
 
 - The Branch will step through the tree, adding points (weights) to
   the classification of the Transient instance

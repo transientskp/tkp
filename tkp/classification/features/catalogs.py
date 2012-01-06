@@ -17,6 +17,17 @@ except ImportError:
     import_failed = True
 
 def match_catalogs(transient):
+    """Match transient source with nearest catalog source
+
+    Iterate through available catalogs, and return the nearest source
+    for each catalog. Each such source is a dictionary with keys
+    catsrcid, catsrcname, catid, catname, ra, decl, ra_err, decl_err,
+    dist_arcsec, assoc_r. See
+    :py:func:`~tkp.database.utils.match_nearests_in_catalogs` for details.
+
+    The returned dictionary contains the catalog name as its key, and
+    a source as the corresponding value.
+    """
     if import_failed:
         return None
     # Hardcode the catalogs for now
@@ -32,5 +43,3 @@ def match_catalogs(transient):
         else:
             results[value] = {}
     return results
-
-            

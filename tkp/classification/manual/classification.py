@@ -1,21 +1,19 @@
-from tkp.classification.manual.classifier import ClassifiedTransient, Branch
-
-
 """
-
 This file defines the various transients that can be classified. It
-does so by creating classes that inherit from ClassifiedTransient, and
-that define test methods. Each test method can check for one or more
-Transient attributes, and returns a weight depending on the test
-outcome (there is no need to return a default value of 0.0: just let
-the method return automatically if the checks don't pass; the
-implicitly returned 'None' will be regarded as 0.0).
+does so by creating classes that inherit from
+:py:class:`~tkp.classification.manual.classifier.ClassifiedTransient`,
+and that define test methods. Each test method can check for one or
+more :py:class:`~tkp.classification.manual.transient.Transient`
+attributes, and returns a weight depending on the test outcome (there
+is no need to return a default value of 0.0: just let the method
+return automatically if the checks don't pass; the implicitly returned
+'None' will be regarded as 0.0).
 
 The test method names, for both ClassifiedTransient and Branch
-subclasses, should start with 'test', extended by any legimate
+subclasses, should start with `test`, extended by any legimate
 character combination (much like the unittest framework). The test
-method are not guaranteed to be run in order, and should thus not be
-dependent on each other.  When multiple test are executed, the various
+method are not guaranteed to be run in order, and should thus not 
+depend on each other.  When multiple test are executed, the various
 return values (weights) are added together, to result in a single
 weight for the specific classified transient.
 
@@ -38,6 +36,10 @@ will, in the end, be a list of 2-tuples with a description string and
 a weight for each ClassifiedTransient.
 
 """
+
+
+from tkp.classification.manual.classifier import ClassifiedTransient, Branch
+
 
 
 class SlowTransient(ClassifiedTransient):

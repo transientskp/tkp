@@ -40,6 +40,17 @@ class LightCurve(object):
 
             - srcid (int): id of the source in the database
 
+
+        Fills the attributes with data obtained from the
+        database. Attributes of the class are the same as those for
+        the constructor. In this case, the srcids attribute is always
+        filled, and reflects the individual extracted sources.
+        
+        Example::
+
+            >>> with closing(DataBase()) as database:
+            ...     lightcurve = LightCurve.from_database(database.cursor, 1)
+            
         """
 
         cursor.execute(sql_lightcurve, srcid)
@@ -91,6 +102,14 @@ class LightCurve(object):
         self.reset()
 
     def reset(self):
+        """Reset all the extracted features to their default values
+
+        The default values are generally numpy.nan or 0; using NaN
+        often provides a better indication for other function or
+        methods that the data does not exist.
+
+        """
+        
         self.background = {'mean': numpy.nan, 'sigma': numpy.nan,
                            'indices': None}
         self.duration = {'start': numpy.nan, 'end': numpy.nan,
@@ -106,13 +125,6 @@ class LightCurve(object):
     def calc_background(self, niter=-50, kappa=(5, 5)):
         """Estimate background flux
 
-        Uses sigmaclipping to estimate a background. This only works
-        well when there are enough background points.
-
-        Also estimates the first point in time where the light curve
-        deviates from the background (T_zero), and the current duration
-        where the light curve is above the background.
-
         Kwargs:
 
             niter (int): number of iterations. Passed on to sigmaclip()
@@ -125,6 +137,14 @@ class LightCurve(object):
             (dict): mean, sigma, indices
                 where light curve is at background level (True) and where
                 not (False).
+
+        Uses sigmaclipping to estimate a background. This only works
+        well when there are enough background points.
+
+        Also estimates the first point in time where the light curve
+        deviates from the background (T_zero), and the current duration
+        where the light curve is above the background.
+
         """
 
         logger = logging.getLogger('tkp')
@@ -178,6 +198,12 @@ class LightCurve(object):
     def calc_duration(self, indices=None):
         """Calculate duration and estimate start of the transient event
 
+        Kwargs:
+
+            indices (numpy.ndarray): None or a numpy.ndarray of
+                relevant indices; that is, the indices for points
+                where the light curve duration should be calculated.
+            
         It calculates two durations:
 
         - full duration, from first rise above background until last bit
@@ -227,12 +253,30 @@ class LightCurve(object):
         """Get the peak flux, its increase (absolute & relative) and
         the peak index
 
+        Kwargs:
+
+            background (float): previously calculated background (or
+                given by the user). If not given, the background is
+                calculated first.
+
+            indices (numpy.ndarray): None or a numpy.ndarray of
+                relevant indices; that is, the indices for points
+                where the light curve duration should be calculated.
+
+        Returns:
+
+            (dict): a dictionary with keys `peak` (the peak flux),
+                `ipeak` (the index of the light curve for the peak
+                flux), `increase` (a dictionary of flux increase
+                values, the two keys indicated the `absolute` and
+                `relative` flux increase).
+            
         In case of several local maxima (multiple outbursts), only the
         peak flux and increase/decrease for the outburst in which the
         peak flux falls is calculated.
 
         The peak flux can be *negative* (eg, occultation transient), in
-        which case increase becomes negative and decrease positive.
+        which case increase becomes negative.
 
         If all indices are True, then the source is still at its
         background level, and no clear transient exists: ipeak will
@@ -263,19 +307,36 @@ class LightCurve(object):
     def calc_risefall(self, background=None, indices=None, ipeak=None):
         """Calculate the (total) flux increase & decrease
 
-        Also calculates the time interval over which the
-        flux increases or decreases.
+        Kwargs:
 
-        Returns a three tuple:
+            background (float): previously calculated background (or
+                given by the user). If not given, the background is
+                calculated first.
 
-        - the first two elements are themselves two-tuples
-          that contain the flux increase or decrease (first element)
-          and the time interval (second element).
+            indices (numpy.ndarray): None or a numpy.ndarray of
+                relevant indices; that is, the indices for points
+                where the light curve duration should be calculated.
 
-        - the third element is a number that indicates
-          the ratio between the increase and decrease.
-          The number is zero if the increase or decrease
-          could not be calculated.
+            ipeak: the index of the light curve maximum. If not set,
+            calculated by `calc_fluxincrease`.
+
+        Returns:
+
+            (3-tuple):
+
+                - the first two elements are themselves two-tuples
+                  that contain the flux increase or decrease (first element)
+                  and the time interval (second element).
+                
+                - the third element is a number that indicates
+                  the ratio between the increase and decrease.
+                  The number is zero if the increase or decrease
+                  could not be calculated.
+
+        
+        This method calculated the flux increase and decrease, as well
+        as the time interval over which the flux increases or
+        decreases.
 
         Note: when values are not available (mostly when the light
         curve hasn't yet returned to background), they will be set to

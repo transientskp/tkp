@@ -24,7 +24,7 @@ from lofarpipe.support.utilities import log_time
 
 class classification(LOFARnodeTCP):
 
-    def run(self, schema, path, transient, weight_cutoff, tkpconfigdir=None):
+    def run(self, path, transient, weight_cutoff, tkpconfigdir=None):
         if tkpconfigdir:   # allow nodes to pick up the TKPCONFIGDIR
             os.environ['TKPCONFIGDIR'] = tkpconfigdir
         from tkp.classification.manual.classifier import Classifier

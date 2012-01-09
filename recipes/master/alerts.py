@@ -73,7 +73,7 @@ class alerts(BaseRecipe):
         parset=lofaringredient.FileField(
             '-p', '--parset',
             dest='parset',
-            help="Python file containing classification schema"),
+            help="(Email) alert configuration parset"),
         logfile=lofaringredient.StringField(
             '-l', '--logfile',
             dest='logfile',

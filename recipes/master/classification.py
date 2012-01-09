@@ -57,9 +57,6 @@ from tkp.classification.manual.utils import DateTime
 class classification(BaseRecipe, RemoteCommandRecipeMixIn):
 
     inputs = dict(
-        schema=lofaringredient.StringField(
-            '--schema',
-            help="Python file containing classification schema"),
         weight_cutoff=lofaringredient.FloatField(
             '--weight-cutoff',
             help='Weight cutoff'),
@@ -104,7 +101,7 @@ class classification(BaseRecipe, RemoteCommandRecipeMixIn):
             self.logger.info("Executing classification for %s on node %s" % (transient, node))
             jobs.append(
                 ComputeJob(node, command, arguments=[
-                self.inputs['schema'], self.config.get("layout", "parset_directory"),
+                self.config.get("layout", "parset_directory"),
                 transient, weight_cutoff, tkp.config.CONFIGDIR]))
 
         self.logger.info("Scheduling jobs")

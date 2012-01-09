@@ -722,7 +722,6 @@ recipe = feature_extraction
 
 [classification]
 recipe = classification
-schema = classification
 weight_cutoff = 0.1
 
 [alerts]

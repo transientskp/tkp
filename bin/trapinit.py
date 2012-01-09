@@ -12,11 +12,6 @@ import logging
 import site
 
 
-#logging.basicConfig(level=logging.INFO,
-#                    format="%(message)s",
-#                    stream=sys.stdout)
-
-
 class ConfigError(Exception):
     pass
 
@@ -307,7 +302,7 @@ password = %s
                 # user, since it's abundant in its options
                 self.create_minimal_tkp_configfile(path)
         tkpconfig = ConfigParser.SafeConfigParser()
-        tkpconfig.read(os.path.expanduser('~/.tkp.cfg'))
+        tkpconfig.read(path)
         if not tkpconfig.has_section('database'):
             self.logger.info("[database] section missing in %s. "
                         "Please add and then rerun this script", path)
@@ -469,7 +464,7 @@ password = %s
                 outfile.write("""\
 ClusterName = heastro
 
-Compute.Nodes = [ heastro1,heastro2 ]
+Compute.Nodes = [ heastro1 ]
 Compute.LocalDisks = [ /zfs/heastro-plex ]
 """)
         if host == 'cep1':
@@ -714,6 +709,9 @@ recipe = source_extraction
 detection_level = 10.
 radius = 3.
 
+[monitoringlist]
+recipe = monitoringlist
+
 [transient_search]
 recipe = transient_search
 detection_level = 1e6
@@ -726,6 +724,11 @@ recipe = feature_extraction
 recipe = classification
 schema = classification
 weight_cutoff = 0.1
+
+[alerts]
+recipe = alerts
+parset = %%(runtime_directory)s/jobs/%%(job_name)s/parsets/alerts.parset
+logfile = %%(runtime_directory)s/jobs/%%(job_name)s/alerts.pck
 
 [prettyprint]
 recipe = prettyprint
@@ -847,6 +850,9 @@ restore = True
 restore_beam = [0.01, 0.01, 0]
 """)
         self.files_created['mwimager.parset'] = os.path.join(parsetdir, 'mwimager.parset')
+        with open(os.path.join(parsetdir, "alerts.parset"), 'w') as outfile:
+            outfile.write("\n")  # dummy file
+        self.files_created['alerts.parset'] = os.path.join(parsetdir, "alerts.parset")
 
     def find_subbands(self):
         datafiles = []

@@ -19,6 +19,7 @@ Contents:
    database
    trap_py
    recipes
+   classification
    monitoringlist
    alerts
    

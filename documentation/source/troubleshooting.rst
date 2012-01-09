@@ -39,5 +39,34 @@ cases.
 Commong errors
 --------------
 
+BBS: inconsistent time axis
+  ::
 
-To be filled out.
+    2012-01-06 15:19:10 DEBUG   trap-with-trip.bbs.GlobalControl: ERROR - [CalSessionException: Time axis inconsistent for kernel process: heastro1:24906]
+
+  This error occurs when several subbands, after having passed through
+  NDPPP, do not have identical begin and end times. The next step in
+  the imaging pipeline, BBS, expects these times to be equal across
+  all subbands, and when this is not the case, the above error will
+  occur.
+
+  To verify that non-identical begin or end times are indeed the cause of
+  this crash, have a look at global VDS file :file:`vds/bbs.gvds`:
+  this file should have all the start and end times of the used
+  subbands, so it will be easy to see if these are all the same or not.
+
+  One way to solve this problem, is to specify the start and end times
+  to be used in the :file:`tasks.cfg`, eg::
+
+    [ndppp]
+    ...
+    data_start_time=2010/10/09/09:04:00.000
+    data_end_time=2010/10/09/13:03:00.000
+      
+  Alternatively, you could obtain these values from the VDS file and
+  insert them within the recipe, as shown `here
+  <http://lus.lofar.org/documentation/pipeline/pipelines/sip/recipes/sip.html>`_. While
+  this is more flexible, there is the change that the resultant times
+  are the maximum values, which will then cause NDPPP to crash instead
+  on subbands with a shorter time range.
+

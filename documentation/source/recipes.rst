@@ -349,6 +349,7 @@ looking for deviations in their light curve.
 This routine is implemented by performing a database search, and thus
 the recipe is simply run on the front-end node.
 
+.. _feature_extraction:
 
 feature_extraction
 ------------------
@@ -380,34 +381,3 @@ Each feature extraction is run as a separate node.
 
   - transients: list of :ref:`Transient
     <tkpapi:classification-manual-transient>` objects.
-
-
-classification
---------------
-
-Attempt to classify the detected transients into one or more groups.
-
-- inputs:
-
-  - schema: Python file containing classification schema. Currently
-    ignored (remnant from an old version). The schema is currently set
-    by importing a class from
-    tkp.classification.manual.classification. A future version wil
-    make this more flexible.
-
-  - weight_cutoff: set a cut-off: any classified transient with a
-    total classification weight below this value will not be output.
-
-  - transients: list of :ref:`Transient
-    <tkpapi:classification-manual-transient>` objects,
-    previously obtained with the transient_search recipe.
-
-  - nproc: number of maximum simultaneous processors per node.
-
-- outputs:
-
-  - transients: list of :ref:`Transient
-    <tkpapi:classification-manual-transient>` objects,
-    amended with their classification.
-
-

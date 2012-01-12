@@ -620,7 +620,7 @@ recipe = %s
 mapfile = %%(runtime_directory)s/jobs/%%(job_name)s/parsets/compute_mapfile
 
 [ndppp]
-recipe = new_dppp
+recipe = dppp
 executable = %%(lofarroot)s/bin/NDPPP
 initscript = %%(lofarroot)s/lofarinit.sh
 working_directory = %%(default_working_directory)s
@@ -631,7 +631,7 @@ nproc = 1
 
 # This ndppp gets ran after the calibration
 [ndppp2]
-recipe = new_dppp
+recipe = dppp
 executable = %%(lofarroot)s/bin/NDPPP
 initscript = %%(lofarroot)s/lofarinit.sh
 working_directory = %%(default_working_directory)s
@@ -642,21 +642,22 @@ nproc = 1
 
 
 [bbs]
-recipe = bbs
+recipe = new_bbs
 initscript = %%(lofarroot)s/lofarinit.sh
 control_exec = %%(lofarroot)s/bin/GlobalControl
 kernel_exec = %%(lofarroot)s/bin/KernelControl
 parset = %%(runtime_directory)s/jobs/%%(job_name)s/parsets/bbs.parset
-key = bbs_%%(job_name)s
+db_key = bbs_%%(job_name)s
 db_host = %s
 db_name = %s
 db_user = postgres
-makevds = %%(lofarroot)s/bin/makevds
-combinevds = %%(lofarroot)s/bin/combinevds
-makesourcedb = %%(lofarroot)s/bin/makesourcedb
-parmdbm = %%(lofarroot)s/bin/parmdbm
-skymodel = %%(runtime_directory)s/jobs/%%(job_name)s/parsets/bbs.skymodel
-nproc = 1
+data_mapfile = %(runtime_directory)s/jobs/%(job_name)s/parsets/parmdb_mapfile
+#makevds = %%(lofarroot)s/bin/makevds
+#combinevds = %%(lofarroot)s/bin/combinevds
+#makesourcedb = %%(lofarroot)s/bin/makesourcedb
+#parmdbm = %%(lofarroot)s/bin/parmdbm
+#skymodel = %%(runtime_directory)s/jobs/%%(job_name)s/parsets/bbs.skymodel
+#nproc = 1
 
 [vdsreader]
 recipe = vdsreader
@@ -665,11 +666,15 @@ gvds = %%(runtime_directory)s/jobs/%%(job_name)s/vds/%%(job_name)s.gvds
 [parmdb]
 recipe = parmdb
 executable = %%(lofarroot)s/bin/parmdbm
+working_directory = %(default_working_directory)s
+mapfile = %(runtime_directory)s/jobs/%(job_name)s/parsets/parmdb_mapfile
 
 [sourcedb]
 recipe = sourcedb
 executable = %%(lofarroot)s/bin/makesourcedb
 skymodel = %%(runtime_directory)s/jobs/%%(job_name)s/parsets/bbs.skymodel
+working_directory = %(default_working_directory)s
+mapfile = %(runtime_directory)s/jobs/%(job_name)s/parsets/sourcedb_mapfile
 
 [skymodel]
 recipe = skymodel
@@ -790,36 +795,36 @@ count.showfullyflagged = True
         self.files_created['ndppp.2.parset'] = os.path.join(parsetdir, 'ndppp.2.parset')
         with open(os.path.join(parsetdir, 'bbs.parset'), 'w') as outfile:
             outfile.write("""\
-Strategy.InputColumn = DATA
-Strategy.ChunkSize = 0
-Strategy.Steps = [solve, correct]
-Step.solve.Operation = SOLVE
-Step.solve.Model.Gain.Enable = T
-Step.solve.Model.Bandpass.Enable = F
-Step.solve.Model.DirectionalGain.Enable = F
-Step.solve.Model.Beam.Enable = F
-Step.solve.Model.Ionosphere.Enable = F
-Step.solve.Model.Cache.Enable = T
-Step.solve.Solve.Parms = ["Gain:0:0:*","Gain:1:1:*"]
-Step.solve.Solve.ExclParms = []
-Step.solve.Solve.CellSize.Freq = 0
-Step.solve.Solve.CellSize.Time = 5
-Step.solve.Solve.CellChunkSize = 20
-Step.solve.Solve.Options.MaxIter = 20
-Step.solve.Solve.Options.EpsValue = 1e-9
-Step.solve.Solve.Options.EpsDerivative = 1e-9
-Step.solve.Solve.Options.ColFactor = 1e-9
-Step.solve.Solve.Options.LMFactor = 1.0
-Step.solve.Solve.Options.BalancedEqs = F
-Step.solve.Solve.Options.UseSVD = T
-Step.correct.Operation = CORRECT
-Step.correct.Model.Gain.Enable = T
-Step.correct.Output.Column = CORRECTED_DATA
-Step.subtract.Operation = SUBTRACT
-Step.subtract.Output.Column = SUBTRACTED_DATA
-Step.subtract.Model.Sources = []
-Step.subtract.Model.Gain.Enable = F
-Step.subtract.Model.Beam.Enable = F
+BBSControl.Strategy.InputColumn = DATA
+BBSControl.Strategy.ChunkSize = 0
+BBSControl.Strategy.Steps = [solve, correct]
+BBSControl.Step.solve.Operation = SOLVE
+BBSControl.Step.solve.Model.Gain.Enable = T
+BBSControl.Step.solve.Model.Bandpass.Enable = F
+BBSControl.Step.solve.Model.DirectionalGain.Enable = F
+BBSControl.Step.solve.Model.Beam.Enable = F
+BBSControl.Step.solve.Model.Ionosphere.Enable = F
+BBSControl.Step.solve.Model.Cache.Enable = T
+BBSControl.Step.solve.Solve.Parms = ["Gain:0:0:*","Gain:1:1:*"]
+BBSControl.Step.solve.Solve.ExclParms = []
+BBSControl.Step.solve.Solve.CellSize.Freq = 0
+BBSControl.Step.solve.Solve.CellSize.Time = 5
+BBSControl.Step.solve.Solve.CellChunkSize = 20
+BBSControl.Step.solve.Solve.Options.MaxIter = 20
+BBSControl.Step.solve.Solve.Options.EpsValue = 1e-9
+BBSControl.Step.solve.Solve.Options.EpsDerivative = 1e-9
+BBSControl.Step.solve.Solve.Options.ColFactor = 1e-9
+BBSControl.Step.solve.Solve.Options.LMFactor = 1.0
+BBSControl.Step.solve.Solve.Options.BalancedEqs = F
+BBSControl.Step.solve.Solve.Options.UseSVD = T
+BBSControl.Step.correct.Operation = CORRECT
+BBSControl.Step.correct.Model.Gain.Enable = T
+BBSControl.Step.correct.Output.Column = CORRECTED_DATA
+BBSControl.Step.subtract.Operation = SUBTRACT
+BBSControl.Step.subtract.Output.Column = SUBTRACTED_DATA
+BBSControl.Step.subtract.Model.Sources = []
+BBSControl.Step.subtract.Model.Gain.Enable = F
+BBSControl.Step.subtract.Model.Beam.Enable = F
 """)
         self.files_created['bbs.parset'] = os.path.join(parsetdir, 'bbs.parset')
         with open(os.path.join(parsetdir, 'mwimager.parset'), 'w') as outfile:

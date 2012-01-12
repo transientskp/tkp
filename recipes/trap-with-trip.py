@@ -49,32 +49,38 @@ class SIP(control):
                 "skymodel", ra=ra, dec=dec, search_size=2.5
                 )
 
+            parmdb_mapfile = self.run_task("parmdb", compute_mapfile)['mapfile']
+            sourcedb_mapfile = self.run_task("sourcedb", compute_mapfile)['mapfile']
+            
             # Patch the name of the central source into the BBS parset for
             # subtraction.
             with patched_parset(
                 self.task_definitions.get("bbs", "parset"),
                 {
-                'Step.correct.Model.Sources': '[ "%s" ]' % (central["source_name"]),
-                'Step.solve1.Model.Sources': '[ "%s" ]' % (central["source_name"]),
-                'Step.solve2.Model.Sources': '[ "%s" ]' % (central["source_name"]),
-                'Step.subtract.Model.Sources': '[ "%s" ]' % (central["source_name"])
+                'BBSControl.Step.correct.Model.Sources': '[ "%s" ]' % (central["source_name"]),
+                'BBSControl.Step.solve1.Model.Sources': '[ "%s" ]' % (central["source_name"]),
+                'BBSControl.Step.solve2.Model.Sources': '[ "%s" ]' % (central["source_name"]),
+                'BBSControl.Step.subtract.Model.Sources': '[ "%s" ]' % (central["source_name"])
                 }
                 ) as bbs_parset:
                 self.logger.info("bbs patched parset = %s" % bbs_parset)
                 # BBS modifies data in place, so the map produced by NDPPP
                 # remains valid.
-                self.run_task("bbs", compute_mapfile, parset=bbs_parset)
+                bbs_mapfile = self.run_task(
+                    "bbs", compute_mapfile,
+                    parset=bbs_parset,
+                    instrument_mapfile=parmdb_mapfile,
+                    sky_mapfile=sourcedb_mapfile)['mapfile']
+                #self.run_task("bbs", compute_mapfile, parset=bbs_parset)
             
             # rerun DPPP on calibrated data
-            ndppp_results = self.run_task(
-                "ndppp2",
-                compute_mapfile,
-            )            
+            ndppp_results = self.run_task("ndppp2", compute_mapfile)
             compute_mapfile = ndppp_results['mapfile']
             # Produce a GVDS file describing the data on the storage nodes.
             gvds_file = self.run_task('vdsmaker', compute_mapfile)['gvds']
             self.logger.info("GVDS file = %s" % gvds_file)
-
+            #self.run_task('cimager', compute_mapfile)
+            
             # Create the dataset
             database = DataBase()
             dataset = DataSet(data={'dsinname': self.inputs['job_name']},
@@ -84,6 +90,7 @@ class SIP(control):
             mapfiles = outputs['mapfiles']
             subdirs = ["%d" % int(starttime) for starttime, endtime in
                        outputs['timesteps']]
+            self.logger.info("subdirs = %s", str(subdirs))
             for iteration, (mapfile, subdir) in enumerate(zip(mapfiles,
                                                             subdirs)):
                 self.logger.info("Starting time slice iteration #%d" %

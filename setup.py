@@ -8,8 +8,9 @@ setup(
         'tkp.database',
         'tkp.sourcefinder',
         'tkp.classification',
-        'tkp.classification.manual',
         'tkp.classification.features',
+        'tkp.classification.transient',
+        'tkp.classification.manual',
         'tkp.tests',
         'tkp.tests.utility',
         'tkp.utility'

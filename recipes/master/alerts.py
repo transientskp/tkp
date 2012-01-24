@@ -59,9 +59,9 @@ import tkp.config
 import tkp.classification
 import tkp.classification.manual
 from tkp.classification.manual.classifier import Classifier
-from tkp.classification.manual.utils import Position
-from tkp.classification.manual.utils import DateTime
-from tkp.classification.manual.transient import Transient
+from tkp.classification.transient import Position
+from tkp.classification.transient import DateTime
+from tkp.classification.transient import Transient
 
 
 class alerts(BaseRecipe):

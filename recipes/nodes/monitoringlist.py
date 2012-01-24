@@ -49,7 +49,7 @@ class source_extraction(LOFARnodeTCP):
                 fitsimage = FITSImage(filename)
                 db_image = DBImage(id=image_id, database=database)
                 sources = db_image.monitoringsources()
-                self.logger.info("# of undetected monitoring sources = %d",
+                self.logger.info("Number of undetected monitoring sources = %d",
                                  len(sources))
                 data_image = sourcefinder_image_from_accessor(fitsimage)
                 # Run the source finder on these sources
@@ -58,8 +58,9 @@ class source_extraction(LOFARnodeTCP):
                     [(source[0], source[1]) for source in sources],
                     boxsize=BOX_IN_BEAMPIX*max(data_image.beam[0], data_image.beam[1]))
                 # Filter out the bad ones, and combines with xtrsrc_ids
-                results = [(source[2], source[3], result) for source, result in zip(sources, results) if result is not None]
-                self.logger.info("found %d sources", len(results))
+                results = [(source[2], source[3], result) for source, result in
+                           zip(sources, results) if result is not None]
+                self.logger.info("Found %d sources", len(results))
                 db_image.insert_monitoring_sources(results)
                 
         return 0

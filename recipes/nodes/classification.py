@@ -6,12 +6,12 @@ For info, see corresponding recipe in the ../master/ directory
 
 """
 
-__author__ = 'Evert Rol / TKP software group'
-__email__ = 'evert.astro@gmail.com'
+__author__ = 'Evert Rol / LOFAR Transients Key Project'
+__email__ = 'discovery@transientskp.org'
 __contact__ = __author__ + ', ' + __email__
-__copyright__ = '2010, University of Amsterdam'
-__version__ = '0.1'
-__last_modification__ = '2010-09-01'
+__copyright__ = '2010-2012, University of Amsterdam'
+__version__ = '0.2'
+__last_modification__ = '2012-01-20'
 
 
 import sys, os
@@ -24,20 +24,22 @@ from lofarpipe.support.utilities import log_time
 
 class classification(LOFARnodeTCP):
 
-    def run(self, path, transient, weight_cutoff, tkpconfigdir=None):
+    def run(self, transient, weight_cutoff, tkpconfigdir=None):
+        paths = [os.path.expanduser('~/.transientskp')]
         if tkpconfigdir:   # allow nodes to pick up the TKPCONFIGDIR
             os.environ['TKPCONFIGDIR'] = tkpconfigdir
+            paths.insert(0, tkpconfigdir)
         from tkp.classification.manual.classifier import Classifier
-        from tkp.classification.manual.transient import Transient
+        from tkp.classification.transient import Transient
         import tkp
         with log_time(self.logger):
             try:
                 self.logger.info("Classifying transient #%d", 
                     transient.srcid)
-                classifier = Classifier(transient)
+                classifier = Classifier(transient, paths=paths)
                 results = classifier.classify()
                 transient.classification = {}
-                for key, value in results:
+                for key, value in results.iteritems():
                     if value > weight_cutoff:
                         transient.classification[key] = value
             except Exception, e:

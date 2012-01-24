@@ -28,7 +28,7 @@ class prettyprint(BaseRecipe):
     inputs = {
         'transients': lofaringredient.ListField(
             '--transients',
-            help="List of tkp.classification.manual.transient.Transent objects"
+            help="List of tkp.classification.transient.Transient objects"
         )
     }
 

@@ -23,9 +23,9 @@ from lofarpipe.support import lofaringredient
 import tkp.database.database
 import tkp.database.dataset
 import tkp.database.utils as dbu
-from tkp.classification.manual.transient import Transient
-from tkp.classification.manual.utils import Position
-from tkp.classification.manual.utils import DateTime
+from tkp.classification.transient import Transient
+from tkp.classification.transient import Position
+from tkp.classification.transient import DateTime
 
 
 class IntList(lofaringredient.ListField):

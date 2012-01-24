@@ -23,12 +23,12 @@ follow from a combination of 'fast transient' and an external trigger).
 """
 
 
-__author__ = 'Evert Rol / TKP software group'
-__email__ = 'evert.astro@gmail.com'
+__author__ = 'Evert Rol / LOFAR Transients Key Project'
+__email__ = 'discovery@transientskp.org'
 __contact__ = __author__ + ', ' + __email__
-__copyright__ = '2010, University of Amsterdam'
-__version__ = '0.1'
-__last_modification__ = '2010-08-05'
+__copyright__ = '2010-2012, University of Amsterdam'
+__version__ = '0.2'
+__last_modification__ = '2012-01-20'
 
 
 import sys
@@ -50,8 +50,8 @@ import tkp.config
 import tkp.classification
 import tkp.classification.manual
 from tkp.classification.manual.classifier import Classifier
-from tkp.classification.manual.utils import Position
-from tkp.classification.manual.utils import DateTime
+from tkp.classification.transient import Position
+from tkp.classification.transient import DateTime
 
 
 class classification(BaseRecipe, RemoteCommandRecipeMixIn):
@@ -101,7 +101,6 @@ class classification(BaseRecipe, RemoteCommandRecipeMixIn):
             self.logger.info("Executing classification for %s on node %s" % (transient, node))
             jobs.append(
                 ComputeJob(node, command, arguments=[
-                self.config.get("layout", "parset_directory"),
                 transient, weight_cutoff, tkp.config.CONFIGDIR]))
 
         self.logger.info("Scheduling jobs")

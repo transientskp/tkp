@@ -39,9 +39,9 @@ class feature_extraction(LOFARnodeTCP):
         from tkp.classification.features import lightcurve as lcmod
         from tkp.classification.features import catalogs as catmod
         from tkp.database.dataset import ExtractedSource
-        from tkp.classification.manual.transient import Transient
-        from tkp.classification.manual.utils import Position
-        from tkp.classification.manual.utils import DateTime
+        from tkp.classification.transient import Transient
+        from tkp.classification.transient import Position
+        from tkp.classification.transient import DateTime
         with log_time(self.logger):
             with closing(DataBase()) as database:
                 try:

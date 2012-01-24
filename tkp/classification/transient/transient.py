@@ -84,7 +84,7 @@ class Transient(object):
 
     def __init__(self, srcid=0, duration=None, variability=None, database=None,
                  position=None, timezero=None, shape=None, spectralindex=None,
-                 features=None):
+                 features=None, activity=None):
         """
 
         Kwargs:
@@ -95,8 +95,9 @@ class Transient(object):
 
             variability (float): measure of the variability
 
-            database (list of strings): list of database names with
-                which the source can be associated
+            database (dcit): dictionary of databases with which the
+                source can be associated. Each value contains details
+                about the matched database source.
 
             position (Position): transient position
 
@@ -114,7 +115,8 @@ class Transient(object):
         self.srcid = int(srcid)
         self.duration = Undefined() if duration is None else duration
         self.variability = Undefined() if variability is None else variability
-        self.database = database if database else []
+        self.activity = Undefined() if activity is None else activity
+        self.database = database if database else {}
         self.shape = Undefined() if shape is None else shape
         self.position = Undefined() if position is None else position
         self.timezero = Undefined() if timezero is None else timezero
@@ -123,13 +125,13 @@ class Transient(object):
 
     def __str__(self):
         if not isinstance(self.duration, Undefined):
-            if not isinstance(self.variability, Undefined):
-                return "transient with duration %-6g and variability %-6g" % (
-                    self.duration, self.variability)
+            if not isinstance(self.activity, Undefined):
+                return "transient with duration %-6g and activity %-6g" % (
+                    self.duration, self.activity)
             else:
                 return "transient with duration %-6g" % (self.duration)
         elif not isinstance(self.variability, Undefined):
-            return "transient with variability %-6g" % (self.variability)
+            return "transient with activity %-6g" % (self.activity)
         else:
             return "transient source"
 
@@ -139,6 +141,8 @@ class Transient(object):
             arglist.append("duration=%.1f" % self.duration)
         if not isinstance(self.variability, Undefined):
             arglist.append("variability=%.2f" % self.variability)
+        if not isinstance(self.activity, Undefined):
+            arglist.append("activity=%.2f" % self.activity)
         if len(self.database):
             arglist.append("database=%s" % self.database)
         if not isinstance(self.position, Undefined):

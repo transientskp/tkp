@@ -17,7 +17,7 @@ import tkp.config
 from tkp.utility.sigmaclip import sigmaclip
 from tkp.utility.sigmaclip import calcsigma
 from tkp.utility.sigmaclip import calcmean
-from tkp.classification.manual.utils import DateTime
+from tkp.classification.transient import DateTime
 from .sql import lightcurve as sql_lightcurve
 
 

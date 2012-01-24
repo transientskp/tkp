@@ -1,137 +1,114 @@
-"""
-This file defines the various transients that can be classified. It
-does so by creating classes that inherit from
-:py:class:`~tkp.classification.manual.classifier.ClassifiedTransient`,
-and that define test methods. Each test method can check for one or
-more :py:class:`~tkp.classification.manual.transient.Transient`
-attributes, and returns a weight depending on the test outcome (there
-is no need to return a default value of 0.0: just let the method
-return automatically if the checks don't pass; the implicitly returned
-'None' will be regarded as 0.0).
-
-The test method names, for both ClassifiedTransient and Branch
-subclasses, should start with `test`, extended by any legimate
-character combination (much like the unittest framework). The test
-method are not guaranteed to be run in order, and should thus not 
-depend on each other.  When multiple test are executed, the various
-return values (weights) are added together, to result in a single
-weight for the specific classified transient.
-
-To start the classification tests for a transient, call the classify()
-method (defined in ClassifiedTransient). It will run the various
-tests, and return a single-item list with a tuple containing the doc
-string of the ClassifiedTransient subclass, and the weight as the
-second tuple item (an example returned value could be
-[("some transient", 0.6)]). The results are returned as a list because
-other classify() methods will be able to extend that list: a single
-transient can thus have multiple classification.
-
-As an extra option, branches can be introduced, which can bypass
-entire classification tests. These are created by defining a subclass
-of Branch, and creating test methods. Each test method should return a
-list, either empty or consisting of classes; those classes are, again,
-subclasses of ClassifiedTransients or Branch, and will be called when
-the code is executed; branches can thus be nested. The returned value
-will, in the end, be a list of 2-tuples with a description string and
-a weight for each ClassifiedTransient.
-
-"""
+# Set up the classification system.
+# Normally, this would be done in an external file (module), but that
+# would complicate things, since we would have to set the TKPCONFIGDIR
+# environment variable, and that module would have to be called
+# classification.py, the same name as this unit test.
+from tkp.classification.manual.classifier import Branch
+from tkp.classification.manual.classifier import ClassifiedObject
 
 
-from tkp.classification.manual.classifier import ClassifiedTransient, Branch
-
-
-
-class SlowTransient(ClassifiedTransient):
-
-    """Slow transient"""
-
-    def test_duration(self):
-        if self.duration > 1e6:
-            return 0.9
-
-    def test_variability(self):
-        if self.variability > 1e4:
-            return 0.9
-
-
-class FastTransient(ClassifiedTransient):
-
-    """Fast transient"""
+class ShortTransient(ClassifiedObject):
+    """Short duration transient"""
 
     def test_duration(self):
         if self.duration < 1e3:
             return 0.9
 
-    def test_variability(self):
-        if self.variability < 1e2:
+
+class ShortRapidTransient(ClassifiedObject):
+    """Short duration, high activity transient"""
+
+    def test_activity(self):
+        if self.activity > 0.5:
+            return 0.9
+
+    def test_duration(self):
+        if self.duration < 1e3:
             return 0.9
 
 
-class GRBPrompt(ClassifiedTransient):
+class ShortSlowTransient(ClassifiedObject):
+    """Short duration, low activity transient"""
 
-    """GRB prompt emission"""
+    def test_activity(self):
+        if self.activity < 0.5:
+            return 0.9
 
     def test_duration(self):
-        if 1 < self.duration < 1e4:
-            return 0.6
-
-    def test_voevent_delay(self):
-        if 0 < self.vo_event.delay < 1e5:
-            return 0.6
-
-    def test_variability(self):
-        if 0 < self.variability < 1e3:
-            return 0.6
-
-class DatabaseSource(ClassifiedTransient):
-
-    """Any transient that can be associated with a database"""
-
-    def test_database(self):
-        if len(self.database):
-            return 1.0
-    
-
-class SubBranch1a(Branch):
-
-    def test1(self):
-        return [SlowTransient]
+        if self.duration < 1e3:
+            return 0.9
 
 
-class SubBranch1b(Branch):
+class LongTransient(ClassifiedObject):
+    """Long duration transient"""
 
-    def test1(self):
-        return [FastTransient]
-
-
-class SubBranch2(Branch):
-
-    def test1(self):
-        return [GRBPrompt]
+    def test_duration(self):
+        if self.duration > 1e3:
+            return 0.9
 
 
-class SpectralBranch(Branch):
+class LongRapidTransient(ClassifiedObject):
+    """Long duration, high activity transient"""
 
-    """Negative spectral index"""
+    def test(self):
+        if self.activity > 0.5 and self.duration > 1e3:
+            return 0.9
 
-    def test1(self):
-        if self.transient.spectralindex < 0:
-            return [SlowTransient, GRBPrompt]
-        return []
+
+class LongSlowTransient(ClassifiedObject):
+    """Long duration, low activity transient"""
+
+    def test(self):
+        if self.activity <= 0.5 and self.duration > 1e3:
+            return 0.9
+
+
+class RapidTransient(ClassifiedObject):
+    """High activity transient"""
+
+    def test(self):
+        if self.activity > 0.5:
+            return 0.9
+
+        
+class SlowTransient(ClassifiedObject):
+    """Low activity transient"""
+
+    def test(self):
+        if self.activity > 0.5:
+            return 0.9
+
+        
+class ShortDurationBranch(Branch):
+    """Branch on short transients"""
+
+    def test_duration(self):
+        if self.duration < 1e3:
+            self.eval(RapidTransient, SlowTransient)
+            return 0.9
+
+
+class LongDurationBranch(Branch):
+    """Branch on short transients"""
+
+    def test_duration(self):
+        if self.duration > 1e3:
+            self.eval(RapidTransient, SlowTransient)
+            return 0.9
+
+
+class DurationBranch(Branch):
+    """Branch on short/long transient duration"""
+
+    def test_duration(self):
+        if self.duration < 1e3:
+            self.eval(ShortTransient, ShortRapidTransient, ShortSlowTransient)
+        else:
+            self.eval(LongTransient, LongRapidTransient, LongSlowTransient)
 
 
 class Main(Branch):
+    """Starting point"""
 
-    """Starting point for manual classification tree"""
-    
-    def test1(self):
-        return [SubBranch1a, SubBranch1b]
-
-    def test2(self):
-        return [SubBranch2]
-
-    def test3(self):
-        return [DatabaseSource]
-    
-
+    def test(self):
+        self.eval(DurationBranch)

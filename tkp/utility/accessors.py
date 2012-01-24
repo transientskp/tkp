@@ -260,6 +260,9 @@ class FITSImage(DataAccessor):
             elif hdulist[0].header['ctype4'] == 'FREQ':
                 self.freqeff = hdulist[0].header['crval4']
                 self.freqbw = hdulist[0].header['cdelt4']
+            else:
+                self.freqeff = hdulist[0].header['restfreq']
+                self.freqbw = 0.0
         except KeyError:
             logging.warn("Frequency not specified in FITS")
 

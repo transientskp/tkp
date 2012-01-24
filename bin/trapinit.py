@@ -778,6 +778,10 @@ uselogger = True
 msin.startchan = 0
 msin.nchan = 1
 msin.datacolumn = CORRECTED_DATA
+# Note: msout.datacolumn can *only* be DATA
+# This is confusing, since when flagging post BBS, the imager has to make use of the DATA column,
+# instead of the CORRECTED_DATA column
+# When *not* flagging post BBS, the imager has to use the CORRECTED_DATA column instead.
 msout.datacolumn = DATA
 steps = [flag1, count]   # if defined as [] the MS will be copied and NaN/infinite will be  flagged
 flag1.type=madflagger
@@ -847,6 +851,8 @@ Gridder.maxsupport = 256
 Gridder.limitsupport = 0
 Gridder.cutoff = 0.001
 Gridder.nfacets = 1
+# Note: since DPPP:msout.datacolumn can *only* be DATA, we have to specify DATA for datacolumn here,
+# but only when flagging post BBS. Otherwise, use the (normal) CORRECTED_DATA column instead.
 datacolumn = DATA
 minUV = 1.0
 ncycles = 0

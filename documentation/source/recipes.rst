@@ -38,7 +38,7 @@ with a slight modification, so that heastro1 is always picked up as
 the compute node.
 
 
-new_vdsmaker
+vdsmaker
 ------------
 
 This recipe is part of the default pipeline framework.
@@ -46,7 +46,7 @@ This recipe is part of the default pipeline framework.
 VDS files are another way to map files to their respective nodes; in
 addition, VDS files store information like time and frequency range.
 
-The new_vdsmaker recipe creates local and a global VDS file for the specified files.
+The vdsmaker recipe creates local and a global VDS file for the specified files.
 
 - Inputs:
 
@@ -69,8 +69,8 @@ The new_vdsmaker recipe creates local and a global VDS file for the specified fi
   - gvds: the GVDS filename
 
 
-new_ndppp
----------
+ndppp
+-----
 
 This recipe is part of the default pipeline framework.
 
@@ -103,8 +103,8 @@ NDPPP is the default flagger for LOFAR (but can be replaced with the AOFlagger).
 
     
 
-bbs
----
+new_bbs
+-------
 
 This recipe is part of the default pipeline framework.
 
@@ -125,7 +125,7 @@ external commands.
 
   - parset: the BBS configuration parset
 
-  - key: a key to identify the BBS session
+  - db_key: a key to identify the BBS session
 
   - db_host: the PostgreSQL database host name
 
@@ -133,20 +133,58 @@ external commands.
 
   - db_name: the PostgreSQL database, usually your username.
 
-  - makevds: the makevds executable
-
-  - combinevds: the combinevds executable
-
-  - makesourcedb: the makesourcedb executable
-
-  - parmdb: the parmdb executable
-
-  - nproc: maximum number of simultaneous processes per output node.
+  - data_mapfile: the mapping file that will contain the BBS
+    calibrated data. Any file (and file name) will do, but it is
+    probably best to this in the parset directory.
 
   - skymodel: an explicite sky model to be used by BBS. Usually,
     however, the sky model is set up on the fly using the catalogs in
     the database. See the section `skymodel` below.
 
+
+vdsreader
+---------
+
+Very simple recipe to read through a global VDS file. 
+
+- inputs:
+
+  - gvds: the gvds file that will be read. By default this is probably 
+    ``%(runtime_directory)s/jobs/%(job_name)s/vds/%(job_name)s.gvds``.
+
+
+parmdb
+------
+
+Adds a parameter database to input Measurement Sets.
+
+- inputs:
+
+  - executable: the `parmdbm` executable. By default this is probably
+    ``%(lofarroot)s/bin/parmdbm``.
+
+
+  - working_directory: just the default working directory
+
+  - mapfile: output mapping file.
+
+sourcedb
+--------
+
+Adds a source database to input Measurement Sets.
+
+- inputs:
+
+  - executable: the `makesourcedb` executable. By default this is
+    probably ``%(lofarroot)s/bin/makesourcedb``.
+
+  - skymodel: the BBS sky model (created by the skymodel
+    recipe). Something like
+    ``%(runtime_directory)s/jobs/%(job_name)s/parsets/bbs.skymodel``
+
+  - working_directory: just the default working directory
+
+  - mapfile: output mapping file.
 
 skymodel
 --------

@@ -12,7 +12,4 @@ Modules from ``tkp.classification.manual``
 
    introduction
    classifier
-   transient
-   utils
    classification
-

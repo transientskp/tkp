@@ -22,11 +22,11 @@ The actual classification work is done in three parts:
   ClassifiedObject.
 
 - A Branch behaves similar to a ClassifiedObject, but it evaluates
-  multiple `ClassifiedObject`s, while bypassing a whole other part of
+  multiple ClassifiedObjects, while bypassing a whole other part of
   the tree, based on a criterion. In addition, it can also (like a
-  `ClassifiedObject`) return a score for a whole branch; such a score
+  ClassifiedObject) return a score for a whole branch; such a score
   is added to all the individual scores from the evaluated
-  `ClassifiedObject`s.
+  ClassifiedObjects.
 
 The object to be classified should have attributes that can be used as
 criteria. The `Classifier` will automatically find these attributes

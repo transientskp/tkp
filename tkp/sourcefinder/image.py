@@ -647,6 +647,11 @@ class ImageData(object):
         # set argument for fixed parameters based on input string
         if fixed == 'position':
             fixed = {'xbar': boxsize/2.0, 'ybar': boxsize/2.0}
+        elif fixed == 'position+error':
+            fixed = {'xbar': boxsize/2.0, 'ybar': boxsize/2.0,
+                     'semimajor': self.beam[0],
+                     'semiminor': self.beam[1],
+                     'theta': self.beam[2]}
         elif fixed == None:
             fixed = {}
         else:
@@ -672,7 +677,7 @@ class ImageData(object):
         return extract.Detection(
             measurement, self)
 
-    def fit_fixed_positions(self, sources, boxsize, threshold=0.0, fixed='position'):
+    def fit_fixed_positions(self, sources, boxsize, threshold=0.0, fixed='position+error'):
         """Convenience function to fit a list of sources at the given positions
 
         This function wraps around fit_to_point().
@@ -691,10 +696,10 @@ class ImageData(object):
                 detections.append(self.fit_to_point(
                     x, y, boxsize=boxsize, threshold=threshold, fixed=fixed))
             except RuntimeError, e:
-                if str(e) == ("wcsp2s error: 8: One or more of the pixel "
-                              "coordinates were invalid"):
-                    logging.warning("Input coordinates (%.2f, %.2f) outside "
-                                    "of image", source[0], source[1])
+                if (str(e).startswith("wcsp2s error: 8:") or
+                    str(e).startswith("wcsp2s error: 9:")):
+                    logging.warning("Input coordinates (%.2f, %.2f) invalid: ",
+                                    source[0], source[1])
                     detections.append(None)
                 else:
                     raise

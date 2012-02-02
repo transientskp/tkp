@@ -206,7 +206,10 @@ def fitgaussian(data, params, fixed=None, maxfev=0):
         errorfunction, my_pars, fixed, full_output=True, maxfev=maxfev)
     # solution contains only the variable parameters; we need to merge the
     # contents of fixed into the solution list.
-    tmp_solution = list(solution)
+    try:
+        tmp_solution = list(solution)
+    except TypeError:
+        tmp_solution = [solution]
     solution = []
     for param in FIT_PARAMS:
         if param in fixed:

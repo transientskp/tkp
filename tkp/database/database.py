@@ -131,12 +131,12 @@ class DataBase(object):
     def execute(self, *args):
         """Shortcut to self.cursor.execute
         
-        This functions list of arguments consist of the actual
-        SQL query plus the arguments fed into that SQL query.
-        For a single argument, this is only the SQL query.
-        Any SQL arguments (so second and further function arguments)
-        are put together in a tuple and passed into the cursor.execute()
-        function.
+        This function's list of arguments consist of the actual SQL
+        query plus the arguments fed into that SQL query.  For a
+        single argument, this is only the SQL query. Note that the
+        extra arguments are passed separately and not inside a tuple.
+        They are put together in a tuple by ethis function and then
+        passed into the cursor.execute() function.
 
         Examples:
 
@@ -150,7 +150,7 @@ class DataBase(object):
         query = args[0]
         q_args = tuple(args[1:]) if len(args) > 1 else None
         try:
-            if q_args:
+            if q_args is not None:
                 self.cursor.execute(query, q_args)
             else:
                 self.cursor.execute(query)
@@ -159,7 +159,6 @@ class DataBase(object):
                 query = query % q_args
             logging.warn("Failed for query %s", query)
             raise
-        return self.cursor.execute(*args)
 
     def fetchall(self):
         """Shortcut to self.cursor.fetchall"""

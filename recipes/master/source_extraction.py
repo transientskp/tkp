@@ -22,19 +22,24 @@ class source_extraction(BaseRecipe, RemoteCommandRecipeMixIn):
             '--images',
             help="List of FITS images"
         ),
-        'detection_level': ingredient.FloatField(
-            '--detection-level',
-            help='Detection level for sources'
+        'parset': ingredient.FileField(
+            '-p', '--parset',
+            dest='parset',
+            help="Source finder configuration parset"
         ),
+#        'detection_level': ingredient.FloatField(
+#            '--detection-level',
+#            help='Detection level for sources'
+#        ),
+#        'radius': ingredient.FloatField(
+#            '--radius',
+#            help='relative radius for source association',
+#            default=1
+#        ),
         'dataset_id': ingredient.IntField(
             '--dataset-id',
             help='Dataset to which images belong',
             default=None
-        ),
-        'radius': ingredient.FloatField(
-            '--radius',
-            help='relative radius for source association',
-            default=1
         ),
         'nproc': ingredient.IntField(
             '--nproc',
@@ -50,7 +55,7 @@ class source_extraction(BaseRecipe, RemoteCommandRecipeMixIn):
         self.logger.info("Extracting sources")
         super(source_extraction, self).go()
         dataset_id = self.inputs['dataset_id']
-
+        
         # Obtain available nodes
         clusterdesc = ClusterDesc(self.config.get('cluster', "clusterdesc"))
         if clusterdesc.subclusters:
@@ -78,9 +83,10 @@ class source_extraction(BaseRecipe, RemoteCommandRecipeMixIn):
                     host, command,
                     arguments=[
                         image,
-                        self.inputs['detection_level'],
+#                        self.inputs['detection_level'],
                         dataset_id,
-                        self.inputs['radius'],
+#                        self.inputs['radius'],
+                        self.inputs['parset'],
                         tkp.config.CONFIGDIR
                         ]
                     )

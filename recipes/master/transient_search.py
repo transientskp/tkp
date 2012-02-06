@@ -19,6 +19,7 @@ import numpy
 
 from lofarpipe.support.baserecipe import BaseRecipe
 from lofarpipe.support import lofaringredient
+from lofar.parameterset import parameterset
 
 import tkp.database.database
 import tkp.database.dataset
@@ -52,17 +53,22 @@ class transient_search(BaseRecipe):
     """
     
     inputs = {
-        'detection_level': lofaringredient.FloatField(
-            '--detection-level',
-            help='Detection level (level * sigma > mu)',
-            default=3.0
+        'parset': lofaringredient.FileField(
+            '-p', '--parset',
+            dest='parset',
+            help="Transient search configuration parset"
         ),
-        'closeness_level': lofaringredient.FloatField(
-            '--closeness-level',
-            help=('Closeness level for associated sources '
-                  '(ignore associations with level > closeness level)'),
-            default=3.0
-        ),
+#        'detection_level': lofaringredient.FloatField(
+#            '--detection-level',
+#            help='Detection level (level * sigma > mu)',
+#            default=3.0
+#        ),
+#        'closeness_level': lofaringredient.FloatField(
+#            '--closeness-level',
+#            help=('Closeness level for associated sources '
+#                  '(ignore associations with level > closeness level)'),
+#            default=3.0
+#        ),
         'dataset_id': lofaringredient.IntField(
             '--dataset-id',
             help='Dataset ID (as stored in the database)'
@@ -78,14 +84,7 @@ class transient_search(BaseRecipe):
     def go(self):
         super(transient_search, self).go()
         self.logger.info("Selecting transient sources from the database")
-        try:
-            detection_level = float(self.inputs['detection_level'])
-        except KeyError:
-            detection_level = DETECTION_LEVEL
-        try:
-            closeness_level = float(self.inputs['closeness_level'])
-        except KeyError:
-            closeness_level = CLOSENESS_LEVEL
+        parset = parameterset(self.inputs['parset'])
         dataset_id = self.inputs['dataset_id']
         self.database = tkp.database.database.DataBase()
         self.dataset = tkp.database.dataset.DataSet(
@@ -93,18 +92,19 @@ class transient_search(BaseRecipe):
         results = self.dataset.detect_variables()
         transients = []
         if len(results) > 0:
+            detection_threshold = parset.getFloat('detection.threshold')
             # need (want) sorting by sigma
             # This is not pretty, but it works:
             tmpresults = dict((key,  [result[key] for result in results])
                            for key in ('srcid', 'npoints', 'v_nu', 'eta_nu'))
             srcids = numpy.array(tmpresults['srcid'])
-            weightedpeaks, N = (numpy.array(tmpresults['v_nu']),
-                                numpy.array(tmpresults['npoints'])-1)
-            siglevel = chisqprob(tmpresults['eta_nu'] * N, N)
-            selection = siglevel < 1/detection_level
+            weightedpeaks, dof = (numpy.array(tmpresults['v_nu']),
+                                  numpy.array(tmpresults['npoints'])-1)
+            probability = 1-chisqprob(tmpresults['eta_nu'] * dof, dof)
+            selection = probability > detection_threshold
             transient_ids = numpy.array(srcids)[selection]
             selected_results = numpy.array(results)[selection]
-            siglevels = siglevel[selection]
+            siglevels = probability[selection]
             for siglevel, result in zip(siglevels, selected_results):
                 position = Position(ra=result['ra'], dec=result['dec'],
                                     error=(result['ra_err'], result['dec_err']))

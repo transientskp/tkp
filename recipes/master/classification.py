@@ -56,29 +56,30 @@ from tkp.classification.transient import DateTime
 
 class classification(BaseRecipe, RemoteCommandRecipeMixIn):
 
-    inputs = dict(
-        weight_cutoff=lofaringredient.FloatField(
-            '--weight-cutoff',
-            help='Weight cutoff'),
-        transients=lofaringredient.ListField(
+    inputs = {
+        'parset': lofaringredient.FileField(
+            '-p', '--parset',
+            dest='parset',
+            help="Transient search configuration parset"
+        ),
+#        weight_cutoff=lofaringredient.FloatField(
+#            '--weight-cutoff',
+#            help='Weight cutoff'),
+        'transients': lofaringredient.ListField(
             '--transients',
             help="List of transient objects"),
-        nproc=lofaringredient.IntField(
+        'nproc': lofaringredient.IntField(
             '--nproc',
             default=8,
             help="Maximum number of simultaneous processes per output node"),
-        )
-    outputs = dict(
-        transients=lofaringredient.ListField()
-        )
+        }
+    outputs = {
+        'transients': lofaringredient.ListField()
+        }
 
     def go(self):
         super(classification, self).go()
         transients = self.inputs['transients']
-        weight_cutoff = float(self.inputs['weight_cutoff'])
-        # Some dummy data
-        position = Position(123.454, 12.342, error=0.0008)
-        timezero = DateTime(2010, 2, 3, 16, 35, 31, error=2)
 
         clusterdesc = ClusterDesc(self.config.get('cluster', "clusterdesc"))
         if clusterdesc.subclusters:
@@ -101,7 +102,7 @@ class classification(BaseRecipe, RemoteCommandRecipeMixIn):
             self.logger.info("Executing classification for %s on node %s" % (transient, node))
             jobs.append(
                 ComputeJob(node, command, arguments=[
-                transient, weight_cutoff, tkp.config.CONFIGDIR]))
+                transient, self.inputs['parset'], tkp.config.CONFIGDIR]))
 
         self.logger.info("Scheduling jobs")
         jobs = self._schedule_jobs(jobs, max_per_node=self.inputs['nproc'])

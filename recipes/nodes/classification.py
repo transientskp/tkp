@@ -20,20 +20,24 @@ import imp
 
 from lofarpipe.support.lofarnode import LOFARnodeTCP
 from lofarpipe.support.utilities import log_time
+from lofar.parameterset import parameterset
 
 
 class classification(LOFARnodeTCP):
 
-    def run(self, transient, weight_cutoff, tkpconfigdir=None):
+    def run(self, transient, parset, tkpconfigdir=None):
         paths = [os.path.expanduser('~/.transientskp')]
         if tkpconfigdir:   # allow nodes to pick up the TKPCONFIGDIR
             os.environ['TKPCONFIGDIR'] = tkpconfigdir
             paths.insert(0, tkpconfigdir)
         from tkp.classification.manual.classifier import Classifier
         from tkp.classification.transient import Transient
-        import tkp
+        import tkp        
         with log_time(self.logger):
             try:
+                parset = parameterset(parset)
+                weight_cutoff = parset.getFloat('weighting.cutoff')
+
                 self.logger.info("Classifying transient #%d", 
                     transient.srcid)
                 classifier = Classifier(transient, paths=paths)

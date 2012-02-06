@@ -693,8 +693,6 @@ class ImageData(object):
         for source in sources:
             try:
                 x, y, = self.wcs.s2p(source)
-                detections.append(self.fit_to_point(
-                    x, y, boxsize=boxsize, threshold=threshold, fixed=fixed))
             except RuntimeError, e:
                 if (str(e).startswith("wcsp2s error: 8:") or
                     str(e).startswith("wcsp2s error: 9:")):
@@ -703,6 +701,21 @@ class ImageData(object):
                     detections.append(None)
                 else:
                     raise
+            else:
+                try:
+                    detections.append(self.fit_to_point(
+                        x, y, boxsize=boxsize, threshold=threshold,
+                        fixed=fixed))
+                except IndexError, e:
+                    if "in dimension" in str(e):
+                        # This can happen if the monitoringlist specifies
+                        # a source outside the image
+                        logging.warning("Input coordinates (%.2f, %.2f) "
+                                        "outside of image",
+                                        source[0], source[1])
+                        detections.append(None)
+                    else:
+                        raise
         return detections
 
     def dump_islands(self, det, anl, minsize=4):

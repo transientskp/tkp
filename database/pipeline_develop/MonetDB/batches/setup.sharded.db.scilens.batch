@@ -44,8 +44,8 @@ fi
 echo "(re)creating $dbname at $host"
 monetdb $monetdb_login stop $dbname
 monetdb $monetdb_login destroy -f $dbname
-monetdb $monetdb_login create $dbname || exit 1
-monetdb $monetdb_login start $dbname || exit 1
+monetdb $monetdb_login create $dbname #|| exit 1
+monetdb $monetdb_login start $dbname #|| exit 1
     
 adminuser=$username
 adminpassword=$password

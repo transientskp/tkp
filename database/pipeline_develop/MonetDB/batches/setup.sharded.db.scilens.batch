@@ -38,7 +38,7 @@ nodes=$7
 monetdb_login=""
 if [ -f ${HOME}/.meropass ]
 then
-    monetdb_login="-h$host -p$controlport -P"`cat ${HOME}/.meropass`
+    monetdb_login="-h$host -p$port -P"`cat ${HOME}/.meropass`
 fi
 
 echo "(re)creating $dbname at $host"
@@ -327,6 +327,13 @@ time mclient -p$port -h$host -d${dbname} < $MONETDBTKPHOME/load/load.cat.wenss.s
 
 #echo -e "\t\tLoad 2XMMi-Slim catalog"
 #mclient -p$port -h$host -d${dbname} < $MONETDBTKPHOME/load/load.cat.2XMMi-slim.sql || exit 1
+
+echo -e "\t---------------------------------"
+echo -e "\tShare & Release MonetDB ${dbname}"
+echo -e "\t---------------------------------"
+
+monetdb set shared=lightcurve$seqnr $dbname
+monetdb $monetdb_login release ${dbname} || exit 1
 
 echo -e "-----"
 echo -e "READY"

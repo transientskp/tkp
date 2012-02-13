@@ -10,23 +10,38 @@
  * and when you have an idea about the zoneheight.
  * TODO: Find out what a good zoneheight will be.
  */
-CREATE PROCEDURE BuildNodes(inode_min INT, inode_max INT)
+CREATE PROCEDURE BuildNodes(inode_min INT, inode_max INT, max_incl BOOLEAN)
 BEGIN
 
   DECLARE izone INT;
 
   SET izone = inode_min;
-  WHILE izone <= inode_max DO
-    INSERT INTO node 
-      (zone
-      ,zoneheight
-      )
-    VALUES 
-      (izone
-      ,1.0
-      )
-    ;
-    SET izone = izone + 1;
-  END WHILE;
+  IF max_incl THEN
+    WHILE izone <= inode_max DO
+      INSERT INTO node 
+        (zone
+        ,zoneheight
+        )
+      VALUES 
+        (izone
+        ,1.0
+        )
+      ;
+      SET izone = izone + 1;
+    END WHILE;
+  ELSE
+    WHILE izone < inode_max DO
+      INSERT INTO node 
+        (zone
+        ,zoneheight
+        )
+      VALUES 
+        (izone
+        ,1.0
+        )
+      ;
+      SET izone = izone + 1;
+    END WHILE;
+  END IF;
 
 END;

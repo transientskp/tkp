@@ -130,7 +130,6 @@ class bbs(BaseRecipe):
         data_map = parameterset(self.inputs['args'][0])
         instrument_map = parameterset(self.inputs['instrument_mapfile'])
         sky_map = parameterset(self.inputs['sky_mapfile'])
-        self.logger.debug("sky_map = %s", str(sky_map))
         nproc = self.inputs['nproc']
         mapfiles = {} #{'data': {}, 'instrument': {}, 'sky': {}}
         # This works per host, not per (sub)cluster.  We assume,
@@ -146,19 +145,21 @@ class bbs(BaseRecipe):
                     "Number of data files (%d) does not match with number of "
                     "instrument files (%d) or number of skymodel files (%d) "
                     "on %s", len(data), len(instrument), len(sky), host)
-            self.logger.debug("""\
-host = %s,
-data = %s (%d),
-instrument = %s (%d),
-sky = %s (%d)""", host, str(data), len(data), str(instrument), len(instrument), str(sky), len(sky))
             subdata = [data[i:i+nproc] for i in range(0, len(data), nproc)]
             subinstrument = [instrument[i:i+nproc] for i in range(0, len(instrument), nproc)]
             subsky = [sky[i:i+nproc] for i in range(0, len(sky), nproc)]
+            # i (below) denotes the i-th set of processes
+            # each set is a dictionary with the available hosts as key
+            # each value in that dictionary is a dictionary itself, 
+            # with data, instrument and sky as keys, and a list of 
+            # corresponding filenames as values
             for i, sublist in enumerate(zip(subdata, subinstrument, subsky)):
-                mapfiles[i] = {host: {'data': sublist[0],
-                                      'instrument': sublist[1],
-                                      'sky': sublist[2]}}
-        self.logger.debug("mapfiles = %s", str(mapfiles))
+                mapfiles.setdefault(i, {}).setdefault(host, {
+                        'data': sublist[0],
+                        'instrument': sublist[1],
+                        'sky': sublist[2]})
+        import pprint
+        self.logger.debug("mapfiles = %s", pprint.pformat(mapfiles))
         sub_mapfiles = []
         path = {}
         for mapping in mapfiles.values():

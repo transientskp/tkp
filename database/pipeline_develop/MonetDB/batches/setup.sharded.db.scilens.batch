@@ -294,12 +294,12 @@ if [ $seqnr -eq 1 ]; then
     mclient -p$port -h$host -d${dbname} -s"CALL BuildNodes(-90, 0, FALSE)"
 else
     if [ $seqnr -lt $nodes ]; then
-        z_min=$seqnr*10
-        z_max=($seqnr+1)*10
+        z_min=($seqnr-1)*10
+        z_max=$seqnr*10
         mclient -p$port -h$host -d${dbname} -s"CALL BuildNodes($z_min, $z_max, FALSE)"
     else
-        z_min=$seqnr*10
-        z_max=($seqnr+1)*10
+        z_min=($seqnr-1)*10
+        z_max=$seqnr*10
         mclient -p$port -h$host -d${dbname} -s"CALL BuildNodes($z_min, $z_max, TRUE)"
     fi
 fi

@@ -291,7 +291,9 @@ mclient -p$port -h$host -d${dbname} < $MONETDBTKPHOME/init/init.shard.tables.sql
 # What to do here? How do we know what the best scheme is to spread the zones
 # over the nodes?
 if [ $seqnr -eq 1 ]; then
-    mclient -p$port -h$host -d${dbname} -s"CALL BuildNodes(-90, 0, FALSE)"
+    z_min=-90
+    z_max=$seqnr*10
+    mclient -p$port -h$host -d${dbname} -s"CALL BuildNodes($z_min, $z_max, FALSE)"
 else
     if [ $seqnr -lt $nodes ]; then
         z_min=($seqnr-1)*10

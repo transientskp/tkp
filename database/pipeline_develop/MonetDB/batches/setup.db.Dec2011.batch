@@ -84,10 +84,11 @@ if [ -n "$create_database" ]
 # Need to create a new database
 then
     echo "(re)creating $dbname at $host"
-    monetdb $monetdb_login stop $dbname
+    monetdb $monetdb_login stop $dbname 
     monetdb $monetdb_login destroy -f $dbname
-    monetdb $monetdb_login create $dbname || exit 1
-    monetdb $monetdb_login start $dbname || exit 1
+    monetdb $monetdb_login create $dbname 
+    monetdb $monetdb_login start $dbname 
+    echo "Created $dbname at $host"
     
     adminuser=$username
     adminpassword=$password
@@ -364,9 +365,9 @@ time mclient -p$port -h$host -d${dbname} < $MONETDBTKPHOME/load/load.cat.wenss.s
 #echo -e "\t\tLoad EXOplanets catalog"
 #time mclient -p$port -h$host -d${dbname} < $MONETDBTKPHOME/load/load.cat.exo.sql || exit 1
 
-#echo -e "\t\tLoad GRB catalog"
-#mclient -p$port -lsql -h$host -d${dbname} < $MONETDBTKPHOME/load/load.cat.grb.sql || exit 1
-#date '+%Y-%m-%d-%H:%M:%S'
+echo -e "\t\tLoad GRB catalog"
+mclient -p$port -lsql -h$host -d${dbname} < $MONETDBTKPHOME/load/load.cat.grb.sql || exit 1
+date '+%Y-%m-%d-%H:%M:%S'
 
 #echo -e "\t\tLoad SIMDATA catalog"
 #mclient -p$port -h$host -d${dbname} < $MONETDBTKPHOME/load/load.cat.simdata.sql || exit 1

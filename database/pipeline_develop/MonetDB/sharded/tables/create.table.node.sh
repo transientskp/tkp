@@ -17,8 +17,8 @@ CREATE TABLE node
   ,zone SMALLINT NOT NULL
   ,zone_min SMALLINT
   ,zone_max SMALLINT
-  ,zone_min_incl DEFAULT TRUE
-  ,zone_max_incl DEFAULT FALSE
+  ,zone_min_incl BOOLEAN DEFAULT TRUE
+  ,zone_max_incl BOOLEAN DEFAULT FALSE
   ,zoneheight DOUBLE DEFAULT 1.0
   ,nodes TINYINT NOT NULL DEFAULT $nodes
   )

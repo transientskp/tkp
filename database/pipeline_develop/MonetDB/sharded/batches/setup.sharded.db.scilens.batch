@@ -116,7 +116,7 @@ echo -e "\t\tCreating MonetDB ${dbname} table temprunningcatalog"
 mclient -p$port -h$host -d${dbname} < $MONETDBTKPHOME/sharded/tables/create.table.temprunningcatalog.sql || exit 1
 
 echo -e "\t\tCreating MonetDB ${dbname} table detections"
-$MONETDBTKPHOME/sharded/tables/create.table.detections.sh $host $dbname $port $seqnr $nodes || exit 1
+mclient -p$port -h$host -d${dbname} < $MONETDBTKPHOME/sharded/tables/create.table.detections.sql || exit 1
 
 echo -e "\t-------------------------------------------------------------------------"
 echo -e "\tCreating MonetDB ${dbname} tables for sharded database"

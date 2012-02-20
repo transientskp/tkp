@@ -14,6 +14,8 @@ seq_query="
 CREATE SEQUENCE \"seq_versions\" AS INTEGER;
 "
 
+mclient -h$host -d$dbname -p$port -s"$seq_query" || exit 1
+
 tab_query="
 CREATE TABLE versions 
   (versionid INT DEFAULT NEXT VALUE FOR \"seq_versions\"

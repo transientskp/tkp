@@ -28,7 +28,7 @@ CREATE TABLE datasets
   ,description VARCHAR(100) DEFAULT NULL
   ,node TINYINT NOT NULL DEFAULT $node
   ,nodes TINYINT NOT NULL DEFAULT $nodes
-  PRIMARY KEY (dsid)
+  ,PRIMARY KEY (dsid)
 )
 ;
 "

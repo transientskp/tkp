@@ -83,18 +83,16 @@ echo -e "\tCreating MonetDB ${dbname} tables"
 echo -e "\t----------------------------------------"
 
 echo -e "\t\tCreating MonetDB ${dbname} table versions"
-echo -e "${MONETDBTKPHOME}"
-ls -l ${MONETDBTKPHOME}/sharded/tables/create.table.versions.sh
-mclient -p$port -h$host -d${dbname} < $MONETDBTKPHOME/sharded/tables/create.table.versions.sh $host $dbname $port $seqnr $nodes || exit 1
+$MONETDBTKPHOME/sharded/tables/create.table.versions.sh $host $dbname $port $seqnr $nodes || exit 1
 
 echo -e "\t\tCreating MonetDB ${dbname} table frequencybands"
 mclient -p$port -h$host -d${dbname} < $MONETDBTKPHOME/sharded/tables/create.table.frequencybands.sql || exit 1
 
 echo -e "\t\tCreating MonetDB ${dbname} table datasets"
-mclient -p$port -h$host -d${dbname} < $MONETDBTKPHOME/sharded/tables/create.table.datasets.sh $host $dbname $port $seqnr $nodes || exit 1
+$MONETDBTKPHOME/sharded/tables/create.table.datasets.sh $host $dbname $port $seqnr $nodes || exit 1
 
 echo -e "\t\tCreating MonetDB ${dbname} table images"
-mclient -p$port -h$host -d${dbname} < $MONETDBTKPHOME/sharded/tables/create.table.images.sh $host $dbname $port $seqnr $nodes || exit 1
+$MONETDBTKPHOME/sharded/tables/create.table.images.sh $host $dbname $port $seqnr $nodes || exit 1
 
 echo -e "\t\tCreating MonetDB ${dbname} table catalogs"
 mclient -p$port -h$host -d${dbname} < $MONETDBTKPHOME/sharded/tables/create.table.catalogs.sql || exit 1
@@ -103,7 +101,6 @@ echo -e "\t\tCreating MonetDB ${dbname} table catalogedsources"
 mclient -p$port -h$host -d${dbname} < $MONETDBTKPHOME/sharded/tables/create.table.catalogedsources.sql || exit 1
 
 echo -e "\t\tCreating MonetDB ${dbname} table extractedsources"
-#mclient -p$port -h$host -d${dbname} < $MONETDBTKPHOME/sharded/tables/create.table.extractedsources.sql || exit 1
 $MONETDBTKPHOME/sharded/tables/create.table.extractedsources.sh $host $dbname $port $seqnr $nodes || exit 1
 
 echo -e "\t\tCreating MonetDB ${dbname} table assoccatsources"
@@ -119,14 +116,14 @@ echo -e "\t\tCreating MonetDB ${dbname} table temprunningcatalog"
 mclient -p$port -h$host -d${dbname} < $MONETDBTKPHOME/sharded/tables/create.table.temprunningcatalog.sql || exit 1
 
 echo -e "\t\tCreating MonetDB ${dbname} table detections"
-mclient -p$port -h$host -d${dbname} < $MONETDBTKPHOME/sharded/tables/create.table.detections.sh $host $dbname $port $seqnr $nodes || exit 1
+$MONETDBTKPHOME/sharded/tables/create.table.detections.sh $host $dbname $port $seqnr $nodes || exit 1
 
 echo -e "\t-------------------------------------------------------------------------"
 echo -e "\tCreating MonetDB ${dbname} tables for sharded database"
 echo -e "\t-------------------------------------------------------------------------"
 
 echo -e "\t\tCreating MonetDB ${dbname} table node"
-mclient -p$port -h$host -d${dbname} < $MONETDBTKPHOME/sharded/tables/create.table.node.sh $host $dbname $port $seqnr $nodes || exit 1
+$MONETDBTKPHOME/sharded/tables/create.table.node.sh $host $dbname $port $seqnr $nodes || exit 1
 
 echo -e "\t-------------------------------------------"
 echo -e "\tCreating MonetDB ${dbname} functions"

@@ -83,83 +83,48 @@ echo -e "\tCreating MonetDB ${dbname} tables"
 echo -e "\t----------------------------------------"
 
 echo -e "\t\tCreating MonetDB ${dbname} table versions"
-mclient -p$port -h$host -d${dbname} < $MONETDBTKPHOME/tables/create.table.versions.sql || exit 1
+mclient -p$port -h$host -d${dbname} < $MONETDBTKPHOME/sharded/tables/create.table.versions.sh $host $dbname $port $seqnr $nodes || exit 1
 
 echo -e "\t\tCreating MonetDB ${dbname} table frequencybands"
-mclient -p$port -h$host -d${dbname} < $MONETDBTKPHOME/tables/create.table.frequencybands.sql || exit 1
+mclient -p$port -h$host -d${dbname} < $MONETDBTKPHOME/sharded/tables/create.table.frequencybands.sql || exit 1
 
 echo -e "\t\tCreating MonetDB ${dbname} table datasets"
-mclient -p$port -h$host -d${dbname} < $MONETDBTKPHOME/tables/create.table.datasets.sql || exit 1
+mclient -p$port -h$host -d${dbname} < $MONETDBTKPHOME/sharded/tables/create.table.datasets.sh $host $dbname $port $seqnr $nodes || exit 1
 
 echo -e "\t\tCreating MonetDB ${dbname} table images"
-mclient -p$port -h$host -d${dbname} < $MONETDBTKPHOME/tables/create.table.images.sql || exit 1
+mclient -p$port -h$host -d${dbname} < $MONETDBTKPHOME/sharded/tables/create.table.images.sh $host $dbname $port $seqnr $nodes || exit 1
 
 echo -e "\t\tCreating MonetDB ${dbname} table catalogs"
-mclient -p$port -h$host -d${dbname} < $MONETDBTKPHOME/tables/create.table.catalogs.sql || exit 1
+mclient -p$port -h$host -d${dbname} < $MONETDBTKPHOME/sharded/tables/create.table.catalogs.sql || exit 1
 
 echo -e "\t\tCreating MonetDB ${dbname} table catalogedsources"
-mclient -p$port -h$host -d${dbname} < $MONETDBTKPHOME/tables/create.table.catalogedsources.sql || exit 1
+mclient -p$port -h$host -d${dbname} < $MONETDBTKPHOME/sharded/tables/create.table.catalogedsources.sql || exit 1
 
 echo -e "\t\tCreating MonetDB ${dbname} table extractedsources"
-#mclient -p$port -h$host -d${dbname} < $MONETDBTKPHOME/tables/create.table.extractedsources.sql || exit 1
-$MONETDBTKPHOME/tables/create.table.extractedsources.sh $host $dbname $port $seqnr $nodes || exit 1
+#mclient -p$port -h$host -d${dbname} < $MONETDBTKPHOME/sharded/tables/create.table.extractedsources.sql || exit 1
+$MONETDBTKPHOME/sharded/tables/create.table.extractedsources.sh $host $dbname $port $seqnr $nodes || exit 1
 
 echo -e "\t\tCreating MonetDB ${dbname} table assoccatsources"
-mclient -p$port -h$host -d${dbname} < $MONETDBTKPHOME/tables/create.table.assoccatsources.sql || exit 1
+mclient -p$port -h$host -d${dbname} < $MONETDBTKPHOME/sharded/tables/create.table.assoccatsources.sql || exit 1
 
 echo -e "\t\tCreating MonetDB ${dbname} table assocxtrsources"
-mclient -p$port -h$host -d${dbname} < $MONETDBTKPHOME/tables/create.table.assocxtrsources.sql || exit 1
-
-echo -e "\t\tCreating MonetDB ${dbname} table lsm"
-mclient -p$port -h$host -d${dbname} < $MONETDBTKPHOME/tables/create.table.lsm.sql || exit 1
-
-#echo -e "\t\tCreating MonetDB ${dbname} table spectralindices"
-#mclient -p$port -h$host -d${dbname} < $MONETDBTKPHOME/tables/create.table.spectralindices.sql || exit 1
+mclient -p$port -h$host -d${dbname} < $MONETDBTKPHOME/sharded/tables/create.table.assocxtrsources.sql || exit 1
 
 echo -e "\t\tCreating MonetDB ${dbname} table runningcatalog"
-mclient -p$port -h$host -d${dbname} < $MONETDBTKPHOME/tables/create.table.runningcatalog.sql || exit 1
+mclient -p$port -h$host -d${dbname} < $MONETDBTKPHOME/sharded/tables/create.table.runningcatalog.sql || exit 1
 
 echo -e "\t\tCreating MonetDB ${dbname} table temprunningcatalog"
-mclient -p$port -h$host -d${dbname} < $MONETDBTKPHOME/tables/create.table.temprunningcatalog.sql || exit 1
+mclient -p$port -h$host -d${dbname} < $MONETDBTKPHOME/sharded/tables/create.table.temprunningcatalog.sql || exit 1
 
 echo -e "\t\tCreating MonetDB ${dbname} table detections"
-mclient -p$port -h$host -d${dbname} < $MONETDBTKPHOME/tables/create.table.detections.sql || exit 1
+mclient -p$port -h$host -d${dbname} < $MONETDBTKPHOME/sharded/tables/create.table.detections.sh $host $dbname $port $seqnr $nodes || exit 1
 
 echo -e "\t-------------------------------------------------------------------------"
 echo -e "\tCreating MonetDB ${dbname} tables for sharded database"
 echo -e "\t-------------------------------------------------------------------------"
 
 echo -e "\t\tCreating MonetDB ${dbname} table node"
-mclient -p$port -h$host -d${dbname} < $MONETDBTKPHOME/tables/create.table.node.sql || exit 1
-
-echo -e "\t-------------------------------------------------------------------------"
-echo -e "\tCreating MonetDB ${dbname} tables for cross-catalogue association"
-echo -e "\t-------------------------------------------------------------------------"
-
-echo -e "\t\tCreating MonetDB ${dbname} table selectedcatsources"
-mclient -p$port -h$host -d${dbname} < $MONETDBTKPHOME/tables/create.table.selectedcatsources.sql || exit 1
-
-echo -e "\t\tCreating MonetDB ${dbname} table tempmergedcatalogs"
-mclient -p$port -h$host -d${dbname} < $MONETDBTKPHOME/tables/create.table.tempmergedcatalogs.sql || exit 1
-
-echo -e "\t\tCreating MonetDB ${dbname} table mergedcatalogs"
-mclient -p$port -h$host -d${dbname} < $MONETDBTKPHOME/tables/create.table.mergedcatalogs.sql || exit 1
-
-echo -e "\t\tCreating MonetDB ${dbname} table assoccrosscatsources"
-mclient -p$port -h$host -d${dbname} < $MONETDBTKPHOME/tables/create.table.assoccrosscatsources.sql || exit 1
-
-echo -e "\t----------------------------------------------------------------------------"
-echo -e "\tCreating MonetDB ${dbname} tables to store detected transients & classifications "
-echo -e "\t----------------------------------------------------------------------------"
-
-echo -e "\t\tCreating MonetDB ${dbname} table monitoringlist"
-mclient -p$port -h$host -d${dbname} < $MONETDBTKPHOME/tables/create.table.monitoringlist.sql || exit 1
-
-echo -e "\t\tCreating MonetDB ${dbname} table transients"
-mclient -p$port -h$host -d${dbname} < $MONETDBTKPHOME/tables/create.table.transients.sql || exit 1
-
-echo -e "\t\tCreating MonetDB ${dbname} table classification"
-mclient -p$port -h$host -d${dbname} < $MONETDBTKPHOME/tables/create.table.classification.sql || exit 1
+mclient -p$port -h$host -d${dbname} < $MONETDBTKPHOME/sharded/tables/create.table.node.sh $host $dbname $port $seqnr $nodes || exit 1
 
 echo -e "\t-------------------------------------------"
 echo -e "\tCreating MonetDB ${dbname} functions"
@@ -266,19 +231,6 @@ mclient -p$port -h$host -d${dbname} < $MONETDBTKPHOME/procedures/create.procedur
 
 echo -e "\t\tCreating MonetDB ${dbname} general procedure BuildNodes"
 mclient -p$port -h$host -d${dbname} < $MONETDBTKPHOME/procedures/create.procedure.BuildNodes.sql || exit 1
-
-echo -e "\t\tCreating MonetDB ${dbname} general procedure LoadLSM"
-mclient -p$port -h$host -d${dbname} < $MONETDBTKPHOME/procedures/create.procedure.LoadLSM.sql || exit 1
-
-#echo -e "\t-----------------------------------------------------------------------------"
-#echo -e "\tCreating MonetDB ${dbname} procedures for multiple catalog association"
-#echo -e "\t-----------------------------------------------------------------------------"
-
-#echo -e "\t\tCreating MonetDB ${dbname} specific procedure MultipleCatMatchingInit"
-#mclient -p$port -h$host -d${dbname} < $MONETDBTKPHOME/procedures/create.procedure.MultipleCatMatchingInit.sql || exit 1
-
-#echo -e "\t\tCreating MonetDB ${dbname} specific procedure MultipleCatMatching"
-#mclient -p$port -h$host -d${dbname} < $MONETDBTKPHOME/procedures/create.procedure.MultipleCatMatching.sql || exit 1
 
 echo -e "\t-----------------------------------"
 echo -e "\tInitialize MonetDB ${dbname}"

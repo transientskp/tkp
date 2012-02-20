@@ -83,7 +83,7 @@ echo -e "\tCreating MonetDB ${dbname} tables"
 echo -e "\t----------------------------------------"
 
 echo -e "\t\tCreating MonetDB ${dbname} table versions"
-echo -e "${MONETDBTKPHOME}/sharded/tables/create.table.versions.sh
+echo -e "${MONETDBTKPHOME}"
 ls -l ${MONETDBTKPHOME}/sharded/tables/create.table.versions.sh
 mclient -p$port -h$host -d${dbname} < $MONETDBTKPHOME/sharded/tables/create.table.versions.sh $host $dbname $port $seqnr $nodes || exit 1
 

@@ -1,3 +1,5 @@
+#!/bin/bash
+
 /**
  * This table keeps track of the versions and changes
  */

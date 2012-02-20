@@ -74,23 +74,12 @@ CREATE TABLE extractedsources
   ,semimajor DOUBLE NULL
   ,semiminor DOUBLE NULL
   ,pa DOUBLE NULL
-  ,I_peak DOUBLE NULL
-  ,I_peak_err DOUBLE NULL
-  ,Q_peak DOUBLE NULL
-  ,Q_peak_err DOUBLE NULL
-  ,U_peak DOUBLE NULL
-  ,U_peak_err DOUBLE NULL
-  ,V_peak DOUBLE NULL
-  ,V_peak_err DOUBLE NULL
-  ,I_int DOUBLE NULL
-  ,I_int_err DOUBLE NULL
-  ,Q_int DOUBLE NULL
-  ,Q_int_err DOUBLE NULL
-  ,U_int DOUBLE NULL
-  ,U_int_err DOUBLE NULL
-  ,V_int DOUBLE NULL
-  ,V_int_err DOUBLE NULL
-  ,id INT NULL
+  ,peak DOUBLE NULL
+  ,peak_err DOUBLE NULL
+  ,int DOUBLE NULL
+  ,int_err DOUBLE NULL
+  ,node TINYINT NOT NULL DEFAULT $node
+  ,nodes TINYINT NOT NULL DEFAULT $nodes
   ,PRIMARY KEY (xtrsrcid)
   ,FOREIGN KEY (image_id) REFERENCES images (imageid)
   )

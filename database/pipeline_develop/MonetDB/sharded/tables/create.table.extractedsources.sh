@@ -74,10 +74,10 @@ CREATE TABLE extractedsources
   ,semimajor DOUBLE NULL
   ,semiminor DOUBLE NULL
   ,pa DOUBLE NULL
-  ,peak DOUBLE NULL
-  ,peak_err DOUBLE NULL
-  ,int DOUBLE NULL
-  ,int_err DOUBLE NULL
+  ,f_peak DOUBLE NULL
+  ,f_peak_err DOUBLE NULL
+  ,f_int DOUBLE NULL
+  ,f_int_err DOUBLE NULL
   ,node TINYINT NOT NULL DEFAULT $node
   ,nodes TINYINT NOT NULL DEFAULT $nodes
   ,PRIMARY KEY (xtrsrcid)

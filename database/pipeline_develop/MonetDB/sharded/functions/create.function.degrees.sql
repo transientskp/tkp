@@ -1,0 +1,8 @@
+--DROP FUNCTION degrees;
+
+/**
+ */
+CREATE FUNCTION degrees(r DOUBLE) RETURNS DOUBLE 
+BEGIN
+    RETURN r * 180 / PI();
+END;

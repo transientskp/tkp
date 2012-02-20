@@ -1,0 +1,7 @@
+--DROP FUNCTION zoneheight;
+
+CREATE FUNCTION zoneheight() RETURNS DOUBLE 
+BEGIN
+    
+  RETURN 1.; 
+END;

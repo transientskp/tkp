@@ -1,8 +1,8 @@
 #!/bin/bash
-
-/**
- * This table keeps track of the versions and changes
- */
+#
+#/*
+# * This table keeps track of the versions and changes
+# */
 
 host=$1
 dbname=$2

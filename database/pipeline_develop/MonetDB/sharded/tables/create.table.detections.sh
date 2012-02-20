@@ -1,8 +1,9 @@
-/**
- * This is a temporary table, used to load
- * the detections from the sources extracted
- * from an image.
- */
+#!/bin/bash
+#/**
+# * This is a temporary table, used to load
+# * the detections from the sources extracted
+# * from an image.
+# */
 
 host=$1
 dbname=$2

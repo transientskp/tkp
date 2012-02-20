@@ -1,8 +1,9 @@
-/**
- * This table contains the information about the dataset that is produced by LOFAR. 
- * A dataset has an integration time and consists of multiple frequency layers.
- * taustart_timestamp:  the start time of the integration
- */
+#!/bin/bash
+#/**
+# * This table contains the information about the dataset that is produced by LOFAR. 
+# * A dataset has an integration time and consists of multiple frequency layers.
+# * taustart_timestamp:  the start time of the integration
+# */
 
 host=$1
 dbname=$2

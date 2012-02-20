@@ -1,6 +1,10 @@
-/**
- * This table keeps track of the versions and changes
- */
+#!/bin/bash
+#/**
+# * This table is node specific. 
+# * It contains the zones of the sources that are
+# * stored on its node.
+# */
+
 host=$1
 dbname=$2
 port=$3

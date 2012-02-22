@@ -26,8 +26,8 @@ CREATE TABLE monitoringlist
   ,xtrsrc_id INTEGER 
   ,ra DOUBLE PRECISION DEFAULT 0
   ,decl DOUBLE PRECISION DEFAULT 0
+  ,ds_id INTEGER NOT NULL
   ,userentry BOOLEAN DEFAULT false
-  ,image_id INTEGER DEFAULT 0
   ,PRIMARY KEY (monitorid)
   )
 ;

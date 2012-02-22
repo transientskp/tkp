@@ -46,7 +46,7 @@ class monitoringlist(BaseRecipe, RemoteCommandRecipeMixIn):
         'dataset_id': ingredient.IntField(
             '--dataset-id',
             help='Dataset ID for images under consideration',
-            default=None
+            default=0
         ),
         'nproc': ingredient.IntField(
             '--nproc',
@@ -61,7 +61,6 @@ class monitoringlist(BaseRecipe, RemoteCommandRecipeMixIn):
         with closing(DataBase()) as database:
             ids_filenames = dbu.get_imagefiles_for_ids(
                 database.connection, self.inputs['image_ids'])
-            
         # Obtain available nodes
         clusterdesc = ClusterDesc(self.config.get('cluster', "clusterdesc"))
         if clusterdesc.subclusters:
@@ -75,10 +74,6 @@ class monitoringlist(BaseRecipe, RemoteCommandRecipeMixIn):
                 }
         nodes = list(itertools.chain(*available_nodes.values()))
 
-        # Running this on nodes, in case we want to perform source extraction
-        # on individual images that are still stored on the compute nodes
-        # Note that for that option, we will need host <-> data mapping,
-        # eg VDS files
         command = "python %s" % self.__file__.replace('master', 'nodes')
         jobs = []
         hosts = itertools.cycle(nodes)
@@ -95,11 +90,11 @@ class monitoringlist(BaseRecipe, RemoteCommandRecipeMixIn):
                     )
                 )
         jobs = self._schedule_jobs(jobs, max_per_node=self.inputs['nproc'])
-
+        
         #                Check if we recorded a failing process before returning
         # ----------------------------------------------------------------------
         if self.error.isSet():
-            self.logger.warn("Failed source extraction process detected")
+            self.logger.warn("Failed monitoringlist process detected")
             return 1
         return 0
 

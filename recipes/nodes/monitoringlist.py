@@ -1,6 +1,5 @@
 #                                             LOFAR TRANSIENT DETECTION PIPELINE
 #
-#                          Node recipe to extract sources in the monitoring list
 #                                                                Evert Rol, 2011
 #                                                          evert.astro@gmail.com
 # ------------------------------------------------------------------------------
@@ -17,9 +16,8 @@ from lofarpipe.support.utilities import log_time
 
 BOX_IN_BEAMPIX = 10
 
-class source_extraction(LOFARnodeTCP):
+class monitoringlist(LOFARnodeTCP):
     """
-    Extract sources from a FITS image
     """
 
     def run(self, filename, image_id, tkpconfigdir=None):
@@ -49,19 +47,18 @@ class source_extraction(LOFARnodeTCP):
                 fitsimage = FITSImage(filename)
                 db_image = DBImage(id=image_id, database=database)
                 sources = db_image.monitoringsources()
-                self.logger.info("Number of undetected monitoring sources = %d",
-                                 len(sources))
-                data_image = sourcefinder_image_from_accessor(fitsimage)
                 # Run the source finder on these sources
-                self.logger.info("finding sources")
-                results = data_image.fit_fixed_positions(
-                    [(source[0], source[1]) for source in sources],
-                    boxsize=BOX_IN_BEAMPIX*max(data_image.beam[0], data_image.beam[1]))
-                # Filter out the bad ones, and combines with xtrsrc_ids
-                results = [(source[2], source[3], result) for source, result in
-                           zip(sources, results) if result is not None]
-                self.logger.info("Found %d sources", len(results))
-                db_image.insert_monitoring_sources(results)
+                if len(sources):
+                    self.logger.info("Measuring %d undetected monitoring sources: %s",
+                                     len(sources), str(sources))
+                    data_image = sourcefinder_image_from_accessor(fitsimage)
+                    results = data_image.fit_fixed_positions(
+                        [(source[0], source[1]) for source in sources],
+                        boxsize=BOX_IN_BEAMPIX*max(data_image.beam[0], data_image.beam[1]))
+                    # Filter out the bad ones, and combines with xtrsrc_ids
+                    results = [(source[2], source[3], result) for source, result in
+                               zip(sources, results) if result is not None]
+                    db_image.insert_monitoring_sources(results)
                 
         return 0
 
@@ -70,4 +67,4 @@ if __name__ == "__main__":
     #                        and pass the rest to the run() method defined above
     # --------------------------------------------------------------------------
     jobid, jobhost, jobport = sys.argv[1:4]
-    sys.exit(source_extraction(jobid, jobhost, jobport).run_with_stored_arguments())
+    sys.exit(monitoringlist(jobid, jobhost, jobport).run_with_stored_arguments())

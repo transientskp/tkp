@@ -83,7 +83,7 @@ class transient_search(BaseRecipe):
 
     def go(self):
         super(transient_search, self).go()
-        self.logger.info("Selecting transient sources from the database")
+        self.logger.info("Finding transient sources in the database")
         parset = parameterset(self.inputs['parset'])
         dataset_id = self.inputs['dataset_id']
         self.database = tkp.database.database.DataBase()
@@ -92,6 +92,7 @@ class transient_search(BaseRecipe):
         results = self.dataset.detect_variables()
         transients = []
         if len(results) > 0:
+            self.logger.info("Found %d variable sources", len(results))
             detection_threshold = parset.getFloat('detection.threshold')
             # need (want) sorting by sigma
             # This is not pretty, but it works:
@@ -100,7 +101,7 @@ class transient_search(BaseRecipe):
             srcids = numpy.array(tmpresults['srcid'])
             weightedpeaks, dof = (numpy.array(tmpresults['v_nu']),
                                   numpy.array(tmpresults['npoints'])-1)
-            probability = 1-chisqprob(tmpresults['eta_nu'] * dof, dof)
+            probability = 1 - chisqprob(tmpresults['eta_nu'] * dof, dof)
             selection = probability > detection_threshold
             transient_ids = numpy.array(srcids)[selection]
             selected_results = numpy.array(results)[selection]
@@ -113,7 +114,8 @@ class transient_search(BaseRecipe):
                 transient.dataset = result['dataset']
                 transient.monitored = dbu.is_monitored(
                     self.database.connection, transient.srcid)
-                dbu.insert_transient(self.database.connection, transient.srcid)
+                dbu.insert_transient(self.database.connection, transient.srcid,
+                                     dataset_id)
                 transients.append(transient)
         else:
             transient_ids = numpy.array([], dtype=numpy.int)

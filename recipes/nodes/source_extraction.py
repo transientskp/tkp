@@ -58,14 +58,15 @@ class source_extraction(LOFARnodeTCP):
                 data_image = sourcefinder_image_from_accessor(fitsimage)
                 results = data_image.extract(det=parset.getFloat('detection.threshold'))
                 self.logger.info("Detected %d sources", len(results))
-                self.logger.info("database = %s", str(database))
+                #self.logger.info("First 5 sources: %s", str(results[:5]))
+                self.logger.info("Saving extracted sources to database")
                 db_image.insert_extracted_sources(results)
-                self.logger.info("saved extracted sources to database")
                 deRuiter_r = (parset.getFloat('association.radius') *
                               config['source_association']['deruiter_radius'])
+                self.logger.info("Associate newly extracted sources with existing ones")
                 db_image.associate_extracted_sources(deRuiter_r=deRuiter_r)
-                db_image.match_monitoringlist(update_image_column=True,
-                     assoc_r=deRuiter_r, mindistance=30)
+                #self.logger.info("Update monitoring list for already found sources")
+                #db_image.match_monitoringlist(assoc_r=deRuiter_r, mindistance=30)
                 self.outputs['image_id'] = db_image.id
         return 0
 

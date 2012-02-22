@@ -730,7 +730,15 @@ class Detection(object):
             return self.__getattribute__(attrname[3:]).error
         else:
             raise AttributeError(attrname)
-            
+
+    def __str__(self):
+        return "(%.2f, %.2f) +/- (%.2f, %.2f): %.2f +/- %.2f" % (
+            self.ra.value, self.dec.value, self.ra.error*360, self.dec.error*3600,
+            self.peak.value, self.peak.error)
+
+    def __repr__(self):
+        return str(self)
+    
     def printob(self, output=None):
         if output is None:
              output = sys.stdout;

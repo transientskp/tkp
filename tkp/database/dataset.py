@@ -455,29 +455,9 @@ class Image(DBObject):
         dbu.associate_extracted_sources(
             self.database.connection, self._id, deRuiter_r)
 
-    def match_monitoringlist(self, update_image_column=True,
-                             assoc_r=DERUITER_R, mindistance=30):
-        """Match sources found in the current image with those in the
-        monitoringlist"""
-        
-        image_id = self._id if update_image_column else -1
-        dbu.match_runningcatalog_monitoringlist(
-            self.database.connection, self.dataset.id, image_id,
-            assoc_r=assoc_r, mindistance=mindistance)
-
-    def monitoringsources(self, include_current=False):
-        """Return a list of monitoring sources
-
-        Kwargs:
-
-            include_current (bool): should the method return sources
-            that already have matched sources for this image?
-        """
-
-        exclude_image_id = None if include_current else self._id
-        return dbu.list_monitoringsources(self.database.connection,
-                                          dataset_id=self.ds_id,
-                                          exclude_image_id=exclude_image_id)
+    def monitoringsources(self):
+        return dbu.monitoringlist_not_observed(self.database.connection,
+                                               self._id)
 
     def insert_monitoring_sources(self, results):
         """Insert the list of measured monitoring sources for this image into

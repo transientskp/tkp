@@ -1736,7 +1736,31 @@ ORDER BY t.catid ASC, t.assoc_r ASC
 
 def monitoringlist_not_observed(conn, image_id):
     """Return a list of sources from the monitoringlist that have no
-    association with the extracted sources for this image"""
+    association with the extracted sources for this image
+
+    We do this by matching the monitoring list xtrsrc_ids with the
+    extractedsources xtrsrcids through the assocxtrsources. Using a
+    left outer join, we get nulls in the place where a source should
+    have been, but isn't: these are the sources that are not in
+    extractedosurces and thus weren't automatically picked up by the
+    sourcefinder. We limit our query using the image_id (and ds_id
+    through images.ds_id).
+
+    Lastly, we get the best (weighted averaged) position for the
+    sources to be monitored from the runningcatalog, which shows up in
+    the final inner join.
+
+    Args:
+
+        conn: A database connection object.
+
+        image_id (int): the image under consideration.
+
+    Returns (list):
+
+        A list of sources yet to be observed; each list item is a
+        tuple with the ra, dec, xtrsrcid and monitorid of the source.
+    """
 
     cursor = conn.cursor()
     query = """\
@@ -1800,21 +1824,28 @@ SELECT COUNT(*) FROM monitoringlist WHERE xtrsrc_id = %s"""
 
 def insert_monitoring_sources(conn, results, image_id):
     """Insert the list of measured monitoring sources for this image into
-    extractedsources and runningcatalog
-    
-    Note that the insertion into runningcatalog can be done by
-    xtrsrc_id from monitoringlist. In case it is negative, it is
-    appended to runningcatalog, and xtrsrc_id is updated in the
-    monitoringlist.
+    extractedsources and runningcatalog.
+
+    For user-inserted sources (i.e., sources that were not discovered
+    automatically), the source will be inserted into the
+    runningcatalog as well; for "normal" monitoring sources (i.e.,
+    ones that preset a transient), this does not happen, to not
+    pollute the runningcatalog averages for this entry.
+
+    The insertion into runningcatalog can be done by xtrsrc_id from
+    monitoringlist. In case it is negative, it is appended to
+    runningcatalog, and xtrsrc_id is updated in the monitoringlist.
     """
 
     cursor = conn.cursor()
+    # step through all the indiviudal results (/sources)
     for xtrsrc_id, monitorid, result in results:
         ra, dec, ra_err, dec_err, peak, peak_err, flux, flux_err, sigma = \
             result.serialize()
         x = math.cos(math.radians(dec)) * math.cos(math.radians(ra))
         y = math.cos(math.radians(dec)) * math.sin(math.radians(ra))
         z = math.sin(math.radians(dec))
+        # Always insert them into extractedsources
         query = """\
         INSERT INTO extractedsources
           (image_id
@@ -1939,7 +1970,8 @@ INSERT INTO runningcatalog
                 logging.warn("query failed: %s", query)
                 cursor.close()
                 raise
-            # Add it to the association table as well
+            # Add it to the association table as well, so we can
+            # obtain the lightcurve
             query = """\
 INSERT INTO assocxtrsources
   (
@@ -1961,9 +1993,9 @@ VALUES
                 logging.warn("query failed: %s", query)
                 cursor.close()
                 raise
-            # Now update the monitoringlist.xtrsrc_id
-            # (note: the original negative xtrsrc_id
-            #  is still held safely in memory)
+            # Now update the monitoringlist.xtrsrc_id (note: the
+            # original, possibly negative, xtrsrc_id is still held
+            # safely in memory)
             query = """\
 UPDATE monitoringlist SET xtrsrc_id=%s, image_id=%s WHERE monitorid=%s"""
             try:
@@ -1976,7 +2008,7 @@ UPDATE monitoringlist SET xtrsrc_id=%s, image_id=%s WHERE monitorid=%s"""
                 cursor.close()
                 raise                    
         else:
-            # We don't update the runningcatalog:
+            # We don't update the runningcatalog, because:
             # - the fluxes are below the detection limit, and
             #   add little to nothing to the average flux
             # - the positions will have large errors, and
@@ -2002,22 +2034,28 @@ VALUES (%s, %s, 0, 0, 0, 0, 0)"""
 
 def insert_transient(conn, srcid, dataset_id):
     """Insert a transient source in the database.
-    Transients are stored both in the monitoring list and
-    in the transients table.
+    Transients are stored in the transients table, as well as in
+    the monitoring list.
 
-    A check is performed where the base id (asocxtrsrcid.xtrsrc_id)
+    A check is performed where the base id (asocxtrsources.xtrsrc_id)
     for the light curve of the transient is queried, by assuming the
     current srcid falls within a light curve
-    (assocxtrsrcid.assoc_xtrsrc_id = src). If this id already in the
+    (assocxtrsources.assoc_xtrsrc_id = srcid). If this id already in the
     table, we replace that transient by this one.
 
-    The reason we check the light curve, is that when there
-    is a double source match, the main source id (as stored in the
+    The reason we check the assocxtrsources, is that when there is a
+    double source match, the main source id (as stored in the
     runningcatalog) may change; this results in transients already
     stored having a different id than the current transient, while
     they are in the fact the same transient. The xtrsrc_id of the
-    stored id, however, should be in the light curve of the new
-    xtrsrc_id.
+    stored id, however, should still be in the light curve of the new
+    xtrsrc_id, as an assoc_xtrsrc_id. We thus update the transient,
+    and replace the current transients.xtrsrc_id by the new srcid
+    (=assocxtrsources.xtrsrc_id)
+
+    We store the transient in the monitoring list to ensure its flux
+    will be measured even when the transient drops below the detection
+    threshold.
     """
 
     cursor = conn.cursor()

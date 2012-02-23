@@ -82,6 +82,7 @@ class transient_search(BaseRecipe):
         }
 
     def go(self):
+        # parset default values:
         super(transient_search, self).go()
         self.logger.info("Finding transient sources in the database")
         parset = parameterset(self.inputs['parset'])
@@ -93,7 +94,7 @@ class transient_search(BaseRecipe):
         transients = []
         if len(results) > 0:
             self.logger.info("Found %d variable sources", len(results))
-            detection_threshold = parset.getFloat('detection.threshold')
+            detection_threshold = parset.getFloat('detection.threshold', )
             # need (want) sorting by sigma
             # This is not pretty, but it works:
             tmpresults = dict((key,  [result[key] for result in results])
@@ -106,7 +107,11 @@ class transient_search(BaseRecipe):
             transient_ids = numpy.array(srcids)[selection]
             selected_results = numpy.array(results)[selection]
             siglevels = probability[selection]
+            minpoints = parset.getInt('detection.minpoints', 0)
             for siglevel, result in zip(siglevels, selected_results):
+                print 'minpoints = ', result['npoints'], minpoints
+                if result['npoints'] < minpoints:
+                    continue
                 position = Position(ra=result['ra'], dec=result['dec'],
                                     error=(result['ra_err'], result['dec_err']))
                 transient = Transient(srcid=result['srcid'], position=position)

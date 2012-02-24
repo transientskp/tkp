@@ -1,7 +1,6 @@
 #!/bin/sh
 
-export LD_LIBRARY_PATH=/opt/pythonlibs/lib:/opt/cep/wcslib/lib:/home/swinbank/sourcefinder/tkp/lib
-export PYTHONPATH=/opt/pythonlibs/lib/python/site-packages:/home/swinbank/sourcefinder/deps/lib/python2.5/site-packages:/home/swinbank/sourcefinder/tkp/lib/python
-
+export LD_LIBRARY_PATH=`dirname ${0}`/../lib${LD_LIBRARY_PATH:+:${LD_LIBRARY_PATH}}
+export PYTHONPATH=`dirname ${0}`/../lib/python${PYTHONPATH:+:${PYTHONPATH}}
 
 python `dirname ${0}`/pyse.py $*

@@ -27,6 +27,7 @@ from lofarpipe.support.remotecommand import run_remote_command
 from lofarpipe.support.remotecommand import ComputeJob
 from lofarpipe.support.jobserver import job_server
 from lofarpipe.support.parset import Parset
+from lofarpipe.support.group_data import store_data_map
 import lofarpipe.support.utilities as utilities
 import lofarpipe.support.lofaringredient as ingredient
 
@@ -127,53 +128,87 @@ class bbs(BaseRecipe):
                           self.inputs['args'][0],
                           self.inputs['instrument_mapfile'],
                           self.inputs['sky_mapfile'])
-        data_map = parameterset(self.inputs['args'][0])
-        instrument_map = parameterset(self.inputs['instrument_mapfile'])
-        sky_map = parameterset(self.inputs['sky_mapfile'])
+        data_map = load_data_map(self.inputs['args'][0])
+        instrument_map = load_data_map(self.inputs['instrument_mapfile'])
+        sky_map = load_data_map(self.inputs['sky_mapfile'])
         nproc = self.inputs['nproc']
         mapfiles = {} #{'data': {}, 'instrument': {}, 'sky': {}}
         # This works per host, not per (sub)cluster.  We assume,
         # however, that the appropriate host/cluster to file mapping
         # has been done correctly before this task.
-        for host in data_map.keys():
-            data = data_map.getStringVector(host, [])
-            instrument = instrument_map.getStringVector(host, [])
-            sky = sky_map.getStringVector(host, [])
-            # Error handling and reporting
-            if not len(data) == len(instrument) == len(sky):
-                self.logger.warn(
-                    "Number of data files (%d) does not match with number of "
-                    "instrument files (%d) or number of skymodel files (%d) "
-                    "on %s", len(data), len(instrument), len(sky), host)
-            subdata = [data[i:i+nproc] for i in range(0, len(data), nproc)]
-            subinstrument = [instrument[i:i+nproc] for i in range(0, len(instrument), nproc)]
-            subsky = [sky[i:i+nproc] for i in range(0, len(sky), nproc)]
-            # i (below) denotes the i-th set of processes
-            # each set is a dictionary with the available hosts as key
-            # each value in that dictionary is a dictionary itself, 
-            # with data, instrument and sky as keys, and a list of 
-            # corresponding filenames as values
-            for i, sublist in enumerate(zip(subdata, subinstrument, subsky)):
-                mapfiles.setdefault(i, {}).setdefault(host, {
-                        'data': sublist[0],
-                        'instrument': sublist[1],
-                        'sky': sublist[2]})
+        # Firstly, we create a list of data, instrument and sky tuples
+        # mapped to each host
+        host_mapping = {}
+        for i, host_data in enumerate(data_map):
+            host, data = host_data
+            instrument = instrument_map[i][1]
+            sky = sky_map[i][1]
+            host_mapping.setdefault(host, []).append((data, instrument, sky))
+        # Secondly, we iterate through each host, chopping the lists up into
+        # parts that are nproc long
+        # We store the separate chopped lists into mapfiles
+        for host, values in host_mapping.iteritems():
+            print values
+            data = [value[0] for value in values]
+            instrument = [value[1] for value in values]
+            sky = [value[2] for value in values]
+            l = len(data)
+            subdata = [data[i:i+nproc] for i in range(0, l, nproc)]
+            subinstrument = [instrument[i:i+nproc] for i in range(0, l, nproc)]
+            subsky = [sky[i:i+nproc] for i in range(0, l, nproc)]
+            print '>>>'
+            print host
+            print subdata
+            print subinstrument
+            print subsky
+            print '>>>'
+            for isubset, sublist in enumerate(zip(subdata, subinstrument, subsky)):
+                mapfiles.setdefault(isubset, {}).setdefault(host, {
+                    'data': sublist[0],
+                    'instrument': sublist[1],
+                    'sky': sublist[2]})
+#        
+#                                                            
+#            #instrument = instrument_map.getStringVector(host, [])
+#            #sky = sky_map.getStringVector(host, [])
+#            # Error handling and reporting
+#            if not len(data) == len(instrument) == len(sky):
+#                self.logger.warn(
+#                    "Number of data files (%d) does not match with number of "
+#                    "instrument files (%d) or number of skymodel files (%d) "
+#                    "on %s", len(data), len(instrument), len(sky), host)
+#            
+#            #subdata = [data[i:i+nproc] for i in range(0, len(data), nproc)]
+#            #subinstrument = [instrument[i:i+nproc] for i in range(0, len(instrument), nproc)]
+#            #subsky = [sky[i:i+nproc] for i in range(0, len(sky), nproc)]
+#            # iset (below) denotes the i-th set of processes
+#            # each set is a dictionary with the available hosts as key
+#            # each value in that dictionary is a dictionary itself, 
+#            # with data, instrument and sky as keys, and a list of 
+#            # corresponding filenames as values
+#            if i > 0 and i // nproc == 0:
+#                iset += 1
+#                mapfiles.setdefault(iset, {}).setdefault(host, {
+#                    'data': sublist[0],
+#                    'instrument': sublist[1],
+#                    'sky': sublist[2]})
         import pprint
         self.logger.debug("mapfiles = %s", pprint.pformat(mapfiles))
         sub_mapfiles = []
         path = {}
+        # Step through the subprocesses
         for mapping in mapfiles.values():
-            parsets = {'data': Parset(),
-                       'instrument': Parset(),
-                       'sky': Parset()}
-            for host, maps in mapping.items():
-                for key in ('data', 'instrument', 'sky'):
-                    parsets[key].addStringVector(host, maps[key])
+            submapping = {'data': [], 'instrument': [], 'sky': []}
             for key in ('data', 'instrument', 'sky'):
+                submapping = []
+                for host, maps in mapping.iteritems():
+                    for value in maps[key]:
+                        submapping.append((host, value))
                 fh, path[key] = tempfile.mkstemp(suffix="_%s_mapfile" % key, dir=self.config.get(
                     'layout', 'parset_directory'))
                 os.close(fh)
-                parsets[key].writeFile(path[key])
+                print '>', key, ':', submapping
+                store_data_map(path[key], submapping)
             sub_mapfiles.append((path['data'], path['instrument'], path['sky']))
         return sub_mapfiles
 
@@ -184,9 +219,9 @@ class bbs(BaseRecipe):
             for host in datamap.keys():
                 mapping.setdefault(host, []).extend(
                     datamap.getStringVector(host, []))
-        mapfile = Parset()
+        mapfile = []
         for host, data in mapping.items():
-            mapfile.addStringVector(host, data)
+            mapfile.append((host, data)) #addStringVector(host, data)
         return mapfile
     
     def go(self):
@@ -215,8 +250,9 @@ class bbs(BaseRecipe):
             for tmpfile in mapfile:
                 os.remove(tmpfile)
         mapfile = self._combine_mapfiles(new_mapfiles)
-        mapfile.writeFile(self.inputs['data_mapfile'])
-        # Claen up temporary output map files
+        store_data_map(self.inputs['data_mapfile'], mapfile)
+        #mapfile.writeFile(self.inputs['data_mapfile'])
+        # Clean up temporary output map files
         for new_mapfile in new_mapfiles:
             os.remove(new_mapfile)
         self.outputs['mapfile'] = self.inputs['data_mapfile']

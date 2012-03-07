@@ -97,7 +97,7 @@ class SIP(control):
                                  (iteration+1,))
                 outputs = {}
                 results_dir = os.path.join(
-                    self.config.get('DEFAULT', 'default_working_directory'),
+                    self.config.get('DEFAULT', 'working_directory'),
                     self.inputs['job_name'],
                     subdir
                     )

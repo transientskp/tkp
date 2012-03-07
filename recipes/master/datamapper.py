@@ -11,7 +11,7 @@ from collections import defaultdict
 
 from lofarpipe.support.baserecipe import BaseRecipe
 from lofarpipe.support.clusterdesc import ClusterDesc, get_compute_nodes
-from lofarpipe.support.parset import Parset
+from lofarpipe.support.group_data import store_data_map
 import lofarpipe.support.lofaringredient as ingredient
 
 class datamapper(BaseRecipe):
@@ -28,7 +28,12 @@ class datamapper(BaseRecipe):
         'mapfile': ingredient.StringField(
             '--mapfile',
             help="Full path (including filename) of mapfile to produce (clobbered if exists)"
-        )
+        ),
+        'subcluster': ingredient.StringField(
+            '--subcluster',
+            default='',
+            help="Explicitly specify the subcluster, if it can't be deduced from the filename"
+        ),
     }
 
     outputs = {
@@ -56,23 +61,30 @@ class datamapper(BaseRecipe):
             }
 
         data = defaultdict(list)
+        datamap = []
+        print data
+        print self.inputs['args']
         for filename in self.inputs['args']:
-            subcluster = filename.split(os.path.sep)[2]
+            if self.inputs['subcluster']:
+                subcluster = self.inputs['subcluster']
+            else:
+                subcluster = filename.split(os.path.sep)[2]
             try:
                 host = available_nodes[subcluster].next()
             except KeyError, key:
                 self.logger.error("%s is not a known cluster" % str(key))
                 raise
-
+            datamap.append((host, filename))
             data[host].append(filename)
 
         #                                 Dump the generated mapping to a parset
         # ----------------------------------------------------------------------
-        parset = Parset()
-        for host, filenames in data.iteritems():
-            parset.addStringVector(host, filenames)
-
-        parset.writeFile(self.inputs['mapfile'])
+        #parset = Parset()
+        #for host, filenames in data.iteritems():
+        #    parset.addStringVector(host, filenames)
+        #
+        #parset.writeFile(self.inputs['mapfile'])
+        store_data_map(self.inputs['mapfile'], datamap)
         self.outputs['mapfile'] = self.inputs['mapfile']
 
         return 0

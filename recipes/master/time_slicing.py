@@ -13,6 +13,7 @@ from lofarpipe.support.parset import Parset
 from lofarpipe.support.clusterdesc import ClusterDesc, get_compute_nodes
 from lofarpipe.support.remotecommand import ComputeJob
 from lofarpipe.support.remotecommand import RemoteCommandRecipeMixIn
+from lofarpipe.support.group_data import store_data_map
 
 
 class IntervalField(ingredient.StringField):
@@ -158,15 +159,12 @@ class time_slicing(BaseRecipe, RemoteCommandRecipeMixIn):
             except OSError:  # directory already exists
                 pass
             # Create a mapping object and safe the results into a mapfile
-            mapper = {}
+            mapper = []
             for job in jobs.itervalues():
-                host, output = job.results['output']
-                mapper.setdefault(host, []).append(output)
-            with open(mapfile, 'w') as outfile:
-                for host in mapper.keys():
-                    outfile.write("%s = %s\n" % (host, str(mapper[host])))
+                mapper.append(job.results['output'])
+                #mapper.setdefault(host, []).append(output)
+            store_data_map(mapfile, mapper)
             self.outputs['mapfiles'].append(mapfile)
-
             self.outputs['timesteps'].append((start_time, end_time))
 
         #                Check if we recorded a failing process before returning

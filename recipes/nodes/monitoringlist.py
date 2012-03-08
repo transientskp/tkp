@@ -56,7 +56,7 @@ class monitoringlist(LOFARnodeTCP):
                         [(source[0], source[1]) for source in sources],
                         boxsize=BOX_IN_BEAMPIX*max(data_image.beam[0], data_image.beam[1]))
                     # Filter out the bad ones, and combines with xtrsrc_ids
-                    results = [(source[2], source[3], result) for source, result in
+                    results = [(source[2], source[3], result.serialize()) for source, result in
                                zip(sources, results) if result is not None]
                     db_image.insert_monitoring_sources(results)
                 

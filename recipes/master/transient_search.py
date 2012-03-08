@@ -21,6 +21,7 @@ from lofarpipe.support.baserecipe import BaseRecipe
 from lofarpipe.support import lofaringredient
 from lofar.parameterset import parameterset
 
+from tkp.config import config
 import tkp.database.database
 import tkp.database.dataset
 import tkp.database.utils as dbu
@@ -72,7 +73,12 @@ class transient_search(BaseRecipe):
         'dataset_id': lofaringredient.IntField(
             '--dataset-id',
             help='Dataset ID (as stored in the database)'
-        )
+        ),
+        'image_ids': lofaringredient.ListField(
+            '--image-ids',
+            default=None,
+            help='List of current images'
+        ),
         }
     
     outputs = {
@@ -90,11 +96,18 @@ class transient_search(BaseRecipe):
         self.database = tkp.database.database.DataBase()
         self.dataset = tkp.database.dataset.DataSet(
             id=dataset_id, database=self.database)
-        results = self.dataset.detect_variables()
+        limits = {'eta': parset.getFloat(
+            'probability.eta_lim', config['transient_search']['eta_lim']),
+                  'V': parset.getFloat(
+            'probability.V_lim', config['transient_search']['V_lim'])}
+        results = self.dataset.detect_variables(
+            eta_lim=limits['eta'], V_lim=limits['V'])
         transients = []
         if len(results) > 0:
             self.logger.info("Found %d variable sources", len(results))
-            detection_threshold = parset.getFloat('detection.threshold', )
+            detection_threshold = parset.getFloat(
+                'probability.threshold',
+                config['transient_search']['probability'])
             # need (want) sorting by sigma
             # This is not pretty, but it works:
             tmpresults = dict((key,  [result[key] for result in results])
@@ -107,20 +120,22 @@ class transient_search(BaseRecipe):
             transient_ids = numpy.array(srcids)[selection]
             selected_results = numpy.array(results)[selection]
             siglevels = probability[selection]
-            minpoints = parset.getInt('detection.minpoints', 0)
+            minpoints = parset.getInt('probability.minpoints',
+                                      config['transient_search']['minpoints'])
             for siglevel, result in zip(siglevels, selected_results):
-                print 'minpoints = ', result['npoints'], minpoints
                 if result['npoints'] < minpoints:
                     continue
                 position = Position(ra=result['ra'], dec=result['dec'],
                                     error=(result['ra_err'], result['dec_err']))
                 transient = Transient(srcid=result['srcid'], position=position)
                 transient.siglevel = siglevel
+                transient.eta = result['eta_nu']
+                transient.V = result['v_nu']
                 transient.dataset = result['dataset']
                 transient.monitored = dbu.is_monitored(
                     self.database.connection, transient.srcid)
-                dbu.insert_transient(self.database.connection, transient.srcid,
-                                     dataset_id)
+                dbu.insert_transient(self.database.connection, transient,
+                                     dataset_id, images=self.inputs['image_ids'])
                 transients.append(transient)
         else:
             transient_ids = numpy.array([], dtype=numpy.int)

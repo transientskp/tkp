@@ -113,33 +113,22 @@ class SIP(control):
                     )
 
                 outputs.update(
-                    self.run_task("source_extraction",
-                                  images=outputs['combined_fitsfile'],
-                                  dataset_id=dsid)
-                    )
-
-                if dsid is None:
-                    dsid = outputs['dsid']
+                    self.run_task("monitoringlist",
+                                  image_ids=outputs['image_ids'],
+                                  dataset_id=dataset.id))
                 outputs.update(
                     self.run_task("transient_search", [],
-                                  dataset_id=dsid)
-                    )
-                outputs.update(
-                    self.run_task("monitoringlist",
-                                  image_ids=outputs['image_ids'])
-                    )
+                                  dataset_id=dataset.id,
+                                  image_ids=outputs['image_ids']))
                 outputs.update(
                     self.run_task("feature_extraction", [],
-                                  transients=outputs['transients'])
-                    )
-
+                                  transients=outputs['transients']))
+                
                 # run the manual classification on the transient objects
                 outputs.update(
                     self.run_task("classification", [],
-                                  transients=outputs['transients'])
-                    )
-
-                self.logger.info("outputs = %s " % str(outputs))
+                                  transients=outputs['transients']))
+                
                 self.run_task("prettyprint", [], transients=outputs['transients'])
 
             dataset.process_ts = datetime.datetime.utcnow()

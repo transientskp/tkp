@@ -31,29 +31,30 @@ class SIP(control):
                           database=database)
         self.logger.info("dataset id = %d", dataset.id)
         with log_time(self.logger):
-             for image in images:
-                 self.logger.info("Processing image %s", str(image))
-                 outputs = self.run_task("source_extraction",
-                                         images=[image],
-                                         dataset_id=dataset.id)
-                 outputs.update(
-                     self.run_task("monitoringlist",
-                                   image_ids=outputs['image_ids'],
-                                   dataset_id=dataset.id))
-                 outputs.update(
-                     self.run_task("transient_search", [],
-                                   dataset_id=dataset.id))
-                 outputs.update(
-                     self.run_task("feature_extraction", [],
-                                   transients=outputs['transients']))
-                 
-                 # run the manual classification on the transient objects
-                 outputs.update(
-                     self.run_task("classification", [],
-                                   transients=outputs['transients']))
-                 
-                 self.run_task("prettyprint", [], transients=outputs['transients'])
-
+            for image in images:
+                self.logger.info("Processing image %s", str(image))
+                outputs = self.run_task("source_extraction",
+                                        images=[image],
+                                        dataset_id=dataset.id)
+                outputs.update(
+                    self.run_task("monitoringlist",
+                                  image_ids=outputs['image_ids'],
+                                  dataset_id=dataset.id))
+                outputs.update(
+                    self.run_task("transient_search", [],
+                                  dataset_id=dataset.id,
+                                   image_ids=outputs['image_ids']))
+                outputs.update(
+                    self.run_task("feature_extraction", [],
+                                  transients=outputs['transients']))
+                
+                # run the manual classification on the transient objects
+                outputs.update(
+                    self.run_task("classification", [],
+                                  transients=outputs['transients']))
+                
+                self.run_task("prettyprint", [], transients=outputs['transients'])
+                
         dataset.process_ts = datetime.datetime.utcnow()
         database.close()
 

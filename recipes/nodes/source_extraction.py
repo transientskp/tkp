@@ -48,6 +48,7 @@ class source_extraction(LOFARnodeTCP):
         
         with log_time(self.logger):
             with closing(DataBase()) as database:
+                seconfig = config['source_extraction']
                 parset = parameterset(parset)
                 dataset = DataSet(id=dataset_id, database=database)
                 fitsimage = FITSImage(image)
@@ -56,11 +57,20 @@ class source_extraction(LOFARnodeTCP):
                 self.logger.info("Detecting sources in %s at %f level", 
                                  image, parset.getFloat('detection.threshold'))
                 data_image = sourcefinder_image_from_accessor(fitsimage)
-                results = data_image.extract(det=parset.getFloat('detection.threshold'))
+                seconfig['back_sizex'] = parset.getInt('backsize.x',
+                                                       seconfig['back_sizex'])
+                seconfig['back_sizey'] = parset.getInt('backsize.y',
+                                                       seconfig['back_sizey'])
+                det = parset.getFloat('detection.threshold',
+                                      seconfig['detection_threshold'])
+                anl = parset.getFloat('analysis.threshold',
+                                      seconfig['analysis_threshold'])
+                results = data_image.extract(det=det, anl=anl)
                 self.logger.info("Detected %d sources", len(results))
                 #self.logger.info("First 5 sources: %s", str(results[:5]))
                 self.logger.info("Saving extracted sources to database")
-                db_image.insert_extracted_sources(results)
+                tuple_results = [result.serialize() for result in results]
+                db_image.insert_extracted_sources(tuple_results)
                 deRuiter_r = (parset.getFloat('association.radius') *
                               config['source_association']['deruiter_radius'])
                 self.logger.info("Associate newly extracted sources with existing ones")

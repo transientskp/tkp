@@ -12,6 +12,9 @@ CREATE TABLE detections
   ,lI_int DOUBLE NULL 
   ,lI_int_err DOUBLE NULL 
   ,ldet_sigma DOUBLE NOT NULL
+  ,lsemimajor DOUBLE 
+  ,lsemiminor DOUBLE 
+  ,lpa DOUBLE 
   )
 ;
 

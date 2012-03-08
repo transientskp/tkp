@@ -960,7 +960,7 @@ class Detection(object):
                 numpy.float(self.theta_celes)
                 )
 
-    def serialize(self):
+    def serialize_old(self):
         """Return source properties suitable for database storage.
 
         @rtype: tuple
@@ -979,4 +979,29 @@ class Detection(object):
             float(self.flux.value),
             float(self.flux.error),
             float(self.sig)
+        )
+
+
+    def serialize(self):
+        """Return source properties suitable for database storage.
+
+        @rtype: tuple
+        """
+
+        # The database doesn't recognize numpy.float64 values, so
+        # in order to let the database accept the values, we convert them
+        # to float
+        return (
+            float(self.ra.value),
+            float(self.dec.value),
+            float(self.ra.error),
+            float(self.dec.error),
+            float(self.peak.value),
+            float(self.peak.error),
+            float(self.flux.value),
+            float(self.flux.error),
+            float(self.sig),
+            float(self.smaj_asec),
+            float(self.smin_asec),
+            float(self.theta_celes)
         )

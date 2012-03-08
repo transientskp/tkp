@@ -435,9 +435,9 @@ class Image(DBObject):
                 utility.containers.ExtractionResult objects (as
                 returned from
                 sourcefinder.image.ImageData().extract()), or a list
-                of data tuples with the source information (ra, dec,
-                ra_err, dec_err, peak, peak_err, flux, flux_err,
-                det_sigma).
+                of data tuples with the source information (zone, ra, dec,
+                ra_err, dec_err, x, y, z, det_sigma, peak, peak_err, flux, flux_err,
+                major, minor, angle).
        """
         dbu.insert_extracted_sources(
             self.database.connection, self._id, results=results)

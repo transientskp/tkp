@@ -145,6 +145,12 @@ def set_default_config():
     config.set('source_extraction', 'eps_ra', '0.')
     config.set('source_extraction', 'eps_dec', '0.')
 
+    config.add_section('transient_search')
+    config.set('transient_search', 'probability', '0.99')
+    config.set('transient_search', 'minpoints', '2')
+    config.set('transient_search', 'eta_lim', '3.')
+    config.set('transient_search', 'V_lim', '0.')
+
     config.add_section('logging')
     config.set('logging', 'level', 'ERROR')
     config.set('logging', 'format',
@@ -229,6 +235,7 @@ def parse_config(config):
                 ('source_extraction', 'median_filter'),
                 ('source_extraction', 'interpolate_order'),
                 ('source_extraction', 'deblend_nthresh'),
+                ('transient_search', 'minpoints'),
                 ('alerts', 'port'),
                 )
     floats = (('source_association', 'deruiter_radius'),
@@ -249,7 +256,11 @@ def parse_config(config):
               ('source_extraction', 'clean_bias_error'),
               ('source_extraction', 'frac_flux_cal_error'),
               ('source_extraction', 'eps_ra'),
-              ('source_extraction', 'eps_dec'))
+              ('source_extraction', 'eps_dec'),
+              ('transient_search', 'probability'),
+              ('transient_search', 'eta_lim'),
+              ('transient_search', 'V_lim'),
+              )
     configuration.update(dict([(section, dict(config.items(section, raw=True)))
                                for section in config.sections()]))
     for section, option in booleans:

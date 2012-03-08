@@ -11,7 +11,6 @@ import os
 import sys
 import math
 import logging
-import pprint
 import monetdb.sql as db
 from tkp.config import config
 # To do: any way we can get rid of this dependency?
@@ -135,8 +134,9 @@ def _insert_into_detections(conn, results):
     if not results:
         return
     try:
-        query = [str(det.serialize()) if isinstance(det, Detection) else
-                 str(tuple(det)) for det in results]
+        query = [str(tuple(det)) for det in results]
+        #query = [str(det.serialize()) if isinstance(det, Detection) else
+        #         str(tuple(det)) for det in results]
         query = "INSERT INTO detections VALUES " + ",".join(query)
         conn.cursor().execute(query)
         if not AUTOCOMMIT:
@@ -166,6 +166,9 @@ def _insert_extractedsources(conn, image_id):
           ,decl
           ,ra_err
           ,decl_err
+          ,semimajor
+          ,semiminor
+          ,pa
           ,x
           ,y
           ,z
@@ -181,6 +184,9 @@ def _insert_extractedsources(conn, image_id):
                 ,decl
                 ,ra_err
                 ,decl_err
+                ,semimajor
+                ,semiminor
+                ,pa
                 ,x
                 ,y
                 ,z
@@ -195,6 +201,9 @@ def _insert_extractedsources(conn, image_id):
                        ,ldecl AS decl
                        ,lra_err * 3600 AS ra_err
                        ,ldecl_err * 3600 AS decl_err
+                       ,lsemimajor as semimajor
+                       ,lsemiminor as semiminor
+                       ,lpa as pa
                        ,COS(RADIANS(ldecl)) * COS(RADIANS(lra)) AS x
                        ,COS(RADIANS(ldecl)) * SIN(RADIANS(lra)) AS y
                        ,SIN(RADIANS(ldecl)) AS z
@@ -1840,8 +1849,8 @@ def insert_monitoring_sources(conn, results, image_id):
     cursor = conn.cursor()
     # step through all the indiviudal results (/sources)
     for xtrsrc_id, monitorid, result in results:
-        ra, dec, ra_err, dec_err, peak, peak_err, flux, flux_err, sigma = \
-            result.serialize()
+        ra, dec, ra_err, dec_err, peak, peak_err, flux, flux_err, sigma, \
+            semimajor, semiminor, pa = result
         x = math.cos(math.radians(dec)) * math.cos(math.radians(ra))
         y = math.cos(math.radians(dec)) * math.sin(math.radians(ra))
         z = math.sin(math.radians(dec))
@@ -1862,9 +1871,15 @@ def insert_monitoring_sources(conn, results, image_id):
           ,I_peak_err
           ,I_int
           ,I_int_err
+          ,semimajor
+          ,semiminor
+          ,pa
           )
           VALUES
           (%s
+          ,%s
+          ,%s
+          ,%s
           ,%s
           ,%s
           ,%s
@@ -1883,7 +1898,8 @@ def insert_monitoring_sources(conn, results, image_id):
         try:
             cursor.execute(
                 query, (image_id, int(math.floor(dec)), ra, dec, ra_err, dec_err,
-                        x, y, z, sigma, peak, peak_err, flux, flux_err))
+                        x, y, z, sigma, peak, peak_err, flux, flux_err,
+                        semimajor, semiminor, pa))
             if not AUTOCOMMIT:
                 conn.commit()
             xtrsrcid = cursor.lastrowid
@@ -2032,7 +2048,7 @@ VALUES (%s, %s, 0, 0, 0, 0, 0)"""
     cursor.close()
     
 
-def insert_transient(conn, srcid, dataset_id):
+def insert_transient(conn, transient, dataset_id, images=None):
     """Insert a transient source in the database.
     Transients are stored in the transients table, as well as in
     the monitoring list.
@@ -2058,6 +2074,7 @@ def insert_transient(conn, srcid, dataset_id):
     threshold.
     """
 
+    srcid = transient.srcid
     cursor = conn.cursor()
     try:  # Find the possible transient associated with the current source
         query = """\
@@ -2069,18 +2086,44 @@ SELECT assoc_xtrsrc_id FROM assocxtrsources WHERE xtrsrc_id = %s
         transientid = cursor.fetchone()
         if transientid:  # update/replace existing source
             query = """\
-UPDATE transients SET xtrsrc_id = %s WHERE transientid = %s
+UPDATE transients SET
+    xtrsrc_id = %s
+    ,eta = %s
+    ,V = %s
+WHERE transientid = %s
 """
-            cursor.execute(query, (srcid, transientid[0]))
+            cursor.execute(query, (srcid, transientid[0],
+                                   transient.eta, transient.V))
         else:  # insert new source
+            # First, let's find the xtrsrc_id that belongs to the
+            # light curve of this transient and this image
+            print 'images =', images
+            print 'srcid =', srcid
+            if images is None:
+                image_set = ""
+            else:
+                image_set = ", ".join([str(image) for image in images])
             query = """\
-INSERT INTO transients (xtrsrc_id) VALUES (%s)
-"""
+SELECT ex.xtrsrcid FROM extractedsources ex, assocxtrsources ax
+WHERE ex.image_id IN (%s) AND ex.xtrsrcid = ax.assoc_xtrsrc_id AND
+ax.xtrsrc_id = %%s""" % image_set
             cursor.execute(query, (srcid,))
+            trigger_srcid = cursor.fetchone()[0]
+            query = """\
+SELECT assoc_xtrsrc_id FROM assocxtrsources WHERE xtrsrc_id = %s
+ORDER BY assoc_xtrsrc_id DESC LIMIT 1"""
+            cursor.execute(query, (srcid,))
+            trigger_srcid = cursor.fetchone()[0]
+            cursor.execute("select * from transients")
+            query = """\
+INSERT INTO transients (xtrsrc_id, eta, V, trigger_xtrsrc_id)
+VALUES (%s, %s, %s, %s)
+"""
+            cursor.execute(query, (srcid, transient.eta, transient.V,
+                                   trigger_srcid))
         if not AUTOCOMMIT:
             conn.commit()
     except db.Error:
-        query = query % srcid
         logging.warn("Query %s failed", query)
         cursor.close()
         raise

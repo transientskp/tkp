@@ -12,28 +12,33 @@ import time as tm
 # Local tkp_lib functionality
 import monetdb.sql as db
 
-def rms_distance_from_fieldcentre(conn, dsid, logscale=False):
+def rms_distance_from_fieldcentre(conn, dsid, dist_arcsec_cutoff=None):
     """
     Plot the rms of extracted sources in given dataset vs their 
     distance from the field centre.
     """
+    if dist_arcsec_cutoff is None:
+        dist_arcsec_cutoff = 36000.
     try:
         cursor = conn.cursor()
         query = """\
-        SELECT x1.image_id
-              ,x1.xtrsrcid as xtrsrcid1
-              ,DEGREES(2 * ASIN(SQRT( (x1.x - im1.x) * (x1.x - im1.x) 
-                                    + (x1.y - im1.y) * (x1.y - im1.y) 
-                                    + (x1.z - im1.z) * (x1.z - im1.z)
-                                    ) / 2)) AS centr_img_dist_deg
-              ,20000 * x1.i_peak / x1.det_sigma as rms_mJy
-          FROM extractedsources x1
-              ,images im1
-         WHERE x1.image_id = im1.imageid
-           AND ds_id = %s
+        SELECT * 
+          FROM (SELECT x1.image_id
+                      ,x1.xtrsrcid as xtrsrcid1
+                      ,3600* DEGREES(2 * ASIN(SQRT( (x1.x - im1.x) * (x1.x - im1.x) 
+                                                  + (x1.y - im1.y) * (x1.y - im1.y) 
+                                                  + (x1.z - im1.z) * (x1.z - im1.z)
+                                                  ) / 2)) AS centr_img_dist_deg
+                      ,20000 * x1.i_peak / x1.det_sigma as rms_mJy
+                  FROM extractedsources x1
+                      ,images im1
+                 WHERE x1.image_id = im1.imageid
+                   AND ds_id = %s
+               ) t
+         WHERE centr_img_dist_deg < %s
         ORDER BY centr_img_dist_deg
         """
-        cursor.execute(query, (dsid,))
+        cursor.execute(query, (dsid,dist_arcsec_cutoff))
 
         results = zip(*cursor.fetchall())
         cursor.close()
@@ -50,10 +55,8 @@ def rms_distance_from_fieldcentre(conn, dsid, logscale=False):
         ax.scatter(dist_deg, rms, c='r', s=20, edgecolor='r')
         ax.set_xlabel(r'Distance from Pointing Centre (deg)', size='x-large')
         ax.set_ylabel(r'rms (mJy/beam)', size='x-large')
-        #ax.set_xlim(xmin=0)
-        #ax.set_ylim(ymin=0)
-        if logscale:
-            ax.set_yscale("log", nonposy='clip')
+        ax.set_xlim(xmin=0)
+        ax.set_ylim(ymin=0)
         
         pylab.grid(True)
         
@@ -126,8 +129,8 @@ def hist_sources_per_image(conn, dsid):
                 height = rect.get_height()
                 pylab.text(rect.get_x()+rect.get_width()/2., 1.05*height, '%d'%int(height),
                          rotation='horizontal', ha='center', va='bottom')
-                pylab.text(rect.get_x()+rect.get_width()/2., 0.5*height, '%s'%str(d[i]),
-                         rotation='vertical', ha='center', va='center')
+                pylab.text(rect.get_x()+rect.get_width()/2., 0.05*height, '%s'%str(d[i]),
+                         rotation='vertical', ha='center', va='bottom')
                 i=i+1
 
         #ax.set_ylim(ymax=100)
@@ -406,6 +409,161 @@ def hist_all_counterparts_assoc_r(conn, dsid):
         pylab.grid(True)
         
         fname = 'hist_all_counterparts_assoc_r_dsid_' + str(dsid) + '.eps'
+        plotfiles.append(fname)
+        pylab.savefig(plotfiles[-1], dpi=600)
+
+        return plotfiles
+    except db.Error, e:
+        logging.warn("Query counterparts for dsid %s failed: %s" % (str(dsid),query))
+        raise
+
+def scat_all_counterparts_dist_assoc_r(conn, dsid, fwhm_arcsec):
+    """
+    Histogram of the all the dimensionless distances (i.e. assoc_r)
+    of the associated sources to their running catalog based position.
+    Dimensionless distances are distributed across 10 bins.
+    """
+    try:
+        cursor = conn.cursor()
+        query = """\
+        SELECT *
+          FROM (
+        SELECT r.xtrsrc_id
+              ,a.assoc_xtrsrc_id
+              ,3600 * DEGREES(2 * ASIN(SQRT( (r.x - x.x) * (r.x - x.x)
+                                           + (r.y - x.y) * (r.y - x.y)
+                                           + (r.z - x.z) * (r.z - x.z)
+                                           ) / 2)
+                             ) AS dist_arcsec
+              ,3600 * SQRT( ((r.wm_ra * COS(RADIANS(r.wm_decl)) - x.ra * COS(RADIANS(x.decl))) 
+                          *  (r.wm_ra * COS(RADIANS(r.wm_decl)) - x.ra * COS(RADIANS(x.decl)))) 
+                          / (r.wm_ra_err * r.wm_ra_err + x.ra_err * x.ra_err)
+                          +
+                          ((r.wm_decl - x.decl) * (r.wm_decl - x.decl)) 
+                          / (r.wm_decl_err * r.wm_decl_err + x.decl_err * x.decl_err)
+                          ) AS assoc_r
+              ,3600 * DEGREES(2 * ASIN(SQRT( (im1.x - x.x) * (im1.x - x.x)
+                                           + (im1.y - x.y) * (im1.y - x.y)
+                                           + (im1.z - x.z) * (im1.z - x.z)
+                                           ) / 2)
+                             ) AS dist_from_centre_arcsec
+          FROM assocxtrsources a
+              ,extractedsources x 
+              ,runningcatalog r
+              ,images im1
+         WHERE a.xtrsrc_id <> a.assoc_xtrsrc_id
+           AND a.xtrsrc_id = r.xtrsrc_id
+           AND a.assoc_xtrsrc_id = x.xtrsrcid
+           AND x.image_id = im1.imageid
+           AND im1.ds_id = %s
+               ) t
+         WHERE t.dist_from_centre_arcsec < %s
+        """
+        cursor.execute(query, (dsid,fwhm_arcsec))
+
+        results = zip(*cursor.fetchall())
+        cursor.close()
+        if len(results) != 0:
+            xtrsrc_id = results[0]
+            assoc_xtrsrc_id = results[1]
+            dist_arcsec = results[2]
+            assoc_r = results[3]
+            dist_from_centre_arcsec = results[3]
+        
+        plotfiles=[]
+        p = 0
+        fig = pylab.figure()
+        ax = fig.add_subplot(111)
+        ax.scatter(dist_arcsec, assoc_r, c='r', s=20, edgecolor='r')
+        ax.set_xlabel(r'Distance (arcsec)', size='x-large')
+        ax.set_ylabel(r'Assoc_r (dimensionless)', size='x-large')
+        for i in range(len(ax.get_xticklabels())):
+            ax.get_xticklabels()[i].set_size('x-large')
+        for i in range(len(ax.get_yticklabels())):
+            ax.get_yticklabels()[i].set_size('x-large')
+
+        ax.set_xlim(xmin=0)
+        ax.set_ylim(ymin=0)
+        pylab.grid(True)
+        
+        fname = 'scat_all_counterparts_dist_assoc_r_dsid_' + str(dsid) + '.eps'
+        plotfiles.append(fname)
+        pylab.savefig(plotfiles[-1], dpi=600)
+
+        return plotfiles
+    except db.Error, e:
+        logging.warn("Query counterparts for dsid %s failed: %s" % (str(dsid),query))
+        raise
+
+def scat_all_var_v_eta(conn, dsid, fwhm_arcsec):
+    """
+    Histogram of the all the dimensionless distances (i.e. assoc_r)
+    of the associated sources to their running catalog based position.
+    Dimensionless distances are distributed across 10 bins.
+    """
+    try:
+        cursor = conn.cursor()
+        query = """\
+        SELECT xtrsrc_id
+              ,t1.V_inter / t1.avg_i_peak as V
+              ,t1.eta_inter / t1.avg_weight_peak as eta
+              ,t1.dist_from_centre_arcsec
+          FROM (SELECT xtrsrc_id
+                      ,avg_i_peak
+                      ,avg_weight_peak
+                      ,CASE WHEN datapoints = 1
+                            THEN 0
+                            ELSE sqrt(cast(datapoints as double) * (avg_I_peak_sq - avg_I_peak*avg_I_peak)
+                                     /(cast(datapoints as double) - 1.0))
+                       END AS V_inter
+                      ,CASE WHEN datapoints = 1
+                            THEN 0
+                            ELSE (cast(datapoints as double) / (cast(datapoints as double) - 1.0))
+                                 * (avg_weight_peak*avg_weighted_I_peak_sq - avg_weighted_I_peak * avg_weighted_I_peak )
+                       END AS eta_inter
+                      ,3600 * DEGREES(2 * ASIN(SQRT( (im0.x - x.x) * (im0.x - x.x)
+                                                   + (im0.y - x.y) * (im0.y - x.y)
+                                                   + (im0.z - x.z) * (im0.z - x.z)
+                                                   ) / 2)
+                                     ) AS dist_from_centre_arcsec
+                  FROM runningcatalog r
+                      ,extractedsources x
+                      ,images im0
+                 WHERE r.ds_id = %s
+                   AND r.xtrsrc_id = x.xtrsrcid
+                   AND x.image_id = im0.imageid
+               ) t1
+         WHERE t1.V_inter / t1.avg_i_peak > 0
+           AND t1.eta_inter / t1.avg_weight_peak > 0
+           AND t1.dist_from_centre_arcsec < %s
+        ORDER BY eta
+        """
+        cursor.execute(query, (dsid,fwhm_arcsec))
+
+        results = zip(*cursor.fetchall())
+        cursor.close()
+        if len(results) != 0:
+            xtrsrc_id = results[0]
+            V_var = results[1]
+            eta_var = results[2]
+        
+        plotfiles=[]
+        p = 0
+        fig = pylab.figure()
+        ax = fig.add_subplot(111)
+        ax.scatter(eta_var, V_var, c='r', s=20, edgecolor='r')
+        ax.set_xlabel(r'$\eta_\nu$', size='x-large')
+        ax.set_ylabel(r'$V_\nu$', size='x-large')
+        for i in range(len(ax.get_xticklabels())):
+            ax.get_xticklabels()[i].set_size('x-large')
+        for i in range(len(ax.get_yticklabels())):
+            ax.get_yticklabels()[i].set_size('x-large')
+
+        ax.set_xlim(xmin=0)
+        ax.set_ylim(ymin=0)
+        pylab.grid(True)
+        
+        fname = 'scat_all_var_v_eta_dsid_' + str(dsid) + '.eps'
         plotfiles.append(fname)
         pylab.savefig(plotfiles[-1], dpi=600)
 

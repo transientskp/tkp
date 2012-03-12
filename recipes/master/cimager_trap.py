@@ -208,10 +208,9 @@ class cimager_trap(BaseRecipe, RemoteCommandRecipeMixIn):
                 image_name = os.path.join(resultsdir,
                     parset.getStringVector(
                         "Cimager.Images.Names")[0] + ".restored")
-                # store host in path
-                image_name = "%s:%s" % (host, image_name)
+                #image_name = "%s:%s" % (host, image_name)
                 ms_name = parset.getString("Cimager.dataset")
-                self.outputs['images'].append((image_name, ms_name))
+                self.outputs['images'].append((host, image_name, ms_name))
             self._schedule_jobs(jobs, max_per_node=self.inputs['nproc'])
             # get the final image names and their original MS
             for parset in parsets:

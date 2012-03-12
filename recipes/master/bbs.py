@@ -148,7 +148,6 @@ class bbs(BaseRecipe):
         # parts that are nproc long
         # We store the separate chopped lists into mapfiles
         for host, values in host_mapping.iteritems():
-            print values
             data = [value[0] for value in values]
             instrument = [value[1] for value in values]
             sky = [value[2] for value in values]
@@ -156,12 +155,6 @@ class bbs(BaseRecipe):
             subdata = [data[i:i+nproc] for i in range(0, l, nproc)]
             subinstrument = [instrument[i:i+nproc] for i in range(0, l, nproc)]
             subsky = [sky[i:i+nproc] for i in range(0, l, nproc)]
-            print '>>>'
-            print host
-            print subdata
-            print subinstrument
-            print subsky
-            print '>>>'
             for isubset, sublist in enumerate(zip(subdata, subinstrument, subsky)):
                 mapfiles.setdefault(isubset, {}).setdefault(host, {
                     'data': sublist[0],

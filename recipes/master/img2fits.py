@@ -52,24 +52,17 @@ class img2fits(BaseRecipe, RemoteCommandRecipeMixIn):
         #                        Convert each image to FITS, and supply metadata
         # ----------------------------------------------------------------------
         command = "python %s" % (self.__file__.replace('master', 'nodes'))
-        for image, ms in self.inputs['images']:
+        for host, image, ms in self.inputs['images']:
             jobs = []
-            try:
-                host, path = image.split(':', 1)
-                if '/' in host:   # there's a ':' in filename
-                    raise ValueError("no host part")
-            except ValueError:
-                path = image
-                host = 'localhost'
             fitsfile = os.path.join(
                 self.inputs['results_dir'],
-                os.path.basename(os.path.splitext(path)[0] + ".fits"))
+                os.path.basename(os.path.splitext(image)[0] + ".fits"))
             self.outputs['fitsfiles'].append(fitsfile)
             jobs.append(
                 ComputeJob(
                     host, command,
                     arguments=[
-                        path,
+                        image,
                         ms,
                         fitsfile,
                         tkp.config.CONFIGDIR

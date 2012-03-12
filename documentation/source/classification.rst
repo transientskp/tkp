@@ -7,12 +7,11 @@ Attempt to classify the detected transients into one or more groups.
 
 - inputs:
 
-  - weight_cutoff: set a cutoff: any classified transient with a
-    total classification weight below this value will not be output.
+parset = %(runtime_directory)s/jobs/%(job_name)s/parsets/classification.parset
+  - parset: parameter set, currently containing only one parameter:
 
-  - transients: list of :ref:`Transient
-    <tkpapi:classification-manual-transient>` objects,
-    previously obtained with the transient_search recipe.
+    - weighting.cutoff: Any classified transient with a total
+      classification weight below this value will not be output.
 
   - nproc: number of maximum simultaneous processors per node.
 

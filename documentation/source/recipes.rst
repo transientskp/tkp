@@ -27,6 +27,12 @@ correct jobs (with datafiles) to the correct nodes.
   
   - mapfile: the filename (full path) of the mapping file
 
+  - subcluster (optional): is the subcluster name is not "encoded"
+    inside the file name (that is, on CEP I the second directory in
+    the path name contains the subcluster), set this option to
+    indicate the subcluster you're using. This will likely be
+    "heastro" or "lofar1".
+
 - outputs:
 
   - the mapping filename. This is often used by the next recipe(s).
@@ -103,10 +109,12 @@ NDPPP is the default flagger for LOFAR (but can be replaced with the AOFlagger).
 
     
 
-new_bbs
--------
+bbs
+---
 
-This recipe is part of the default pipeline framework.
+This recipe is a wrapper around the new_bbs recipe that is part of the
+default pipeline framework. It adds the `nproc` option, so that BBS
+won't eat up all processing power if you don't want it to.
 
 BlackBoard Selfcal (BBS) is the calibration routine for LOFAR. 
 
@@ -141,6 +149,7 @@ external commands.
     however, the sky model is set up on the fly using the catalogs in
     the database. See the section `skymodel` below.
 
+  - nproc: maximum number of simultaneous processes per output node.
 
 vdsreader
 ---------
@@ -216,9 +225,17 @@ time_slicing
 Creates a list of time slices, that can be used to iterate on sections
 of the data.
 
-The cimager recipes also contains a time slicing option, but while
-this option still exists in `cimager_trap`, it may be removed in the
-future. This will depend how the SIP deals with image time slices.
+The various imagers also contain time slicing options, but because of
+the way the imager create the images, one looses the necessary
+metadata. The time_slicing recipe attempts to fix this, by slicing up
+the actual MS and creating subdirectories for those sliced MSs. Note
+that the sliced MS is just a "view" into the original, so there is
+little extra disk space needed.
+
+Once metadata gets properly transported into created images, this
+recipe will become obsolete.
+
+See also the `img2fits` recipe.
 
 - inputs:
 
@@ -254,6 +271,8 @@ Once data is sliced, you can then iterate through it, for example::
 
 cimager_trap
 ------------
+
+**This recipe, and the cimager, is now deprecated. Please use the awimager recipe**.
 
 A slightly more TRAP specific version of the SIP cimager recipe. It
 stores the host and original MS in the outputs, which can be used to
@@ -291,13 +310,86 @@ obtain the ncessary meta data when source finding is run.
     (taken from the MS).
 
 
+awimager
+--------
+
+Run the awimager. 
+
+- inputs:
+
+  - executable: the awimager executable
+
+  - parset: the parameter set that contains all the awimager
+    options. See below for more explanation.
+
+  - nproc: number of maximum simultaneous processors per
+    node. **Safest to leave this at one (the default)**. See below for
+    an explanation.
+
+  - nthreads: Number of simultaneous threads per process. See below
+    for an explanation.
+
+The parameter set for the awimager specifies all the options that are
+normally specified on the command line when running the awimager. You
+can run `awimager -h` to see all these options.
+
+A number of options are ignored, since these do not make sense in the
+context of a pipeline recipe:
+
+- hdf5, fits: the output format is fixed to be a CASA image.
+
+- ms, image, restored: the input and output filenames are fixed.
+
+All other options can (and should) be specified using the parset. Example::
+
+    npix = 128
+    verbose = 0
+    niter = 100
+    weight = natural
+    wmax = 500
+    npix = 256
+    cellsize = 30arcsec
+    data = CORRECTED_DATA
+    padding = 1.
+    niter = 10
+    wprojplanes = 50
+    timewindow = 300
+    StepApplyElement = 2
+    stokes = I
+    threshold = 0
+    operation = csclean
+
+nproc & nthreads
+~~~~~~~~~~~~~~~~
+
+The awimager is parallelised, so that a single awimager run can use
+multiple cores (thus making it faster); the number of cores used to be
+run simultaneously is specified using the nthreads configuration
+parameter.
+
+Of course, there is also the option of running multiple awimager
+together, e.g. when processing multiple subbands. This may cause
+problems, however: the awimager creates some extra files, that have a
+fixed filename (independent of the input MS file name); when the
+subbands being processed are in the same directory, these extra files
+start to overwrite each other, causing the awimager to (likely)
+crash. There, until there is a work around, it is advised to leave
+`nproc` at 1, and use `nthreads` instead to speed up the awimager
+process.
+
+The additional advantage of using `nthreads` over `nproc` is that,
+even for the processing of a single subband, a speed gain is obtained,
+which wouldn't be possible using `nproc`.
+
 
 img2fits
 --------
 
 Convert a CASA image to a FITS file, including the necessary meta data
-(header keywords) to run source finding. It also combines the subbands
-into a single image.
+(header keywords) to run source finding. These meta data are found
+from the sliced MSs created using the `time_slicing` recipe.
+
+It also combines the subbands into a single image.
 
 - inputs:
 
@@ -329,15 +421,25 @@ new sources with existing ones.
 
   - image: list of (FITS) images.
 
-  - detection_level: detection level for sources, in background sigma.
+  - parset: parameter set containg the following optional
+    settings. Note that these setting supersede the values in your
+    (local) TKP configuration file.
 
-  - dataset_id: dataset to which images belong. If run with the
-    default of ``None``, a dataset_id will be created in the database,
-    that can then be used in later iterations.
+    - detection.threshold: peak detection threshold for a source to be
+      found.
 
-  - radius: relative radius for source association. Default is 1.
+    - analysis.threshold: threshold to include neighbouring pixels
+      into the determination of the source details.
 
-  - nproc: number of maximum simultaneous processors per node
+    - association.radius: radius in units of the default De Ruiter
+      radius to associate sources with previously extracted sources.
+
+    - backsize.x, backsize.y: mesh size to determine the background
+      level.
+
+  - nproc: number of maximum simultaneous processors per node. Useful
+    when performing source extraction on multiple subbands
+    simultaneously.
 
 
 - outputs:
@@ -363,15 +465,20 @@ looking for deviations in their light curve.
 
 - inputs:
 
-  - detection_level: Level above which a source is classified as a
-    transient. This is done by looking at the chi-squared value of the
-    light curve. Default = 3.
+  - parset: parameter set, with the following parameters:
 
-  - closeness_level: ignore associations with level > closeness
-    level. Default = 3.
+    - probability.threshold: likeliness above which the variable is
+      assumed a transient (between 0 and 1).
 
-  - dataset_id: The dataset ID, likely obtained from the
-    source_extraction recipe.
+    - probability.minpoints: minimum number of light curve data points
+      to determine the variability of a source.
+
+    - probability.eta_lim: eta (least-squared sum) limit above which
+      a source is assumed to be variable (related to `threshold`
+      above).
+
+   - probability.V_lim: limit for V (measure of variation around the
+     mean value) above which a source is assumed to be variable.
 
 - outputs:
   

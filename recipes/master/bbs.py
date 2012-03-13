@@ -177,16 +177,11 @@ class bbs(BaseRecipe):
         return sub_mapfiles
 
     def _combine_mapfiles(self, mapfiles):
-        mapping = {}
+        combined_mapfile = []
         for mapfile in mapfiles:
-            datamap = parameterset(mapfile)
-            for host in datamap.keys():
-                mapping.setdefault(host, []).extend(
-                    datamap.getStringVector(host, []))
-        mapfile = []
-        for host, data in mapping.items():
-            mapfile.append((host, data)) #addStringVector(host, data)
-        return mapfile
+            datamap = load_data_map(mapfile)
+            combined_mapfile.extend(datamap)
+        return combined_mapfile
     
     def go(self):
         self.logger.info("Starting BBS run")
@@ -215,7 +210,6 @@ class bbs(BaseRecipe):
                 os.remove(tmpfile)
         mapfile = self._combine_mapfiles(new_mapfiles)
         store_data_map(self.inputs['data_mapfile'], mapfile)
-        #mapfile.writeFile(self.inputs['data_mapfile'])
         # Clean up temporary output map files
         for new_mapfile in new_mapfiles:
             os.remove(new_mapfile)

@@ -345,7 +345,8 @@ class TestExtractedSource(unittest.TestCase):
             sources = [
                 (data['ra'], data['decl'], data['ra_err'], data['decl_err'],
                  data['i_peak']*(1+i), data['i_peak_err'],
-                 data['i_peak']*(1+i), data['i_peak_err'], 10.)
+                 data['i_peak']*(1+i), data['i_peak_err'], 10.,
+                 1, 1, 0)
                 for data in data_list]
             # Insert the sources
             image.insert_extracted_sources(sources)

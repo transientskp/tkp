@@ -135,8 +135,6 @@ def _insert_into_detections(conn, results):
         return
     try:
         query = [str(tuple(det)) for det in results]
-        #query = [str(det.serialize()) if isinstance(det, Detection) else
-        #         str(tuple(det)) for det in results]
         query = "INSERT INTO detections VALUES " + ",".join(query)
         conn.cursor().execute(query)
         if not AUTOCOMMIT:

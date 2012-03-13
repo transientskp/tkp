@@ -17,11 +17,6 @@ class img2fits(BaseRecipe, RemoteCommandRecipeMixIn):
     """Simple recipe to convert CASA image to FITS files"""
 
     inputs = {
-        'images': ingredient.ListField(
-            '--images',
-            help="List of images, specified as 2-tuples of "
-            "(image name, MS name) ",
-        ),
         'results_dir': ingredient.DirectoryField(
             '--results-dir',
             help="Directory in which resulting images will be placed",
@@ -47,12 +42,13 @@ class img2fits(BaseRecipe, RemoteCommandRecipeMixIn):
     def go(self):
         self.logger.info("Converting CASA images to FITS")
         super(img2fits, self).go()
+        images = self.inputs['args']
         self.outputs['fitsfiles' ] = []
 
         #                        Convert each image to FITS, and supply metadata
         # ----------------------------------------------------------------------
         command = "python %s" % (self.__file__.replace('master', 'nodes'))
-        for host, image, ms in self.inputs['images']:
+        for host, image, ms in images:
             jobs = []
             fitsfile = os.path.join(
                 self.inputs['results_dir'],

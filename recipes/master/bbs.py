@@ -14,7 +14,6 @@ import tempfile
 import shutil
 import time
 import signal
-from pprint import pprint
 
 from lofar.parameterset import parameterset
 
@@ -160,33 +159,6 @@ class bbs(BaseRecipe):
                     'data': sublist[0],
                     'instrument': sublist[1],
                     'sky': sublist[2]})
-#        
-#                                                            
-#            #instrument = instrument_map.getStringVector(host, [])
-#            #sky = sky_map.getStringVector(host, [])
-#            # Error handling and reporting
-#            if not len(data) == len(instrument) == len(sky):
-#                self.logger.warn(
-#                    "Number of data files (%d) does not match with number of "
-#                    "instrument files (%d) or number of skymodel files (%d) "
-#                    "on %s", len(data), len(instrument), len(sky), host)
-#            
-#            #subdata = [data[i:i+nproc] for i in range(0, len(data), nproc)]
-#            #subinstrument = [instrument[i:i+nproc] for i in range(0, len(instrument), nproc)]
-#            #subsky = [sky[i:i+nproc] for i in range(0, len(sky), nproc)]
-#            # iset (below) denotes the i-th set of processes
-#            # each set is a dictionary with the available hosts as key
-#            # each value in that dictionary is a dictionary itself, 
-#            # with data, instrument and sky as keys, and a list of 
-#            # corresponding filenames as values
-#            if i > 0 and i // nproc == 0:
-#                iset += 1
-#                mapfiles.setdefault(iset, {}).setdefault(host, {
-#                    'data': sublist[0],
-#                    'instrument': sublist[1],
-#                    'sky': sublist[2]})
-        import pprint
-        self.logger.debug("mapfiles = %s", pprint.pformat(mapfiles))
         sub_mapfiles = []
         path = {}
         # Step through the subprocesses
@@ -200,7 +172,6 @@ class bbs(BaseRecipe):
                 fh, path[key] = tempfile.mkstemp(suffix="_%s_mapfile" % key, dir=self.config.get(
                     'layout', 'parset_directory'))
                 os.close(fh)
-                print '>', key, ':', submapping
                 store_data_map(path[key], submapping)
             sub_mapfiles.append((path['data'], path['instrument'], path['sky']))
         return sub_mapfiles

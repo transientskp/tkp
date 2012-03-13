@@ -59,24 +59,9 @@ class transient_search(BaseRecipe):
             dest='parset',
             help="Transient search configuration parset"
         ),
-#        'detection_level': lofaringredient.FloatField(
-#            '--detection-level',
-#            help='Detection level (level * sigma > mu)',
-#            default=3.0
-#        ),
-#        'closeness_level': lofaringredient.FloatField(
-#            '--closeness-level',
-#            help=('Closeness level for associated sources '
-#                  '(ignore associations with level > closeness level)'),
-#            default=3.0
-#        ),
-        'dataset_id': lofaringredient.IntField(
-            '--dataset-id',
-            help='Dataset ID (as stored in the database)'
-        ),
         'image_ids': lofaringredient.ListField(
             '--image-ids',
-            default=None,
+            default=[],
             help='List of current images'
         ),
         }
@@ -92,7 +77,7 @@ class transient_search(BaseRecipe):
         super(transient_search, self).go()
         self.logger.info("Finding transient sources in the database")
         parset = parameterset(self.inputs['parset'])
-        dataset_id = self.inputs['dataset_id']
+        dataset_id = self.inputs['args'][0]
         self.database = tkp.database.database.DataBase()
         self.dataset = tkp.database.dataset.DataSet(
             id=dataset_id, database=self.database)

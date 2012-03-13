@@ -62,12 +62,6 @@ class classification(BaseRecipe, RemoteCommandRecipeMixIn):
             dest='parset',
             help="Transient search configuration parset"
         ),
-#        weight_cutoff=lofaringredient.FloatField(
-#            '--weight-cutoff',
-#            help='Weight cutoff'),
-        'transients': lofaringredient.ListField(
-            '--transients',
-            help="List of transient objects"),
         'nproc': lofaringredient.IntField(
             '--nproc',
             default=8,
@@ -79,7 +73,7 @@ class classification(BaseRecipe, RemoteCommandRecipeMixIn):
 
     def go(self):
         super(classification, self).go()
-        transients = self.inputs['transients']
+        transients = self.inputs['args']
 
         clusterdesc = ClusterDesc(self.config.get('cluster', "clusterdesc"))
         if clusterdesc.subclusters:

@@ -39,15 +39,6 @@ class monitoringlist(BaseRecipe, RemoteCommandRecipeMixIn):
     """
     
     inputs = {
-        'image_ids': ingredient.ListField(
-            '--image-ids',
-            help="List of database image ids"
-        ),
-        'dataset_id': ingredient.IntField(
-            '--dataset-id',
-            help='Dataset ID for images under consideration',
-            default=0
-        ),
         'nproc': ingredient.IntField(
             '--nproc',
             help="Maximum number of simultaneous processes per compute node",
@@ -58,9 +49,10 @@ class monitoringlist(BaseRecipe, RemoteCommandRecipeMixIn):
     def go(self):
         super(monitoringlist, self).go()
         # Get image_ids and their file names
+        image_ids = self.inputs['args']
         with closing(DataBase()) as database:
             ids_filenames = dbu.get_imagefiles_for_ids(
-                database.connection, self.inputs['image_ids'])
+                database.connection, image_ids)
         # Obtain available nodes
         clusterdesc = ClusterDesc(self.config.get('cluster', "clusterdesc"))
         if clusterdesc.subclusters:

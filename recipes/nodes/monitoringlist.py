@@ -34,9 +34,9 @@ class monitoringlist(LOFARnodeTCP):
 
         Args:
 
-            - image: FITS filename
-
-            - dataset_id: dataset to which image belongs
+            - filename: FITS file
+            
+            - image_id: database image id
 
         """
         

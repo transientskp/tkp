@@ -43,9 +43,6 @@ import tkp.config
 class feature_extraction(BaseRecipe, RemoteCommandRecipeMixIn):
 
     inputs = dict(
-        transients=lofaringredient.ListField(
-            '--transients',
-            help=""),
         nproc=lofaringredient.IntField(
             '--nproc',
             default=8,
@@ -73,7 +70,7 @@ class feature_extraction(BaseRecipe, RemoteCommandRecipeMixIn):
         command = "python %s" % self.__file__.replace('master', 'nodes')
         jobs = []
         nodes = itertools.cycle(nodes)
-        for transient in self.inputs['transients']:
+        for transient in self.inputs['args']:
             node = nodes.next()
             jobs.append(
                 ComputeJob(

@@ -18,10 +18,6 @@ class source_extraction(BaseRecipe, RemoteCommandRecipeMixIn):
     """
 
     inputs = {
-        'images': ingredient.ListField(
-            '--images',
-            help="List of FITS images"
-        ),
         'parset': ingredient.FileField(
             '-p', '--parset',
             dest='parset',
@@ -54,6 +50,8 @@ class source_extraction(BaseRecipe, RemoteCommandRecipeMixIn):
     def go(self):
         self.logger.info("Extracting sources")
         super(source_extraction, self).go()
+        images = self.inputs['args']
+        print 'IMAGES =', images
         dataset_id = self.inputs['dataset_id']
         
         # Obtain available nodes
@@ -76,7 +74,7 @@ class source_extraction(BaseRecipe, RemoteCommandRecipeMixIn):
         command = "python %s" % self.__file__.replace('master', 'nodes')
         jobs = []
         hosts = itertools.cycle(nodes)
-        for image in self.inputs['images']:
+        for image in images:
             host = hosts.next()
             jobs.append(
                 ComputeJob(

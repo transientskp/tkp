@@ -26,10 +26,6 @@ from lofarpipe.cuisine.parset import Parset
 class prettyprint(BaseRecipe):
 
     inputs = {
-        'transients': lofaringredient.ListField(
-            '--transients',
-            help="List of tkp.classification.transient.Transient objects"
-        )
     }
 
     outputs = {}
@@ -37,7 +33,7 @@ class prettyprint(BaseRecipe):
     def go(self):
         super(prettyprint, self).go()
         results = "\n====== Results ======\n"
-        for transient in self.inputs['transients']:
+        for transient in self.inputs['args']:
             indent = 8 * " "
             features = ""
             catalogs = ""

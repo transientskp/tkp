@@ -127,32 +127,30 @@ class SIP(control):
                 outputs = self.run_task('awimager', mapfile)
             
                 outputs.update(
-                    self.run_task('img2fits', images=outputs['images'],
-                        results_dir=os.path.join(
-                            self.config.get('layout', 'results_directory'),
-                            subdir))
+                    self.run_task('img2fits', outputs['images'],
+                                  results_dir=os.path.join(
+                    self.config.get('layout', 'results_directory'),
+                    subdir))
                     )
+                
                 outputs.update(self.run_task("source_extraction",
-                                             images=[outputs['combined_fitsfile']],
+                                             [outputs['combined_fitsfile']],
                                              dataset_id=dataset.id))
+
                 outputs.update(
-                    self.run_task("monitoringlist",
-                                  image_ids=outputs['image_ids'],
-                                  dataset_id=dataset.id))
+                    self.run_task("monitoringlist", outputs['image_ids']))
+
                 outputs.update(
-                    self.run_task("transient_search", [],
-                                  dataset_id=dataset.id,
+                    self.run_task("transient_search", [dataset.id],
                                   image_ids=outputs['image_ids']))
+
                 outputs.update(
-                    self.run_task("feature_extraction", [],
-                                  transients=outputs['transients']))
+                    self.run_task("feature_extraction", outputs['transients']))
                 
-                # run the manual classification on the transient objects
                 outputs.update(
-                    self.run_task("classification", [],
-                                  transients=outputs['transients']))
+                    self.run_task("classification", outputs['transients']))
                 
-                self.run_task("prettyprint", [], transients=outputs['transients'])
+                self.run_task("prettyprint", outputs['transients'])
 
             dataset.process_ts = datetime.datetime.utcnow()
             database.close()

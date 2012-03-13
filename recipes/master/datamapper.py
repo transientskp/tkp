@@ -62,8 +62,6 @@ class datamapper(BaseRecipe):
 
         data = defaultdict(list)
         datamap = []
-        print data
-        print self.inputs['args']
         for filename in self.inputs['args']:
             if self.inputs['subcluster']:
                 subcluster = self.inputs['subcluster']

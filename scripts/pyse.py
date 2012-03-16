@@ -61,6 +61,7 @@ def summary(filename, sourcelist):
         print >>output, "Semi-minor axis (arcsec): %s" % (str(source.smin_asec))
         print >>output, "Position angle: %s" % (str(source.theta_celes))
         print >>output, "Flux: %s\n" % (str(source.flux))
+        print >>output, "Peak: %s\n" % (str(source.peak))
     return output.getvalue()
 
 def handle_args():

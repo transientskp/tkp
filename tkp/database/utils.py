@@ -2093,10 +2093,8 @@ WHERE transientid = %s
             cursor.execute(query, (srcid, transientid[0],
                                    transient.eta, transient.V))
         else:  # insert new source
-            # First, let's find the xtrsrc_id that belongs to the
-            # light curve of this transient and this image
-            print 'images =', images
-            print 'srcid =', srcid
+            # First, let'find the current xtrsrc_id that belongs to the
+            # current image: this is the trigger source id
             if images is None:
                 image_set = ""
             else:
@@ -2107,12 +2105,6 @@ WHERE ex.image_id IN (%s) AND ex.xtrsrcid = ax.assoc_xtrsrc_id AND
 ax.xtrsrc_id = %%s""" % image_set
             cursor.execute(query, (srcid,))
             trigger_srcid = cursor.fetchone()[0]
-            query = """\
-SELECT assoc_xtrsrc_id FROM assocxtrsources WHERE xtrsrc_id = %s
-ORDER BY assoc_xtrsrc_id DESC LIMIT 1"""
-            cursor.execute(query, (srcid,))
-            trigger_srcid = cursor.fetchone()[0]
-            cursor.execute("select * from transients")
             query = """\
 INSERT INTO transients (xtrsrc_id, eta, V, trigger_xtrsrc_id)
 VALUES (%s, %s, %s, %s)

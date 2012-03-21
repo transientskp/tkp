@@ -905,15 +905,14 @@ restore_beam = [0.01, 0.01, 0]
 
     def find_subbands(self):
         datafiles = []
-        if (self.config['hostname'].startswith('heastro') or 
-            self.config['hostname'].startswith('lhn')):
-            archivedir = os.path.join(self.config['default-dirs']['archive'],
-                                      self.config['dsname'])
-            try:
-                datafiles = sorted(os.listdir(archivedir))
-            except OSError:
-                self.logger.warning("Could not find data files; "
-                               "creating an empty data file list")
+        archivedir = os.path.join(self.config['default-dirs']['archive'],
+                                  self.config['dsname'])
+        try:
+            datafiles = sorted(os.listdir(archivedir))
+        except OSError:
+            self.logger.warning("Could not find data files; "
+                           "creating an empty data file list")
+
         # we could dump it with str(datafiles), but let's do it nicely
         filename = os.path.join(self.config['default-dirs']['jobs'],
                                self.config['dsname'], 'control', 'ms_to_process.py')

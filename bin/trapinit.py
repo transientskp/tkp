@@ -562,7 +562,7 @@ Head.LocalDisks = [ /data ]
 runtime_directory = %s
 recipe_directories = [%s, %s]
 lofarroot = %s
-default_working_directory = %s
+working_directory = %s
 task_files = [%%(cwd)s/tasks.cfg]
 
 [layout]

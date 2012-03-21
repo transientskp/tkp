@@ -249,6 +249,45 @@ class Setup(object):
             config['cdesc'] = 'cep2.clusterdesc'
             config['sipcfg'] = 'sip.cfg'
             config['postgres'] = {'host': 'ldb001'}
+        else:
+            print("unknown system (%s), using generic settings" % hostname)
+            tkp_base = '/usr/local'
+            lofim_base = '/usr/local'
+            config['database'] = {
+                'host': 'localhost',
+                'name': 'tkp',
+                'user': 'tkp',
+                'password': 'tkp',
+                }
+            config['default-dirs'].update({
+                'tkp': {'base': tkp_base,
+                        'lib': os.path.join(tkp_base, 'lib'),
+                        'python': os.path.join(tkp_base, 'lib/python'),
+                        'bin': os.path.join(tkp_base, 'bin')},
+                'trap': {'recipes': os.path.join(tkp_base, 'recipes')},
+                'database': {'base': os.path.join(tkp_base, 'database')},
+                'casacore': {'lib': 'usr/local/lib'},
+                'casarest': {'lib': 'usr/local/lib'},
+                'lofim': {'base': lofim_base,
+                        'lib': os.path.join(lofim_base, 'lib/python'),
+                        'python': os.path.join(lofim_base, 'lib/python2.7/dist-packages'),
+                        'bin': os.path.join(lofim_base, 'bin')},
+                'pyrap': {'python': '/usr/local/lib/python2.7/dist-packages',
+                          'lib': '/usr/local/lib'},
+                'wcslib': {'lib': '/usr/local/lib'},
+                'monetdb': {'python': '/usr /lib/python2.7/dist-packages'},
+                'sip': {'recipes': '/usr/local/recipes',
+                        'python':
+                        '/usr/local/lib/python2.7/dist-packages'},
+                'work': os.path.join(homedir, 'pipeline-runtime/scratch'),
+                'archive': os.path.join(homedir, 'pipeline-runtime/archive'),
+                'pipeline-runtime': os.path.join(homedir, 'pipeline-runtime'),
+                'jobs': os.path.join(homedir, 'pipeline-runtime', 'jobs'),
+                })
+            config['cdesc'] = 'heastro.clusterdesc'
+            config['sipcfg'] = 'sip.cfg'
+            config['postgres'] = {'host': 'localhost'}
+
         # Prepare the PYTHONPATH and LD_LIBRARY_PATH
         dirs = config['default-dirs']
         ppath = []
@@ -651,7 +690,7 @@ db_key = bbs_%%(job_name)s
 db_host = %s
 db_name = %s
 db_user = postgres
-data_mapfile = %(runtime_directory)s/jobs/%(job_name)s/parsets/parmdb_mapfile
+data_mapfile = %%(runtime_directory)s/jobs/%%(job_name)s/parsets/parmdb_mapfile
 #makevds = %%(lofarroot)s/bin/makevds
 #combinevds = %%(lofarroot)s/bin/combinevds
 #makesourcedb = %%(lofarroot)s/bin/makesourcedb
@@ -666,15 +705,15 @@ gvds = %%(runtime_directory)s/jobs/%%(job_name)s/vds/%%(job_name)s.gvds
 [parmdb]
 recipe = parmdb
 executable = %%(lofarroot)s/bin/parmdbm
-working_directory = %(default_working_directory)s
-mapfile = %(runtime_directory)s/jobs/%(job_name)s/parsets/parmdb_mapfile
+working_directory = %%(default_working_directory)s
+mapfile = %%(runtime_directory)s/jobs/%%(job_name)s/parsets/parmdb_mapfile
 
 [sourcedb]
 recipe = sourcedb
 executable = %%(lofarroot)s/bin/makesourcedb
 skymodel = %%(runtime_directory)s/jobs/%%(job_name)s/parsets/bbs.skymodel
-working_directory = %(default_working_directory)s
-mapfile = %(runtime_directory)s/jobs/%(job_name)s/parsets/sourcedb_mapfile
+working_directory = %%(default_working_directory)s
+mapfile = %%(runtime_directory)s/jobs/%%(job_name)s/parsets/sourcedb_mapfile
 
 [skymodel]
 recipe = skymodel

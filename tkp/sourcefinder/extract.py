@@ -1001,7 +1001,7 @@ class Detection(object):
             float(self.flux.value),
             float(self.flux.error),
             float(self.sig),
-            float(self.smaj_asec),
-            float(self.smin_asec),
-            float(self.theta_celes)
+            float(self.smaj_asec.value),
+            float(self.smin_asec.value),
+            float(self.theta_celes.value)
         )

@@ -51,11 +51,11 @@ class SIP(control):
                 )['mapfile']
                                     
 
-            #ra = quantity(vdsinfo['pointing']['ra']).get_value('deg')
-            #dec = quantity(vdsinfo['pointing']['dec']).get_value('deg')
-            #central = self.run_task(
-            #    "skymodel", ra=ra, dec=dec, search_size=2.5
-            #    )
+            ra = quantity(vdsinfo['pointing']['ra']).get_value('deg')
+            dec = quantity(vdsinfo['pointing']['dec']).get_value('deg')
+            central = self.run_task(
+                "skymodel", ra=ra, dec=dec, search_size=2.5
+                )
 
             parmdb_mapfile = self.run_task("parmdb", compute_mapfile)['mapfile']
             sourcedb_mapfile = self.run_task("sourcedb", compute_mapfile)['mapfile']

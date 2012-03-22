@@ -1904,7 +1904,8 @@ def insert_monitoring_sources(conn, results, image_id):
         except db.Error, e:
             query = query % (
                 image_id, int(math.floor(dec)), ra, dec, ra_err, dec_err,
-                x, y, z, sigma, peak, peak_err, flux, flux_err)
+                x, y, z, sigma, peak, peak_err, flux, flux_err,
+                semimajor, semiminor, pa)
             logging.warn("Query failed: %s", query)
             cursor.close()
             raise

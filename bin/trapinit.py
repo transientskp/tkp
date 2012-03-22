@@ -160,7 +160,7 @@ class Setup(object):
                           'lib': '/opt/pyrap/lib'},
                 'wcslib': {'lib': '/opt/wcslib/lib'},
                 'monetdb': {'python': '/opt/monetdb/lib/python2.6/site-packages'},
-                'sip': {'recipes': '/opt/pipeline/recipes',
+                'sip': {'recipes': '/opt/LofIm/lofar/lib/python2.6/dist-packages/lofarpipe/recipes',
                         'python':
                         '/opt/pipeline/framework/lib/python2.6/site-packages'},
                 'work': '/zfs/heastro-plex/scratch/%s/trap' % user,
@@ -169,6 +169,7 @@ class Setup(object):
                 'jobs': os.path.join(homedir, 'pipeline-runtime', 'jobs'),
                 })
             config['cdesc'] = 'heastro.clusterdesc'
+            config['subcluster'] = 'heastro'
             config['sipcfg'] = 'sip.cfg'
             config['postgres'] = {'host': '146.50.10.202'}
         elif hostname in ('lfe001', 'lfe002'):
@@ -558,7 +559,7 @@ Head.LocalDisks = [ /data ]
         dirs = self.config['default-dirs']
         with open(path, 'w') as outfile:
             outfile.write("""\
-[DEFAULT]5B
+[DEFAULT]
 runtime_directory = %s
 recipe_directories = [%s, %s]
 lofarroot = %s
@@ -618,8 +619,6 @@ datefmt = %%Y-%%m-%%d %%H:%%M:%%S
     def setup_control_dir(self):
         dirs = self.config['default-dirs']
         controldir = os.path.join(dirs['jobs'], self.config['dsname'], 'control')
-        shutil.copy(os.path.join(dirs['trap']['recipes'], 'trap-with-trip.py'),
-                    controldir)
         # runtrap.sh file
         with open(os.path.join(controldir, 'runtrap.sh'), 'w') as outfile:
             outfile.write("""\
@@ -634,54 +633,43 @@ datefmt = %%Y-%%m-%%d %%H:%%M:%%S
 
 CONTROLDIR=%s
 # Note! The next command spans 3 lines
-PYTHONPATH=%s \\
+PYTHONPATH=%s:. \\
 LD_LIBRARY_PATH=%s \\
-python ${CONTROLDIR}/trap-with-trip.py -d --task-file=${CONTROLDIR}/tasks.cfg -j %s -c %s $1
+python %s/trap-with-trip.py -d --task-file=${CONTROLDIR}/tasks.cfg -j %s -c %s $1
 """ % (os.path.join(dirs['work'], self.config['dsname']), 
        os.path.join(controldir, 'vds'),
        os.path.join(controldir, 'results'),
        os.path.join(dirs['jobs'], self.config['dsname'], 'statefile'),
        controldir, self.config['ppath'], self.config['lpath'],
-       self.config['dsname'], self.config['sipcfg']))
+       dirs['trap']['recipes'], self.config['dsname'], self.config['sipcfg']))
         self.files_created['runtrap.sh'] = os.path.join(controldir, 'runtrap.sh')
         # tasks.cfg file
-        datamapper_recipe = ('datamapper_heastro' 
-                             if self.config['hostname'].startswith('heastro')
-                             else 'datamapper')
         with open(os.path.join(controldir, 'tasks.cfg'), 'w') as outfile:
             outfile.write("""\
 [datamapper_storage]
-recipe = %s
+recipe = datamapper
+subcluster = %s
 mapfile = %%(runtime_directory)s/jobs/%%(job_name)s/parsets/storage_mapfile
 
 [datamapper_compute]
-recipe = %s
+recipe = datamapper
+subcluster = %s
 mapfile = %%(runtime_directory)s/jobs/%%(job_name)s/parsets/compute_mapfile
 
 [ndppp]
 recipe = dppp
 executable = %%(lofarroot)s/bin/NDPPP
 initscript = %%(lofarroot)s/lofarinit.sh
-working_directory = %%(default_working_directory)s
 dry_run = False
 mapfile = %%(runtime_directory)s/jobs/%%(job_name)s/parsets/compute_mapfile
 parset = %%(runtime_directory)s/jobs/%%(job_name)s/parsets/ndppp.1.parset
 nproc = 1
 
-# This ndppp gets ran after the calibration
-[ndppp2]
-recipe = dppp
-executable = %%(lofarroot)s/bin/NDPPP
-initscript = %%(lofarroot)s/lofarinit.sh
-working_directory = %%(default_working_directory)s
-dry_run = False
-mapfile = %%(runtime_directory)s/jobs/%%(job_name)s/parsets/compute_mapfile
-parset = %%(runtime_directory)s/jobs/%%(job_name)s/parsets/ndppp.2.parset
-nproc = 1
-
+[flag_baseline]
+recipe = flag_baseline
 
 [bbs]
-recipe = new_bbs
+recipe = bbs
 initscript = %%(lofarroot)s/lofarinit.sh
 control_exec = %%(lofarroot)s/bin/GlobalControl
 kernel_exec = %%(lofarroot)s/bin/KernelControl
@@ -690,13 +678,8 @@ db_key = bbs_%%(job_name)s
 db_host = %s
 db_name = %s
 db_user = postgres
-data_mapfile = %%(runtime_directory)s/jobs/%%(job_name)s/parsets/parmdb_mapfile
-#makevds = %%(lofarroot)s/bin/makevds
-#combinevds = %%(lofarroot)s/bin/combinevds
-#makesourcedb = %%(lofarroot)s/bin/makesourcedb
-#parmdbm = %%(lofarroot)s/bin/parmdbm
-#skymodel = %%(runtime_directory)s/jobs/%%(job_name)s/parsets/bbs.skymodel
-#nproc = 1
+data_mapfile = %%(runtime_directory)s/jobs/%%(job_name)s/parsets/compute_mapfile
+nproc = 1
 
 [vdsreader]
 recipe = vdsreader
@@ -705,14 +688,12 @@ gvds = %%(runtime_directory)s/jobs/%%(job_name)s/vds/%%(job_name)s.gvds
 [parmdb]
 recipe = parmdb
 executable = %%(lofarroot)s/bin/parmdbm
-working_directory = %%(default_working_directory)s
 mapfile = %%(runtime_directory)s/jobs/%%(job_name)s/parsets/parmdb_mapfile
 
 [sourcedb]
 recipe = sourcedb
 executable = %%(lofarroot)s/bin/makesourcedb
 skymodel = %%(runtime_directory)s/jobs/%%(job_name)s/parsets/bbs.skymodel
-working_directory = %%(default_working_directory)s
 mapfile = %%(runtime_directory)s/jobs/%%(job_name)s/parsets/sourcedb_mapfile
 
 [skymodel]
@@ -724,49 +705,43 @@ search_size = 2.
 [time_slicing]
 recipe = time_slicing
 interval = 12:00:00
-gvds_file = %%(runtime_directory)s/jobs/%%(job_name)s/vds/cimager.gvds
 mapfiledir = %%(runtime_directory)s/jobs/%%(job_name)s/vds/
 
 [vdsmaker]
-recipe = new_vdsmaker
+recipe = vdsmaker
 directory = %%(runtime_directory)s/jobs/%%(job_name)s/vds
 gvds = %%(runtime_directory)s/jobs/%%(job_name)s/vds/%%(job_name)s.gvds
 makevds = %%(lofarroot)s/bin/makevds
 combinevds = %%(lofarroot)s/bin/combinevds
 unlink = False
 
-[cimager_trap]
-recipe = cimager_trap
-imager_exec = %%(lofarroot)s/bin/cimager
-convert_exec = %%(lofarroot)s/bin/convertimagerparset
-parset = %%(runtime_directory)s/jobs/%%(job_name)s/parsets/mwimager.parset
-parset_type = mwimager
-makevds = %%(lofarroot)s/bin/makevds
-combinevds = %%(lofarroot)s/bin/combinevds
-#results_dir = %%(runtime_directory)s/jobs/%%(job_name)s/results/
+[awimager]
+recipe = awimager
+executable = /opt/LofIm/lofar/bin/awimager
+parset = %%(runtime_directory)s/jobs/%%(job_name)s/parsets/awimager.parset
+nproc = 1
+nthreads = 1
 
 [img2fits]
 recipe = img2fits
 
 [source_extraction]
 recipe = source_extraction
-detection_level = 10.
-radius = 3.
+parset = %%(runtime_directory)s/jobs/%%(job_name)s/parsets/sourcefinder.parset
 
 [monitoringlist]
 recipe = monitoringlist
 
 [transient_search]
 recipe = transient_search
-detection_level = 1e6
-closeness_level = 3
+parset = %%(runtime_directory)s/jobs/%%(job_name)s/parsets/transientsearch.parset
 
 [feature_extraction]
 recipe = feature_extraction
 
 [classification]
 recipe = classification
-weight_cutoff = 0.1
+parset = %%(runtime_directory)s/jobs/%%(job_name)s/parsets/classification.parset
 
 [alerts]
 recipe = alerts
@@ -775,7 +750,7 @@ logfile = %%(runtime_directory)s/jobs/%%(job_name)s/alerts.pck
 
 [prettyprint]
 recipe = prettyprint
-""" % (datamapper_recipe, datamapper_recipe, self.config['postgres']['host'],
+""" % (self.config['subcluster'], self.config['subcluster'], self.config['postgres']['host'],
        self.config['user']))
         self.files_created['tasks.cfg'] = os.path.join(controldir, 'tasks.cfg')
 
@@ -810,98 +785,92 @@ count.type = counter
 count.showfullyflagged = True
 """)
         self.files_created['ndppp.1.parset'] = os.path.join(parsetdir, 'ndppp.1.parset')
-        with open(os.path.join(parsetdir, 'ndppp.2.parset'), 'w') as outfile:
+        with open(os.path.join(parsetdir, 'ndppp.postbbs.parset'), 'w') as outfile:
             outfile.write("""\
-# Flag after calibration
-uselogger = True
 msin.startchan = 0
 msin.nchan = 1
 msin.datacolumn = CORRECTED_DATA
-# Note: msout.datacolumn can *only* be DATA
-# This is confusing, since when flagging post BBS, the imager has to make use of the DATA column,
-# instead of the CORRECTED_DATA column
-# When *not* flagging post BBS, the imager has to use the CORRECTED_DATA column instead.
-msout.datacolumn = DATA
-steps = [flag1, count]   # if defined as [] the MS will be copied and NaN/infinite will be  flagged
-flag1.type=madflagger
-flag1.threshold=100
-flag1.freqwindow=1
-flag1.timewindow=5
-flag1.correlations=[0,3]   # only flag on XX and YY
-flag2.type=madflagger
-flag2.threshold=3
-flag2.timewindow=51
-count.type = counter
-count.showfullyflagged = True
+msout.datacolumn = CORRECTED_DATA
+steps = [preflag]   # if defined as [] the MS will be copied and NaN/infinite will be  flagged
+preflag.type=preflagger
+preflag.corrtype=cross
+preflag.amplmax=500
+preflag.baseline=[ [CS*,CS*] ]
 """)
 
-        self.files_created['ndppp.2.parset'] = os.path.join(parsetdir, 'ndppp.2.parset')
+        self.files_created['ndppp.postbbs.parset'] = os.path.join(parsetdir, 'ndppp.postbbs.parset')
         with open(os.path.join(parsetdir, 'bbs.parset'), 'w') as outfile:
             outfile.write("""\
-BBSControl.Strategy.InputColumn = DATA
-BBSControl.Strategy.ChunkSize = 0
-BBSControl.Strategy.Steps = [solve, correct]
-BBSControl.Step.solve.Operation = SOLVE
-BBSControl.Step.solve.Model.Gain.Enable = T
-BBSControl.Step.solve.Model.Bandpass.Enable = F
-BBSControl.Step.solve.Model.DirectionalGain.Enable = F
-BBSControl.Step.solve.Model.Beam.Enable = F
-BBSControl.Step.solve.Model.Ionosphere.Enable = F
-BBSControl.Step.solve.Model.Cache.Enable = T
-BBSControl.Step.solve.Solve.Parms = ["Gain:0:0:*","Gain:1:1:*"]
-BBSControl.Step.solve.Solve.ExclParms = []
-BBSControl.Step.solve.Solve.CellSize.Freq = 0
-BBSControl.Step.solve.Solve.CellSize.Time = 5
-BBSControl.Step.solve.Solve.CellChunkSize = 20
-BBSControl.Step.solve.Solve.Options.MaxIter = 20
-BBSControl.Step.solve.Solve.Options.EpsValue = 1e-9
-BBSControl.Step.solve.Solve.Options.EpsDerivative = 1e-9
-BBSControl.Step.solve.Solve.Options.ColFactor = 1e-9
-BBSControl.Step.solve.Solve.Options.LMFactor = 1.0
-BBSControl.Step.solve.Solve.Options.BalancedEqs = F
-BBSControl.Step.solve.Solve.Options.UseSVD = T
-BBSControl.Step.correct.Operation = CORRECT
-BBSControl.Step.correct.Model.Gain.Enable = T
-BBSControl.Step.correct.Output.Column = CORRECTED_DATA
-BBSControl.Step.subtract.Operation = SUBTRACT
-BBSControl.Step.subtract.Output.Column = SUBTRACTED_DATA
-BBSControl.Step.subtract.Model.Sources = []
-BBSControl.Step.subtract.Model.Gain.Enable = F
-BBSControl.Step.subtract.Model.Beam.Enable = F
+Strategy.InputColumn = DATA
+Strategy.ChunkSize = 0
+Strategy.Steps = [solve, correct]
+Step.solve.Operation = SOLVE
+Step.solve.Model.Gain.Enable = T
+Step.solve.Model.Bandpass.Enable = F
+Step.solve.Model.DirectionalGain.Enable = F
+Step.solve.Model.Beam.Enable = F
+Step.solve.Model.Ionosphere.Enable = F
+Step.solve.Model.Cache.Enable = T
+Step.solve.Solve.Parms = ["Gain:0:0:*","Gain:1:1:*"]
+Step.solve.Solve.ExclParms = []
+Step.solve.Solve.CellSize.Freq = 0
+Step.solve.Solve.CellSize.Time = 5
+Step.solve.Solve.CellChunkSize = 20
+Step.solve.Solve.Options.MaxIter = 20
+Step.solve.Solve.Options.EpsValue = 1e-9
+Step.solve.Solve.Options.EpsDerivative = 1e-9
+Step.solve.Solve.Options.ColFactor = 1e-9
+Step.solve.Solve.Options.LMFactor = 1.0
+Step.solve.Solve.Options.BalancedEqs = F
+Step.solve.Solve.Options.UseSVD = T
+Step.correct.Operation = CORRECT
+Step.correct.Model.Gain.Enable = T
+Step.correct.Output.Column = CORRECTED_DATA
+Step.subtract.Operation = SUBTRACT
+Step.subtract.Output.Column = SUBTRACTED_DATA
+Step.subtract.Model.Sources = []
+Step.subtract.Model.Gain.Enable = F
+Step.subtract.Model.Beam.Enable = F
 """)
         self.files_created['bbs.parset'] = os.path.join(parsetdir, 'bbs.parset')
-        with open(os.path.join(parsetdir, 'mwimager.parset'), 'w') as outfile:
+        with open(os.path.join(parsetdir, 'awimager.parset'), 'w') as outfile:
             outfile.write("""\
-Images.stokes = [I]
-Images.shape = [512, 512]
-Images.cellSize = [20, 20]
-Images.directionType = J2000
-Solver.type = Dirty
-Solver.algorithm = MultiScale
-Solver.niter = 1.
-Solver.gain = 1.0
-Solver.verbose = True
-Solver.scales = [0, 3]
-Gridder.type = WProject
-Gridder.wmax = 50000
-Gridder.nwplanes = 51
-Gridder.oversample = 1
-Gridder.maxsupport = 256
-Gridder.limitsupport = 0
-Gridder.cutoff = 0.001
-Gridder.nfacets = 1
-# Note: since DPPP:msout.datacolumn can *only* be DATA, we have to specify DATA for datacolumn here,
-# but only when flagging post BBS. Otherwise, use the (normal) CORRECTED_DATA column instead.
-datacolumn = DATA
-minUV = 1.0
-ncycles = 0
-restore = True
-restore_beam = [0.01, 0.01, 0]
+npix = 128
+verbose = 0
+niter = 100
+weight = natural
+wmax = 500
+npix = 256
+cellsize = 30arcsec
+data = CORRECTED_DATA
+padding = 1.
+niter = 10
+wprojplanes = 50
+timewindow = 300
+StepApplyElement = 2
+stokes = I
+threshold = 0
+operation = csclean
 """)
-        self.files_created['mwimager.parset'] = os.path.join(parsetdir, 'mwimager.parset')
-        with open(os.path.join(parsetdir, "alerts.parset"), 'w') as outfile:
-            outfile.write("\n")  # dummy file
-        self.files_created['alerts.parset'] = os.path.join(parsetdir, "alerts.parset")
+        self.files_created['awimager.parset'] = os.path.join(parsetdir, 'awimager.parset')
+        with open(os.path.join(parsetdir, "sourcefinder.parset"), 'w') as outfile:
+            outfile.write("""\
+detection.threshold = 15.
+analysis.threshold = 3.
+association.radius = 2.0
+""")
+        self.files_created['sourcefinder.parset'] = os.path.join(parsetdir, "sourcefinder.parset")
+        with open(os.path.join(parsetdir, "transientsearch.parset"), 'w') as outfile:
+            outfile.write("""\
+probability.threshold = 0.99
+probability.minpoints = 0
+probability.eta_lim = 5
+probability.V_lim = 0
+""")
+        self.files_created['transientsearch.parset'] = os.path.join(parsetdir, "transientsearch.parset")
+        with open(os.path.join(parsetdir, "classification.parset"), 'w') as outfile:
+            outfile.write("weighting.cutoff = 0.1\n")
+        self.files_created['classification.parset'] = os.path.join(parsetdir, "classification.parset")
 
     def find_subbands(self):
         datafiles = []

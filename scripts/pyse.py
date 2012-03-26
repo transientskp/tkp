@@ -96,10 +96,9 @@ def set_configuration(options):
     config['back_sizex'] = options.grid
     config['back_sizey'] = options.grid
     config['margin'] = options.margin
+    config['deblend'] = bool(options.deblend)
     if options.residuals or options.islands:
         config['residuals'] = True
-    if options.deblend:
-        config['deblend'] = True
 
 def writefits(filename, data):
     try:

@@ -76,10 +76,12 @@ def handle_args():
     parser.add_option("--regions", action="store_true", help="Generate DS9 region file(s)")
     parser.add_option("--residuals", action="store_true", help="Generate residual maps")
     parser.add_option("--islands", action="store_true", help="Generate island maps")
+    parser.add_option("--deblend", action="store_true", help="Deblend composite sources")
     parser.add_option("--bmaj", type="float", help="Major axis of beam")
     parser.add_option("--bmin", type="float", help="Minor axis of beam")
     parser.add_option("--bpa", type="float", help="Beam position angle")
     parser.add_option("--grid", default=64, type="int", help="Background grid segment size")
+    parser.add_option("--margin", default=0, type="int", help="Margin applied to each edge of image (in pixels)")
     return parser.parse_args()
 
 def set_configuration(options):
@@ -93,8 +95,11 @@ def set_configuration(options):
     config = config['source_extraction']
     config['back_sizex'] = options.grid
     config['back_sizey'] = options.grid
+    config['margin'] = options.margin
     if options.residuals or options.islands:
         config['residuals'] = True
+    if options.deblend:
+        config['deblend'] = True
 
 def writefits(filename, data):
     try:

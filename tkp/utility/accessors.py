@@ -301,7 +301,7 @@ class FITSImage(DataAccessor):
         # pyfits returns data in arrays of numpy.float32; boost.python
         # chokes on them.
         data = numpy.float64(pyfits.getdata(self.filename).squeeze())
-        if not isinstance(self.plane, bool):
+        if not isinstance(self.plane, bool) and len(data.shape) > 2:
             data = data[self.plane].squeeze()
         if len(data.shape) != 2:
             # This basically takes Stokes I if we have an image cube instead

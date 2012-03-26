@@ -124,9 +124,9 @@ def run_sourcefinder(files, options):
             and isinstance(options.bmin, float)
             and isinstance(options.bpa, float)
         ):
-            ff = FitsFile(filename, beam=(options.bmaj, options.bmin, options.bpa))
+            ff = FitsFile(filename, beam=(options.bmaj, options.bmin, options.bpa), plane=0)
         else:
-            ff = FitsFile(filename)
+            ff = FitsFile(filename, plane=0)
         imagedata = sourcefinder_image_from_accessor(ff)
         sr = imagedata.extract(options.detection, options.analysis)
         if options.regions:

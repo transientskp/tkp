@@ -51,7 +51,8 @@ A script is available to make it possible to test the basic functionality of
 the pyse code. It does not make all the features listed above available. In
 particular, at the present time, the FDR algorithm is not available.
 
-On the LOFAR CEP1 cluster, run the script as:
+On the LOFAR CEP1 & CEP2 clusters, first run "use LofIm" then run the script
+as:
 
   $ ~swinbank/sourcefinder/tkp/bin/pyse file1.fits ... fileN.fits
 
@@ -70,12 +71,14 @@ option:
                           Detection threshold
     --analysis=ANALYSIS   Analysis threshold
     --regions             Generate DS9 region file(s)
-    --regionext=REGIONEXT
-                          Extension for DS9 region file(s)
+    --residuals           Generate residual maps
+    --islands             Generate island maps
+    --deblend             Deblend composite sources
     --bmaj=BMAJ           Major axis of beam
     --bmin=BMIN           Minor axis of beam
     --bpa=BPA             Beam position angle
     --grid=GRID           Background grid segment size
+    --margin=MARGIN       Margin applied to each edge of image (in pixels)
 
 
 The --detection argument specifies the multiple of the RMS noise which is
@@ -88,8 +91,19 @@ identified a larger number of pixels is included for the fitting process.
 
 If the --regions option is specified, a DS9-compatible region file is output
 showing the shapes & positions of the sources. It is named after the input
-filename with the extension specified by --regionext (default ".reg")
-appended.
+filename with the extension ".reg" appended.
+
+If --residuals is specified, then a FITS file showing the residuals after
+sources have been subtracted from the input image will be produced. It is
+named after the input filename with the string ".residuals" inserted before
+the extension
+
+If --residuals is specified, then a FITS file showing the islands which have
+been measured will be produced. It is named after the input filename with the
+string ".islands" inserted before the extension
+
+If --deblend is specified the system will attempt to "deblend" -- that is,
+break down into their component Gaussians -- composite sources
 
 --bmaj, --bmin and --bpa specify the shape of the restoring beam. They are
 equivalent to the BMAJ, BMIN and BPA FITS headers. Normally, the code will
@@ -101,6 +115,10 @@ detection, it is segmented into a grid. The size of the grid can be specified
 using the --grid option. The optimal value is a compromise: it should be
 significantly larger than the most extended sources in the image, but small
 enough to account for small-scale variation across the image.
+
+The --margin argument specifies a margin to leave around each edge of the
+image when processing. The margin is specified in pixels, and is applied
+equally to each edge.
 
 All of these arguments are optional (with the caveat that the beam shape must
 be provided if not included with the image).

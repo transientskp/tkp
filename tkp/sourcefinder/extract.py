@@ -34,7 +34,10 @@ from . import utils
 
 
 CONFIG = config['source_extraction']
-
+# If we deblend too far, we hit the recursion limit. And it's slow.
+if CONFIG['deblend'] and CONFIG['deblend_nthresh'] > 300:
+    logging.warn("Limiting to 300 deblending subtresholds")
+    CONFIG['deblend_nthresh'] = 300
 
 class Island(object):
     """
@@ -49,8 +52,7 @@ class Island(object):
     """
 
     def __init__(self, data, rms, chunk, analysis_threshold, detection_map,
-                 beam, rms_orig=None, flux_orig=None, min_orig=None,
-                 max_orig=None):
+                 beam, rms_orig=None, flux_orig=None, subthrrange=None):
         mask = numpy.where(data >= rms * analysis_threshold, 0, 1)
         self.data = numpy.ma.array(data, mask=mask)
         self.rms = rms
@@ -70,22 +72,18 @@ class Island(object):
             self.flux_orig = self.data.sum()
         else:
             self.flux_orig = flux_orig
-        # The minimum of the island is also needed
-        if not isinstance(min_orig, float):
-            self.min_orig = self.data.min()
+        if isinstance(subthrrange, numpy.ndarray):
+            self.subthrrange = subthrrange
         else:
-            self.min_orig = min_orig
-        # And the maximum
-        if not isinstance(max_orig, float):
-            self.max_orig = self.data.max()
-        else:
-            self.max_orig = max_orig
-        # This factor is used for determining the subthreshold levels,
-        # exponentially spaced.
-        self.factor = ((self.max_orig - self.min_orig) /
-                       (numpy.exp(CONFIG['deblend_nthresh']+1)-1.))
+            self.subthrrange = numpy.logspace(
+                numpy.log(self.data.min()),
+                numpy.log(self.data.max()),
+                num=CONFIG['deblend_nthresh']+1, # first value == min_orig
+                base=numpy.e,
+                endpoint=False
+            )[1:]
 
-    def deblend(self, niter=1):
+    def deblend(self, niter=0):
         """Return a decomposed numpy array of all the subislands.
 
         Iterate up through subthresholds, looking for our island
@@ -93,9 +91,7 @@ class Island(object):
         separate islands.
         """
 
-        subthrrange = (self.factor*(numpy.exp(numpy.arange(
-            niter, CONFIG['deblend_nthresh']+1))-1.) + self.min_orig)
-        for level in subthrrange:
+        for level in self.subthrrange[niter:]:
 
             # The idea is to retain the parent island when no significant
             # subislands are found and jump to the next subthreshold
@@ -131,16 +127,22 @@ class Island(object):
                     # We can achieve this by setting rms=level*ones and
                     # analysis_threshold=1.
                     island = Island(
-                        newdata[chunk], (numpy.ones(self.data[chunk].shape) *
-                                         level),
-                        (slice(self.chunk[0].start + chunk[0].start,
-                               self.chunk[0].start + chunk[0].stop),
-                         slice(self.chunk[1].start + chunk[1].start,
-                               self.chunk[1].start + chunk[1].stop)),
-                        1, self.detection_map[chunk], self.beam,
-                        (self.rms_orig[chunk[0].start:chunk[0].stop,
-                                       chunk[1].start:chunk[1].stop],
-                         self.flux_orig, self.min_orig, self.max_orig))
+                                 newdata[chunk],
+                                 (numpy.ones(self.data[chunk].shape) * level),
+                                 (
+                                     slice(self.chunk[0].start + chunk[0].start,
+                                        self.chunk[0].start + chunk[0].stop),
+                                     slice(self.chunk[1].start + chunk[1].start,
+                                        self.chunk[1].start + chunk[1].stop)
+                                 ),
+                                 1,
+                                 self.detection_map[chunk],
+                                 self.beam,
+                                 self.rms_orig[chunk[0].start:chunk[0].stop, chunk[1].start:chunk[1].stop],
+                                 self.flux_orig,
+                                 self.subthrrange
+                            )
+
                     subislands.append(island)
                 # This line should filter out any subisland with insufficient
                 # flux, in about the same way as SExtractor.
@@ -161,7 +163,7 @@ class Island(object):
                 # subthreshold is higher than the present one.
                 # Or we would end up in an infinite loop...
                 if numbersignifsub > 1:
-                    if niter < CONFIG['deblend_nthresh']:
+                    if niter+1 < CONFIG['deblend_nthresh']:
                         # Apparently, the map command always results in
                         # nested lists.
                         return list(utils.flatten(map(
@@ -169,7 +171,7 @@ class Island(object):
                             subislands)))
                     else:
                         return subislands
-                elif numbersignifsub == 1 and niter < CONFIG['deblend_nthresh']:
+                elif numbersignifsub == 1 and niter+1 < CONFIG['deblend_nthresh']:
                     return Island.deblend(self, niter=niter+1)
                 else:
                     # In this case we have numbersignifsub == 0 or

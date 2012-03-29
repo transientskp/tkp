@@ -77,6 +77,7 @@ def handle_args():
     parser.add_option("--residuals", action="store_true", help="Generate residual maps")
     parser.add_option("--islands", action="store_true", help="Generate island maps")
     parser.add_option("--deblend", action="store_true", help="Deblend composite sources")
+    parser.add_option("--deblend-thresholds", default=32, type="int", help="Number of deblending subthresholds")
     parser.add_option("--bmaj", type="float", help="Major axis of beam")
     parser.add_option("--bmin", type="float", help="Minor axis of beam")
     parser.add_option("--bpa", type="float", help="Beam position angle")
@@ -97,6 +98,7 @@ def set_configuration(options):
     config['back_sizey'] = options.grid
     config['margin'] = options.margin
     config['deblend'] = bool(options.deblend)
+    config['deblend_nthresh'] = options.deblend_thresholds
     if options.residuals or options.islands:
         config['residuals'] = True
 

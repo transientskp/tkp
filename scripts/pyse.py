@@ -48,6 +48,50 @@ def regions(sourcelist):
         )
     return output.getvalue()
 
+def skymodel(sourcelist, ref_freq=73800000):
+    """
+    Return a string containing a skymodel from the extracted sources for use in self-calibration.
+    """
+    output = StringIO()
+    print >>output, "#(Name, Type, Ra, Dec, I, Q, U, V, MajorAxis, MinorAxis, Orientation, ReferenceFrequency='60e6', SpectralIndex='[0.0]') = format"
+    for source in sourcelist:
+        print >>output, "%s, GAUSSIAN, %s, %s, %f, 0, 0, 0, %f, %f, %f, %f, [0]" % (
+            "ra:%fdec:%f" % (source.ra, source.dec),
+            "%fdeg" % (source.ra,),
+            "%fdeg" % (source.dec,),
+            source.flux,
+            source.smaj_asec,
+            source.smin_asec,
+            source.theta_celes,
+            ref_freq
+        )
+    return output.getvalue()
+
+def csv(sourcelist):
+    """
+    Return a string containing a csv from the extracted sources.
+    """
+    output = StringIO()
+    print >>output, "ra, ra_err, dec, dec_err, smaj, smaj_err, smin, smin_err, pa, int_flux, int_flux_err, pk_flux, pk_flux_err"
+    for source in sourcelist:
+        print >>output, "%f, %f, %f, %f, %f, %f, %f, %f, %f, %f, %f, %f, %f, %f" % (
+            source.ra,
+            source.ra.error,
+            source.dec,
+            source.dec.error,
+            source.smaj_asec,
+            source.smaj_asec.error,
+            source.smin_asec,
+            source.smin_asec.error,
+            source.theta_celes,
+            source.theta_celes.error,
+            source.flux,
+            source.flux.error,
+            source.peak,
+            source.peak.error,
+        )
+    return output.getvalue()
+
 def summary(filename, sourcelist):
     """
     Return a string containing a human-readable summary of all sources in
@@ -83,6 +127,8 @@ def handle_args():
     parser.add_option("--bpa", type="float", help="Beam position angle")
     parser.add_option("--grid", default=64, type="int", help="Background grid segment size")
     parser.add_option("--margin", default=0, type="int", help="Margin applied to each edge of image (in pixels)")
+    parser.add_option("--skymodel", action="store_true", help="Generate sky model")
+    parser.add_option("--csv", action="store_true", help="Generate csv text file for use in programs such as TopCat")
     return parser.parse_args()
 
 def set_configuration(options):
@@ -143,6 +189,20 @@ def run_sourcefinder(files, options):
         if options.islands:
             islandfile = os.path.splitext(os.path.basename(filename))[0] + ".islands.fits"
             writefits(islandfile, gaussian_map)
+        if options.skymodel:
+            skymodelfile = os.path.splitext(os.path.basename(filename))[0] + ".skymodel"
+            skymodelfile = open(skymodelfile, 'w')
+            if ff.freqeff:
+                skymodelfile.write(skymodel(sr, ff.freqeff))
+            else:
+                print "WARNING: Using default reference frequency for %s" % (skymodelfile.name,)
+                skymodelfile.write(skymodel(sr))
+            skymodelfile.close()
+        if options.csv:
+            csvfile = os.path.splitext(os.path.basename(filename))[0] + ".csv"
+            csvfile = open(csvfile, 'w')
+            csvfile.write(csv(sr))
+            csvfile.close()
         print >>output, summary(filename, sr),
     return output.getvalue()
 

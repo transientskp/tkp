@@ -1,19 +1,18 @@
-# -*- coding: utf-8 -*-
+#                                                         LOFAR IMAGING PIPELINE
+#
+#                                                      BBS Source Catalogue List 
+#                                                             Bart Scheers, 2011
+#                                                           L.H.A.Scheers@uva.nl
+# ------------------------------------------------------------------------------
 
-#
-# LOFAR Transients Key Project
-#
-import sys, pylab, string
+import sys, string
 import numpy as np
-# Local tkp_lib functionality
 import monetdb.sql as db
 import logging
-from tkp.config import config
 
-DERUITER_R = config['source_association']['deruiter_radius']
-print "DERUITER_R =",DERUITER_R
-
-def expected_flux_in_fov(conn, ra_central, decl_central, fov_radius, assoc_theta, bbsfile, storespectraplots=False):
+def expected_fluxes_in_fov(conn, ra_central, decl_central, fov_radius, assoc_theta, bbsfile, 
+                                 storespectraplots=False, deruiter_radius=0.,
+                                 vlss_flux_cutoff=None):
     """Search for VLSS, WENSS and NVSS sources that
     are in the given FoV. The FoV is set by its central position
     (ra_central, decl_central) out to a radius of fov_radius.
@@ -22,11 +21,31 @@ def expected_flux_in_fov(conn, ra_central, decl_central, fov_radius, assoc_theta
 
     All units are in degrees.
 
+    deruiter_radius is a measure for the association uncertainty that takes
+    position errors into account (see thesis Bart Scheers). If not given
+    as a positive value, it is read from the TKP config file. If not
+    available, it defaults to 3.717.
+
     The query returns all vlss sources (id) that are in the FoV.
     If so, the counterparts from other catalogues are returned as well 
     (also their ids).
     """
     
+    DERUITER_R = deruiter_radius
+    if DERUITER_R <= 0:
+        try:
+            from tkp.config import config
+            DERUITER_R = config['source_association']['deruiter_radius']
+            ##print "DERUITER_R =",DERUITER_R
+        except:
+            DERUITER_R=3.717
+
+    if ra_central + alpha(fov_radius, decl_central) > 360:
+        "This will be implemented soon"
+        raise BaseException("ra = %s > 360 degrees, not implemented yet" % str(ra_central + alpha(fov_radius, decl_central))) 
+    
+    if vlss_flux_cutoff is None:
+        vlss_flux_cutoff = 0.
     skymodel = open(bbsfile, 'w')
     header = "# (Name, Type, Ra, Dec, I, Q, U, V, ReferenceFrequency='60e6',  SpectralIndex='[0.0]', MajorAxis, MinorAxis, Orientation) = format\n\n"
     skymodel.write(header)
@@ -34,7 +53,7 @@ def expected_flux_in_fov(conn, ra_central, decl_central, fov_radius, assoc_theta
     # This is dimensionless search radius that takes into account 
     # the ra and decl difference between two sources weighted by 
     # their positional errors.
-    deRuiter_reduced = 3.717/3600.
+    deRuiter_reduced = DERUITER_R/3600.
     try:
         cursor = conn.cursor()
         query = """\
@@ -141,6 +160,7 @@ SELECT t0.v_catsrcid
                       ,i_int_avg_err
                   FROM catalogedsources 
                  WHERE cat_id = 5
+                   AND (src_type = 'S' OR src_type = 'M')
                    AND zone BETWEEN CAST(FLOOR(CAST(%s AS DOUBLE) - %s) AS INTEGER)
                                 AND CAST(FLOOR(CAST(%s AS DOUBLE) + %s) AS INTEGER)
                    AND decl BETWEEN CAST(%s AS DOUBLE) - %s
@@ -207,6 +227,7 @@ SELECT t0.v_catsrcid
                       ,i_int_avg_err
                   FROM catalogedsources 
                  WHERE cat_id = 6
+                   AND (src_type = 'S' OR src_type = 'M')
                    AND zone BETWEEN CAST(FLOOR(CAST(%s AS DOUBLE) - %s) AS INTEGER)
                                 AND CAST(FLOOR(CAST(%s AS DOUBLE) + %s) AS INTEGER)
                    AND decl BETWEEN CAST(%s AS DOUBLE) - %s
@@ -291,6 +312,7 @@ SELECT t0.v_catsrcid
                     / (c1.decl_err * c1.decl_err + c2.decl_err * c2.decl_err))) < %s
        ) t3
     ON t0.v_catsrcid = t3.v_catsrcid
+ WHERE t0.v_flux >= %s
         """
         cursor.execute(query, (
                      decl_central, fov_radius, decl_central, fov_radius, decl_central, fov_radius, decl_central, fov_radius,
@@ -316,7 +338,8 @@ SELECT t0.v_catsrcid
                      decl_central, fov_radius, decl_central, fov_radius, decl_central, fov_radius, decl_central, fov_radius,
                      ra_central, fov_radius, decl_central,ra_central, fov_radius, decl_central, 
                      decl_central, ra_central, decl_central, ra_central, decl_central, fov_radius,
-                     assoc_theta, deRuiter_reduced
+                     assoc_theta, deRuiter_reduced,
+                     vlss_flux_cutoff
                               ))
         results = zip(*cursor.fetchall())
         if len(results) != 0:
@@ -346,10 +369,10 @@ SELECT t0.v_catsrcid
             decl = results[23]
         spectrumfiles = []
         for i in range(len(vlss_catsrcid)):
-            print "\ni = ", i
+            ##print "\ni = ", i
             bbsrow = ""
             # Here we check the cases for the degree of the polynomial spectral index fit
-            print vlss_catsrcid[i], wenssm_catsrcid[i], wenssp_catsrcid[i], nvss_catsrcid[i]
+            ##print vlss_catsrcid[i], wenssm_catsrcid[i], wenssp_catsrcid[i], nvss_catsrcid[i]
             #print "VLSS",vlss_name[i]
             bbsrow += vlss_name[i] + ", "
             # According to Jess, only sources that have values for all
@@ -364,7 +387,7 @@ SELECT t0.v_catsrcid
             #print "BBS ra = ", ra2bbshms(ra[i]), "; BBS decl = ", decl2bbsdms(decl[i])
             bbsrow += ra2bbshms(ra[i]) + ", " + decl2bbsdms(decl[i]) + ", "
             # Stokes I id default, so filed is empty
-            bbsrow += ", "
+            #bbsrow += ", "
             lognu = []
             logflux = []
             lognu.append(np.log10(74.0/60.0))
@@ -381,7 +404,7 @@ SELECT t0.v_catsrcid
             f = ""
             for j in range(len(logflux)):
                 f += str(10**logflux[j]) + "; "
-            print f
+            ##print f
             #print "len(lognu) = ",len(lognu), "nvss_catsrcid[",i,"] =", nvss_catsrcid[i]
             # Here we write the expected flux values at 60 MHz, and the fitted spectral index and
             # and curvature term
@@ -432,6 +455,7 @@ SELECT t0.v_catsrcid
         cursor.close()
 
 def plotSpectrum(x, y, p, f):
+    import pylab
     expflux = "Exp. flux: " + str(round(10**p(0),3)) + " Jy"
     fig = pylab.figure()
     ax = fig.add_subplot(111)
@@ -506,3 +530,14 @@ def ra2bbshms(a):
     #print '\t'+string.zfill(`hh`,2)+'h'+string.zfill(`mm`,2)+'m'+'%10.8fs\n' % ss
     return string.zfill(`hh`, 2) + ':' + string.zfill(`mm`, 2) + ':' + string.zfill(ss, 11)
 
+def alpha(theta, decl):
+    if abs(decl) + theta > 89.9:
+        return 180.0
+    else:
+        return degrees(abs(np.arctan(np.sin(radians(theta)) / np.sqrt(abs(np.cos(radians(decl - theta)) * np.cos(radians(decl + theta)))))))
+
+def degrees(r):
+    return r * 180 / np.pi
+
+def radians(d):
+    return d * np.pi / 180

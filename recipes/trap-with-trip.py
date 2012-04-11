@@ -59,9 +59,12 @@ class SIP(control):
 
             parmdb_mapfile = self.run_task("parmdb", compute_mapfile)['mapfile']
             sourcedb_mapfile = self.run_task("sourcedb", compute_mapfile)['mapfile']
-#            
-#            # Patch the name of the central source into the BBS parset for
-#            # subtraction.
+
+            # Add extra columns necessary when using a CASA imager (eg, awimager)
+            self.run_task("addimagingcolumns", compute_mapfile)
+
+            # Patch the name of the central source into the BBS parset for
+            # subtraction.
             with patched_parset(
                 self.task_definitions.get("bbs", "parset"),
                 {

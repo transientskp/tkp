@@ -12,6 +12,9 @@
  * freq_eff in Hz (ref. band)
  * taustart_timestamp in YYYY-MM-DD-HH:mm:ss:nnnnnn, but without 
  *                    interpunctions (ref. seq_nr)
+ * bsmaj, bsmin, bpa are the semimajor, semiminor axes of the synthesized beam in degrees
+ *                 NOTE that these *ARE* the semimajor axes.
+ * centr_ra and _decl are the central coordinates (J2000) of the image in degrees.
  */
 CREATE SEQUENCE "seq_images" AS INTEGER;
 
@@ -25,10 +28,17 @@ CREATE TABLE images
   ,freq_eff DOUBLE NOT NULL
   ,freq_bw DOUBLE NULL
   ,taustart_ts TIMESTAMP NOT NULL
-  /*,beam_maj DOUBLE NOT NULL
-  ,beam_min DOUBLE NOT NULL
-  ,beam_pa DOUBLE NOT NULL*/
-  ,url VARCHAR(120) NULL
+  ,centr_ra DOUBLE NOT NULL
+  ,centr_decl DOUBLE NOT NULL
+  ,x DOUBLE NOT NULL
+  ,y DOUBLE NOT NULL
+  ,z DOUBLE NOT NULL
+  ,bsmaj DOUBLE NOT NULL
+  ,bsmin DOUBLE NOT NULL
+  ,bpa DOUBLE NOT NULL
+  ,fwhm_arcsec DOUBLE NULL
+  ,fov_degrees DOUBLE NULL
+  ,url VARCHAR(1024) NULL
   ,PRIMARY KEY (imageid)
   ,FOREIGN KEY (ds_id) REFERENCES datasets (dsid)
   ,FOREIGN KEY (band) REFERENCES frequencybands (freqbandid)

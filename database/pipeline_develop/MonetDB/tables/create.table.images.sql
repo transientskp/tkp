@@ -28,14 +28,14 @@ CREATE TABLE images
   ,freq_eff DOUBLE NOT NULL
   ,freq_bw DOUBLE NULL
   ,taustart_ts TIMESTAMP NOT NULL
-  ,centr_ra DOUBLE NOT NULL
-  ,centr_decl DOUBLE NOT NULL
+  ,centr_ra DOUBLE NULL
+  ,centr_decl DOUBLE NULL
   ,x DOUBLE NOT NULL
   ,y DOUBLE NOT NULL
   ,z DOUBLE NOT NULL
-  ,bsmaj DOUBLE NOT NULL
-  ,bsmin DOUBLE NOT NULL
-  ,bpa DOUBLE NOT NULL
+  ,bsmaj DOUBLE NULL
+  ,bsmin DOUBLE NULL
+  ,bpa DOUBLE NULL
   ,fwhm_arcsec DOUBLE NULL
   ,fov_degrees DOUBLE NULL
   ,url VARCHAR(1024) NULL

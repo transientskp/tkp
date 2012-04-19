@@ -2116,6 +2116,7 @@ VALUES (%s, %s, %s, %s)
             conn.commit()
     except db.Error:
         logging.warn("Query %s failed", query)
+        logging.debug("Query %s failed", query)
         cursor.close()
         raise
     try:

@@ -148,13 +148,13 @@ def set_configuration(options):
     if options.residuals or options.islands:
         config['residuals'] = True
 
-def writefits(filename, data):
+def writefits(filename, data, header={}):
     try:
         os.unlink(filename)
     except OSError:
         # Thrown if file didn't exist
         pass
-    tkp_writefits(data, filename)
+    tkp_writefits(data, filename, header)
 
 def run_sourcefinder(files, options):
     """
@@ -185,10 +185,10 @@ def run_sourcefinder(files, options):
             gaussian_map, residual_map = generate_result_maps(imagedata.data, sr)
         if options.residuals:
             residualfile = os.path.splitext(os.path.basename(filename))[0] + ".residuals.fits"
-            writefits(residualfile, residual_map)
+            writefits(residualfile, residual_map, pyfits.getheader(filename))
         if options.islands:
             islandfile = os.path.splitext(os.path.basename(filename))[0] + ".islands.fits"
-            writefits(islandfile, gaussian_map)
+            writefits(islandfile, gaussian_map, pyfits.getheader(filename)))
         if options.skymodel:
             skymodelfile = os.path.splitext(os.path.basename(filename))[0] + ".skymodel"
             skymodelfile = open(skymodelfile, 'w')

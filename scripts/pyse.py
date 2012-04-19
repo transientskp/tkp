@@ -188,7 +188,7 @@ def run_sourcefinder(files, options):
             writefits(residualfile, residual_map, pyfits.getheader(filename))
         if options.islands:
             islandfile = os.path.splitext(os.path.basename(filename))[0] + ".islands.fits"
-            writefits(islandfile, gaussian_map, pyfits.getheader(filename)))
+            writefits(islandfile, gaussian_map, pyfits.getheader(filename))
         if options.skymodel:
             skymodelfile = os.path.splitext(os.path.basename(filename))[0] + ".skymodel"
             skymodelfile = open(skymodelfile, 'w')

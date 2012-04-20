@@ -23,6 +23,8 @@ import os.path
 from cStringIO import StringIO
 from optparse import OptionParser
 
+import pyfits
+
 from tkp.utility.accessors import FitsFile
 from tkp.utility.accessors import sourcefinder_image_from_accessor
 from tkp.utility.accessors import writefits as tkp_writefits

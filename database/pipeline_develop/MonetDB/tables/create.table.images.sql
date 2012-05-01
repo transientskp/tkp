@@ -30,9 +30,9 @@ CREATE TABLE images
   ,taustart_ts TIMESTAMP NOT NULL
   ,centr_ra DOUBLE NULL
   ,centr_decl DOUBLE NULL
-  ,x DOUBLE NOT NULL
-  ,y DOUBLE NOT NULL
-  ,z DOUBLE NOT NULL
+  ,x DOUBLE NULL
+  ,y DOUBLE NULL
+  ,z DOUBLE NULL
   ,bsmaj DOUBLE NULL
   ,bsmin DOUBLE NULL
   ,bpa DOUBLE NULL

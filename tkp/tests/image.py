@@ -7,68 +7,129 @@ except AttributeError:
 from utility.decorators import requires_data
 from utility.decorators import requires_database
 from utility.decorators import requires_module
+import tkp.sourcefinder 
 from tkp.sourcefinder import image
 import os
 import tkp.config
 import wcslib
 from tkp.utility import accessors
 
-
+import numpy as np
 
 DATAPATH = tkp.config.config['test']['datapath']
 
 BOX_IN_BEAMPIX = 10 #HARDCODING - FIXME! (see also monitoringlist recipe)
 
+#
+class TestNumpySubroutines(unittest.TestCase):
+    def testBoxSlicing(self):
+        """testBoxSlicing
+        
+            Previous implementation returned correct sized box,
+            but central pixel was often offset unnecessarily.
+            This method always returns a centred chunk.
+   
+        """
+        
+        a = np.arange(1,101)
+        a= a.reshape(10,10)
+        x,y = 3,3
+        central_value = a[y,x] #34
+        
+        round_down_to_single_pixel = a[image.ImageData.box_slice_about_pixel(x, y, 0.9)]
+        self.assertEquals(round_down_to_single_pixel, [[central_value]])
+        
+        chunk_3_by_3 = a[image.ImageData.box_slice_about_pixel(x, y, 1)]
+        self.assertEquals(chunk_3_by_3.shape, (3,3))
+        self.assertEqual(central_value, chunk_3_by_3[1,1])        
+        
+        chunk_3_by_3_round_down = a[image.ImageData.box_slice_about_pixel(x, y, 1.9)]
+        self.assertListEqual( list(chunk_3_by_3.reshape(9)),
+                              list(chunk_3_by_3_round_down.reshape(9))
+                              )
+    
+        
+
 class TestFitFixedPositions(unittest.TestCase):
-    """NB source positions / background positions were simply picked out by eye in DS9"""
     
     @requires_data(os.path.join(DATAPATH, 'NCP_sample_image_1.fits'))
     def setUp(self):
         """NB the required image has been committed to the tkp/data subversion repository.
         
             (See tkp/data/unittests/tkp_lib for a full copy of all the unittest data).
+            
+            Source positions / background positions were simply picked out by eye in DS9
         """
         self.image = accessors.sourcefinder_image_from_accessor(
                        accessors.FitsFile(os.path.join(DATAPATH, 'NCP_sample_image_1.fits'))
                        )
         
+        
+        
         self.assertListEqual(list(self.image.data.shape),[1024,1024])
         self.boxsize = BOX_IN_BEAMPIX*max(self.image.beam[0], self.image.beam[1])
-        pass    
         
+        self.bright_src_posn = (215.83993,86.307504)  #RA, DEC
+        self.background_posn = (186.33731,82.70002)    #RA, DEC
+        
+        ##NB These are simply plucked from a previous run,
+        # so they merely ensure *consistent*, rather than *correct*, results.
+        self.known_fit_results = [215.84 , 86.31 , 9.88] #RA, DEC, PEAK
+        
+        pass    
     
     def testSourceAtGivenPosition(self):
-        posn = (215.83993,86.307504)
+        posn = self.bright_src_posn
         img=self.image
         results = self.image.fit_fixed_positions(sources = [posn], 
-                                       boxsize = self.boxsize)
+                                       boxsize = self.boxsize,
+                                       threshold=0.0)[0]
     
-        print "BOXSIZE:", self.boxsize
-        print "XY:", img.wcs.s2p(posn)
-        print "Results:", results
-        print
+        self.assertAlmostEqual(results.ra.value, self.known_fit_results[0],
+                               delta = 0.01)
+        self.assertAlmostEqual(results.dec.value, self.known_fit_results[1],
+                               delta = 0.01)
+        self.assertAlmostEqual(results.peak.value, self.known_fit_results[2],
+                               delta = 0.01)
     
-    def testBackgroundAtGivenPosition(self):
-        """testBackgroundAtGivenPosition
+#        print "BOXSIZE:", self.boxsize
+#        print "XY:", img.wcs.s2p(posn)
+#        print "Results:", results
+#        print
+#    
+    def testLowFitThreshold(self):
+        """testLowFitThreshold
         
-        I.E. no source at given position (but still in the image frame)
+        If we supply an extremely low threshold
+        do we get a similar result to a zero threshold, for a bright source? 
         """
-        posn = (186.33731,82.70002)
-        img=self.image
-        results = self.image.fit_fixed_positions(sources = [posn], 
-                                       boxsize = BOX_IN_BEAMPIX*max(img.beam[0], img.beam[1]))
-        print "XY:", img.wcs.s2p(posn)
-        print "Results:", results
-        print
         
-    def testFitThresholding(self):
-        """testFitThresholding
+        posn = self.bright_src_posn
+        img=self.image
+        
+#        with self.assertRaises(ValueError):
+        low_thresh_results = self.image.fit_fixed_positions(sources = [posn], 
+                                   boxsize = BOX_IN_BEAMPIX*max(img.beam[0], img.beam[1]),
+                                   threshold = -1e20)[0]
+        self.assertAlmostEqual(low_thresh_results.ra.value, self.known_fit_results[0],
+                               delta = 0.01)
+        self.assertAlmostEqual(low_thresh_results.dec.value, self.known_fit_results[1],
+                               delta = 0.01)
+        self.assertAlmostEqual(low_thresh_results.peak.value, self.known_fit_results[2],
+                               delta = 0.01)
+        
+        
+#        print "Results:", low_thresh_results
+#        print
+        
+    def testHighFitThreshold(self):
+        """testHighFitThreshold
         
         If we supply an extremely high threshold, we expect to get back 
         a fitting error since all pixels should be masked out.
         """
-        pass
-        posn = (186.33731,82.70002)
+    
+        posn = self.bright_src_posn
         img=self.image
         with self.assertRaises(ValueError):
             results = self.image.fit_fixed_positions(sources = [posn], 
@@ -77,7 +138,35 @@ class TestFitFixedPositions(unittest.TestCase):
 #        print "XY:", img.wcs.s2p(posn)
 #        print "Results:", results
 #        print
+
+
 #    
+    def testBackgroundAtGivenPosition(self):
+        """testBackgroundAtGivenPosition
+        
+        I.E. no source at given position (but still in the image frame)
+        
+        Note, if we request zero threshold, then the region will be unfittable,
+        since it is largely below that thresh.
+        
+        Rather than pick an arbitrarily low threshold, we set it to None.
+        
+        """
+
+        img=self.image
+        results = self.image.fit_fixed_positions(
+                                     sources = [self.background_posn], 
+                                     boxsize = BOX_IN_BEAMPIX*max(img.beam[0], img.beam[1]), 
+                                     threshold = None
+                                     )[0]
+                                     
+#        print "XY:", img.wcs.s2p(posn)
+#        print "Results:", results
+        self.assertAlmostEqual(results.peak.value, 0, 
+                               delta = results.peak.error*1.0)
+#        print
+        
+
         
     def testGivenPositionOutsideImage(self):
         """testGivenPositionOutsideImage
@@ -92,35 +181,11 @@ class TestFitFixedPositions(unittest.TestCase):
         posn_out_of_img = (p1[0] - 10.0 / 3600.0 , (p1[1] + p2[1] / 2.0) )
         results = self.image.fit_fixed_positions(sources = [posn_out_of_img], 
                                        boxsize = BOX_IN_BEAMPIX*max(img.beam[0], img.beam[1]))
-        print "XY:", img.wcs.s2p(posn_out_of_img)
-        print "Results:" , results
-        self.assertListEqual([None], results)
-        pass
-        
-    
-#    def testEdgePosition(self):
-#        img = self.image
-#        print 
-#        edge_posn = img.wcs.p2s((0, img.data.shape[1]/2.0))
-#
-#        results = self.image.fit_fixed_positions(sources = [edge_posn], 
-#                                       boxsize = BOX_IN_BEAMPIX*max(img.beam[0], img.beam[1]))
-#        print "XY:", img.wcs.s2p(edge_posn)
+#        print "XY:", img.wcs.s2p(posn_out_of_img)
 #        print "Results:" , results
-#        
-#        pass
-    
-#    def testHalfABoxFromEdgePosition(self):
-        """Passes same as a regular position"""
-#        img = self.image
-#        print 
-#        
-#        boxsize = BOX_IN_BEAMPIX*max(img.beam[0], img.beam[1])
-#        edge_posn = img.wcs.p2s((0 + boxsize/2 -1, img.data.shape[1]/2.0))
-#
-#        results = self.image.fit_fixed_positions(sources = [edge_posn], 
-#                                       boxsize = boxsize)
-##        
+        self.assertListEqual([None], results)
+        
+        
 
     def testTooCloseToEdgePosition(self):
         img = self.image
@@ -129,22 +194,16 @@ class TestFitFixedPositions(unittest.TestCase):
         boxsize = BOX_IN_BEAMPIX*max(img.beam[0], img.beam[1])
         edge_posn = img.wcs.p2s((0 + boxsize/2 -2, img.data.shape[1]/2.0))
         
-#        results = self.image.fit_fixed_positions(
-#                                    sources = [edge_posn], 
-#                                    boxsize = boxsize,
-#                                    threshold = -1e10
-#                                    )
-#    
+        results = self.image.fit_fixed_positions(
+                                    sources = [edge_posn], 
+                                    boxsize = boxsize,
+                                    threshold = -1e10
+                                    )
 #        print "Posn:", edge_posn
 #        print "XY:", img.wcs.s2p(edge_posn)
 #        print "Results:" , results
-#        self.assertListEqual([None], results)
-        with self.assertRaises(ValueError):
-            results2 = self.image.fit_fixed_positions(
-                                        sources = [edge_posn], 
-                                        boxsize = boxsize
-                                        )
-            print "Results2:" , results2
+        self.assertListEqual([None], results)
+    
         
         
         

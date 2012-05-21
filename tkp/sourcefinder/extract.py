@@ -248,7 +248,7 @@ class ParamSet(DictMixin):
         return self.values.keys()
 
     def calculate_errors(self, noise, beam, threshold):
-        """Calculate positioanl errors
+        """Calculate positional errors
 
         Uses _condon_formulae() if this object is based on a Gaussian fit,
         _error_bars_from_moments() if it's based on moments.
@@ -599,8 +599,13 @@ def source_profile_and_errors(data, threshold, noise, beam, fixed=None):
         fixed = {}
     param = ParamSet()
 
+    if threshold is None:
+        moments_threshold=0
+    else:
+        moments_threshold = threshold
+
     try:
-        param.update(fitting.moments(data, beam, threshold))
+        param.update(fitting.moments(data, beam, moments_threshold)) 
         param.moments = True
     except ValueError:
         # If this happens, we have two choices:

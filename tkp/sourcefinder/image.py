@@ -612,7 +612,17 @@ class ImageData(object):
         return self.data_bgsubbed[y-numpix:y+numpix+1,
                                   x-numpix:x+numpix+1].max()
 
-    def fit_to_point(self, x, y, boxsize, threshold=0.0, fixed='position'):
+    
+    @staticmethod
+    def box_slice_about_pixel(x,y,box_radius):
+        """
+        Returns a slice centred about (x,y), of width = 2*int(box_radius) + 1
+        """
+        ibr = int(box_radius)
+        return (slice(x - ibr, x + ibr + 1),
+                slice(y - ibr, y + ibr + 1))
+
+    def fit_to_point(self, x, y, boxsize, threshold, fixed='position'):
         """Fit an elliptical Gaussian to a specified point on the image.
 
         The fit is carried on a square section of the image, of length
@@ -624,25 +634,35 @@ class ImageData(object):
         Returns an instance of :class:`tkp.sourcefinder.extract.Detection`.
         """
 
-        # We'll mask out anything below threshold*self.rmsmap from the fit.
-        labels, num = self.labels.setdefault(
-            threshold, ndimage.label(
-                self.clip.setdefault(
-                    threshold, numpy.where(
-                        self.data_bgsubbed > threshold * self.rmsmap, 1, 0
+
+        chunk = ImageData.box_slice_about_pixel(x, y, boxsize/2.0)
+        if threshold is not None:
+            # We'll mask out anything below threshold*self.rmsmap from the fit.
+            labels, num = self.labels.setdefault( #Dictionary mapping threshold -> islands map
+                threshold, 
+                ndimage.label(
+                    self.clip.setdefault( #Dictionary mapping threshold -> mask
+                        threshold, 
+                        numpy.where(
+                            self.data_bgsubbed > threshold * self.rmsmap, 1, 0
+                            )
                         )
                     )
                 )
-            )
-
-        chunk = (slice(x - boxsize/2.0, x + boxsize/2.0),
-                 slice(y - boxsize/2.0, y + boxsize/2.0))
-        mylabel = labels[x, y]
-        mask = numpy.where(labels[chunk] == mylabel, 0, 1)
-        fitme = numpy.ma.array(self.data_bgsubbed[chunk], mask=mask)
-
-        if len(fitme.compressed()) < 1:
-            raise ValueError("Too small to fit")
+    
+            
+            mylabel = labels[x, y]
+            if mylabel == 0:  # 'Background'
+                raise ValueError("Fit region is below specified threshold, fit aborted.")
+            mask = numpy.where(labels[chunk] == mylabel, 0, 1)
+            fitme = numpy.ma.array(self.data_bgsubbed[chunk], mask=mask)
+            if len(fitme.compressed()) < 1:
+                raise IndexError("Fit region too close to edge or too small")
+        else:
+            fitme = self.data_bgsubbed[chunk]
+            if fitme.size < 1:
+                raise IndexError("Fit region too close to edge or too small")
+        
 
         # set argument for fixed parameters based on input string
         if fixed == 'position':
@@ -657,9 +677,17 @@ class ImageData(object):
         else:
             raise TypeError("Unkown fixed parameter")
 
+        if threshold is not None:
+            threshold_at_pixel = threshold * self.rmsmap[x, y]
+        else:
+            threshold_at_pixel = None 
+        
         measurement, residuals = extract.source_profile_and_errors(
-            fitme, threshold * self.rmsmap[x, y], self.rmsmap[x, y],
-            self.beam, fixed=fixed)
+            fitme, 
+            threshold_at_pixel, 
+            self.rmsmap[x, y],
+            self.beam, 
+            fixed=fixed)
 
         try:
             assert(abs(measurement['xbar'] < boxsize))
@@ -677,7 +705,7 @@ class ImageData(object):
         return extract.Detection(
             measurement, self)
 
-    def fit_fixed_positions(self, sources, boxsize, threshold=0.0, fixed='position+error'):
+    def fit_fixed_positions(self, sources, boxsize, threshold=None, fixed='position+error'):
         """Convenience function to fit a list of sources at the given positions
 
         This function wraps around fit_to_point().
@@ -706,20 +734,22 @@ class ImageData(object):
                     detections.append(self.fit_to_point(
                         x, y, boxsize=boxsize, threshold=threshold,
                         fixed=fixed))
-                except IndexError, e:
-                    if "in dimension" in str(e):
-                        # This can happen if the monitoringlist specifies
-                        # a source outside the image
-                        logging.warning("Input coordinates (%.2f, %.2f) "
-                                        "outside of image",
-                                        source[0], source[1])
-                        detections.append(None)
-                    else:
-                        raise
+                except IndexError as e:
+                    logging.warning("Input pixel coordinates (%.2f, %.2f) "
+                                    "could not be fit.",
+                                    source[0], source[1])
+                    detections.append(None)
+
         return detections
 
     def dump_islands(self, det, anl, minsize=4):
-        """Identify potential islands"""
+        """Identify potential islands.
+        
+            (This is effectively a deprecated function - 
+            it was written for testing external pieces of code.
+            -TS, 2012-05-21)
+
+        """
 
         sci_clip = numpy.where(self.data_bgsubbed > anl * self.rmsmap, 1, 0)
         sci_labels, sci_num = ndimage.label(sci_clip,

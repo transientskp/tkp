@@ -14,7 +14,8 @@ from lofarpipe.support.lofarnode import LOFARnodeTCP
 from lofarpipe.support.utilities import log_time
 
 
-BOX_IN_BEAMPIX = 10
+BOX_IN_BEAMPIX = 10 #HARDCODING - FIXME! (see also 'image' unit test)
+
 
 class monitoringlist(LOFARnodeTCP):
     """

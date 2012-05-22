@@ -21,7 +21,7 @@ CREATE FUNCTION insertImage(ids_id INT
                            ,ifreq_eff DOUBLE
                            ,ifreq_bw DOUBLE
                            ,itaustart_ts TIMESTAMP
-                           ,iurl VARCHAR(120)
+                           ,iurl VARCHAR(1024)
                            /*,beam_maj DOUBLE
                            ,beam_min DOUBLE
                            ,beam_pa DOUBLE*/

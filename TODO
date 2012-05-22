@@ -1,9 +1,0 @@
-
--> gsm2bbs is outdated.
-
--> Proper configuration, rather than the mess that is settings.py.
-
--> setup.py should build external dependencies.
-
--> Clamp down on crazy dependencies.
-

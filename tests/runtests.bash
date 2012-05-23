@@ -1,8 +1,8 @@
 #! /bin/bash
 
-pythonpath=../../python-packages/lib.linux-x86_64-2.6:../external/deconv:../external/python-wcslib
+pythonpath=../python-packages/lib.linux-x86_64-2.6:../external/deconv:../external/python-wcslib
 # Add path for unittest2 & argparse
-pythonpath=${pythonpath}:../../../../tkp/trunk/tests
+pythonpath=${pythonpath}:../../../../tkp/tests
 if [ -z "$PYTHONPATH" ]
 then
     export PYTHONPATH=${pythonpath}

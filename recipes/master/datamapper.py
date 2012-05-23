@@ -13,6 +13,7 @@ from lofarpipe.support.baserecipe import BaseRecipe
 from lofarpipe.support.clusterdesc import ClusterDesc, get_compute_nodes
 from lofarpipe.support.group_data import store_data_map
 import lofarpipe.support.lofaringredient as ingredient
+import lofarpipe.support.utilities
 
 class datamapper(BaseRecipe):
     """
@@ -21,8 +22,8 @@ class datamapper(BaseRecipe):
     by filename in this way is fragile, but is the best we can do for now.
 
     **Arguments**
-
-    None.
+    A list of datafiles.
+    
     """
     inputs = {
         'mapfile': ingredient.StringField(
@@ -82,6 +83,9 @@ class datamapper(BaseRecipe):
         #    parset.addStringVector(host, filenames)
         #
         #parset.writeFile(self.inputs['mapfile'])
+        lofarpipe.support.utilities.create_directory(
+                 os.path.dirname(self.inputs['mapfile'])
+                 )
         store_data_map(self.inputs['mapfile'], datamap)
         self.outputs['mapfile'] = self.inputs['mapfile']
 

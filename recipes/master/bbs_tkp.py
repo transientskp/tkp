@@ -31,7 +31,7 @@ import lofarpipe.support.utilities as utilities
 import lofarpipe.support.lofaringredient as ingredient
 
 
-class bbs(BaseRecipe):
+class bbs_tkp(BaseRecipe):
     """
     The bbs recipe acts as a wrapper around new_bbs, introducing one
     extra parameter: nproc. Based on nproc, it runs new_bbs multiple
@@ -146,10 +146,10 @@ class bbs(BaseRecipe):
         # Secondly, we iterate through each host, chopping the lists up into
         # parts that are nproc long
         # We store the separate chopped lists into mapfiles
-        for host, values in host_mapping.iteritems():
-            data = [value[0] for value in values]
-            instrument = [value[1] for value in values]
-            sky = [value[2] for value in values]
+        for host, dataset_tuples in host_mapping.iteritems():
+            data = [tup[0] for tup in dataset_tuples]
+            instrument = [tup[1] for tup in dataset_tuples]
+            sky = [tup[2] for tup in dataset_tuples]
             l = len(data)
             subdata = [data[i:i+nproc] for i in range(0, l, nproc)]
             subinstrument = [instrument[i:i+nproc] for i in range(0, l, nproc)]
@@ -159,60 +159,70 @@ class bbs(BaseRecipe):
                     'data': sublist[0],
                     'instrument': sublist[1],
                     'sky': sublist[2]})
-        sub_mapfiles = []
+        subset_mapfiles = []
         path = {}
         # Step through the subprocesses
         for mapping in mapfiles.values():
-            submapping = {'data': [], 'instrument': [], 'sky': []}
             for key in ('data', 'instrument', 'sky'):
                 submapping = []
                 for host, maps in mapping.iteritems():
                     for value in maps[key]:
                         submapping.append((host, value))
-                fh, path[key] = tempfile.mkstemp(suffix="_%s_mapfile" % key, dir=self.config.get(
-                    'layout', 'parset_directory'))
+                fh, path[key] = tempfile.mkstemp(suffix="_bbs_subset_%s_mapfile" % key, dir=self.config.get(
+                    'layout', 'mapfile_directory'))
                 os.close(fh)
                 store_data_map(path[key], submapping)
-            sub_mapfiles.append((path['data'], path['instrument'], path['sky']))
-        return sub_mapfiles
+            subset_mapfiles.append((path['data'], path['instrument'], path['sky']))
+        return subset_mapfiles
 
-    def _combine_mapfiles(self, mapfiles):
+    def _combine_mapfiles(self, subset_mapfile_paths):
         combined_mapfile = []
-        for mapfile in mapfiles:
-            datamap = load_data_map(mapfile)
+        for mapfile_path in subset_mapfile_paths:
+            datamap = load_data_map(mapfile_path)
             combined_mapfile.extend(datamap)
         return combined_mapfile
     
     def go(self):
         self.logger.info("Starting BBS run")
-        super(bbs, self).go()
+        super(bbs_tkp, self).go()
 
-        inputs = dict(self.inputs)
-        del inputs['nproc']
-        mapfiles = self._make_partial_bbs_map()
-        self.logger.debug("temporary sub mapfiles = %s", str(mapfiles))
-        new_mapfiles = []
-        for mapfile in mapfiles:
-            inputs['args'] = [mapfile[0]]
-            inputs['instrument_mapfile'] = mapfile[1]
-            inputs['sky_mapfile'] = mapfile[2]
-            self.logger.info("mapfile = %s", str(mapfile))
-            outputs = ingredient.LOFARoutput()
-            fh, path = tempfile.mkstemp(suffix="_compute_mapfile", dir=self.config.get(
-                'layout', 'parset_directory'))
+        wrapped_inputs = dict(self.inputs)
+        del wrapped_inputs['nproc']
+        utilities.create_directory(self.config.get('layout', 'mapfile_directory'))
+        subset_mapfile_tuples = self._make_partial_bbs_map()
+        self.logger.debug("temporary subset mapfiles = %s", str(subset_mapfile_tuples))
+        
+        subset_output_mapfiles = []  #Collect a list of the outputs from each subset
+        for mapfile in subset_mapfile_tuples:
+            wrapped_inputs['args'] = [mapfile[0]]
+            wrapped_inputs['instrument_mapfile'] = mapfile[1]
+            wrapped_inputs['sky_mapfile'] = mapfile[2]
+            self.logger.info("subset mapfile = %s", str(mapfile))
+            fh, subset_output_path = tempfile.mkstemp(
+                      suffix="_bbs_subset_compute_mapfile", 
+                      dir=self.config.get('layout', 'mapfile_directory')
+                      )
             os.close(fh)
-            inputs['data_mapfile'] = path
-            self.cook_recipe("new_bbs", inputs, outputs)
-            self.logger.debug("outputs = %s", str(outputs))
-            new_mapfiles.append(outputs['mapfile'])
-            # Clean up temporary input map files
+            wrapped_inputs['data_mapfile'] = subset_output_path
+            
+            fh, subset_gvds_path = tempfile.mkstemp(suffix="_bbs_subset.gvds", dir=self.config.get(
+                'layout', 'mapfile_directory'))
+            os.close(fh)
+            wrapped_inputs['gvds'] = subset_gvds_path    
+            outputs = ingredient.LOFARoutput()
+            self.cook_recipe("new_bbs", wrapped_inputs, outputs)
+            self.logger.debug("BBS subset outputs = %s", str(outputs))
+            subset_output_mapfiles.append(outputs['mapfile'])
+            # Clean up temporary files
+            os.remove(subset_gvds_path)
             for tmpfile in mapfile:
                 os.remove(tmpfile)
-        mapfile = self._combine_mapfiles(new_mapfiles)
+            
+        mapfile = self._combine_mapfiles(subset_output_mapfiles)
         store_data_map(self.inputs['data_mapfile'], mapfile)
         # Clean up temporary output map files
-        for new_mapfile in new_mapfiles:
-            os.remove(new_mapfile)
+        for f in subset_output_mapfiles:
+            os.remove(f)
         self.outputs['mapfile'] = self.inputs['data_mapfile']
         return 0
 

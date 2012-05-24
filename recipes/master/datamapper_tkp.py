@@ -15,7 +15,7 @@ from lofarpipe.support.group_data import store_data_map
 import lofarpipe.support.lofaringredient as ingredient
 import lofarpipe.support.utilities
 
-class datamapper(BaseRecipe):
+class datamapper_tkp(BaseRecipe):
     """
     Parses a list of filenames and attempts to map them to appropriate compute
     nodes (ie, which can access the files) on the LOFAR CEP cluster. Mapping
@@ -45,7 +45,7 @@ class datamapper(BaseRecipe):
 
     def go(self):
         self.logger.info("Starting datamapper run")
-        super(datamapper, self).go()
+        super(datamapper_tkp, self).go()
 
         #      We build lists of compute-nodes per cluster and data-per-cluster,
         #          then match them up to schedule jobs in a round-robin fashion.

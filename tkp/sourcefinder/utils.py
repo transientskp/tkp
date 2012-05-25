@@ -14,6 +14,7 @@ This module contain utilities for the source finding routines
 """
 
 import numpy
+import math
 import scipy.integrate
 from .gaussian import gaussian
 
@@ -90,16 +91,18 @@ def fudge_max_pix(semimajor, semiminor, theta):
     # from the scipy docs:
     #   Return the double (definite) integral of f1(y,x) from x=a..b
     #   and y=f2(x)..f3(x).
-    correction = scipy.integrate.dblquad(
-        lambda y, x: numpy.exp(numpy.log(2.0) *
-                               (((numpy.cos(theta) * x +
-                                  numpy.sin(theta) * y) / semiminor)**2.0 +
-                                ((numpy.cos(theta) * y -
-                                  numpy.sin(theta) * x) / semimajor)**2.)),
-        -0.5,
-        0.5,
-        lambda ymin: -0.5,
-        lambda ymax: 0.5)[0]
+
+    log20 = numpy.log(2.0)
+    cos_theta = numpy.cos(theta)
+    sin_theta = numpy.sin(theta)
+
+    def optimisation_landscape(x, y):
+        up = math.pow(((cos_theta * x + sin_theta * y) / semiminor ), 2)
+        down = math.pow(((cos_theta * y - sin_theta * x) / semimajor ), 2)
+        return numpy.exp(log20 * ( up + down ))
+
+    (correction, abserr) = scipy.integrate.dblquad(optimisation_landscape, -0.5, 0.5,
+        lambda ymin: -0.5, lambda ymax: 0.5)
 
     return correction
 
@@ -128,14 +131,14 @@ def maximum_pixel_method_variance(semimajor, semiminor, theta):
     variance = (scipy.integrate.dblquad(
         lambda y, x: numpy.exp(2.0 * numpy.log(2.0) *
                                (((numpy.cos(theta) * x +
-                                  numpy.sin(theta) * y) / semiminor)**2.0 +
+                                  numpy.sin(theta) * y) / semiminor) ** 2.0 +
                                 ((numpy.cos(theta) * y -
-                                  numpy.sin(theta) * x) / semimajor)**2.0)),
+                                  numpy.sin(theta) * x) / semimajor) ** 2.0)),
         -0.5,
         0.5,
         lambda ymin: -0.5,
         lambda ymax: 0.5)[0]
-                - fudge_max_pix(semimajor, semiminor, theta)**2)
+                - fudge_max_pix(semimajor, semiminor, theta) ** 2)
 
     return variance
 

@@ -17,7 +17,7 @@ import numpy
 import math
 import scipy.integrate
 from .gaussian import gaussian
-tkp
+
 
 def generate_result_maps(data, sourcelist):
     """Return a source and residual image

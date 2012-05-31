@@ -17,7 +17,7 @@ import numpy
 import math
 import scipy.integrate
 from .gaussian import gaussian
-
+tkp
 
 def generate_result_maps(data, sourcelist):
     """Return a source and residual image
@@ -96,12 +96,12 @@ def fudge_max_pix(semimajor, semiminor, theta):
     cos_theta = numpy.cos(theta)
     sin_theta = numpy.sin(theta)
 
-    def optimisation_landscape(x, y):
+    def landscape(x, y):
         up = math.pow(((cos_theta * x + sin_theta * y) / semiminor ), 2)
         down = math.pow(((cos_theta * y - sin_theta * x) / semimajor ), 2)
         return numpy.exp(log20 * ( up + down ))
 
-    (correction, abserr) = scipy.integrate.dblquad(optimisation_landscape, -0.5, 0.5,
+    (correction, abserr) = scipy.integrate.dblquad(landscape, -0.5, 0.5,
         lambda ymin: -0.5, lambda ymax: 0.5)
 
     return correction

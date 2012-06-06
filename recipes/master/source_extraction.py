@@ -42,10 +42,30 @@ class source_extraction(BaseRecipe, RemoteCommandRecipeMixIn):
             help="Maximum number of simultaneous processes per compute node",
             default=8
         ),
-        }
+        'store_images': ingredient.BoolField(
+            '--store-images',
+            help="Store images in MongoDB database",
+            default=False
+        ),
+        'mongo_host': ingredient.StringField(
+            '--mongo-host',
+            help="MongoDB hostname",
+            default="pc-swinbank.science.uva.nl"
+        ),
+        'mongo_port': ingredient.IntField(
+            '--mongo-port',
+            help="MongoDB port number",
+            default=27017
+        ),
+        'mongo_db': ingredient.StringField(
+            '--mongo-db',
+            help="MongoDB database",
+            default="tkp"
+        )
+    }
     outputs = {
         'image_ids': ingredient.ListField()
-        }
+    }
 
     def go(self):
         self.logger.info("Extracting sources")
@@ -53,7 +73,7 @@ class source_extraction(BaseRecipe, RemoteCommandRecipeMixIn):
         images = self.inputs['args']
         print 'IMAGES =', images
         dataset_id = self.inputs['dataset_id']
-        
+
         # Obtain available nodes
         clusterdesc = ClusterDesc(self.config.get('cluster', "clusterdesc"))
         if clusterdesc.subclusters:
@@ -85,10 +105,14 @@ class source_extraction(BaseRecipe, RemoteCommandRecipeMixIn):
                         dataset_id,
 #                        self.inputs['radius'],
                         self.inputs['parset'],
+                        self.inputs['store_images'],
+                        self.inputs['mongo_host'],
+                        self.inputs['mongo_port'],
+                        self.inputs['mongo_db'],
                         tkp.config.CONFIGDIR
-                        ]
-                    )
+                    ]
                 )
+            )
         jobs = self._schedule_jobs(jobs, max_per_node=self.inputs['nproc'])
         self.outputs['image_ids'] = [job.results['image_id'] for job in jobs.itervalues()]
         #                Check if we recorded a failing process before returning

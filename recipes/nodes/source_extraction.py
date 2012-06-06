@@ -16,23 +16,40 @@ from lofarpipe.support.lofarnode import LOFARnodeTCP
 from lofarpipe.support.utilities import log_time
 
 
+def store_to_mongodb(filename, hostname, port, db, logger):
+    self.logger.info(
+        "Storing %s to MongoDB database %s on %s:%d" %
+        filename, db, hostname, port
+    )
+    try:
+        import pymongo
+        import gridfs
+    except ImportError:
+        self.logger.warn("Could not import MongoDB modules")
+        return
+
+    try:
+        connection = pymongo.Connection(host=hostname, port=port)
+        gfs = gridfs.GridFS(connection[db])
+        new_file = g.new_file(filename=filename)
+        with open(filename, "r") as f:
+            new_file.write(f)
+        new_file.close()
+        connection.close()
+    except ImportError:
+        self.logger.warn("Could not store image to MongoDB")
+
 class source_extraction(LOFARnodeTCP):
     """
     Extract sources from a FITS image
     """
 
-    def run(self, image, dataset_id, parset, tkpconfigdir=None):
-        if tkpconfigdir:   # allow nodes to pick up the TKPCONFIGDIR
-            os.environ['TKPCONFIGDIR'] = tkpconfigdir
-        import tkp
-        from tkp.config import config
-        from tkp.database.database import DataBase
-        from tkp.database.dataset import DataSet
-        from tkp.utility.accessors import FITSImage
-        from tkp.utility.accessors import dbimage_from_accessor
-        from tkp.utility.accessors import sourcefinder_image_from_accessor
+    def run(
+        self, image, dataset_id, parset,
+        store_images, mongo_host, mongo_port, mongo_db,
+        tkpconfigdir=None
+    ):
         """
-
         Args:
 
             - image: FITS filename
@@ -44,7 +61,20 @@ class source_extraction(LOFARnodeTCP):
                   radius, the last one in units of the de Ruiter
                   radius.
 
+            - storage_images: bool. Store images to MongoDB database if True.
+
+            - mongo_host/port/db: details of MongoDB to use if store_images is
+              True.
         """
+        if tkpconfigdir:   # allow nodes to pick up the TKPCONFIGDIR
+            os.environ['TKPCONFIGDIR'] = tkpconfigdir
+        import tkp
+        from tkp.config import config
+        from tkp.database.database import DataBase
+        from tkp.database.dataset import DataSet
+        from tkp.utility.accessors import FITSImage
+        from tkp.utility.accessors import dbimage_from_accessor
+        from tkp.utility.accessors import sourcefinder_image_from_accessor
         
         with log_time(self.logger):
             with closing(DataBase()) as database:

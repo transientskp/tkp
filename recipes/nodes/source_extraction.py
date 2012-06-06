@@ -75,7 +75,7 @@ class source_extraction(LOFARnodeTCP):
         from tkp.utility.accessors import FITSImage
         from tkp.utility.accessors import dbimage_from_accessor
         from tkp.utility.accessors import sourcefinder_image_from_accessor
-        
+
         with log_time(self.logger):
             with closing(DataBase()) as database:
                 seconfig = config['source_extraction']
@@ -84,9 +84,14 @@ class source_extraction(LOFARnodeTCP):
                 fitsimage = FITSImage(image)
                 db_image = dbimage_from_accessor(dataset=dataset,
                                                  image=fitsimage)
-                self.logger.info("Detecting sources in %s at %f level", 
+                self.logger.info("Detecting sources in %s at %f level",
                                  image, parset.getFloat('detection.threshold'))
                 data_image = sourcefinder_image_from_accessor(fitsimage)
+                if store_images:
+                    store_to_mongodb(
+                        image, mongo_host, mongo_port, mongo_db, self.logger
+                    )
+
                 seconfig['back_sizex'] = parset.getInt('backsize.x',
                                                        seconfig['back_sizex'])
                 seconfig['back_sizey'] = parset.getInt('backsize.y',

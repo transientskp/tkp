@@ -39,7 +39,7 @@ class DataAccessor(object):
         self.obstime = datetime.datetime(1970, 1, 1, 0, 0, 0)
         self.freqbw = None
         self.freqeff = None  # Hertz (? MHz?)
-        
+
     def _beamsizeparse(self, bmaj, bmin, bpa):
         """Calculate beam in pixels and radians.
         Needs beam parameters, no defaults."""
@@ -122,7 +122,7 @@ class CASAImage(DataAccessor):
             super(CASAImage, self)._beamsizeparse(bmaj, bmin, bpa)
         except KeyError:
             raise ValueError("beam size information not available")
-    
+
     @property
     def data(self):
         return self._get_table().getcellslice("map", 0,
@@ -153,23 +153,38 @@ class FITSImage(DataAccessor):
     If beam info is not present in the header, it HAS to be provided as a
     tuple: (bmaj, bmin, bpa).
     """
-    def __init__(self, filename, plane=False, beam=False):
+    def __init__(self, source, plane=False, beam=False, hdu=0):
         # NB: pyfits bogs down reading parameters from FITS files with very
         # long headers. This code should run in a fraction of a second on most
         # files, but can take several seconds given a huge header.
         super(FITSImage, self).__init__()  # Set defaults
-        self.filename = filename
-        hdulist = pyfits.open(self.filename)
 
-        self._coordparse(hdulist)
+        self.plane = plane
+
+        # filename attribute is required by db_image_from_accessor(), below.
+        if isinstance(source, basestring):
+            self.filename = source
+            hdulist = pyfits.open(source)
+            hdu = hdulist[hdu]
+        elif isinstance(source, pyfits.core.HDUList):
+            self.filename = source.filename()
+            hdu = source[hdu]
+        elif isinstance(source, pyfits.PrimaryHDU) or isinstance(source, pyfits.ImageHDU):
+            self.filename = source.fileinfo()['file'].name
+            hdu = source
+
+        self.header = hdu.header.copy()
+        self._read_data(hdu)
+
+        self._coordparse(hdu)
         try:
-            self._freqparse(hdulist)
+            self._freqparse(hdu)
         except KeyError:
             # Never mind frequency information then
             # But be aware when storing this in the database
             pass
         if not beam:
-            self._beamsizeparse(hdulist)
+            self._beamsizeparse(hdu)
         else:
             super(FITSImage, self)._beamsizeparse(beam[0], beam[1], beam[2])
 
@@ -177,20 +192,19 @@ class FITSImage(DataAccessor):
         timezone = pytz.utc
         try:
             try:
-                timestamp = dateutil.parser.parse(
-                    hdulist[0].header['date-obs'])
+                timestamp = dateutil.parser.parse(hdu.header['date-obs'])
             except AttributeError:
                 # Maybe it's a float, Westerbork-style?
-                if isinstance(hdulist[0].header['date-obs'], float):
+                if isinstance(hdu.header['date-obs'], float):
                     logging.warn("Non-standard date specified in FITS file!")
-                    frac, year = numpy.modf(hdulist[0].header['date-obs'])
+                    frac, year = numpy.modf(hdu.header['date-obs'])
                     timestamp = datetime.datetime(int(year), 1, 1)
                     delta = datetime.timedelta(365.242199 * frac)
                     timestamp += delta
                 else:
                     raise KeyError("Timestamp in fits file unreadable")
             try:
-                timezone = pytz.timezone(hdulist[0].header['timesys'])
+                timezone = pytz.timezone(hdu.header['timesys'])
             except (pytz.UnknownTimeZoneError, KeyError):
                 logging.debug(
                     "Timezone not specified in FITS file: assuming UTC")
@@ -199,8 +213,9 @@ class FITSImage(DataAccessor):
         except KeyError:
             logging.warn("Timestamp not specified in FITS file; using now")
             self.utc = datetime.datetime.now().replace(tzinfo=pytz.utc)
+        self.obstime = self.utc
         try:
-            endtime = dateutil.parser.parse(hdulist[0].header['end_utc'])
+            endtime = dateutil.parser.parse(hdu.header['end_utc'])
             endtime = endtime.replace(tzinfo=timezone)
             self.utc_end = pytz.utc.normalize(endtime.astimezone(pytz.utc))
             delta = self.utc_end - self.utc
@@ -210,18 +225,20 @@ class FITSImage(DataAccessor):
         except KeyError:
             logging.warn("End time not specified or unreadable")
             self.inttime = 0.
-        self.obstime = self.utc
-        self.plane = plane
-        hdulist.close()
 
-    def _coordparse(self, hdulist):
+        if isinstance(source, basestring):
+            # If we opened the FITS file ourselves, we'd better ensure it's
+            # closed
+            hdulist.close()
+
+    def _coordparse(self, hdu):
         """Set some 'shortcut' variables for access to the coordinate
         parameters in the FITS file header.
         """
         # These are maintained for legacy reasons -- better to access by
         # header name through __getattr__?
         self.wcs = WCS()
-        header = hdulist[0].header
+        header = hdu.header
         try:
             self.wcs.crval = header['crval1'], header['crval2']
             self.wcs.crpix = header['crpix1'], header['crpix2']
@@ -245,7 +262,7 @@ class FITSImage(DataAccessor):
         self.wcs.wcsset()
         self.pix_to_position = self.wcs.p2s
 
-    def _freqparse(self, hdulist):
+    def _freqparse(self, hdu):
         """
         Set some 'shortcut' variables for access to the frequency parameters
         in the FITS file header.
@@ -254,43 +271,25 @@ class FITSImage(DataAccessor):
         @type hdulist: hdulist
         """
         try:
-            if hdulist[0].header['ctype3'] in ('FREQ', 'VOPT'):
-                self.freqeff = hdulist[0].header['crval3']
-                self.freqbw = hdulist[0].header['cdelt3']
-            elif hdulist[0].header['ctype4'] in ('FREQ', 'VOPT'):
-                self.freqeff = hdulist[0].header['crval4']
-                self.freqbw = hdulist[0].header['cdelt4']
+            if hdu.header['ctype3'] in ('FREQ', 'VOPT'):
+                self.freqeff = hdu.header['crval3']
+                self.freqbw = hdu.header['cdelt3']
+            elif hdu.header['ctype4'] in ('FREQ', 'VOPT'):
+                self.freqeff = hdu.header['crval4']
+                self.freqbw = hdu.header['cdelt4']
             else:
-                self.freqeff = hdulist[0].header['restfreq']
+                self.freqeff = hdu.header['restfreq']
                 self.freqbw = 0.0
         except KeyError:
             logging.warn("Frequency not specified in FITS")
 
-    def __getstate__(self):
-        return {
-            "filename": self.filename,
-            "plane": self.plane,
-            "obstime": self.obstime
-            }
-
-    def __setstate__(self, statedict):
-        self.filename = statedict['filename']
-        self.plane = statedict['plane']
-        self.obstime = statedict['obstime']
-        self.utc = self.obstime
-
-        hdulist = pyfits.open(self.filename)
-        self._coordparse(hdulist)
-        self._beamsizeparse(hdulist)
-        hdulist.close()
-
     def get_header(self):
-        return pyfits.getheader(self.filename)
+        # Preserved for API compatibility.
+        return self.header
 
-    @property
-    def data(self):
+    def _read_data(self, hdu):
         """
-        Read and return data from our FITS file.
+        Read and store data from our FITS file.
 
         NOTE: PyFITS reads the data into an array indexed as [y][x]. We
         take the transpose to make this more intuitively reasonable and
@@ -298,9 +297,7 @@ class FITSImage(DataAccessor):
         before viewing the array with RO.DS9, saving to a FITS file,
         etc.
         """
-        # pyfits returns data in arrays of numpy.float32; boost.python
-        # chokes on them.
-        data = numpy.float64(pyfits.getdata(self.filename).squeeze())
+        data = numpy.float64(hdu.data.squeeze())
         if not isinstance(self.plane, bool) and len(data.shape) > 2:
             data = data[self.plane].squeeze()
         if len(data.shape) != 2:
@@ -310,10 +307,9 @@ class FITSImage(DataAccessor):
             # If you make some assumptions about the data format, that may
             # be true, but...
             raise IndexError("Data has wrong shape")
-        data = data.transpose()
-        return data
+        self.data = data.transpose()
 
-    def _beamsizeparse(self, hdulist):
+    def _beamsizeparse(self, hdu):
         """Read and return the beam properties bmaj, bmin and bpa values from
         the fits header
 
@@ -321,8 +317,7 @@ class FITSImage(DataAccessor):
         If no (key) values can be read we use the WENSS values.
         """
 
-        hdulist = pyfits.open(self.filename)
-        header = hdulist[0].header
+        header = hdu.header
         bmaj, bmin, bpa = None, None, None
         try:
             # MIRIAD FITS file
@@ -357,7 +352,6 @@ class FITSImage(DataAccessor):
             raise ValueError("""\
 Basic processing is impossible without adequate information about the \
 resolution element.""")
-        hdulist.close()
         super(FITSImage, self)._beamsizeparse(bmaj, bmin, bpa)
 
     def __getattr__(self, attrname):
@@ -368,14 +362,9 @@ resolution element.""")
 
         @type attrname: string
         """
-        if hasattr(self, "filename"):
-            hdr = pyfits.open(self.filename)[0].header
-            if attrname in hdr:
-                return hdr[attrname]
+        if attrname in self.header:
+            return self.header[attrname]
         raise AttributeError(attrname)
-
-    def fitsfile(self):
-        return self.filename
 
 
 class FitsFile(FITSImage):

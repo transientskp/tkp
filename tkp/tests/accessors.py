@@ -11,17 +11,55 @@ from utility.decorators import requires_database
 from utility.decorators import requires_module
 
 import os
+import pyfits
 import tkp.config
 from tkp.utility import accessors
 
 DATAPATH = tkp.config.config['test']['datapath']
 
-class FitsFile(unittest.TestCase):
-
-    def setUp(self):
-        pass
+class PyfitsFitsFile(unittest.TestCase):
 
     @requires_data(os.path.join(DATAPATH, 'L15_12h_const/observed-all.fits'))
+    @requires_data(os.path.join(DATAPATH, 'CORRELATED_NOISE.FITS'))
+    def testOpen(self):
+        hdu = pyfits.open(os.path.join(DATAPATH, 'L15_12h_const/observed-all.fits'), mode="readonly")
+        image = accessors.FitsFile(hdu, beam=(54./3600, 54./3600, 0.))
+        self.assertAlmostEqual(image.beam[0], 0.225)
+        self.assertAlmostEqual(image.beam[1], 0.225)
+        self.assertAlmostEqual(image.beam[2], 0.)
+        self.assertAlmostEqual(image.wcs.crval[0], 350.85)
+        self.assertAlmostEqual(image.wcs.crval[1], 58.815)
+        self.assertAlmostEqual(image.wcs.crpix[0], 1441.)
+        self.assertAlmostEqual(image.wcs.crpix[1], 1441.)
+        self.assertAlmostEqual(image.wcs.cdelt[0], -0.03333333)
+        self.assertAlmostEqual(image.wcs.cdelt[1], 0.03333333)
+        self.assertTupleEqual(image.wcs.ctype, ('RA---SIN', 'DEC--SIN'))
+        # Beam included in image
+        hdu = pyfits.open(os.path.join(DATAPATH, 'CORRELATED_NOISE.FITS'), mode="readonly")
+        image = accessors.FitsFile(hdu)
+        self.assertAlmostEqual(image.beam[0], 2.7977999)
+        self.assertAlmostEqual(image.beam[1], 2.3396999)
+        self.assertAlmostEqual(image.beam[2], -0.869173967)
+        self.assertAlmostEqual(image.wcs.crval[0], 266.363244382)
+        self.assertAlmostEqual(image.wcs.crval[1], -29.9529359725)
+        self.assertAlmostEqual(image.wcs.crpix[0], 128.)
+        self.assertAlmostEqual(image.wcs.crpix[1], 129.)
+        self.assertAlmostEqual(image.wcs.cdelt[0], -0.003333333414)
+        self.assertAlmostEqual(image.wcs.cdelt[1], 0.003333333414)
+        self.assertTupleEqual(image.wcs.ctype, ('RA---SIN', 'DEC--SIN'))
+
+    @requires_data(os.path.join(DATAPATH, 'L15_12h_const/observed-all.fits'))
+    def testSFImageFromFITS(self):
+        hdu = pyfits.open(os.path.join(DATAPATH, 'L15_12h_const/observed-all.fits'))
+        image = accessors.FitsFile(hdu, beam=(54./3600, 54./3600, 0.))
+        sfimage = accessors.sourcefinder_image_from_accessor(image)
+
+
+
+class FitsFile(unittest.TestCase):
+
+    @requires_data(os.path.join(DATAPATH, 'L15_12h_const/observed-all.fits'))
+    @requires_data(os.path.join(DATAPATH, 'CORRELATED_NOISE.FITS'))
     def testOpen(self):
         # Beam specified by user
         image = accessors.FitsFile(os.path.join(DATAPATH, 'L15_12h_const/observed-all.fits'), beam=(54./3600, 54./3600, 0.))
@@ -77,7 +115,7 @@ class DataBaseImage(unittest.TestCase):
 
 
 class FrequencyInformation(unittest.TestCase):
-    
+
     @requires_database()
     @requires_data(os.path.join(DATAPATH, 'L21641_SB098.restored.image'))
     @requires_data(os.path.join(DATAPATH, 'VLSS.fits'))
@@ -103,8 +141,8 @@ class FrequencyInformation(unittest.TestCase):
         self.assertListEqual(
             list(accessors.sourcefinder_image_from_accessor(image).data.shape),
             [2048, 2048])
-        
+
         database.close()
-        
+
 if __name__ == '__main__':
     unittest.main()

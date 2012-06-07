@@ -17,27 +17,27 @@ from lofarpipe.support.utilities import log_time
 
 
 def store_to_mongodb(filename, hostname, port, db, logger):
-    self.logger.info(
-        "Storing %s to MongoDB database %s on %s:%d" %
-        filename, db, hostname, port
+    logger.info(
+        "Storing %s to MongoDB database %s on %s port %d" %
+        (filename, db, hostname, port)
     )
     try:
         import pymongo
         import gridfs
     except ImportError:
-        self.logger.warn("Could not import MongoDB modules")
+        logger.warn("Could not import MongoDB modules")
         return
 
     try:
         connection = pymongo.Connection(host=hostname, port=port)
         gfs = gridfs.GridFS(connection[db])
-        new_file = g.new_file(filename=filename)
+        new_file = gfs.new_file(filename=filename)
         with open(filename, "r") as f:
             new_file.write(f)
         new_file.close()
         connection.close()
     except ImportError:
-        self.logger.warn("Could not store image to MongoDB")
+        logger.warn("Could not store image to MongoDB")
 
 class source_extraction(LOFARnodeTCP):
     """

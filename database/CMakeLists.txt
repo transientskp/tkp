@@ -1,1 +1,1 @@
-add_subdirectory (pipeline_develop)
+add_subdirectory (MonetDB)

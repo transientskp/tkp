@@ -37,7 +37,7 @@ def store_to_mongodb(filename, hostname, port, db, logger):
         new_file.close()
         connection.close()
     except Exception, e:
-        logger.warn("Could not store image to MongoDB: %s" % (str(e))
+        logger.warn("Could not store image to MongoDB: %s" % (str(e)))
 
 class source_extraction(LOFARnodeTCP):
     """

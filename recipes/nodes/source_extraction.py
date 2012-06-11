@@ -9,6 +9,7 @@ from __future__ import with_statement
 
 import os
 import sys
+from threading import Thread
 from contextlib import closing
 
 from lofar.parameterset import parameterset
@@ -88,9 +89,11 @@ class source_extraction(LOFARnodeTCP):
                                  image, parset.getFloat('detection.threshold'))
                 data_image = sourcefinder_image_from_accessor(fitsimage)
                 if store_images:
-                    store_to_mongodb(
-                        image, mongo_host, mongo_port, mongo_db, self.logger
+                    upload_thread = Thread(
+                        target=store_to_mongodb,
+                        args=(image, mongo_host, mongo_port, mongo_db, self.logger)
                     )
+                    thread.start()
 
                 seconfig['back_sizex'] = parset.getInt('backsize.x',
                                                        seconfig['back_sizex'])
@@ -113,6 +116,9 @@ class source_extraction(LOFARnodeTCP):
                 #self.logger.info("Update monitoring list for already found sources")
                 #db_image.match_monitoringlist(assoc_r=deRuiter_r, mindistance=30)
                 self.outputs['image_id'] = db_image.id
+
+                if store_images:
+                    upload_thread.join()
         return 0
 
 if __name__ == "__main__":

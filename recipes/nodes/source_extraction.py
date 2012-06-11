@@ -93,7 +93,7 @@ class source_extraction(LOFARnodeTCP):
                         target=store_to_mongodb,
                         args=(image, mongo_host, mongo_port, mongo_db, self.logger)
                     )
-                    thread.start()
+                    upload_thread.start()
 
                 seconfig['back_sizex'] = parset.getInt('backsize.x',
                                                        seconfig['back_sizex'])

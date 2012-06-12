@@ -15,7 +15,7 @@ from contextlib import closing
 from lofar.parameterset import parameterset
 from lofarpipe.support.lofarnode import LOFARnodeTCP
 from lofarpipe.support.utilities import log_time
-
+from lofarpipe.support.lofarexceptions import PipelineException
 
 def store_to_mongodb(filename, hostname, port, db, logger):
     logger.info(
@@ -76,6 +76,9 @@ class source_extraction(LOFARnodeTCP):
         from tkp.utility.accessors import FITSImage
         from tkp.utility.accessors import dbimage_from_accessor
         from tkp.utility.accessors import sourcefinder_image_from_accessor
+
+        if not os.path.exists(image):
+            raise PipelineException("Image '%s' not found" % image)
 
         with log_time(self.logger):
             with closing(DataBase()) as database:

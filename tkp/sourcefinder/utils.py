@@ -96,7 +96,7 @@ def fudge_max_pix(semimajor, semiminor, theta):
     cos_theta = numpy.cos(theta)
     sin_theta = numpy.sin(theta)
 
-    def landscape(x, y):
+    def landscape(y, x):
         up = math.pow(((cos_theta * x + sin_theta * y) / semiminor ), 2)
         down = math.pow(((cos_theta * y - sin_theta * x) / semimajor ), 2)
         return numpy.exp(log20 * ( up + down ))
@@ -128,17 +128,20 @@ def maximum_pixel_method_variance(semimajor, semiminor, theta):
     # from the scipy docs:
     #   Return the double (definite) integral of f1(y,x) from x=a..b
     #   and y=f2(x)..f3(x).
-    variance = (scipy.integrate.dblquad(
-        lambda y, x: numpy.exp(2.0 * numpy.log(2.0) *
-                               (((numpy.cos(theta) * x +
-                                  numpy.sin(theta) * y) / semiminor) ** 2.0 +
-                                ((numpy.cos(theta) * y -
-                                  numpy.sin(theta) * x) / semimajor) ** 2.0)),
-        -0.5,
-        0.5,
-        lambda ymin: -0.5,
-        lambda ymax: 0.5)[0]
-                - fudge_max_pix(semimajor, semiminor, theta) ** 2)
+
+    log20 = numpy.log(2.0)
+    cos_theta = numpy.cos(theta)
+    sin_theta = numpy.sin(theta)
+
+    def landscape(y, x):
+        return numpy.exp(2.0 * log20 *
+                  ( math.pow(((cos_theta * x + sin_theta * y) / semiminor), 2) +
+                    math.pow(((cos_theta * y - sin_theta * x) / semimajor), 2)
+                  )
+        )
+
+    (result, abserr) = scipy.integrate.dblquad(landscape, -0.5, 0.5, lambda ymin: -0.5, lambda ymax: 0.5)
+    variance = result - math.pow(fudge_max_pix(semimajor, semiminor, theta), 2)
 
     return variance
 

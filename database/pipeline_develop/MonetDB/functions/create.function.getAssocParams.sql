@@ -15,7 +15,7 @@ begin
                                / 2
                               )
                      ) AS assoc_distance_arcsec
-          ,SQRT( (x1.ra * COS(RADIANS(x1.decl)) - x2.ra * COS(RADIANS(x2.decl))) * (x1.ra * COS(RADIANS(x1.decl)) - x2.ra * COS(RADIANS(x2.decl)))
+          ,3600*SQRT( (x1.ra * COS(RADIANS(x1.decl)) - x2.ra * COS(RADIANS(x2.decl))) * (x1.ra * COS(RADIANS(x1.decl)) - x2.ra * COS(RADIANS(x2.decl)))
                  / (x1.ra_err * x1.ra_err + x2.ra_err * x2.ra_err)
                + (x1.decl - x2.decl) * (x1.decl - x2.decl)  
                  / (x1.decl_err * x1.decl_err + x2.decl_err * x2.decl_err)

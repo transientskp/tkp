@@ -971,77 +971,76 @@ def _insert_new_source_runcat(conn, image_id, deRuiter_r):
     try:
         cursor = conn.cursor()
         query = """\
-INSERT INTO runningcatalog
-  (xtrsrc_id
-  ,ds_id
-  ,band
-  ,datapoints
-  ,zone
-  ,wm_ra
-  ,wm_decl
-  ,wm_ra_err
-  ,wm_decl_err
-  ,avg_wra
-  ,avg_wdecl
-  ,avg_weight_ra
-  ,avg_weight_decl
-  ,x
-  ,y
-  ,z
-  ,avg_I_peak
-  ,avg_I_peak_sq
-  ,avg_weight_peak
-  ,avg_weighted_I_peak
-  ,avg_weighted_I_peak_sq
-  )
-  SELECT x1.xtrsrcid
-        ,im1.ds_id
-        ,band
-        ,1
-        ,x1.zone
-        ,x1.ra
-        ,x1.decl
-        ,x1.ra_err
-        ,x1.decl_err
-        ,x1.ra / (x1.ra_err * x1.ra_err)
-        ,x1.decl / (x1.decl_err * x1.decl_err)
-        ,1 / (x1.ra_err * x1.ra_err)
-        ,1 / (x1.decl_err * x1.decl_err)
-        ,x1.x
-        ,x1.y
-        ,x1.z
-        ,I_peak
-        ,I_peak * I_peak
-        ,1 / (I_peak_err * I_peak_err)
-        ,I_peak / (I_peak_err * I_peak_err)
-        ,I_peak * I_peak / (I_peak_err * I_peak_err)
-    FROM extractedsources x1
-        ,images im1
-   WHERE x1.image_id = %s
-     AND x1.image_id = im1.imageid
-     AND x1.xtrsrcid NOT IN (
-         SELECT x0.xtrsrcid
-          FROM extractedsources x0
-              ,runningcatalog b0
-              ,images im0
-         WHERE x0.image_id = %s
-           AND x0.image_id = im0.imageid
-           AND im0.ds_id = b0.ds_id
-           AND b0.zone BETWEEN x0.zone - cast(0.025 as integer)
-                           AND x0.zone + cast(0.025 as integer)
-           AND b0.wm_decl BETWEEN x0.decl - 0.025
-                                    AND x0.decl + 0.025
-           AND b0.wm_ra BETWEEN x0.ra - alpha(0.025,x0.decl)
-                                  AND x0.ra + alpha(0.025,x0.decl)
-           AND b0.x * x0.x + b0.y * x0.y + b0.z * x0.z > COS(RADIANS(0.025))
-           AND SQRT(  (x0.ra * COS(RADIANS(x0.decl)) - b0.wm_ra * COS(RADIANS(b0.wm_decl)))
-                    * (x0.ra * COS(RADIANS(x0.decl)) - b0.wm_ra * COS(RADIANS(b0.wm_decl)))
-                    / (x0.ra_err * x0.ra_err + b0.wm_ra_err * b0.wm_ra_err)
-                   + (x0.decl - b0.wm_decl) * (x0.decl - b0.wm_decl)
-                    / (x0.decl_err * x0.decl_err + b0.wm_decl_err * b0.wm_decl_err)
-                   ) < %s
-           )
-"""
+        INSERT INTO runningcatalog
+          (xtrsrc_id
+          ,ds_id
+          ,band
+          ,datapoints
+          ,zone
+          ,wm_ra
+          ,wm_decl
+          ,wm_ra_err
+          ,wm_decl_err
+          ,avg_wra
+          ,avg_wdecl
+          ,avg_weight_ra
+          ,avg_weight_decl
+          ,x
+          ,y
+          ,z
+          ,avg_I_peak
+          ,avg_I_peak_sq
+          ,avg_weight_peak
+          ,avg_weighted_I_peak
+          ,avg_weighted_I_peak_sq
+          )
+          SELECT x1.xtrsrcid
+                ,im1.ds_id
+                ,band
+                ,1
+                ,x1.zone
+                ,x1.ra
+                ,x1.decl
+                ,x1.ra_err
+                ,x1.decl_err
+                ,x1.ra / (x1.ra_err * x1.ra_err)
+                ,x1.decl / (x1.decl_err * x1.decl_err)
+                ,1 / (x1.ra_err * x1.ra_err)
+                ,1 / (x1.decl_err * x1.decl_err)
+                ,x1.x
+                ,x1.y
+                ,x1.z
+                ,I_peak
+                ,I_peak * I_peak
+                ,1 / (I_peak_err * I_peak_err)
+                ,I_peak / (I_peak_err * I_peak_err)
+                ,I_peak * I_peak / (I_peak_err * I_peak_err)
+            FROM extractedsources x1
+                ,images im1
+           WHERE x1.image_id = %s
+             AND x1.image_id = im1.imageid
+             AND x1.xtrsrcid NOT IN (
+                 SELECT x0.xtrsrcid
+                  FROM extractedsources x0
+                      ,runningcatalog b0
+                      ,images im0
+                 WHERE x0.image_id = %s
+                   AND x0.image_id = im0.imageid
+                   AND im0.ds_id = b0.ds_id
+                   AND b0.zone BETWEEN CAST(FLOOR(x0.zone - 0.025) AS INTEGER)
+                                   AND CAST(FLOOR(x0.zone + 0.025) AS INTEGER)
+                   AND b0.wm_decl BETWEEN x0.decl - 0.025
+                                      AND x0.decl + 0.025
+                   AND b0.wm_ra BETWEEN x0.ra - alpha(0.025,x0.decl)
+                                    AND x0.ra + alpha(0.025,x0.decl)
+                   AND SQRT(  (x0.ra * COS(RADIANS(x0.decl)) - b0.wm_ra * COS(RADIANS(b0.wm_decl)))
+                            * (x0.ra * COS(RADIANS(x0.decl)) - b0.wm_ra * COS(RADIANS(b0.wm_decl)))
+                            / (x0.ra_err * x0.ra_err + b0.wm_ra_err * b0.wm_ra_err)
+                           + (x0.decl - b0.wm_decl) * (x0.decl - b0.wm_decl)
+                            / (x0.decl_err * x0.decl_err + b0.wm_decl_err * b0.wm_decl_err)
+                           ) < %s
+                   )
+        """
         cursor.execute(query, (image_id, image_id, deRuiter_r/3600.))
         if not AUTOCOMMIT:
             conn.commit()

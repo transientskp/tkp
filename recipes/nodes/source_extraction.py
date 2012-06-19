@@ -90,6 +90,7 @@ class source_extraction(LOFARnodeTCP):
                                                  image=fitsimage)
                 self.logger.info("Detecting sources in %s at %f level",
                                  image, parset.getFloat('detection.threshold'))
+                
                 data_image = sourcefinder_image_from_accessor(fitsimage)
                 if store_images:
                     upload_thread = Thread(
@@ -102,6 +103,20 @@ class source_extraction(LOFARnodeTCP):
                                                        seconfig['back_sizex'])
                 seconfig['back_sizey'] = parset.getInt('backsize.y',
                                                        seconfig['back_sizey'])
+                seconfig['margin'] = parset.getFloat('margin',
+                                                   seconfig['margin'])
+                seconfig['deblend'] = parset.getBool('deblend',
+                                                   seconfig['deblend'])
+                seconfig['deblend_nthresh'] = parset.getInt('deblend_nthresh',
+                                                   seconfig['deblend_nthresh'])
+                
+                
+                self.logger.info("Employing margin: %f, deblend: %s, deblend_nthresh:%d",
+                                 seconfig['margin'], 
+                                 str(seconfig['deblend']),
+                                 seconfig['deblend_nthresh']
+                                 )  
+                
                 det = parset.getFloat('detection.threshold',
                                       seconfig['detection_threshold'])
                 anl = parset.getFloat('analysis.threshold',

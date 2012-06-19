@@ -23,15 +23,6 @@ class source_extraction(BaseRecipe, RemoteCommandRecipeMixIn):
             dest='parset',
             help="Source finder configuration parset"
         ),
-#        'detection_level': ingredient.FloatField(
-#            '--detection-level',
-#            help='Detection level for sources'
-#        ),
-#        'radius': ingredient.FloatField(
-#            '--radius',
-#            help='relative radius for source association',
-#            default=1
-#        ),
         'dataset_id': ingredient.IntField(
             '--dataset-id',
             help='Dataset to which images belong',

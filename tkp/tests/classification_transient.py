@@ -9,7 +9,7 @@ try:
     unittest.TestCase.assertIsInstance
 except AttributeError:
     import unittest2 as unittest
-from tkp.classification.manual.transient import Undefined
+from tkp.classification.transient import Undefined
 
 
 

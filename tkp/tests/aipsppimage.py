@@ -28,6 +28,8 @@ class AIPSppImage(unittest.TestCase):
                                      aipsppim.wcs)
 
     @requires_data(os.path.join(DATAPATH, 'CX3_peeled.image/'))
+    def testLoadImage(self):
+        print "Loaded ok."
     def testExtractPython(self):
         self.image.extract(det=15)
 

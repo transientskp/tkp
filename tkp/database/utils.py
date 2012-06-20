@@ -232,7 +232,7 @@ def insert_extracted_sources(conn, image_id, results):
     procedures into the extractedsources table.
 
     Therefore, we use a temporary table containing the "raw" detections,
-    from which the sources will then be inserted into extractedsourtces.
+    from which the sources will then be inserted into extractedsources.
     """
 
     _empty_detections(conn)
@@ -1133,7 +1133,7 @@ def associate_extracted_sources(conn, image_id, deRuiter_r=DERUITER_R):
 
 
 def select_single_epoch_detection(conn, dsid):
-    """Select sources and variability indices in the running catalog"""
+    """Select sources from running catalog which have only one detection"""
 
     results = []
     cursor = conn.cursor()

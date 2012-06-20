@@ -8,6 +8,21 @@
 # discovery@transientskp.org
 #
 
+"""
+This file appears to be deprecated.
+Does anyone know if it is still in use?
+It contains a few extras compared to utils.py, e.g. the functions:
+    _insert_temprunningcatalog_by_bsmaj(conn, image_id)
+    _flag_multiple_counterparts_in_runningcatalog_by_dist(conn)
+    _insert_new_source_runcat_by_bsmaj
+
+etc. etc.
+
+Perhaps we can move it to a branch?
+
+-TS 20/06/2012
+"""
+
 import sys
 import math
 import logging

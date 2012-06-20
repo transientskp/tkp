@@ -1,6 +1,6 @@
 import os
 import tkp.config
-import testdb_subroutines as testdb_subs
+import database_subroutines as testdb_subs
 
 import unittest
 try:

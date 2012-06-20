@@ -16,29 +16,25 @@ import contextlib
 from tkp.config import config
 from ..utility.exceptions import TKPDataBaseError
 
-ENGINE = config['database']['engine']
-ENABLED = config['database']['enabled']
-HOST = config['database']['host']
-USER = config['database']['user']
-PASSWORD = config['database']['password']
-NAME = config['database']['name']
-PORT = config['database']['port']
-AUTOCOMMIT = config['database']['autocommit']
+
 
 # Set up the Python DB API.
+# Record which module was imported as the engine via the ENGINE global.
 # port = 0 is a flag to use the default port instead
+ENGINE = config['database']['engine']
 if ENGINE == 'monetdb':
     import monetdb
     import monetdb.sql as engine
-    if PORT == 0:
-        PORT = 50000
+    if config['database']['port'] == 0:
+        config['database']['port'] = 50000
 elif ENGINE == 'postgresql':
-    AUTOCOMMIT = False  # PostgreSQL does not have autocommit
+    config['database']['autocommit'] = False  # PostgreSQL does not have autocommit
     import psycopg2 as engine
-    if PORT == 0:
-        PORT = 5432
+    if config['database']['port'] == 0:
+        config['database']['port'] = 5432
 else:
-    raise TypeError("unknown engine %s" % ENGINE)
+    raise TypeError("unknown engine %s" % config['database']['engine'])
+
     
 
 class DataBase(object):
@@ -68,9 +64,9 @@ class DataBase(object):
     # Assign this class variable for convenience
     Error = engine.Error
 
-    def __init__(self, host=HOST, name=NAME, user=USER,
-                 password=PASSWORD, port=PORT,
-                 autocommit=AUTOCOMMIT):
+    def __init__(self, host=None, name=None, user=None,
+                 password=None, port=None,
+                 autocommit=None):
         """Set up a database connection object
 
         Raises an exception if not enabled.
@@ -78,14 +74,30 @@ class DataBase(object):
         Use login defaults from the config module, but the user can
         override these.
         """
+        #Dynamically load defaults from config file.
+        if host == None:
+            host = config['database']['host']
+        if user == None:
+            user = config['database']['user']
+        if password == None:
+            password = config['database']['password']
+        if name == None:
+            name = config['database']['name']
+        if port == None:
+            port = config['database']['port']
+        if autocommit == None:
+            autocommit = config['database']['autocommit']
+        if ENGINE == 'postgresql':
+            autocommit = False
+        
         self.host = host
         self.name = name
         self.user = user
         self.password = password
         self.port = port
-        self.autocommit = autocommit if ENGINE != 'postgresql' else False
+        self.autocommit = autocommit
         self.connection = None
-        if not ENABLED:
+        if not config['database']['enabled']:
             raise TKPDataBaseError("Database is not enabled")
         self.connect()
 
@@ -118,8 +130,8 @@ class DataBase(object):
         kwargs['user'] = user if user else self.user
         kwargs['password'] = password if password else self.password
         kwargs['port'] = port if port else self.port
-        if ENGINE != 'postgresql':  # PostgreSQL doesn't have autocommit
-            kwargs['autocommit'] = autocommit if autocommit else self.autocommit
+        if ENGINE == 'postgresql':  # PostgreSQL doesn't have autocommit
+            assert kwargs['autocommit'] is False 
         self.connection = engine.connect(**kwargs)
         self.cursor = self.connection.cursor()
         

@@ -1,5 +1,7 @@
 import os
 import tkp.config
+import testdb_subroutines as testdb_subs
+
 import unittest
 try:
     unittest.TestCase.assertIsInstance
@@ -8,6 +10,7 @@ except AttributeError:
 
 def requires_database():
     if tkp.config.config['database']['enabled']:
+        testdb_subs.use_test_database_by_default()
         return lambda func: func
     return unittest.skip("Database functionality disabled in configuration")
 

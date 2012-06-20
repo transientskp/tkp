@@ -5,9 +5,19 @@ except AttributeError:
     import unittest2 as unittest
 from utility.decorators import requires_database
 
+
+
 class TestDatabase(unittest.TestCase):
 
     def setUp(self):
+        """
+        NB. Must switch config to testdb BEFORE importing tkp.database.
+        
+        All a bit kludgy.
+       """
+        import utility.database_subroutines         
+        utility.database_subroutines.use_test_database_by_default()
+        
         import tkp.database.database
         import monetdb
         self.database = tkp.database.database.DataBase()

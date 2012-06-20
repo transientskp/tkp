@@ -2061,44 +2061,6 @@ def associate_extracted_sources(conn, image_id, deRuiter_r=DERUITER_R):
     #+-------------------------------------------------------------+
 
 
-def select_single_epoch_detection(conn, dsid):
-    """Select sources and variability indices in the running catalog"""
-
-    results = []
-    cursor = conn.cursor()
-    try:
-        query = """\
-SELECT xtrsrc_id
-      ,ds_id
-      ,datapoints
-      ,wm_ra
-      ,wm_decl
-      ,wm_ra_err
-      ,wm_decl_err
-      ,sqrt(datapoints*(avg_I_peak_sq - avg_I_peak*avg_I_peak) /
-            (datapoints-1)) / avg_I_peak as V
-      ,(datapoints/(datapoints-1)) *
-       (avg_weighted_I_peak_sq -
-        avg_weighted_I_peak * avg_weighted_I_peak / avg_weight_peak)
-       as eta
-  FROM runningcatalog
- WHERE ds_id = %s
-   AND datapoints = 1
-"""
-        cursor.execute(query, (dsid, ))
-        results = cursor.fetchall()
-        results = [dict(srcid=x[0], npoints=x[2], v_nu=x[7], eta_nu=x[8])
-                   for x in results]
-        if not AUTOCOMMIT:
-            conn.commit()
-    except db.Error:
-        logging.warn("Failed on query %s", query)
-        raise
-    finally:
-        cursor.close()
-    return results
-
-
 def lightcurve(conn, xtrsrcid):
     """Obtain a light curve for a specific extractedsource
 

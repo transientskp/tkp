@@ -1,14 +1,14 @@
 import os
 from tkp.config import config as tkp_conf
-
+import tkp.database.database
 #fresh_database_dump_filename = "fresh_db.sql"
 
-
-def use_test_database_by_default():
+def TestDatabase():
     test_db_name = tkp_conf['test']['test_database_name']
-    tkp_conf['database']['name'] = test_db_name
-    tkp_conf['database']['user'] = test_db_name
-    tkp_conf['database']['password'] = test_db_name     
+    return tkp.database.database.DataBase(name = test_db_name,
+                                          user = test_db_name,
+                                          password = test_db_name)
+               
     
 #def prep_test_database():
 #    if not tkp_conf['database']['enabled']:

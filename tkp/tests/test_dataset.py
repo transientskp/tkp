@@ -104,6 +104,14 @@ class TestImage(unittest.TestCase):
         # because dataset2.images are newly created Python objects,
         # with different ids
         #self.assertEqual(len(dataset2.images), 2)
+        
+        ##Now, update and try it again:
+        image1.update()
+        self.assertEqual(image1.tau_time, 0)
+        
+        ##Uh oh. I don't think this is caused by the update 
+        #- I noticed it in the database without any updates being called.
+        # Rather, the tau (exposure time) is not being inserted properly.
 
     @requires_database()
     def test_update(self):
@@ -343,10 +351,12 @@ class TestExtractedSource(unittest.TestCase):
         for i, image in enumerate(images):
             # Create the "source finding results"
             sources = [
-                (data['ra'], data['decl'], data['ra_err'], data['decl_err'],
+                (data['ra'], data['decl'], 
+                 data['ra_err'], data['decl_err'],
                  data['i_peak']*(1+i), data['i_peak_err'],
-                 data['i_peak']*(1+i), data['i_peak_err'], 10.,
-                 1, 1, 0)
+                 data['i_peak']*(1+i), data['i_peak_err'], 
+                 10.,#Significance level
+                 1, 1, 0) #Beam params (width arcsec major, width arcsec minor, parallactic angle) 
                 for data in data_list]
             # Insert the sources
             image.insert_extracted_sources(sources)

@@ -8,13 +8,13 @@ from utility.decorators import requires_data
 from utility.decorators import requires_database
 from utility.decorators import requires_module
 import tkp.sourcefinder 
-from tkp.sourcefinder import image
-import os
+from tkp.sourcefinder import image as sfimage
 import tkp.config
 import wcslib
 from tkp.utility import accessors
 
 import numpy as np
+import os
 
 DATAPATH = tkp.config.config['test']['datapath']
 
@@ -25,6 +25,8 @@ class TestNumpySubroutines(unittest.TestCase):
     def testBoxSlicing(self):
         """testBoxSlicing
         
+            Tests a routine to return a window on an image.
+                
             Previous implementation returned correct sized box,
             but central pixel was often offset unnecessarily.
             This method always returns a centred chunk.
@@ -36,14 +38,14 @@ class TestNumpySubroutines(unittest.TestCase):
         x,y = 3,3
         central_value = a[y,x] #34
         
-        round_down_to_single_pixel = a[image.ImageData.box_slice_about_pixel(x, y, 0.9)]
+        round_down_to_single_pixel = a[sfimage.ImageData.box_slice_about_pixel(x, y, 0.9)]
         self.assertEquals(round_down_to_single_pixel, [[central_value]])
         
-        chunk_3_by_3 = a[image.ImageData.box_slice_about_pixel(x, y, 1)]
+        chunk_3_by_3 = a[sfimage.ImageData.box_slice_about_pixel(x, y, 1)]
         self.assertEquals(chunk_3_by_3.shape, (3,3))
         self.assertEqual(central_value, chunk_3_by_3[1,1])        
         
-        chunk_3_by_3_round_down = a[image.ImageData.box_slice_about_pixel(x, y, 1.9)]
+        chunk_3_by_3_round_down = a[sfimage.ImageData.box_slice_about_pixel(x, y, 1.9)]
         self.assertListEqual( list(chunk_3_by_3.reshape(9)),
                               list(chunk_3_by_3_round_down.reshape(9))
                               )
@@ -51,6 +53,7 @@ class TestNumpySubroutines(unittest.TestCase):
         
 
 class TestFitFixedPositions(unittest.TestCase):
+    """Test various fitting cases where the pixel position is predetermined"""
     
     @requires_data(os.path.join(DATAPATH, 'NCP_sample_image_1.fits'))
     def setUp(self):
@@ -171,7 +174,7 @@ class TestFitFixedPositions(unittest.TestCase):
     def testGivenPositionOutsideImage(self):
         """testGivenPositionOutsideImage
         
-        Central position is checked, if outside image then result is NoneType"""
+        If given position is outside image then result should be NoneType"""
         img = self.image
         print 
         p1 = img.wcs.p2s((0,0))
@@ -188,6 +191,9 @@ class TestFitFixedPositions(unittest.TestCase):
         
 
     def testTooCloseToEdgePosition(self):
+        """testTooCloseToEdgePosition
+        
+        Same if right on the edge -- too few pixels to fit"""
         img = self.image
         print 
         
@@ -205,8 +211,39 @@ class TestFitFixedPositions(unittest.TestCase):
         self.assertListEqual([None], results)
     
         
+class TestSimpleImageSourceFind(unittest.TestCase):
+    """Now lets test drive the routines which find new sources"""
+    
+#    def setUp(self):
+#        """NB the required image has been committed to the tkp/data subversion repository.
+#            (See tkp/data/unittests/tkp_lib for a full copy of all the unittest data).
+#        """
         
+    @requires_data(os.path.join(DATAPATH, 'GRB120422A/GRB120422A-120429.fits'))
+    def testSingleSourceExtraction(self):
+        """testSingleSourceExtraction
         
+        From visual inspection we only expect a single source in the image,
+        at around 5 or 6 sigma detection level."""
+        
+        known_result = (136.89603241069054, 14.022184792492785, #RA, DEC 
+                     0.0005341819139061954, 0.0013428186757078464, #Err, Err
+                      0.0007226590529214518, 0.00010918184742211533, #Peak flux, err
+                      0.0006067963179204716, 0.00017037685531724465, #Integrated flux, err
+                      6.192259965962862, 25.516190123153514, #Significance level, Beam semimajor-axis width (arcsec)
+                      10.718798843620489, 178.62899212789304) #Beam semiminor-axis width (arcsec), Beam parallactic angle
+    
+        
+        self.image = accessors.sourcefinder_image_from_accessor(
+                       accessors.FitsFile(os.path.join(DATAPATH, 'GRB120422A/GRB120422A-120429.fits'))
+                       )
+        
+        results = self.image.extract(det=5, anl=3)
+        results = [result.serialize() for result in results]
+        self.assertTupleEqual(known_result, results[0])
+            
+            
+        1
             
 #        
         

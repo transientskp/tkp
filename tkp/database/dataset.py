@@ -314,6 +314,7 @@ class DataSet(DBObject):
             self.name, str(self._dsid), len(self.images))
 
     # Inserting datasets is handled a little different than normal inserts
+    # (We make use of the SQL function insertDataset)
     @property
     def id(self):
         """Add or obtain an id to/from the table
@@ -382,6 +383,8 @@ class Image(DBObject):
         self._init_data()
 
     # Inserting images is handled a little different than normal inserts
+    # -- We call an SQL function 'insertImage' which takes care of  
+    #    assigning a new image id.
     @property
     def id(self):
         """Add or obtain an id to/from the table

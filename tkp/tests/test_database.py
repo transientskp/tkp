@@ -7,7 +7,7 @@ from utility.decorators import requires_database
 
 
 
-class TestDatabase(unittest.TestCase):
+class TestDatabaseConnection(unittest.TestCase):
 
     def setUp(self):
         import tkp.database.database

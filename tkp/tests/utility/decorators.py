@@ -6,12 +6,12 @@ try:
     unittest.TestCase.assertIsInstance
 except AttributeError:
     import unittest2 as unittest
+    
+import database_subroutines
 
 def requires_database():
     if tkp.config.config['database']['enabled']:
-        tkp.config.config['database']['name']=tkp.config.config['test']['test_database_name']
-        tkp.config.config['database']['user']=tkp.config.config['test']['test_database_name']
-        tkp.config.config['database']['password']=tkp.config.config['test']['test_database_name']
+        database_subroutines.use_test_database_by_default()
         return lambda func: func
     return unittest.skip("Database functionality disabled in configuration")
 

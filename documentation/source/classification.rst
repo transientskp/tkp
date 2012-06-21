@@ -137,7 +137,7 @@ TKP library tries to extract such features in the
 `duration`
   full duration of the transient
 
-`variability
+`variability`
   a measure of the actual activity of the transient. It
   is the ratio of the amount of time the transient light curve is
   above background level, to the full duration of the transient. It is

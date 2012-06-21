@@ -488,7 +488,7 @@ looking for deviations in their light curve.
   - siglevels: significance levels of the "transientness".
 
   - transients: list of :ref:`Transient
-    <tkpapi:classification-manual-transient>` objects.
+    <tkpapi:classification-transient-transient>` objects.
 
 
 This routine is implemented by performing a database search, and thus
@@ -517,7 +517,7 @@ Each feature extraction is run as a separate node.
 - inputs:
 
   - transients: list of :ref:`Transient
-    <tkpapi:classification-manual-transient>` objects,
+    <tkpapi:classification-transient-transient>` objects,
     previously obtained with the transient_search recipe.
 
   - nproc: number of maximum simultaneous processors per node.
@@ -525,4 +525,4 @@ Each feature extraction is run as a separate node.
 - outputs:
 
   - transients: list of :ref:`Transient
-    <tkpapi:classification-manual-transient>` objects.
+    <tkpapi:classification-transient-transient>` objects.

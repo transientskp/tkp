@@ -18,7 +18,7 @@ parset = %(runtime_directory)s/jobs/%(job_name)s/parsets/classification.parset
 - outputs:
 
   - transients: list of :ref:`Transient
-    <tkpapi:classification-manual-transient>` objects,
+    <tkpapi:classification-transient-transient>` objects,
     amended with their classification.
 
 

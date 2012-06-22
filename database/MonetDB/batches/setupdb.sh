@@ -94,5 +94,3 @@ for sql_file in $(cat ${BATCH_FILE} | grep -v ^#); do
 	fail_check "failed to load SQL:\n ${sql}"
 done 
 
-echo $temp
-

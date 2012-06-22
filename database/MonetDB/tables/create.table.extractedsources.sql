@@ -47,23 +47,10 @@
 
 --@node n
 CREATE SEQUENCE "seq_extractedsources" AS INTEGER 
-  START WITH $start
-  INCREMENT BY $incr
+  START WITH %NODE%
+  INCREMENT BY %NODES%
 ;
 
-/*
---@node2
-CREATE SEQUENCE "seq_extractedsources" AS INTEGER 
-  START WITH 2
-  INCREMENT BY 3
-;
-
---@node3
-CREATE SEQUENCE "seq_extractedsources" AS INTEGER 
-  START WITH 3
-  INCREMENT BY 3
-;
-*/
 
 CREATE TABLE extractedsources 
   (xtrsrcid INT DEFAULT NEXT VALUE FOR "seq_extractedsources"
@@ -83,21 +70,10 @@ CREATE TABLE extractedsources
   ,pa DOUBLE NULL
   ,I_peak DOUBLE NULL
   ,I_peak_err DOUBLE NULL
-  ,Q_peak DOUBLE NULL
-  ,Q_peak_err DOUBLE NULL
-  ,U_peak DOUBLE NULL
-  ,U_peak_err DOUBLE NULL
-  ,V_peak DOUBLE NULL
-  ,V_peak_err DOUBLE NULL
   ,I_int DOUBLE NULL
   ,I_int_err DOUBLE NULL
-  ,Q_int DOUBLE NULL
-  ,Q_int_err DOUBLE NULL
-  ,U_int DOUBLE NULL
-  ,U_int_err DOUBLE NULL
-  ,V_int DOUBLE NULL
-  ,V_int_err DOUBLE NULL
-  ,id INT NULL
+  ,node TINYINT NOT NULL DEFAULT %NODE%
+  ,nodes TINYINT NOT NULL DEFAULT %NODES%
   ,PRIMARY KEY (xtrsrcid)
   ,FOREIGN KEY (image_id) REFERENCES images (imageid)
   )

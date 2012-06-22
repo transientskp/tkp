@@ -57,14 +57,7 @@ CREATE TABLE aux_catalogedsources
 COPY 1773484 RECORDS
 INTO aux_catalogedsources
 FROM
-/* '/scratch/bscheers/tkp-code/pipe/database/catfiles/nvss/nvss-few.csv' */
-/* '${TKPDBCODE}/catfiles/nvss/nvss-all_strip.csv' */
-/* '/home/scheers/tkp-code/pipe/database/catfiles/nvss/NVSS-all_strip.csv' */
-/* '/export/scratch1/bscheers/code/database/trunk/database/catfiles/nvss/NVSS-all_strip.csv' */
-/* '/zfs/heastro-plex/scratch/evert/catfiles/NVSS-all_strip.csv' */
-/* '/data/scratch/rol/catalogs/NVSS-all_strip.csv' */
-/* '/Users/evert/lofar/data/catalogs/NVSS-all_strip.csv' */
-/* '/home/ts3e11/code/tkp_data/catfiles/NVSS-all_strip.csv' */
+'%NVSS%'
 USING DELIMITERS ';', '\n'
 NULL AS ''
 ;

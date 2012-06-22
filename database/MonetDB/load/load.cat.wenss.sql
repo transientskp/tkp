@@ -82,13 +82,7 @@ CREATE TABLE aux_catalogedsources
 COPY 229420 RECORDS 
 INTO aux_catalogedsources 
 FROM
-/* '/scratch/scheers/tkp-code/pipe/database/catfiles/wenss/wenss-all_strip.csv' */
-/* '/home/scheers/tkp-code/pipe/database/catfiles/wenss/WENSS-all_strip.csv' */
-/* '/export/scratch1/bscheers/code/database/trunk/database/catfiles/wenss/WENSS-all_strip.csv' */
-/* '/zfs/heastro-plex/scratch/evert/catfiles/WENSS-all_strip.csv' */
-/* '/data/scratch/rol/catalogs/WENSS-all_strip.csv' */
-/* '/Users/evert/lofar/data/catalogs/WENSS-all_strip.csv' */
-/* '/home/ts3e11/code/tkp_data/catfiles/WENSS-all_strip.csv' */
+'%WENSS%'
 USING DELIMITERS ';', '\n' 
 ;
 

@@ -15,6 +15,7 @@ CREATE TABLE detections
   ,lsemimajor DOUBLE 
   ,lsemiminor DOUBLE 
   ,lpa DOUBLE 
-  )
-;
+  ,lnode TINYINT NOT NULL DEFAULT %NODE%
+  ,lnodes TINYINT NOT NULL DEFAULT %NODES%
+  );
 

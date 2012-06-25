@@ -6,6 +6,8 @@
 
 BATCH_FILE="sql_files"
 MONETDB_DATABASE="trap"
+MONETDB_USERNAME="trap"
+MONETDB_PASSWORD="trap"
 MONETDB_RECREATE=true
 #MONETDB_PORT="5000"
 #MONETDB_HOST="localhost"
@@ -18,7 +20,7 @@ MONETDB_RECREATE=true
 
 declare -A tokens
 tokens["%NODE%"]=1
-tokens["%NODES%"]=1
+tokens["%NODES%"]=10
 tokens["%NVSS%"]="/scratch/catfiles/NVSS-all_strip.csv"
 tokens["%VLSS%"]="/scratch/catfiles/VLSS-all_strip.csv"
 tokens["%WENSS%"]="/scratch/catfiles/WENSS-all_strip.csv"
@@ -69,6 +71,15 @@ destroy_database() {
 create_database() {
 	run "monetdb ${MONETDB_PARAMS} create ${MONETDB_DATABASE}"
 	run "monetdb ${MONETDB_PARAMS} start ${MONETDB_DATABASE}"
+}
+
+set_credentials() {
+   mclient -h$host -p$port -d$dbname <<-EOF
+ALTER USER "monetdb" RENAME TO "${adminuser}";
+ALTER USER SET PASSWORD '${adminpassword}' USING OLD PASSWORD 'monetdb';
+CREATE SCHEMA "${dbname}" AUTHORIZATION "${adminuser}";
+ALTER USER "${adminuser}" SET SCHEMA "${dbname}";
+EOF
 }
 
 

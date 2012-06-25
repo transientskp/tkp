@@ -28,20 +28,14 @@ CREATE TABLE images
   ,freq_eff DOUBLE NOT NULL
   ,freq_bw DOUBLE NULL
   ,taustart_ts TIMESTAMP NOT NULL
-  ,centr_ra DOUBLE NULL
-  ,centr_decl DOUBLE NULL
-  ,x DOUBLE NULL
-  ,y DOUBLE NULL
-  ,z DOUBLE NULL
-  ,bsmaj DOUBLE NULL
-  ,bsmin DOUBLE NULL
-  ,bpa DOUBLE NULL
-  ,fwhm_arcsec DOUBLE NULL
-  ,fov_degrees DOUBLE NULL
-  ,url VARCHAR(1024) NULL
+  ,bmaj_syn DOUBLE NULL
+  ,bmin_syn DOUBLE NULL
+  ,bpa_syn DOUBLE NULL
+  ,url VARCHAR(120) NULL
+  ,node TINYINT NOT NULL DEFAULT %NODE%
+  ,nodes TINYINT NOT NULL DEFAULT %NODES%
   ,PRIMARY KEY (imageid)
   ,FOREIGN KEY (ds_id) REFERENCES datasets (dsid)
   ,FOREIGN KEY (band) REFERENCES frequencybands (freqbandid)
-  )
-;
+  );
 

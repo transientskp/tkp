@@ -1,8 +1,0 @@
---DROP FUNCTION deg;
-
-/**
- */
-CREATE FUNCTION deg(r DOUBLE) RETURNS DOUBLE 
-BEGIN
-    RETURN r * 180 / PI();
-END;

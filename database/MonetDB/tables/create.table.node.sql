@@ -3,33 +3,13 @@
  */
 
 CREATE TABLE node 
-  (zone INT
+  (node TINYINT NOT NULL DEFAULT %NODE%
+  ,zone SMALLINT NOT NULL
+  ,zone_min SMALLINT
+  ,zone_max SMALLINT
+  ,zone_min_incl BOOLEAN DEFAULT TRUE
+  ,zone_max_incl BOOLEAN DEFAULT FALSE
   ,zoneheight DOUBLE DEFAULT 1.0
+  ,nodes TINYINT NOT NULL DEFAULT %NODES%
   )
 ;
-
-/*
---@node1
-INSERT INTO node
-  (zone)
-VALUES (50)
-      ,(51)
-      ,(52)
-;
-
---@node2
-INSERT INTO node
-  (zone)
-VALUES (53)
-      ,(54)
-      ,(55)
-;
-
---@node3
-INSERT INTO node
-  (zone)
-VALUES (56)
-      ,(57)
-      ,(58)
-;
-*/

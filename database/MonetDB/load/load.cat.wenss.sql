@@ -31,7 +31,7 @@ SET C2_sq = 1.69;
 SET icatid_main = 5;
 SET icatid_pole = 6;
 
-INSERT INTO catalogs
+INSERT INTO catalog
   (catid
   ,catname
   ,fullname
@@ -54,10 +54,7 @@ SET ifreq_eff_pole = 352000000.0;
 /*SET iband_pole = getBand(ifreq_eff_pole, 10000000.0);*/
 SET iband_pole = getBand(ifreq_eff_pole);
 
-
-/*DROP TABLE aux_catalogedsources;*/
-
-CREATE TABLE aux_catalogedsources
+CREATE TABLE aux_catalogedsource
   (aviz_RAJ2000 DOUBLE
   ,aviz_DEJ2000 DOUBLE
   ,aorig_catsrcid INT
@@ -80,13 +77,13 @@ CREATE TABLE aux_catalogedsources
 ;
 
 COPY 229420 RECORDS 
-INTO aux_catalogedsources 
+INTO aux_catalogedsource
 FROM
 '%WENSS%'
 USING DELIMITERS ';', '\n' 
 ;
 
-INSERT INTO catalogedsources
+INSERT INTO catalogedsource
   (orig_catsrcid
   ,catsrcname
   ,cat_id
@@ -105,10 +102,10 @@ INSERT INTO catalogedsources
   ,pa
   ,major
   ,minor
-  ,i_peak_avg
-  ,i_peak_avg_err
-  ,i_int_avg
-  ,i_int_avg_err
+  ,avg_f_peak
+  ,avg_f_peak_err
+  ,avg_f_int
+  ,avg_f_int_err
   ,frame
   )
   SELECT aorig_catsrcid
@@ -164,10 +161,10 @@ INSERT INTO catalogedsources
         ,a_S / 1000
         ,SQRT(C1_sq + C2_sq * (arms / a_S) * (arms / a_S)) * a_S / 1000
         ,aframe
-    FROM aux_catalogedsources
+    FROM aux_catalogedsource
    WHERE a_S > 0
 --     AND af_name a_S > 0
 ;
 
-DROP TABLE aux_catalogedsources;
+DROP TABLE aux_catalogedsource;
 

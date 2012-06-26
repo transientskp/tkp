@@ -1,10 +1,10 @@
 /**
  * This table keeps track of the versions and changes
  */
-CREATE SEQUENCE "seq_versions" AS INTEGER;
+CREATE SEQUENCE "seq_version" AS INTEGER;
 
-CREATE TABLE versions 
-  (versionid INT DEFAULT NEXT VALUE FOR "seq_versions"
+CREATE TABLE version
+  (versionid INT DEFAULT NEXT VALUE FOR "seq_version"
   ,version VARCHAR(32) NULL
   ,creation_ts TIMESTAMP NOT NULL
   ,monet_version VARCHAR(8) NOT NULL
@@ -13,5 +13,6 @@ CREATE TABLE versions
   ,nodes TINYINT NOT NULL DEFAULT %NODES%
   ,scriptname VARCHAR(256) NULL
   ,PRIMARY KEY (versionid)
-  );
+  )
+;
 

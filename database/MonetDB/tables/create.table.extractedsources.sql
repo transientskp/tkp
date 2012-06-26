@@ -11,20 +11,20 @@
  * xtrsrcid         Every inserted source/measurement gets a unique id.
  * image_id         The reference id to the image from which this sources
  *                  was extracted.
- * zone             The zone number in which the source declination resides.
- *                  The width of the zones is determined by the "zoneheight" 
- *                  parameter defined in the zoneheight table.
+ * zone             The zone id in which the source declination resides.
+ *                  The sphere is devided into zones of equal width: here
+ *                  fixed to 1 degree. (decl=31.3 => zone=31)
  * ra               Right ascension of the measurement [in degrees]
  * decl             Declination of the measurement [in degrees]
- * ra_err           The 1sigma error of the ra measurement [in arcsec]
- * decl_err         The 1sigma error of the declination measurement [in arcsec]
+ * ra_err           The 1-sigma error of the ra measurement [in arcsec]
+ * decl_err         The 1-sigma error of the declination measurement [in arcsec]
  * x, y, z:         Cartesian coordinate representation of (ra,decl)
  * margin           Used for association procedures to take into 
  *                  account sources that lie close to ra=0 & ra=360 meridian.
  *                  True: source is close to ra=0 meridian
  *                  False: source is far away enough from the ra=0 meridian
- *                  TODO: This is not implemented yet.
- * det_sigma:       The sigma level of the detection,
+ *                  NOTE & TODO: This is not implemented yet.
+ * det_sigma:       The sigma level of the detection (Hanno's thesis):
  *                  20*(I_peak/det_sigma) gives the rms of the detection.
  * semimajor        Semi-major axis that was used for gauss fitting
  *                  [in arcsec]
@@ -32,28 +32,27 @@
  *                  [in arcsec]
  * pa               Position Angle that was used for gauss fitting 
  *                  [from north through local east, in degrees]
- * I,Q,U,V          Stokes parameters
- *  peak            peak values
- *  int             integrated values
- *  err             1sigma errors
- *                  Fluxes and flux errors are in Jy
+ * f_peak           peak flux [Jy]
+ * f_int            integrated flux [Jy]
+ * f_peak/int_err   1-sigma errors respectively [Jy]
+ * extract_type     Reports how the source was extracted by sourcefinder
+ *                  (Hanno's thesis):
+ *                  1: gaussian fit
+ *                  2: moments fit
+ *                  3: forced fit to pixel
+ * node(s)          Determine the current and number of nodes in case
+ *                  of a sharded database set-up.
  * 
  */
 
---@single node database
---CREATE SEQUENCE "seq_extractedsources" AS INTEGER
---;
-
-
 --@node n
-CREATE SEQUENCE "seq_extractedsources" AS INTEGER 
+CREATE SEQUENCE "seq_extractedsource" AS INTEGER 
   START WITH %NODE%
   INCREMENT BY %NODES%
 ;
 
-
-CREATE TABLE extractedsources 
-  (xtrsrcid INT DEFAULT NEXT VALUE FOR "seq_extractedsources"
+CREATE TABLE extractedsource
+  (xtrsrcid INT DEFAULT NEXT VALUE FOR "seq_extractedsource"
   ,image_id INT NOT NULL
   ,zone INT NOT NULL
   ,ra DOUBLE NOT NULL
@@ -68,14 +67,15 @@ CREATE TABLE extractedsources
   ,semimajor DOUBLE NULL
   ,semiminor DOUBLE NULL
   ,pa DOUBLE NULL
-  ,I_peak DOUBLE NULL
-  ,I_peak_err DOUBLE NULL
-  ,I_int DOUBLE NULL
-  ,I_int_err DOUBLE NULL
+  ,f_peak DOUBLE NULL
+  ,f_peak_err DOUBLE NULL
+  ,f_int DOUBLE NULL
+  ,f_int_err DOUBLE NULL
+  ,extract_type TINYINT NULL
   ,node TINYINT NOT NULL DEFAULT %NODE%
   ,nodes TINYINT NOT NULL DEFAULT %NODES%
   ,PRIMARY KEY (xtrsrcid)
-  ,FOREIGN KEY (image_id) REFERENCES images (imageid)
+  ,FOREIGN KEY (image_id) REFERENCES image (imageid)
   )
 ;
 

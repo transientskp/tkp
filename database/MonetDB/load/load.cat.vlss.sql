@@ -3,7 +3,7 @@ DECLARE i_freq_eff DOUBLE;
 DECLARE iband INT;
 SET icatid = 4;
 
-INSERT INTO catalogs
+INSERT INTO catalog
   (catid
   ,catname
   ,fullname
@@ -19,7 +19,7 @@ SET i_freq_eff = 73800000;
 /*SET iband = getBand(i_freq_eff, 2000000);*/
 SET iband = getBand(i_freq_eff);
 
-CREATE TABLE aux_catalogedsources
+CREATE TABLE aux_catalogedsource
   (aviz_RAJ2000 DOUBLE
   ,aviz_DEJ2000 DOUBLE
   ,aorig_catsrcid INT
@@ -46,7 +46,7 @@ CREATE TABLE aux_catalogedsources
 ;
 
 COPY 68311 RECORDS
-INTO aux_catalogedsources
+INTO aux_catalogedsource
 FROM
 '%VLSS%'
 USING DELIMITERS ';', '\n'
@@ -54,7 +54,7 @@ NULL AS ''
 ;
 
 /* So we can put our FoV conditions in here...*/
-INSERT INTO catalogedsources
+INSERT INTO catalogedsource
   (orig_catsrcid
   ,catsrcname
   ,cat_id
@@ -74,8 +74,8 @@ INSERT INTO catalogedsources
   ,major_err
   ,minor
   ,minor_err
-  ,i_int_avg
-  ,i_int_avg_err
+  ,avg_f_int
+  ,avg_f_int_err
   ,frame
   )
   SELECT aorig_catsrcid
@@ -100,8 +100,8 @@ INSERT INTO catalogedsources
         ,aSi
         ,ae_Si
         ,aSPECFIND
-    FROM aux_catalogedsources
+    FROM aux_catalogedsource
   ;
 
-DROP TABLE aux_catalogedsources;
+DROP TABLE aux_catalogedsource;
 

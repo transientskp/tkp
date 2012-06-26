@@ -20,11 +20,11 @@ tables/create.table.classification.sql
 #
 #system functions
 #
+functions/create.function.degrad.sql
 functions/create.function.alpha.sql
 functions/create.function.getBand.sql
 functions/create.function.insertImage.sql
 functions/create.function.insertDataset.sql
-#functions/create.function.degrad.sql
 procedures/create.procedure.BuildFrequencyBands.sql
 procedures/create.procedure.BuildNodes.sql
 procedures/create.procedure.InsertVersion.sql

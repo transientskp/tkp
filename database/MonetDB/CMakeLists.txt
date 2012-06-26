@@ -11,6 +11,11 @@ install (DIRECTORY .
 	 FILES_MATCHING PATTERN "*.batch"
   	 PATTERN ".svn" EXCLUDE
 	 )
+install (DIRECTORY .
+ 	 DESTINATION ${CMAKE_INSTALL_PREFIX}/database
+	 FILES_MATCHING PATTERN "*.bash"
+  	 PATTERN ".svn" EXCLUDE
+	 )
 install (FILES load/update_catalog_locations.bash 
 	 DESTINATION ${CMAKE_INSTALL_PREFIX}/database/load
 	 )

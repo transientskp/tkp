@@ -25,7 +25,7 @@ BEGIN
 
   SELECT MAX(rerun)
     INTO irerun
-    FROM datasets
+    FROM dataset
    WHERE dsinname = idsinname
   ;
 
@@ -35,9 +35,9 @@ BEGIN
     SET irerun = irerun + 1;
   END IF;
 
-  SELECT NEXT VALUE FOR seq_datasets INTO idsid;
+  SELECT NEXT VALUE FOR seq_dataset INTO idsid;
 
-  INSERT INTO datasets
+  INSERT INTO dataset
     (dsid
     ,rerun
     ,dstype

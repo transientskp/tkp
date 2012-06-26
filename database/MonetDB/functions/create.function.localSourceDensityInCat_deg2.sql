@@ -33,9 +33,9 @@ BEGIN
 
   SELECT COUNT(*)
     INTO ncatsources
-    FROM extractedsources x1
-        ,catalogedsources c1
-        ,catalogs c0
+    FROM extractedsource x1
+        ,catalogedsource c1
+        ,catalog c0
    WHERE c1.cat_id = c0.catid
      AND c0.catname = UPPER(icatname)
      AND x1.xtrsrcid = ixtrsrcid

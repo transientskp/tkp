@@ -8,7 +8,7 @@ BEGIN
   /* Some cataloged sources do not have spectral information
     (e.g. exoplanets) and are referred to freq 0
    */
-  INSERT INTO frequencybands
+  INSERT INTO frequencyband
     (freqbandid
     ,freq_central
     ,freq_low
@@ -22,7 +22,7 @@ BEGIN
     )
   ;
 
-  INSERT INTO frequencybands
+  INSERT INTO frequencyband
     (freq_central
     ,freq_low
     ,freq_high

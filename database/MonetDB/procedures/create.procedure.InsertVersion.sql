@@ -5,7 +5,7 @@
 CREATE PROCEDURE InsertVersion()
 BEGIN
 
-  INSERT INTO versions
+  INSERT INTO version
     (version
     ,creation_ts
     ,monet_version
@@ -17,7 +17,7 @@ BEGIN
     ,(SELECT CAST(NOW() AS TIMESTAMP))
     ,(SELECT value FROM sys.env() WHERE name = 'monet_version')
     ,(SELECT value FROM sys.env() WHERE name = 'monet_release')
-    ,'/pipe/database/pipeline_develop/MonetDB/'
+    ,'setupdb.batch'
     )
   ;
 

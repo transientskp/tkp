@@ -21,13 +21,12 @@
 CREATE SEQUENCE "seq_monitoringlist" AS INTEGER;
 
 CREATE TABLE monitoringlist
-  (
-   monitorid INTEGER NOT NULL DEFAULT next value for "seq_monitoringlist"
+  (monitorid INTEGER NOT NULL DEFAULT NEXT VALUE FOR "seq_monitoringlist"
   ,xtrsrc_id INTEGER 
   ,ra DOUBLE PRECISION DEFAULT 0
   ,decl DOUBLE PRECISION DEFAULT 0
   ,ds_id INTEGER NOT NULL
-  ,userentry BOOLEAN DEFAULT false
+  ,userentry BOOLEAN DEFAULT FALSE
   ,PRIMARY KEY (monitorid)
   )
 ;

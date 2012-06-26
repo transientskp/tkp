@@ -30,8 +30,8 @@ begin
                  /
                  (2 * PI() * SQRT(x1.ra_err * x1.ra_err + x2.ra_err * x2.ra_err) * SQRT(x1.decl_err * x1.decl_err + x2.decl_err * x2.decl_err) * 4.02439375E-06)
                 ) AS assoc_log_lr
-  from extractedsources x1
-      ,extractedsources x2 
+  from extractedsource x1
+      ,extractedsource x2 
  where x1.xtrsrcid = ixtrsrcid1
    and x2.xtrsrcid = ixtrsrcid2
   )

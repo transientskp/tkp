@@ -19,8 +19,8 @@ BEGIN
 
   SELECT x2.xtrsrcid
     INTO oxtrsrcid
-    FROM extractedsources x1
-        ,extractedsources x2
+    FROM extractedsource x1
+        ,extractedsource x2
    WHERE x1.xtrsrcid = ixtrsrcid
      AND x2.image_id = iimageid 
      AND x2.xtrsrcid <> ixtrsrcid
@@ -49,8 +49,8 @@ BEGIN
                                            - SIN(RADIANS(x1.decl))
                                            ), 2)
                                    )
-                           FROM extractedsources x1
-                               ,extractedsources x2
+                           FROM extractedsource x1
+                               ,extractedsource x2
                           WHERE x1.xtrsrcid = ixtrsrcid
                             AND x2.image_id = iimageid 
                             AND x2.xtrsrcid <> ixtrsrcid

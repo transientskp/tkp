@@ -58,9 +58,9 @@ BEGIN
   END IF;
   */
 
-  SELECT NEXT VALUE FOR seq_images INTO iimageid;
+  SELECT NEXT VALUE FOR seq_image INTO iimageid;
 
-  INSERT INTO images
+  INSERT INTO image
     (imageid
     ,ds_id
     ,tau

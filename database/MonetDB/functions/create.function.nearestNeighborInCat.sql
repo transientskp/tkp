@@ -5,7 +5,7 @@ CREATE FUNCTION nearestNeighborInCat(ira DOUBLE
                                      ,icatname VARCHAR(50)
                                      ) RETURNS TABLE (catsrcid INT
                                                      ,catsrcname VARCHAR(120)
-                                                     ,i_int DOUBLE
+                                                     ,avg_f_int DOUBLE
                                                      ,distance_arcsec DOUBLE
                                                      )
 BEGIN
@@ -30,14 +30,14 @@ BEGIN
   (
     SELECT catsrcid
           ,catsrcname
-          ,i_int_avg
+          ,avg_f_int
           ,3600 * DEGREES(2 * ASIN(SQRT((ix - c1.x) * (ix - c1.x)
                                        + (iy - c1.y) * (iy - c1.y)
                                        + (iz - c1.z) * (iz - c1.z)
                                        ) / 2) 
                          ) AS distance_arcsec
-      FROM catalogedsources c1
-          ,catalogs c0
+      FROM catalogedsource c1
+          ,catalog c0
      WHERE c1.cat_id = c0.catid
        AND c0.catname = icatname
        AND c1.x * ix + c1.y * iy + c1.z * iz > COS(RADIANS(itheta))

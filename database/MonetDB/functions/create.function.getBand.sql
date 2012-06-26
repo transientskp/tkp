@@ -25,7 +25,7 @@ BEGIN
 
   SELECT COUNT(*)
     INTO nfreqbandid
-    FROM frequencybands
+    FROM frequencyband
    WHERE freq_low <= ifreq_eff
      AND freq_high >= ifreq_eff
   ;
@@ -33,13 +33,13 @@ BEGIN
   IF nfreqbandid = 1 THEN
     SELECT freqbandid
       INTO ifreqbandid
-      FROM frequencybands
+      FROM frequencyband
      WHERE freq_low <= ifreq_eff
        AND freq_high >= ifreq_eff
     ;
   ELSE
-    SELECT NEXT VALUE FOR seq_frequencybands INTO ifreqbandid;
-    INSERT INTO frequencybands
+    SELECT NEXT VALUE FOR seq_frequencyband INTO ifreqbandid;
+    INSERT INTO frequencyband
       (freqbandid
       ,freq_central
       ,freq_low

@@ -17,8 +17,8 @@ BEGIN
                                      + (x1.z - c1.z) * (x1.z - c1.z)  
                                      ) / 2) ) AS distance_arcsec
     INTO dist
-    FROM extractedsources x1
-        ,catalogedsources c1
+    FROM extractedsource x1
+        ,catalogedsource c1
    WHERE x1.xtrsrcid = ixtrsrcid     
      AND c1.catsrcid = icatsrcid 
   ;

@@ -11,10 +11,10 @@ CREATE FUNCTION neighborsInCats(ira DOUBLE
                                                ,decl DOUBLE
                                                ,ra_err DOUBLE
                                                ,decl_err DOUBLE
-                                               ,i_peak DOUBLE
-                                               ,i_peak_err DOUBLE
-                                               ,i_int DOUBLE
-                                               ,i_int_err DOUBLE
+                                               ,avg_f_peak DOUBLE
+                                               ,avg_f_peak_err DOUBLE
+                                               ,avg_f_int DOUBLE
+                                               ,avg_f_int_err DOUBLE
                                                ,distance_arcsec DOUBLE
                                                )
 BEGIN
@@ -46,17 +46,17 @@ BEGIN
           ,decl
           ,ra_err
           ,decl_err
-          ,i_peak_avg
-          ,i_peak_avg_err
-          ,i_int_avg
-          ,i_int_avg_err
+          ,avg_f_peak
+          ,avg_f_peak_err
+          ,avg_f_int
+          ,avg_f_int_err
           ,3600 * DEGREES(2 * ASIN(SQRT(  (ix - c1.x) * (ix - c1.x)
                                         + (iy - c1.y) * (iy - c1.y)
                                         + (iz - c1.z) * (iz - c1.z)
                                        ) / 2) 
                      ) AS distance_arcsec
-      FROM catalogedsources c1
-          ,catalogs c0
+      FROM catalogedsource c1
+          ,catalog c0
      WHERE c1.cat_id = c0.catid
        AND c1.x * ix + c1.y * iy + c1.z * iz > COS(RADIANS(itheta))
        AND c1.zone BETWEEN CAST(FLOOR((idecl - itheta) / izoneheight) AS INTEGER)

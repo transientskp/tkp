@@ -9,7 +9,7 @@ MONETDB_DATABASE="trap"
 MONETDB_USERNAME="trap"
 MONETDB_PASSWORD="trap"
 MONETDB_RECREATE=true
-#MONETDB_PORT="5000"
+#MONETDB_PORT="50000"
 #MONETDB_HOST="localhost"
 #MONETDB_PARAMS="-h${MONETDB_HOST} -p${MONETDB_PORT}"
 
@@ -21,9 +21,9 @@ MONETDB_RECREATE=true
 declare -A tokens
 tokens["%NODE%"]=1
 tokens["%NODES%"]=10
-tokens["%NVSS%"]="/scratch/catfiles/NVSS-all_strip.csv"
-tokens["%VLSS%"]="/scratch/catfiles/VLSS-all_strip.csv"
-tokens["%WENSS%"]="/scratch/catfiles/WENSS-all_strip.csv"
+tokens["%NVSS%"]="/home/bscheers/catfiles/nvss/NVSS-all_strip.csv"
+tokens["%VLSS%"]="/home/bscheers/catfiles/vlss//VLSS-all_strip.csv"
+tokens["%WENSS%"]="/home/bscheers/catfiles/wenss/WENSS-all_strip.csv"
 
 
 # Non-configurable variables
@@ -74,14 +74,23 @@ create_database() {
 }
 
 set_credentials() {
-   mclient -h$host -p$port -d$dbname <<-EOF
-ALTER USER "monetdb" RENAME TO "${adminuser}";
-ALTER USER SET PASSWORD '${adminpassword}' USING OLD PASSWORD 'monetdb';
-CREATE SCHEMA "${dbname}" AUTHORIZATION "${adminuser}";
-ALTER USER "${adminuser}" SET SCHEMA "${dbname}";
+   mclient -d${MONETDB_DATABASE} <<-EOF
+ALTER USER "monetdb" RENAME TO "${MONETDB_USERNAME}";
+ALTER USER SET PASSWORD '${MONETDB_PASSWORD}' USING OLD PASSWORD 'monetdb';
+CREATE SCHEMA "${MONETDB_DATABASE}" AUTHORIZATION "${MONETDB_USERNAME}";
+ALTER USER "${MONETDB_USERNAME}" SET SCHEMA "${MONETDB_DATABASE}";
+EOF
+
+    DOTMONETDBFILE=.${MONETDB_DATABASE}
+    cat > $DOTMONETDBFILE <<EOF
+user=${MONETDB_USERNAME}
+password=${MONETDB_PASSWORD}
 EOF
 }
 
+rm_dotmonetdbfile() {
+    rm $DOTMONETDBFILE
+}
 
 # the real code
 ###############
@@ -90,6 +99,7 @@ if ${MONETDB_RECREATE}; then
 	message "(re)creating database ${MONETDB_DATABASE}"
 	destroy_database
 	create_database
+    set_credentials
 fi
 
 for sql_file in $(cat ${BATCH_FILE} | grep -v ^#); do
@@ -104,4 +114,8 @@ for sql_file in $(cat ${BATCH_FILE} | grep -v ^#); do
 	echo "${sql}" | mclient -d${MONETDB_DATABASE}
 	fail_check "failed to load SQL:\n ${sql}"
 done 
+
+if ${MONETDB_RECREATE}; then
+    rm_dotmonetdbfile
+fi
 

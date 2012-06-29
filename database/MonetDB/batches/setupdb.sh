@@ -95,6 +95,10 @@ rm_dotmonetdbfile() {
 # the real code
 ###############
 
+#echo "WHEREAMI=${WHEREAMI}"
+#echo "WHATAMI=${WHATAMI}"
+#echo "SQLFILES=${SQLFILES}"
+
 if ${MONETDB_RECREATE}; then
 	message "(re)creating database ${MONETDB_DATABASE}"
 	destroy_database
@@ -102,10 +106,10 @@ if ${MONETDB_RECREATE}; then
     set_credentials
 fi
 
-for sql_file in $(cat ${BATCH_FILE} | grep -v ^#); do
+for sql_file in $(cat ${WHEREAMI}/${BATCH_FILE} | grep -v ^#); do
 	# replace tokens in sql files
 	sql=`cat ${SQLFILES}/${sql_file}`
-	for token in ${!tokens[*]}; do
+    for token in ${!tokens[*]}; do
 		sql="${sql//${token}/${tokens[${token}]}}"
 	done	
 

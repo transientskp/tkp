@@ -16,9 +16,9 @@ MONETDB_RECREATE=true
 WHEREAMI="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 WHATAMI="$0"
 SQLFILES=${WHEREAMI}/sql
-NVSS=${WHEREAMI}/catfiles/nvss/nvss.csv
-VLSS=${WHEREAMI}/catfiles/vlss/vlss.csv
-WENSS=${WHEREAMI}/catfiles/wenss/wenss.csv
+NVSS=${WHEREAMI}/catalog/nvss/nvss.csv
+VLSS=${WHEREAMI}/catalog/vlss/vlss.csv
+WENSS=${WHEREAMI}/catalog/wenss/wenss.csv
 
 
 # Here you can specify what string in a SQL file to replace with what

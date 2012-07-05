@@ -16,15 +16,15 @@
  *
  */
 CREATE FUNCTION insertImage(ids_id INT
-                           /*,itau INT
-                           ,itau_time DOUBLE*/
+                           ,itau INT
+                           ,itau_time DOUBLE
                            ,ifreq_eff DOUBLE
                            ,ifreq_bw DOUBLE
                            ,itaustart_ts TIMESTAMP
+                           ,ibeam_maj DOUBLE
+                           ,ibeam_min DOUBLE
+                           ,ibeam_pa DOUBLE
                            ,iurl VARCHAR(1024)
-                           /*,beam_maj DOUBLE
-                           ,beam_min DOUBLE
-                           ,beam_pa DOUBLE*/
                            ) RETURNS INT
 BEGIN
 
@@ -32,13 +32,6 @@ BEGIN
   DECLARE oimageid INT;
   /*DECLARE iseq_nr INT;*/
   DECLARE iband INT;
-  DECLARE itau INT;
-  DECLARE itau_time DOUBLE;
-  SELECT 1
-        ,3600
-    INTO itau
-        ,itau_time
-  ;
 
   SET iband = getBand(ifreq_eff);
   
@@ -69,10 +62,10 @@ BEGIN
     ,freq_eff
     ,freq_bw
     ,taustart_ts
+    ,bsmaj
+    ,bsmin
+    ,bpa
     ,url
-    /*,beam_semimaj
-    ,beam_semimin
-    ,beam_pa*/
     ) 
   VALUES
     (iimageid
@@ -83,10 +76,10 @@ BEGIN
     ,ifreq_eff
     ,ifreq_bw
     ,itaustart_ts
+    ,ibeam_maj 
+    ,ibeam_min 
+    ,ibeam_pa 
     ,iurl
-    /*,beam_semimaj
-    ,beam_semimin
-    ,beam_pa*/
     )
   ;
 

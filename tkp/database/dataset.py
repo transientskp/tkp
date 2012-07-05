@@ -391,11 +391,18 @@ class Image(DBObject):
 
         if self._id is None:
             try:
+                if 'bsmaj' not in self._data:
+                    self._data['bsmaj']=None
+                    self._data['bsmin']=None
+                    self._data['bpa']=None
                 # Insert a default image
                 self._id = dbu.insert_image(
                     self.database.connection, self.dataset.id,
                     self._data['freq_eff'], self._data['freq_bw'],
-                    self._data['taustart_ts'], self._data['url']
+                    self._data['taustart_ts'],self._data['tau_time'],
+                    self._data['bsmaj'],self._data['bsmin'],  
+                    self._data['bpa'],
+                    self._data['url'],
                 )
             except self.database.Error, e:
                 logging.warn("insertion of Image() into the database failed")

@@ -386,7 +386,7 @@ def dbimage_from_accessor(dataset, image):
 
         (dataset.Image): a dataset.Image instance.
     """
-    from ..database.dataset import Image
+    from ..database.dataset import Image as DBImage
 
     if image.freqeff is None or image.freqbw is None:
         raise ValueError("cannot create database image: frequency information missing")
@@ -396,8 +396,11 @@ def dbimage_from_accessor(dataset, image):
             'taustart_ts': image.obstime.strftime("%Y-%m-%d %H:%M:%S.%f"),
             'url': image.filename,
             'band': 0,    # not yet clearly defined
+            'bsmaj': float(image.beam[0]), ## NB We must cast to a standard python float
+            'bsmin': float(image.beam[1]), ## as Monetdb converter cannot handle numpy.float64
+            'bpa': float(image.beam[2]),
             }
-    image = Image(data=data, dataset=dataset)
+    image = DBImage(data=data, dataset=dataset)
     return image
 
 

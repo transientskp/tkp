@@ -46,21 +46,32 @@ def insert_dataset(conn, description):
     return newdsid
 
 
-def insert_image(conn, dsid, freq_eff, freq_bw, taustart_ts, url):
+def insert_image(conn, dsid, 
+                 freq_eff, freq_bw, 
+                 taustart_ts, tau_time,
+                 beam_maj, beam_min,
+                 beam_pa,  
+                 url):
     """Insert an image for a given dataset with the column values
     given in the argument list.
     """
+    tau_mode = 0 ###Placeholder, this variable is not well defined currently.
 
     newimgid = None
     try:
         cursor = conn.cursor()
         query = """\
-        SELECT insertImage(%s, %s, %s, %s, %s)
+        SELECT insertImage(%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
         """
         cursor.execute(query, (dsid
+                              ,tau_mode
+                              ,tau_time
                               ,freq_eff
                               ,freq_bw
                               ,taustart_ts
+                              ,beam_maj
+                              ,beam_min
+                              ,beam_pa                              
                               ,url
                               ))
         newimgid = cursor.fetchone()[0]

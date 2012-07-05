@@ -739,6 +739,10 @@ class Detection(object):
             raise AttributeError(attrname)
 
     def __str__(self):
+        """Note that for fluxes of less than 10mJy this often displays as 0.00!
+        
+        To do: Fiddle the formatting to something more reasonable.
+        """
         return "(%.2f, %.2f) +/- (%.2f, %.2f): %.2f +/- %.2f" % (
             self.ra.value, self.dec.value, self.ra.error*3600, self.dec.error*3600,
             self.peak.value, self.peak.error)

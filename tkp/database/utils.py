@@ -233,7 +233,18 @@ def insert_extracted_sources(conn, image_id, results):
 
     Therefore, we use a temporary table containing the "raw" detections,
     from which the sources will then be inserted into extractedsources.
+    
+    (ra, dec,
+    ra_err, dec_err, 
+    peak, peak_err, 
+    flux, flux_err,
+    significance level,
+    beam major width (as), beam minor width(as),
+    beam parallactic angle).
     """
+    
+    #To do: Figure out a saner method of passing the results around
+    # (Namedtuple for starters?) 
 
     _empty_detections(conn)
     _insert_into_detections(conn, results)

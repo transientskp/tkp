@@ -1,6 +1,5 @@
 #!/usr/bin/env bash
 
-
 # Configurables
 ###############
 
@@ -9,9 +8,6 @@ MONETDB_DATABASE="trap"
 MONETDB_USERNAME="trap"
 MONETDB_PASSWORD="trap"
 MONETDB_RECREATE=true
-#MONETDB_PORT="50000"
-#MONETDB_HOST="localhost"
-#MONETDB_PARAMS="-h${MONETDB_HOST} -p${MONETDB_PORT}"
 
 
 # Non-configurable variables
@@ -23,7 +19,6 @@ SQLFILES=${WHEREAMI}/sql
 NVSS=${WHEREAMI}/catfiles/nvss/nvss.csv
 VLSS=${WHEREAMI}/catfiles/vlss/vlss.csv
 WENSS=${WHEREAMI}/catfiles/wenss/wenss.csv
-
 
 
 # Here you can specify what string in a SQL file to replace with what
@@ -42,11 +37,11 @@ tokens["%WENSS%"]=${WENSS}
 ###########
 
 message() {
-    echo "*** ${WHATAMI}: $1"
+    echo -e "*** ${WHATAMI}: $1"
 }
 
 error_message() {
-    echo "*** ${WHATAMI}: ERROR: $1" >&2
+    echo -e "*** ${WHATAMI}: ERROR: $1" >&2
 }
 
 check_file() {
@@ -66,7 +61,7 @@ fail_check() {
 
 run() {
     message "running ${1}"
-    eval ${1}
+    eval ${1} 
     fail_check "running ${1} failed"
 }
 
@@ -101,6 +96,7 @@ restore_monetconffile() {
     message "restoring monetdb config file ~/.monetdb"
     mv ~/.monetdb.old ~/.monetdb
 }
+
 
 # the real code
 ###############
@@ -146,9 +142,6 @@ for sql_file in $(cat ${WHEREAMI}/${BATCH_FILE} | grep -v ^#); do
 	# and then run it it
 	message "processing ${sql_file}"
 	echo "${sql}" | mclient -d${MONETDB_DATABASE}
-	fail_check "failed to load SQL:
-
-${sql}"
+	fail_check "failed to load SQL: ${sql}"
 done 
-
 

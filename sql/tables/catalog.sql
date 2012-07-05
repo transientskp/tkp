@@ -5,8 +5,8 @@
 CREATE SEQUENCE "seq_catalog" AS INTEGER;
 
 CREATE TABLE catalog (
-  catid INT DEFAULT NEXT VALUE FOR "seq_catalog",
-  catname VARCHAR(50) NOT NULL,
-  fullname VARCHAR(250) NOT NULL,
-  PRIMARY KEY (catid)
+  catid INT DEFAULT NEXT VALUE FOR "seq_catalog"
+  ,catname VARCHAR(50) NOT NULL
+  ,fullname VARCHAR(250) NOT NULL
+  ,PRIMARY KEY (catid)
 );

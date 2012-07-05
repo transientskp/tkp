@@ -4,7 +4,7 @@
 # Configurables
 ###############
 
-BATCH_FILE="sql_files"
+BATCH_FILE="sql/batch"
 MONETDB_DATABASE="trap"
 MONETDB_USERNAME="trap"
 MONETDB_PASSWORD="trap"
@@ -19,7 +19,11 @@ MONETDB_RECREATE=true
 
 WHEREAMI="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 WHATAMI="$0"
-SQLFILES=${WHEREAMI}/..
+SQLFILES=${WHEREAMI}/sql
+NVSS=${WHEREAMI}/catfiles/nvss/nvss.csv
+VLSS=${WHEREAMI}/catfiles/vlss/vlss.csv
+WENSS=${WHEREAMI}/catfiles/wenss/wenss.csv
+
 
 
 # Here you can specify what string in a SQL file to replace with what
@@ -29,9 +33,9 @@ SQLFILES=${WHEREAMI}/..
 declare -A tokens
 tokens["%NODE%"]=1
 tokens["%NODES%"]=10
-tokens["%NVSS%"]="${WHEREAMI}/../../catfiles/nvss/nvss.csv"
-tokens["%VLSS%"]="/${WHEREAMI}/../../catfiles/vlss/vlss.csv"
-tokens["%WENSS%"]="${WHEREAMI}/../../catfiles/wenss/wenss.csv"
+tokens["%NVSS%"]=${NVSS}
+tokens["%VLSS%"]=${VLSS}
+tokens["%WENSS%"]=${WENSS}
 
 
 # Functions
@@ -43,6 +47,14 @@ message() {
 
 error_message() {
     echo "*** ${WHATAMI}: ERROR: $1" >&2
+}
+
+check_file() {
+	message "checking if $1 exists"
+	if [ ! -f $1 ]; then
+		error_message "$2"
+		exit 1
+	fi
 }
 
 fail_check() {
@@ -93,9 +105,9 @@ restore_monetconffile() {
 # the real code
 ###############
 
-#echo "WHEREAMI=${WHEREAMI}"
-#echo "WHATAMI=${WHATAMI}"
-#echo "SQLFILES=${SQLFILES}"
+for i in ${NVSS} ${VLSS} ${WENSS}; do
+	check_file $i "please download a catalog or symlink something to $i"
+done
 
 if ${MONETDB_RECREATE}; then
 	message "(re)creating database ${MONETDB_DATABASE}"
@@ -119,7 +131,6 @@ EOF
 user=${MONETDB_USERNAME}
 password=${MONETDB_PASSWORD}
 EOF
-
 
     # always run this on exit
     trap restore_monetconffile EXIT

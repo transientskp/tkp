@@ -11,5 +11,5 @@ make symlinks, something like this::
 
 then run the setup script to populate your database::
  
-  $ ./setupdb.sh
+  $ ./setup.sh
 

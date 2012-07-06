@@ -45,15 +45,9 @@
  * 
  */
 
---@node n
-CREATE SEQUENCE "seq_extractedsource" AS INTEGER 
-  START WITH %NODE%
-  INCREMENT BY %NODES%
-;
-
 CREATE TABLE extractedsource
-  (xtrsrcid INT DEFAULT NEXT VALUE FOR "seq_extractedsource"
-  ,image_id INT NOT NULL
+  (id INT AUTO_INCREMENT
+  ,image INT NOT NULL
   ,zone INT NOT NULL
   ,ra DOUBLE NOT NULL
   ,decl DOUBLE NOT NULL
@@ -74,8 +68,9 @@ CREATE TABLE extractedsource
   ,extract_type TINYINT NULL
   ,node TINYINT NOT NULL DEFAULT %NODE%
   ,nodes TINYINT NOT NULL DEFAULT %NODES%
-  ,PRIMARY KEY (xtrsrcid)
-  ,FOREIGN KEY (image_id) REFERENCES image (imageid)
+  ,PRIMARY KEY (id)
+  ,FOREIGN KEY (image) REFERENCES image (id)
+
   )
 ;
 

@@ -18,13 +18,10 @@
  * avg_weight_decl := avg(1/decl_err^2)
  */
 
-CREATE SEQUENCE "seq_runningcatalog" AS INTEGER;
-
 CREATE TABLE runningcatalog
-  (runcatid INT DEFAULT NEXT VALUE FOR "seq_runningcatalog"
-  ,xtrsrc_id INT NOT NULL
-  ,ds_id INT NOT NULL
-  --,band INT NOT NULL
+  (id INT AUTO_INCREMENT
+  ,xtrsrc INT NOT NULL
+  ,dataset INT NOT NULL
   ,datapoints INT NOT NULL
   ,zone INT NOT NULL
   ,wm_ra DOUBLE NOT NULL
@@ -39,14 +36,9 @@ CREATE TABLE runningcatalog
   ,y DOUBLE NOT NULL
   ,z DOUBLE NOT NULL
   ,margin BOOLEAN NOT NULL DEFAULT 0
-  --,beam_semimaj DOUBLE NULL
-  --,beam_semimin DOUBLE NULL
-  --,beam_pa DOUBLE NULL
-  --,avg_I_peak DOUBLE NULL
-  --,avg_I_peak_sq DOUBLE NULL
-  --,avg_weight_peak DOUBLE NULL
-  --,avg_weighted_I_peak DOUBLE NULL
-  --,avg_weighted_I_peak_sq DOUBLE NULL
+  ,PRIMARY KEY(id)
+  ,FOREIGN KEY (xtrsrc) REFERENCES extractedsource (id)
+  ,FOREIGN KEY (dataset) REFERENCES dataset (id)
   )
 ;
 

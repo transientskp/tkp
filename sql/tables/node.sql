@@ -11,5 +11,6 @@ CREATE TABLE node
   ,zone_max_incl BOOLEAN DEFAULT FALSE
   ,zoneheight DOUBLE DEFAULT 1.0
   ,nodes TINYINT NOT NULL DEFAULT %NODES%
+  ,PRIMARY KEY (node, zone)
   )
 ;

@@ -27,15 +27,18 @@
  */
 
 CREATE TABLE assocxtrsource
-  (runcat_id INT NOT NULL
-  ,assoc_xtrsrc_id INT NULL
-  ,assoc_type TINYINT NOT NULL
-  ,assoc_distance_arcsec DOUBLE NULL
-  ,assoc_r DOUBLE NULL
-  ,assoc_loglr DOUBLE NULL
-  ,PRIMARY KEY (runcat_id
-               ,assoc_xtrsrc_id
+  (runcat INT NOT NULL
+  ,xtrsrc INT NULL
+  ,"type" TINYINT NOT NULL
+  ,distance_arcsec DOUBLE NULL
+  ,r DOUBLE NULL
+  ,loglr DOUBLE NULL
+  ,PRIMARY KEY (runcat
+               ,xtrsrc
                )
+  ,FOREIGN KEY (runcat) REFERENCES runningcatalog (id)
+  ,FOREIGN KEY (xtrsrc) REFERENCES extractedsource (id)
   )
+
 ;
 

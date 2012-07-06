@@ -113,7 +113,6 @@ try:
             cursor.execute(sql_insert_image, (params[0],params[1],params[2],params[3],params[4]))
             query2_time = time.time() - query_start
             print "\tQuery ", query, ": ", str(round(query2_time*1000,2)), "ms"
-            #imgid = cursor.fetchone()[0]
             imgid = int(cursor.lastrowid)
             conn.commit()
             #print "imgid = ", imgid

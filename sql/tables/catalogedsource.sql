@@ -14,11 +14,10 @@
  * TODO: Probably it is better not te set catsrcid to auto_incr,
  * because we will copy them from the catalog database.
  */
-CREATE SEQUENCE "seq_catalogedsource" AS INTEGER;
 
 CREATE TABLE catalogedsource 
-  (catsrcid INT DEFAULT NEXT VALUE FOR "seq_catalogedsource"
-  ,cat_id INT NOT NULL
+  (id INT AUTO_INCREMENT
+  ,catalog INT NOT NULL
   ,orig_catsrcid INT NOT NULL
   ,catsrcname VARCHAR(120) NULL
   ,tau INT NULL
@@ -50,9 +49,9 @@ CREATE TABLE catalogedsource
   ,avg_f_int DOUBLE NULL
   ,avg_f_int_err DOUBLE NULL
   ,frame VARCHAR(20) NULL
-  ,PRIMARY KEY (catsrcid)
-  ,FOREIGN KEY (cat_id) REFERENCES catalog (catid)
-  ,FOREIGN KEY (band) REFERENCES frequencyband (freqbandid)
+  ,PRIMARY KEY (id)
+  ,FOREIGN KEY (catalog) REFERENCES catalog (id)
+  ,FOREIGN KEY (band) REFERENCES frequencyband (id)
   )
 ;
 

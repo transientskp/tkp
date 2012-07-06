@@ -16,11 +16,10 @@
  *                 NOTE that these *ARE* the semimajor axes.
  * centr_ra and _decl are the central coordinates (J2000) of the image in degrees.
  */
-CREATE SEQUENCE "seq_image" AS INTEGER;
 
 CREATE TABLE image 
-  (imageid INT DEFAULT NEXT VALUE FOR "seq_image"
-  ,ds_id INT NOT NULL
+  (id INT AUTO_INCREMENT
+  ,dataset INT NOT NULL
   ,tau INT NOT NULL
   ,band INT NOT NULL
   ,stokes CHAR(1) NOT NULL DEFAULT 'I'
@@ -34,8 +33,8 @@ CREATE TABLE image
   ,url VARCHAR(120) NULL
   ,node TINYINT NOT NULL DEFAULT %NODE%
   ,nodes TINYINT NOT NULL DEFAULT %NODES%
-  ,PRIMARY KEY (imageid)
-  ,FOREIGN KEY (ds_id) REFERENCES dataset (dsid)
-  ,FOREIGN KEY (band) REFERENCES frequencyband (freqbandid)
+  ,PRIMARY KEY (id)
+  ,FOREIGN KEY (dataset) REFERENCES dataset (id)
+  ,FOREIGN KEY (band) REFERENCES frequencyband (id)
   );
 

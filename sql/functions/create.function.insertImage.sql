@@ -42,22 +42,6 @@ BEGIN
 
   SET iband = getBand(ifreq_eff);
   
-  /*
-  SELECT MAX(seq_nr)
-    INTO iseq_nr
-    FROM images
-   WHERE ds_id = ids_id
-     AND tau = itau
-     AND band = iband
-  ;
-
-  IF iseq_nr IS NULL THEN
-    SET iseq_nr = 1;
-  ELSE
-    SET iseq_nr = iseq_nr + 1;
-  END IF;
-  */
-
   SELECT NEXT VALUE FOR seq_image INTO iimageid;
 
   INSERT INTO image

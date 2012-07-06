@@ -1,7 +1,6 @@
 #!/usr/bin/env bash
 
 WHEREAMI="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
-WHATAMI="$0"
 SQLFILES=${WHEREAMI}/sql
 NVSS=${WHEREAMI}/catalog/nvss/nvss.csv
 VLSS=${WHEREAMI}/catalog/vlss/vlss.csv

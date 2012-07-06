@@ -1,15 +1,16 @@
 --DROP TABLE temprunningcatalog;
 /* This table contains the unique sources that were detected
  * during an observation.
- * TODO: The resolution element (from images table) is not implemented yet
  * Extractedsources not in this table are appended when there is no positional match
  * or when a source was detected in a higher resolution image.
  */
---DROP TABLE tempbasesources;
+
+--TODO: The resolution element (from images table) is not implemented yet
+
 CREATE TABLE temprunningcatalog 
-  (xtrsrc_id INT NOT NULL
-  ,assoc_xtrsrc_id INT NOT NULL
-  ,ds_id INT NOT NULL
+  (runcat INT NOT NULL
+  ,xtrsrc INT NOT NULL
+  ,dataset INT NOT NULL
   ,band INT NOT NULL
   ,stokes TINYINT NOT NULL DEFAULT 1
   ,datapoints INT NOT NULL
@@ -34,6 +35,11 @@ CREATE TABLE temprunningcatalog
   ,avg_weight_peak DOUBLE NULL
   ,avg_weighted_I_peak DOUBLE NULL
   ,avg_weighted_I_peak_sq DOUBLE NULL
+  ,FOREIGN KEY (runcat) REFERENCES runningcatalog (id)
+  ,FOREIGN KEY (xtrsrc) REFERENCES extractedsource (id)
+  ,FOREIGN KEY (dataset) REFERENCES dataset (id)
+  ,FOREIGN KEY (band) REFERENCES frequencyband (id)
   )
+
 ;
 

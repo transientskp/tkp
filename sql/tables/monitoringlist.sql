@@ -18,15 +18,17 @@
  * of the runningcatalog.
  */
 
-CREATE SEQUENCE "seq_monitoringlist" AS INTEGER;
+-- TODO: maybe add this?:
+--,FOREIGN KEY (xtrsrc) REFERENCES extractedsource (id)
 
 CREATE TABLE monitoringlist
-  (monitorid INTEGER NOT NULL DEFAULT NEXT VALUE FOR "seq_monitoringlist"
-  ,xtrsrc_id INTEGER 
-  ,ra DOUBLE PRECISION DEFAULT 0
-  ,decl DOUBLE PRECISION DEFAULT 0
+  (id INTEGER AUTO_INCREMENT
+  ,xtrsrc INTEGER
+  ,ra DOUBLE DEFAULT 0
+  ,decl DOUBLE DEFAULT 0
   ,ds_id INTEGER NOT NULL
   ,userentry BOOLEAN DEFAULT FALSE
-  ,PRIMARY KEY (monitorid)
+  ,PRIMARY KEY (id)
+
   )
 ;

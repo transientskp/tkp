@@ -11,7 +11,7 @@
  * avg_weighted_f_peak_sq   := average of ratio of (peak flux squared) and (peak flux errors squared)
  */
 CREATE TABLE runningcatalog_flux
-  (runcat_id INT NOT NULL
+  (runcat INT NOT NULL
   ,band INT NOT NULL
   ,stokes TINYINT NOT NULL DEFAULT 1
   ,f_datapoints INT NOT NULL
@@ -30,6 +30,8 @@ CREATE TABLE runningcatalog_flux
                ,band
                ,stokes
                )
+  ,FOREIGN KEY (runcat) REFERENCES runningcatalog (id)
+  ,FOREIGN KEY (band) REFERENCES frequencyband (id)
   )
 ;
 

@@ -92,24 +92,18 @@ class FitsFile(unittest.TestCase):
                                    beam=(54./3600, 54./3600, 0.))
         sfimage = accessors.sourcefinder_image_from_accessor(image)
 
-    @requires_module("pyrap")
-    @requires_data(os.path.join(DATAPATH, 'CX3_peeled.image/'))
-    def testSFImageFromAIPSpp(self):
-        image = accessors.AIPSppImage(os.path.join(DATAPATH, 'CX3_peeled.image/'),
-                                      beam=(54./3600, 54./3600, 0.))
-        sfimage = accessors.sourcefinder_image_from_accessor(image)
-
 
 class DataBaseImage(unittest.TestCase):
 
     @requires_database()
-    @requires_data(os.path.join(DATAPATH, 'CX3_peeled.image/'))
+    @requires_data(os.path.join(DATAPATH, 'L15_12h_const/observed-all.fits'))
     def testDBImageFromAccessor(self):
-        from tkp.database.database import DataBase
+        import tkp.database.database 
         from tkp.database.dataset import DataSet
-        image = accessors.AIPSppImage(os.path.join(DATAPATH, 'CX3_peeled.image/'),
+        image = accessors.FitsFile(os.path.join(DATAPATH, 'L15_12h_const/observed-all.fits'),
                                       beam=(54./3600, 54./3600, 0.))
-        database = DataBase()
+        
+        database = tkp.database.database.DataBase()
         dataset = DataSet(data={'dsinname': 'dataset'}, database=database)
         dbimage = accessors.dbimage_from_accessor(dataset, image)
 

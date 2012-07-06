@@ -10,8 +10,8 @@ from utility.decorators import requires_database
 class TestDatabase(unittest.TestCase):
 
     def setUp(self):
-        import utility.database_subroutines         
-        self.database = utility.database_subroutines.TestDatabase()
+        import tkp.database.database
+        self.database = tkp.database.database.DataBase()
 
     def tearDown(self):
         self.database.close()

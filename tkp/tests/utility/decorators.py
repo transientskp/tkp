@@ -9,6 +9,9 @@ except AttributeError:
 
 def requires_database():
     if tkp.config.config['database']['enabled']:
+        tkp.config.config['database']['name']=tkp.config.config['test']['test_database_name']
+        tkp.config.config['database']['user']=tkp.config.config['test']['test_database_name']
+        tkp.config.config['database']['password']=tkp.config.config['test']['test_database_name']
         return lambda func: func
     return unittest.skip("Database functionality disabled in configuration")
 

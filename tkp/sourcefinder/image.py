@@ -363,7 +363,7 @@ class ImageData(object):
                     startx:startx + CONFIG['back_sizex'],
                     starty:starty + CONFIG['back_sizey']
                 ].ravel()
-                chunk, sigma, median, no_clip = stats.sigma_clip(
+                chunk, sigma, median, num_clip_its = stats.sigma_clip(
                     chunk, self.beam)
                 mean = numpy.mean(chunk)
 
@@ -381,11 +381,11 @@ class ImageData(object):
                     # estimator devised by Karl Pearson.
                     if numpy.fabs(mean - median) / sigma >= 0.3:
                         logging.debug(
-                            'bg skewed, %f clipping iterations', no_clip)
+                            'bg skewed, %f clipping iterations', num_clip_its)
                         bgrow.append(median)
                     else:
                         logging.debug(
-                            'bg not skewed, %f clipping iterations', no_clip)
+                            'bg not skewed, %f clipping iterations', num_clip_its)
                         bgrow.append(2.5 * median - 1.5 * mean)
 
             rmsgrid.append(rmsrow)

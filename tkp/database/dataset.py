@@ -391,11 +391,18 @@ class Image(DBObject):
 
         if self._id is None:
             try:
+                if 'bsmaj' not in self._data:
+                    self._data['bsmaj']=None
+                    self._data['bsmin']=None
+                    self._data['bpa']=None
                 # Insert a default image
                 self._id = dbu.insert_image(
                     self.database.connection, self.dataset.id,
                     self._data['freq_eff'], self._data['freq_bw'],
-                    self._data['taustart_ts'], self._data['url']
+                    self._data['taustart_ts'],self._data['tau_time'],
+                    self._data['bsmaj'],self._data['bsmin'],  
+                    self._data['bpa'],
+                    self._data['url'],
                 )
             except self.database.Error, e:
                 logging.warn("insertion of Image() into the database failed")
@@ -435,10 +442,18 @@ class Image(DBObject):
                 utility.containers.ExtractionResult objects (as
                 returned from
                 sourcefinder.image.ImageData().extract()), or a list
-                of data tuples with the source information (zone, ra, dec,
-                ra_err, dec_err, x, y, z, det_sigma, peak, peak_err, flux, flux_err,
-                major, minor, angle).
+                of data tuples with the source information as follows:
+                (ra, dec,
+                ra_err, dec_err, 
+                peak, peak_err, 
+                flux, flux_err,
+                significance level,
+                beam major width (as), beam minor width(as),
+                beam parallactic angle).
        """
+       #To do: Figure out a saner method of passing the results around
+       # (Namedtuple, for starters?)
+       
         dbu.insert_extracted_sources(
             self.database.connection, self._id, results=results)
         

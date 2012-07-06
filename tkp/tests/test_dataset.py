@@ -158,9 +158,9 @@ class TestImage(unittest.TestCase):
         image1.update()
         self.assertEqual(image1.taustart_ts, datetime.datetime(2010, 3, 3))
 
-
+    
 class TestExtractedSource(unittest.TestCase):
-
+    
     def setUp(self):
         import tkp.database.database
         self.database = tkp.database.database.DataBase()

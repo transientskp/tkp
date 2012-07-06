@@ -1,22 +1,6 @@
---DROP TABLE runningcatalog;
-/* This table contains the unique sources that were detected
- * during an observation.
+/* 
  * TODO: The resolution element (from images table) is not implemented yet
- * Extractedsources not in this table are appended when there is no positional match
- * or when a source was detected in a higher resolution image.
- *
- * We maintain weighted averages for the sources (see ch4, Bevington)
- * wm_ := weighted mean
- *
- * wm_ra := avg_wra/avg_weight_ra
- * wm_decl := avg_wdecl/avg_weight_decl
- * wm_ra_err := 1/(N * avg_weight_ra)
- * wm_decl_err := 1/(N * avg_weight_decl)
- * avg_wra := avg(ra/ra_err^2)
- * avg_wdecl := avg(decl/decl_err^2)
- * avg_weight_ra := avg(1/ra_err^2) 
- * avg_weight_decl := avg(1/decl_err^2)
- */
+*/
 
 CREATE TABLE runningcatalog
   (id INT AUTO_INCREMENT

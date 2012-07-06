@@ -1,8 +1,3 @@
-/**
- * This table stores the information about the catalogs that are
- * loaded into the pipeline database.
- */
-
 CREATE TABLE catalog (
   id INT AUTO_INCREMENT
   ,"name" VARCHAR(50) NOT NULL

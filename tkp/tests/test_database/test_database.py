@@ -3,9 +3,8 @@ try:
     unittest.TestCase.assertIsInstance
 except AttributeError:
     import unittest2 as unittest
-from utility.decorators import requires_database
 
-
+from tkp.tests.decorators import requires_database
 
 class TestDatabaseConnection(unittest.TestCase):
 

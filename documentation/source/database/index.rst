@@ -14,3 +14,4 @@ Modules from the ``tkp.database`` package.
    database
    dataset
    utils
+   schema

@@ -8,9 +8,9 @@ CREATE FUNCTION getAssocParamsByPos(ira1 DOUBLE
                                    ,idecl2 DOUBLE
                                    ,ira_err2 DOUBLE
                                    ,idecl_err2 DOUBLE
-                                   ) RETURNS TABLE (assoc_distance_arcsec DOUBLE
-                                                   ,assoc_r DOUBLE
-                                                   ,assoc_log_lr DOUBLE
+                                   ) RETURNS TABLE (distance_arcsec DOUBLE
+                                                   ,r DOUBLE
+                                                   ,loglr DOUBLE
                                                    )
 
 BEGIN
@@ -34,13 +34,13 @@ BEGIN
                                        )
                                   / 2
                                   )
-                         ) AS assoc_distance_arcsec
+                         ) AS distance_arcsec
           ,3600 * SQRT(  (ira1 * COS(RADIANS(idecl1)) - ira2 * COS(RADIANS(idecl2))) 
                        * (ira1 * COS(RADIANS(idecl1)) - ira2 * COS(RADIANS(idecl2)))
                        / (ira_err1 * ira_err1 + ira_err2 * ira_err2)
                       + (idecl1 - idecl2) * (idecl1 - idecl2)  
                        / (idecl_err1 * idecl_err1 + idecl_err2 * idecl_err2)
-                      ) AS assoc_r
+                      ) AS r
           ,LOG10(EXP(((  (ira1 * COS(RADIANS(idecl1)) - ira2 * COS(RADIANS(idecl2))) 
                        * (ira1 * COS(RADIANS(idecl1)) - ira2 * COS(RADIANS(idecl2))) 
                        / (ira_err1 * ira_err1 + ira_err2 * ira_err2)
@@ -53,7 +53,7 @@ BEGIN
                  (2 * PI() * SQRT(ira_err1 * ira_err1 + ira_err2 * ira_err2)    
                            * SQRT(idecl_err1 * idecl_err1 + idecl_err2 * idecl_err2) * 4.02439375E-06
                  )
-                ) AS assoc_log_lr
+                ) AS loglr
   )
   ;
 

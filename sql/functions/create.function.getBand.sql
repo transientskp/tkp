@@ -7,19 +7,6 @@ BEGIN
   DECLARE nfreqbandid, ifreqbandid, ofreqbandid INT;
   DECLARE ibandwidth DOUBLE;
 
-  /*Does not work properly
-  SELECT CASE WHEN COUNT(*) = 0
-              THEN NULL
-              ELSE freqbandid
-              END
-    INTO ifreqbandid
-    FROM frequencybands
-   WHERE freq_low <= ifreq_eff
-     AND freq_high >= ifreq_eff
-  GROUP BY freqbandid
-  ;
-  */
-  
   /* For now, we default the bandwidth of a new band to 10MHz */
   SET ibandwidth = 10000000;
 

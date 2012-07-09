@@ -84,7 +84,7 @@ create_database() {
 
 set_credentials() {
     message "setting credentials"
-   mclient -d${MONETDB_DATABASE} <<-EOF
+    mclient -d${MONETDB_DATABASE} <<-EOF
 ALTER USER "monetdb" RENAME TO "${MONETDB_USERNAME}";
 ALTER USER SET PASSWORD '${MONETDB_PASSWORD}' USING OLD PASSWORD 'monetdb';
 CREATE SCHEMA "${MONETDB_DATABASE}" AUTHORIZATION "${MONETDB_USERNAME}";

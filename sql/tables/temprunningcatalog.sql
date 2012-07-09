@@ -1,11 +1,5 @@
---DROP TABLE temprunningcatalog;
-/* This table contains the unique sources that were detected
- * during an observation.
- * Extractedsources not in this table are appended when there is no positional match
- * or when a source was detected in a higher resolution image.
- */
-
---TODO: The resolution element (from images table) is not implemented yet
+/* TODO: The resolution element (from images table) is not implemented yet
+*/
 
 CREATE TABLE temprunningcatalog 
   (runcat INT NOT NULL

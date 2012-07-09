@@ -1,6 +1,4 @@
 /**
- * This table contains classification of transients
- *
  * TODO: evert's tabel, how should we handle this? what is the ID?
  */
 

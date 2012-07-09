@@ -1,9 +1,3 @@
-/**
- * This table contains the information about the dataset that is produced by LOFAR. 
- * A dataset has an integration time and consists of multiple frequency layers.
- * taustart_timestamp:  the start time of the integration
- */
-
 CREATE TABLE dataset
   (id INT AUTO_INCREMENT
   ,rerun INT NOT NULL DEFAULT '0'

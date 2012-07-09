@@ -1,7 +1,3 @@
-/**
- * This table keeps track of the versions and changes
- */
-
 CREATE TABLE node 
   (node TINYINT NOT NULL DEFAULT %NODE%
   ,zone SMALLINT NOT NULL

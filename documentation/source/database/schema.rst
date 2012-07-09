@@ -9,7 +9,10 @@ Schema
 assoccatsource
 ==============
 
-This table stores the information about the extractedsources that could be associated with a catalogedsource.
+This table stores the associations between extracted sources and cataloged sources (i.e. VLSS, WENSSm, WENSSp, and NVSS sources). 
+
+For every association pair the association parameters, distance_arcsec, r and loglr are calculated as well. Only source pairs that fullfil the criterion of an association (r < r_lim) are accepted and appended to this table. r_lim may be specified in tkp.cfg, or otherwise defaults to 3.717, corresponding to missing 10^{-3} counterparts (see Scheers's thesis, section 3.2.3)
+
 
 **xrtsrc**
    This refers to the xtrsrcid of the extractedsource
@@ -18,7 +21,7 @@ This table stores the information about the extractedsources that could be assoc
    This is the id of the catalogedsource that could be associated to the extractedsource as its counterpart
 
 **type**
-   Type of the association
+   Type of the association. See under assocxtrsource for a description
 
 **distance_arcsec**
    The distance in arcsec between the associated sources
@@ -33,7 +36,7 @@ This table stores the information about the extractedsources that could be assoc
 assocxtrsource
 ==============
 
-This table stores the information about the sources that could be associated.
+This table stores the associations between extracted sources and the running catalog.
 
 **runcat**
    refers to the runcatid in runningcatalog.  It is the "base" id of a series of polarized spectral lightcurve datapoints.
@@ -62,17 +65,119 @@ This table stores the information about the sources that could be associated.
 catalogedsource
 ===============
 
-This table contains the known sources that were detected previously, either by LOFAR itself or other instruments.  It is a selection from the table containing all the catalog sources (in the catlogue area). 
+This table contains the sources from renown surveys/catalogues, VLSS, WENSS and NVSS. It also contains the exoplanets, of which the entries were provided by Matthias Griessmeier. 
 
-Every observation has its field(s) of view and for this all the known sources are collected. This table will be loaded from the catalog table in the catalog database before every observation.  This table will be used to load the sources table and will not be touched any more during an observation.
+This table will be pre-loaded in the database, in order to have it available all the time. As opposed to the runningcatalog, the catalogedsources table is fixed and won't change during runs.
 
-Fluxes are in Jy, ra, decl, ra_err and decl_err in degrees.  PA, major, minor in degrees
+
+**id**
+    Every inserted catalog source gets a unique id.
+    
+**catalog** 
+    The reference id to the catalog from which this source originates from.
+     
+**orig_catsrcid**
+    The original id of the source as reported in the catalog
+
+**catsrcname**
+    The original name of the source as reported in the catalog
+    
+**tau**
+    The integration time. Defaults to NULL.
+
+**band**
+    The reference id to the frequencyband at which this survey was carried out.
+
+**stokes**
+    The Stokes parameter. Four possible values 1 - I, 2 - Q, 3 - U, 4 - V.
+
+**freq_eff**
+    The effective frequency of the survey, in Hz.
+
+**zone**
+    The zone id in which the source declination resides.  The sphere is devided into zones of equal width: here fixed to 1 degree, and the zone is effectively the truncated declination. (decl=31.3 => zone=31, decl=31.9 => zone=31)
+    
+**ra**
+    The right ascension (RA) of the source in J2000 degrees.
+    
+**decl**
+    The declination (decl) of the source in J2000 degrees.
+
+**ra_err**
+    The 1-sigma error of the source in RA as measured on the sky, in arcsec.
+
+**decl_err**
+    The 1-sigma error of the source in decl as measured on the sky, in arcsec.
+
+**x**
+    The x-Cartesian coordinate of the source, generated from ra, decl: COS(decl) * COS(ra)
+                    .
+**y**
+    The y-Cartesian coordinate of the source, generated from ra, decl: COS(decl) * SIN(ra)
+    
+**z**
+    The z-Cartesian coordinate of the source, generated from ra, decl: SIN(decl)
+    
+**margin**
+    Not used, defaults to 0. 
+
+**det_sigma**
+    The detection level of the source, which none of the current catalogs provides, and defaults to 0.
+
+**src_type**
+    Only the WENSS catalog reports the source type: M for a multi-component source, C for a subcomponent of the parent M, S for a single source and E for an extended source. Currently, we associate extracted sources with all source types.
+
+**fit_probl**
+    WENSS and NVSS report occasional fit problems.
+
+**PA**
+    Position angle of fitted major axis, in degrees
+
+**PA_err**
+    Error on position angle of fitted major axis, in degrees
+
+**major**
+    Major axis of deconvolved component size, in arcsec
+
+**major_err**
+    Mean error on major axis, in arcsec
+
+**minor**
+    Minor axis of deconvolved component size, in arcsec
+
+**minor_err**
+    Mean error on minor axis, in arcsec
+
+**avg_f_peak**
+    Peak flux of source, in Jy
+
+**avg_f_peak_err**
+    Mean error on peak flux of source, in Jy
+
+**avg_f_int**
+    Integrated flux of source, in Jy
+
+**avg_f_int_err**
+    Mean error on integrated flux of source, in Jy
+
+**frame**
+    Some catalogs have a reference to a frame/fits image/jpg postage stamp for the field the source was detected in.
 
 
 catalog
 =======
 
-This table stores the information about the catalogs that are loaded into the pipeline database.
+This table stores the information about the catalogs that are loaded into the pipeline database. 
+
+
+**id**
+    Every catalog gets a unique id.
+
+**name**
+    An acronym under which the catalog is well-known, f.ex. 'NVSS'
+
+**fullname**
+    The full name under which the catalog is known, f.ex. 'NRAO VLA Sky Survey'
 
 
 classification
@@ -84,10 +189,24 @@ This table contains classification of transients
 dataset
 =======
 
-This table contains the information about the dataset that is produced by LOFAR.  A dataset has an integration time and consists of multiple frequency layers.
+This table contains the information about a dataset. A dataset is nothing more than a collection of images grouped together for processing. When the same group is reprocessed, and the dataset.dsinname is identical (f.ex. when the processing runs with other trap parameters), the rerun is incremented by 1, but also the id is auto-incremented 
 
-**taustart_timestamp**
-    the start time of the integration
+
+**id**
+    Every dataset gets a unique id.
+
+**rerun**
+    At insertion, with the insertDataset() SQL function, this is incremented by 1 when the dsinname
+    is present, otherwise defaults to 0.
+
+**process_ts**
+    The timestamp of the start of processing the dataset
+
+**inname** 
+    A description of the dataset.
+
+**description** 
+    A description of the dataset.
 
 
 extractedsource
@@ -104,13 +223,13 @@ This table is empty BEFORE an observation.  DURING an observation new sources ar
     The reference id to the image from which this sources was extracted.
 
 **zone**
-    The zone id in which the source declination resides.  The sphere is devided into zones of equal width: here fixed to 1 degree. (decl=31.3 => zone=31)
+    The zone id in which the source declination resides.  The sphere is devided into zones of equal width: here fixed to 1 degree, and the zone is effectively the truncated declination. (decl=31.3 => zone=31, decl=31.9 => zone=31)
 
 **ra**
-    Right ascension of the measurement [in degrees]
+    Right ascension of the measurement [in J2000 degrees]
 
 **decl**
-    Declination of the measurement [in degrees]
+    Declination of the measurement [in J2000 degrees]
 
 **ra_err**
     The 1-sigma error of the ra measurement [in arcsec]
@@ -162,35 +281,88 @@ This table is empty BEFORE an observation.  DURING an observation new sources ar
 frequencyband
 =============
 
-This table contains the frequencies at which the extracted sources were detected. It might also be preloaded with the frequencies at which the stokes of the catalog sources were measured.
+This table contains the frequency bands that are available during an observation and for the cataloged sources. 
+
+**id**
+    Every frequency band has its unique id.
+
+**freq_central**
+    The central frequency of the defined frequency band. (Note that this is not the effective frequency, which is stored as a property in the image table.)
+
+**freq_low**
+    The low end of the frequency band
+
+**freq_high**
+    The high end of the frequency band
+
 
 
 image
 =====
 
-This table contains the images that are being processed.  The only format for now is FITS. The HDF5 format will be implemented later.
+This table contains the images that are being or were processed in the trap.  The only format for now is FITS. The HDF5 format will be implemented later.
 
 An image is characterised by
 
-* integration time (tau)
+* observation timestamp (taustart_ts).
 * frequency band (band) 
-* timestamp (seq_nr).
+* integration time (tau)
 
-A group of images that belong together (not specified any further) are in the same data set (they have the same ds_id).
+A group of images that belong together (defined by user, but not specified any further) are in the same data set (i.e. they have the same ds_id).
 
-**tau_time**
-   in seconds (ref. tau)
-**freq_eff**
-   in Hz (ref. band)
+**id**
+    Every image gets a unique id.
 
-**taustart_timestamp**
-    in YYYY-MM-DD-HH:mm:ss:nnnnnn, but without interpunctions (ref. seq_nr)
+**dataset**
+    The dataset to which the image belongs to
 
-**bsmaj, bsmin, bpa**
-	the semimajor, semiminor axes of the synthesized beam in degrees. NOTE that these *ARE* the semimajor axes.
+**tau** 
+    The integration time of the image. This is a quick reference number related to tau_time, similar to band related to central frequency.
 
-**centr_ra and _decl**
-	the central coordinates (J2000) of the image in degrees.
+**band** 
+    The frequency band at which the observation was carried out
+
+**stokes** 
+    The Stokes parameter of the observation. 1 = I, 2 = Q, 3 = U and 4 = V.
+
+**tau_time** 
+    The integration time of the image, in seconds.
+
+**freq_eff** 
+    The effective frequency at which the observation was carried out, in Hz
+
+**freq_bw** 
+    The frequency bandwidth of the observation, in Hz
+
+**taustart_ts** 
+    The timestamp of the start of the observation
+
+**centre_ra and centre_decl**
+	The central coordinates (J2000) of the image in degrees.
+
+**x, y and z**
+    The Cartesian coordinates of centre_ra and centre_decl.
+
+**bmaj_syn** 
+    The beam major axis of the synthesized beam, in arcsec.
+
+**bmin_syn** 
+    The beam minor axis of the synthesized beam, in arcsec.
+
+**bpa_syn** 
+    The position angle of the synthesized beam (from north to east to the major axis), in degrees.
+
+**fwhm_arcsec**
+    The full width half maximum of the primary beam, in arcsec.
+
+**fov_degrees**
+    The field of view of the image, in square degrees.
+
+**url** 
+    The url of the physical location of the image at the time of processing.
+
+**node(s)** 
+    Determine the current and number of nodes in case of a sharded database set-up.
 
 
 monitoringlist
@@ -206,8 +378,24 @@ For user defined sources, however, positions may be available that are more prec
 node
 ====
 
-This table keeps track of the versions and changes
+This table keeps track of zones (declinations) of the stored sources on the nodes in a sharded database configuration. Every node in such a set-up will have this table, but with different content.
 
+**node**
+    The id of the node
+**zone**
+    The zone that is available on the node
+**zone_min**
+    The minimum zone of the zones
+**zone_max**
+    The maximum zone of the zones
+**zone_min_incl**
+    Boolean determining whether the minimum zone is included.
+**zone_max_incl**
+    Boolean determining whether the maximum zone is included.
+**zoneheight** 
+    The zone height of a zone, in degrees
+**nodes**
+    The total number of nodes in the sharded database configuration.
 
 runningcatalog
 ==============
@@ -277,8 +465,7 @@ runningcatalog_flux
 temprunningcatalog
 ==================
 
-This table contains the unique sources that were detected during an observation.
-Extractedsources not in this table are appended when there is no positional match or when a source was detected in a higher resolution image.
+This table contains the matches of all extractedsources from an image and their counterparts in the runningcatalog. After handling the many-to-many, 1-to-many and many-to-1, the runningcatalog is updated with the new "averages". The 0-to-1 and 1-to-0 relations are processed separatedly and do not touch this table.
 
 
 transient

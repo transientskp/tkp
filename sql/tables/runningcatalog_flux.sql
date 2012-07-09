@@ -1,15 +1,3 @@
---DROP TABLE runningcatalog_flux;
-/* 
- * stokes                   Stokes parameter:
- *                          1 = I, 2 = Q, 3 = U, 4 = V
- * f_datapoints             the number of datapoints for which the averages
- *                          were calculated
- * avg_f_peak               := average of peak flux
- * avg_f_peak_sq            := average of (peak flux)^2
- * avg_f_peak_weight        := average of one over peak flux errors squared
- * avg_weighted_f_peak      := average of ratio of (peak flux) and (peak flux errors squared)
- * avg_weighted_f_peak_sq   := average of ratio of (peak flux squared) and (peak flux errors squared)
- */
 CREATE TABLE runningcatalog_flux
   (runcat INT NOT NULL
   ,band INT NOT NULL

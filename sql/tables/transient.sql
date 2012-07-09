@@ -1,7 +1,3 @@
-/**
- * This table contains the detected transients and their characteristics
- */
-
 CREATE TABLE transient 
   (id INT AUTO_INCREMENT
   ,xtrsrc INT NOT NULL

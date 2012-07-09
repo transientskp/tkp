@@ -22,7 +22,8 @@ from tkp.database.database import DataBase
 from tkp.database.dataset import DataSet
 
 
-class SIP(control):
+
+class TrapImages(control):
     inputs = {
           'dataset_id': ingredient.IntField(
             '--dataset-id',
@@ -46,14 +47,17 @@ class SIP(control):
             
         self.logger.info("dataset id = %d", dataset.id)
         with log_time(self.logger):
-            for image in images:
-                self.logger.info("Processing image %s", str(image))
-                outputs = self.run_task("source_extraction", [image],
-                                        dataset_id=dataset.id)
-                outputs.update(
-                    self.run_task("monitoringlist", outputs['image_ids']))
+            self.logger.info("Processing images ...")
+            outputs = self.run_task("source_extraction", images,
+                                            dataset_id=dataset.id,
+#                                            nproc = self.config.get('DEFAULT', 'default_nproc')
+                                            nproc=1 #Force nproc =1 until issue #3357 is fixed.
+                                    )
 
-                outputs.update(
+            outputs.update(
+                self.run_task("monitoringlist", outputs['image_ids'],
+                              nproc=1))
+            outputs.update(
                     self.run_task("transient_search", [dataset.id],
                                    image_ids=outputs['image_ids']))
 
@@ -70,4 +74,4 @@ class SIP(control):
 
 
 if __name__ == '__main__':
-    sys.exit(SIP().main())
+    sys.exit(TrapImages().main())

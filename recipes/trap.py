@@ -18,7 +18,7 @@ import tkp.database.database as tkpdb
 SECONDS_IN_DAY = 86400.
 
 
-class SIP(control):
+class TrapImages(control):
     def pipeline_logic(self):
         # Read the datafiles; datafiles is a list of MS paths.
         from ms_to_process import datafiles
@@ -140,4 +140,4 @@ class SIP(control):
 
 
 if __name__ == '__main__':
-    sys.exit(SIP().main())
+    sys.exit(TrapImages().main())

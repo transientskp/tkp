@@ -113,7 +113,7 @@ class source_extraction(LOFARnodeTCP):
                 
                 self.logger.info("Employing margin: %f, deblend: %s, deblend_nthresh:%d",
                                  seconfig['margin'], 
-                                 str(seconfig['deblend']),
+                                 seconfig['deblend'],
                                  seconfig['deblend_nthresh']
                                  )  
                 
@@ -121,9 +121,11 @@ class source_extraction(LOFARnodeTCP):
                                       seconfig['detection_threshold'])
                 anl = parset.getFloat('analysis.threshold',
                                       seconfig['analysis_threshold'])
+                
+                ##Finally, do some work!
                 results = data_image.extract(det=det, anl=anl)
+                
                 self.logger.info("Detected %d sources", len(results))
-                #self.logger.info("First 5 sources: %s", str(results[:5]))
                 self.logger.info("Saving extracted sources to database")
                 tuple_results = [result.serialize() for result in results]
                 db_image.insert_extracted_sources(tuple_results)

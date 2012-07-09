@@ -16,19 +16,34 @@ from pyrap.quanta import quantity
 from lofarpipe.support.control import control
 from lofarpipe.support.utilities import log_time
 from lofarpipe.support.parset import patched_parset
+import lofarpipe.support.lofaringredient as ingredient
 
 from tkp.database.database import DataBase
 from tkp.database.dataset import DataSet
 
 
 class SIP(control):
+    inputs = {
+          'dataset_id': ingredient.IntField(
+            '--dataset-id',
+            help='Specify a previous dataset id to append the results to.',
+            default=-1
+            ),
+      }
+    
     def pipeline_logic(self):
         from images_to_process import images
-
+        
         # Create the dataset
         database = DataBase()
-        dataset = DataSet(data={'dsinname': self.inputs['job_name']},
-                          database=database)
+        if self.inputs['dataset_id'] == -1:
+            dataset = DataSet(data={'dsinname': self.inputs['job_name']},
+                              database=database)
+        else:
+            dataset = DataSet(id = self.inputs['dataset_id'],
+                              database=database)
+            self.logger.info("Appending results to previous dataset")
+            
         self.logger.info("dataset id = %d", dataset.id)
         with log_time(self.logger):
             for image in images:

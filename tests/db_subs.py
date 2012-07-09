@@ -1,7 +1,7 @@
 import os
 from tkp.config import config as tkp_conf
 import datetime
-
+import logging
 from collections import namedtuple
 
 ExtractedSourceTuple=namedtuple("ExtractedSourceTuple",
@@ -18,7 +18,31 @@ def use_test_database_by_default():
     test_db_name = tkp_conf['test']['test_database_name']
     tkp_conf['database']['name'] = test_db_name
     tkp_conf['database']['user'] = test_db_name
-    tkp_conf['database']['password'] = test_db_name     
+    tkp_conf['database']['password'] = test_db_name
+    
+def delete_test_database(database):
+    """Use with caution!"""
+    import monetdb.sql
+    if database.name.lower().find("test") != 0:
+        raise ValueError("You tried to delete a database not prefixed with 'test'.\n"
+                         "Not recommended!")
+    try:
+        cursor = database.connection.cursor()
+        cursor.execute("DELETE from assocxtrsources")
+        cursor.execute("DELETE from extractedsources")
+        cursor.execute("DELETE from images")
+        cursor.execute("DELETE from runningcatalog")
+        cursor.execute("DELETE from datasets")
+        cursor.execute("DELETE from transients")
+        cursor.execute("DELETE from monitoringlist")
+        if not tkp_conf['database']['autocommit']:
+            database.connection.commit()
+    except monetdb.sql.Error:
+        logging.warn("Query failed when trying to blank database")
+        raise
+    finally:
+        cursor.close()
+             
     
 def example_dbimage_datasets(n_images):
     """Generate a list of image data dictionaries.

@@ -4,9 +4,7 @@ import logging
 #    unittest.TestCase.assertIsInstance
 #except AttributeError:
 #    import unittest2 as unittest
-#    
-logging.basicConfig(level=logging.CRITICAL)
-
+    
 import tkp.database as tkpdb
 import tkp.tests.db_subs as db_subs
 from tkp.tests.decorators import requires_database

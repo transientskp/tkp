@@ -6,27 +6,20 @@ CREATE FUNCTION getNearestNeighborInImage(iimageid INT
 BEGIN
   
   DECLARE oxtrsrcid INT;
-  DECLARE izoneheight, itheta DOUBLE;
+  DECLARE itheta DOUBLE;
   
   SET itheta = 1;
-  
-  /* TODO 
-  SELECT zoneheight
-    INTO izoneheight
-    FROM zoneheight
-  ;*/
-  SET izoneheight = 1;
 
-  SELECT x2.xtrsrcid
+  SELECT x2.id
     INTO oxtrsrcid
     FROM extractedsource x1
         ,extractedsource x2
-   WHERE x1.xtrsrcid = ixtrsrcid
-     AND x2.image_id = iimageid 
-     AND x2.xtrsrcid <> ixtrsrcid
+   WHERE x1.id = ixtrsrcid
+     AND x2.image = iimageid 
+     AND x2.id <> ixtrsrcid
      AND x2.x * x1.x + x2.y * x1.y + x2.z * x1.z > COS(RADIANS(itheta))
-     AND x2.zone BETWEEN CAST(FLOOR((x1.decl - itheta) / izoneheight) AS INTEGER)
-                     AND CAST(FLOOR((x1.decl + itheta) / izoneheight) AS INTEGER)
+     AND x2.zone BETWEEN CAST(FLOOR(x1.decl - itheta) AS INTEGER)
+                     AND CAST(FLOOR(x1.decl + itheta) AS INTEGER)
      AND x2.ra BETWEEN x1.ra - alpha(itheta, x1.decl)
                    AND x1.ra + alpha(itheta, x1.decl)
      AND x2.decl BETWEEN x1.decl - itheta
@@ -51,12 +44,12 @@ BEGIN
                                    )
                            FROM extractedsource x1
                                ,extractedsource x2
-                          WHERE x1.xtrsrcid = ixtrsrcid
-                            AND x2.image_id = iimageid 
-                            AND x2.xtrsrcid <> ixtrsrcid
+                          WHERE x1.id = ixtrsrcid
+                            AND x2.image = iimageid 
+                            AND x2.id <> ixtrsrcid
                             AND x2.x * x1.x + x2.y * x1.y + x2.z * x1.z > COS(RADIANS(itheta))
-                            AND x2.zone BETWEEN CAST(FLOOR((x1.decl - itheta) / izoneheight) AS INTEGER)
-                                            AND CAST(FLOOR((x1.decl + itheta) / izoneheight) AS INTEGER)
+                            AND x2.zone BETWEEN CAST(FLOOR(x1.decl - itheta) AS INTEGER)
+                                            AND CAST(FLOOR(x1.decl + itheta) AS INTEGER)
                             AND x2.ra BETWEEN x1.ra - alpha(itheta, x1.decl)
                                           AND x1.ra + alpha(itheta, x1.decl)
                             AND x2.decl BETWEEN x1.decl - itheta

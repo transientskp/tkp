@@ -12,21 +12,17 @@
  * mysql> SET GLOBAL log_bin_trust_function_creators = 1;
  *
  */
-CREATE FUNCTION insertDataset(idsinname VARCHAR(50)) RETURNS INT
+CREATE FUNCTION insertDataset(idescription VARCHAR(50)) RETURNS INT
 BEGIN
 
   DECLARE idsid INT;
   DECLARE odsid INT;
   DECLARE irerun INT;
-  DECLARE idstype SMALLINT;
-  SELECT 1
-    INTO idstype
-  ;
 
   SELECT MAX(rerun)
     INTO irerun
     FROM dataset
-   WHERE dsinname = idsinname
+   WHERE description = idescription
   ;
 
   IF irerun IS NULL THEN
@@ -38,18 +34,16 @@ BEGIN
   SELECT NEXT VALUE FOR seq_dataset INTO idsid;
 
   INSERT INTO dataset
-    (dsid
+    (id
     ,rerun
-    ,dstype
     ,process_ts
-    ,dsinname
+    ,description
     ) 
   VALUES
     (idsid
     ,irerun
-    ,idstype
     ,NOW()
-    ,idsinname
+    ,idescription
     )
   ;
 

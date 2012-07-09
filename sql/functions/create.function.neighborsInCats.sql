@@ -2,8 +2,8 @@
 
 CREATE FUNCTION neighborsInCats(ira DOUBLE
                                ,idecl DOUBLE
-                               ) RETURNS TABLE (catsrcid INT
-                                               ,catname VARCHAR(50)
+                               ) RETURNS TABLE (id INT
+                                               ,name VARCHAR(50)
                                                ,catsrcname VARCHAR(120)
                                                ,band INT
                                                ,freq_eff DOUBLE
@@ -25,20 +25,12 @@ BEGIN
   SET iy = COS(RADIANS(idecl)) * SIN(RADIANS(ira));
   SET iz = SIN(RADIANS(idecl));
 
-  /* TODO: 
-   * retrieve zoneheight from table ->
-   * meaning add a columns to the table
-  SELECT zoneheight
-    INTO izoneheight
-    FROM zoneheight
-  ;*/
-  SET izoneheight = 1;
   SET itheta = 1;
 
   RETURN TABLE 
   (
-    SELECT catsrcid
-          ,catname
+    SELECT c1.id
+          ,name
           ,catsrcname
           ,band
           ,freq_eff
@@ -57,14 +49,14 @@ BEGIN
                      ) AS distance_arcsec
       FROM catalogedsource c1
           ,catalog c0
-     WHERE c1.cat_id = c0.catid
-       AND c1.x * ix + c1.y * iy + c1.z * iz > COS(RADIANS(itheta))
-       AND c1.zone BETWEEN CAST(FLOOR((idecl - itheta) / izoneheight) AS INTEGER)
-                       AND CAST(FLOOR((idecl + itheta) / izoneheight) AS INTEGER)
+     WHERE c1.catalog = c0.id
+       AND c1.zone BETWEEN CAST(FLOOR(idecl - itheta) AS INTEGER)
+                       AND CAST(FLOOR(idecl + itheta) AS INTEGER)
        AND c1.ra BETWEEN ira - alpha(itheta, idecl)
                      AND ira + alpha(itheta, idecl)
        AND c1.decl BETWEEN idecl - itheta
                        AND idecl + itheta
+       AND c1.x * ix + c1.y * iy + c1.z * iz > COS(RADIANS(itheta))
   )
   ;
 

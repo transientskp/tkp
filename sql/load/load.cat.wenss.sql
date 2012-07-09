@@ -19,39 +19,35 @@
  *}     for even faster load.                                         |
  *+-------------------------------------------------------------------+
  */
-DECLARE icatid_main, icatid_pole INT;
 DECLARE ifreq_eff_main, ifreq_eff_pole DOUBLE;
 DECLARE iband_main, iband_pole INT;
+DECLARE iname_main, iname_pole VARCHAR(50);
 
 /*see Rengelink et al.(1997) Eq.9*/
 DECLARE C1_sq, C2_sq DOUBLE;
 SET C1_sq = 0.0016;
 SET C2_sq = 1.69;
 
-SET icatid_main = 5;
-SET icatid_pole = 6;
+SET iname_main = 'WENSSm';
+SET iname_pole = 'WENSSp';
 
 INSERT INTO catalog
-  (catid
-  ,catname
+  (name
   ,fullname
-  ) VALUES 
-  (icatid_main
-  ,'WENSSm'
+  ) 
+VALUES 
+  (iname_main
   ,'WEsterbork Nortern Sky Survey, Main Catalogue @ 325 MHz'
   )
   ,
-  (icatid_pole
-  ,'WENSSp'
+  (iname_pole
   ,'WEsterbork Nortern Sky Survey, Polar Catalogue @ 352 MHz'
   )
 ;
 
 SET ifreq_eff_main = 325000000.0;
-/*SET iband_main = getBand(ifreq_eff_main, 10000000.0);*/
 SET iband_main = getBand(ifreq_eff_main);
 SET ifreq_eff_pole = 352000000.0;
-/*SET iband_pole = getBand(ifreq_eff_pole, 10000000.0);*/
 SET iband_pole = getBand(ifreq_eff_pole);
 
 CREATE TABLE aux_catalogedsource
@@ -83,10 +79,11 @@ FROM
 USING DELIMITERS ';', '\n' 
 ;
 
+/* First, we will insert the main catalog */
 INSERT INTO catalogedsource
   (orig_catsrcid
   ,catsrcname
-  ,cat_id
+  ,catalog
   ,band
   ,ra
   ,decl
@@ -110,14 +107,8 @@ INSERT INTO catalogedsource
   )
   SELECT aorig_catsrcid
         ,CONCAT(TRIM(aname), af_name)
-        ,CASE WHEN aframe LIKE 'WNH%'
-              THEN icatid_main
-              ELSE icatid_pole
-         END
-        ,CASE WHEN aframe LIKE 'WNH%'
-              THEN iband_main
-              ELSE iband_pole
-         END
+        ,c0.id
+        ,iband_main
         ,aviz_RAJ2000
         ,aviz_DEJ2000
         ,CAST(FLOOR(aviz_DEJ2000) AS INTEGER)
@@ -141,10 +132,7 @@ INSERT INTO catalogedsource
                                  )
                    END
          END
-        ,CASE WHEN aframe LIKE 'WNH%'
-              THEN ifreq_eff_main
-              ELSE ifreq_eff_pole
-         END
+        ,ifreq_eff_main
         ,COS(RADIANS(aviz_DEJ2000)) * COS(RADIANS(aviz_RAJ2000))
         ,COS(RADIANS(aviz_DEJ2000)) * SIN(RADIANS(aviz_RAJ2000))
         ,SIN(RADIANS(aviz_DEJ2000))
@@ -161,9 +149,87 @@ INSERT INTO catalogedsource
         ,a_S / 1000
         ,SQRT(C1_sq + C2_sq * (arms / a_S) * (arms / a_S)) * a_S / 1000
         ,aframe
-    FROM aux_catalogedsource
-   WHERE a_S > 0
---     AND af_name a_S > 0
+    FROM aux_catalogedsource c1
+        ,catalog c0
+   WHERE c1.aframe LIKE 'WNH%'
+     AND c1.a_S > 0
+     AND c0.name = iname_main
+;
+
+INSERT INTO catalogedsource
+  (orig_catsrcid
+  ,catsrcname
+  ,catalog
+  ,band
+  ,ra
+  ,decl
+  ,zone
+  ,ra_err
+  ,decl_err
+  ,freq_eff
+  ,x
+  ,y
+  ,z
+  ,src_type
+  ,fit_probl
+  ,pa
+  ,major
+  ,minor
+  ,avg_f_peak
+  ,avg_f_peak_err
+  ,avg_f_int
+  ,avg_f_int_err
+  ,frame
+  )
+  SELECT aorig_catsrcid
+        ,CONCAT(TRIM(aname), af_name)
+        ,c0.id
+        ,iband_pole
+        ,aviz_RAJ2000
+        ,aviz_DEJ2000
+        ,CAST(FLOOR(aviz_DEJ2000) AS INTEGER)
+        ,CASE WHEN a_I / arms >= 10 
+              THEN 1.5
+              ELSE CASE WHEN amajor <> 0
+                        THEN SQRT(2.25 + arms * arms * (amajor * amajor * SIN(RADIANS(apa)) * SIN(RADIANS(apa)) 
+                                                       + aminor * aminor * COS(RADIANS(apa)) * COS(RADIANS(apa))
+                                                       ) / (1.69 * a_I * a_I))
+                        ELSE SQRT(2.25 + arms * arms * 2916 / (1.69 * a_I * a_I))
+                   END
+         END
+        ,CASE WHEN a_I / arms >= 10 
+              THEN 1.5
+              ELSE CASE WHEN amajor <> 0
+                        THEN SQRT(2.25 + arms * arms * (amajor * amajor * COS(RADIANS(apa)) * COS(RADIANS(apa)) 
+                                                       + aminor * aminor * SIN(RADIANS(apa)) * SIN(RADIANS(apa))
+                                                       ) / (1.69 * a_I * a_I)) 
+                        ELSE SQRT(2.25 + arms * arms * 2916 
+                                 / (1.69 * a_I * a_I * SIN(RADIANS(aviz_DEJ2000)) * SIN(RADIANS(aviz_DEJ2000)))
+                                 )
+                   END
+         END
+        ,ifreq_eff_pole
+        ,COS(RADIANS(aviz_DEJ2000)) * COS(RADIANS(aviz_RAJ2000))
+        ,COS(RADIANS(aviz_DEJ2000)) * SIN(RADIANS(aviz_RAJ2000))
+        ,SIN(RADIANS(aviz_DEJ2000))
+        ,aflg1
+        ,CASE WHEN aflg2 = '*'
+              THEN aflg2
+              ELSE NULL
+         END
+        ,apa
+        ,amajor
+        ,aminor
+        ,a_I / 1000
+        ,SQRT(C1_sq + C2_sq * (arms / a_I) * (arms / a_I)) * a_I / 1000
+        ,a_S / 1000
+        ,SQRT(C1_sq + C2_sq * (arms / a_S) * (arms / a_S)) * a_S / 1000
+        ,aframe
+    FROM aux_catalogedsource c1
+        ,catalog c0
+   WHERE c1.aframe LIKE 'WNP%'
+     AND c1.a_S > 0
+     AND c0.name = 'WENSSp'
 ;
 
 DROP TABLE aux_catalogedsource;

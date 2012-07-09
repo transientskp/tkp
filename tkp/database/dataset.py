@@ -356,6 +356,26 @@ class DataSet(DBObject):
 
         return dbu.detect_variable_sources(
             self.database.connection, self._id, V_lim, eta_lim)
+        
+    def find_transient_candidates(self, single_epoch_threshold,
+                                        combined_threshold):
+        """Find sources not present in all epochs.
+        
+        Returns a list of associated source ids, which 
+            - Do not have an associated extracted source in all epochs
+            - Have at least one extracted source with SNR above the single_epoch_threshold
+            - Have a a summed SNR above the combined_threshold 
+            - Excludes non-detections due to a shifting field of view (edge cases).
+        """
+        candidates = dbu.select_winking_sources(
+             self.database.connection, self._id)
+        
+        #TO DO: Now whittle down the results
+        
+        return candidates
+        
+        
+
 
 
 class Image(DBObject):
@@ -472,12 +492,13 @@ class Image(DBObject):
         """
         dbu.associate_extracted_sources(
             self.database.connection, self._id, deRuiter_r)
+        
 
     def monitoringsources(self):
         return dbu.monitoringlist_not_observed(self.database.connection,
                                                self._id)
 
-    def insert_monitoring_sources(self, results):
+    def insert_monitored_sources(self, results):
         """Insert the list of measured monitoring sources for this image into
         extractedsources and runningcatalog
 
@@ -487,7 +508,7 @@ class Image(DBObject):
         monitoringlist.
         """
 
-        dbu.insert_monitoring_sources(self.database.connection, results,
+        dbu.insert_monitored_sources(self.database.connection, results,
                                       self._id)
         
         

@@ -14,12 +14,16 @@ class TestSourceAssociation(unittest.TestCase):
     def setUp(self):
     
         self.database = tkpdb.DataBase()
-        self.dataset = tkpdb.DataSet(data={'dsinname':"Source assoc. test"},
+#        db_subs.delete_test_database(self.database)
+        
+        self.dataset = tkpdb.DataSet(data={'dsinname':"Src. assoc:"+self._testMethodName},
                                                     database = self.database)
         
         self.im_params = db_subs.example_dbimage_datasets(n_images=8)
         self.db_imgs=[]
         
+    def tearDown(self):
+        self.database.close()
     
     def test_null_case_sequential(self):
         for im in self.im_params:
@@ -120,69 +124,69 @@ class TestSourceAssociation(unittest.TestCase):
             
             self.assertEqual(len(assocxtrsrcs_rows),1,
                              msg="No entries in assocxtrsrcs for image number "+str(imgs_loaded))
-#            self.assertEqual(assocxtrsrcs_rows[0]['xtrsrc_id'], ds_source_ids[0],
-#                             msg="Assocxtrsrcs table incorrectly assocating for image number "
-#                             +str(imgs_loaded)")
-            
-            
-            
+            self.assertEqual(assocxtrsrcs_rows[0]['xtrsrc_id'], ds_source_ids[0],
+                             msg="Assocxtrsrcs table incorrectly assocating for image number "
+                             +str(imgs_loaded))
 
         
     
-class TestMonitoringlistFunctionality(unittest.TestCase):
+class TestTransientCandidateMonitoring(unittest.TestCase):
     @requires_database()
     def setUp(self):
         import datetime
         self.database = tkpdb.DataBase()
-        self.dataset = tkpdb.DataSet(data={'dsinname':"Test Dataset"},
-                                                    database = self.database)
+        self.dataset = tkpdb.DataSet(data={'dsinname':"Monitoringlist"},
+                                    database = self.database)
 
         self.n_images = 8                
         self.im_params = db_subs.example_dbimage_datasets(self.n_images)
         self.db_imgs=[]
-        for im in self.im_params:
-            self.db_imgs.append( tkpdb.dataset.Image( data=im, dataset=self.dataset) )
-            
-            
-        FixedSource = db_subs.example_extractedsource_tuple()
         
+        FixedSource = db_subs.example_extractedsource_tuple()            
         SlowTransient = FixedSource._replace(ra=128.123,
                                       peak = 5e-3, 
                                       flux = 5e-3,
                                       sigma = 5,
-                                      )
-        
+                                      )    
         FastTransient = FixedSource._replace(dec=15.5,
                                         peak = 10e-3,
                                         flux = 10e-3, 
                                         sigma = 10,
                                       )
+        
+            
         source_lists=[]
         for i in xrange(self.n_images):
-            source_lists.append([ FixedSource ])
+            source_lists.append([FixedSource])
         
         source_lists[3].append(FastTransient)
                 
         source_lists[5].append(SlowTransient)
         source_lists[6].append(SlowTransient)
-        
-#        for i in xrange(n_images):
-#            self.db_imgs[i].insert_extracted_sources(source_lists[i])
-#            self.db_imgs[i].associate_extracted_sources(deRuiter_r=3.7)
+                
+        for i in xrange(self.n_images):
+            self.db_imgs.append(
+                        tkpdb.dataset.Image(data=self.im_params[i], 
+                                            dataset=self.dataset)
+                                )
+            self.db_imgs[i].insert_extracted_sources(source_lists[i])
+            self.db_imgs[i].associate_extracted_sources(deRuiter_r=3.7)
         
             
     def tearDown(self):
         self.database.close()
             
         
-    def testSetUp(self):
+    def test_winking_source(self):
+        results = self.dataset.find_transient_candidates(None,None)
+        self.assertEqual(len(results),2)
+        self.assertEqual(results[0]['datapoints'],1)
+        self.assertEqual(results[1]['datapoints'],2)
+    
+    def test_monitoringlist_insertion(self):
         pass
-#        print "Test dataset has been set up."
-#        print "Dataset id:", self.dataset.id
-#        print "Image ids:", [img.id for img in self.db_imgs]
-#        for img in self.db_imgs:
-#            img.update()
-#            self.assertEqual(img.tau_time, self.im_params[0]['tau_time'])
+    
+
 
 #class TestLightCurve(unittest.TestCase):
 #    """This test serves more as an example than as a proper unit

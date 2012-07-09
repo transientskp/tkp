@@ -21,7 +21,11 @@ def use_test_database_by_default():
     tkp_conf['database']['password'] = test_db_name
     
 def delete_test_database(database):
-    """Use with caution!"""
+    """Use with caution!
+    
+        NB. Not the same as a freshly initialised database.
+            All the sequence counters are offset.
+    """
     import monetdb.sql
     if database.name.lower().find("test") != 0:
         raise ValueError("You tried to delete a database not prefixed with 'test'.\n"
@@ -67,7 +71,7 @@ def example_dbimage_datasets(n_images):
 
 def example_extractedsource_tuple():
     return ExtractedSourceTuple(ra=123.123, dec=10.5,
-                                  ra_err=0.1, dec_err=0.1,
+                                  ra_err=0.01, dec_err=0.01,
                                   peak = 15e-3, peak_err = 5e-4,
                                   flux = 15e-3, flux_err = 5e-4,
                                   sigma = 15,

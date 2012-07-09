@@ -1153,6 +1153,42 @@ def associate_extracted_sources(conn, image_id, deRuiter_r=DERUITER_R):
     _insert_new_source_runcat(conn, image_id, deRuiter_r)
     #_associate_across_frequencies(conn, ds_id, image_id, deRuiter_r)
 
+def select_winking_sources(conn, dsid):
+    """Select sources not detected in all epochs.
+    
+    Selects entries in running catalog which
+    are not detected in *all* the images belonging to the dataset.
+    
+    """
+    
+    results = []
+    cursor = conn.cursor()
+    try:
+        #Thought about trying to do this in one clever SQL statement
+        #But this will have to do for now.
+        query="""SELECT COUNT(ds_id) from images where ds_id=%s"""
+        cursor.execute(query, (dsid,))
+        nimgs = cursor.fetchone()[0]
+        query="""\
+SELECT  xtrsrc_id
+        ,datapoints
+        ,avg_i_peak
+    FROM runningcatalog 
+    WHERE ds_id=%s 
+    AND datapoints<>%s
+"""
+        cursor.execute(query, (dsid, nimgs))
+        results = cursor.fetchall()
+        results = [dict(xtrsrc_id=x[0], datapoints=x[1], avg_i_peak=x[2])
+                   for x in results]
+        if not AUTOCOMMIT:
+            conn.commit()
+    except db.Error:
+        logging.warn("Failed on query %s", query)
+        raise
+    finally:
+        cursor.close()
+    return results
 
 def select_single_epoch_detection(conn, dsid):
     """Select sources from running catalog which have only one detection"""
@@ -2160,3 +2196,4 @@ WHERE ex.xtrsrcid = %s
         cursor.close()
         raise
     cursor.close()
+

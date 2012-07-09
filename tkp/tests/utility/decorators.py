@@ -7,11 +7,11 @@ try:
 except AttributeError:
     import unittest2 as unittest
     
-import db_subs
+import database_subroutines
 
 def requires_database():
     if tkp.config.config['database']['enabled']:
-        db_subs.use_test_database_by_default()
+        database_subroutines.use_test_database_by_default()
         return lambda func: func
     return unittest.skip("Database functionality disabled in configuration")
 

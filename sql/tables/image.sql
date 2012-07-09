@@ -27,10 +27,17 @@ CREATE TABLE image
   ,freq_eff DOUBLE NOT NULL
   ,freq_bw DOUBLE NULL
   ,taustart_ts TIMESTAMP NOT NULL
+  ,centre_ra DOUBLE NOT NULL
+  ,centre_ra DOUBLE NOT NULL
+  ,x DOUBLE NOT NULL
+  ,y DOUBLE NOT NULL
+  ,z DOUBLE NOT NULL
   ,bmaj_syn DOUBLE NULL
   ,bmin_syn DOUBLE NULL
   ,bpa_syn DOUBLE NULL
-  ,url VARCHAR(120) NULL
+  ,fwhm_arcsec DOUBLE NULL
+  ,fov_degrees DOUBLE NULL
+  ,url VARCHAR(1024) NULL
   ,node TINYINT NOT NULL DEFAULT %NODE%
   ,nodes TINYINT NOT NULL DEFAULT %NODES%
   ,PRIMARY KEY (id)

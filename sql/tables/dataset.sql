@@ -8,8 +8,7 @@ CREATE TABLE dataset
   ,assoc_radius DOUBLE NOT NULL
   ,backsize_x SMALLINT NOT NULL
   ,backsize_y SMALLINT NOT NULL
-  ,margin_width 
-  ,what more...
+  ,margin_width DOUBLE NOT NULL
   ,inname VARCHAR(64) NOT NULL
   ,description VARCHAR(100) DEFAULT NULL
   ,node TINYINT NOT NULL DEFAULT %NODE%

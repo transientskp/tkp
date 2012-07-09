@@ -31,7 +31,7 @@ import math
 import numpy
 from tkp.classification.features import lightcurve as lcmod
 from tkp.classification.transient import DateTime
-from utility.decorators import requires_module
+from tkp.tests.decorators import requires_module
 
 
 class TestLightcurve(unittest.TestCase):

@@ -9,7 +9,7 @@ CREATE TABLE image
   ,freq_bw DOUBLE NULL
   ,taustart_ts TIMESTAMP NOT NULL
   ,centre_ra DOUBLE NOT NULL
-  ,centre_ra DOUBLE NOT NULL
+  ,centre_decl DOUBLE NOT NULL
   ,x DOUBLE NOT NULL
   ,y DOUBLE NOT NULL
   ,z DOUBLE NOT NULL

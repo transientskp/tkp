@@ -17,7 +17,7 @@
 
 CREATE TABLE catalogedsource 
   (id INT AUTO_INCREMENT
-  ,catalog INT NOT NULL
+  ,catalog TINYINT NOT NULL
   ,orig_catsrcid INT NOT NULL
   ,catsrcname VARCHAR(120) NULL
   ,tau INT NULL
@@ -36,8 +36,6 @@ CREATE TABLE catalogedsource
   ,det_sigma DOUBLE NOT NULL DEFAULT 0
   ,src_type VARCHAR(1) NULL
   ,fit_probl VARCHAR(2) NULL
-  ,ell_a DOUBLE NULL
-  ,ell_b DOUBLE NULL
   ,PA DOUBLE NULL
   ,PA_err DOUBLE NULL
   ,major DOUBLE NULL

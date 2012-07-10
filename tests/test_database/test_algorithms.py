@@ -6,6 +6,7 @@ import logging
 #    import unittest2 as unittest
     
 import tkp.database as tkpdb
+import tkp.database.utils as db_utils
 import tkp.tests.db_subs as db_subs
 from tkp.tests.decorators import requires_database
 
@@ -135,7 +136,7 @@ class TestTransientCandidateMonitoring(unittest.TestCase):
     def setUp(self):
         import datetime
         self.database = tkpdb.DataBase()
-        self.dataset = tkpdb.DataSet(data={'dsinname':"Monitoringlist"},
+        self.dataset = tkpdb.DataSet(data={'dsinname':"Mon:"+self._testMethodName},
                                     database = self.database)
 
         self.n_images = 8                
@@ -143,15 +144,22 @@ class TestTransientCandidateMonitoring(unittest.TestCase):
         self.db_imgs=[]
         
         FixedSource = db_subs.example_extractedsource_tuple()            
-        SlowTransient = FixedSource._replace(ra=128.123,
+        SlowTransient1 = FixedSource._replace(ra=123.888,
                                       peak = 5e-3, 
                                       flux = 5e-3,
-                                      sigma = 5,
-                                      )    
-        FastTransient = FixedSource._replace(dec=15.5,
+                                      sigma = 4,
+                                      )
+        SlowTransient2 = SlowTransient1._replace(sigma = 3)    
+        BrightFastTransient = FixedSource._replace(dec=15.666,
+                                        peak = 30e-3,
+                                        flux = 30e-3, 
+                                        sigma = 15,
+                                      )
+        
+        WeakFastTransient = FixedSource._replace(dec=15.777,
                                         peak = 10e-3,
                                         flux = 10e-3, 
-                                        sigma = 10,
+                                        sigma = 5,
                                       )
         
             
@@ -159,10 +167,11 @@ class TestTransientCandidateMonitoring(unittest.TestCase):
         for i in xrange(self.n_images):
             source_lists.append([FixedSource])
         
-        source_lists[3].append(FastTransient)
-                
-        source_lists[5].append(SlowTransient)
-        source_lists[6].append(SlowTransient)
+        source_lists[3].append(BrightFastTransient)
+        
+        source_lists[4].append(WeakFastTransient)        
+        source_lists[5].append(SlowTransient1)
+        source_lists[6].append(SlowTransient2)
                 
         for i in xrange(self.n_images):
             self.db_imgs.append(
@@ -175,13 +184,60 @@ class TestTransientCandidateMonitoring(unittest.TestCase):
             
     def tearDown(self):
         self.database.close()
-            
+
+    def test_winkers(self):
+        """test_winkers
+        --- Tests the SQL call which finds sources not present in all epochs
+        """
         
-    def test_winking_source(self):
-        results = self.dataset.find_transient_candidates(None,None)
-        self.assertEqual(len(results),2)
-        self.assertEqual(results[0]['datapoints'],1)
-        self.assertEqual(results[1]['datapoints'],2)
+        winkers = db_utils.select_winking_sources(
+                   self.database.connection,
+                   self.dataset.id)
+        self.assertEqual(len(winkers),3)
+        self.assertEqual(winkers[0]['datapoints'],1)
+        self.assertEqual(winkers[1]['datapoints'],1)
+        self.assertEqual(winkers[2]['datapoints'],2)
+        
+    def test_candidate_thresholding(self):
+        #Grab the source ids
+        winkers = db_utils.select_winking_sources(
+                   self.database.connection,
+                   self.dataset.id)
+        
+        all_results = db_utils.select_transient_candidates_above_thresh(
+                    self.database.connection, 
+                    [c['xtrsrc_id'] for c in winkers],
+                    0,
+                    0)
+        self.assertEqual(len(winkers), len(all_results))
+        
+        bright_results = db_utils.select_transient_candidates_above_thresh(
+                    self.database.connection, 
+                    [c['xtrsrc_id'] for c in winkers],
+                    10,
+                    10)
+        self.assertEqual(len(bright_results), 1)
+        self.assertEqual(bright_results[0]['max_det_sigma'], 15)
+        
+        #Should return bright single epoch, and fainter two epoch sources
+        solid_results = db_utils.select_transient_candidates_above_thresh(
+                    self.database.connection, 
+                    [c['xtrsrc_id'] for c in winkers],
+                    3.5,
+                    6.5)
+        self.assertEqual(len(solid_results), 2)
+        self.assertAlmostEqual(solid_results[1]['max_det_sigma'], 4)
+        self.assertAlmostEqual(solid_results[1]['sum_det_sigma'], 7)
+        
+        
+    def test_full_transient_candidate_routine(self):
+        all_results = self.dataset.find_transient_candidates(0,0)
+        self.assertEqual(len(all_results),3)
+#        self.assertEqual(results[0]['datapoints'],1)
+#        self.assertEqual(results[1]['datapoints'],1)
+        self.assertEqual(all_results[2]['datapoints'],2)
+        self.assertAlmostEqual(all_results[2]['sum_det_sigma'], 7)
+    
     
     def test_monitoringlist_insertion(self):
         pass

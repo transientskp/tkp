@@ -370,8 +370,18 @@ class DataSet(DBObject):
         candidates = dbu.select_winking_sources(
              self.database.connection, self._id)
         
-        #TO DO: Now whittle down the results
+        candidates_sigma = dbu.select_transient_candidates_above_thresh(
+                    self.database.connection, 
+                    [c['xtrsrc_id'] for c in candidates],
+                    single_epoch_threshold,
+                    combined_threshold
+                    )
+        for i in xrange(len(candidates)):
+            candidates[i].update(candidates_sigma[i])
         
+        
+        #TO DO: Filter out those which only disappear because they drop out of FoV
+        ###  --- This will require FoV information in database
         return candidates
         
         

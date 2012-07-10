@@ -1159,6 +1159,9 @@ def select_winking_sources(conn, dsid):
     Selects entries in running catalog which
     are not detected in *all* the images belonging to the dataset.
     
+    Returns:
+    list of dicts:
+        [ {xtrsrc_id, datapoints, avg_i_peak} ]
     """
     
     results = []
@@ -1189,6 +1192,56 @@ SELECT  xtrsrc_id
     finally:
         cursor.close()
     return results
+
+def select_transient_candidates_above_thresh(
+                    conn, 
+                    candidate_assoc_ids,
+                    single_epoch_threshold,
+                    combined_threshold
+                    ):
+    """Takes a list of assoc_ids for candidate transients.
+    
+    Selects info for those which exceed the specified detection thresholds.
+    
+    Returns: a list of dicts
+        [ {xtrsrc_id, max_det_sigma, sum_det_sigma} ]
+        
+    """
+    results = []
+    cursor = conn.cursor()
+    try:
+        ids_placeholder = ", ".join(["%s"] * len(candidate_assoc_ids))
+        query= """\
+SELECT ax.xtrsrc_id 
+       ,MAX(ex.det_sigma)
+       ,SUM(ex.det_sigma)
+    FROM 
+        assocxtrsources ax
+        ,extractedsources ex
+    WHERE ax.xtrsrc_id in ({0}) 
+        AND ax.assoc_xtrsrc_id = ex.xtrsrcid
+    GROUP BY ax.xtrsrc_id
+    HAVING 
+        MAX(ex.det_sigma)>%s    
+        AND SUM(ex.det_sigma)>%s;
+""".format(ids_placeholder)
+        query_tuple = tuple(candidate_assoc_ids +[single_epoch_threshold, combined_threshold])
+        
+#        print "QUERY:"
+#        print query % query_tuple
+        cursor.execute(query, query_tuple)
+        results = cursor.fetchall()
+        results = [dict(xtrsrc_id=x[0], max_det_sigma=x[1], sum_det_sigma=x[2])
+                   for x in results]
+        if not AUTOCOMMIT:
+            conn.commit()
+    except db.Error:
+        logging.warn("Failed on query %s", query)
+        raise
+    finally:
+        cursor.close()
+    return results
+    pass
 
 def select_single_epoch_detection(conn, dsid):
     """Select sources from running catalog which have only one detection"""

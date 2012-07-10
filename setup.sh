@@ -217,7 +217,6 @@ if ${DESTROY}; then
     cat > ~/.monetdb <<-EOF
 user=monetdb
 password=monetdb
-else
 EOF
 
     set_credentials

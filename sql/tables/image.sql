@@ -3,18 +3,18 @@ CREATE SEQUENCE seq_image AS INTEGER;
 CREATE TABLE image 
   (id INT NOT NULL DEFAULT NEXT VALUE FOR seq_image
   ,dataset INT NOT NULL
-  ,tau INT NOT NULL
+  ,tau INT NULL
   ,band INT NOT NULL
   ,stokes CHAR(1) NOT NULL DEFAULT 'I'
-  ,tau_time DOUBLE NOT NULL
+  ,tau_time DOUBLE NULL
   ,freq_eff DOUBLE NOT NULL
   ,freq_bw DOUBLE NULL
   ,taustart_ts TIMESTAMP NOT NULL
-  ,centre_ra DOUBLE NOT NULL
-  ,centre_decl DOUBLE NOT NULL
-  ,x DOUBLE NOT NULL
-  ,y DOUBLE NOT NULL
-  ,z DOUBLE NOT NULL
+  ,centre_ra DOUBLE NULL
+  ,centre_decl DOUBLE NULL
+  ,x DOUBLE NULL
+  ,y DOUBLE NULL
+  ,z DOUBLE NULL
   ,bmaj_syn DOUBLE NULL
   ,bmin_syn DOUBLE NULL
   ,bpa_syn DOUBLE NULL

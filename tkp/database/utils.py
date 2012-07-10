@@ -74,7 +74,7 @@ def insert_image(conn, dataset,
                               #,beam_pa
                               ,url
                               ))
-        newimgid = cursor.lastrowid
+        newimgid = cursor.fetchone()[0]
         if not AUTOCOMMIT:
             conn.commit()
     except db.Error, e:
@@ -339,8 +339,8 @@ INSERT INTO temprunningcatalog
   ,avg_weighted_I_peak
   ,avg_weighted_I_peak_sq
   )
-  SELECT t0.xtrsrc_id
-        ,t0.assoc_xtrsrc_id
+  SELECT t0.runcat
+        ,t0.xtrsrc
         ,t0.dataset
         ,t0.band
         ,t0.datapoints
@@ -361,69 +361,69 @@ INSERT INTO temprunningcatalog
         ,t0.avg_weight_peak
         ,t0.avg_weighted_I_peak
         ,t0.avg_weighted_I_peak_sq
-    FROM (SELECT rc.xtrsrc_id as xtrsrc_id
-                ,x0.xtrsrcid as assoc_xtrsrc_id
-                ,im0.dataset
-                ,im0.band
-                ,rc.datapoints + 1 AS datapoints
-                ,((datapoints * rc.avg_wra + x0.ra /
+    FROM (SELECT runcat.id as runcat
+                ,x0.id as xtrsrc
+                ,image.dataset
+                ,image.band
+                ,runcat.datapoints + 1 AS datapoints
+                ,((datapoints * runcat.avg_wra + x0.ra /
                   (x0.ra_err * x0.ra_err)) / (datapoints + 1))
                  /
-                 ((datapoints * rc.avg_weight_ra + 1 /
+                 ((datapoints * runcat.avg_weight_ra + 1 /
                    (x0.ra_err * x0.ra_err)) / (datapoints + 1))
                  AS wm_ra
-                ,((datapoints * rc.avg_wdecl + x0.decl /
+                ,((datapoints * runcat.avg_wdecl + x0.decl /
                   (x0.decl_err * x0.decl_err)) / (datapoints + 1))
                  /
-                 ((datapoints * rc.avg_weight_decl + 1 /
+                 ((datapoints * runcat.avg_weight_decl + 1 /
                    (x0.decl_err * x0.decl_err)) / (datapoints + 1))
                  AS wm_decl
                 ,SQRT(1 / ((datapoints + 1) *
-                  ((datapoints * rc.avg_weight_ra +
+                  ((datapoints * runcat.avg_weight_ra +
                     1 / (x0.ra_err * x0.ra_err)) / (datapoints + 1))
                           )
                      ) AS wm_ra_err
                 ,SQRT(1 / ((datapoints + 1) *
-                  ((datapoints * rc.avg_weight_decl +
+                  ((datapoints * runcat.avg_weight_decl +
                     1 / (x0.decl_err * x0.decl_err)) / (datapoints + 1))
                           )
                      ) AS wm_decl_err
-                ,(datapoints * rc.avg_wra + x0.ra / (x0.ra_err * x0.ra_err))
+                ,(datapoints * runcat.avg_wra + x0.ra / (x0.ra_err * x0.ra_err))
                  / (datapoints + 1) AS avg_wra
-                ,(datapoints * rc.avg_wdecl + x0.decl /
+                ,(datapoints * runcat.avg_wdecl + x0.decl /
                   (x0.decl_err * x0.decl_err))
                  / (datapoints + 1) AS avg_wdecl
-                ,(datapoints * rc.avg_weight_ra + 1 /
+                ,(datapoints * runcat.avg_weight_ra + 1 /
                   (x0.ra_err * x0.ra_err))
                  / (datapoints + 1) AS avg_weight_ra
-                ,(datapoints * rc.avg_weight_decl + 1 /
+                ,(datapoints * runcat.avg_weight_decl + 1 /
                   (x0.decl_err * x0.decl_err))
                  / (datapoints + 1) AS avg_weight_decl
-                ,(datapoints * rc.avg_I_peak + x0.I_peak)
+                ,(datapoints * runcat.avg_I_peak + x0.I_peak)
                  / (datapoints + 1)
                  AS avg_I_peak
-                ,(datapoints * rc.avg_I_peak_sq +
+                ,(datapoints * runcat.avg_I_peak_sq +
                   x0.I_peak * x0.I_peak)
                  / (datapoints + 1)
                  AS avg_I_peak_sq
-                ,(datapoints * rc.avg_weight_peak + 1 /
+                ,(datapoints * runcat.avg_weight_peak + 1 /
                   (x0.I_peak_err * x0.I_peak_err))
                  / (datapoints + 1)
                  AS avg_weight_peak
-                ,(datapoints * rc.avg_weighted_I_peak + x0.I_peak /
+                ,(datapoints * runcat.avg_weighted_I_peak + x0.I_peak /
                   (x0.I_peak_err * x0.I_peak_err))
                  / (datapoints + 1)
                  AS avg_weighted_I_peak
-                ,(datapoints * rc.avg_weighted_I_peak_sq
+                ,(datapoints * runcat.avg_weighted_I_peak_sq
                   + (x0.I_peak * x0.I_peak) /
                      (x0.I_peak_err * x0.I_peak_err))
                  / (datapoints + 1) AS avg_weighted_I_peak_sq
-            FROM runningcatalog rc
+            FROM runningcatalog runcat
                 ,extractedsource x0
-                ,images im0
+                ,image
            WHERE x0.image = %s
-             AND x0.image = im0.imageid
-             AND im0.dataset = rc.dataset
+             AND x0.image = image.id
+             AND image.dataset = runcat.dataset
              AND rc.zone BETWEEN CAST(FLOOR(x0.decl - 0.025) as INTEGER)
                              AND CAST(FLOOR(x0.decl + 0.025) as INTEGER)
              AND rc.wm_decl BETWEEN x0.decl - 0.025
@@ -473,9 +473,9 @@ def _flag_multiple_counterparts_in_runningcatalog(conn):
     try:
         cursor = conn.cursor()
         query = """\
-        SELECT t1.xtrsrc_id
-              ,t1.assoc_xtrsrc_id
-          FROM (SELECT trc0.assoc_xtrsrc_id
+        SELECT t1.xtrsrc
+              ,t1.xtrsrc
+          FROM (SELECT trc0.xtrsrc
                       ,MIN(SQRT((x0.ra - rc0.wm_ra) * COS(RADIANS(x0.decl))
                                 * (x0.ra - rc0.wm_ra) * COS(RADIANS(x0.decl))
                                 / (x0.ra_err * x0.ra_err + rc0.wm_ra_err *
@@ -489,17 +489,17 @@ def _flag_multiple_counterparts_in_runningcatalog(conn):
                   FROM temprunningcatalog trc0
                       ,runningcatalog rc0
                       ,extractedsource x0
-                 WHERE trc0.assoc_xtrsrc_id IN (SELECT assoc_xtrsrc_id
+                 WHERE trc0.xtrsrc IN (SELECT xtrsrc
                                                  FROM temprunningcatalog
-                                               GROUP BY assoc_xtrsrc_id
+                                               GROUP BY xtrsrc
                                                HAVING COUNT(*) > 1
                                               )
-                   AND trc0.xtrsrc_id = rc0.xtrsrc_id
-                   AND trc0.assoc_xtrsrc_id = x0.xtrsrcid
-                GROUP BY trc0.assoc_xtrsrc_id
+                   AND trc0.xtrsrc = rc0.xtrsrc
+                   AND trc0.xtrsrc = x0.id
+                GROUP BY trc0.xtrsrc
                ) t0
-              ,(SELECT trc1.xtrsrc_id
-                      ,trc1.assoc_xtrsrc_id
+              ,(SELECT trc1.xtrsrc
+                      ,trc1.xtrsrc
                       ,SQRT( (x1.ra - rc1.wm_ra) * COS(RADIANS(x1.decl))
                             *(x1.ra - rc1.wm_ra) * COS(RADIANS(x1.decl))
                             / (x1.ra_err * x1.ra_err +
@@ -511,31 +511,31 @@ def _flag_multiple_counterparts_in_runningcatalog(conn):
                   FROM temprunningcatalog trc1
                       ,runningcatalog rc1
                       ,extractedsource x1
-                 WHERE trc1.assoc_xtrsrc_id IN (SELECT assoc_xtrsrc_id
+                 WHERE trc1.xtrsrc IN (SELECT xtrsrc
                                                  FROM temprunningcatalog
-                                               GROUP BY assoc_xtrsrc_id
+                                               GROUP BY xtrsrc
                                                HAVING COUNT(*) > 1
                                               )
-                   AND trc1.xtrsrc_id = rc1.xtrsrc_id
-                   AND trc1.assoc_xtrsrc_id = x1.xtrsrcid
+                   AND trc1.xtrsrc = rc1.xtrsrc
+                   AND trc1.xtrsrc = x1.id
                ) t1
-         WHERE t1.assoc_xtrsrc_id = t0.assoc_xtrsrc_id
+         WHERE t1.xtrsrc = t0.xtrsrc
            AND t1.r1 > t0.min_r1
         """
         cursor.execute(query)
         results = zip(*cursor.fetchall())
         if len(results) != 0:
             xtrsrc_id = results[0]
-            assoc_xtrsrc_id = results[1]
+            xtrsrc = results[1]
             # TODO: Consider setting row to inactive instead of deleting
             query = """\
             DELETE
               FROM temprunningcatalog
              WHERE xtrsrc_id = %s
-               AND assoc_xtrsrc_id = %s
+               AND xtrsrc = %s
             """
             for j in range(len(xtrsrc_id)):
-                cursor.execute(query, (xtrsrc_id[j], assoc_xtrsrc_id[j]))
+                cursor.execute(query, (xtrsrc_id[j], xtrsrc[j]))
                 if not AUTOCOMMIT:
                     conn.commit()
     except db.Error, e:
@@ -558,15 +558,15 @@ def _insert_multiple_assocs(conn):
     try:
         cursor = conn.cursor()
         query = """\
-        INSERT INTO assocxtrsources
+        INSERT INTO assocxtrsource
           (xtrsrc_id
-          ,assoc_xtrsrc_id
+          ,xtrsrc
           ,assoc_distance_arcsec
           ,assoc_r
           ,assoc_lr_method
           )
-          SELECT t.assoc_xtrsrc_id
-                ,t.xtrsrc_id
+          SELECT t.xtrsrc
+                ,t.xtrsrc
                 ,3600 * DEGREES(2 * ASIN(SQRT((r.x - x.x) * (r.x - x.x)
                                           + (r.y - x.y) * (r.y - x.y)
                                           + (r.z - x.z) * (r.z - x.z)
@@ -583,9 +583,9 @@ def _insert_multiple_assocs(conn):
             FROM temprunningcatalog t
                 ,runningcatalog r
                 ,extractedsource x
-           WHERE t.xtrsrc_id = r.xtrsrc_id
-             AND t.xtrsrc_id = x.xtrsrcid
-             AND t.xtrsrc_id IN (SELECT xtrsrc_id
+           WHERE t.xtrsrc = r.xtrsrc
+             AND t.xtrsrc = x.id
+             AND t.xtrsrc IN (SELECT xtrsrc_id
                                    FROM temprunningcatalog
                                  GROUP BY xtrsrc_id
                                  HAVING COUNT(*) > 1
@@ -611,15 +611,15 @@ def _insert_first_of_assocs(conn):
     try:
         cursor = conn.cursor()
         query = """\
-        INSERT INTO assocxtrsources
+        INSERT INTO assocxtrsource
           (xtrsrc_id
-          ,assoc_xtrsrc_id
+          ,xtrsrc
           ,assoc_distance_arcsec
           ,assoc_r
           ,assoc_lr_method
           )
-          SELECT assoc_xtrsrc_id
-                ,assoc_xtrsrc_id
+          SELECT xtrsrc
+                ,xtrsrc
                 ,0
                 ,0
                 ,2
@@ -652,7 +652,7 @@ def _flag_swapped_assocs(conn):
         cursor = conn.cursor()
         query = """\
         DELETE
-          FROM assocxtrsources
+          FROM assocxtrsource
          WHERE xtrsrc_id IN (SELECT xtrsrc_id
                                FROM temprunningcatalog
                              GROUP BY xtrsrc_id
@@ -698,7 +698,7 @@ def _insert_multiple_assocs_runcat(conn):
           ,avg_weighted_I_peak
           ,avg_weighted_I_peak_sq
           )
-          SELECT assoc_xtrsrc_id
+          SELECT xtrsrc
                 ,dataset
                 ,band
                 ,datapoints
@@ -786,21 +786,21 @@ def _flag_multiple_assocs(conn):
 
 
 def _insert_single_assocs(conn):
-    """Insert remaining 1-1 associations into assocxtrsources table"""
-    #TODO: check whether last row (t.xtrsrc_id = x.xtrsrcid) should be
+    """Insert remaining 1-1 associations into assocxtrsource table"""
+    #TODO: check whether last row (t.xtrsrc = x.id) should be
     #      t.assocxtrsrc_id = ...)
     try:
         cursor = conn.cursor()
         query = """\
-        INSERT INTO assocxtrsources
+        INSERT INTO assocxtrsource
           (xtrsrc_id
-          ,assoc_xtrsrc_id
+          ,xtrsrc
           ,assoc_distance_arcsec
           ,assoc_r
           ,assoc_lr_method
           )
-          SELECT t.xtrsrc_id
-                ,t.assoc_xtrsrc_id
+          SELECT t.xtrsrc
+                ,t.xtrsrc
                 ,3600 * DEGREES(2 * ASIN(SQRT((r.x - x.x) * (r.x - x.x)
                                           + (r.y - x.y) * (r.y - x.y)
                                           + (r.z - x.z) * (r.z - x.z)
@@ -819,8 +819,8 @@ def _insert_single_assocs(conn):
             FROM temprunningcatalog t
                 ,runningcatalog r
                 ,extractedsource x
-           WHERE t.xtrsrc_id = r.xtrsrc_id
-             AND t.xtrsrc_id = x.xtrsrcid
+           WHERE t.xtrsrc = r.xtrsrc
+             AND t.xtrsrc = x.id
         """
         cursor.execute(query)
         if not AUTOCOMMIT:
@@ -903,11 +903,11 @@ def _count_known_sources(conn, image_id, deRuiter_r):
         query = """\
         SELECT COUNT(*)
           FROM extractedsource x0
-              ,images im0
+              ,image
               ,runningcatalog b0
          WHERE x0.image = %s
-           AND x0.image = im0.imageid
-           AND im0.dataset = b0.dataset
+           AND x0.image = image.id
+           AND image.dataset = b0.dataset
            AND b0.zone BETWEEN x0.zone - cast(0.025 as integer)
                            AND x0.zone + cast(0.025 as integer)
            AND b0.wm_decl BETWEEN x0.decl - 0.025
@@ -941,28 +941,28 @@ def _insert_new_assocs(conn, image_id, deRuiter_r):
     cursor = conn.cursor()
     try:
         query = """\
-        INSERT INTO assocxtrsources
+        INSERT INTO assocxtrsource
           (xtrsrc_id
-          ,assoc_xtrsrc_id
+          ,xtrsrc
           ,assoc_distance_arcsec
           ,assoc_r
           ,assoc_lr_method
           )
-          SELECT x1.xtrsrcid as xtrsrc_id
-                ,x1.xtrsrcid as assoc_xtrsrc_id
+          SELECT x1.id as xtrsrc_id
+                ,x1.id as xtrsrc
                 ,0
                 ,0
                 ,4
             FROM extractedsource x1
            WHERE x1.image = %s
-             AND x1.xtrsrcid NOT IN (
-                 SELECT x0.xtrsrcid
+             AND x1.id NOT IN (
+                 SELECT x0.id
                   FROM extractedsource x0
                       ,runningcatalog b0
-                      ,images im0
+                      ,image
                  WHERE x0.image = %s
-                   AND x0.image = im0.imageid
-                   AND im0.dataset = b0.dataset
+                   AND x0.image = image.id
+                   AND image.dataset = b0.dataset
                    AND b0.zone BETWEEN x0.zone - cast(0.025 as integer)
                                    AND x0.zone + cast(0.025 as integer)
                    AND b0.wm_decl BETWEEN x0.decl - 0.025
@@ -1016,7 +1016,7 @@ def _insert_new_source_runcat(conn, image_id, deRuiter_r):
           ,avg_weighted_I_peak
           ,avg_weighted_I_peak_sq
           )
-          SELECT x1.xtrsrcid
+          SELECT x1.id
                 ,im1.dataset
                 ,band
                 ,1
@@ -1038,17 +1038,17 @@ def _insert_new_source_runcat(conn, image_id, deRuiter_r):
                 ,I_peak / (I_peak_err * I_peak_err)
                 ,I_peak * I_peak / (I_peak_err * I_peak_err)
             FROM extractedsource x1
-                ,images im1
+                ,image im1
            WHERE x1.image = %s
-             AND x1.image = im1.imageid
-             AND x1.xtrsrcid NOT IN (
-                 SELECT x0.xtrsrcid
+             AND x1.image = im1.id
+             AND x1.id NOT IN (
+                 SELECT x0.id
                   FROM extractedsource x0
                       ,runningcatalog b0
-                      ,images im0
+                      ,image
                  WHERE x0.image = %s
-                   AND x0.image = im0.imageid
-                   AND im0.dataset = b0.dataset
+                   AND x0.image = image.id
+                   AND image.dataset = b0.dataset
                    AND b0.zone BETWEEN CAST(FLOOR(x0.zone - 0.025) AS INTEGER)
                                    AND CAST(FLOOR(x0.zone + 0.025) AS INTEGER)
                    AND b0.wm_decl BETWEEN x0.decl - 0.025
@@ -1087,15 +1087,15 @@ def _associate_across_frequencies(conn, dataset, image_id, deRuiter_r=DERUITER_R
         cursor = conn.cursor()
         query = """\
         SELECT COUNT(*)
-              /*r1.xtrsrc_id AS runcat_id
+              /*r1.xtrsrc AS runcat_id
               ,r1.band AS band
-              ,r2.xtrsrc_id AS assoc_runcat_id
+              ,r2.xtrsrc AS assoc_runcat_id
               ,r2.band AS assoc_band*/
           FROM runningcatalog r1
               ,runningcatalog r2
-              ,images im1
+              ,image im1
          WHERE r1.dataset = %s
-           AND im1.imageid = %s
+           AND im1.id = %s
            AND r1.band = im1.band
            AND r2.dataset = r1.dataset
            AND r2.band <> r1.band
@@ -1219,12 +1219,12 @@ def lightcurve(conn, xtrsrcid):
     cursor = conn.cursor()
     try:
         query = """\
-SELECT im.taustart_ts, im.tau_time, ex.i_peak, ex.i_peak_err, ex.xtrsrcid
-FROM extractedsource ex, assocxtrsources ax, images im
-WHERE ax.xtrsrc_id in
-    (SELECT xtrsrc_id FROM assocxtrsources WHERE assoc_xtrsrc_id = %s)
-  AND ex.xtrsrcid = ax.assoc_xtrsrc_id
-  AND ex.image = im.imageid
+SELECT im.taustart_ts, im.tau_time, ex.i_peak, ex.i_peak_err, ex.id
+FROM extractedsource ex, assocxtrsource ax, image im
+WHERE ax.xtrsrc in
+    (SELECT xtrsrc_id FROM assocxtrsource WHERE xtrsrc = %s)
+  AND ex.id = ax.xtrsrc
+  AND ex.image = im.id
 ORDER BY im.taustart_ts"""
         cursor.execute(query, (xtrsrcid,))
         results = cursor.fetchall()
@@ -1493,12 +1493,12 @@ def columns_from_table(conn, table, keywords=None, where=None):
 
     Example:
     
-        >>> columns_from_table(conn, 'images',
+        >>> columns_from_table(conn, 'image',
             keywords=['taustart_ts', 'tau_time', 'freq_eff', 'freq_bw'], where={'imageid': 1})
             [{'freq_eff': 133984375.0, 'taustart_ts': datetime.datetime(2010, 10, 9, 9, 4, 2), 'tau_time': 14400.0, 'freq_bw': 1953125.0}]
 
         This builds the SQL query:
-        "SELECT taustart_ts, tau_time, freq_eff, freq_bw FROM images WHERE imageid=1"
+        "SELECT taustart_ts, tau_time, freq_eff, freq_bw FROM image WHERE imageid=1"
 
     This function is implemented mainly to abstract and hide the SQL
     functionality from the Python interface.
@@ -1603,7 +1603,7 @@ def get_imagefiles_for_ids(conn, image_ids):
     
     where_string = ", ".join(["%s"] * len(image_ids))
     where_tuple = tuple(image_ids)
-    query = ("""SELECT imageid, url FROM images WHERE imageid in (%s)""" % 
+    query = ("""SELECT id, url FROM image WHERE id in (%s)""" %
              where_string)
     cursor = conn.cursor()
     try:
@@ -1767,12 +1767,12 @@ def monitoringlist_not_observed(conn, image_id):
     association with the extracted sources for this image
 
     We do this by matching the monitoring list xtrsrc_ids with the
-    extractedsource xtrsrcids through the assocxtrsources. Using a
+    extractedsource xtrsrcids through the assocxtrsource. Using a
     left outer join, we get nulls in the place where a source should
     have been, but isn't: these are the sources that are not in
     extractedosurces and thus weren't automatically picked up by the
     sourcefinder. We limit our query using the image_id (and dataset
-    through images.dataset).
+    through image.dataset).
 
     Lastly, we get the best (weighted averaged) position for the
     sources to be monitored from the runningcatalog, which shows up in
@@ -1794,31 +1794,31 @@ def monitoringlist_not_observed(conn, image_id):
     query = """\
 SELECT rc.wm_ra
       ,rc.wm_decl
-      ,t2.xtrsrc_id2
+      ,t2.xtrsrc2
       ,t2.monitorid
 FROM
    (SELECT ml.monitorid AS monitorid
-          ,ml.xtrsrc_id AS xtrsrc_id2
-          ,t1.xtrsrc_id AS xtrsrc_id
-          ,t1.assoc_xtrsrc_id AS assoc_xtrsrc_id
+          ,ml.xtrsrc AS xtrsrc_id2
+          ,t1.xtrsrc AS xtrsrc_id
+          ,t1.xtrsrc AS xtrsrc
           ,t1.image AS image_id
           ,ml.dataset AS dataset
       FROM monitoringlist ml
       LEFT OUTER JOIN 
-          (SELECT ax.xtrsrc_id as xtrsrc_id
-                ,ex.xtrsrcid as xtrsrcid
+          (SELECT ax.xtrsrc as xtrsrc_id
+                ,ex.id as xtrsrcid
                 ,ex.image as image_id
-                ,ax.assoc_xtrsrc_id as assoc_xtrsrc_id
-            FROM extractedsource ex, assocxtrsources ax
-            WHERE ex.xtrsrcid = ax.assoc_xtrsrc_id
+                ,ax.xtrsrc as xtrsrc
+            FROM extractedsource ex, assocxtrsource ax
+            WHERE ex.id = ax.xtrsrc
             AND ex.image = %s
           ) t1
-      ON ml.xtrsrc_id = t1.xtrsrc_id
-      WHERE t1.assoc_xtrsrc_id IS NULL
-    ) t2, images im, runningcatalog rc
+      ON ml.xtrsrc = t1.xtrsrc
+      WHERE t1.xtrsrc IS NULL
+    ) t2, image im, runningcatalog rc
 WHERE im.dataset = t2.dataset
-AND im.imageid = %s
-AND rc.xtrsrc_id = t2.xtrsrc_id2
+AND im.id = %s
+AND rc.xtrsrc = t2.xtrsrc2
 """
     try:
         cursor.execute(query, (image_id, image_id))
@@ -1932,7 +1932,7 @@ def insert_monitoring_sources(conn, results, image_id):
             raise
         if xtrsrc_id < 0:
             # Insert as new source into the running catalog
-            # and update the monitoringlist.xtrsrc_id
+            # and update the monitoringlist.xtrsrc
             query = """\
 INSERT INTO runningcatalog
     (xtrsrc_id
@@ -1958,7 +1958,7 @@ INSERT INTO runningcatalog
     ,avg_weighted_I_peak_sq
     )
     SELECT
-        t0.xtrsrcid
+        t0.id
         ,im.dataset
         ,im.band
         ,1
@@ -1981,7 +1981,7 @@ INSERT INTO runningcatalog
         ,t0.flux_sq
     FROM (SELECT
         ex.image
-        ,ex.xtrsrcid
+        ,ex.id
         ,ex.zone
         ,ex.ra
         ,ex.decl
@@ -1993,9 +1993,9 @@ INSERT INTO runningcatalog
         ,ex.i_peak as flux
         ,ex.i_peak * ex.i_peak as flux_sq
         FROM extractedsource ex
-        WHERE ex.xtrsrcid = %s
-        ) as t0, images im
-    WHERE im.imageid = %s
+        WHERE ex.id = %s
+        ) as t0, image im
+    WHERE im.id = %s
 """
             try:
                 cursor.execute(query, (xtrsrcid, image_id))
@@ -2009,10 +2009,10 @@ INSERT INTO runningcatalog
             # Add it to the association table as well, so we can
             # obtain the lightcurve
             query = """\
-INSERT INTO assocxtrsources
+INSERT INTO assocxtrsource
   (
   xtrsrc_id,
-  assoc_xtrsrc_id,
+  xtrsrc,
   assoc_weight,
   assoc_distance_arcsec,
   assoc_lr_method,
@@ -2029,7 +2029,7 @@ VALUES
                 logging.warn("query failed: %s", query)
                 cursor.close()
                 raise
-            # Now update the monitoringlist.xtrsrc_id (note: the
+            # Now update the monitoringlist.xtrsrc (note: the
             # original, possibly negative, xtrsrc_id is still held
             # safely in memory)
             query = """\
@@ -2054,7 +2054,7 @@ UPDATE monitoringlist SET xtrsrc_id=%s, image_id=%s WHERE monitorid=%s"""
             # the xtrsrc_id from the monitoringlist already
             # points to the original/first point
             query = """\
-INSERT INTO assocxtrsources (xtrsrc_id, assoc_xtrsrc_id, assoc_weight, assoc_distance_arcsec, assoc_lr_method, assoc_r, assoc_lr)
+INSERT INTO assocxtrsource (xtrsrc_id, xtrsrc, assoc_weight, assoc_distance_arcsec, assoc_lr_method, assoc_r, assoc_lr)
 VALUES (%s, %s, 0, 0, 0, 0, 0)"""
             try:
                 cursor.execute(query, (xtrsrc_id, xtrsrcid))
@@ -2068,26 +2068,26 @@ VALUES (%s, %s, 0, 0, 0, 0, 0)"""
     cursor.close()
     
 
-def insert_transient(conn, transient, dataset_id, images=None):
+def insert_transient(conn, transient, dataset, images=None):
     """Insert a transient source in the database.
     Transients are stored in the transients table, as well as in
     the monitoring list.
 
-    A check is performed where the base id (asocxtrsources.xtrsrc_id)
+    A check is performed where the base id (asocxtrsources.xtrsrc)
     for the light curve of the transient is queried, by assuming the
     current srcid falls within a light curve
-    (assocxtrsources.assoc_xtrsrc_id = srcid). If this id already in the
+    (assocxtrsource.xtrsrc = srcid). If this id already in the
     table, we replace that transient by this one.
 
-    The reason we check the assocxtrsources, is that when there is a
+    The reason we check the assocxtrsource, is that when there is a
     double source match, the main source id (as stored in the
     runningcatalog) may change; this results in transients already
     stored having a different id than the current transient, while
     they are in the fact the same transient. The xtrsrc_id of the
     stored id, however, should still be in the light curve of the new
-    xtrsrc_id, as an assoc_xtrsrc_id. We thus update the transient,
-    and replace the current transients.xtrsrc_id by the new srcid
-    (=assocxtrsources.xtrsrc_id)
+    xtrsrc_id, as an xtrsrc. We thus update the transient,
+    and replace the current transients.xtrsrc by the new srcid
+    (=assocxtrsource.xtrsrc)
 
     We store the transient in the monitoring list to ensure its flux
     will be measured even when the transient drops below the detection
@@ -2099,7 +2099,7 @@ def insert_transient(conn, transient, dataset_id, images=None):
     try:  # Find the possible transient associated with the current source
         query = """\
 SELECT transientid FROM transients WHERE xtrsrc_id IN (
-SELECT assoc_xtrsrc_id FROM assocxtrsources WHERE xtrsrc_id = %s
+SELECT xtrsrc FROM assocxtrsource WHERE xtrsrc_id = %s
 )
 """
         cursor.execute(query, (srcid,))
@@ -2122,9 +2122,9 @@ WHERE transientid = %s
             else:
                 image_set = ", ".join([str(image) for image in images])
             query = """\
-SELECT ex.xtrsrcid FROM extractedsource ex, assocxtrsources ax
-WHERE ex.image IN (%s) AND ex.xtrsrcid = ax.assoc_xtrsrc_id AND
-ax.xtrsrc_id = %%s""" % image_set
+SELECT ex.id FROM extractedsource ex, assocxtrsource ax
+WHERE ex.image IN (%s) AND ex.id = ax.xtrsrc AND
+ax.xtrsrc = %%s""" % image_set
             cursor.execute(query, (srcid,))
             trigger_srcid = cursor.fetchone()[0]
             query = """\
@@ -2144,14 +2144,14 @@ VALUES (%s, %s, %s, %s)
         query = """\
 INSERT INTO monitoringlist
 (xtrsrc_id, ra, decl, dataset)
-SELECT ex.xtrsrcid, 0, 0, %s
+SELECT ex.id, 0, 0, %s
 FROM extractedsource ex
-WHERE ex.xtrsrcid = %s
+WHERE ex.id = %s
   AND
-    ex.xtrsrcid NOT IN
+    ex.id NOT IN
     (SELECT xtrsrc_id FROM monitoringlist)
 """
-        cursor.execute(query, (dataset_id, srcid))
+        cursor.execute(query, (dataset, srcid))
         if not AUTOCOMMIT:
             conn.commit()
     except db.Error:

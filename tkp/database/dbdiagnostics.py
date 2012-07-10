@@ -23,29 +23,29 @@ def scatterWenssNvssSigmaOverMuX2X(dsid,conn):
     """
     try:
         cursor = conn.cursor()
-        cursor.execute("SELECT ax2.xtrsrc_id " + \
+        cursor.execute("SELECT ax2.xtrsrc " + \
                        "      ,count(*) as datapoints " + \
                        "      ,1000 * min(x2.i_int) as min_i_int_mJy " + \
                        "      ,1000 * avg(x2.i_int) as avg_i_int_mJy " + \
                        "      ,1000 * max(x2.i_int) as max_i_int_mJy " + \
                        "      ,sqrt(count(*) * (avg(x2.i_int * x2.i_int) - avg(x2.i_int) * avg(x2.i_int))/ (count(*)-1))/avg(x2.i_int) as sigma_over_mu " + \
-                       "  FROM assocxtrsources ax2 " + \
+                       "  FROM assocxtrsource ax2 " + \
                        "      ,extractedsource x1 " + \
                        "      ,extractedsource x2 " + \
                        "      ,images im1 " + \
                        "      ,images im2 " + \
-                       " WHERE ax2.xtrsrc_id = x1.xtrsrcid " + \
-                       "   AND ax2.assoc_xtrsrc_id = x2.xtrsrcid " + \
-                       "   AND x1.image = im1.imageid " + \
-                       "   AND x2.image = im2.imageid " + \
+                       " WHERE ax2.xtrsrc = x1.id " + \
+                       "   AND ax2.xtrsrc = x2.id " + \
+                       "   AND x1.image = im1.id " + \
+                       "   AND x2.image = im2.id " + \
                        "   AND im1.dataset = im2.dataset " + \
                        "   AND im1.dataset = %s " + \
                        "   AND im1.band = 14 " + \
                        "   AND im1.band = im2.band " + \
-                       "GROUP BY ax2.xtrsrc_id " + \
+                       "GROUP BY ax2.xtrsrc " + \
                        "HAVING COUNT(*) = 10 " + \
                        "ORDER BY datapoints " + \
-                       "        ,ax2.xtrsrc_id ", (dsid,))
+                       "        ,ax2.xtrsrc ", (dsid,))
         y = cursor.fetchall()
         cursor.close()
         
@@ -101,13 +101,13 @@ def plotWenssNvssSpIdxFig7(dsid,catid,conn):
         ~10000 records, this takes to long in python, so we
         bin it in the query itself
         cursor.execute("select log10(x1.i_int / c1.i_int_avg) / log10(c1.freq_eff / im1.freq_eff) " + \
-                       "  from assoccatsources ac1 " + \
-                       "      ,catalogedsources c1 " + \
+                       "  from assoccatsource ac1 " + \
+                       "      ,catalogedsource c1 " + \
                        "      ,extractedsource x1 " + \
-                       "      ,images im1 " + \
-                       " where assoc_catsrc_id = catsrcid " + \
-                       "   and xtrsrc_id = xtrsrcid " + \
-                       "   and image_id = imageid " + \
+                       "      ,image im1 " + \
+                       " where assoc_catsrc_id = catalogedsource.id " + \
+                       "   and xtrsrc = xtrsrc.id " + \
+                       "   and image = image.id " + \
                        "   and dataset = %s " + \
                        "   and cat_id = %s " + \
                        "   and assoc_lr > 3 ", (dsid,catid)) 
@@ -175,27 +175,27 @@ def plotWenssNvssFig6(dsid,catid,conn):
                        "      ,CAST(bin_lr_nr AS DOUBLE) / 2 AS bin_lr " + \
                        "      ,bin_lr_nr " + \
                        "      ,avg(reliab) " + \
-                       "  from (select t2.xtrsrc_id " + \
+                       "  from (select t2.xtrsrc " + \
                        "              ,t2.assoc_catsrc_id " + \
                        "              ,CAST(1 + FLOOR(2 * t2.assoc_lr) AS INTEGER) as bin_lr_nr " + \
                        "              ,t2.assoc_lr " + \
                        "              ,t2.cnt_sf " + \
                        "              ,t2.cnt_bg " + \
                        "              ,(t2.cnt_sf - t2.cnt_bg / 8) / t2.cnt_sf as reliab " + \
-                       "          from (select t1.xtrsrc_id as xtrsrc_id " + \
+                       "          from (select t1.xtrsrc as xtrsrc_id " + \
                        "                      ,t1.assoc_catsrc_id as assoc_catsrc_id " + \
                        "                      ,t1.assoc_lr as assoc_lr " + \
                        "                      ,getCountLogLRbin_CatSF(2,(t1.assoc_lr - 0.25),(t1.assoc_lr + 0.25)) as cnt_sf " + \
                        "                      ,getCountLogLRbin_CatBG(3,10,(t1.assoc_lr - 0.25),(t1.assoc_lr + 0.25)) as cnt_bg " + \
-                       "                  from (select ac1.xtrsrc_id as xtrsrc_id " + \
+                       "                  from (select ac1.xtrsrc as xtrsrc_id " + \
                        "                              ,ac1.assoc_catsrc_id as assoc_catsrc_id " + \
                        "                              ,ac1.assoc_lr as assoc_lr " + \
                        "                          from assoccatsources ac1 " + \
                        "                              ,extractedsource x1 " + \
                        "                              ,images im1 " + \
                        "                              ,catalogedsources c1 " + \
-                       "                         where ac1.xtrsrc_id = x1.xtrsrcid " + \
-                       "                           and x1.image = im1.imageid " + \
+                       "                         where ac1.xtrsrc = x1.id " + \
+                       "                           and x1.image = im1.id " + \
                        "                           and im1.dataset = %s " + \
                        "                           and ac1.assoc_catsrc_id = c1.catsrcid " + \
                        "                           and c1.cat_id = %s " + \
@@ -1222,12 +1222,12 @@ def scatterSourceAssocIndexX2X(dsid,conn):
                        "              ,max(assoc_lr) as max_loglr " + \
                        "              ,cast(1 + floor(100 * assoc_r) as integer) as bin_r_nr " + \
                        "              ,avg(assoc_distance_arcsec) as avg_dist " + \
-                       "          from assocxtrsources " + \
+                       "          from assocxtrsource " + \
                        "              ,extractedsource " + \
                        "              ,images " + \
                        "         where xtrsrc_id = xtrsrcid " + \
                        "           and image_id = imageid " + \
-                       "           and xtrsrc_id <> assoc_xtrsrc_id " + \
+                       "           and xtrsrc_id <> xtrsrc " + \
                        "           and dataset = %s " + \
                        "        group by bin_r_nr " + \
                        "       ) t " + \
@@ -1393,17 +1393,17 @@ def contourX2XDistLRRho(conn,dsid):
     try:
         cursor = conn.cursor()
         cursor.execute("select xtrsrc_id " + \
-                       "      ,assoc_xtrsrc_id " + \
+                       "      ,xtrsrc " + \
                        "      ,cast(1 + floor(10 * assoc_distance_arcsec) as integer) as bin_dist " + \
                        "      ,assoc_distance_arcsec " + \
                        "      ,assoc_r " + \
                        "      ,assoc_lr " + \
-                       "  from assocxtrsources " + \
+                       "  from assocxtrsource " + \
                        "      ,extractedsource " + \
                        "      ,images " + \
                        " where xtrsrc_id = xtrsrcid " + \
                        "   and image_id = imageid " + \
-                       "   and xtrsrc_id <> assoc_xtrsrc_id " + \
+                       "   and xtrsrc_id <> xtrsrc " + \
                        "   and dataset = %s " + \
                        "order by assoc_distance_arcsec ", (dsid,))
         y = cursor.fetchall()
@@ -1493,22 +1493,22 @@ def plotLightCurveLevelVar_v1(conn,dsid,level=None):
 
     try:
         cursor = conn.cursor()
-        cursor.execute("SELECT t.xtrsrc_id " + \
+        cursor.execute("SELECT t.xtrsrc " + \
                        "      ,t.v1 " + \
-                       "  FROM (SELECT ax2.xtrsrc_id " + \
+                       "  FROM (SELECT ax2.xtrsrc " + \
                        "              ,sqrt(count(*) " + \
                        "                   * (avg(x2.i_int * x2.i_int) - avg(x2.i_int) * avg(x2.i_int)) " + \
                        "                   / (count(*)-1)) " + \
                        "               / avg(x2.i_int) as v1 " + \
-                       "          FROM assocxtrsources ax2 " + \
+                       "          FROM assocxtrsource ax2 " + \
                        "              ,extractedsource x1 " + \
                        "              ,extractedsource x2 " + \
                        "              ,images im1 " + \
-                       "         WHERE ax2.xtrsrc_id = x1.xtrsrcid " + \
-                       "           AND ax2.assoc_xtrsrc_id = x2.xtrsrcid " + \
-                       "           AND x1.image = im1.imageid " + \
+                       "         WHERE ax2.xtrsrc = x1.id " + \
+                       "           AND ax2.xtrsrc = x2.id " + \
+                       "           AND x1.image = im1.id " + \
                        "           AND im1.dataset = %s " + \
-                       "        GROUP BY ax2.xtrsrc_id " + \
+                       "        GROUP BY ax2.xtrsrc " + \
                        "       ) t " + \
                        " WHERE t.v1 >= %s ", (dsid, level))
         y = cursor.fetchall()
@@ -1541,32 +1541,32 @@ def plotLightCurveMaxVar_v1(dsid,conn):
     """
     try:
         cursor = conn.cursor()
-        cursor.execute("SELECT t.xtrsrc_id " + \
+        cursor.execute("SELECT t.xtrsrc " + \
                        "      ,t.sigma_over_mu " + \
-                       "  FROM (SELECT ax2.xtrsrc_id " + \
+                       "  FROM (SELECT ax2.xtrsrc " + \
                        "              ,sqrt(count(*) * (avg(x2.i_int * x2.i_int) - avg(x2.i_int) * avg(x2.i_int))/ (count(*)-1)) /avg(x2.i_int) as sigma_over_mu " + \
-                       "          FROM assocxtrsources ax2 " + \
+                       "          FROM assocxtrsource ax2 " + \
                        "              ,extractedsource x1 " + \
                        "              ,extractedsource x2 " + \
                        "              ,images im1 " + \
-                       "         WHERE ax2.xtrsrc_id = x1.xtrsrcid " + \
-                       "           AND ax2.assoc_xtrsrc_id = x2.xtrsrcid " + \
-                       "           AND x1.image = im1.imageid " + \
+                       "         WHERE ax2.xtrsrc = x1.id " + \
+                       "           AND ax2.xtrsrc = x2.id " + \
+                       "           AND x1.image = im1.id " + \
                        "           AND im1.dataset = %s " + \
-                       "        GROUP BY ax2.xtrsrc_id " + \
+                       "        GROUP BY ax2.xtrsrc " + \
                        "        HAVING COUNT(*) > 1 " + \
                        "       ) t " + \
                        " WHERE t.sigma_over_mu = (SELECT MAX(t0.sigma_over_mu) " + \
                        "                            FROM (SELECT sqrt(count(*) * (avg(x2.i_int * x2.i_int) - avg(x2.i_int) * avg(x2.i_int)) / (count(*) - 1)) / avg(x2.i_int) AS sigma_over_mu " + \
-                       "                                    FROM assocxtrsources ax2 " + \
+                       "                                    FROM assocxtrsource ax2 " + \
                        "                                        ,extractedsource x1 " + \
                        "                                        ,extractedsource x2 " + \
                        "                                        ,images im1 " + \
-                       "                                   WHERE ax2.xtrsrc_id = x1.xtrsrcid " + \
-                       "                                     AND ax2.assoc_xtrsrc_id = x2.xtrsrcid " + \
-                       "                                     AND x1.image = im1.imageid " + \
+                       "                                   WHERE ax2.xtrsrc = x1.id " + \
+                       "                                     AND ax2.xtrsrc = x2.id " + \
+                       "                                     AND x1.image = im1.id " + \
                        "                                     AND im1.dataset = %s " + \
-                       "                                  GROUP BY ax2.xtrsrc_id " + \
+                       "                                  GROUP BY ax2.xtrsrc " + \
                        "                                  HAVING COUNT(*) > 1 " + \
                        "                                 ) t0 " + \
                        "                         ) ", (dsid, dsid))
@@ -1600,36 +1600,36 @@ def plotLightCurveMaxVar_v2(dsid,conn):
     """
     try:
         cursor = conn.cursor()
-        cursor.execute("SELECT t.xtrsrc_id " + \
+        cursor.execute("SELECT t.xtrsrc " + \
                        "      ,t.var_v2 " + \
-                       "  FROM (SELECT ax2.xtrsrc_id " + \
+                       "  FROM (SELECT ax2.xtrsrc " + \
                        "              ,avg(x2.i_int * x2.i_int / (x2.i_int_err * x2.i_int_err)) " + \
                        "               - 2 * avg(x2.i_int / (x2.i_int_err * x2.i_int_err)) * avg(x2.i_int) " + \
                        "               + avg(1 / (x2.i_int_err * x2.i_int_err)) * avg(x2.i_int) * avg(x2.i_int) as var_v2 " + \
-                       "          FROM assocxtrsources ax2 " + \
+                       "          FROM assocxtrsource ax2 " + \
                        "              ,extractedsource x1 " + \
                        "              ,extractedsource x2 " + \
                        "              ,images im1 " + \
-                       "         WHERE ax2.xtrsrc_id = x1.xtrsrcid " + \
-                       "           AND ax2.assoc_xtrsrc_id = x2.xtrsrcid " + \
-                       "           AND x1.image = im1.imageid " + \
+                       "         WHERE ax2.xtrsrc = x1.id " + \
+                       "           AND ax2.xtrsrc = x2.id " + \
+                       "           AND x1.image = im1.id " + \
                        "           AND im1.dataset = %s " + \
-                       "        GROUP BY ax2.xtrsrc_id " + \
+                       "        GROUP BY ax2.xtrsrc " + \
                        "        HAVING COUNT(*) > 1 " + \
                        "       ) t " + \
                        " WHERE t.var_v2 = (SELECT MAX(t0.var_v2) " + \
                        "                     FROM (SELECT avg(x2.i_int * x2.i_int / (x2.i_int_err * x2.i_int_err)) " + \
                        "                                  - 2 * avg(x2.i_int / (x2.i_int_err * x2.i_int_err)) * avg(x2.i_int) " + \
                        "                                  + avg(1 / (x2.i_int_err * x2.i_int_err)) * avg(x2.i_int) * avg(x2.i_int) as var_v2 " + \
-                       "                             FROM assocxtrsources ax2 " + \
+                       "                             FROM assocxtrsource ax2 " + \
                        "                                 ,extractedsource x1 " + \
                        "                                 ,extractedsource x2 " + \
                        "                                 ,images im1 " + \
-                       "                            WHERE ax2.xtrsrc_id = x1.xtrsrcid " + \
-                       "                              AND ax2.assoc_xtrsrc_id = x2.xtrsrcid " + \
-                       "                              AND x1.image = im1.imageid " + \
+                       "                            WHERE ax2.xtrsrc = x1.id " + \
+                       "                              AND ax2.xtrsrc = x2.id " + \
+                       "                              AND x1.image = im1.id " + \
                        "                              AND im1.dataset = %s " + \
-                       "                           GROUP BY ax2.xtrsrc_id " + \
+                       "                           GROUP BY ax2.xtrsrc " + \
                        "                           HAVING COUNT(*) > 1 " + \
                        "                          ) t0 " + \
                        "                  ) ", (dsid, dsid))
@@ -1666,7 +1666,7 @@ def scatterVar_v1_v2_X2X(dsid,conn):
     """
     try:
         cursor = conn.cursor()
-        cursor.execute("SELECT ax2.xtrsrc_id " + \
+        cursor.execute("SELECT ax2.xtrsrc " + \
                        "      ,count(*) as datapoints " + \
                        "      ,1000 * min(x2.i_int) as min_i_int_mJy " + \
                        "      ,1000 * avg(x2.i_int) as avg_i_int_mJy " + \
@@ -1678,18 +1678,18 @@ def scatterVar_v1_v2_X2X(dsid,conn):
                        "      ,avg((x2.i_int / x2.i_int_err) * (x2.i_int / x2.i_int_err)) " + \
                        "       - 2 * avg(x2.i_int) * avg(x2.i_int / (x2.i_int_err * x2.i_int_err)) " + \
                        "       + avg(x2.i_int) * avg(x2.i_int) * avg(1 / (x2.i_int_err * x2.i_int_err)) as chi2 " + \
-                       "  FROM assocxtrsources ax2 " + \
+                       "  FROM assocxtrsource ax2 " + \
                        "      ,extractedsource x1 " + \
                        "      ,extractedsource x2 " + \
                        "      ,images im1 " + \
-                       " WHERE ax2.xtrsrc_id = x1.xtrsrcid " + \
-                       "   AND ax2.assoc_xtrsrc_id = x2.xtrsrcid " + \
-                       "   AND x1.image = im1.imageid " + \
+                       " WHERE ax2.xtrsrc = x1.id " + \
+                       "   AND ax2.xtrsrc = x2.id " + \
+                       "   AND x1.image = im1.id " + \
                        "   AND im1.dataset = %s " + \
-                       "GROUP BY ax2.xtrsrc_id " + \
+                       "GROUP BY ax2.xtrsrc " + \
                        "HAVING COUNT(*) > 1 " + \
                        "ORDER BY datapoints " + \
-                       "        ,ax2.xtrsrc_id ", (dsid,))
+                       "        ,ax2.xtrsrc ", (dsid,))
         y = cursor.fetchall()
         cursor.close()
         
@@ -1772,24 +1772,24 @@ def plotSigmaMuAssocs2XtrByDsid(dsid,cnt,conn):
     """
     try:
         cursor = conn.cursor()
-        cursor.execute("SELECT ax2.xtrsrc_id " + \
+        cursor.execute("SELECT ax2.xtrsrc " + \
                        "      ,count(*) as datapoints " + \
                        "      ,1000 * min(x2.i_int) as min_i_int_mJy " + \
                        "      ,1000 * avg(x2.i_int) as avg_i_int_mJy " + \
                        "      ,1000 * max(x2.i_int) as max_i_int_mJy " + \
                        "      ,sqrt(count(*) * (avg(x2.i_int * x2.i_int) - avg(x2.i_int) * avg(x2.i_int))/ (count(*)-1))/avg(x2.i_int) as sigma_over_mu " + \
-                       "  FROM assocxtrsources ax2 " + \
+                       "  FROM assocxtrsource ax2 " + \
                        "      ,extractedsource x1 " + \
                        "      ,extractedsource x2 " + \
                        "      ,images im1 " + \
-                       " WHERE ax2.xtrsrc_id = x1.xtrsrcid " + \
-                       "   AND ax2.assoc_xtrsrc_id = x2.xtrsrcid " + \
-                       "   AND x1.image = im1.imageid " + \
+                       " WHERE ax2.xtrsrc = x1.id " + \
+                       "   AND ax2.xtrsrc = x2.id " + \
+                       "   AND x1.image = im1.id " + \
                        "   AND im1.dataset = %s " + \
-                       "GROUP BY ax2.xtrsrc_id " + \
+                       "GROUP BY ax2.xtrsrc " + \
                        "HAVING COUNT(*) = %s " + \
                        "ORDER BY datapoints " + \
-                       "        ,ax2.xtrsrc_id ", (dsid,cnt))
+                       "        ,ax2.xtrsrc ", (dsid,cnt))
         y = cursor.fetchall()
         cursor.close()
         
@@ -1922,7 +1922,7 @@ def histNumberOfAssociations(dsid,conn):
                        "      ,COUNT(*) " + \
                        "  FROM (SELECT xtrsrc_id " + \
                        "              ,COUNT(*) AS assoc_cnt " + \
-                       "          FROM assocxtrsources " + \
+                       "          FROM assocxtrsource " + \
                        "              ,extractedsource " + \
                        "              ,images " + \
                        "         WHERE xtrsrc_id = xtrsrcid " + \
@@ -1983,13 +1983,13 @@ def plotXtrBarLR(dsid, conn):
                        "              ,ax1.assoc_lr " + \
                        "              ,ax1.assoc_distance_arcsec " + \
                        "              ,ax1.assoc_r " + \
-                       "          FROM assocxtrsources ax1 " + \
+                       "          FROM assocxtrsource ax1 " + \
                        "              ,extractedsource x1 " + \
                        "              ,images im1 " + \
-                       "         WHERE ax1.xtrsrc_id = x1.xtrsrcid " + \
-                       "           AND ax1.xtrsrc_id <> ax1.assoc_xtrsrc_id " + \
+                       "         WHERE ax1.xtrsrc = x1.id " + \
+                       "           AND ax1.xtrsrc <> ax1.xtrsrc " + \
                        "           AND ax1.assoc_lr >= -100.5 " + \
-                       "           AND x1.image = im1.imageid " + \
+                       "           AND x1.image = im1.id " + \
                        "           AND im1.dataset = %s " + \
                        "       ) t " + \
                        "GROUP BY bin_nr " + \
@@ -2122,9 +2122,9 @@ def plotCatBarLR(dsid, catid,conn):
                        "              ,extractedsource x1 " + \
                        "              ,images im1 " + \
                        "              ,lsm lsm1 " + \
-                       "         WHERE ac1.xtrsrc_id = x1.xtrsrcid " + \
+                       "         WHERE ac1.xtrsrc = x1.id " + \
                        "           AND ac1.assoc_lr >= -100.5 " + \
-                       "           AND x1.image = im1.imageid " + \
+                       "           AND x1.image = im1.id " + \
                        "           AND ac1.assoc_catsrc_id = lsm1.lsmid " + \
                        "           AND im1.dataset = %s " + \
                        "           AND lsm1.cat_id = %s " + \

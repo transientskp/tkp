@@ -122,8 +122,8 @@ def polarplot_distr(conn):
     try:
         cursor = conn.cursor()
         query = """
-        select r.xtrsrc_id
-              ,x.xtrsrcid
+        select r.xtrsrc
+              ,x.id
               ,a.assoc_distance_arcsec
               ,3600 * deg(2 * ASIN(SQRT((r.x - x.x) * (r.x - x.x)
                                         + (r.y - x.y) * (r.y - x.y)
@@ -139,13 +139,13 @@ def polarplot_distr(conn):
                            ((r.wm_decl - x.decl) * (r.wm_decl - x.decl)) 
                            / (r.wm_decl_err * r.wm_decl_err + x.decl_err * x.decl_err)
                           ) as r
-          from assocxtrsources a
+          from assocxtrsource a
               ,runningcatalog r
               ,extractedsource x
-         where r.xtrsrc_id = 1
-           and a.xtrsrc_id = r.xtrsrc_id
-           and a.assoc_xtrsrc_id = x.xtrsrcid
-        order by a.assoc_xtrsrc_id
+         where r.xtrsrc = 1
+           and a.xtrsrc = r.xtrsrc
+           and a.xtrsrc = x.id
+        order by a.xtrsrc
         """
         cursor.execute(query)
         results = zip(*cursor.fetchall())
@@ -201,19 +201,19 @@ def colatitude_plot(conn):
         select xtrsrc_id
               ,xtrsrcid
               ,1-z_prime as colat
-          from (select r.xtrsrc_id
+          from (select r.xtrsrc
                       ,r.wm_ra
                       ,r.wm_decl
-                      ,x.xtrsrcid
+                      ,x.id
                       ,cos(rad(wm_decl))*cos(rad(wm_ra))*x.x
                        + cos(rad(wm_decl))*sin(rad(wm_ra))*x.y
                        + sin(rad(wm_decl))*x.z as z_prime
-                  from assocxtrsources a
+                  from assocxtrsource a
                       ,runningcatalog r
                       ,extractedsource x
-                 where r.xtrsrc_id = a.xtrsrc_id
-                   and a.assoc_xtrsrc_id = x.xtrsrcid
-                   and r.xtrsrc_id = 1
+                 where r.xtrsrc = a.xtrsrc
+                   and a.xtrsrc = x.id
+                   and r.xtrsrc = 1
                ) t1
         order by colat
         """
@@ -340,21 +340,21 @@ def longitude_plot(conn):
                                       else 360+180*atan(y_prime/x_prime)/pi()
                                  end
                        end as ra_prime
-                  from (select r.xtrsrc_id
+                  from (select r.xtrsrc
                               ,r.wm_ra
                               ,r.wm_decl
-                              ,x.xtrsrcid
+                              ,x.id
                               ,sin(rad(wm_decl))*cos(rad(wm_ra))*x.x 
                                + sin(rad(wm_decl))*sin(rad(wm_ra))*x.y 
                                - cos(rad(wm_decl))*x.z as x_prime
                               ,-sin(rad(wm_ra))*x.x 
                                + cos(rad(wm_ra))*x.y as y_prime
-                          from assocxtrsources a
+                          from assocxtrsource a
                               ,runningcatalog r
                               ,extractedsource x
-                         where r.xtrsrc_id = a.xtrsrc_id
-                           and a.assoc_xtrsrc_id = x.xtrsrcid
-                           and r.xtrsrc_id = 1
+                         where r.xtrsrc = a.xtrsrc
+                           and a.xtrsrc = x.id
+                           and r.xtrsrc = 1
                        ) t1
                ) t2
         order by longitude
@@ -422,10 +422,10 @@ def two_variable_plot(conn):
                       ,y_dblprime
                       ,z_dblprime
                   FROM (
-                        SELECT r.xtrsrc_id
+                        SELECT r.xtrsrc
                               ,r.wm_ra
                               ,r.wm_decl
-                              ,x.xtrsrcid
+                              ,x.id
                               ,COS(rad(wm_decl)) * COS(rad(wm_ra)) * x.x 
                                + COS(rad(wm_decl)) * SIN(rad(wm_ra)) * x.y 
                                + SIN(rad(wm_decl)) * x.z 
@@ -437,12 +437,12 @@ def two_variable_plot(conn):
                                + SIN(rad(wm_decl)) * SIN(rad(wm_ra)) * x.y 
                                - COS(rad(wm_decl)) * x.z 
                                AS z_dblprime  
-                          FROM assocxtrsources a
+                          FROM assocxtrsource a
                               ,runningcatalog r
                               ,extractedsource x
-                         WHERE r.xtrsrc_id = a.xtrsrc_id
-                           AND a.assoc_xtrsrc_id = x.xtrsrcid
-                           AND r.xtrsrc_id = 1 
+                         WHERE r.xtrsrc = a.xtrsrc
+                           AND a.xtrsrc = x.id
+                           AND r.xtrsrc = 1
                        ) t1
                ) t2
         ORDER BY twovar
@@ -519,7 +519,7 @@ def fisher_distr_plot(conn):
     try:
         cursor = conn.cursor()
         query = """
-        select x.xtrsrcid
+        select x.id
               ,a.assoc_distance_arcsec
               ,3600 * deg(2 * ASIN(SQRT((r.x - x.x) * (r.x - x.x)
                                         + (r.y - x.y) * (r.y - x.y)
@@ -534,13 +534,13 @@ def fisher_distr_plot(conn):
                            ((r.wm_decl - x.decl) * (r.wm_decl - x.decl)) 
                            / (r.wm_decl_err * r.wm_decl_err + x.decl_err*x.decl_err)
                           ) as r
-              ,r.xtrsrc_id
-          from assocxtrsources a
+              ,r.xtrsrc
+          from assocxtrsource a
               ,runningcatalog r
               ,extractedsource x
-         where r.xtrsrc_id = 1
-           and r.xtrsrc_id = a.xtrsrc_id
-           and a.assoc_xtrsrc_id = x.xtrsrcid
+         where r.xtrsrc = 1
+           and r.xtrsrc = a.xtrsrc
+           and a.xtrsrc = x.id
         order by distance_arcsec
         """
         cursor.execute(query)

@@ -107,12 +107,12 @@ means there aren't any updates.
     >>> image2.tau_time
     2500
     >>> database.cursor.execute("SELECT tau_time FROM images WHERE imageid=%s" %
-                                 (image2.imageid,))
+                                 (image2.id,))
     >>> database.cursors.fetchone()[0]
     2500
     # Manually update the database
     >>> database.cursor.execute("UPDATE images SET tau_time=2000.0 imageid=%s" %
-                                 (image2.imageid,))
+                                 (image2.id,))
     >>> image2.tau_time   # not updated yet!
     2500
     >>> image2.update()
@@ -127,7 +127,7 @@ It is also possible to create a DataSet, Image or ExtractedSource instance from 
 database, using the ``id`` in the initializer::
 
     >>> dataset2 = DataSet(id=dataset.id, database=database)
-    >>> image3 = Image(imageid=image2.imageid, database=database)
+    >>> image3 = Image(imageid=image2.id, database=database)
     >>> image3.tau_time
     2000
     
@@ -337,7 +337,7 @@ class DataSet(DBObject):
         """Renew the set of images by getting the images for this
         dataset from the database"""
 
-        query = "SELECT imageid FROM images WHERE dataset = %s"
+        query = "SELECT id FROM image WHERE dataset = %s"
         try:
             self.database.cursor.execute(query, (self._id,))
             results = self.database.cursor.fetchall()
@@ -361,8 +361,8 @@ class DataSet(DBObject):
 class Image(DBObject):
     """Class corresponding to the images table in the database"""
 
-    TABLE = 'images'
-    ID = 'imageid'
+    TABLE = 'image'
+    ID = 'id'
     REQUIRED = ('dataset', 'tau_time', 'freq_eff', 'freq_bw', 'taustart_ts')
     
     def __init__(self, data=None, dataset=None, database=None, id=None):

@@ -40,7 +40,7 @@ for file in files:
     # Store results in extractedsource table
     results.savetoDB(conn)
     # Check for associations in current dataset and
-    # store results in assocxtrsources table
+    # store results in assocxtrsource table
     results.assocXSrc2XSrc(my_image.id[0], conn)
     # Check for associations in (specified, via LoadLSM()) catalogs and
     # store results in assoccatsources table

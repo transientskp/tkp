@@ -39,7 +39,7 @@ def scatter_SoI_X2X(conn,dsid=None,band=None,datapoints=None,pointdist=None,titl
             grbdist = pointdist
         
         cursor = conn.cursor()
-        cursor.execute("SELECT t1.xtrsrc_id " + \
+        cursor.execute("SELECT t1.xtrsrc " + \
                        "      ,COUNT(*) AS datapoints " + \
                        #"      ,1000 * min(t1.i_peak) AS min_i_peak_mJy " + \
                        #"      ,1000 * AVG(t1.i_peak) AS AVG_i_peak_mJy " + \
@@ -56,11 +56,11 @@ def scatter_SoI_X2X(conn,dsid=None,band=None,datapoints=None,pointdist=None,titl
                        "       + avg(t1.i_int) * avg(t1.i_int) * avg(1 / (t1.i_int_err * t1.i_int_err)) as chi2 " + \
                        "  FROM (SELECT t0.* " + \
                        "              ,(t0.i_int - t0.i_int_AVG) * (t0.i_int - t0.i_int_AVG) AS nvar_cat " + \
-                       "          FROM (SELECT ax1.xtrsrc_id " + \
-                       "                      ,ax1.assoc_xtrsrc_id " + \
+                       "          FROM (SELECT ax1.xtrsrc " + \
+                       "                      ,ax1.xtrsrc " + \
                        "                      ,ax1.assoc_distance_arcsec " + \
                        "                      ,ax1.assoc_lr " + \
-                       "                      ,im2.imageid " + \
+                       "                      ,im2.id " + \
                        "                      ,x2.i_peak " + \
                        "                      ,x2.i_int " + \
                        "                      ,x2.i_peak_err " + \
@@ -71,18 +71,18 @@ def scatter_SoI_X2X(conn,dsid=None,band=None,datapoints=None,pointdist=None,titl
                        "                      ,ac2.assoc_catsrc_id " + \
                        "                      ,c2.i_int_avg " + \
                        "                      ,3600 * DEGREES(2 * ASIN(SQRT((x2.x - c1.x) * (x2.x - c1.x)+ (x2.y - c1.y) * (x2.y - c1.y)+ (x2.z - c1.z) * (x2.z - c1.z)) / 2) ) as grb_dist" + \
-                       "                  FROM assocxtrsources ax1 " + \
-                       "                      LEFT OUTER JOIN assoccatsources ac2 ON ax1.assoc_xtrsrc_id = ac2.xtrsrc_id " + \
+                       "                  FROM assocxtrsource ax1 " + \
+                       "                      LEFT OUTER JOIN assoccatsources ac2 ON ax1.xtrsrc = ac2.xtrsrc " + \
                        "                      LEFT OUTER JOIN catalogedsources c2 ON c2.catsrcid = ac2.assoc_catsrc_id " + \
                        "                      ,extractedsource x1 " + \
                        "                      ,extractedsource x2 " + \
                        "                      ,images im1 " + \
                        "                      ,images im2 " + \
                        "                      ,catalogedsources c1 " + \
-                       "                 WHERE ax1.xtrsrc_id = x1.xtrsrcid " + \
-                       "                   AND ax1.assoc_xtrsrc_id = x2.xtrsrcid " + \
-                       "                   AND x1.image = im1.imageid " + \
-                       "                   AND x2.image = im2.imageid " + \
+                       "                 WHERE ax1.xtrsrc = x1.id " + \
+                       "                   AND ax1.xtrsrc = x2.id " + \
+                       "                   AND x1.image = im1.id " + \
+                       "                   AND x2.image = im2.id " + \
                        "                   AND ax1.assoc_lr > -10 " + \
                        "                   AND c1.catsrcid = 2071216 " + \
                        "                   AND (ac2.assoc_lr > -76 " + \
@@ -91,21 +91,21 @@ def scatter_SoI_X2X(conn,dsid=None,band=None,datapoints=None,pointdist=None,titl
                        "                   AND im1.dataset = %s " + \
                        "                   AND im1.band <> 17 " + \
                        "                   AND im2.band = %s " + \
-                       "                   AND ax1.assoc_xtrsrc_id NOT IN (10876, 11018, 10543, 13386, 13494, 13206, 13401) " + \
-                       "                   AND ax1.assoc_xtrsrc_id NOT IN (13924, 14064, 14149) " + \
+                       "                   AND ax1.xtrsrc NOT IN (10876, 11018, 10543, 13386, 13494, 13206, 13401) " + \
+                       "                   AND ax1.xtrsrc NOT IN (13924, 14064, 14149) " + \
                        #"                  sources in band 13 (840MHz) that are excluded due to bad fitting 
-                       "                   AND ax1.assoc_xtrsrc_id NOT IN (15272,15449,15542,15704) " + \
-                       "                   AND ax1.xtrsrc_id <> 13230 " + \
+                       "                   AND ax1.xtrsrc NOT IN (15272,15449,15542,15704) " + \
+                       "                   AND ax1.xtrsrc <> 13230 " + \
                        # NOTE: for a source for which an association could be found, we also
                        #       check whether the previous association is valid. If not, we insert
                        #       only the current and the assoc that was valid.
                        #       TODO: this is not necessary when the assoc that could be found has
                        #             multiple previous ids.
-                       "                   AND ax1.xtrsrc_id NOT IN (13168,15018,15055,15068,15098,15128) " + \
+                       "                   AND ax1.xtrsrc NOT IN (13168,15018,15055,15068,15098,15128) " + \
                        "               ) t0 " + \
                        "         WHERE t0.grb_dist <= %s " + \
                        "       ) t1 " + \
-                       "GROUP BY t1.xtrsrc_id " + \
+                       "GROUP BY t1.xtrsrc " + \
                        "HAVING COUNT(*) >= %s " + \
                        "ORDER BY datapoints ", (dsid,band,grbdist,datapoints))
         y = cursor.fetchall()

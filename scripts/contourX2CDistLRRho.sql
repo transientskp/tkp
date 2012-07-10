@@ -4,12 +4,12 @@ select xtrsrc_id
       ,assoc_distance_arcsec 
       ,assoc_r 
       ,assoc_lr 
-  from assoccatsources 
+  from assoccatsources
       ,extractedsource
-      ,images 
+      ,image
       ,lsm 
- where xtrsrc_id = xtrsrcid 
-   and image_id = imageid 
+ where xtrsrc = extractedsource.id
+   and image = image.id
    and dataset = 1
    and assoc_catsrc_id = lsmid 
    and cat_id = 3 

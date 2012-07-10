@@ -42,7 +42,7 @@ This table stores the associations between extracted sources and the running cat
    refers to the runcatid in runningcatalog.  It is the "base" id of a series of polarized spectral lightcurve datapoints.
 
 **xtrsrc** 
-   This is the id of the extracted source that could be associated to runningcatalog source.  Together, the runcat_id and the assoc_xtrsrc_id form a unique pair.
+   This is the id of the extracted source that could be associated to runningcatalog source.  Together, the runcat_id and the xtrsrc form a unique pair.
 
 **type**
     Type of association.  x-y, where x is the number of runningcatalog sources, and y the number of extractedsources

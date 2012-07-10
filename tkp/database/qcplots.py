@@ -24,7 +24,7 @@ def rms_distance_from_fieldcentre(conn, dsid, dist_arcsec_cutoff=None):
         query = """\
         SELECT * 
           FROM (SELECT x1.image
-                      ,x1.xtrsrcid as xtrsrcid1
+                      ,x1.id as xtrsrcid1
                       ,3600* DEGREES(2 * ASIN(SQRT( (x1.x - im1.x) * (x1.x - im1.x) 
                                                   + (x1.y - im1.y) * (x1.y - im1.y) 
                                                   + (x1.z - im1.z) * (x1.z - im1.z)
@@ -32,7 +32,7 @@ def rms_distance_from_fieldcentre(conn, dsid, dist_arcsec_cutoff=None):
                       ,20000 * x1.i_peak / x1.det_sigma as rms_mJy
                   FROM extractedsource x1
                       ,images im1
-                 WHERE x1.image = im1.imageid
+                 WHERE x1.image = im1.id
                    AND dataset = %s
                ) t
          WHERE centr_img_dist_deg < %s
@@ -80,19 +80,19 @@ def hist_sources_per_image(conn, dsid):
     try:
         cursor = conn.cursor()
         query = """\
-        SELECT imageid
+        SELECT id
               ,taustart_ts
               ,nsources
-          FROM images
+          FROM image
               ,(SELECT x1.image
-                      ,COUNT(*) as nsources
+                    ,COUNT(*) as nsources
                   FROM extractedsource x1
-                      ,images im1
-                 WHERE x1.image = im1.imageid
+                      ,image im1
+                 WHERE x1.image = im1.id
                    AND dataset = %s
                 GROUP BY x1.image
                ) t1
-         WHERE t1.image = imageid
+         WHERE t1.image = image.id
         """
         cursor.execute(query, (dsid,))
 
@@ -157,7 +157,7 @@ def scat_pos_counterparts(conn, xtrsrcid):
     try:
         cursor = conn.cursor()
         query = """\
-        select x.xtrsrcid
+        select x.id
               ,x.ra
               ,x.decl
               /*,3600 * (x.ra * cos(radians(x.decl)) - r.wm_ra * cos(radians(r.wm_decl))) as ra_dist_arcsec*/
@@ -167,15 +167,15 @@ def scat_pos_counterparts(conn, xtrsrcid):
               ,x.decl_err/2 
               ,r.wm_ra_err/2
               ,r.wm_decl_err/2
-          from assocxtrsources a
+          from assocxtrsource a
               ,extractedsource x
               ,runningcatalog r
-         where a.xtrsrc_id in (select xtrsrc_id 
-                                 from assocxtrsources 
-                                where assoc_xtrsrc_id = %s
+         where a.xtrsrc in (select xtrsrc_id
+                                 from assocxtrsource
+                                where xtrsrc = %s
                               ) 
-           and a.assoc_xtrsrc_id = x.xtrsrcid
-           and a.xtrsrc_id = r.xtrsrc_id
+           and a.xtrsrc = x.id
+           and a.xtrsrc = r.xtrsrc
 
         """
         cursor.execute(query, (xtrsrcid,))
@@ -233,7 +233,7 @@ def scat_pos_all_counterparts(conn, dsid):
     try:
         cursor = conn.cursor()
         query = """\
-        select x.xtrsrcid
+        select x.id
               ,x.ra
               ,x.decl
               /*,3600 * (x.ra * cos(radians(x.decl)) - r.wm_ra * cos(radians(r.wm_decl))) as ra_dist_arcsec*/
@@ -243,14 +243,14 @@ def scat_pos_all_counterparts(conn, dsid):
               ,x.decl_err/2 
               ,r.wm_ra_err/2
               ,r.wm_decl_err/2
-          from assocxtrsources a
+          from assocxtrsource a
               ,extractedsource x
               ,runningcatalog r
               ,images im1
-         where a.xtrsrc_id <> a.assoc_xtrsrc_id
-           and a.xtrsrc_id = r.xtrsrc_id
-           and a.assoc_xtrsrc_id = x.xtrsrcid
-           and x.image = im1.imageid
+         where a.xtrsrc <> a.xtrsrc
+           and a.xtrsrc = r.xtrsrc
+           and a.xtrsrc = x.id
+           and x.image = im1.id
            and im1.dataset = %s
 
         """
@@ -308,21 +308,21 @@ def hist_all_counterparts_dist(conn, dsid):
     try:
         cursor = conn.cursor()
         query = """\
-        SELECT r.xtrsrc_id
-              ,a.assoc_xtrsrc_id
+        SELECT r.xtrsrc
+              ,a.xtrsrc
               ,3600 * DEGREES(2 * ASIN(SQRT( (r.x - x.x) * (r.x - x.x)
                                            + (r.y - x.y) * (r.y - x.y)
                                            + (r.z - x.z) * (r.z - x.z)
                                            ) / 2)
                              ) AS dist_arcsec
-          FROM assocxtrsources a
+          FROM assocxtrsource a
               ,extractedsource x
               ,runningcatalog r
               ,images im1
-         WHERE a.xtrsrc_id <> a.assoc_xtrsrc_id
-           AND a.xtrsrc_id = r.xtrsrc_id
-           AND a.assoc_xtrsrc_id = x.xtrsrcid
-           AND x.image = im1.imageid
+         WHERE a.xtrsrc <> a.xtrsrc
+           AND a.xtrsrc = r.xtrsrc
+           AND a.xtrsrc = x.id
+           AND x.image = im1.id
            AND im1.dataset = %s
         """
         cursor.execute(query, (dsid,))
@@ -331,7 +331,7 @@ def hist_all_counterparts_dist(conn, dsid):
         cursor.close()
         if len(results) != 0:
             xtrsrc_id = results[0]
-            assoc_xtrsrc_id = results[1]
+            xtrsrc = results[1]
             dist_arcsec = results[2]
         
         plotfiles=[]
@@ -366,8 +366,8 @@ def hist_all_counterparts_assoc_r(conn, dsid):
     try:
         cursor = conn.cursor()
         query = """\
-        SELECT r.xtrsrc_id
-              ,a.assoc_xtrsrc_id
+        SELECT r.xtrsrc
+              ,a.xtrsrc
               ,3600 * SQRT( ((r.wm_ra * COS(RADIANS(r.wm_decl)) - x.ra * COS(RADIANS(x.decl))) 
                           *  (r.wm_ra * COS(RADIANS(r.wm_decl)) - x.ra * COS(RADIANS(x.decl)))) 
                           / (r.wm_ra_err * r.wm_ra_err + x.ra_err * x.ra_err)
@@ -375,14 +375,14 @@ def hist_all_counterparts_assoc_r(conn, dsid):
                           ((r.wm_decl - x.decl) * (r.wm_decl - x.decl)) 
                           / (r.wm_decl_err * r.wm_decl_err + x.decl_err * x.decl_err)
                           ) AS assoc_r
-          FROM assocxtrsources a
+          FROM assocxtrsource a
               ,extractedsource x
               ,runningcatalog r
               ,images im1
-         WHERE a.xtrsrc_id <> a.assoc_xtrsrc_id
-           AND a.xtrsrc_id = r.xtrsrc_id
-           AND a.assoc_xtrsrc_id = x.xtrsrcid
-           AND x.image = im1.imageid
+         WHERE a.xtrsrc <> a.xtrsrc
+           AND a.xtrsrc = r.xtrsrc
+           AND a.xtrsrc = x.id
+           AND x.image = im1.id
            AND im1.dataset = %s
         """
         cursor.execute(query, (dsid,))
@@ -391,7 +391,7 @@ def hist_all_counterparts_assoc_r(conn, dsid):
         cursor.close()
         if len(results) != 0:
             xtrsrc_id = results[0]
-            assoc_xtrsrc_id = results[1]
+            xtrsrc = results[1]
             assoc_r = results[2]
         
         plotfiles=[]
@@ -428,8 +428,8 @@ def scat_all_counterparts_dist_assoc_r(conn, dsid, fwhm_arcsec):
         query = """\
         SELECT *
           FROM (
-        SELECT r.xtrsrc_id
-              ,a.assoc_xtrsrc_id
+        SELECT r.xtrsrc
+              ,a.xtrsrc
               ,3600 * DEGREES(2 * ASIN(SQRT( (r.x - x.x) * (r.x - x.x)
                                            + (r.y - x.y) * (r.y - x.y)
                                            + (r.z - x.z) * (r.z - x.z)
@@ -447,14 +447,14 @@ def scat_all_counterparts_dist_assoc_r(conn, dsid, fwhm_arcsec):
                                            + (im1.z - x.z) * (im1.z - x.z)
                                            ) / 2)
                              ) AS dist_from_centre_arcsec
-          FROM assocxtrsources a
+          FROM assocxtrsource a
               ,extractedsource x
               ,runningcatalog r
               ,images im1
-         WHERE a.xtrsrc_id <> a.assoc_xtrsrc_id
-           AND a.xtrsrc_id = r.xtrsrc_id
-           AND a.assoc_xtrsrc_id = x.xtrsrcid
-           AND x.image = im1.imageid
+         WHERE a.xtrsrc <> a.xtrsrc
+           AND a.xtrsrc = r.xtrsrc
+           AND a.xtrsrc = x.id
+           AND x.image = im1.id
            AND im1.dataset = %s
                ) t
          WHERE t.dist_from_centre_arcsec < %s
@@ -465,7 +465,7 @@ def scat_all_counterparts_dist_assoc_r(conn, dsid, fwhm_arcsec):
         cursor.close()
         if len(results) != 0:
             xtrsrc_id = results[0]
-            assoc_xtrsrc_id = results[1]
+            xtrsrc = results[1]
             dist_arcsec = results[2]
             assoc_r = results[3]
             dist_from_centre_arcsec = results[3]
@@ -530,8 +530,8 @@ def scat_all_var_v_eta(conn, dsid, fwhm_arcsec):
                       ,extractedsource x
                       ,images im0
                  WHERE r.dataset = %s
-                   AND r.xtrsrc_id = x.xtrsrcid
-                   AND x.image = im0.imageid
+                   AND r.xtrsrc = x.id
+                   AND x.image = im0.id
                ) t1
          WHERE t1.V_inter / t1.avg_i_peak > 0
            AND t1.eta_inter / t1.avg_weight_peak > 0

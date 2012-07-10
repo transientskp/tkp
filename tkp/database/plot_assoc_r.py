@@ -48,8 +48,8 @@ def plotHist_assoc_r(conn):
     try:
         cursor = conn.cursor()
         query = """
-        select r.xtrsrc_id
-              ,x.xtrsrcid
+        select r.xtrsrc
+              ,x.id
               ,a.assoc_distance_arcsec
               ,3600 * deg(2 * ASIN(SQRT((r.x - x.x) * (r.x - x.x)
                                         + (r.y - x.y) * (r.y - x.y)
@@ -68,12 +68,12 @@ def plotHist_assoc_r(conn):
               ,3600*(x.ra - r.wm_ra)/r.wm_ra_err as z_ra
               ,x.decl
               /*,3600*(x.ra*cos(rad(x.decl)) - r.wm_ra *cos(rad(r.wm_decl)))/r.wm_ra_err as z_ra_cos*/
-          from assocxtrsources a
+          from assocxtrsource a
               ,runningcatalog r
               ,extractedsource x
-         where r.xtrsrc_id = 232683
-           and r.xtrsrc_id = a.xtrsrc_id
-           and a.assoc_xtrsrc_id = x.xtrsrcid
+         where r.xtrsrc = 232683
+           and r.xtrsrc = a.xtrsrc
+           and a.xtrsrc = x.id
         order by a.assoc_r
         """
         plotfiles = []
@@ -175,8 +175,8 @@ def plot_i_assoc_r(conn):
         cursor = conn.cursor()
         query = """
         select row_number() over()
-              ,r.xtrsrc_id
-              ,x.xtrsrcid
+              ,r.xtrsrc
+              ,x.id
               ,a.assoc_distance_arcsec
               ,3600 * deg(2 * ASIN(SQRT((r.x - x.x) * (r.x - x.x)
                                         + (r.y - x.y) * (r.y - x.y)
@@ -192,13 +192,13 @@ def plot_i_assoc_r(conn):
                            ((r.wm_decl - x.decl) * (r.wm_decl - x.decl)) 
                            / (r.wm_decl_err * r.wm_decl_err + x.decl_err * x.decl_err)
                           ) as r
-          from assocxtrsources a
+          from assocxtrsource a
               ,runningcatalog r
               ,extractedsource x
-         where r.xtrsrc_id = %s
-           and a.xtrsrc_id = r.xtrsrc_id
-           and a.assoc_xtrsrc_id = x.xtrsrcid
-        order by a.assoc_xtrsrc_id
+         where r.xtrsrc = %s
+           and a.xtrsrc = r.xtrsrc
+           and a.xtrsrc = x.id
+        order by a.xtrsrc
         """
         plotfiles = []
         lar = []

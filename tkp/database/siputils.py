@@ -675,7 +675,7 @@ def _flag_multiple_assocs(conn):
 
 
 def _insert_single_crossassocs(conn):
-    """Insert remaining 1-1 associations into assocxtrsources table"""
+    """Insert remaining 1-1 associations into assocxtrsource table"""
 
     try:
         cursor = conn.cursor()
@@ -732,83 +732,83 @@ def _update_mergedcatalogs(conn):
     ##  SET zone = (
     ##      SELECT zone
     ##      FROM tempmultcatbasesources
-    ##      WHERE tempmultcatbasesources.xtrsrc_id =
-    ##            multcatbasesources.xtrsrc_id
+    ##      WHERE tempmultcatbasesources.xtrsrc =
+    ##            multcatbasesources.xtrsrc
     ##      )
     ##     ,ra_avg = (
     ##         SELECT ra_avg
     ##         FROM tempmultcatbasesources
-    ##         WHERE tempmultcatbasesources.xtrsrc_id =
-    ##               multcatbasesources.xtrsrc_id
+    ##         WHERE tempmultcatbasesources.xtrsrc =
+    ##               multcatbasesources.xtrsrc
     ##         )
     ##     ,decl_avg = (
     ##         SELECT decl_avg
     ##         FROM tempmultcatbasesources
-    ##         WHERE tempmultcatbasesources.xtrsrc_id =
-    ##               multcatbasesources.xtrsrc_id
+    ##         WHERE tempmultcatbasesources.xtrsrc =
+    ##               multcatbasesources.xtrsrc
     ##         )
     ##     ,ra_err_avg = (
     ##         SELECT ra_err_avg
     ##         FROM tempmultcatbasesources
-    ##         WHERE tempmultcatbasesources.xtrsrc_id =
-    ##               multcatbasesources.xtrsrc_id
+    ##         WHERE tempmultcatbasesources.xtrsrc =
+    ##               multcatbasesources.xtrsrc
     ##                   )
     ##     ,decl_err_avg = (
     ##         SELECT decl_err_avg
     ##         FROM tempmultcatbasesources
-    ##         WHERE tempmultcatbasesources.xtrsrc_id =
-    ##               multcatbasesources.xtrsrc_id
+    ##         WHERE tempmultcatbasesources.xtrsrc =
+    ##               multcatbasesources.xtrsrc
     ##                     )
     ##     ,x = (SELECT x
     ##             FROM tempmultcatbasesources
-    ##            WHERE tempmultcatbasesources.xtrsrc_id =
-    ##                  multcatbasesources.xtrsrc_id
+    ##            WHERE tempmultcatbasesources.xtrsrc =
+    ##                  multcatbasesources.xtrsrc
     ##          )
     ##     ,y = (SELECT y
     ##             FROM tempmultcatbasesources
-    ##            WHERE tempmultcatbasesources.xtrsrc_id =
-    ##                  multcatbasesources.xtrsrc_id
+    ##            WHERE tempmultcatbasesources.xtrsrc =
+    ##                  multcatbasesources.xtrsrc
     ##          )
     ##     ,z = (SELECT z
     ##             FROM tempmultcatbasesources
-    ##            WHERE tempmultcatbasesources.xtrsrc_id =
-    ##                  multcatbasesources.xtrsrc_id
+    ##            WHERE tempmultcatbasesources.xtrsrc =
+    ##                  multcatbasesources.xtrsrc
     ##          )
     ##     ,datapoints = (
     ##         SELECT datapoints
     ##         FROM tempmultcatbasesources
-    ##         WHERE tempmultcatbasesources.xtrsrc_id =
-    ##               multcatbasesources.xtrsrc_id
+    ##         WHERE tempmultcatbasesources.xtrsrc =
+    ##               multcatbasesources.xtrsrc
     ##                   )
     ##     ,avg_weighted_ra = (
     ##         SELECT avg_weighted_ra
     ##         FROM tempmultcatbasesources
-    ##         WHERE tempmultcatbasesources.xtrsrc_id =
-    ##               multcatbasesources.xtrsrc_id
+    ##         WHERE tempmultcatbasesources.xtrsrc =
+    ##               multcatbasesources.xtrsrc
     ##                        )
     ##     ,avg_weighted_decl = (
     ##         SELECT avg_weighted_decl
     ##         FROM tempmultcatbasesources
-    ##         WHERE tempmultcatbasesources.xtrsrc_id =
-    ##               multcatbasesources.xtrsrc_id
+    ##         WHERE tempmultcatbasesources.xtrsrc =
+    ##               multcatbasesources.xtrsrc
     ##                          )
     ##     ,avg_ra_weight = (
     ##         SELECT avg_ra_weight
     ##         FROM tempmultcatbasesources
-    ##         WHERE tempmultcatbasesources.xtrsrc_id =
-    ##               multcatbasesources.xtrsrc_id
+    ##         WHERE tempmultcatbasesources.xtrsrc =
+    ##               multcatbasesources.xtrsrc
     ##                      )
     ##     ,avg_decl_weight = (
     ##         SELECT avg_decl_weight
     ##         FROM tempmultcatbasesources
-    ##         WHERE tempmultcatbasesources.xtrsrc_id =
-    ##         multcatbasesources.xtrsrc_id
+    ##         WHERE tempmultcatbasesources.xtrsrc =
+    ##         multcatbasesources.xtrsrc
     ##                        )
     ##WHERE EXISTS (
     ##    SELECT xtrsrc_id
     ##    FROM tempmultcatbasesources
-    ##    WHERE tempmultcatbasesources.xtrsrc_id =
-    ##    multcatbasesources.xtrsrc_id
+    ##    WHERE tempmultcatbasesources.xtrsrc =
+    ##    multcatbasesources.xtrsrc
     ##             )
     ##+--------------------------------------------
 

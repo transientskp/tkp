@@ -66,9 +66,9 @@ class TestSourceAssociation(unittest.TestCase):
                 self.assertEqual(len(img_xtrsrc_ids),1)
                 extracted_source_ids.extend(img_xtrsrc_ids)
                 assocxtrsrcs_rows = tkpdb.utils.columns_from_table(self.database.connection,
-                                           table="assocxtrsources",
-                                           keywords=['xtrsrc_id', 'assoc_xtrsrc_id' ],
-                                           where={"assoc_xtrsrc_id":img_xtrsrc_ids[0]})
+                                           table="assocxtrsource",
+                                           keywords=['xtrsrc_id', 'xtrsrc' ],
+                                           where={"xtrsrc":img_xtrsrc_ids[0]})
                 self.assertEqual(len(assocxtrsrcs_rows),1)
                 self.assertEqual(assocxtrsrcs_rows[0]['xtrsrc_id'], img_xtrsrc_ids[0])
             else:
@@ -80,9 +80,9 @@ class TestSourceAssociation(unittest.TestCase):
         #Assocxtrsources still ok after multiple images?
         self.assertEqual(len(extracted_source_ids),1)
         assocxtrsrcs_rows = tkpdb.utils.columns_from_table(self.database.connection,
-                                           table="assocxtrsources",
-                                           keywords=['xtrsrc_id', 'assoc_xtrsrc_id' ],
-                                           where={"assoc_xtrsrc_id":extracted_source_ids[0]})
+                                           table="assocxtrsource",
+                                           keywords=['xtrsrc_id', 'xtrsrc' ],
+                                           where={"xtrsrc":extracted_source_ids[0]})
         self.assertEqual(len(assocxtrsrcs_rows),1)
         self.assertEqual(assocxtrsrcs_rows[0]['xtrsrc_id'], extracted_source_ids[0])
             
@@ -110,9 +110,9 @@ class TestSourceAssociation(unittest.TestCase):
             self.assertEqual(len(img_xtrsrc_ids), 1)
             ds_source_ids.extend(img_xtrsrc_ids)
             assocxtrsrcs_rows = tkpdb.utils.columns_from_table(self.database.connection,
-                                       table="assocxtrsources",
-                                       keywords=['xtrsrc_id', 'assoc_xtrsrc_id' ],
-                                       where={"assoc_xtrsrc_id":img_xtrsrc_ids[0]})
+                                       table="assocxtrsource",
+                                       keywords=['xtrsrc_id', 'xtrsrc' ],
+                                       where={"xtrsrc":img_xtrsrc_ids[0]})
 #            print "ImageID:", last_img.id
 #            print "Imgs sources:", img_xtrsrc_ids
 #            print "Assoc entries:", assocxtrsrcs_rows 

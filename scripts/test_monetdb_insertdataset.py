@@ -8,7 +8,7 @@ def insertDatasetByQuery(params):
     try:
         conn = db.connection()
         cursor = conn.cursor()
-        insds = "INSERT INTO dataset (obs_id, res_id, dstype, taustart_timestamp, dsinname) VALUES (%d, %d, %d, %d, %s)" %(params)
+        insds = "INSERT INTO dataset (obs_id, res_id, dstype, taustart_timestamp, inname) VALUES (%d, %d, %d, %d, %s)" %(params)
 	    cursor.execute(insds)
 	    cursor.close()
 	    conn.commit()

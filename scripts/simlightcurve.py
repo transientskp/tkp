@@ -521,7 +521,7 @@ VALUES (%s, %s)
 """,
         dataset="""\
 INSERT INTO datasets
-(dstype, process_ts, dsinname, dsoutname, description)
+(dstype, process_ts, inname, dsoutname, description)
 VALUES (1, %s, %s, '', '')
 ;
 """,

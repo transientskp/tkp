@@ -209,7 +209,7 @@ class TestMonitoringlistFunctionality(unittest.TestCase):
 #        import monetdb
 #        import datetime
 #        from operator import attrgetter, itemgetter
-#        dataset = DataSet(data={'dsinname': 'dataset with images'},
+#        dataset = DataSet(data={'inname': 'dataset with images'},
 #                          database=self.database)
 #        # create 4 images, separated by one day each
 #        images = [

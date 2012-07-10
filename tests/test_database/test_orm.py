@@ -28,14 +28,13 @@ class TestDataSet(unittest.TestCase):
         import monetdb
         dataset1 = DataSet(data={'inname': 'dataset 1'},
                            database=self.database)
-        dsid = dataset1.id
         # The name for the following dataset will be ignored, and set
         # to the name of the dataset with dsid = dsid
-        dataset2 = DataSet(database=self.database, id=dsid)
+        dataset2 = DataSet(database=self.database, id=dataset1.id)
         # update some stuff
         dataset2.update()
         self.assertEqual(dataset2.inname, "dataset 1")
-        self.assertEqual(dataset2.id, dsid)
+        self.assertEqual(dataset2.id, dataset1.id)
         dataset2.update(dsoutname='output.ms',
                         description='testing of dataset',
                         process_ts=datetime.datetime(1970, 1, 1))
@@ -186,7 +185,7 @@ class TestExtractedSource(unittest.TestCase):
                     x=0.11, y=0.22, z=0.33, det_sigma=10.)
         src1 = ExtractedSource(data=data, image=image)
         src2 = ExtractedSource(data=data, image=image, database=self.database)
-        data['image_id'] = image.id
+        data['image'] = image.id
         src3 = ExtractedSource(data=data, database=self.database)
         data['ra'] = 23.23
         src4 = ExtractedSource(data=data, database=self.database, id=src1.id)

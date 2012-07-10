@@ -43,7 +43,7 @@ try:
     #    dbu.load_LSM(db.connection, 47.0, 59.0, 50.0, 58.0)
 
     description = 'TRAPPED: GRB030329 multifrequency images'
-    dataset = ds.DataSet(data={'dsinname': description}, database=db)
+    dataset = ds.DataSet(data={'inname': description}, database=db)
     print "dataset.id:", dataset.id
 
     i = 0

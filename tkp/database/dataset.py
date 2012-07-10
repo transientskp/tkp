@@ -139,7 +139,6 @@ If an ``id`` is supplied, ``data`` is ignored.
 """
 
 from __future__ import with_statement
-import datetime
 import logging
 import utils as dbu
 import monetdb.sql as db

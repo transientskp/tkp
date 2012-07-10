@@ -189,14 +189,14 @@ This table contains classification of transients
 dataset
 =======
 
-This table contains the information about a dataset. A dataset is nothing more than a collection of images grouped together for processing. When the same group is reprocessed, and the dataset.dsinname is identical (f.ex. when the processing runs with other trap parameters), the rerun is incremented by 1, but also the id is auto-incremented 
+This table contains the information about a dataset. A dataset is nothing more than a collection of images grouped together for processing. When the same group is reprocessed, and the dataset.inname is identical (f.ex. when the processing runs with other trap parameters), the rerun is incremented by 1, but also the id is auto-incremented
 
 
 **id**
     Every dataset gets a unique id.
 
 **rerun**
-    At insertion, with the insertDataset() SQL function, this is incremented by 1 when the dsinname
+    At insertion, with the insertDataset() SQL function, this is incremented by 1 when the inname
     is present, otherwise defaults to 0.
 
 **process_ts**

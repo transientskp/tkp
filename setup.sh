@@ -3,7 +3,7 @@
 # Configurables
 ###############
 
-RECREATE=false
+DESTROY=true
 CONFIRM=true
 DATABASE=trap
 BATCH="sql/batch"
@@ -44,11 +44,11 @@ usage() {
 cat << EOF
 usage: $0 options
 
-This script will (re)create the TKP database
+This script will populate the TKP database
 
 OPTIONS:
    -h      Show this message
-   -r      Destroy database before recreation
+   -r      Don't destroy database before population
    -y      Don't prompt for comfirmation
    -d      Database name to use
    -u      Set database username to this value
@@ -69,7 +69,7 @@ parse_arguments() {
 				 exit 1
 				 ;;
 			 r)
-				 RECREATE=true
+				 DESTROY=false
 				 ;;
 			 y)
 				 CONFIRM=false
@@ -148,7 +148,7 @@ create_database() {
 
 set_credentials() {
     message "setting credentials"
-    mclient -d${DATABASE} <<-EOF
+    mclient -d${DATABASE} -p${PORT} -h${HOSTNAME} <<-EOF
 ALTER USER "monetdb" RENAME TO "${USERNAME}";
 ALTER USER SET PASSWORD '${PASSWORD}' USING OLD PASSWORD 'monetdb';
 CREATE SCHEMA "${DATABASE}" AUTHORIZATION "${USERNAME}";
@@ -161,6 +161,15 @@ restore_monetconffile() {
     mv ~/.monetdb.old ~/.monetdb
 }
 
+lock_database() {
+	run_nofail "monetdb ${PARAMS} lock ${DATABASE}"
+}
+
+
+release_database() {
+	run "monetdb ${PARAMS} release ${DATABASE}"
+}
+
 
 # the real code
 ###############
@@ -168,15 +177,19 @@ restore_monetconffile() {
 parse_arguments $*
 
 echo
-echo "TKP database will be (re)created with these settings:"
+echo "TKP database will be populated with these settings:"
 echo
-echo "Recreate database: " ${RECREATE}
-echo "Database name: " ${DATABASE}
-echo "Batch file: " ${BATCH}
-echo "username: " ${USERNAME}
-echo "Password: " ${PASSWORD}
-echo "Hostname: " ${HOSTNAME}
-echo "Port: " ${PORT}
+echo " Destroy database: " ${DESTROY}
+echo " Database name: " ${DATABASE}
+echo " Batch file: " ${BATCH}
+echo " username: " ${USERNAME}
+echo " Password: " ${PASSWORD}
+echo " Hostname: " ${HOSTNAME}
+echo " Port: " ${PORT}
+echo 
+echo "use $0 -h to see how to set all options"
+echo
+
 
 if "${CONFIRM}"; then
     echo 
@@ -184,6 +197,7 @@ if "${CONFIRM}"; then
     read -p "Continue? " -n 1
     if [[ ! $REPLY =~ ^[Yy]$ ]]
     then
+        echo
         exit 1
     fi
 fi
@@ -192,9 +206,10 @@ for i in ${NVSS} ${VLSS} ${WENSS}; do
 	check_file $i "please download a catalog or symlink something to $i"
 done
 
-if ${RECREATE}; then
-	message "(re)creating database ${DATABASE}"
+if ${DESTROY}; then
+	message "Destroying database ${DATABASE}"
 	destroy_database
+	message "Creating database ${DATABASE}"
 	create_database
 
     message "creating backup of monetdb config file to ~/.monetdb.old"
@@ -203,6 +218,7 @@ if ${RECREATE}; then
     cat > ~/.monetdb <<-EOF
 user=monetdb
 password=monetdb
+else
 EOF
 
     set_credentials
@@ -217,6 +233,8 @@ EOF
 
     # always run this on exit
     trap restore_monetconffile EXIT
+else
+    lock_database
 fi
 
 for sql_file in $(cat ${WHEREAMI}/${BATCH} | grep -v ^#); do
@@ -228,7 +246,9 @@ for sql_file in $(cat ${WHEREAMI}/${BATCH} | grep -v ^#); do
 
 	# and then run it it
 	message "processing ${sql_file}"
-	echo "${sql}" | mclient -d${DATABASE}
+	echo "${sql}" | mclient -d${DATABASE} -p${PORT} -h${HOSTNAME}
 	fail_check "failed to load SQL: ${sql}"
 done 
+
+release_database
 

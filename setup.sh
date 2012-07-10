@@ -3,12 +3,14 @@
 # Configurables
 ###############
 
-BATCH_FILE="sql/batch"
-MONETDB_DATABASE="trap"
-MONETDB_USERNAME="trap"
-MONETDB_PASSWORD="trap"
-MONETDB_RECREATE=true
-
+RECREATE=false
+CONFIRM=true
+DATABASE=trap
+BATCH="sql/batch"
+USERNAME=${DATABASE}
+PASSWORD=${DATABASE}
+HOSTNAME=localhost
+PORT=50000
 
 # Non-configurable variables
 ############################
@@ -37,6 +39,66 @@ tokens["%EXO%"]=${EXO}
 
 # Functions
 ###########
+
+usage() {
+cat << EOF
+usage: $0 options
+
+This script will (re)create the TKP database
+
+OPTIONS:
+   -h      Show this message
+   -r      Destroy database before recreation
+   -y      Don't prompt for comfirmation
+   -d      Database name to use
+   -u      Set database username to this value
+   -p      Set database password to this value
+   -H      Database hostname
+   -P      Database port
+   -b      Set batch file to use
+EOF
+}
+
+parse_arguments() {
+    echo $0 $1 $2 $3
+	while getopts “hryd:u:p:H:P:b:” OPTION
+	do
+		 case $OPTION in
+			 h)
+				 usage
+				 exit 1
+				 ;;
+			 r)
+				 RECREATE=true
+				 ;;
+			 y)
+				 CONFIRM=false
+				 ;;
+			 d)
+				 DATABASE=${OPTARG}
+				 ;;
+			 u)
+				 USERNAME=${OPTARG}
+				 ;;
+			 p)
+				 PASSWORD=${OPTARG}
+				 ;;
+			 H)
+				 HOSTNAME=${OPTARG}
+				 ;;
+			 P)
+				 PORT=${OPTARG}
+				 ;;
+			 b)
+				 BATCH=${OPTARG}
+                 ;;
+			 ?)
+				 usage
+				 exit
+				 ;;
+		 esac
+	done
+}
 
 message() {
     echo -e "*** ${WHATAMI}: $1"
@@ -74,23 +136,23 @@ run_nostop() {
 
 destroy_database() {
     message "destroying old database"
-	run_nostop "monetdb ${MONETDB_PARAMS} stop ${MONETDB_DATABASE}"
-	run_nostop "monetdb ${MONETDB_PARAMS} destroy -f ${MONETDB_DATABASE}"
+	run_nostop "monetdb ${PARAMS} stop ${DATABASE}"
+	run_nostop "monetdb ${PARAMS} destroy -f ${DATABASE}"
 }
 
 create_database() {
-    message "creating database ${MONETDB_DATABASE}"
-	run "monetdb ${MONETDB_PARAMS} create ${MONETDB_DATABASE}"
-	run "monetdb ${MONETDB_PARAMS} start ${MONETDB_DATABASE}"
+    message "creating database ${DATABASE}"
+	run "monetdb ${PARAMS} create ${DATABASE}"
+	run "monetdb ${PARAMS} start ${DATABASE}"
 }
 
 set_credentials() {
     message "setting credentials"
-    mclient -d${MONETDB_DATABASE} <<-EOF
-ALTER USER "monetdb" RENAME TO "${MONETDB_USERNAME}";
-ALTER USER SET PASSWORD '${MONETDB_PASSWORD}' USING OLD PASSWORD 'monetdb';
-CREATE SCHEMA "${MONETDB_DATABASE}" AUTHORIZATION "${MONETDB_USERNAME}";
-ALTER USER "${MONETDB_USERNAME}" SET SCHEMA "${MONETDB_DATABASE}";
+    mclient -d${DATABASE} <<-EOF
+ALTER USER "monetdb" RENAME TO "${USERNAME}";
+ALTER USER SET PASSWORD '${PASSWORD}' USING OLD PASSWORD 'monetdb';
+CREATE SCHEMA "${DATABASE}" AUTHORIZATION "${USERNAME}";
+ALTER USER "${USERNAME}" SET SCHEMA "${DATABASE}";
 EOF
 }
 
@@ -103,12 +165,35 @@ restore_monetconffile() {
 # the real code
 ###############
 
+parse_arguments $*
+
+echo
+echo "TKP database will be (re)created with these settings:"
+echo
+echo "Recreate database: " ${RECREATE}
+echo "Database name: " ${DATABASE}
+echo "Batch file: " ${BATCH}
+echo "username: " ${USERNAME}
+echo "Password: " ${PASSWORD}
+echo "Hostname: " ${HOSTNAME}
+echo "Port: " ${PORT}
+
+if "${CONFIRM}"; then
+    echo 
+    echo "WARNING: this will (re)create the database ${DATABASE}."
+    read -p "Continue? " -n 1
+    if [[ ! $REPLY =~ ^[Yy]$ ]]
+    then
+        exit 1
+    fi
+fi
+
 for i in ${NVSS} ${VLSS} ${WENSS}; do
 	check_file $i "please download a catalog or symlink something to $i"
 done
 
-if ${MONETDB_RECREATE}; then
-	message "(re)creating database ${MONETDB_DATABASE}"
+if ${RECREATE}; then
+	message "(re)creating database ${DATABASE}"
 	destroy_database
 	create_database
 
@@ -126,15 +211,15 @@ EOF
     mv ~/.monetdb ~/.monetdb.old
     message "creating temporary monetdb config file"
     cat > ~/.monetdb <<-EOF
-user=${MONETDB_USERNAME}
-password=${MONETDB_PASSWORD}
+user=${USERNAME}
+password=${PASSWORD}
 EOF
 
     # always run this on exit
     trap restore_monetconffile EXIT
 fi
 
-for sql_file in $(cat ${WHEREAMI}/${BATCH_FILE} | grep -v ^#); do
+for sql_file in $(cat ${WHEREAMI}/${BATCH} | grep -v ^#); do
 	# replace tokens in sql files
 	sql=`cat ${SQLFILES}/${sql_file}`
     for token in ${!tokens[*]}; do
@@ -143,7 +228,7 @@ for sql_file in $(cat ${WHEREAMI}/${BATCH_FILE} | grep -v ^#); do
 
 	# and then run it it
 	message "processing ${sql_file}"
-	echo "${sql}" | mclient -d${MONETDB_DATABASE}
+	echo "${sql}" | mclient -d${DATABASE}
 	fail_check "failed to load SQL: ${sql}"
 done 
 

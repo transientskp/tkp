@@ -60,7 +60,6 @@ EOF
 }
 
 parse_arguments() {
-    echo $0 $1 $2 $3
 	while getopts “hryd:u:p:H:P:b:” OPTION
 	do
 		 case $OPTION in

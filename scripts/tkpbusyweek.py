@@ -37,7 +37,7 @@ for file in files:
     # with a reference id to the dataset id
     print "Image Id:", my_image.id[0]
     results = my_image.extract(det=7,anl=4)
-    # Store results in extractedsources table
+    # Store results in extractedsource table
     results.savetoDB(conn)
     # Check for associations in current dataset and
     # store results in assocxtrsources table

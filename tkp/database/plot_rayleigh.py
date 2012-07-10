@@ -140,7 +140,7 @@ def polarplot_distr(conn):
                           ) as r
           from assocxtrsources a
               ,runningcatalog r
-              ,extractedsources x
+              ,extractedsource x
          where r.xtrsrc_id = 1
            and a.xtrsrc_id = r.xtrsrc_id
            and a.assoc_xtrsrc_id = x.xtrsrcid
@@ -209,7 +209,7 @@ def colatitude_plot(conn):
                        + sin(rad(wm_decl))*x.z as z_prime
                   from assocxtrsources a
                       ,runningcatalog r
-                      ,extractedsources x
+                      ,extractedsource x
                  where r.xtrsrc_id = a.xtrsrc_id
                    and a.assoc_xtrsrc_id = x.xtrsrcid
                    and r.xtrsrc_id = 1
@@ -341,7 +341,7 @@ def longitude_plot(conn):
                                + cos(rad(wm_ra))*x.y as y_prime
                           from assocxtrsources a
                               ,runningcatalog r
-                              ,extractedsources x
+                              ,extractedsource x
                          where r.xtrsrc_id = a.xtrsrc_id
                            and a.assoc_xtrsrc_id = x.xtrsrcid
                            and r.xtrsrc_id = 1
@@ -434,7 +434,7 @@ def two_variable_plot(conn):
                                + sin(3*pi()+rad(wm_decl))*x.z as z_dblprime  
                           from assocxtrsources a
                               ,runningcatalog r
-                              ,extractedsources x 
+                              ,extractedsource x
                          where r.xtrsrc_id = a.xtrsrc_id
                            and a.assoc_xtrsrc_id = x.xtrsrcid
                            and r.xtrsrc_id = 1 
@@ -525,7 +525,7 @@ def rayleigh_distr_plot(conn):
               ,3600 * (x.decl - r.wm_decl) as z_decl
           from assocxtrsources a
               ,runningcatalog r
-              ,extractedsources x
+              ,extractedsource x
          where r.xtrsrc_id = 1
            and r.xtrsrc_id = a.xtrsrc_id
            and a.assoc_xtrsrc_id = x.xtrsrcid
@@ -941,7 +941,7 @@ def rayleigh_distr_r_plot(conn):
               ,x.decl_err
           from assocxtrsources a
               ,runningcatalog r
-              ,extractedsources x
+              ,extractedsource x
          where r.xtrsrc_id = 20
            and r.xtrsrc_id = a.xtrsrc_id
            and a.assoc_xtrsrc_id = x.xtrsrcid
@@ -1040,7 +1040,7 @@ def z_alpha_decl_plot(conn, id):
               ,3600 * (x.decl - r.wm_decl) AS z_delta
           FROM assocxtrsources a
               ,runningcatalog r
-              ,extractedsources x
+              ,extractedsource x
          WHERE r.xtrsrc_id = %s
            AND r.xtrsrc_id = a.xtrsrc_id
            AND a.assoc_xtrsrc_id = x.xtrsrcid
@@ -1316,7 +1316,7 @@ def z_alpha_decl_errors_plot(conn):
               ,3600 * (x.decl - r.wm_decl) / decl_err AS z_y
           FROM assocxtrsources a
               ,runningcatalog r
-              ,extractedsources x
+              ,extractedsource x
          WHERE r.xtrsrc_id = 1
            AND r.xtrsrc_id = a.xtrsrc_id
            AND a.assoc_xtrsrc_id = x.xtrsrcid

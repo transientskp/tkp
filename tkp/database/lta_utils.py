@@ -205,14 +205,14 @@ def _insert_extractedsources(conn, image_id):
     """Insert all extracted sources with their properties
 
     Insert all detected sources and some derived properties into the
-    extractedsources table.
+    extractedsource table.
 
     """
 
     cursor = conn.cursor()
     try:
         query = """\
-        INSERT INTO extractedsources
+        INSERT INTO extractedsource
           (image_id
           ,zone
           ,ra
@@ -275,7 +275,7 @@ def insert_extracted_sources(conn, image_id, results, fname=None):
     """Insert all extracted sources
 
     Insert the sources that were detected by the Source Extraction
-    procedures into the extractedsources table.
+    procedures into the extractedsource table.
 
     Therefore, we use a temporary table containing the "raw" detections,
     from which the sources will then be inserted into extractedsourtces.
@@ -357,7 +357,7 @@ def _insert_temprunningcatalog_by_bsmaj(conn, image_id):
         INSERT INTO temprunningcatalog
           (xtrsrc_id
           ,assoc_xtrsrc_id
-          ,ds_id
+          ,dataset
           ,band
           ,datapoints
           ,zone
@@ -381,7 +381,7 @@ def _insert_temprunningcatalog_by_bsmaj(conn, image_id):
           )
           SELECT t0.xtrsrc_id
                 ,t0.assoc_xtrsrc_id
-                ,t0.ds_id
+                ,t0.dataset
                 ,t0.band
                 ,t0.datapoints
                 ,CAST(FLOOR(t0.wm_decl/1.0) AS INTEGER)
@@ -404,7 +404,7 @@ def _insert_temprunningcatalog_by_bsmaj(conn, image_id):
                 ,t0.avg_weighted_peak_flux_sq
             FROM (SELECT rc.xtrsrc_id as xtrsrc_id
                         ,x0.xtrsrcid as assoc_xtrsrc_id
-                        ,im0.ds_id
+                        ,im0.dataset
                         ,im0.band
                         ,rc.datapoints + 1 AS datapoints
                         ,rc.firstzone
@@ -461,11 +461,11 @@ def _insert_temprunningcatalog_by_bsmaj(conn, image_id):
                              (x0.peak_flux_err * x0.peak_flux_err))
                          / (datapoints + 1) AS avg_weighted_peak_flux_sq
                     FROM runningcatalog rc
-                        ,extractedsources x0
+                        ,extractedsource x0
                         ,images im0
-                   WHERE x0.image_id = %s
-                     AND x0.image_id = im0.imageid
-                     AND im0.ds_id = rc.ds_id
+                   WHERE x0.image = %s
+                     AND x0.image = im0.imageid
+                     AND im0.dataset = rc.dataset
                      AND rc.zone BETWEEN CAST(FLOOR(x0.decl - im0.bsmaj) AS INTEGER)
                                      AND CAST(FLOOR(x0.decl + im0.bsmaj) AS INTEGER)
                      AND rc.wm_decl BETWEEN x0.decl - im0.bsmaj
@@ -518,7 +518,7 @@ def _insert_temprunningcatalog(conn, image_id, deRuiter_r):
 INSERT INTO temprunningcatalog
   (xtrsrc_id
   ,assoc_xtrsrc_id
-  ,ds_id
+  ,dataset
   ,band
   ,datapoints
   ,zone
@@ -541,7 +541,7 @@ INSERT INTO temprunningcatalog
   )
   SELECT t0.xtrsrc_id
         ,t0.assoc_xtrsrc_id
-        ,t0.ds_id
+        ,t0.dataset
         ,t0.band
         ,t0.datapoints
         ,CAST(FLOOR(t0.wm_decl/1.0) AS INTEGER)
@@ -563,7 +563,7 @@ INSERT INTO temprunningcatalog
         ,t0.avg_weighted_peak_flux_sq
     FROM (SELECT rc.xtrsrc_id as xtrsrc_id
                 ,x0.xtrsrcid as assoc_xtrsrc_id
-                ,im0.ds_id
+                ,im0.dataset
                 ,im0.band
                 ,rc.datapoints + 1 AS datapoints
                 ,((datapoints * rc.avg_wra + x0.ra /
@@ -619,11 +619,11 @@ INSERT INTO temprunningcatalog
                      (x0.peak_flux_err * x0.peak_flux_err))
                  / (datapoints + 1) AS avg_weighted_peak_flux_sq
             FROM runningcatalog rc
-                ,extractedsources x0
+                ,extractedsource x0
                 ,images im0
-           WHERE x0.image_id = %s
-             AND x0.image_id = im0.imageid
-             AND im0.ds_id = rc.ds_id
+           WHERE x0.image = %s
+             AND x0.image = im0.imageid
+             AND im0.dataset = rc.dataset
              AND rc.zone BETWEEN CAST(FLOOR(x0.decl - 0.025) as INTEGER)
                              AND CAST(FLOOR(x0.decl + 0.025) as INTEGER)
              AND rc.wm_decl BETWEEN x0.decl - 0.025
@@ -684,7 +684,7 @@ def _flag_multiple_counterparts_in_runningcatalog_by_dist(conn):
                           )) AS min_dist_param
                   FROM temprunningcatalog trc0
                       ,runningcatalog rc0
-                      ,extractedsources x0
+                      ,extractedsource x0
                  WHERE trc0.xtrsrc_id = rc0.xtrsrc_id
                    AND trc0.assoc_xtrsrc_id = x0.xtrsrcid
                 GROUP BY trc0.assoc_xtrsrc_id
@@ -699,7 +699,7 @@ def _flag_multiple_counterparts_in_runningcatalog_by_dist(conn):
                            )) AS dist_param
                   FROM temprunningcatalog trc1
                       ,runningcatalog rc1
-                      ,extractedsources x1
+                      ,extractedsource x1
                  WHERE trc1.xtrsrc_id = rc1.xtrsrc_id
                    AND trc1.assoc_xtrsrc_id = x1.xtrsrcid
                ) t1
@@ -769,7 +769,7 @@ def _flag_multiple_counterparts_in_runningcatalog(conn):
                           ) AS min_r1
                   FROM temprunningcatalog trc0
                       ,runningcatalog rc0
-                      ,extractedsources x0
+                      ,extractedsource x0
                  WHERE trc0.assoc_xtrsrc_id IN (SELECT assoc_xtrsrc_id
                                                   FROM temprunningcatalog
                                                 GROUP BY assoc_xtrsrc_id
@@ -789,7 +789,7 @@ def _flag_multiple_counterparts_in_runningcatalog(conn):
                            ) AS r1
                   FROM temprunningcatalog trc1
                       ,runningcatalog rc1
-                      ,extractedsources x1
+                      ,extractedsource x1
                  WHERE trc1.assoc_xtrsrc_id IN (SELECT assoc_xtrsrc_id
                                                  FROM temprunningcatalog
                                                GROUP BY assoc_xtrsrc_id
@@ -864,7 +864,7 @@ def _insert_multiple_assocs(conn):
                 ,1
             FROM temprunningcatalog t
                 ,runningcatalog r
-                ,extractedsources x
+                ,extractedsource x
                 ,node n
            WHERE t.xtrsrc_id = r.xtrsrc_id
              AND t.xtrsrc_id = x.xtrsrcid
@@ -967,7 +967,7 @@ def _insert_multiple_assocs_runcat(conn):
         query = """\
         INSERT INTO runningcatalog
           (xtrsrc_id
-          ,ds_id
+          ,dataset
           ,band
           ,datapoints
           ,zone
@@ -990,7 +990,7 @@ def _insert_multiple_assocs_runcat(conn):
           ,avg_weighted_peak_flux_sq
           )
           SELECT assoc_xtrsrc_id
-                ,ds_id
+                ,dataset
                 ,band
                 ,datapoints
                 ,zone
@@ -1024,7 +1024,7 @@ def _insert_multiple_assocs_runcat(conn):
         query = """\
         INSERT INTO runcat_zoned
           (xtrsrc_id
-          ,ds_id
+          ,dataset
           ,band
           ,datapoints
           ,zone
@@ -1047,7 +1047,7 @@ def _insert_multiple_assocs_runcat(conn):
           ,avg_weighted_peak_flux_sq
           )
           SELECT assoc_xtrsrc_id
-                ,ds_id
+                ,dataset
                 ,band
                 ,datapoints
                 ,t.zone
@@ -1157,7 +1157,7 @@ def _flag_multiple_assocs(conn):
           ,int_flux_err
           )
           SELECT x1.xtrsrcid 
-                ,x1.image_id 
+                ,x1.image
                 ,x1.zone 
                 ,x1.ra 
                 ,x1.decl 
@@ -1176,7 +1176,7 @@ def _flag_multiple_assocs(conn):
                 ,x1.int_flux 
                 ,x1.int_flux_err
             FROM temprunningcatalog t1
-                ,extractedsources x1
+                ,extractedsource x1
                 ,node n1
           WHERE t1.xtrsrc_id IN (SELECT xtrsrc_id
                                   FROM temprunningcatalog
@@ -1235,7 +1235,7 @@ def _insert_single_assocs(conn):
                 ,3
             FROM temprunningcatalog t
                 ,runningcatalog r
-                ,extractedsources x
+                ,extractedsource x
                 ,node n
            WHERE t.xtrsrc_id = r.xtrsrc_id
              AND t.assoc_xtrsrc_id = x.xtrsrcid
@@ -1365,7 +1365,7 @@ def _insert_measurements(conn):
           ,int_flux_err
           )
           SELECT x1.xtrsrcid
-                ,x1.image_id 
+                ,x1.image
                 ,x1.zone 
                 ,x1.ra 
                 ,x1.decl 
@@ -1383,7 +1383,7 @@ def _insert_measurements(conn):
                 ,x1.int_flux 
                 ,x1.int_flux_err
             FROM temprunningcatalog t1
-                ,extractedsources x1
+                ,extractedsource x1
                 ,node n1
            WHERE t1.assoc_xtrsrc_id = x1.xtrsrcid
              AND t1.firstzone = n1.zone
@@ -1408,12 +1408,12 @@ def _count_known_sources_by_bsmaj(conn, image_id):
     try:
         query = """\
         SELECT COUNT(*)
-          FROM extractedsources x0
+          FROM extractedsource x0
               ,images im0
               ,runningcatalog r0
-         WHERE x0.image_id = %s
-           AND x0.image_id = im0.imageid
-           AND im0.ds_id = r0.ds_id
+         WHERE x0.image = %s
+           AND x0.image = im0.imageid
+           AND im0.dataset = r0.dataset
            AND r0.zone BETWEEN CAST(FLOOR(x0.decl - im0.bsmaj) AS INTEGER)
                            AND CAST(FLOOR(x0.decl + im0.bsmaj) AS INTEGER)
            AND r0.wm_decl BETWEEN x0.decl - im0.bsmaj
@@ -1442,12 +1442,12 @@ def _count_known_sources(conn, image_id, deRuiter_r):
     try:
         query = """\
         SELECT COUNT(*)
-          FROM extractedsources x0
+          FROM extractedsource x0
               ,images im0
               ,runningcatalog b0
-         WHERE x0.image_id = %s
-           AND x0.image_id = im0.imageid
-           AND im0.ds_id = b0.ds_id
+         WHERE x0.image = %s
+           AND x0.image = im0.imageid
+           AND im0.dataset = b0.dataset
            AND b0.zone BETWEEN x0.zone - cast(0.025 as integer)
                            AND x0.zone + cast(0.025 as integer)
            AND b0.wm_decl BETWEEN x0.decl - 0.025
@@ -1504,17 +1504,17 @@ def _insert_new_assocs_by_bsmaj(conn, image_id):
                 ,0
                 ,0
                 ,4
-            FROM extractedsources x1
+            FROM extractedsource x1
                 ,node n
-           WHERE x1.image_id = %s
+           WHERE x1.image = %s
              AND x1.zone = n.zone
              AND x1.xtrsrcid NOT IN (SELECT x0.xtrsrcid
-                                       FROM extractedsources x0
+                                       FROM extractedsource x0
                                            ,runningcatalog r0
                                            ,images im0
-                                      WHERE x0.image_id = %s
-                                        AND x0.image_id = im0.imageid
-                                        AND im0.ds_id = r0.ds_id
+                                      WHERE x0.image = %s
+                                        AND x0.image = im0.imageid
+                                        AND im0.dataset = r0.dataset
                                         AND r0.zone BETWEEN CAST(FLOOR(x0.decl - im0.bsmaj) AS INTEGER)
                                                         AND CAST(FLOOR(x0.decl + im0.bsmaj) AS INTEGER)
                                         AND r0.wm_decl BETWEEN x0.decl - im0.bsmaj
@@ -1538,9 +1538,9 @@ def _insert_new_assocs_by_bsmaj(conn, image_id):
                 ,0
                 ,0
                 ,4
-            FROM extractedsources x1
+            FROM extractedsource x1
                 ,node n
-           WHERE x1.image_id = %s
+           WHERE x1.image = %s
              AND x1.zone = n.zone
              AND x1.xtrsrcid NOT IN (SELECT assoc_xtrsrc_id
                                        FROM temprunningcatalog
@@ -1578,15 +1578,15 @@ def _insert_new_assocs(conn, image_id, deRuiter_r):
                 ,0
                 ,0
                 ,4
-            FROM extractedsources x1
-           WHERE x1.image_id = %s
+            FROM extractedsource x1
+           WHERE x1.image = %s
              AND x1.xtrsrcid NOT IN (SELECT x0.xtrsrcid
-                                       FROM extractedsources x0
+                                       FROM extractedsource x0
                                            ,runningcatalog b0
                                            ,images im0
-                                      WHERE x0.image_id = %s
-                                        AND x0.image_id = im0.imageid
-                                        AND im0.ds_id = b0.ds_id
+                                      WHERE x0.image = %s
+                                        AND x0.image = im0.imageid
+                                        AND im0.dataset = b0.dataset
                                         AND b0.zone BETWEEN x0.zone - cast(0.025 as integer)
                                                         AND x0.zone + cast(0.025 as integer)
                                         AND b0.wm_decl BETWEEN x0.decl - 0.025
@@ -1628,7 +1628,7 @@ def _insert_new_source_runcat_by_bsmaj(conn, image_id):
         old_query = """\
         INSERT INTO runningcatalog
           (xtrsrc_id
-          ,ds_id
+          ,dataset
           ,band
           ,datapoints
           ,zone
@@ -1651,7 +1651,7 @@ def _insert_new_source_runcat_by_bsmaj(conn, image_id):
           ,avg_weighted_peak_flux_sq
           )
           SELECT x1.xtrsrcid
-                ,im1.ds_id
+                ,im1.dataset
                 ,band
                 ,1
                 ,x1.zone
@@ -1672,17 +1672,17 @@ def _insert_new_source_runcat_by_bsmaj(conn, image_id):
                 ,1 / (peak_flux_err * peak_flux_err)
                 ,peak_flux / (peak_flux_err * peak_flux_err)
                 ,peak_flux * peak_flux / (peak_flux_err * peak_flux_err)
-            FROM extractedsources x1
+            FROM extractedsource x1
                 ,images im1
-           WHERE x1.image_id = %s
-             AND x1.image_id = im1.imageid
+           WHERE x1.image = %s
+             AND x1.image = im1.imageid
              AND x1.xtrsrcid NOT IN (SELECT x0.xtrsrcid
-                                       FROM extractedsources x0
+                                       FROM extractedsource x0
                                            ,runningcatalog r0
                                            ,images im0
-                                      WHERE x0.image_id = %s
-                                        AND x0.image_id = im0.imageid
-                                        AND im0.ds_id = r0.ds_id
+                                      WHERE x0.image = %s
+                                        AND x0.image = im0.imageid
+                                        AND im0.dataset = r0.dataset
                                         AND r0.zone BETWEEN CAST(FLOOR(x0.decl - im0.bsmaj) AS INTEGER)
                                                         AND CAST(FLOOR(x0.decl + im0.bsmaj) AS INTEGER) 
                                         AND r0.wm_decl BETWEEN x0.decl - im0.bsmaj
@@ -1696,7 +1696,7 @@ def _insert_new_source_runcat_by_bsmaj(conn, image_id):
         query = """\
         INSERT INTO runningcatalog
           (xtrsrc_id
-          ,ds_id
+          ,dataset
           ,band
           ,datapoints
           ,zone
@@ -1719,7 +1719,7 @@ def _insert_new_source_runcat_by_bsmaj(conn, image_id):
           ,avg_weighted_peak_flux_sq
           )
           SELECT x1.xtrsrcid
-                ,im1.ds_id
+                ,im1.dataset
                 ,band
                 ,1
                 ,x1.zone
@@ -1740,10 +1740,10 @@ def _insert_new_source_runcat_by_bsmaj(conn, image_id):
                 ,1 / (peak_flux_err * peak_flux_err)
                 ,peak_flux / (peak_flux_err * peak_flux_err)
                 ,peak_flux * peak_flux / (peak_flux_err * peak_flux_err)
-            FROM extractedsources x1
+            FROM extractedsource x1
                 ,images im1
-           WHERE x1.image_id = %s
-             AND x1.image_id = im1.imageid
+           WHERE x1.image = %s
+             AND x1.image = im1.imageid
              AND x1.xtrsrcid NOT IN (SELECT assoc_xtrsrc_id
                                        FROM temprunningcatalog
                                     )
@@ -1757,7 +1757,7 @@ def _insert_new_source_runcat_by_bsmaj(conn, image_id):
         query = """\
         INSERT INTO runcat_zoned
           (xtrsrc_id
-          ,ds_id
+          ,dataset
           ,band
           ,datapoints
           ,zone
@@ -1780,7 +1780,7 @@ def _insert_new_source_runcat_by_bsmaj(conn, image_id):
           ,avg_weighted_peak_flux_sq
           )
           SELECT x1.xtrsrcid
-                ,im1.ds_id
+                ,im1.dataset
                 ,band
                 ,1
                 ,x1.zone
@@ -1801,11 +1801,11 @@ def _insert_new_source_runcat_by_bsmaj(conn, image_id):
                 ,1 / (peak_flux_err * peak_flux_err)
                 ,peak_flux / (peak_flux_err * peak_flux_err)
                 ,peak_flux * peak_flux / (peak_flux_err * peak_flux_err)
-            FROM extractedsources x1
+            FROM extractedsource x1
                 ,images im1
                 ,node n
-           WHERE x1.image_id = %s
-             AND x1.image_id = im1.imageid
+           WHERE x1.image = %s
+             AND x1.image = im1.imageid
              AND x1.zone = n.zone
              AND x1.xtrsrcid NOT IN (SELECT assoc_xtrsrc_id
                                        FROM temprunningcatalog
@@ -1824,7 +1824,7 @@ def _insert_new_source_runcat_by_bsmaj(conn, image_id):
         cursor.close()
 
 def _insert_first_measurements(conn, image_id):
-    """Insert extractedsources into measurements depending on sharded zone"""
+    """Insert extractedsource into measurements depending on sharded zone"""
     # TODO: check zone cast in search radius!
     try:
         cursor = conn.cursor()
@@ -1850,7 +1850,7 @@ def _insert_first_measurements(conn, image_id):
           ,int_flux_err
           )
           SELECT x1.xtrsrcid
-                ,x1.image_id 
+                ,x1.image
                 ,x1.zone 
                 ,x1.ra 
                 ,x1.decl 
@@ -1867,11 +1867,11 @@ def _insert_first_measurements(conn, image_id):
                 ,x1.peak_flux_err 
                 ,x1.int_flux 
                 ,x1.int_flux_err
-            FROM extractedsources x1
+            FROM extractedsource x1
                 ,images im1
                 ,node n1
-           WHERE x1.image_id = %s
-             AND x1.image_id = im1.imageid
+           WHERE x1.image = %s
+             AND x1.image = im1.imageid
              AND x1.zone = n1.zone
              AND x1.xtrsrcid NOT IN (SELECT assoc_xtrsrc_id
                                        FROM temprunningcatalog
@@ -1896,7 +1896,7 @@ def _insert_new_source_runcat(conn, image_id, deRuiter_r):
         query = """\
         INSERT INTO runningcatalog
           (xtrsrc_id
-          ,ds_id
+          ,dataset
           ,band
           ,datapoints
           ,zone
@@ -1918,7 +1918,7 @@ def _insert_new_source_runcat(conn, image_id, deRuiter_r):
           ,avg_weighted_peak_flux_sq
           )
           SELECT x1.xtrsrcid
-                ,im1.ds_id
+                ,im1.dataset
                 ,band
                 ,1
                 ,x1.zone
@@ -1938,17 +1938,17 @@ def _insert_new_source_runcat(conn, image_id, deRuiter_r):
                 ,1 / (I_peak_err * I_peak_err)
                 ,I_peak / (I_peak_err * I_peak_err)
                 ,I_peak * I_peak / (I_peak_err * I_peak_err)
-            FROM extractedsources x1
+            FROM extractedsource x1
                 ,images im1
-           WHERE x1.image_id = %s
-             AND x1.image_id = im1.imageid
+           WHERE x1.image = %s
+             AND x1.image = im1.imageid
              AND x1.xtrsrcid NOT IN (SELECT x0.xtrsrcid
-                                       FROM extractedsources x0
+                                       FROM extractedsource x0
                                            ,runningcatalog b0
                                            ,images im0
-                                      WHERE x0.image_id = %s
-                                        AND x0.image_id = im0.imageid
-                                        AND im0.ds_id = b0.ds_id
+                                      WHERE x0.image = %s
+                                        AND x0.image = im0.imageid
+                                        AND im0.dataset = b0.dataset
                                         AND b0.zone BETWEEN x0.zone - cast(0.025 as integer)
                                                         AND x0.zone + cast(0.025 as integer)
                                         AND b0.wm_decl BETWEEN x0.decl - 0.025
@@ -1974,7 +1974,7 @@ def _insert_new_source_runcat(conn, image_id, deRuiter_r):
         cursor.close()
 
 
-def _associate_across_frequencies(conn, ds_id, image_id, deRuiter_r=DERUITER_R):
+def _associate_across_frequencies(conn, dataset, image_id, deRuiter_r=DERUITER_R):
     """Associate sources in running catalog across frequency bands
 
     The dimensionless distance between two sources is given by the
@@ -1995,10 +1995,10 @@ def _associate_across_frequencies(conn, ds_id, image_id, deRuiter_r=DERUITER_R):
           FROM runningcatalog r1
               ,runningcatalog r2
               ,images im1
-         WHERE r1.ds_id = %s
+         WHERE r1.dataset = %s
            AND im1.imageid = %s
            AND r1.band = im1.band
-           AND r2.ds_id = r1.ds_id
+           AND r2.dataset = r1.dataset
            AND r2.band <> r1.band
            AND r2.zone BETWEEN CAST(FLOOR(r1.decl - 0.025) AS INTEGER)
                            AND CAST(FLOOR(r1.decl + 0.025) AS INTEGER)
@@ -2013,7 +2013,7 @@ def _associate_across_frequencies(conn, ds_id, image_id, deRuiter_r=DERUITER_R):
                     / (r1.decl_err * r1.decl_err + r2.decl_err * r2.decl_err)
                    ) < %s
         """
-        cursor.execute(query, (ds_id, image_id, deRuiter_r/3600.))
+        cursor.execute(query, (dataset, image_id, deRuiter_r/3600.))
         if not AUTOCOMMIT:
             conn.commit()
     except db.Error, e:
@@ -2039,7 +2039,7 @@ def associate_extracted_sources(conn, image_id, deRuiter_r=DERUITER_R):
     #if image_id > 1:
     #    sys.exit(1)
     #+----------------------------------------------------------------+
-    #| Below, we take care of the extractedsources (i.e. more than 1) |
+    #| Below, we take care of the extractedsource (i.e. more than 1) |
     #| that were associated to the same runningcatalog source.        |
     #+----------------------------------------------------------------+
     #_flag_multiple_counterparts_in_runningcatalog(conn)
@@ -2057,7 +2057,7 @@ def associate_extracted_sources(conn, image_id, deRuiter_r=DERUITER_R):
     _update_runningcatalog(conn)
     _insert_measurements(conn)
     #+-----------------------------------------------------------+
-    #| We end with extractedsources that could not be associated |
+    #| We end with extractedsource that could not be associated |
     #+-----------------------------------------------------------+
     #_count_known_sources(conn, image_id, deRuiter_r)
     #_insert_new_assocs(conn, image_id, deRuiter_r)
@@ -2065,10 +2065,10 @@ def associate_extracted_sources(conn, image_id, deRuiter_r=DERUITER_R):
     #_insert_new_source_runcat(conn, image_id, deRuiter_r)
     _insert_new_source_runcat_by_bsmaj(conn, image_id)
     # TODO: Before we empty temprunningcatalog we need to insert the
-    # extractedsources into sharded measurements...
+    # extractedsource into sharded measurements...
     _insert_first_measurements(conn, image_id)
     _empty_temprunningcatalog(conn)
-    #_associate_across_frequencies(conn, ds_id, image_id, deRuiter_r)
+    #_associate_across_frequencies(conn, dataset, image_id, deRuiter_r)
     #+----------------------- TODO --------------------------------+
     #| We have to include the monitorlist: source taht are in the  |
     #| runningcatalog, but were not extracted from the image ->    |
@@ -2084,7 +2084,7 @@ def select_single_epoch_detection(conn, dsid):
     try:
         query = """\
 SELECT xtrsrc_id
-      ,ds_id
+      ,dataset
       ,datapoints
       ,wm_ra
       ,wm_decl
@@ -2097,7 +2097,7 @@ SELECT xtrsrc_id
         avg_weighted_I_peak * avg_weighted_I_peak / avg_weight_peak)
        as eta
   FROM runningcatalog
- WHERE ds_id = %s
+ WHERE dataset = %s
    AND datapoints = 1
 """
         cursor.execute(query, (dsid, ))
@@ -2146,7 +2146,7 @@ def lightcurve(conn, xtrsrcid):
               ,ex.i_peak
               ,ex.i_peak_err
               ,ex.xtrsrcid
-          FROM extractedsources ex
+          FROM extractedsource ex
               ,assocxtrsources ax
               ,images im
          WHERE ax.xtrsrc_id in (SELECT xtrsrc_id 
@@ -2154,7 +2154,7 @@ def lightcurve(conn, xtrsrcid):
                                  WHERE assoc_xtrsrc_id = 1
                                 )
            AND ex.xtrsrcid = ax.assoc_xtrsrc_id
-           AND ex.image_id = im.imageid
+           AND ex.image = im.imageid
            ORDER BY im.taustart_ts
         """
         cursor.execute(query, (xtrsrcid,))
@@ -2194,7 +2194,7 @@ def _select_variability_indices(conn, dsid, V_lim, eta_lim):
     try:
         query = """\
         SELECT xtrsrc_id
-              ,ds_id
+              ,dataset
               ,datapoints
               ,wm_ra
               ,wm_decl
@@ -2203,7 +2203,7 @@ def _select_variability_indices(conn, dsid, V_lim, eta_lim):
               ,t1.V_inter / t1.avg_i_peak as V
               ,t1.eta_inter / t1.avg_weight_peak as eta
           FROM (SELECT xtrsrc_id
-                      ,ds_id
+                      ,dataset
                       ,datapoints
                       ,wm_ra
                       ,wm_decl
@@ -2223,7 +2223,7 @@ def _select_variability_indices(conn, dsid, V_lim, eta_lim):
                                  * (avg_weight_peak * avg_weighted_I_peak_sq - avg_weighted_I_peak * avg_weighted_I_peak )
                        END AS eta_inter
                   FROM runningcatalog
-                 WHERE ds_id = %s
+                 WHERE dataset = %s
                ) t1
          WHERE t1.V_inter / t1.avg_i_peak > %s
            AND t1.eta_inter / t1.avg_weight_peak > %s
@@ -2311,7 +2311,7 @@ def _insert_cat_assocs(conn, image_id, radius, deRuiter_r):
                         ,x
                         ,y
                         ,z
-                    from extractedsources
+                    from extractedsource
                    where image_id = %s
                  ) x0
                 ,catalogedsources c0
@@ -2760,7 +2760,7 @@ AS
        + (rc.wm_decl - t1.decl) * (rc.wm_decl - t1.decl)
        / (cast(rc.wm_decl_err AS DOUBLE PRECISION) * rc.wm_decl_err)
        ) AS assoc_r
-    ,rc.ds_id AS ds_id
+    ,rc.dataset AS dataset
   FROM (
     SELECT
        ml.monitorid
@@ -2776,9 +2776,9 @@ AS
    WHERE
      ml.xtrsrc_id = rc.xtrsrc_id
    AND
-     rc.ds_id = %s
+     rc.dataset = %s
    ) AS t1, runningcatalog AS rc
-  WHERE rc.ds_id = %s
+  WHERE rc.dataset = %s
   WITH DATA
 """
 
@@ -2799,7 +2799,7 @@ SELECT
   ,rc_ra
   ,rc_decl
   ,assoc_r
-  ,ds_id
+  ,dataset
 FROM temp_monitoringlist t1 
 INNER JOIN
     (SELECT monitorid, MIN(assoc_distance_arcsec) AS mindistance 
@@ -2946,7 +2946,7 @@ FROM
 WHERE
     ml.userentry = false
   AND rc.xtrsrc_id = ml.xtrsrc_id
-  AND rc.ds_id = %s
+  AND rc.dataset = %s
   AND image_id <> %s
 """
         try:
@@ -2969,7 +2969,7 @@ FROM
 WHERE
     ml.userentry = false
   AND rc.xtrsrc_id = ml.xtrsrc_id
-  AND rc.ds_id = %s
+  AND rc.dataset = %s
 """
         try:
             cursor.execute(query, (dataset_id,))
@@ -2984,7 +2984,7 @@ WHERE
 
 def insert_monitoring_sources(conn, results, image_id):
     """Insert the list of measured monitoring sources for this image into
-    extractedsources and runningcatalog
+    extractedsource and runningcatalog
     
     Note that the insertion into runningcatalog can be done by
     xtrsrc_id from monitoringlist. In case it is negative, it is
@@ -3000,7 +3000,7 @@ def insert_monitoring_sources(conn, results, image_id):
         y = math.cos(math.radians(dec)) * math.sin(math.radians(ra))
         z = math.sin(math.radians(dec))
         query = """\
-        INSERT INTO extractedsources
+        INSERT INTO extractedsource
           (image_id
           ,zone
           ,ra
@@ -3053,7 +3053,7 @@ def insert_monitoring_sources(conn, results, image_id):
             query = """\
 INSERT INTO runningcatalog
     (xtrsrc_id
-    ,ds_id
+    ,dataset
     ,band
     ,datapoints
     ,zone
@@ -3076,7 +3076,7 @@ INSERT INTO runningcatalog
     )
     SELECT
         t0.xtrsrcid
-        ,im.ds_id
+        ,im.dataset
         ,im.band
         ,1
         ,t0.zone
@@ -3097,7 +3097,7 @@ INSERT INTO runningcatalog
         ,t0.flux
         ,t0.flux_sq
     FROM (SELECT
-        ex.image_id
+        ex.image
         ,ex.xtrsrcid
         ,ex.zone
         ,ex.ra
@@ -3109,7 +3109,7 @@ INSERT INTO runningcatalog
         ,ex.z 
         ,ex.i_peak as flux
         ,ex.i_peak * ex.i_peak as flux_sq
-        FROM extractedsources ex
+        FROM extractedsource ex
         WHERE ex.xtrsrcid = %s
         ) as t0, images im
     WHERE im.imageid = %s
@@ -3224,8 +3224,8 @@ INSERT INTO transients
         query = """\
 INSERT INTO monitoringlist
 (xtrsrc_id, ra, decl, image_id)
-  SELECT ex.xtrsrcid, 0, 0, ex.image_id
-  FROM extractedsources ex
+  SELECT ex.xtrsrcid, 0, 0, ex.image
+  FROM extractedsource ex
   WHERE ex.xtrsrcid = %s
   AND ex.xtrsrcid NOT IN
   (SELECT xtrsrc_id FROM monitoringlist)

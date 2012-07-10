@@ -74,21 +74,21 @@ def scatter_SoI_X2X(conn,dsid=None,band=None,datapoints=None,pointdist=None,titl
                        "                  FROM assocxtrsources ax1 " + \
                        "                      LEFT OUTER JOIN assoccatsources ac2 ON ax1.assoc_xtrsrc_id = ac2.xtrsrc_id " + \
                        "                      LEFT OUTER JOIN catalogedsources c2 ON c2.catsrcid = ac2.assoc_catsrc_id " + \
-                       "                      ,extractedsources x1 " + \
-                       "                      ,extractedsources x2 " + \
+                       "                      ,extractedsource x1 " + \
+                       "                      ,extractedsource x2 " + \
                        "                      ,images im1 " + \
                        "                      ,images im2 " + \
                        "                      ,catalogedsources c1 " + \
                        "                 WHERE ax1.xtrsrc_id = x1.xtrsrcid " + \
                        "                   AND ax1.assoc_xtrsrc_id = x2.xtrsrcid " + \
-                       "                   AND x1.image_id = im1.imageid " + \
-                       "                   AND x2.image_id = im2.imageid " + \
+                       "                   AND x1.image = im1.imageid " + \
+                       "                   AND x2.image = im2.imageid " + \
                        "                   AND ax1.assoc_lr > -10 " + \
                        "                   AND c1.catsrcid = 2071216 " + \
                        "                   AND (ac2.assoc_lr > -76 " + \
                        "                        OR ac2.assoc_lr IS NULL " + \
                        "                       ) " + \
-                       "                   AND im1.ds_id = %s " + \
+                       "                   AND im1.dataset = %s " + \
                        "                   AND im1.band <> 17 " + \
                        "                   AND im2.band = %s " + \
                        "                   AND ax1.assoc_xtrsrc_id NOT IN (10876, 11018, 10543, 13386, 13494, 13206, 13401) " + \

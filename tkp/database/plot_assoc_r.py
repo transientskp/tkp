@@ -70,7 +70,7 @@ def plotHist_assoc_r(conn):
               /*,3600*(x.ra*cos(rad(x.decl)) - r.wm_ra *cos(rad(r.wm_decl)))/r.wm_ra_err as z_ra_cos*/
           from assocxtrsources a
               ,runningcatalog r
-              ,extractedsources x
+              ,extractedsource x
          where r.xtrsrc_id = 232683
            and r.xtrsrc_id = a.xtrsrc_id
            and a.assoc_xtrsrc_id = x.xtrsrcid
@@ -194,7 +194,7 @@ def plot_i_assoc_r(conn):
                           ) as r
           from assocxtrsources a
               ,runningcatalog r
-              ,extractedsources x
+              ,extractedsource x
          where r.xtrsrc_id = %s
            and a.xtrsrc_id = r.xtrsrc_id
            and a.assoc_xtrsrc_id = x.xtrsrcid

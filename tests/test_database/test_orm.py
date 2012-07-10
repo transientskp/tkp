@@ -26,7 +26,7 @@ class TestDataSet(unittest.TestCase):
         from tkp.database.dataset import DataSet
         import tkp.database.database
         import monetdb
-        dataset1 = DataSet(data={'dsinname': 'dataset 1'},
+        dataset1 = DataSet(data={'inname': 'dataset 1'},
                            database=self.database)
         dsid = dataset1.id
         # The name for the following dataset will be ignored, and set
@@ -34,17 +34,17 @@ class TestDataSet(unittest.TestCase):
         dataset2 = DataSet(database=self.database, id=dsid)
         # update some stuff
         dataset2.update()
-        self.assertEqual(dataset2.dsinname, "dataset 1")
+        self.assertEqual(dataset2.inname, "dataset 1")
         self.assertEqual(dataset2.id, dsid)
         dataset2.update(dsoutname='output.ms',
                         description='testing of dataset',
                         process_ts=datetime.datetime(1970, 1, 1))
-        self.assertEqual(dataset2.dsinname, "dataset 1")
+        self.assertEqual(dataset2.inname, "dataset 1")
         self.assertEqual(dataset2.id, dsid)
         # 'data' is ignored if dsid is given:
-        dataset3 = DataSet(data={'dsinname': 'dataset 3'},
+        dataset3 = DataSet(data={'inname': 'dataset 3'},
                            id=dsid, database=self.database)
-        self.assertEqual(dataset3.dsinname, "dataset 1")
+        self.assertEqual(dataset3.inname, "dataset 1")
         self.assertEqual(dataset3.id, dsid)
 
     @requires_database()
@@ -53,16 +53,16 @@ class TestDataSet(unittest.TestCase):
         from tkp.database.dataset import DataSet
         import tkp.database.database
         import monetdb
-        dataset1 = DataSet(data={'dsinname': 'dataset 1'},
+        dataset1 = DataSet(data={'inname': 'dataset 1'},
                             database=self.database)
-        self.assertEqual(dataset1.dsinname, "dataset 1")
-        dataset1.update(rerun=5, dsinname="new dataset")
+        self.assertEqual(dataset1.inname, "dataset 1")
+        dataset1.update(rerun=5, inname="new dataset")
         self.database.cursor.execute(
-            "SELECT rerun, dsinname FROM datasets WHERE dsid=%s", (dataset1.id,))
+            "SELECT rerun, inname FROM datasets WHERE dsid=%s", (dataset1.id,))
         results = self.database.cursor.fetchone()
         self.assertEqual(results[0], 5)
         self.assertEqual(results[1], "new dataset")
-        self.assertEqual(dataset1.dsinname, "new dataset")
+        self.assertEqual(dataset1.inname, "new dataset")
         self.assertEqual(dataset1.rerun, 5)
 
 
@@ -88,7 +88,7 @@ class TestImage(unittest.TestCase):
             'url': '/path/to/image',
             'tau_time': 0,
             }
-        dataset1 = DataSet(data={'dsinname': 'dataset with images'},
+        dataset1 = DataSet(data={'inname': 'dataset with images'},
                            database=self.database)
         #self.assertEqual(dataset1.images, set())
         image1 = Image(dataset=dataset1, data=data)
@@ -118,7 +118,7 @@ class TestImage(unittest.TestCase):
         from tkp.database.dataset import Image
         import tkp.database.database
         import monetdb
-        dataset1 = DataSet(data={'dsinname':
+        dataset1 = DataSet(data={'inname':
                                   'dataset with changing images'},
                                   database=self.database)
         data = dict(tau_time=1000, freq_eff=80e6,
@@ -172,7 +172,7 @@ class TestExtractedSource(unittest.TestCase):
         from tkp.database.dataset import DataSet
         from tkp.database.dataset import Image
         from tkp.database.dataset import ExtractedSource
-        dataset = DataSet(data={'dsinname': 'dataset with images'},
+        dataset = DataSet(data={'inname': 'dataset with images'},
                           database=self.database)
         # create 4 images, separated by one day each
         image = Image(
@@ -211,7 +211,7 @@ class TestExtractedSource(unittest.TestCase):
             'url': '/path/to/image',
             'tau_time': 0,
                 }
-        dataset1 = DataSet(data={'dsinname': 'dataset with images'},
+        dataset1 = DataSet(data={'inname': 'dataset with images'},
                                  database=self.database)
         self.assertEqual(dataset1.images, set())
         image1 = Image(dataset=dataset1, data=data)
@@ -264,7 +264,7 @@ class TestExtractedSource(unittest.TestCase):
             'url': '/path/to/image',
             'tau_time': 0,
                 }
-        dataset1 = DataSet(data={'dsinname': 'dataset with images'},
+        dataset1 = DataSet(data={'inname': 'dataset with images'},
                            database=self.database)
         self.assertEqual(dataset1.images, set())
         image1 = Image(dataset=dataset1, data=data)

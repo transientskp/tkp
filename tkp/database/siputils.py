@@ -128,7 +128,7 @@ def _empty_tempmergedcatalogs(conn):
 def _insert_selected_catsources(conn, cat_id, zone, ra_min, ra_max):
     """Select matched sources
 
-    Here we select the extractedsources that have a positional match
+    Here we select the extractedsource that have a positional match
     with the sources in the running catalogue table (runningcatalog)
     and those who have will be inserted into the temporary running
     catalogue table (temprunningcatalog).
@@ -212,7 +212,7 @@ INSERT INTO selectedcatsources
 def _insert_tempmergedcatalogs(conn, cat_id, zone, ra_min, ra_max, deRuiter_r):
     """Select matched sources
 
-    Here we select the extractedsources that have a positional match
+    Here we select the extractedsource that have a positional match
     with the sources in the running catalogue table (runningcatalog)
     and those who have will be inserted into the temporary running
     catalogue table (temprunningcatalog).
@@ -1425,7 +1425,7 @@ def _select_variability_indices(conn, dsid, V_lim, eta_lim):
         cursor = conn.cursor()
         query = """\
 SELECT xtrsrc_id
-      ,ds_id
+      ,dataset
       ,datapoints
       ,wm_ra
       ,wm_decl
@@ -1438,7 +1438,7 @@ SELECT xtrsrc_id
         avg_weighted_I_peak * avg_weighted_I_peak / avg_weight_peak)
        as eta
   FROM runningcatalog
- WHERE ds_id = %s
+ WHERE dataset = %s
    AND datapoints > 1
    AND (sqrt(datapoints*(avg_I_peak_sq - avg_I_peak*avg_I_peak) /
              (datapoints-1)) / avg_I_peak > %s

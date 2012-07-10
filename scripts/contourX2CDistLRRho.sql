@@ -5,12 +5,12 @@ select xtrsrc_id
       ,assoc_r 
       ,assoc_lr 
   from assoccatsources 
-      ,extractedsources 
+      ,extractedsource
       ,images 
       ,lsm 
  where xtrsrc_id = xtrsrcid 
    and image_id = imageid 
-   and ds_id = 1 
+   and dataset = 1
    and assoc_catsrc_id = lsmid 
    and cat_id = 3 
 order by assoc_distance_arcsec

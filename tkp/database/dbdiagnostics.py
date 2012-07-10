@@ -30,16 +30,16 @@ def scatterWenssNvssSigmaOverMuX2X(dsid,conn):
                        "      ,1000 * max(x2.i_int) as max_i_int_mJy " + \
                        "      ,sqrt(count(*) * (avg(x2.i_int * x2.i_int) - avg(x2.i_int) * avg(x2.i_int))/ (count(*)-1))/avg(x2.i_int) as sigma_over_mu " + \
                        "  FROM assocxtrsources ax2 " + \
-                       "      ,extractedsources x1 " + \
-                       "      ,extractedsources x2 " + \
+                       "      ,extractedsource x1 " + \
+                       "      ,extractedsource x2 " + \
                        "      ,images im1 " + \
                        "      ,images im2 " + \
                        " WHERE ax2.xtrsrc_id = x1.xtrsrcid " + \
                        "   AND ax2.assoc_xtrsrc_id = x2.xtrsrcid " + \
-                       "   AND x1.image_id = im1.imageid " + \
-                       "   AND x2.image_id = im2.imageid " + \
-                       "   AND im1.ds_id = im2.ds_id " + \
-                       "   AND im1.ds_id = %s " + \
+                       "   AND x1.image = im1.imageid " + \
+                       "   AND x2.image = im2.imageid " + \
+                       "   AND im1.dataset = im2.dataset " + \
+                       "   AND im1.dataset = %s " + \
                        "   AND im1.band = 14 " + \
                        "   AND im1.band = im2.band " + \
                        "GROUP BY ax2.xtrsrc_id " + \
@@ -103,12 +103,12 @@ def plotWenssNvssSpIdxFig7(dsid,catid,conn):
         cursor.execute("select log10(x1.i_int / c1.i_int_avg) / log10(c1.freq_eff / im1.freq_eff) " + \
                        "  from assoccatsources ac1 " + \
                        "      ,catalogedsources c1 " + \
-                       "      ,extractedsources x1 " + \
+                       "      ,extractedsource x1 " + \
                        "      ,images im1 " + \
                        " where assoc_catsrc_id = catsrcid " + \
                        "   and xtrsrc_id = xtrsrcid " + \
                        "   and image_id = imageid " + \
-                       "   and ds_id = %s " + \
+                       "   and dataset = %s " + \
                        "   and cat_id = %s " + \
                        "   and assoc_lr > 3 ", (dsid,catid)) 
         """
@@ -119,12 +119,12 @@ def plotWenssNvssSpIdxFig7(dsid,catid,conn):
                        "              ,cast(1 + floor(20 * log10(x1.i_int / c1.i_int_avg) / log10(c1.freq_eff / im1.freq_eff)) as integer) as sp_index_bin_nr " + \
                        "          from assoccatsources ac1 " + \
                        "              ,catalogedsources c1 " + \
-                       "              ,extractedsources x1 " + \
+                       "              ,extractedsource x1 " + \
                        "              ,images im1 " + \
                        "         where assoc_catsrc_id = catsrcid " + \
                        "           and xtrsrc_id = xtrsrcid " + \
                        "           and image_id = imageid " + \
-                       "           and ds_id = %s " + \
+                       "           and dataset = %s " + \
                        "           and cat_id = %s " + \
                        "           and assoc_lr > 3 " + \
                        "        group by sp_index_bin_nr " + \
@@ -166,7 +166,7 @@ def plotWenssNvssSpIdxFig7(dsid,catid,conn):
 def plotWenssNvssFig6(dsid,catid,conn):
     """
     The input arguments are actually dummies because we know
-    the SF are in ds_id = 2, and the BG ds_id between 3 and 10.
+    the SF are in dataset = 2, and the BG dataset between 3 and 10.
     This makes a reliability plot for the WENSS-NVSS assocs
     """
     try:
@@ -191,12 +191,12 @@ def plotWenssNvssFig6(dsid,catid,conn):
                        "                              ,ac1.assoc_catsrc_id as assoc_catsrc_id " + \
                        "                              ,ac1.assoc_lr as assoc_lr " + \
                        "                          from assoccatsources ac1 " + \
-                       "                              ,extractedsources x1 " + \
+                       "                              ,extractedsource x1 " + \
                        "                              ,images im1 " + \
                        "                              ,catalogedsources c1 " + \
                        "                         where ac1.xtrsrc_id = x1.xtrsrcid " + \
-                       "                           and x1.image_id = im1.imageid " + \
-                       "                           and im1.ds_id = %s " + \
+                       "                           and x1.image = im1.imageid " + \
+                       "                           and im1.dataset = %s " + \
                        "                           and ac1.assoc_catsrc_id = c1.catsrcid " + \
                        "                           and c1.cat_id = %s " + \
                        "                           and ac1.assoc_lr > -300 " + \
@@ -277,12 +277,12 @@ def plotWenssNvssFig5(dsid,dsid_min,dsid_max,catid,conn):
                        "          FROM (SELECT COUNT(*) AS npairs " + \
                        "                      ,CAST(1 + floor(2 * assoc_lr) AS INTEGER) AS bin_lr_nr " + \
                        "                  FROM assoccatsources " + \
-                       "                      ,extractedsources " + \
+                       "                      ,extractedsource " + \
                        "                      ,images " + \
                        "                      ,lsm " + \
                        "                  WHERE xtrsrc_id = xtrsrcid " + \
                        "                    AND image_id = imageid " + \
-                       "                    AND ds_id = %s " + \
+                       "                    AND dataset = %s " + \
                        "                    AND assoc_catsrc_id = lsmid " + \
                        "                    AND cat_id = %s " + \
                        "                    AND assoc_lr > -100 " + \
@@ -300,13 +300,13 @@ def plotWenssNvssFig5(dsid,dsid_min,dsid_max,catid,conn):
                        "          FROM (SELECT COUNT(*) AS npairs " + \
                        "                      ,CAST(1 + floor(2 * assoc_lr) AS INTEGER) AS bin_lr_nr " + \
                        "                  FROM assoccatsources " + \
-                       "                      ,extractedsources " + \
+                       "                      ,extractedsource " + \
                        "                      ,images " + \
                        "                      ,lsm " + \
                        "                  WHERE xtrsrc_id = xtrsrcid " + \
                        "                    AND image_id = imageid " + \
-                       "                    AND ds_id >= %s " + \
-                       "                    AND ds_id <= %s " + \
+                       "                    AND dataset >= %s " + \
+                       "                    AND dataset <= %s " + \
                        "                    AND assoc_catsrc_id = lsmid " + \
                        "                    AND cat_id = %s " + \
                        "                    AND assoc_lr > -100 " + \
@@ -480,12 +480,12 @@ def plotWenssNvssDistDistrib(dsid,dsid_min,dsid_max,catid,conn):
                        "                      ,AVG(assoc_distance_arcsec) AS avg_dist_arcsec " + \
                        "                      ,CAST(1 + floor(10 * assoc_distance_arcsec) AS INTEGER) AS bin_dist_nr " + \
                        "                  FROM assoccatsources " + \
-                       "                      ,extractedsources " + \
+                       "                      ,extractedsource " + \
                        "                      ,images " + \
                        "                      ,lsm " + \
                        "                  WHERE xtrsrc_id = xtrsrcid " + \
                        "                    AND image_id = imageid " + \
-                       "                    AND ds_id = %s " + \
+                       "                    AND dataset = %s " + \
                        "                    AND assoc_catsrc_id = lsmid " + \
                        "                    AND cat_id = %s " + \
                        "                GROUP BY bin_dist_nr " + \
@@ -504,13 +504,13 @@ def plotWenssNvssDistDistrib(dsid,dsid_min,dsid_max,catid,conn):
                        "                      ,AVG(assoc_distance_arcsec) AS avg_dist_arcsec " + \
                        "                      ,CAST(1 + floor(10 * assoc_distance_arcsec) AS INTEGER) AS bin_dist_nr " + \
                        "                  FROM assoccatsources " + \
-                       "                      ,extractedsources " + \
+                       "                      ,extractedsource " + \
                        "                      ,images " + \
                        "                      ,lsm " + \
                        "                  WHERE xtrsrc_id = xtrsrcid " + \
                        "                    AND image_id = imageid " + \
-                       "                    AND ds_id >= %s " + \
-                       "                    AND ds_id <= %s " + \
+                       "                    AND dataset >= %s " + \
+                       "                    AND dataset <= %s " + \
                        "                    AND assoc_catsrc_id = lsmid " + \
                        "                    AND cat_id = %s " + \
                        "                GROUP BY bin_dist_nr " + \
@@ -626,12 +626,12 @@ def plotWenssNvssFig4(dsid,dsid_min,dsid_max,catid,conn):
                        "                      ,AVG(assoc_lr) AS avg_loglr " + \
                        "                      ,CAST(1 + floor(40 * assoc_r) AS INTEGER) AS bin_r_nr " + \
                        "                  FROM assoccatsources " + \
-                       "                      ,extractedsources " + \
+                       "                      ,extractedsource " + \
                        "                      ,images " + \
                        "                      ,lsm " + \
                        "                  WHERE xtrsrc_id = xtrsrcid " + \
                        "                    AND image_id = imageid " + \
-                       "                    AND ds_id = %s " + \
+                       "                    AND dataset = %s " + \
                        "                    AND assoc_catsrc_id = lsmid " + \
                        "                    AND cat_id = %s " + \
                        "                    AND assoc_lr > -100 " + \
@@ -651,13 +651,13 @@ def plotWenssNvssFig4(dsid,dsid_min,dsid_max,catid,conn):
                        "                      ,AVG(assoc_lr) AS avg_loglr " + \
                        "                      ,CAST(1 + floor(40 * assoc_r) AS INTEGER) AS bin_r_nr " + \
                        "                  FROM assoccatsources " + \
-                       "                      ,extractedsources " + \
+                       "                      ,extractedsource " + \
                        "                      ,images " + \
                        "                      ,lsm " + \
                        "                  WHERE xtrsrc_id = xtrsrcid " + \
                        "                    AND image_id = imageid " + \
-                       "                    AND ds_id >= %s " + \
-                       "                    AND ds_id <= %s " + \
+                       "                    AND dataset >= %s " + \
+                       "                    AND dataset <= %s " + \
                        "                    AND assoc_catsrc_id = lsmid " + \
                        "                    AND cat_id = %s " + \
                        "                    AND assoc_lr > -100 " + \
@@ -763,12 +763,12 @@ def plotWenssNvssFig3(dsid,dsid_min,dsid_max,catid,conn):
                        "          FROM (SELECT COUNT(*) AS npairs " + \
                        "                      ,CAST(1 + floor(2 * assoc_lr) AS INTEGER) AS bin_lr_nr " + \
                        "                  FROM assoccatsources " + \
-                       "                      ,extractedsources " + \
+                       "                      ,extractedsource " + \
                        "                      ,images " + \
                        "                      ,lsm " + \
                        "                  WHERE xtrsrc_id = xtrsrcid " + \
                        "                    AND image_id = imageid " + \
-                       "                    AND ds_id = %s " + \
+                       "                    AND dataset = %s " + \
                        "                    AND assoc_catsrc_id = lsmid " + \
                        "                    AND cat_id = %s " + \
                        "                    AND assoc_lr > -100 " + \
@@ -786,13 +786,13 @@ def plotWenssNvssFig3(dsid,dsid_min,dsid_max,catid,conn):
                        "          FROM (SELECT COUNT(*) AS npairs " + \
                        "                      ,CAST(1 + floor(2 * assoc_lr) AS INTEGER) AS bin_lr_nr " + \
                        "                  FROM assoccatsources " + \
-                       "                      ,extractedsources " + \
+                       "                      ,extractedsource " + \
                        "                      ,images " + \
                        "                      ,lsm " + \
                        "                  WHERE xtrsrc_id = xtrsrcid " + \
                        "                    AND image_id = imageid " + \
-                       "                    AND ds_id >= %s " + \
-                       "                    AND ds_id <= %s " + \
+                       "                    AND dataset >= %s " + \
+                       "                    AND dataset <= %s " + \
                        "                    AND assoc_catsrc_id = lsmid " + \
                        "                    AND cat_id = %s " + \
                        "                    AND assoc_lr > -100 " + \
@@ -883,12 +883,12 @@ def plotWenssNvssFig2(dsid,dsid_min,dsid_max,catid,conn):
                        "                      ,MAX(assoc_lr) AS max_loglr " + \
                        "                      ,CAST(1 + floor(40 * assoc_r) AS INTEGER) AS bin_r_nr " + \
                        "                  FROM assoccatsources " + \
-                       "                      ,extractedsources " + \
+                       "                      ,extractedsource " + \
                        "                      ,images " + \
                        "                      ,lsm " + \
                        "                  WHERE xtrsrc_id = xtrsrcid " + \
                        "                    AND image_id = imageid " + \
-                       "                    AND ds_id = %s " + \
+                       "                    AND dataset = %s " + \
                        "                    AND assoc_catsrc_id = lsmid " + \
                        "                    AND cat_id = %s " + \
                        #"                    AND assoc_lr > -100 " + \
@@ -913,13 +913,13 @@ def plotWenssNvssFig2(dsid,dsid_min,dsid_max,catid,conn):
                        "                      ,MAX(assoc_lr) AS max_loglr " + \
                        "                      ,CAST(1 + floor(40 * assoc_r) AS INTEGER) AS bin_r_nr " + \
                        "                  FROM assoccatsources " + \
-                       "                      ,extractedsources " + \
+                       "                      ,extractedsource " + \
                        "                      ,images " + \
                        "                      ,lsm " + \
                        "                  WHERE xtrsrc_id = xtrsrcid " + \
                        "                    AND image_id = imageid " + \
-                       "                    AND ds_id >= %s " + \
-                       "                    AND ds_id <= %s " + \
+                       "                    AND dataset >= %s " + \
+                       "                    AND dataset <= %s " + \
                        "                    AND assoc_catsrc_id = lsmid " + \
                        "                    AND cat_id = %s " + \
                        #"                    AND assoc_lr > -100 " + \
@@ -1028,13 +1028,13 @@ def scatterSourceAssocIndexX2CBackGround(dsid_min,dsid_max,catid,conn):
                        "              ,cast(1 + floor(100 * assoc_r) as integer) as bin_r_nr " + \
                        "              ,avg(assoc_distance_arcsec) as avg_dist " + \
                        "          from assoccatsources " + \
-                       "              ,extractedsources " + \
+                       "              ,extractedsource " + \
                        "              ,images " + \
                        "              ,lsm " + \
                        "         where xtrsrc_id = xtrsrcid " + \
                        "           and image_id = imageid " + \
-                       "           and ds_id >= %s " + \
-                       "           and ds_id <= %s " + \
+                       "           and dataset >= %s " + \
+                       "           and dataset <= %s " + \
                        "           and assoc_catsrc_id = lsmid " + \
                        "           and cat_id = %s " + \
                        "           and assoc_lr > -20 " + \
@@ -1127,12 +1127,12 @@ def scatterSourceAssocIndexX2C(dsid,catid,conn):
                        "              ,cast(1 + floor(100 * assoc_r) as integer) as bin_r_nr " + \
                        "              ,avg(assoc_distance_arcsec) as avg_dist " + \
                        "          from assoccatsources " + \
-                       "              ,extractedsources " + \
+                       "              ,extractedsource " + \
                        "              ,images " + \
                        "              ,lsm " + \
                        "         where xtrsrc_id = xtrsrcid " + \
                        "           and image_id = imageid " + \
-                       "           and ds_id = %s " + \
+                       "           and dataset = %s " + \
                        "           and assoc_catsrc_id = lsmid " + \
                        "           and cat_id = %s " + \
                        "           and assoc_lr > -20 " + \
@@ -1223,12 +1223,12 @@ def scatterSourceAssocIndexX2X(dsid,conn):
                        "              ,cast(1 + floor(100 * assoc_r) as integer) as bin_r_nr " + \
                        "              ,avg(assoc_distance_arcsec) as avg_dist " + \
                        "          from assocxtrsources " + \
-                       "              ,extractedsources " + \
+                       "              ,extractedsource " + \
                        "              ,images " + \
                        "         where xtrsrc_id = xtrsrcid " + \
                        "           and image_id = imageid " + \
                        "           and xtrsrc_id <> assoc_xtrsrc_id " + \
-                       "           and ds_id = %s " + \
+                       "           and dataset = %s " + \
                        "        group by bin_r_nr " + \
                        "       ) t " + \
                        "order by bin_r ", (dsid,))
@@ -1303,12 +1303,12 @@ def contourX2CDistLRRho(conn,dsid, catid):
                        "      ,assoc_r " + \
                        "      ,assoc_lr " + \
                        "  from assoccatsources " + \
-                       "      ,extractedsources " + \
+                       "      ,extractedsource " + \
                        "      ,images " + \
                        "      ,lsm " + \
                        " where xtrsrc_id = xtrsrcid " + \
                        "   and image_id = imageid " + \
-                       "   and ds_id = %s " + \
+                       "   and dataset = %s " + \
                        "   and assoc_catsrc_id = lsmid " + \
                        "   and cat_id = %s " + \
                        "order by assoc_distance_arcsec ", (dsid,catid))
@@ -1399,12 +1399,12 @@ def contourX2XDistLRRho(conn,dsid):
                        "      ,assoc_r " + \
                        "      ,assoc_lr " + \
                        "  from assocxtrsources " + \
-                       "      ,extractedsources " + \
+                       "      ,extractedsource " + \
                        "      ,images " + \
                        " where xtrsrc_id = xtrsrcid " + \
                        "   and image_id = imageid " + \
                        "   and xtrsrc_id <> assoc_xtrsrc_id " + \
-                       "   and ds_id = %s " + \
+                       "   and dataset = %s " + \
                        "order by assoc_distance_arcsec ", (dsid,))
         y = cursor.fetchall()
         cursor.close()
@@ -1501,13 +1501,13 @@ def plotLightCurveLevelVar_v1(conn,dsid,level=None):
                        "                   / (count(*)-1)) " + \
                        "               / avg(x2.i_int) as v1 " + \
                        "          FROM assocxtrsources ax2 " + \
-                       "              ,extractedsources x1 " + \
-                       "              ,extractedsources x2 " + \
+                       "              ,extractedsource x1 " + \
+                       "              ,extractedsource x2 " + \
                        "              ,images im1 " + \
                        "         WHERE ax2.xtrsrc_id = x1.xtrsrcid " + \
                        "           AND ax2.assoc_xtrsrc_id = x2.xtrsrcid " + \
-                       "           AND x1.image_id = im1.imageid " + \
-                       "           AND im1.ds_id = %s " + \
+                       "           AND x1.image = im1.imageid " + \
+                       "           AND im1.dataset = %s " + \
                        "        GROUP BY ax2.xtrsrc_id " + \
                        "       ) t " + \
                        " WHERE t.v1 >= %s ", (dsid, level))
@@ -1546,26 +1546,26 @@ def plotLightCurveMaxVar_v1(dsid,conn):
                        "  FROM (SELECT ax2.xtrsrc_id " + \
                        "              ,sqrt(count(*) * (avg(x2.i_int * x2.i_int) - avg(x2.i_int) * avg(x2.i_int))/ (count(*)-1)) /avg(x2.i_int) as sigma_over_mu " + \
                        "          FROM assocxtrsources ax2 " + \
-                       "              ,extractedsources x1 " + \
-                       "              ,extractedsources x2 " + \
+                       "              ,extractedsource x1 " + \
+                       "              ,extractedsource x2 " + \
                        "              ,images im1 " + \
                        "         WHERE ax2.xtrsrc_id = x1.xtrsrcid " + \
                        "           AND ax2.assoc_xtrsrc_id = x2.xtrsrcid " + \
-                       "           AND x1.image_id = im1.imageid " + \
-                       "           AND im1.ds_id = %s " + \
+                       "           AND x1.image = im1.imageid " + \
+                       "           AND im1.dataset = %s " + \
                        "        GROUP BY ax2.xtrsrc_id " + \
                        "        HAVING COUNT(*) > 1 " + \
                        "       ) t " + \
                        " WHERE t.sigma_over_mu = (SELECT MAX(t0.sigma_over_mu) " + \
                        "                            FROM (SELECT sqrt(count(*) * (avg(x2.i_int * x2.i_int) - avg(x2.i_int) * avg(x2.i_int)) / (count(*) - 1)) / avg(x2.i_int) AS sigma_over_mu " + \
                        "                                    FROM assocxtrsources ax2 " + \
-                       "                                        ,extractedsources x1 " + \
-                       "                                        ,extractedsources x2 " + \
+                       "                                        ,extractedsource x1 " + \
+                       "                                        ,extractedsource x2 " + \
                        "                                        ,images im1 " + \
                        "                                   WHERE ax2.xtrsrc_id = x1.xtrsrcid " + \
                        "                                     AND ax2.assoc_xtrsrc_id = x2.xtrsrcid " + \
-                       "                                     AND x1.image_id = im1.imageid " + \
-                       "                                     AND im1.ds_id = %s " + \
+                       "                                     AND x1.image = im1.imageid " + \
+                       "                                     AND im1.dataset = %s " + \
                        "                                  GROUP BY ax2.xtrsrc_id " + \
                        "                                  HAVING COUNT(*) > 1 " + \
                        "                                 ) t0 " + \
@@ -1607,13 +1607,13 @@ def plotLightCurveMaxVar_v2(dsid,conn):
                        "               - 2 * avg(x2.i_int / (x2.i_int_err * x2.i_int_err)) * avg(x2.i_int) " + \
                        "               + avg(1 / (x2.i_int_err * x2.i_int_err)) * avg(x2.i_int) * avg(x2.i_int) as var_v2 " + \
                        "          FROM assocxtrsources ax2 " + \
-                       "              ,extractedsources x1 " + \
-                       "              ,extractedsources x2 " + \
+                       "              ,extractedsource x1 " + \
+                       "              ,extractedsource x2 " + \
                        "              ,images im1 " + \
                        "         WHERE ax2.xtrsrc_id = x1.xtrsrcid " + \
                        "           AND ax2.assoc_xtrsrc_id = x2.xtrsrcid " + \
-                       "           AND x1.image_id = im1.imageid " + \
-                       "           AND im1.ds_id = %s " + \
+                       "           AND x1.image = im1.imageid " + \
+                       "           AND im1.dataset = %s " + \
                        "        GROUP BY ax2.xtrsrc_id " + \
                        "        HAVING COUNT(*) > 1 " + \
                        "       ) t " + \
@@ -1622,13 +1622,13 @@ def plotLightCurveMaxVar_v2(dsid,conn):
                        "                                  - 2 * avg(x2.i_int / (x2.i_int_err * x2.i_int_err)) * avg(x2.i_int) " + \
                        "                                  + avg(1 / (x2.i_int_err * x2.i_int_err)) * avg(x2.i_int) * avg(x2.i_int) as var_v2 " + \
                        "                             FROM assocxtrsources ax2 " + \
-                       "                                 ,extractedsources x1 " + \
-                       "                                 ,extractedsources x2 " + \
+                       "                                 ,extractedsource x1 " + \
+                       "                                 ,extractedsource x2 " + \
                        "                                 ,images im1 " + \
                        "                            WHERE ax2.xtrsrc_id = x1.xtrsrcid " + \
                        "                              AND ax2.assoc_xtrsrc_id = x2.xtrsrcid " + \
-                       "                              AND x1.image_id = im1.imageid " + \
-                       "                              AND im1.ds_id = %s " + \
+                       "                              AND x1.image = im1.imageid " + \
+                       "                              AND im1.dataset = %s " + \
                        "                           GROUP BY ax2.xtrsrc_id " + \
                        "                           HAVING COUNT(*) > 1 " + \
                        "                          ) t0 " + \
@@ -1679,13 +1679,13 @@ def scatterVar_v1_v2_X2X(dsid,conn):
                        "       - 2 * avg(x2.i_int) * avg(x2.i_int / (x2.i_int_err * x2.i_int_err)) " + \
                        "       + avg(x2.i_int) * avg(x2.i_int) * avg(1 / (x2.i_int_err * x2.i_int_err)) as chi2 " + \
                        "  FROM assocxtrsources ax2 " + \
-                       "      ,extractedsources x1 " + \
-                       "      ,extractedsources x2 " + \
+                       "      ,extractedsource x1 " + \
+                       "      ,extractedsource x2 " + \
                        "      ,images im1 " + \
                        " WHERE ax2.xtrsrc_id = x1.xtrsrcid " + \
                        "   AND ax2.assoc_xtrsrc_id = x2.xtrsrcid " + \
-                       "   AND x1.image_id = im1.imageid " + \
-                       "   AND im1.ds_id = %s " + \
+                       "   AND x1.image = im1.imageid " + \
+                       "   AND im1.dataset = %s " + \
                        "GROUP BY ax2.xtrsrc_id " + \
                        "HAVING COUNT(*) > 1 " + \
                        "ORDER BY datapoints " + \
@@ -1765,7 +1765,7 @@ def scatterVar_v1_v2_X2X(dsid,conn):
 def plotSigmaMuAssocs2XtrByDsid(dsid,cnt,conn):
     """
     This method makes two plots.
-    Q1: A plot of the number of extractedsources per image
+    Q1: A plot of the number of extractedsource per image
     Q2: A histogram of the number of associations
     that could be made per extractedsource throughout all the 
     processed images.
@@ -1779,13 +1779,13 @@ def plotSigmaMuAssocs2XtrByDsid(dsid,cnt,conn):
                        "      ,1000 * max(x2.i_int) as max_i_int_mJy " + \
                        "      ,sqrt(count(*) * (avg(x2.i_int * x2.i_int) - avg(x2.i_int) * avg(x2.i_int))/ (count(*)-1))/avg(x2.i_int) as sigma_over_mu " + \
                        "  FROM assocxtrsources ax2 " + \
-                       "      ,extractedsources x1 " + \
-                       "      ,extractedsources x2 " + \
+                       "      ,extractedsource x1 " + \
+                       "      ,extractedsource x2 " + \
                        "      ,images im1 " + \
                        " WHERE ax2.xtrsrc_id = x1.xtrsrcid " + \
                        "   AND ax2.assoc_xtrsrc_id = x2.xtrsrcid " + \
-                       "   AND x1.image_id = im1.imageid " + \
-                       "   AND im1.ds_id = %s " + \
+                       "   AND x1.image = im1.imageid " + \
+                       "   AND im1.dataset = %s " + \
                        "GROUP BY ax2.xtrsrc_id " + \
                        "HAVING COUNT(*) = %s " + \
                        "ORDER BY datapoints " + \
@@ -1866,10 +1866,10 @@ def plotSourcesPerImage(dsid,conn):
         cursor = conn.cursor()
         cursor.execute("select image_id " + \
                        "      ,count(*) " + \
-                       "  from extractedsources " + \
+                       "  from extractedsource " + \
                        "      ,images " + \
                        " where image_id = imageid " + \
-                       "   and ds_id = %s " + \
+                       "   and dataset = %s " + \
                        "group by image_id " + \
                        "order by image_id ", (dsid,))
         z = cursor.fetchall()
@@ -1923,11 +1923,11 @@ def histNumberOfAssociations(dsid,conn):
                        "  FROM (SELECT xtrsrc_id " + \
                        "              ,COUNT(*) AS assoc_cnt " + \
                        "          FROM assocxtrsources " + \
-                       "              ,extractedsources " + \
+                       "              ,extractedsource " + \
                        "              ,images " + \
                        "         WHERE xtrsrc_id = xtrsrcid " + \
                        "           AND image_id = imageid " + \
-                       "           AND ds_id = %s " + \
+                       "           AND dataset = %s " + \
                        "        GROUP BY xtrsrc_id " + \
                        "       ) t " + \
                        "GROUP BY t.assoc_cnt " + \
@@ -1984,13 +1984,13 @@ def plotXtrBarLR(dsid, conn):
                        "              ,ax1.assoc_distance_arcsec " + \
                        "              ,ax1.assoc_r " + \
                        "          FROM assocxtrsources ax1 " + \
-                       "              ,extractedsources x1 " + \
+                       "              ,extractedsource x1 " + \
                        "              ,images im1 " + \
                        "         WHERE ax1.xtrsrc_id = x1.xtrsrcid " + \
                        "           AND ax1.xtrsrc_id <> ax1.assoc_xtrsrc_id " + \
                        "           AND ax1.assoc_lr >= -100.5 " + \
-                       "           AND x1.image_id = im1.imageid " + \
-                       "           AND im1.ds_id = %s " + \
+                       "           AND x1.image = im1.imageid " + \
+                       "           AND im1.dataset = %s " + \
                        "       ) t " + \
                        "GROUP BY bin_nr " + \
                        "ORDER BY bin_nr ", (dsid,))
@@ -2119,14 +2119,14 @@ def plotCatBarLR(dsid, catid,conn):
                        "              ,ac1.assoc_distance_arcsec " + \
                        "              ,ac1.assoc_r " + \
                        "          FROM assoccatsources ac1 " + \
-                       "              ,extractedsources x1 " + \
+                       "              ,extractedsource x1 " + \
                        "              ,images im1 " + \
                        "              ,lsm lsm1 " + \
                        "         WHERE ac1.xtrsrc_id = x1.xtrsrcid " + \
                        "           AND ac1.assoc_lr >= -100.5 " + \
-                       "           AND x1.image_id = im1.imageid " + \
+                       "           AND x1.image = im1.imageid " + \
                        "           AND ac1.assoc_catsrc_id = lsm1.lsmid " + \
-                       "           AND im1.ds_id = %s " + \
+                       "           AND im1.dataset = %s " + \
                        "           AND lsm1.cat_id = %s " + \
                        "       ) t " + \
                        "GROUP BY bin_nr " + \

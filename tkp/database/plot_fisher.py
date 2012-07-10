@@ -141,7 +141,7 @@ def polarplot_distr(conn):
                           ) as r
           from assocxtrsources a
               ,runningcatalog r
-              ,extractedsources x
+              ,extractedsource x
          where r.xtrsrc_id = 1
            and a.xtrsrc_id = r.xtrsrc_id
            and a.assoc_xtrsrc_id = x.xtrsrcid
@@ -210,7 +210,7 @@ def colatitude_plot(conn):
                        + sin(rad(wm_decl))*x.z as z_prime
                   from assocxtrsources a
                       ,runningcatalog r
-                      ,extractedsources x
+                      ,extractedsource x
                  where r.xtrsrc_id = a.xtrsrc_id
                    and a.assoc_xtrsrc_id = x.xtrsrcid
                    and r.xtrsrc_id = 1
@@ -351,7 +351,7 @@ def longitude_plot(conn):
                                + cos(rad(wm_ra))*x.y as y_prime
                           from assocxtrsources a
                               ,runningcatalog r
-                              ,extractedsources x
+                              ,extractedsource x
                          where r.xtrsrc_id = a.xtrsrc_id
                            and a.assoc_xtrsrc_id = x.xtrsrcid
                            and r.xtrsrc_id = 1
@@ -439,7 +439,7 @@ def two_variable_plot(conn):
                                AS z_dblprime  
                           FROM assocxtrsources a
                               ,runningcatalog r
-                              ,extractedsources x 
+                              ,extractedsource x
                          WHERE r.xtrsrc_id = a.xtrsrc_id
                            AND a.assoc_xtrsrc_id = x.xtrsrcid
                            AND r.xtrsrc_id = 1 
@@ -537,7 +537,7 @@ def fisher_distr_plot(conn):
               ,r.xtrsrc_id
           from assocxtrsources a
               ,runningcatalog r
-              ,extractedsources x
+              ,extractedsource x
          where r.xtrsrc_id = 1
            and r.xtrsrc_id = a.xtrsrc_id
            and a.assoc_xtrsrc_id = x.xtrsrcid

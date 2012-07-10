@@ -155,7 +155,7 @@ class DataBase(object):
             DataBase().execute("SELECT COUNT(*) FROM images")
 
             DataBase().execute(
-                "SELECT image_id, url FROM images WHERE ds_id = %s",
+                "SELECT image_id, url FROM images WHERE dataset = %s",
                 11)
         """
 

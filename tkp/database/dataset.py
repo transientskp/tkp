@@ -59,11 +59,11 @@ fail)::
     >>> database = tkp.database.database.DataBase()
 
     # Each object type takes a data dictionary on creation, which for newly objects
-    # has some required keys (& values). For a DataSet, this is only 'dsinname';
+    # has some required keys (& values). For a DataSet, this is only 'inname';
     # for an Image, the keys are 'freq_eff', 'freq_bw_', 'taustart_ts',
     # 'tau_time' & 'url'
     # The required values are stored in the the REQUIRED attribute
-    >>> dataset = DataSet(data={'dsinname': 'a dataset'}, database=database)
+    >>> dataset = DataSet(data={'inname': 'a dataset'}, database=database)
 
     # Here, dataset indirectly holds the database connection:
     >>> dataset.database
@@ -295,9 +295,9 @@ class DBObject(object):
 class DataSet(DBObject):
     """Class corresponding to the dataset table in the database"""
 
-    TABLE = 'datasets'
-    ID = 'dsid'
-    REQUIRED = ('dsinname',)
+    TABLE = 'dataset'
+    ID = 'id'
+    REQUIRED = ('inname',)
     
     def __init__(self, data=None, database=None, id=None):
         """If id is supplied, the data and image arguments are ignored."""
@@ -325,7 +325,7 @@ class DataSet(DBObject):
         if self._id is None:
             try:
                 self._id = dbu.insert_dataset(self.database.connection,
-                                              self._data['dsinname'])
+                                              self._data['inname'])
             except self.database.Error, e:
                 logging.warn("insertion of DataSet() into the database failed")
                 raise
@@ -337,7 +337,7 @@ class DataSet(DBObject):
         """Renew the set of images by getting the images for this
         dataset from the database"""
 
-        query = "SELECT imageid FROM images WHERE ds_id = %s"
+        query = "SELECT imageid FROM images WHERE dataset = %s"
         try:
             self.database.cursor.execute(query, (self._id,))
             results = self.database.cursor.fetchall()
@@ -363,7 +363,7 @@ class Image(DBObject):
 
     TABLE = 'images'
     ID = 'imageid'
-    REQUIRED = ('ds_id', 'tau_time', 'freq_eff', 'freq_bw', 'taustart_ts')
+    REQUIRED = ('dataset', 'tau_time', 'freq_eff', 'freq_bw', 'taustart_ts')
     
     def __init__(self, data=None, dataset=None, database=None, id=None):
         """If id is supplied, the data and image arguments are ignored."""
@@ -375,7 +375,7 @@ class Image(DBObject):
             if self.dataset.database and not self.database:
                 self.database = self.dataset.database
             self.dataset.images.add(self)
-            self._data.setdefault('ds_id', self.dataset.id)
+            self._data.setdefault('dataset', self.dataset.id)
         self.sources = set()
         if not self.database:
             raise ValueError(
@@ -423,7 +423,7 @@ class Image(DBObject):
         consuming. 
         """
 
-        query = "SELECT xtrsrcid FROM extractedsources WHERE image_id = %s"
+        query = "SELECT id FROM extractedsource WHERE image = %s"
         try:
             self.database.cursor.execute(query, (self._id,))
             results = self.database.cursor.fetchall()
@@ -479,7 +479,7 @@ class Image(DBObject):
 
     def insert_monitoring_sources(self, results):
         """Insert the list of measured monitoring sources for this image into
-        extractedsources and runningcatalog
+        extractedsource and runningcatalog
 
         Note that the insertion into runningcatalog can be done by
         xtrsrc_id from monitoringlist. In case it is negative, it is
@@ -492,11 +492,11 @@ class Image(DBObject):
         
         
 class ExtractedSource(DBObject):
-    """Class corresponding to the extractedsources table in the database"""
+    """Class corresponding to the extractedsource table in the database"""
 
-    TABLE = 'extractedsources'
-    ID = 'xtrsrcid'
-    REQUIRED = ('image_id', 'zone', 'ra', 'decl', 'ra_err', 'decl_err',
+    TABLE = 'extractedsource'
+    ID = 'id'
+    REQUIRED = ('image', 'zone', 'ra', 'decl', 'ra_err', 'decl_err',
                 'x', 'y', 'z', 'det_sigma')
 
     def __init__(self, data=None, image=None, database=None, id=None):
@@ -509,7 +509,7 @@ class ExtractedSource(DBObject):
             if self.image.dataset.database and not self.database:
                 self.database = self.image.dataset.database
             self.image.sources.add(self)
-            self._data.setdefault('image_id', self.image.id)
+            self._data.setdefault('image', self.image.id)
         if not self.database:
             raise ValueError(
                 "can't create ExtractedSource object without a DataBase() object")

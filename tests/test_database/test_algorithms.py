@@ -8,15 +8,15 @@ import logging
 logging.basicConfig(level=logging.CRITICAL)
 
 import tkp.database as tkpdb
-import tkp.tests.db_subs as db_subs
-from tkp.tests.decorators import requires_database
+from .. import db_subs
+from ..decorators import requires_database
 
 class TestSourceAssociation(unittest.TestCase):
     @requires_database()
     def setUp(self):
     
         self.database = tkpdb.DataBase()
-        self.dataset = tkpdb.DataSet(data={'dsinname':"Source assoc. test"},
+        self.dataset = tkpdb.DataSet(data={'inname':"Source assoc. test"},
                                                     database = self.database)
         
         self.im_params = db_subs.example_dbimage_datasets(n_images=8)
@@ -30,7 +30,7 @@ class TestSourceAssociation(unittest.TestCase):
             running_cat = tkpdb.utils.columns_from_table(self.database.connection,
                                            table="runningcatalog",
                                            keywords="*",
-                                           where={"ds_id":self.dataset.id})
+                                           where={"dataset":self.dataset.id})
             self.assertEqual(len(running_cat), 0)
             
 #    def test_null_case_post_insert(self):
@@ -53,7 +53,7 @@ class TestSourceAssociation(unittest.TestCase):
             running_cat = tkpdb.utils.columns_from_table(self.database.connection,
                                            table="runningcatalog",
                                            keywords=['datapoints'],
-                                           where={"ds_id":self.dataset.id})
+                                           where={"dataset":self.dataset.id})
             self.assertEqual(len(running_cat), 1)
             self.assertEqual(running_cat[0]['datapoints'], 1)
             
@@ -101,7 +101,7 @@ class TestSourceAssociation(unittest.TestCase):
             running_cat = tkpdb.utils.columns_from_table(self.database.connection,
                                            table="runningcatalog",
                                            keywords=['datapoints'],
-                                           where={"ds_id":self.dataset.id})
+                                           where={"dataset":self.dataset.id})
             self.assertEqual(len(running_cat), 1)
             self.assertEqual(running_cat[0]['datapoints'], imgs_loaded)               
             last_img.update()
@@ -136,7 +136,7 @@ class TestMonitoringlistFunctionality(unittest.TestCase):
     def setUp(self):
         import datetime
         self.database = tkpdb.DataBase()
-        self.dataset = tkpdb.DataSet(data={'dsinname':"Test Dataset"},
+        self.dataset = tkpdb.DataSet(data={'inname':"Test Dataset"},
                                                     database = self.database)
 
         self.n_images = 8                

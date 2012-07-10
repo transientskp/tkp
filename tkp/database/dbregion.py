@@ -74,7 +74,7 @@ def extractedsourcesInImage(conn, image_id, dirname, icolor='magenta'):
               ,ra_err/2
               ,decl_err/2
               ,url
-          FROM extractedsources
+          FROM extractedsource
               ,images
          WHERE imageid = %s
            AND image_id = imageid
@@ -127,7 +127,7 @@ def assoccatsourcesInImage(conn, image_id, dirname, icolor='yellow'):
               ,decl_err/2
               ,url 
           FROM assoccatsources
-              ,extractedsources 
+              ,extractedsource
               ,images 
          WHERE image_id = %s
            AND image_id = imageid 
@@ -215,7 +215,7 @@ def catsourcesInRegion(conn, image_id, ra_min, ra_max, decl_min, decl_max, dirna
 def createRegionFileFromRunCat(conn
                               ,dirname
                               ,icolor = 'green'
-                              ,ds_id = 0
+                              ,dataset = 0
                               ,datapoints = 0
                               ,logger=logging.getLogger()
                               ):
@@ -254,7 +254,7 @@ def createRegionFileFromRunCat(conn
                         ,CONCAT('R', '}')
                                ))))))))))) AS VARCHAR(300)) AS line
                     FROM runningcatalog 
-                   WHERE ds_id = %s
+                   WHERE dataset = %s
                      AND datapoints > %s
                  ) t 
             INTO %s 
@@ -264,7 +264,7 @@ def createRegionFileFromRunCat(conn
         """
         cursor = conn.cursor()
         print "cursor created"
-        cursor.execute(sql_copy_into_reg, (icolor, icolor, ds_id, datapoints, outfile))
+        cursor.execute(sql_copy_into_reg, (icolor, icolor, dataset, datapoints, outfile))
         print "executed"
         cursor.close()
         return outfile

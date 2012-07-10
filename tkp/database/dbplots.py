@@ -22,11 +22,11 @@ def plotHistAssocXtrDist(dsid, conn):
     try:
         query = "SELECT assoc_distance_arcsec " + \
                 "  FROM assocxtrsources " + \
-                "      ,extractedsources " + \
+                "      ,extractedsource " + \
                 "      ,images " + \
                 " WHERE assoc_xtrsrc_id = xtrsrcid " +\
                 "   AND image_id = imageid " +\
-                "   AND ds_id = " + str(dsid)
+                "   AND dataset = " + str(dsid)
         cursor.execute(query)
         x = cursor.fetchall()
         #print "x:",x
@@ -57,11 +57,11 @@ def plotHistAssocCatDist(dsid, conn):
                 "  FROM assoccatsources " + \
                 "      ,catalogedsources " + \
                 "      ,images " + \
-                "      ,extractedsources " + \
+                "      ,extractedsource " + \
                 " WHERE xtrsrc_id = xtrsrcid " +\
                 "   AND image_id = imageid " +\
                 "   AND assoc_catsrc_id = catsrcid " +\
-                "   AND ds_id = %d " %(dsid)
+                "   AND dataset = %d " %(dsid)
         cursor.execute(query)
         x = cursor.fetchall()
         print "x:",x
@@ -91,13 +91,13 @@ def plotBarDist(dsid, catid, conn):
                        "              ,assoc_r " + \
                        "              ,assoc_lr " + \
                        "         from assoccatsources ac1 " + \
-                       "             ,extractedsources x1 " + \
+                       "             ,extractedsource x1 " + \
                        "             ,images im1 " + \
                        "             ,obscatsources oc1 " + \
                        "        where ac1.xtrsrc_id = x1.xtrsrcid " + \
                        "         and assoc_lr >= -100 " + \
-                       "         and x1.image_id = im1.imageid " + \
-                       "         AND im1.ds_id = %s " + \
+                       "         and x1.image = im1.imageid " + \
+                       "         AND im1.dataset = %s " + \
                        "         and ac1.assoc_catsrc_id = oc1.obscatsrcid " + \
                        "         and oc1.cat_id = %s " + \
                        "       ) t " + \
@@ -178,13 +178,13 @@ def plotBarRho(dsid, catid, conn):
                        "              ,assoc_distance_arcsec " + \
                        "              ,assoc_r " + \
                        "         from assoccatsources ac1 " + \
-                       "             ,extractedsources x1 " + \
+                       "             ,extractedsource x1 " + \
                        "             ,images im1 " + \
                        "             ,obscatsources oc1 " + \
                        "        where ac1.xtrsrc_id = x1.xtrsrcid " + \
                        "         and assoc_lr >= -300 " + \
-                       "         and x1.image_id = im1.imageid " + \
-                       "         AND im1.ds_id = %s " + \
+                       "         and x1.image = im1.imageid " + \
+                       "         AND im1.dataset = %s " + \
                        "         and ac1.assoc_catsrc_id = oc1.obscatsrcid " + \
                        "         and oc1.cat_id = %s " + \
                        "       ) t " + \
@@ -309,13 +309,13 @@ def plotBarSrcBGLR(dsid, dsid_min, dsid_max, catid, conn):
                        "              ,ac1.assoc_distance_arcsec " + \
                        "              ,ac1.assoc_r " + \
                        "          FROM assoccatsources ac1 " + \
-                       "              ,extractedsources x1 " + \
+                       "              ,extractedsource x1 " + \
                        "              ,images im1 " + \
                        "              ,obscatsources oc1 " + \
                        "         WHERE ac1.xtrsrc_id = x1.xtrsrcid " + \
                        "           AND ac1.assoc_lr >= -100.5 " + \
-                       "           AND x1.image_id = im1.imageid " + \
-                       "           AND im1.ds_id BETWEEN %s " + \
+                       "           AND x1.image = im1.imageid " + \
+                       "           AND im1.dataset BETWEEN %s " + \
                        "                             AND %s " + \
                        "           AND ac1.assoc_catsrc_id = oc1.obscatsrcid " + \
                        "           AND oc1.cat_id = %s " + \
@@ -372,13 +372,13 @@ def plotBarSrcBGLR(dsid, dsid_min, dsid_max, catid, conn):
                        "              ,ac1.assoc_distance_arcsec " + \
                        "              ,ac1.assoc_r " + \
                        "          FROM assoccatsources ac1 " + \
-                       "              ,extractedsources x1 " + \
+                       "              ,extractedsource x1 " + \
                        "              ,images im1 " + \
                        "              ,obscatsources oc1 " + \
                        "         WHERE ac1.xtrsrc_id = x1.xtrsrcid " + \
                        "           AND ac1.assoc_lr >= -100.5 " + \
-                       "           AND x1.image_id = im1.imageid " + \
-                       "           AND im1.ds_id = %s " + \
+                       "           AND x1.image = im1.imageid " + \
+                       "           AND im1.dataset = %s " + \
                        "           AND ac1.assoc_catsrc_id = oc1.obscatsrcid " + \
                        "           AND oc1.cat_id = %s " + \
                        "       ) t " + \
@@ -495,13 +495,13 @@ def plotBarBGLR(dsid_min, dsid_max, catid, conn):
                        "              ,ac1.assoc_distance_arcsec " + \
                        "              ,ac1.assoc_r " + \
                        "          FROM assoccatsources ac1 " + \
-                       "              ,extractedsources x1 " + \
+                       "              ,extractedsource x1 " + \
                        "              ,images im1 " + \
                        "              ,obscatsources oc1 " + \
                        "         WHERE ac1.xtrsrc_id = x1.xtrsrcid " + \
                        "           AND ac1.assoc_lr >= -100.5 " + \
-                       "           AND x1.image_id = im1.imageid " + \
-                       "           AND im1.ds_id BETWEEN %s " + \
+                       "           AND x1.image = im1.imageid " + \
+                       "           AND im1.dataset BETWEEN %s " + \
                        "                             AND %s " + \
                        "           AND ac1.assoc_catsrc_id = oc1.obscatsrcid " + \
                        "           AND oc1.cat_id = %s " + \
@@ -675,13 +675,13 @@ def plotBarLR(dsid, catid, conn):
                        "              ,ac1.assoc_distance_arcsec " + \
                        "              ,ac1.assoc_r " + \
                        "          FROM assoccatsources ac1 " + \
-                       "              ,extractedsources x1 " + \
+                       "              ,extractedsource x1 " + \
                        "              ,images im1 " + \
                        "              ,obscatsources oc1 " + \
                        "         WHERE ac1.xtrsrc_id = x1.xtrsrcid " + \
                        "           AND ac1.assoc_lr >= -100.5 " + \
-                       "           AND x1.image_id = im1.imageid " + \
-                       "           AND im1.ds_id = %s " + \
+                       "           AND x1.image = im1.imageid " + \
+                       "           AND im1.dataset = %s " + \
                        "           AND ac1.assoc_catsrc_id = oc1.obscatsrcid " + \
                        "           AND oc1.cat_id = %s " + \
                        "       ) t " + \
@@ -859,7 +859,7 @@ def plotLightCurveByXSource(xtrsrcid, conn):
                        "      ,i_int " + \
                        "      ,i_int_err  " + \
                        "  FROM assocxtrsources " + \
-                       "      ,extractedsources  " + \
+                       "      ,extractedsource  " + \
                        "      ,images            " + \
                        " WHERE xtrsrcid = assoc_xtrsrc_id " + \
                        "   AND imageid = image_id         " + \
@@ -887,7 +887,7 @@ def plotLightCurveByXSource(xtrsrcid, conn):
                        "      ,SQRT(1 / SUM(1 / (x1.i_peak_err * x1.i_peak_err))) " + \
                        "      ,SQRT(1 / SUM(1 / (x1.i_int_err * x1.i_int_err))) " + \
                        "  FROM assocxtrsources " + \
-                       "      ,extractedsources x1 " + \
+                       "      ,extractedsource x1 " + \
                        "      ,images            " + \
                        " WHERE xtrsrcid = assoc_xtrsrc_id " + \
                        "   AND imageid = image_id         " + \
@@ -914,7 +914,7 @@ def plotLightCurveByXSource(xtrsrcid, conn):
                        #"      ,STD(x1.i_int) " + \
                        "      ,SQRT(AVG(x1.i_int * x1.i_int) - AVG(x1.i_int) * AVG(x1.i_int)) " + \
                        "  FROM assocxtrsources " + \
-                       "      ,extractedsources x1 " + \
+                       "      ,extractedsource x1 " + \
                        "      ,images            " + \
                        " WHERE xtrsrcid = assoc_xtrsrc_id " + \
                        "   AND imageid = image_id         " + \
@@ -1001,11 +1001,11 @@ def plotAssocCloudByXSource(xtrsrcid, conn, outputdir):
                        "         WHERE assoc_xtrsrc_id = %s " + \
                        "       ) t " + \
                        "      ,assocxtrsources ax1 " + \
-                       "      ,extractedsources x1 " + \
+                       "      ,extractedsource x1 " + \
                        "      ,images im1 " + \
                        " WHERE ax1.xtrsrc_id = t.xtrsrc_id " + \
                        "   AND ax1.assoc_xtrsrc_id = x1.xtrsrcid " + \
-                       "   AND x1.image_id = im1.imageid ", (xtrsrcid,))
+                       "   AND x1.image = im1.imageid ", (xtrsrcid,))
         y = cursor.fetchall()
         ra = []
         decl = []
@@ -1031,11 +1031,11 @@ def plotAssocCloudByXSource(xtrsrcid, conn, outputdir):
                        "         WHERE assoc_xtrsrc_id = %s " + \
                        "       ) t " + \
                        "      ,assocxtrsources ax1 " + \
-                       "      ,extractedsources x1 " + \
+                       "      ,extractedsource x1 " + \
                        "      ,images im1 " + \
                        " WHERE ax1.xtrsrc_id = t.xtrsrc_id " + \
                        "   AND ax1.assoc_xtrsrc_id = x1.xtrsrcid " + \
-                       "   AND x1.image_id = im1.imageid ", (xtrsrcid,))
+                       "   AND x1.image = im1.imageid ", (xtrsrcid,))
         avg_y = cursor.fetchall()
         avg_ra = []
         avg_decl = []
@@ -1058,11 +1058,11 @@ def plotAssocCloudByXSource(xtrsrcid, conn, outputdir):
                        "         WHERE assoc_xtrsrc_id = %s " + \
                        "       ) t " + \
                        "      ,assocxtrsources ax1 " + \
-                       "      ,extractedsources x1 " + \
+                       "      ,extractedsource x1 " + \
                        "      ,images im1 " + \
                        " WHERE ax1.xtrsrc_id = t.xtrsrc_id " + \
                        "   AND ax1.assoc_xtrsrc_id = x1.xtrsrcid " + \
-                       "   AND x1.image_id = im1.imageid ", (xtrsrcid,))
+                       "   AND x1.image = im1.imageid ", (xtrsrcid,))
         avg2_y = cursor.fetchall()
         avg2_ra = []
         avg2_decl = []
@@ -1124,7 +1124,7 @@ def plotHistSpIndices(conn):
     try:
         cursor = conn.cursor()
 
-        query="select t.cat_id,t.sp_indx from (select xtrsrc_id,assoc_catsrc_id,cat_id,log10(i_int_avg/i_int)/log10(351100000/freq_eff) as sp_indx from assoccatsources,catalogedsources,extractedsources where xtrsrc_id = xtrsrcid and assoc_catsrc_id = catsrcid and assoc_lr > -10) t order by t.cat_id,t.sp_indx "
+        query="select t.cat_id,t.sp_indx from (select xtrsrc_id,assoc_catsrc_id,cat_id,log10(i_int_avg/i_int)/log10(351100000/freq_eff) as sp_indx from assoccatsources,catalogedsources,extractedsource where xtrsrc_id = xtrsrcid and assoc_catsrc_id = catsrcid and assoc_lr > -10) t order by t.cat_id,t.sp_indx "
 
         cursor.execute(query)
         y = cursor.fetchall()
@@ -1175,7 +1175,7 @@ def plotLightCurveSecByXSource(xtrsrcid, conn):
     try:
         cursor = conn.cursor()
         cursor.execute("SELECT ax1.assoc_xtrsrc_id " + \
-                       "      ,x1.image_id " + \
+                       "      ,x1.image " + \
                        "      ,CAST(im1.taustart_ts AS TIMESTAMP) " + \
                        "      ,CAST(\'2002-09-30\' AS TIMESTAMP) " + \
                        "      ,x1.ra " + \
@@ -1191,11 +1191,11 @@ def plotLightCurveSecByXSource(xtrsrcid, conn):
                        "         WHERE assoc_xtrsrc_id = %s " + \
                        "       ) t " + \
                        "      ,assocxtrsources ax1 " + \
-                       "      ,extractedsources x1 " + \
+                       "      ,extractedsource x1 " + \
                        "      ,images im1 " + \
                        " WHERE ax1.xtrsrc_id = t.xtrsrc_id " + \
                        "   AND ax1.assoc_xtrsrc_id = x1.xtrsrcid " + \
-                       "   AND x1.image_id = im1.imageid ", (xtrsrcid,))
+                       "   AND x1.image = im1.imageid ", (xtrsrcid,))
         y = cursor.fetchall()
         days=[]
         fluxpeak=[]
@@ -1228,11 +1228,11 @@ def plotLightCurveSecByXSource(xtrsrcid, conn):
                        "         WHERE assoc_xtrsrc_id = %s " + \
                        "       ) t " + \
                        "      ,assocxtrsources ax1 " + \
-                       "      ,extractedsources x1 " + \
+                       "      ,extractedsource x1 " + \
                        "      ,images im1 " + \
                        " WHERE ax1.xtrsrc_id = t.xtrsrc_id " + \
                        "   AND ax1.assoc_xtrsrc_id = x1.xtrsrcid " + \
-                       "   AND x1.image_id = im1.imageid ", (xtrsrcid,))
+                       "   AND x1.image = im1.imageid ", (xtrsrcid,))
         avg_y = cursor.fetchall()
         avg_fluxpeak=[]
         avg_fluxpeakerr=[]
@@ -1258,11 +1258,11 @@ def plotLightCurveSecByXSource(xtrsrcid, conn):
                        "         WHERE assoc_xtrsrc_id = %s " + \
                        "       ) t " + \
                        "      ,assocxtrsources ax1 " + \
-                       "      ,extractedsources x1 " + \
+                       "      ,extractedsource x1 " + \
                        "      ,images im1 " + \
                        " WHERE ax1.xtrsrc_id = t.xtrsrc_id " + \
                        "   AND ax1.assoc_xtrsrc_id = x1.xtrsrcid " + \
-                       "   AND x1.image_id = im1.imageid ", (xtrsrcid,))
+                       "   AND x1.image = im1.imageid ", (xtrsrcid,))
         avg2_y = cursor.fetchall()
         avg2_fluxpeak=[]
         avg2_fluxpeakerr=[]
@@ -1353,22 +1353,22 @@ def plotGRB030329LightCurveSecByXSource(xtrsrcid, dsid, conn,title=None):
                        "      ,1000 * x2.i_int " + \
                        "      ,1000 * x2.i_int_err " + \
                        "  from assocxtrsources ax1 " + \
-                       "      ,extractedsources x1 " + \
-                       "      ,extractedsources x2 " + \
+                       "      ,extractedsource x1 " + \
+                       "      ,extractedsource x2 " + \
                        "      ,images im1 " + \
                        "      ,images im2 " + \
                        "      ,catalogedsources c1 " + \
                        " where ax1.xtrsrc_id = x1.xtrsrcid " + \
-                       "   and x1.image_id = im1.imageid " + \
+                       "   and x1.image = im1.imageid " + \
                        "   AND ax1.assoc_xtrsrc_id = x2.xtrsrcid " + \
-                       "   and x2.image_id = im2.imageid " + \
+                       "   and x2.image = im2.imageid " + \
                        "   AND ax1.assoc_lr > -10 " + \
                        "   AND im1.band <> 17 " + \
                        "   AND im2.band <> 17 " + \
                        "   and c1.catsrcid = 2071216 " + \
                        #"   AND c1.x * x1.x + c1.y * x1.y + c1.z * x1.z > COS(RADIANS(0.05)) " + \
                        "   and ax1.xtrsrc_id = %s " + \
-                       "   and im1.ds_id = %s " + \
+                       "   and im1.dataset = %s " + \
                        "order by ax1.xtrsrc_id " + \
                        "        ,im2.band " + \
                        "        ,im2.taustart_ts ", (xtrsrcid,dsid))
@@ -1449,12 +1449,12 @@ def plotGRB030329LightCurveSecByXSource(xtrsrcid, dsid, conn,title=None):
                        "         WHERE assoc_xtrsrc_id = %s " + \
                        "       ) t " + \
                        "      ,assocxtrsources ax1 " + \
-                       "      ,extractedsources x1 " + \
+                       "      ,extractedsource x1 " + \
                        "      ,images im1 " + \
                        " WHERE ax1.xtrsrc_id = t.xtrsrc_id " + \
                        "   AND ax1.assoc_xtrsrc_id = x1.xtrsrcid " + \
                        "   AND im1.band = 14 " + \
-                       "   AND x1.image_id = im1.imageid ", (xtrsrcid,))
+                       "   AND x1.image = im1.imageid ", (xtrsrcid,))
         avg_y = cursor.fetchall()
         avg_fluxpeak=[]
         avg_fluxpeakerr=[]
@@ -1480,12 +1480,12 @@ def plotGRB030329LightCurveSecByXSource(xtrsrcid, dsid, conn,title=None):
                        "         WHERE assoc_xtrsrc_id = %s " + \
                        "       ) t " + \
                        "      ,assocxtrsources ax1 " + \
-                       "      ,extractedsources x1 " + \
+                       "      ,extractedsource x1 " + \
                        "      ,images im1 " + \
                        " WHERE ax1.xtrsrc_id = t.xtrsrc_id " + \
                        "   AND ax1.assoc_xtrsrc_id = x1.xtrsrcid " + \
                        "   AND im1.band = 14 " + \
-                       "   AND x1.image_id = im1.imageid ", (xtrsrcid,))
+                       "   AND x1.image = im1.imageid ", (xtrsrcid,))
         avg2_y = cursor.fetchall()
         avg2_fluxpeak=[]
         avg2_fluxpeakerr=[]

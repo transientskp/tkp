@@ -506,7 +506,7 @@ def dbase_setup():
                "DELETE FROM tempbasesources",
                "DELETE FROM catalogedsources",
                "DELETE FROM catalogs",
-               "DELETE FROM extractedsources",
+               "DELETE FROM extractedsource",
                "DELETE FROM spectralindices",
                "DELETE FROM zoneheight",
                "DELETE FROM zones",
@@ -527,12 +527,12 @@ VALUES (1, %s, %s, '', '')
 """,
         image="""\
 INSERT INTO images
-(ds_id, tau_time, tau, taustart_ts, freq_eff, freq_bw, band, url)
+(dataset, tau_time, tau, taustart_ts, freq_eff, freq_bw, band, url)
 VALUES (%s, %s, 1, %s, %s, %s, %s, '')
 ;
 """,
        source="""\
-INSERT INTO extractedsources
+INSERT INTO extractedsource
 (image_id, zone, ra, decl, ra_err, decl_err, x, y, z, det_sigma,
  i_peak, i_peak_err, q_peak, q_peak_err,
  u_peak, u_peak_err, v_peak, v_peak_err, 

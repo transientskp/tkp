@@ -308,7 +308,7 @@ An image is characterised by
 * frequency band (band) 
 * integration time (tau)
 
-A group of images that belong together (defined by user, but not specified any further) are in the same data set (i.e. they have the same ds_id).
+A group of images that belong together (defined by user, but not specified any further) are in the same data set (i.e. they have the same dataset).
 
 **id**
     Every image gets a unique id.

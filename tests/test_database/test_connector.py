@@ -4,7 +4,7 @@ try:
 except AttributeError:
     import unittest2 as unittest
 
-from tkp.tests.decorators import requires_database
+from ..decorators import requires_database
 
 class TestDatabaseConnection(unittest.TestCase):
 

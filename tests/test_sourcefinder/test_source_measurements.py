@@ -24,7 +24,7 @@ from tkp.utility.accessors import FitsFile
 from tkp.sourcefinder import image
 
 import tkp.config
-from tkp.tests.decorators import requires_data
+from ..decorators import requires_data
 
 
 DATAPATH = tkp.config.config['test']['datapath']

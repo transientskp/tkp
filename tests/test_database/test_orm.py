@@ -6,7 +6,7 @@ except AttributeError:
 import sys
 import datetime
 import random
-from tkp.tests.decorators import requires_database
+from ..decorators import requires_database
 
 # We're cheating here: a unit test shouldn't really depend on an
 # external dependency like the database being up and running

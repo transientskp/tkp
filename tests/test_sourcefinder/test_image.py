@@ -4,8 +4,8 @@ try:
 except AttributeError:
     import unittest2 as unittest
 
-from tkp.tests.decorators import requires_data
-from tkp.tests.decorators import requires_module
+from ..decorators import requires_data
+from ..decorators import requires_module
 import tkp.sourcefinder 
 from tkp.sourcefinder import image as sfimage
 import tkp.config

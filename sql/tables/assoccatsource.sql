@@ -1,7 +1,7 @@
 CREATE TABLE assoccatsource
   (xtrsrc INT NOT NULL
   ,catsrc INT NOT NULL
-  ,"type" TINYINT NOT NULL
+  ,type TINYINT NOT NULL
   ,distance_arcsec DOUBLE NULL
   ,r DOUBLE NULL
   ,loglr DOUBLE NULL

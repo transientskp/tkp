@@ -16,9 +16,10 @@ MONETDB_RECREATE=true
 WHEREAMI="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 WHATAMI="$0"
 SQLFILES=${WHEREAMI}/sql
-NVSS=${WHEREAMI}/catalog/nvss/nvss.csv
 VLSS=${WHEREAMI}/catalog/vlss/vlss.csv
 WENSS=${WHEREAMI}/catalog/wenss/wenss.csv
+NVSS=${WHEREAMI}/catalog/nvss/nvss.csv
+EXO=${WHEREAMI}/catalog/exoplanets/exo.csv
 
 
 # Here you can specify what string in a SQL file to replace with what
@@ -28,9 +29,10 @@ WENSS=${WHEREAMI}/catalog/wenss/wenss.csv
 declare -A tokens
 tokens["%NODE%"]=1
 tokens["%NODES%"]=10
-tokens["%NVSS%"]=${NVSS}
 tokens["%VLSS%"]=${VLSS}
 tokens["%WENSS%"]=${WENSS}
+tokens["%NVSS%"]=${NVSS}
+tokens["%EXO%"]=${EXO}
 
 
 # Functions
@@ -84,7 +86,7 @@ create_database() {
 
 set_credentials() {
     message "setting credentials"
-   mclient -d${MONETDB_DATABASE} <<-EOF
+    mclient -d${MONETDB_DATABASE} <<-EOF
 ALTER USER "monetdb" RENAME TO "${MONETDB_USERNAME}";
 ALTER USER SET PASSWORD '${MONETDB_PASSWORD}' USING OLD PASSWORD 'monetdb';
 CREATE SCHEMA "${MONETDB_DATABASE}" AUTHORIZATION "${MONETDB_USERNAME}";

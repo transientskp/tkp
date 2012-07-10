@@ -15,7 +15,7 @@
  * This means this function inserts deafult values so long.
  *
  */
-CREATE FUNCTION insertImage(ids_id INT
+CREATE FUNCTION insertImage(idataset INT
                            /*,itau INT
                            ,itau_time DOUBLE*/
                            ,ifreq_eff DOUBLE
@@ -30,26 +30,20 @@ BEGIN
 
   DECLARE iimageid INT;
   DECLARE oimageid INT;
-  /*DECLARE iseq_nr INT;*/
   DECLARE iband INT;
   DECLARE itau INT;
   DECLARE itau_time DOUBLE;
-  SELECT 1
-        ,3600
-    INTO itau
-        ,itau_time
-  ;
 
   SET iband = getBand(ifreq_eff);
   
   SELECT NEXT VALUE FOR seq_image INTO iimageid;
 
   INSERT INTO image
-    (imageid
-    ,ds_id
-    ,tau
+    (id
+    ,dataset
+    /*,tau*/
     ,band
-    ,tau_time
+    /*,tau_time*/
     ,freq_eff
     ,freq_bw
     ,taustart_ts
@@ -60,10 +54,10 @@ BEGIN
     ) 
   VALUES
     (iimageid
-    ,ids_id
-    ,itau
+    ,idataset
+    /*,itau*/
     ,iband
-    ,itau_time
+    /*,itau_time*/
     ,ifreq_eff
     ,ifreq_bw
     ,itaustart_ts

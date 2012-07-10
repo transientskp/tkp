@@ -26,7 +26,6 @@ functions/create.function.insertImage.sql
 functions/create.function.insertDataset.sql
 procedures/create.procedure.BuildFrequencyBands.sql
 procedures/create.procedure.BuildNodes.sql
-procedures/create.procedure.InsertVersion.sql
 #
 # utility functions
 #
@@ -56,7 +55,8 @@ init/init.tables.sql
 #
 # catalogs
 #
-load/load.cat.nvss.sql
 load/load.cat.vlss.sql
 load/load.cat.wenss.sql
+load/load.cat.nvss.sql
+load/load.cat.exo.sql
 

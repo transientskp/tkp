@@ -1,27 +1,20 @@
-DECLARE icatid INT;
 DECLARE i_freq_eff DOUBLE;
 DECLARE iband INT;
-SET icatid = 7;
+DECLARE iname VARCHAR(50);
 
---SELECT NOW();
+SET iname = 'EXO';
 
-INSERT INTO catalogs
-  (catid
-  ,catname
+INSERT INTO catalog
+  (name
   ,fullname
   ) 
 VALUES 
-  (icatid
-  ,'EXO'
+  (iname
   ,'Exoplanets from exoplanet.eu and simbad (J.-M. Griessmeier)'
   )
 ;
 
-/*SET i_freq_eff = 1400000000.0;
-SET iband = getBand(i_freq_eff, 10000000.0);
-SET iband = getBand(i_freq_eff);*/
-
-CREATE TABLE aux_catalogedsources
+CREATE TABLE aux_catalogedsource
   (aorig_catsrcname VARCHAR(25)
   ,aRAJ2000 VARCHAR(17)
   ,aDEJ2000 VARCHAR(19)
@@ -34,19 +27,15 @@ CREATE TABLE aux_catalogedsources
 ;
 
 COPY 473 RECORDS
-INTO aux_catalogedsources
-/*
-FROM '/scratch/bscheers/tkp-code/pipe/database/catfiles/nvss/nvss-few.csv'
-FROM '${TKPDBCODE}/catfiles/nvss/nvss-all_strip.csv'
-FROM '/home/scheers/tkp-code/pipe/database/catfiles/exoplanets/exoplanetDatabase.csv'
-*/
-FROM '/export/scratch1/bscheers/tkp-code/pipe/database/catfiles/exoplanets/exoplanetDatabase.csv'
+INTO aux_catalogedsource
+FROM 
+'%EXO%'
 USING DELIMITERS ';', '\n', '"'
 NULL AS '""'
 ;
 
-INSERT INTO catalogedsources
-  (cat_id
+INSERT INTO catalogedsource
+  (catalog
   ,orig_catsrcid
   ,catsrcname
   ,band
@@ -59,10 +48,10 @@ INSERT INTO catalogedsources
   ,x
   ,y
   ,z
-  ,i_int_avg
-  ,i_int_avg_err
+  ,avg_f_int
+  ,avg_f_int_err
   )
-  SELECT icatid
+  SELECT c0.id
         ,row_number() over()
         ,aorig_catsrcname 
         ,0
@@ -77,9 +66,10 @@ INSERT INTO catalogedsources
         ,SIN(RADIANS(CAST(aDEJ2000 AS DOUBLE)))
         ,CAST(aFlux AS DOUBLE)
         ,CAST(aFlux_err AS DOUBLE)
-    FROM aux_catalogedsources
-  ;
+    FROM aux_catalogedsource c1
+        ,catalog c0
+   WHERE c0.name = iname
+;
 
-DROP TABLE aux_catalogedsources;
+DROP TABLE aux_catalogedsource;
 
---SELECT NOW();

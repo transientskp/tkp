@@ -1,26 +1,20 @@
-DECLARE icatid INT;
 DECLARE i_freq_eff DOUBLE;
 DECLARE iband INT;
---SET icatid = 6;
-SET icatid = 3;
+DECLARE iname VARCHAR(50);
 
---SELECT NOW();
+SET iname = 'NVSS';
+SET i_freq_eff = 1400000000.0;
+SET iband = getBand(i_freq_eff);
 
 INSERT INTO catalog
-  (catid
-  ,catname
+  (name
   ,fullname
   ) 
 VALUES 
-  (icatid
-  ,'NVSS'
-  ,'1.4GHz NRAO VLA Sky Survey (NVSS)'
+  (iname
+  ,'The NRAO VLA Sky Survey at 1.4 GHz'
   )
 ;
-
-SET i_freq_eff = 1400000000.0;
-/*SET iband = getBand(i_freq_eff, 10000000.0);*/
-SET iband = getBand(i_freq_eff);
 
 CREATE TABLE aux_catalogedsource
   (aviz_RAJ2000 DOUBLE
@@ -66,7 +60,7 @@ NULL AS ''
 INSERT INTO catalogedsource
   (orig_catsrcid
   ,catsrcname
-  ,cat_id
+  ,catalog
   ,band
   ,ra
   ,decl
@@ -91,7 +85,7 @@ INSERT INTO catalogedsource
   )
   SELECT aorig_catsrcid
         ,CONCAT('J', aname)
-        ,icatid
+        ,c0.id
         ,iband
         ,aviz_RAJ2000
         ,aviz_DEJ2000
@@ -112,7 +106,9 @@ INSERT INTO catalogedsource
         ,aS1400 / 1000
         ,ae_S1400 / 1000
         ,aImage
-    FROM aux_catalogedsource
+    FROM aux_catalogedsource c1
+        ,catalog c0
+   WHERE c0.name = 'NVSS'
   ;
 
 DROP TABLE aux_catalogedsource;

@@ -12,15 +12,15 @@ BEGIN
 
   DECLARE dist DOUBLE;
 
-  SELECT 3600 * DEGREES(2 * ASIN(SQRT((x1.x - c1.x) * (x1.x - c1.x)  
+  SELECT 3600 * DEGREES(2 * ASIN(SQRT( (x1.x - c1.x) * (x1.x - c1.x)  
                                      + (x1.y - c1.y) * (x1.y - c1.y)  
                                      + (x1.z - c1.z) * (x1.z - c1.z)  
                                      ) / 2) ) AS distance_arcsec
     INTO dist
     FROM extractedsource x1
         ,catalogedsource c1
-   WHERE x1.xtrsrcid = ixtrsrcid     
-     AND c1.catsrcid = icatsrcid 
+   WHERE x1.id = ixtrsrcid     
+     AND c1.id = icatsrcid 
   ;
 
   RETURN dist;

@@ -19,7 +19,7 @@ The modules are separated into four subpackages:
  this subpackage contains a variety of utility functions, such as (image) data file handlers and coordinate functions.
 
 Directory notes
----
+------------------
 - *dead_scripts*: A collection of various scripts that were once useful, but are currently not in use AFAIK. To be deprecated (i.e. deleted from the current repository HEAD) if no-one yells about them within the next week or two.
 - *documentation*: --
 - *enduser_scripts*: Some small front-end scripts that make it easy to call routines from the command line (source extraction, image conversion etc).

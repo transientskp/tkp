@@ -387,8 +387,13 @@ def _flag_multiple_counterparts_in_runningcatalog(conn):
 
     -1- running-catalogue sources  <- extracted source
 
-    An extracted source has multiple counterparts in the running
-    catalogue.  We only keep the ones with the lowest deRuiter_r
+    We do not yet handle the case where two or more extractedsource have
+    the same counterparts (i.e. two or more) in the runningcatalog.
+    
+    Here we filter on single extracted sources that have multiple counterparts in the running
+    catalogue. 
+    When more than one extracted source has the same 
+    We only keep the ones with the lowest deRuiter_r
     value, the rest we throw away.
 
     NOTE:
@@ -1066,8 +1071,8 @@ def associate_extracted_sources(conn, image_id, deRuiter_r=DERUITER_R):
 
     _empty_temprunningcatalog(conn)
     _insert_temprunningcatalog(conn, image_id, deRuiter_r)
-    #sys.exit()
     _flag_multiple_counterparts_in_runningcatalog(conn)
+    #sys.exit()
     _insert_multiple_assocs(conn)
     _insert_first_of_assocs(conn)
     _flag_swapped_assocs(conn)

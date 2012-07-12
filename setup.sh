@@ -30,7 +30,7 @@ EXO=${WHEREAMI}/catalog/exoplanets/exo.csv
 
 declare -A tokens
 tokens["%NODE%"]=1
-tokens["%NODES%"]=10
+tokens["%NODES%"]=1
 tokens["%VLSS%"]=${VLSS}
 tokens["%WENSS%"]=${WENSS}
 tokens["%NVSS%"]=${NVSS}

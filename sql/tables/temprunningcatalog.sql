@@ -24,11 +24,11 @@ CREATE TABLE temprunningcatalog
   ,beam_semimaj DOUBLE NULL
   ,beam_semimin DOUBLE NULL
   ,beam_pa DOUBLE NULL
-  ,avg_I_peak DOUBLE NULL
-  ,avg_I_peak_sq DOUBLE NULL
+  ,avg_f_peak DOUBLE NULL
+  ,avg_f_peak_sq DOUBLE NULL
   ,avg_weight_peak DOUBLE NULL
-  ,avg_weighted_I_peak DOUBLE NULL
-  ,avg_weighted_I_peak_sq DOUBLE NULL
+  ,avg_weighted_f_peak DOUBLE NULL
+  ,avg_weighted_f_peak_sq DOUBLE NULL
   ,FOREIGN KEY (runcat) REFERENCES runningcatalog (id)
   ,FOREIGN KEY (xtrsrc) REFERENCES extractedsource (id)
   ,FOREIGN KEY (dataset) REFERENCES dataset (id)

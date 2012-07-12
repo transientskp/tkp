@@ -490,18 +490,18 @@ def _insert_multiple_assocs(conn):
         cursor = conn.cursor()
         query = """\
         INSERT INTO assocxtrsource
-          (xtrsrc_id
+          (runcat
           ,xtrsrc
-          ,assoc_distance_arcsec
-          ,assoc_r
-          ,assoc_lr_method
+          ,distance_arcsec
+          ,r
+          ,type
           )
           SELECT t.xtrsrc
                 ,t.xtrsrc
                 ,3600 * DEGREES(2 * ASIN(SQRT((r.x - x.x) * (r.x - x.x)
                                           + (r.y - x.y) * (r.y - x.y)
                                           + (r.z - x.z) * (r.z - x.z)
-                                          ) / 2) ) AS assoc_distance_arcsec
+                                          ) / 2) ) AS distance_arcsec
                 ,3600 * sqrt(
                     ( (r.wm_ra * cos(RADIANS(r.wm_decl)) - x.ra * cos(RADIANS(x.decl)))
                      *(r.wm_ra * cos(RADIANS(r.wm_decl)) - x.ra * cos(RADIANS(x.decl)))
@@ -509,16 +509,16 @@ def _insert_multiple_assocs(conn):
                     / (r.wm_ra_err * r.wm_ra_err + x.ra_err * x.ra_err)
                     + ((r.wm_decl - x.decl) * (r.wm_decl - x.decl)) 
                     / (r.wm_decl_err * r.wm_decl_err + x.decl_err * x.decl_err)
-                            ) as assoc_r
+                            ) as r
                 ,1
             FROM temprunningcatalog t
                 ,runningcatalog r
                 ,extractedsource x
            WHERE t.xtrsrc = r.xtrsrc
              AND t.xtrsrc = x.id
-             AND t.xtrsrc IN (SELECT xtrsrc_id
+             AND t.xtrsrc IN (SELECT xtrsrc
                                    FROM temprunningcatalog
-                                 GROUP BY xtrsrc_id
+                                 GROUP BY xtrsrc
                                  HAVING COUNT(*) > 1
                                 )
         """
@@ -543,11 +543,11 @@ def _insert_first_of_assocs(conn):
         cursor = conn.cursor()
         query = """\
         INSERT INTO assocxtrsource
-          (xtrsrc_id
+          (runcat
           ,xtrsrc
-          ,assoc_distance_arcsec
-          ,assoc_r
-          ,assoc_lr_method
+          ,distance_arcsec
+          ,r
+          ,type
           )
           SELECT xtrsrc
                 ,xtrsrc
@@ -555,9 +555,9 @@ def _insert_first_of_assocs(conn):
                 ,0
                 ,2
             FROM temprunningcatalog
-           WHERE xtrsrc_id IN (SELECT xtrsrc_id
+           WHERE xtrsrc IN (SELECT xtrsrc
                                  FROM temprunningcatalog
-                               GROUP BY xtrsrc_id
+                               GROUP BY xtrsrc
                                HAVING COUNT(*) > 1
                               )
         """
@@ -584,9 +584,9 @@ def _flag_swapped_assocs(conn):
         query = """\
         DELETE
           FROM assocxtrsource
-         WHERE xtrsrc_id IN (SELECT xtrsrc_id
+         WHERE xtrsrc IN (SELECT xtrsrc
                                FROM temprunningcatalog
-                             GROUP BY xtrsrc_id
+                             GROUP BY xtrsrc
                              HAVING COUNT(*) > 1
                             )
         """
@@ -607,7 +607,7 @@ def _insert_multiple_assocs_runcat(conn):
         cursor = conn.cursor()
         query = """\
         INSERT INTO runningcatalog
-          (xtrsrc_id
+          (xtrsrc
           ,dataset
           ,band
           ,datapoints
@@ -651,9 +651,9 @@ def _insert_multiple_assocs_runcat(conn):
                 ,avg_weighted_I_peak
                 ,avg_weighted_I_peak_sq
             FROM temprunningcatalog
-           WHERE xtrsrc_id IN (SELECT xtrsrc_id
+           WHERE xtrsrc IN (SELECT xtrsrc
                                  FROM temprunningcatalog
-                               GROUP BY xtrsrc_id
+                               GROUP BY xtrsrc
                                HAVING COUNT(*) > 1
                               )
         """
@@ -676,9 +676,9 @@ def _flag_old_assocs_runcat(conn):
         query = """\
         DELETE
           FROM runningcatalog
-         WHERE xtrsrc_id IN (SELECT xtrsrc_id
+         WHERE xtrsrc IN (SELECT xtrsrc
                                FROM temprunningcatalog
-                             GROUP BY xtrsrc_id
+                             GROUP BY xtrsrc
                              HAVING COUNT(*) > 1
                             )
         """
@@ -700,9 +700,9 @@ def _flag_multiple_assocs(conn):
         query = """\
         DELETE
           FROM temprunningcatalog
-         WHERE xtrsrc_id IN (SELECT xtrsrc_id
+         WHERE xtrsrc IN (SELECT xtrsrc
                                FROM temprunningcatalog
-                             GROUP BY xtrsrc_id
+                             GROUP BY xtrsrc
                              HAVING COUNT(*) > 1
                             )
         """
@@ -719,16 +719,16 @@ def _flag_multiple_assocs(conn):
 def _insert_single_assocs(conn):
     """Insert remaining 1-1 associations into assocxtrsource table"""
     #TODO: check whether last row (t.xtrsrc = x.id) should be
-    #      t.assocxtrsrc_id = ...)
+    #      t.assocxtrsrc = ...)
     try:
         cursor = conn.cursor()
         query = """\
         INSERT INTO assocxtrsource
-          (xtrsrc_id
+          (runcat
           ,xtrsrc
           ,assoc_distance_arcsec
           ,assoc_r
-          ,assoc_lr_method
+          ,type
           )
           SELECT t.xtrsrc
                 ,t.xtrsrc
@@ -787,7 +787,7 @@ SELECT datapoints
       ,avg_weight_peak
       ,avg_weighted_I_peak
       ,avg_weighted_I_peak_sq
-      ,xtrsrc_id
+      ,xtrsrc
   FROM temprunningcatalog
         """
         cursor.execute(query)
@@ -812,7 +812,7 @@ UPDATE runningcatalog
      ,avg_weight_peak = %s
      ,avg_weighted_I_peak = %s
      ,avg_weighted_I_peak_sq = %s
-WHERE xtrsrc_id = %s
+WHERE xtrsrc = %s
 """
         for result in results:
             cursor.execute(query, tuple(result))
@@ -873,13 +873,13 @@ def _insert_new_assocs(conn, image_id, deRuiter_r):
     try:
         query = """\
         INSERT INTO assocxtrsource
-          (xtrsrc_id
+          (runcat
           ,xtrsrc
           ,assoc_distance_arcsec
           ,assoc_r
-          ,assoc_lr_method
+          ,type
           )
-          SELECT x1.id as xtrsrc_id
+          SELECT x1.id as xtrsrc
                 ,x1.id as xtrsrc
                 ,0
                 ,0
@@ -925,7 +925,7 @@ def _insert_new_source_runcat(conn, image_id, deRuiter_r):
         cursor = conn.cursor()
         query = """\
         INSERT INTO runningcatalog
-          (xtrsrc_id
+          (xtrsrc
           ,dataset
           ,band
           ,datapoints
@@ -1093,7 +1093,7 @@ def select_single_epoch_detection(conn, dsid):
     cursor = conn.cursor()
     try:
         query = """\
-SELECT xtrsrc_id
+SELECT xtrsrc
       ,dataset
       ,datapoints
       ,wm_ra
@@ -1154,7 +1154,7 @@ def lightcurve(conn, xtrsrcid):
 SELECT im.taustart_ts, im.tau_time, ex.i_peak, ex.i_peak_err, ex.id
 FROM extractedsource ex, assocxtrsource ax, image im
 WHERE ax.xtrsrc in
-    (SELECT xtrsrc_id FROM assocxtrsource WHERE xtrsrc = %s)
+    (SELECT xtrsrc FROM assocxtrsource WHERE xtrsrc = %s)
   AND ex.id = ax.xtrsrc
   AND ex.image = im.id
 ORDER BY im.taustart_ts"""
@@ -1195,7 +1195,7 @@ def _select_variability_indices(conn, dsid, V_lim, eta_lim):
     try:
         query = """\
 SELECT
-     xtrsrc_id
+     xtrsrc
     ,dataset
     ,datapoints
     ,wm_ra
@@ -1206,7 +1206,7 @@ SELECT
     ,t1.eta_inter / t1.avg_weight_peak as eta
 FROM
     (SELECT
-          xtrsrc_id
+          xtrsrc
          ,dataset
          ,datapoints
          ,wm_ra
@@ -1268,14 +1268,14 @@ def _insert_cat_assocs(conn, image_id, radius, deRuiter_r):
         cursor = conn.cursor()
         query = """\
         INSERT INTO assoccatsources
-          (xtrsrc_id
+          (xtrsrc
           ,assoc_catsrc_id
           ,assoc_distance_arcsec
-          ,assoc_lr_method
+          ,type
           ,assoc_r
           ,assoc_loglr
           )
-          SELECT xtrsrcid AS xtrsrc_id
+          SELECT xtrsrcid AS xtrsrc
                 ,catsrcid AS assoc_catsrc_id
                 ,3600 * DEGREES(2 * ASIN(SQRT((x0.x - c0.x) * (x0.x - c0.x)
                                           + (x0.y - c0.y) * (x0.y - c0.y)
@@ -1567,7 +1567,7 @@ def match_nearests_in_catalogs(conn, srcid, radius=1.0,
     
     Args:
 
-        srcid: xtrsrc_id in runningcatalog
+        srcid: xtrsrc in runningcatalog
 
     Kwargs:
     
@@ -1639,7 +1639,7 @@ FROM (
     ,wm_ra_err
     ,wm_decl_err
     FROM runningcatalog
-    WHERE xtrsrc_id = %%s
+    WHERE xtrsrc = %%s
     ) rc
     ,catalogedsources cs
     ,catalogs c
@@ -1698,7 +1698,7 @@ def monitoringlist_not_observed(conn, image_id):
     """Return a list of sources from the monitoringlist that have no
     association with the extracted sources for this image
 
-    We do this by matching the monitoring list xtrsrc_ids with the
+    We do this by matching the monitoring list xtrsrcs with the
     extractedsource xtrsrcids through the assocxtrsource. Using a
     left outer join, we get nulls in the place where a source should
     have been, but isn't: these are the sources that are not in
@@ -1947,8 +1947,8 @@ INSERT INTO assocxtrsource
   xtrsrc,
   assoc_weight,
   assoc_distance_arcsec,
-  assoc_lr_method,
-  assoc_r, assoc_lr
+  type,
+  assoc_r, loglr
   )
 VALUES
   (%s, %s, 0, 0, 0, 0, 0)"""
@@ -1986,8 +1986,8 @@ UPDATE monitoringlist SET xtrsrc_id=%s, image_id=%s WHERE monitorid=%s"""
             # the xtrsrc_id from the monitoringlist already
             # points to the original/first point
             query = """\
-INSERT INTO assocxtrsource (xtrsrc_id, xtrsrc, assoc_weight, assoc_distance_arcsec, assoc_lr_method, assoc_r, assoc_lr)
-VALUES (%s, %s, 0, 0, 0, 0, 0)"""
+INSERT INTO assocxtrsource (xtrsrc_id, xtrsrc, distance_arcsec, type, r, loglr)
+VALUES (%s, %s, 0, 0, 0, 0)"""
             try:
                 cursor.execute(query, (xtrsrc_id, xtrsrcid))
                 if not AUTOCOMMIT:

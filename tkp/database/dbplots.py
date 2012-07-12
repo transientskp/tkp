@@ -86,16 +86,16 @@ def plotBarDist(dsid, catid, conn):
         cursor.execute("select bin_dist " + \
                        "      ,count(*) " + \
                        "      ,avg(assoc_r) " + \
-                       "      ,avg(assoc_lr) " + \
+                       "      ,avg(loglr) " + \
                        "  from (select cast(floor(assoc_distance_arcsec) as integer) as bin_dist " + \
                        "              ,assoc_r " + \
-                       "              ,assoc_lr " + \
+                       "              ,loglr " + \
                        "         from assoccatsources ac1 " + \
                        "             ,extractedsource x1 " + \
                        "             ,images im1 " + \
                        "             ,obscatsources oc1 " + \
                        "        where ac1.xtrsrc = x1.id " + \
-                       "         and assoc_lr >= -100 " + \
+                       "         and loglr >= -100 " + \
                        "         and x1.image = im1.id " + \
                        "         AND im1.dataset = %s " + \
                        "         and ac1.assoc_catsrc_id = oc1.obscatsrcid " + \
@@ -108,12 +108,12 @@ def plotBarDist(dsid, catid, conn):
         bins = []
         x = []
         assoc_r = []
-        assoc_lr = []
+        loglr = []
         for i in range(len(y)):
             bins.append(y[i][0])
             x.append(y[i][1])
             assoc_r.append(y[i][2])
-            assoc_lr.append(y[i][3])
+            loglr.append(y[i][3])
         
         xsum = 0
         for i in range(len(x)):
@@ -182,7 +182,7 @@ def plotBarRho(dsid, catid, conn):
                        "             ,images im1 " + \
                        "             ,obscatsources oc1 " + \
                        "        where ac1.xtrsrc = x1.id " + \
-                       "         and assoc_lr >= -300 " + \
+                       "         and loglr >= -300 " + \
                        "         and x1.image = im1.id " + \
                        "         AND im1.dataset = %s " + \
                        "         and ac1.assoc_catsrc_id = oc1.obscatsrcid " + \
@@ -304,8 +304,8 @@ def plotBarSrcBGLR(dsid, dsid_min, dsid_max, catid, conn):
                        "      ,AVG(assoc_r) " + \
                        "      ,MIN(assoc_r) " + \
                        "      ,MAX(assoc_r) " + \
-                       "  FROM (SELECT CAST(1 + FLOOR(2 * assoc_lr) AS INTEGER) AS bin_nr " + \
-                       "              ,ac1.assoc_lr " + \
+                       "  FROM (SELECT CAST(1 + FLOOR(2 * loglr) AS INTEGER) AS bin_nr " + \
+                       "              ,ac1.loglr " + \
                        "              ,ac1.assoc_distance_arcsec " + \
                        "              ,ac1.assoc_r " + \
                        "          FROM assoccatsources ac1 " + \
@@ -313,7 +313,7 @@ def plotBarSrcBGLR(dsid, dsid_min, dsid_max, catid, conn):
                        "              ,images im1 " + \
                        "              ,obscatsources oc1 " + \
                        "         WHERE ac1.xtrsrc = x1.id " + \
-                       "           AND ac1.assoc_lr >= -100.5 " + \
+                       "           AND ac1.loglr >= -100.5 " + \
                        "           AND x1.image = im1.id " + \
                        "           AND im1.dataset BETWEEN %s " + \
                        "                             AND %s " + \
@@ -367,8 +367,8 @@ def plotBarSrcBGLR(dsid, dsid_min, dsid_max, catid, conn):
                        "      ,AVG(assoc_r) " + \
                        "      ,MIN(assoc_r) " + \
                        "      ,MAX(assoc_r) " + \
-                       "  FROM (SELECT CAST(1 + FLOOR(2 * assoc_lr) AS INTEGER) AS bin_nr " + \
-                       "              ,ac1.assoc_lr " + \
+                       "  FROM (SELECT CAST(1 + FLOOR(2 * loglr) AS INTEGER) AS bin_nr " + \
+                       "              ,ac1.loglr " + \
                        "              ,ac1.assoc_distance_arcsec " + \
                        "              ,ac1.assoc_r " + \
                        "          FROM assoccatsources ac1 " + \
@@ -376,7 +376,7 @@ def plotBarSrcBGLR(dsid, dsid_min, dsid_max, catid, conn):
                        "              ,images im1 " + \
                        "              ,obscatsources oc1 " + \
                        "         WHERE ac1.xtrsrc = x1.id " + \
-                       "           AND ac1.assoc_lr >= -100.5 " + \
+                       "           AND ac1.loglr >= -100.5 " + \
                        "           AND x1.image = im1.id " + \
                        "           AND im1.dataset = %s " + \
                        "           AND ac1.assoc_catsrc_id = oc1.obscatsrcid " + \
@@ -490,8 +490,8 @@ def plotBarBGLR(dsid_min, dsid_max, catid, conn):
                        "      ,AVG(assoc_r) " + \
                        "      ,MIN(assoc_r) " + \
                        "      ,MAX(assoc_r) " + \
-                       "  FROM (SELECT CAST(1 + FLOOR(2 * assoc_lr) AS INTEGER) AS bin_nr " + \
-                       "              ,ac1.assoc_lr " + \
+                       "  FROM (SELECT CAST(1 + FLOOR(2 * loglr) AS INTEGER) AS bin_nr " + \
+                       "              ,ac1.loglr " + \
                        "              ,ac1.assoc_distance_arcsec " + \
                        "              ,ac1.assoc_r " + \
                        "          FROM assoccatsources ac1 " + \
@@ -499,7 +499,7 @@ def plotBarBGLR(dsid_min, dsid_max, catid, conn):
                        "              ,images im1 " + \
                        "              ,obscatsources oc1 " + \
                        "         WHERE ac1.xtrsrc = x1.id " + \
-                       "           AND ac1.assoc_lr >= -100.5 " + \
+                       "           AND ac1.loglr >= -100.5 " + \
                        "           AND x1.image = im1.id " + \
                        "           AND im1.dataset BETWEEN %s " + \
                        "                             AND %s " + \
@@ -670,8 +670,8 @@ def plotBarLR(dsid, catid, conn):
                        "      ,AVG(assoc_r) " + \
                        "      ,MIN(assoc_r) " + \
                        "      ,MAX(assoc_r) " + \
-                       "  FROM (SELECT CAST(1 + FLOOR(2 * assoc_lr) AS INTEGER) AS bin_nr " + \
-                       "              ,ac1.assoc_lr " + \
+                       "  FROM (SELECT CAST(1 + FLOOR(2 * loglr) AS INTEGER) AS bin_nr " + \
+                       "              ,ac1.loglr " + \
                        "              ,ac1.assoc_distance_arcsec " + \
                        "              ,ac1.assoc_r " + \
                        "          FROM assoccatsources ac1 " + \
@@ -679,7 +679,7 @@ def plotBarLR(dsid, catid, conn):
                        "              ,images im1 " + \
                        "              ,obscatsources oc1 " + \
                        "         WHERE ac1.xtrsrc = x1.id " + \
-                       "           AND ac1.assoc_lr >= -100.5 " + \
+                       "           AND ac1.loglr >= -100.5 " + \
                        "           AND x1.image = im1.id " + \
                        "           AND im1.dataset = %s " + \
                        "           AND ac1.assoc_catsrc_id = oc1.obscatsrcid " + \
@@ -945,7 +945,7 @@ def plotLightCurveByXSource(xtrsrcid, conn):
                        "                      FROM assoccatsources ac " + \
                        "                          ,assocxtrsource ax  " + \
                        "                     WHERE ax.xtrsrc = ac.xtrsrc  " + \
-                       "                       AND ac.assoc_lr > -10 " + \
+                       "                       AND ac.loglr > -10 " + \
                        "                       AND ax.xtrsrc = %s " + \
                        "                    GROUP BY ac.assoc_catsrc_id " + \
                        "                   ) ", (xtrsrcid,))
@@ -1088,7 +1088,7 @@ def plotAssocCloudByXSource(xtrsrcid, conn, outputdir):
                        "                      FROM assoccatsources ac " + \
                        "                          ,assocxtrsource ax  " + \
                        "                     WHERE ax.xtrsrc = ac.xtrsrc " + \
-                       "                       AND ac.assoc_lr > -10 " + \
+                       "                       AND ac.loglr > -10 " + \
                        "                       AND ax.xtrsrc = %s " + \
                        "                    GROUP BY ac.assoc_catsrc_id " + \
                        "                   ) ", (xtrsrcid,))
@@ -1124,7 +1124,7 @@ def plotHistSpIndices(conn):
     try:
         cursor = conn.cursor()
 
-        query="select t.cat_id,t.sp_indx from (select xtrsrc_id,assoc_catsrc_id,cat_id,log10(i_int_avg/i_int)/log10(351100000/freq_eff) as sp_indx from assoccatsources,catalogedsources,extractedsource where xtrsrc_id = xtrsrcid and assoc_catsrc_id = catsrcid and assoc_lr > -10) t order by t.cat_id,t.sp_indx "
+        query="select t.cat_id,t.sp_indx from (select xtrsrc_id,assoc_catsrc_id,cat_id,log10(i_int_avg/i_int)/log10(351100000/freq_eff) as sp_indx from assoccatsources,catalogedsources,extractedsource where xtrsrc_id = xtrsrcid and assoc_catsrc_id = catsrcid and loglr > -10) t order by t.cat_id,t.sp_indx "
 
         cursor.execute(query)
         y = cursor.fetchall()
@@ -1288,7 +1288,7 @@ def plotLightCurveSecByXSource(xtrsrcid, conn):
                        "                      FROM assoccatsources ac " + \
                        "                          ,assocxtrsource ax  " + \
                        "                     WHERE ax.xtrsrc = ac.xtrsrc  " + \
-                       "                       AND ac.assoc_lr > -10 " + \
+                       "                       AND ac.loglr > -10 " + \
                        "                       AND ax.xtrsrc = %s " + \
                        "                    GROUP BY ac.assoc_catsrc_id " + \
                        "                   ) ", (xtrsrcid,))
@@ -1343,7 +1343,7 @@ def plotGRB030329LightCurveSecByXSource(xtrsrcid, dsid, conn,title=None):
                        "      ,CAST(\'2003-03-29\' AS TIMESTAMP) " + \
                        #"      ,assoc_distance_arcsec " + \
                        #"      ,assoc_r " + \
-                       #"      ,assoc_lr " + \
+                       #"      ,loglr " + \
                        "      ,3600 * DEGREES(2 * ASIN(SQRT((c1.x - x2.x) * (c1.x - x2.x) " + \
                        "                                   + (c1.y - x2.y) * (c1.y - x2.y) " + \
                        "                                   + (c1.z - x2.z) * (c1.z - x2.z) " + \
@@ -1362,7 +1362,7 @@ def plotGRB030329LightCurveSecByXSource(xtrsrcid, dsid, conn,title=None):
                        "   and x1.image = im1.id " + \
                        "   AND ax1.xtrsrc = x2.id " + \
                        "   and x2.image = im2.id " + \
-                       "   AND ax1.assoc_lr > -10 " + \
+                       "   AND ax1.loglr > -10 " + \
                        "   AND im1.band <> 17 " + \
                        "   AND im2.band <> 17 " + \
                        "   and c1.catsrcid = 2071216 " + \
@@ -1511,7 +1511,7 @@ def plotGRB030329LightCurveSecByXSource(xtrsrcid, dsid, conn,title=None):
                        "                      FROM assoccatsources ac " + \
                        "                          ,assocxtrsource ax  " + \
                        "                     WHERE ax.xtrsrc = ac.xtrsrc  " + \
-                       "                       AND ac.assoc_lr > 0 " + \
+                       "                       AND ac.loglr > 0 " + \
                        "                       AND ax.xtrsrc = %s " + \
                        "                    GROUP BY ac.assoc_catsrc_id " + \
                        "                   ) ", (xtrsrcid,))

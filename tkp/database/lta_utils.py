@@ -845,7 +845,7 @@ def _insert_multiple_assocs(conn):
           ,xtrsrc
           ,assoc_distance_arcsec
           ,assoc_r
-          ,assoc_lr_method
+          ,type
           )
           SELECT t.xtrsrc
                 ,t.xtrsrc
@@ -903,7 +903,7 @@ def _insert_first_of_assocs(conn):
           ,xtrsrc
           ,assoc_distance_arcsec
           ,assoc_r
-          ,assoc_lr_method
+          ,type
           )
           SELECT xtrsrc
                 ,xtrsrc
@@ -1218,7 +1218,7 @@ def _insert_single_assocs(conn):
           ,xtrsrc
           ,assoc_distance_arcsec
           ,assoc_r
-          ,assoc_lr_method
+          ,type
           )
           SELECT t.xtrsrc
                 ,t.xtrsrc
@@ -1497,7 +1497,7 @@ def _insert_new_assocs_by_bsmaj(conn, image_id):
           ,xtrsrc
           ,assoc_distance_arcsec
           ,assoc_r
-          ,assoc_lr_method
+          ,type
           )
           SELECT x1.id as xtrsrc_id
                 ,x1.id as xtrsrc
@@ -1531,7 +1531,7 @@ def _insert_new_assocs_by_bsmaj(conn, image_id):
           ,xtrsrc
           ,assoc_distance_arcsec
           ,assoc_r
-          ,assoc_lr_method
+          ,type
           )
           SELECT x1.id as xtrsrc_id
                 ,x1.id as xtrsrc
@@ -1571,7 +1571,7 @@ def _insert_new_assocs(conn, image_id, deRuiter_r):
           ,xtrsrc
           ,assoc_distance_arcsec
           ,assoc_r
-          ,assoc_lr_method
+          ,type
           )
           SELECT x1.id as xtrsrc_id
                 ,x1.id as xtrsrc
@@ -2268,7 +2268,7 @@ def _insert_cat_assocs(conn, image_id, radius, deRuiter_r):
           (xtrsrc_id
           ,assoc_catsrc_id
           ,assoc_distance_arcsec
-          ,assoc_lr_method
+          ,type
           ,assoc_r
           ,assoc_loglr
           )
@@ -3131,8 +3131,8 @@ INSERT INTO assocxtrsource
   xtrsrc,
   assoc_weight,
   assoc_distance_arcsec,
-  assoc_lr_method,
-  assoc_r, assoc_lr
+  type,
+  assoc_r, loglr
   )
 VALUES
   (%s, %s, 0, 0, 0, 0, 0)"""
@@ -3170,7 +3170,7 @@ UPDATE monitoringlist SET xtrsrc_id=%s, image_id=%s WHERE monitorid=%s"""
             # the xtrsrc_id from the monitoringlist already
             # points to the original/first point
             query = """\
-INSERT INTO assocxtrsource (xtrsrc_id, xtrsrc, assoc_weight, assoc_distance_arcsec, assoc_lr_method, assoc_r, assoc_lr)
+INSERT INTO assocxtrsource (xtrsrc_id, xtrsrc, assoc_weight, assoc_distance_arcsec, type, assoc_r, loglr)
 VALUES (%s, %s, 0, 0, 0, 0, 0)"""
             try:
                 cursor.execute(query, (xtrsrc_id, xtrsrcid))

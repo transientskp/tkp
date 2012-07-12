@@ -3,7 +3,7 @@ select xtrsrc_id
       ,cast(1 + floor(10 * assoc_distance_arcsec) as integer) as bin_dist 
       ,assoc_distance_arcsec 
       ,assoc_r 
-      ,assoc_lr 
+      ,loglr
   from assoccatsources
       ,extractedsource
       ,image

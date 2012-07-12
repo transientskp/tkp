@@ -59,7 +59,7 @@ def scatter_SoI_X2X(conn,dsid=None,band=None,datapoints=None,pointdist=None,titl
                        "          FROM (SELECT ax1.xtrsrc " + \
                        "                      ,ax1.xtrsrc " + \
                        "                      ,ax1.assoc_distance_arcsec " + \
-                       "                      ,ax1.assoc_lr " + \
+                       "                      ,ax1.loglr " + \
                        "                      ,im2.id " + \
                        "                      ,x2.i_peak " + \
                        "                      ,x2.i_int " + \
@@ -83,10 +83,10 @@ def scatter_SoI_X2X(conn,dsid=None,band=None,datapoints=None,pointdist=None,titl
                        "                   AND ax1.xtrsrc = x2.id " + \
                        "                   AND x1.image = im1.id " + \
                        "                   AND x2.image = im2.id " + \
-                       "                   AND ax1.assoc_lr > -10 " + \
+                       "                   AND ax1.loglr > -10 " + \
                        "                   AND c1.catsrcid = 2071216 " + \
-                       "                   AND (ac2.assoc_lr > -76 " + \
-                       "                        OR ac2.assoc_lr IS NULL " + \
+                       "                   AND (ac2.loglr > -76 " + \
+                       "                        OR ac2.loglr IS NULL " + \
                        "                       ) " + \
                        "                   AND im1.dataset = %s " + \
                        "                   AND im1.band <> 17 " + \

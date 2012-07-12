@@ -462,7 +462,7 @@ def _insert_multiple_crossassocs(conn):
     one we had before. Therefore, we 'swap' the ids.
     """
     #TODO: check where clause, assoccrosscatsources should have entries for 
-    # assoc_lr_method 8 and 9.
+    # type 8 and 9.
 
     try:
         cursor = conn.cursor()
@@ -472,7 +472,7 @@ def _insert_multiple_crossassocs(conn):
           ,assoc_catsrc_id
           ,assoc_distance_arcsec
           ,assoc_r
-          ,assoc_lr_method
+          ,type
           )
           SELECT t.assoc_catsrc_id
                 ,t.catsrc_id
@@ -524,7 +524,7 @@ def _insert_first_of_multiple_crossassocs(conn):
           ,assoc_catsrc_id
           ,assoc_distance_arcsec
           ,assoc_r
-          ,assoc_lr_method
+          ,type
           )
           SELECT assoc_catsrc_id
                 ,assoc_catsrc_id
@@ -685,7 +685,7 @@ def _insert_single_crossassocs(conn):
           ,assoc_catsrc_id
           ,assoc_distance_arcsec
           ,assoc_r
-          ,assoc_lr_method
+          ,type
           )
           SELECT t.catsrc_id
                 ,t.assoc_catsrc_id
@@ -928,7 +928,7 @@ def _insert_new_assocs(conn, zone, ra_min, ra_max, deRuiter_r):
           ,assoc_catsrc_id
           ,assoc_distance_arcsec
           ,assoc_r
-          ,assoc_lr_method
+          ,type
           )
           SELECT s1.catsrc_id as catsrc_id
                 ,s1.catsrc_id as assoc_catsrc_id

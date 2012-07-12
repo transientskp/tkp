@@ -59,11 +59,11 @@ fail)::
     >>> database = tkp.database.database.DataBase()
 
     # Each object type takes a data dictionary on creation, which for newly objects
-    # has some required keys (& values). For a DataSet, this is only 'inname';
+    # has some required keys (& values). For a DataSet, this is only 'description';
     # for an Image, the keys are 'freq_eff', 'freq_bw_', 'taustart_ts',
     # 'tau_time' & 'url'
     # The required values are stored in the the REQUIRED attribute
-    >>> dataset = DataSet(data={'inname': 'a dataset'}, database=database)
+    >>> dataset = DataSet(data={'description': 'a dataset'}, database=database)
 
     # Here, dataset indirectly holds the database connection:
     >>> dataset.database
@@ -296,7 +296,7 @@ class DataSet(DBObject):
 
     TABLE = 'dataset'
     ID = 'id'
-    REQUIRED = ('inname',)
+    REQUIRED = ('description',)
     
     def __init__(self, data=None, database=None, id=None):
         """If id is supplied, the data and image arguments are ignored."""
@@ -324,7 +324,7 @@ class DataSet(DBObject):
         if self._id is None:
             try:
                 self._id = dbu.insert_dataset(self.database.connection,
-                                              self._data['inname'])
+                                              self._data['description'])
             except self.database.Error, e:
                 logging.warn("insertion of DataSet() into the database failed")
                 raise

@@ -107,7 +107,7 @@ class DataBase(object):
 
     def __repr__(self):
         return ("DataBase(host=%s, name=%s, user=%s, password=%s, port=%d, "
-                "autocommit=%s" % (self.host, self.name, self.user,
+                "autocommit=%s)" % (self.host, self.name, self.user,
                 self.password, self.port, self.autocommit))
 
     def connect(self, host=None, name=None, user=None, password=None,
@@ -130,6 +130,7 @@ class DataBase(object):
         kwargs['user'] = user if user else self.user
         kwargs['password'] = password if password else self.password
         kwargs['port'] = port if port else self.port
+        kwargs['autocommit'] = autocommit if autocommit else self.autocommit
         if ENGINE == 'postgresql':  # PostgreSQL doesn't have autocommit
             assert kwargs['autocommit'] is False 
         self.connection = engine.connect(**kwargs)

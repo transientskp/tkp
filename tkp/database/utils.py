@@ -21,7 +21,6 @@ AUTOCOMMIT = config['database']['autocommit']
 DERUITER_R = config['source_association']['deruiter_radius']
 BG_DENSITY = config['source_association']['bg-density']
 
-
 def insert_dataset(conn, description):
     """Insert dataset with discription as given by argument.
 
@@ -104,129 +103,58 @@ def load_LSM(conn, ira_min, ira_max, idecl_min, idecl_max, cat1="NVSS", cat2="VL
     finally:
         cursor.close()
 
-
-# The following set of functions are private to the module
-# these are called by insert_extracted_sources(), and should
-# only be used that way
-def _empty_detections(conn):
-    """Empty the detections table
-
-    Initialize the detections table by
-    deleting all entries.
-
-    It is used at the beginning and the end
-    when detected sources are inserted.
-    """
-
-    try:
-        cursor = conn.cursor()
-        query = """\
-        DELETE FROM detections
-        """
-        cursor.execute(query)
-        if not AUTOCOMMIT:
-            conn.commit()
-    except db.Error, e:
-        logging.warn("Failed on query nr %s." % query)
-        raise
-    finally:
-        cursor.close()
-
-
-def _insert_into_detections(conn, results):
-    """Insert all detections
-
-    Insert all detections, as they are,
-    straight into the detection table.
-
-    """
-
-    # TODO: COPY INTO is faster.
-    if not results:
-        return
-    try:
-        query = [str(tuple(det)) for det in results]
-        query = "INSERT INTO detections VALUES " + ",".join(query)
-        conn.cursor().execute(query)
-        if not AUTOCOMMIT:
-            conn.commit()
-    except db.Error, e:
-        logging.warn("Failed on query nr %s." % query)
-        raise
-    finally:
-        conn.cursor().close()
-
-
-def _insert_extractedsources(conn, image_id):
+def _insert_extractedsources(conn, image_id, results):
     """Insert all extracted sources with their properties
 
-    Insert all detected sources and some derived properties into the
-    extractedsource table.
+    For all extracted sources additional parameters are calculated,
+    and appended to the sourcefinder data. Appended and converted are:
+    - the image id to which the extracted sources belong to 
+    - the zone in which an extracted source falls is calculated, based 
+      on its declination. We adopt a zoneheight of 1 degree, so
+      the floor of the declination represents the zone.
+    - the positional errors are converted from degrees to arcsecs
+    - the Cartesian coordinates of the source position
 
     """
+    xtrsrc = []
+    for src in results:
+        r = list(src)
+        r[2] = r[2] * 3600. # ra_err converted to arcsec
+        r[3] = r[3] * 3600. # decl_err is converted to arcsec
+        r.append(image_id) # id of the image
+        r.append(int(math.floor(r[1]))) # zone
+        r.append(math.cos(math.radians(r[1])) * math.cos(math.radians(r[0]))) # Cartesian x
+        r.append(math.cos(math.radians(r[1])) * math.sin(math.radians(r[0]))) # Cartesian y
+        r.append(math.sin(math.radians(r[1]))) # Cartesian z
+        xtrsrc.append(r)
+    values = [str(tuple(xsrc)) for xsrc in xtrsrc]
 
     cursor = conn.cursor()
     try:
         query = """\
         INSERT INTO extractedsource
-          (image_id
-          ,zone
-          ,ra
+          (ra
           ,decl
           ,ra_err
           ,decl_err
+          ,f_peak
+          ,f_peak_err
+          ,f_int
+          ,f_int_err
+          ,det_sigma
           ,semimajor
           ,semiminor
           ,pa
+          ,image
+          ,zone
           ,x
           ,y
           ,z
-          ,det_sigma
-          ,I_peak
-          ,I_peak_err
-          ,I_int
-          ,I_int_err
           )
-          SELECT image_id
-                ,t0.zone
-                ,ra
-                ,decl
-                ,ra_err
-                ,decl_err
-                ,semimajor
-                ,semiminor
-                ,pa
-                ,x
-                ,y
-                ,z
-                ,det_sigma
-                ,I_peak
-                ,I_peak_err
-                ,I_int
-                ,I_int_err
-           FROM (SELECT %s AS image_id
-                       ,CAST(FLOOR(ldecl) AS INTEGER) AS zone
-                       ,lra AS ra
-                       ,ldecl AS decl
-                       ,lra_err * 3600 AS ra_err
-                       ,ldecl_err * 3600 AS decl_err
-                       ,lsemimajor as semimajor
-                       ,lsemiminor as semiminor
-                       ,lpa as pa
-                       ,COS(RADIANS(ldecl)) * COS(RADIANS(lra)) AS x
-                       ,COS(RADIANS(ldecl)) * SIN(RADIANS(lra)) AS y
-                       ,SIN(RADIANS(ldecl)) AS z
-                       ,ldet_sigma AS det_sigma
-                       ,lI_peak AS I_peak 
-                       ,lI_peak_err AS I_peak_err
-                       ,lI_int AS I_int
-                       ,lI_int_err AS I_int_err
-                   FROM detections
-                ) t0
-/*               ,node n
-          WHERE n.zone = t0.zone */
-        """
-        cursor.execute(query, (image_id,))
+        VALUES
+        """\
+        + ",".join(values)
+        cursor.execute(query)
         if not AUTOCOMMIT:
             conn.commit()
     except db.Error, e:
@@ -257,10 +185,10 @@ def insert_extracted_sources(conn, image_id, results):
     #To do: Figure out a saner method of passing the results around
     # (Namedtuple for starters?) 
 
-    _empty_detections(conn)
-    _insert_into_detections(conn, results)
-    _insert_extractedsources(conn, image_id)
-    _empty_detections(conn)
+    #_empty_detections(conn)
+    #_insert_into_detections(conn, results)
+    _insert_extractedsources(conn, image_id, results)
+    #_empty_detections(conn)
 
 
 # The following set of functions are private to the module;
@@ -320,6 +248,7 @@ INSERT INTO temprunningcatalog
   ,xtrsrc
   ,dataset
   ,band
+  ,stokes
   ,datapoints
   ,zone
   ,wm_ra
@@ -333,18 +262,19 @@ INSERT INTO temprunningcatalog
   ,x
   ,y
   ,z
-  ,avg_I_peak
+  /*,avg_I_peak
   ,avg_I_peak_sq
   ,avg_weight_peak
   ,avg_weighted_I_peak
-  ,avg_weighted_I_peak_sq
+  ,avg_weighted_I_peak_sq*/
   )
   SELECT t0.runcat
         ,t0.xtrsrc
         ,t0.dataset
         ,t0.band
+        ,t0.stokes
         ,t0.datapoints
-        ,CAST(FLOOR(t0.wm_decl/1.0) AS INTEGER)
+        ,CAST(FLOOR(t0.wm_decl) AS INTEGER)
         ,t0.wm_ra
         ,t0.wm_decl
         ,t0.wm_ra_err
@@ -356,15 +286,16 @@ INSERT INTO temprunningcatalog
         ,COS(RADIANS(t0.wm_decl)) * COS(RADIANS(t0.wm_ra))
         ,COS(RADIANS(t0.wm_decl)) * SIN(RADIANS(t0.wm_ra))
         ,SIN(RADIANS(t0.wm_decl))
-        ,t0.avg_I_peak
+        /*,t0.avg_I_peak
         ,t0.avg_I_peak_sq
         ,t0.avg_weight_peak
         ,t0.avg_weighted_I_peak
-        ,t0.avg_weighted_I_peak_sq
+        ,t0.avg_weighted_I_peak_sq*/
     FROM (SELECT runcat.id as runcat
                 ,x0.id as xtrsrc
                 ,image.dataset
                 ,image.band
+                ,image.stokes
                 ,runcat.datapoints + 1 AS datapoints
                 ,((datapoints * runcat.avg_wra + x0.ra /
                   (x0.ra_err * x0.ra_err)) / (datapoints + 1))
@@ -399,7 +330,7 @@ INSERT INTO temprunningcatalog
                 ,(datapoints * runcat.avg_weight_decl + 1 /
                   (x0.decl_err * x0.decl_err))
                  / (datapoints + 1) AS avg_weight_decl
-                ,(datapoints * runcat.avg_I_peak + x0.I_peak)
+                /*,(datapoints * runcat.avg_I_peak + x0.I_peak)
                  / (datapoints + 1)
                  AS avg_I_peak
                 ,(datapoints * runcat.avg_I_peak_sq +
@@ -417,24 +348,24 @@ INSERT INTO temprunningcatalog
                 ,(datapoints * runcat.avg_weighted_I_peak_sq
                   + (x0.I_peak * x0.I_peak) /
                      (x0.I_peak_err * x0.I_peak_err))
-                 / (datapoints + 1) AS avg_weighted_I_peak_sq
+                 / (datapoints + 1) AS avg_weighted_I_peak_sq*/
             FROM runningcatalog runcat
                 ,extractedsource x0
                 ,image
-           WHERE x0.image = %s
+           WHERE image.id = %s
              AND x0.image = image.id
              AND image.dataset = runcat.dataset
-             AND rc.zone BETWEEN CAST(FLOOR(x0.decl - 0.025) as INTEGER)
-                             AND CAST(FLOOR(x0.decl + 0.025) as INTEGER)
-             AND rc.wm_decl BETWEEN x0.decl - 0.025
-                                AND x0.decl + 0.025
-             AND rc.wm_ra BETWEEN x0.ra - alpha(0.025,x0.decl)
-                              AND x0.ra + alpha(0.025,x0.decl)
-             AND SQRT(  (x0.ra * COS(RADIANS(x0.decl)) - rc.wm_ra * COS(RADIANS(rc.wm_decl)))
-                      * (x0.ra * COS(RADIANS(x0.decl)) - rc.wm_ra * COS(RADIANS(rc.wm_decl)))
-                      / (x0.ra_err * x0.ra_err + rc.wm_ra_err * rc.wm_ra_err)
-                     + (x0.decl - rc.wm_decl) * (x0.decl - rc.wm_decl)
-                      / (x0.decl_err * x0.decl_err + rc.wm_decl_err * rc.wm_decl_err)
+             AND runcat.zone BETWEEN CAST(FLOOR(x0.decl - 0.025) as INTEGER)
+                                 AND CAST(FLOOR(x0.decl + 0.025) as INTEGER)
+             AND runcat.wm_decl BETWEEN x0.decl - 0.025
+                                    AND x0.decl + 0.025
+             AND runcat.wm_ra BETWEEN x0.ra - alpha(0.025, x0.decl)
+                                  AND x0.ra + alpha(0.025, x0.decl)
+             AND SQRT(  (x0.ra * COS(RADIANS(x0.decl)) - runcat.wm_ra * COS(RADIANS(runcat.wm_decl)))
+                      * (x0.ra * COS(RADIANS(x0.decl)) - runcat.wm_ra * COS(RADIANS(runcat.wm_decl)))
+                      / (x0.ra_err * x0.ra_err + runcat.wm_ra_err * runcat.wm_ra_err)
+                     + (x0.decl - runcat.wm_decl) * (x0.decl - runcat.wm_decl)
+                      / (x0.decl_err * x0.decl_err + runcat.wm_decl_err * runcat.wm_decl_err)
                      ) < %s
          ) t0
 """
@@ -451,8 +382,8 @@ INSERT INTO temprunningcatalog
 def _flag_multiple_counterparts_in_runningcatalog(conn):
     """Flag source with multiple associations
 
-    Before we continue, we first take care of the sources that have
-    multiple associations in both directions.
+    Before we continue, we first take care of the many-to-many associations:
+    sources that have multiple associations in both directions.
 
     -1- running-catalogue sources  <- extracted source
 
@@ -1135,6 +1066,7 @@ def associate_extracted_sources(conn, image_id, deRuiter_r=DERUITER_R):
 
     _empty_temprunningcatalog(conn)
     _insert_temprunningcatalog(conn, image_id, deRuiter_r)
+    #sys.exit()
     _flag_multiple_counterparts_in_runningcatalog(conn)
     _insert_multiple_assocs(conn)
     _insert_first_of_assocs(conn)

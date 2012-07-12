@@ -16,7 +16,7 @@ class TestSourceAssociation(unittest.TestCase):
     def setUp(self):
     
         self.database = tkpdb.DataBase()
-        self.dataset = tkpdb.DataSet(data={'inname':"Source assoc. test"},
+        self.dataset = tkpdb.DataSet(data={'description':"Source assoc. test"},
                                                     database = self.database)
         
         self.im_params = db_subs.example_dbimage_datasets(n_images=8)
@@ -136,7 +136,7 @@ class TestMonitoringlistFunctionality(unittest.TestCase):
     def setUp(self):
         import datetime
         self.database = tkpdb.DataBase()
-        self.dataset = tkpdb.DataSet(data={'inname':"Test Dataset"},
+        self.dataset = tkpdb.DataSet(data={'description':"Test Dataset"},
                                                     database = self.database)
 
         self.n_images = 8                
@@ -209,7 +209,7 @@ class TestMonitoringlistFunctionality(unittest.TestCase):
 #        import monetdb
 #        import datetime
 #        from operator import attrgetter, itemgetter
-#        dataset = DataSet(data={'inname': 'dataset with images'},
+#        dataset = DataSet(data={'description': 'dataset with images'},
 #                          database=self.database)
 #        # create 4 images, separated by one day each
 #        images = [

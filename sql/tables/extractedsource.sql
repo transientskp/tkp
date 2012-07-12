@@ -23,7 +23,6 @@ CREATE TABLE extractedsource
   ,nodes TINYINT NOT NULL DEFAULT %NODES%
   ,PRIMARY KEY (id)
   ,FOREIGN KEY (image) REFERENCES image (id)
-
   )
 ;
 

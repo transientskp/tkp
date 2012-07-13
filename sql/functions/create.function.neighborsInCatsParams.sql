@@ -7,7 +7,7 @@ CREATE FUNCTION neighborsInCatsParams(ira DOUBLE
                                      ) RETURNS TABLE (id INT
                                                      ,name VARCHAR(50)
                                                      ,catsrcname VARCHAR(120)
-                                                     ,band INT
+                                                     ,band SMALLINT
                                                      ,freq_eff DOUBLE
                                                      ,ra DOUBLE
                                                      ,decl DOUBLE

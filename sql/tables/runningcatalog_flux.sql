@@ -1,6 +1,6 @@
 CREATE TABLE runningcatalog_flux
   (runcat INT NOT NULL
-  ,band INT NOT NULL
+  ,band SMALLINT NOT NULL
   ,stokes TINYINT NOT NULL DEFAULT 1
   ,f_datapoints INT NOT NULL
   ,resolution DOUBLE NULL
@@ -14,7 +14,7 @@ CREATE TABLE runningcatalog_flux
   ,avg_f_int_weight DOUBLE NULL
   ,avg_weighted_f_int DOUBLE NULL
   ,avg_weighted_f_int_sq DOUBLE NULL
-  ,PRIMARY KEY (runcat_id
+  ,PRIMARY KEY (runcat
                ,band
                ,stokes
                )

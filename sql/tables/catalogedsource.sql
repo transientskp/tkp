@@ -9,7 +9,7 @@ CREATE TABLE catalogedsource
   ,orig_catsrcid INT NOT NULL
   ,catsrcname VARCHAR(120) NULL
   ,tau INT NULL
-  ,band INT NOT NULL
+  ,band SMALLINT NOT NULL
   ,stokes TINYINT NOT NULL DEFAULT 1 
   ,freq_eff DOUBLE NOT NULL
   ,zone INT NOT NULL

@@ -11,6 +11,7 @@ tables/extractedsource.sql
 tables/assoccatsource.sql
 tables/runningcatalog.sql
 tables/assocxtrsource.sql
+tables/runningcatalog_flux.sql
 tables/temprunningcatalog.sql
 tables/node.sql
 tables/monitoringlist.sql

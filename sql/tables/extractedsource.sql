@@ -9,6 +9,7 @@ CREATE TABLE extractedsource
   ,x DOUBLE NOT NULL
   ,y DOUBLE NOT NULL
   ,z DOUBLE NOT NULL
+  ,racosdecl DOUBLE NOT NULL
   ,margin BOOLEAN NOT NULL DEFAULT 0
   ,det_sigma DOUBLE NOT NULL
   ,semimajor DOUBLE NULL

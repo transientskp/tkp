@@ -30,7 +30,7 @@ BEGIN
 
   DECLARE iimageid INT;
   DECLARE oimageid INT;
-  DECLARE iband INT;
+  DECLARE iband SMALLINT;
   DECLARE itau INT;
   DECLARE itau_time DOUBLE;
 

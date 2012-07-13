@@ -5,7 +5,7 @@ CREATE TABLE temprunningcatalog
   (runcat INT NOT NULL
   ,xtrsrc INT NOT NULL
   ,dataset INT NOT NULL
-  ,band INT NOT NULL
+  ,band SMALLINT NOT NULL
   ,stokes TINYINT NOT NULL DEFAULT 1
   ,datapoints INT NOT NULL
   ,zone INT NOT NULL
@@ -24,9 +24,10 @@ CREATE TABLE temprunningcatalog
   ,beam_semimaj DOUBLE NULL
   ,beam_semimin DOUBLE NULL
   ,beam_pa DOUBLE NULL
+  ,f_datapoints INT NULL
   ,avg_f_peak DOUBLE NULL
   ,avg_f_peak_sq DOUBLE NULL
-  ,avg_weight_peak DOUBLE NULL
+  ,avg_f_peak_weight DOUBLE NULL
   ,avg_weighted_f_peak DOUBLE NULL
   ,avg_weighted_f_peak_sq DOUBLE NULL
   ,FOREIGN KEY (runcat) REFERENCES runningcatalog (id)

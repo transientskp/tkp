@@ -1,10 +1,11 @@
 --DROP FUNCTION getBand;
 
-CREATE FUNCTION getBand(ifreq_eff DOUBLE) RETURNS INT
+CREATE FUNCTION getBand(ifreq_eff DOUBLE) RETURNS SMALLINT
 
 BEGIN
   
-  DECLARE nfreqbandid, ifreqbandid, ofreqbandid INT;
+  DECLARE nfreqbandid INT;
+  DECLARE ifreqbandid, ofreqbandid SMALLINT;
   DECLARE ibandwidth DOUBLE;
 
   /* For now, we default the bandwidth of a new band to 10MHz */

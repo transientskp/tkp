@@ -4,8 +4,8 @@ CREATE TABLE image
   (id INT NOT NULL DEFAULT NEXT VALUE FOR seq_image
   ,dataset INT NOT NULL
   ,tau INT NULL
-  ,band INT NOT NULL
-  ,stokes CHAR(1) NOT NULL DEFAULT 'I'
+  ,band SMALLINT NOT NULL
+  ,stokes TINYINT NOT NULL DEFAULT 1
   ,tau_time DOUBLE NULL
   ,freq_eff DOUBLE NOT NULL
   ,freq_bw DOUBLE NULL

@@ -59,7 +59,7 @@ class monitoringlist(LOFARnodeTCP):
                     # Filter out the bad ones, and combines with xtrsrc_ids
                     results = [(source[2], source[3], result.serialize()) for source, result in
                                zip(sources, results) if result is not None]
-                    db_image.insert_monitoring_sources(results)
+                    db_image.insert_monitored_sources(results)
                 
         return 0
 

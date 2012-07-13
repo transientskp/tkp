@@ -30,7 +30,7 @@ db_autocommit = config['database']['autocommit']
 
 basedir = config['test']['datapath']
 imagesdir = basedir + '/fits'
-regionfilesdir = '/regions'
+regionfilesdir = basedir + '/regions'
 
 try:
     db = database.DataBase(host=db_host, name=db_dbase, user=db_user, password=db_passwd, port=db_port, autocommit=db_autocommit)
@@ -63,7 +63,7 @@ try:
         dbu.associate_extracted_sources(db.connection, dbimg.id)
         dbu.associate_with_catalogedsources(db.connection, dbimg.id)
         print "xtrsrc: ", reg.extractedsourcesInImage(db.connection, dbimg.id, regionfilesdir)
-        print "assoccatsrc: ", reg.assoccatsourcesInImage(db.connection, dbimg.id, regionfilesdir)
+        #print "assoccatsrc: ", reg.assoccatsourcesInImage(db.connection, dbimg.id, regionfilesdir)
         #print dbu.detect_variable_sources(db.connection, dataset.id, 0.1, 4)
         my_image.clearcache()
         i += 1

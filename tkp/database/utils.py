@@ -14,8 +14,8 @@ import logging
 import monetdb.sql as db
 from tkp.config import config
 # To do: any way we can get rid of this dependency?
-from tkp.sourcefinder.extract import Detection
-from .database import ENGINE
+#from tkp.sourcefinder.extract import Detection
+#from .database import ENGINE
 
 AUTOCOMMIT = config['database']['autocommit']
 DERUITER_R = config['source_association']['deruiter_radius']
@@ -83,29 +83,14 @@ def insert_image(conn, dataset,
         cursor.close()
     return newimgid
 
-
-def load_LSM(conn, ira_min, ira_max, idecl_min, idecl_max, cat1="NVSS", cat2="VLSS", cat3="WENSS"):
-    #raise NotImplementedError
-
-    try:
-        cursor = conn.cursor()
-        query = """\
-        CALL LoadLSM(%s, %s, %s, %s, %s, %s, %s)
-        /*CALL LoadLSM(47, 59, 50, 58, 'NVSS', 'VLSS', 'WENSS')*/
-        """
-        cursor.execute(query, (ira_min,ira_max,idecl_min,idecl_max,cat1,cat2,cat3))
-        #cursor.execute(query)
-        if not AUTOCOMMIT:
-            conn.commit()
-    except db.Error, e:
-        logging.warn("Failed to insert lsm by procedure LoadLSM: %s" % e)
-        raise
-    finally:
-        cursor.close()
-
 def _insert_extractedsources(conn, image_id, results):
     """Insert all extracted sources with their properties
 
+    The content of results is in the following sequence:
+    (ra, dec, ra_err, dec_err, peak_flux, peak_flux_err, 
+    int_flux, int_flux_err, significance level,
+    beam major width (as), beam minor width(as), beam parallactic angle).
+    
     For all extracted sources additional parameters are calculated,
     and appended to the sourcefinder data. Appended and converted are:
     - the image id to which the extracted sources belong to 
@@ -114,6 +99,8 @@ def _insert_extractedsources(conn, image_id, results):
       the floor of the declination represents the zone.
     - the positional errors are converted from degrees to arcsecs
     - the Cartesian coordinates of the source position
+    - ra * cos(radians(decl)), this is very often being used in 
+      source-distance calculations
 
     """
     xtrsrc = []
@@ -126,6 +113,7 @@ def _insert_extractedsources(conn, image_id, results):
         r.append(math.cos(math.radians(r[1])) * math.cos(math.radians(r[0]))) # Cartesian x
         r.append(math.cos(math.radians(r[1])) * math.sin(math.radians(r[0]))) # Cartesian y
         r.append(math.sin(math.radians(r[1]))) # Cartesian z
+        r.append(r[0] * math.cos(math.radians(r[1]))) # ra * cos(radias(decl))
         xtrsrc.append(r)
     values = [str(tuple(xsrc)) for xsrc in xtrsrc]
 
@@ -150,6 +138,7 @@ def _insert_extractedsources(conn, image_id, results):
           ,x
           ,y
           ,z
+          ,racosdecl
           )
         VALUES
         """\
@@ -169,27 +158,9 @@ def insert_extracted_sources(conn, image_id, results):
 
     Insert the sources that were detected by the Source Extraction
     procedures into the extractedsource table.
-
-    Therefore, we use a temporary table containing the "raw" detections,
-    from which the sources will then be inserted into extractedsource.
-    
-    (ra, dec,
-    ra_err, dec_err, 
-    peak, peak_err, 
-    flux, flux_err,
-    significance level,
-    beam major width (as), beam minor width(as),
-    beam parallactic angle).
     """
     
-    #To do: Figure out a saner method of passing the results around
-    # (Namedtuple for starters?) 
-
-    #_empty_detections(conn)
-    #_insert_into_detections(conn, results)
     _insert_extractedsources(conn, image_id, results)
-    #_empty_detections(conn)
-
 
 # The following set of functions are private to the module;
 # these are called by associate_extracted_sources, and should
@@ -240,8 +211,6 @@ def _insert_temprunningcatalog(conn, image_id, deRuiter_r):
 
     try:
         cursor = conn.cursor()
-        # !!TODO!!: Add columns for previous weighted averaged values,
-        # otherwise the assoc_r will be biased.
         query = """\
 INSERT INTO temprunningcatalog
   (runcat
@@ -262,11 +231,17 @@ INSERT INTO temprunningcatalog
   ,x
   ,y
   ,z
-  /*,avg_I_peak
-  ,avg_I_peak_sq
-  ,avg_weight_peak
-  ,avg_weighted_I_peak
-  ,avg_weighted_I_peak_sq*/
+  ,f_datapoints
+  /*,avg_f_peak
+  ,avg_f_peak_sq
+  ,avg_f_peak_weight
+  ,avg_weighted_f_peak
+  ,avg_weighted_f_peak_sq
+  ,avg_f_int
+  ,avg_f_int_sq
+  ,avg_f_int_weight
+  ,avg_weighted_f_int
+  ,avg_weighted_f_int_sq*/
   )
   SELECT t0.runcat
         ,t0.xtrsrc
@@ -286,86 +261,81 @@ INSERT INTO temprunningcatalog
         ,COS(RADIANS(t0.wm_decl)) * COS(RADIANS(t0.wm_ra))
         ,COS(RADIANS(t0.wm_decl)) * SIN(RADIANS(t0.wm_ra))
         ,SIN(RADIANS(t0.wm_decl))
+        ,CASE WHEN t0.f_datapoints IS NULL
+              THEN 0 
+              ELSE f_datapoints
+         END AS f_datapoints
         /*,t0.avg_I_peak
         ,t0.avg_I_peak_sq
         ,t0.avg_weight_peak
         ,t0.avg_weighted_I_peak
         ,t0.avg_weighted_I_peak_sq*/
-    FROM (SELECT runcat.id as runcat
+    FROM (SELECT rc0.id as runcat
                 ,x0.id as xtrsrc
                 ,image.dataset
                 ,image.band
                 ,image.stokes
-                ,runcat.datapoints + 1 AS datapoints
-                ,((datapoints * runcat.avg_wra + x0.ra /
+                ,rc0.datapoints + 1 AS datapoints
+                ,((datapoints * rc0.avg_wra + x0.ra /
                   (x0.ra_err * x0.ra_err)) / (datapoints + 1))
                  /
-                 ((datapoints * runcat.avg_weight_ra + 1 /
+                 ((datapoints * rc0.avg_weight_ra + 1 /
                    (x0.ra_err * x0.ra_err)) / (datapoints + 1))
                  AS wm_ra
-                ,((datapoints * runcat.avg_wdecl + x0.decl /
+                ,((datapoints * rc0.avg_wdecl + x0.decl /
                   (x0.decl_err * x0.decl_err)) / (datapoints + 1))
                  /
-                 ((datapoints * runcat.avg_weight_decl + 1 /
+                 ((datapoints * rc0.avg_weight_decl + 1 /
                    (x0.decl_err * x0.decl_err)) / (datapoints + 1))
                  AS wm_decl
                 ,SQRT(1 / ((datapoints + 1) *
-                  ((datapoints * runcat.avg_weight_ra +
+                  ((datapoints * rc0.avg_weight_ra +
                     1 / (x0.ra_err * x0.ra_err)) / (datapoints + 1))
                           )
                      ) AS wm_ra_err
                 ,SQRT(1 / ((datapoints + 1) *
-                  ((datapoints * runcat.avg_weight_decl +
+                  ((datapoints * rc0.avg_weight_decl +
                     1 / (x0.decl_err * x0.decl_err)) / (datapoints + 1))
                           )
                      ) AS wm_decl_err
-                ,(datapoints * runcat.avg_wra + x0.ra / (x0.ra_err * x0.ra_err))
+                ,(datapoints * rc0.avg_wra + x0.ra / (x0.ra_err * x0.ra_err))
                  / (datapoints + 1) AS avg_wra
-                ,(datapoints * runcat.avg_wdecl + x0.decl /
+                ,(datapoints * rc0.avg_wdecl + x0.decl /
                   (x0.decl_err * x0.decl_err))
                  / (datapoints + 1) AS avg_wdecl
-                ,(datapoints * runcat.avg_weight_ra + 1 /
+                ,(datapoints * rc0.avg_weight_ra + 1 /
                   (x0.ra_err * x0.ra_err))
                  / (datapoints + 1) AS avg_weight_ra
-                ,(datapoints * runcat.avg_weight_decl + 1 /
+                ,(datapoints * rc0.avg_weight_decl + 1 /
                   (x0.decl_err * x0.decl_err))
                  / (datapoints + 1) AS avg_weight_decl
-                /*,(datapoints * runcat.avg_I_peak + x0.I_peak)
-                 / (datapoints + 1)
-                 AS avg_I_peak
-                ,(datapoints * runcat.avg_I_peak_sq +
-                  x0.I_peak * x0.I_peak)
-                 / (datapoints + 1)
-                 AS avg_I_peak_sq
-                ,(datapoints * runcat.avg_weight_peak + 1 /
-                  (x0.I_peak_err * x0.I_peak_err))
-                 / (datapoints + 1)
-                 AS avg_weight_peak
-                ,(datapoints * runcat.avg_weighted_I_peak + x0.I_peak /
-                  (x0.I_peak_err * x0.I_peak_err))
-                 / (datapoints + 1)
-                 AS avg_weighted_I_peak
-                ,(datapoints * runcat.avg_weighted_I_peak_sq
-                  + (x0.I_peak * x0.I_peak) /
-                     (x0.I_peak_err * x0.I_peak_err))
-                 / (datapoints + 1) AS avg_weighted_I_peak_sq*/
-            FROM runningcatalog runcat
+                ,f_datapoints
+                /*,x0.f_peak
+                ,x0.f_peak_err
+                ,x0.f_int
+                ,x0.f_int_err*/
+            FROM runningcatalog rc0
+                 LEFT OUTER JOIN runningcatalog_flux rf0
+                 ON rc0.id = rf0.runcat
                 ,extractedsource x0
                 ,image
            WHERE image.id = %s
              AND x0.image = image.id
-             AND image.dataset = runcat.dataset
-             AND runcat.zone BETWEEN CAST(FLOOR(x0.decl - 0.025) as INTEGER)
+             AND image.dataset = rc0.dataset
+             AND rf0.runcat = rc0.id
+             AND rf0.band = image.band
+             AND rf0.stokes = image.stokes
+             AND rc0.zone BETWEEN CAST(FLOOR(x0.decl - 0.025) as INTEGER)
                                  AND CAST(FLOOR(x0.decl + 0.025) as INTEGER)
-             AND runcat.wm_decl BETWEEN x0.decl - 0.025
+             AND rc0.wm_decl BETWEEN x0.decl - 0.025
                                     AND x0.decl + 0.025
-             AND runcat.wm_ra BETWEEN x0.ra - alpha(0.025, x0.decl)
+             AND rc0.wm_ra BETWEEN x0.ra - alpha(0.025, x0.decl)
                                   AND x0.ra + alpha(0.025, x0.decl)
-             AND SQRT(  (x0.ra * COS(RADIANS(x0.decl)) - runcat.wm_ra * COS(RADIANS(runcat.wm_decl)))
-                      * (x0.ra * COS(RADIANS(x0.decl)) - runcat.wm_ra * COS(RADIANS(runcat.wm_decl)))
-                      / (x0.ra_err * x0.ra_err + runcat.wm_ra_err * runcat.wm_ra_err)
-                     + (x0.decl - runcat.wm_decl) * (x0.decl - runcat.wm_decl)
-                      / (x0.decl_err * x0.decl_err + runcat.wm_decl_err * runcat.wm_decl_err)
+             AND SQRT(  (x0.ra * COS(RADIANS(x0.decl)) - rc0.wm_ra * COS(RADIANS(rc0.wm_decl)))
+                      * (x0.ra * COS(RADIANS(x0.decl)) - rc0.wm_ra * COS(RADIANS(rc0.wm_decl)))
+                      / (x0.ra_err * x0.ra_err + rc0.wm_ra_err * rc0.wm_ra_err)
+                     + (x0.decl - rc0.wm_decl) * (x0.decl - rc0.wm_decl)
+                      / (x0.decl_err * x0.decl_err + rc0.wm_decl_err * rc0.wm_decl_err)
                      ) < %s
          ) t0
 """
@@ -387,91 +357,90 @@ def _flag_multiple_counterparts_in_runningcatalog(conn):
 
     -1- running-catalogue sources  <- extracted source
 
-    We do not yet handle the case where two or more extractedsource have
-    the same counterparts (i.e. two or more) in the runningcatalog.
+    NOTE: We do not yet handle the case where two or more extractedsource have
+    the same counterparts (i.e. two or more) in the runningcatalog,
+    the so-called many-to-many association.
     
-    Here we filter on single extracted sources that have multiple counterparts in the running
-    catalogue. 
-    When more than one extracted source has the same 
-    We only keep the ones with the lowest deRuiter_r
-    value, the rest we throw away.
+    What we do is filtering on single extracted sources that have 
+    multiple counterparts in the running catalogue, 
+    i.e. the many-to-one associations.
 
-    NOTE:
+    For now, we only keep the extractedsource that has 
+    the lowest De Ruiter radius, the other pairs will be thrown away.
 
-    It is worth considering whether this might be changed to selecting
+    NOTES & TODO:
+    1. The calculation of min_r1 and r1 is an approximation.
+    2. It is worth considering whether this might be changed to selecting
     the brightest neighbour source, instead of just the closest
     neighbour.
-
     (There are case [when flux_lim > 10Jy] that the nearest source has
     a lower flux level, causing unexpected spectral indices)
+    3. TODO: We should not throw away those outlier pairs, but flag
+    them as such in temprunningcatag.
     """
 
     try:
         cursor = conn.cursor()
         query = """\
-        SELECT t1.xtrsrc
-              ,t1.xtrsrc
-          FROM (SELECT trc0.xtrsrc
-                      ,MIN(SQRT((x0.ra - rc0.wm_ra) * COS(RADIANS(x0.decl))
-                                * (x0.ra - rc0.wm_ra) * COS(RADIANS(x0.decl))
-                                / (x0.ra_err * x0.ra_err + rc0.wm_ra_err *
-                                   rc0.wm_ra_err)
-                               + (x0.decl - rc0.wm_decl) *
-                                 (x0.decl - rc0.wm_decl)
-                                / (x0.decl_err * x0.decl_err +
-                                   rc0.wm_decl_err * rc0.wm_decl_err)
-                               )
-                          ) AS min_r1
-                  FROM temprunningcatalog trc0
-                      ,runningcatalog rc0
-                      ,extractedsource x0
-                 WHERE trc0.xtrsrc IN (SELECT xtrsrc
-                                                 FROM temprunningcatalog
-                                               GROUP BY xtrsrc
-                                               HAVING COUNT(*) > 1
-                                              )
-                   AND trc0.xtrsrc = rc0.xtrsrc
-                   AND trc0.xtrsrc = x0.id
-                GROUP BY trc0.xtrsrc
-               ) t0
-              ,(SELECT trc1.xtrsrc
-                      ,trc1.xtrsrc
-                      ,SQRT( (x1.ra - rc1.wm_ra) * COS(RADIANS(x1.decl))
-                            *(x1.ra - rc1.wm_ra) * COS(RADIANS(x1.decl))
-                            / (x1.ra_err * x1.ra_err +
-                               rc1.wm_ra_err * rc1.wm_ra_err)
-                           + (x1.decl - rc1.wm_decl) * (x1.decl - rc1.wm_decl)
-                             / (x1.decl_err * x1.decl_err + rc1.wm_decl_err *
-                                rc1.wm_decl_err)
-                           ) AS r1
-                  FROM temprunningcatalog trc1
-                      ,runningcatalog rc1
-                      ,extractedsource x1
-                 WHERE trc1.xtrsrc IN (SELECT xtrsrc
-                                                 FROM temprunningcatalog
-                                               GROUP BY xtrsrc
-                                               HAVING COUNT(*) > 1
-                                              )
-                   AND trc1.xtrsrc = rc1.xtrsrc
-                   AND trc1.xtrsrc = x1.id
-               ) t1
-         WHERE t1.xtrsrc = t0.xtrsrc
-           AND t1.r1 > t0.min_r1
-        """
+SELECT t1.runcat
+      ,t1.xtrsrc
+  FROM (SELECT trc0.xtrsrc
+              ,MIN(SQRT(  (x0.ra - rc0.wm_ra) * COS(RADIANS(x0.decl))
+                        * (x0.ra - rc0.wm_ra) * COS(RADIANS(x0.decl))
+                          / (x0.ra_err * x0.ra_err + rc0.wm_ra_err * rc0.wm_ra_err)
+                       +  (x0.decl - rc0.wm_decl) * (x0.decl - rc0.wm_decl)
+                          / (x0.decl_err * x0.decl_err + rc0.wm_decl_err * rc0.wm_decl_err)
+                       )
+                  ) AS min_r1
+          FROM temprunningcatalog trc0
+              ,runningcatalog rc0
+              ,extractedsource x0
+         WHERE trc0.xtrsrc IN (SELECT xtrsrc
+                                 FROM temprunningcatalog
+                               GROUP BY xtrsrc
+                               HAVING COUNT(*) > 1
+                              )
+           AND trc0.runcat = rc0.id
+           AND trc0.xtrsrc = x0.id
+        GROUP BY trc0.xtrsrc
+       ) t0
+      ,(SELECT trc1.runcat
+              ,trc1.xtrsrc
+              ,SQRT(  (x1.ra - rc1.wm_ra) * COS(RADIANS(x1.decl))
+                    * (x1.ra - rc1.wm_ra) * COS(RADIANS(x1.decl))
+                      / (x1.ra_err * x1.ra_err + rc1.wm_ra_err * rc1.wm_ra_err)
+                   +  (x1.decl - rc1.wm_decl) * (x1.decl - rc1.wm_decl)
+                      / (x1.decl_err * x1.decl_err + rc1.wm_decl_err * rc1.wm_decl_err)
+                   ) AS r1
+          FROM temprunningcatalog trc1
+              ,runningcatalog rc1
+              ,extractedsource x1
+         WHERE trc1.xtrsrc IN (SELECT xtrsrc
+                                 FROM temprunningcatalog
+                               GROUP BY xtrsrc
+                               HAVING COUNT(*) > 1
+                              )
+           AND trc1.runcat = rc1.id
+           AND trc1.xtrsrc = x1.id
+       ) t1
+ WHERE t1.xtrsrc = t0.xtrsrc
+   AND t1.r1 > t0.min_r1
+"""
         cursor.execute(query)
         results = zip(*cursor.fetchall())
         if len(results) != 0:
-            xtrsrc_id = results[0]
+            runcat = results[0]
             xtrsrc = results[1]
-            # TODO: Consider setting row to inactive instead of deleting
+            # TODO: See NOTE 3 above: Consider setting row to inactive instead of deleting
             query = """\
             DELETE
               FROM temprunningcatalog
-             WHERE xtrsrc_id = %s
+             WHERE runcat = %s
                AND xtrsrc = %s
             """
-            for j in range(len(xtrsrc_id)):
-                cursor.execute(query, (xtrsrc_id[j], xtrsrc[j]))
+            for j in range(len(runcat)):
+                print "\nThrowing away from temruncat:", runcat[j], xtrsrc[j]
+                cursor.execute(query, (runcat[j], xtrsrc[j]))
                 if not AUTOCOMMIT:
                     conn.commit()
     except db.Error, e:
@@ -484,11 +453,19 @@ def _flag_multiple_counterparts_in_runningcatalog(conn):
 def _insert_multiple_assocs(conn):
     """Insert sources with multiple associations
 
-    -2- Now, we take care of the sources in the running catalogue that
-    have more than one counterpart among the extracted sources.
+    -2- Here, we take care of the extractedsources that have the 
+    same single running catalogue source as counterpart, 
+    i.e. the one-to-many associations.
 
-    We now make two entries in the running catalogue, in stead of the
-    one we had before. Therefore, we 'swap' the ids.
+    In this case, new entries in the runningcatalogue will be made
+    (for every extractedsource one), which will replace the existing one 
+    of the runningcatalog. Therefore, we swap the (multiple) extractedsource 
+    ids with the runningcatalog id.
+
+    NOTE:
+    1. TODO, see also comment in _flag_multiple_counterparts_in_runningcatalog()
+    We should catch the case where we have many-to-many relations.
+    2. TODO: Check where clause of query
     """
 
     try:
@@ -502,11 +479,12 @@ def _insert_multiple_assocs(conn):
           ,type
           )
           SELECT t.xtrsrc
-                ,t.xtrsrc
-                ,3600 * DEGREES(2 * ASIN(SQRT((r.x - x.x) * (r.x - x.x)
-                                          + (r.y - x.y) * (r.y - x.y)
-                                          + (r.z - x.z) * (r.z - x.z)
-                                          ) / 2) ) AS distance_arcsec
+                ,t.runcat
+                ,3600 * DEGREES(2 * ASIN(SQRT( (r.x - x.x) * (r.x - x.x)
+                                             + (r.y - x.y) * (r.y - x.y)
+                                             + (r.z - x.z) * (r.z - x.z)
+                                             ) / 2) 
+                               ) AS distance_arcsec
                 ,3600 * sqrt(
                     ( (r.wm_ra * cos(RADIANS(r.wm_decl)) - x.ra * cos(RADIANS(x.decl)))
                      *(r.wm_ra * cos(RADIANS(r.wm_decl)) - x.ra * cos(RADIANS(x.decl)))
@@ -519,13 +497,13 @@ def _insert_multiple_assocs(conn):
             FROM temprunningcatalog t
                 ,runningcatalog r
                 ,extractedsource x
-           WHERE t.xtrsrc = r.xtrsrc
+           WHERE t.runcat = r.id
              AND t.xtrsrc = x.id
-             AND t.xtrsrc IN (SELECT xtrsrc
-                                   FROM temprunningcatalog
-                                 GROUP BY xtrsrc
-                                 HAVING COUNT(*) > 1
-                                )
+             AND t.runcat IN (SELECT runcat
+                               FROM temprunningcatalog
+                              GROUP BY runcat
+                              HAVING COUNT(*) > 1
+                             )
         """
         cursor.execute(query)
         if not AUTOCOMMIT:
@@ -606,7 +584,10 @@ def _flag_swapped_assocs(conn):
 
 
 def _insert_multiple_assocs_runcat(conn):
-    """Insert new ids of the sources in the running catalogue"""
+    """Insert new ids of the sources in the running catalogue
+    
+    """
+    #TODO: Add runningcatalog_flux as well
 
     try:
         cursor = conn.cursor()
@@ -614,7 +595,6 @@ def _insert_multiple_assocs_runcat(conn):
         INSERT INTO runningcatalog
           (xtrsrc
           ,dataset
-          ,band
           ,datapoints
           ,zone
           ,wm_ra
@@ -628,15 +608,14 @@ def _insert_multiple_assocs_runcat(conn):
           ,x
           ,y
           ,z
-          ,avg_I_peak
+          /*,avg_I_peak
           ,avg_I_peak_sq
           ,avg_weight_peak
           ,avg_weighted_I_peak
-          ,avg_weighted_I_peak_sq
+          ,avg_weighted_I_peak_sq*/
           )
           SELECT xtrsrc
                 ,dataset
-                ,band
                 ,datapoints
                 ,zone
                 ,wm_ra
@@ -650,17 +629,17 @@ def _insert_multiple_assocs_runcat(conn):
                 ,x
                 ,y
                 ,z
-                ,avg_I_peak
+                /*,avg_I_peak
                 ,avg_I_peak_sq
                 ,avg_weight_peak
                 ,avg_weighted_I_peak
-                ,avg_weighted_I_peak_sq
+                ,avg_weighted_I_peak_sq*/
             FROM temprunningcatalog
            WHERE xtrsrc IN (SELECT xtrsrc
-                                 FROM temprunningcatalog
-                               GROUP BY xtrsrc
-                               HAVING COUNT(*) > 1
-                              )
+                              FROM temprunningcatalog
+                            GROUP BY xtrsrc
+                            HAVING COUNT(*) > 1
+                           )
         """
         cursor.execute(query)
         if not AUTOCOMMIT:
@@ -722,42 +701,49 @@ def _flag_multiple_assocs(conn):
 
 
 def _insert_single_assocs(conn):
-    """Insert remaining 1-1 associations into assocxtrsource table"""
-    #TODO: check whether last row (t.xtrsrc = x.id) should be
-    #      t.assocxtrsrc = ...)
+    """Insert remaining 1-1 associations into assocxtrsource table
+    
+    This handles the case where a single extractedsource is associated
+    with a single runningcatalog source.
+    The extractedsource.id is appended to the assocxtrsource table
+    (i.e. its light-curve datapoints).
+
+    Since tempruncat contains the new (updated)  position average 
+    (including the latest extractedsource), 
+    the calculations of the distance and r should be done 
+    with the runningcatalog values
+    """
+    
     try:
         cursor = conn.cursor()
         query = """\
-        INSERT INTO assocxtrsource
-          (runcat
-          ,xtrsrc
-          ,assoc_distance_arcsec
-          ,assoc_r
-          ,type
-          )
-          SELECT t.xtrsrc
-                ,t.xtrsrc
-                ,3600 * DEGREES(2 * ASIN(SQRT((r.x - x.x) * (r.x - x.x)
-                                          + (r.y - x.y) * (r.y - x.y)
-                                          + (r.z - x.z) * (r.z - x.z)
-                                          ) / 2) ) AS assoc_distance_arcsec
-                ,3600 * sqrt(
-                    ((r.wm_ra * cos(RADIANS(r.wm_decl)) 
-                     - x.ra * cos(RADIANS(x.decl))) 
-                    * (r.wm_ra * cos(RADIANS(r.wm_decl)) 
-                     - x.ra * cos(RADIANS(x.decl)))) 
-                    / (r.wm_ra_err * r.wm_ra_err + x.ra_err*x.ra_err)
-                    +
-                    ((r.wm_decl - x.decl) * (r.wm_decl - x.decl)) 
-                    / (r.wm_decl_err * r.wm_decl_err + x.decl_err*x.decl_err)
-                            ) as assoc_r
-                ,3
-            FROM temprunningcatalog t
-                ,runningcatalog r
-                ,extractedsource x
-           WHERE t.xtrsrc = r.xtrsrc
-             AND t.xtrsrc = x.id
-        """
+INSERT INTO assocxtrsource
+  (runcat
+  ,xtrsrc
+  ,distance_arcsec
+  ,r
+  ,type
+  )
+  SELECT t.runcat
+        ,t.xtrsrc
+        ,3600 * DEGREES(2 * ASIN(SQRT( (r.x - x.x) * (r.x - x.x)
+                                     + (r.y - x.y) * (r.y - x.y)
+                                     + (r.z - x.z) * (r.z - x.z)
+                                     ) / 2) 
+                       ) AS distance_arcsec
+        ,3600 * SQRT( (r.wm_ra * cos(RADIANS(r.wm_decl)) - x.ra * cos(RADIANS(x.decl)))
+                     * (r.wm_ra * cos(RADIANS(r.wm_decl)) - x.ra * cos(RADIANS(x.decl))) 
+                       / (r.wm_ra_err * r.wm_ra_err + x.ra_err * x.ra_err)
+                    + (r.wm_decl - x.decl) * (r.wm_decl - x.decl)
+                      / (r.wm_decl_err * r.wm_decl_err + x.decl_err * x.decl_err)
+                    ) AS r
+        ,3
+    FROM temprunningcatalog t
+        ,runningcatalog r
+        ,extractedsource x
+   WHERE t.runcat = r.id
+     AND t.xtrsrc = x.id
+"""
         cursor.execute(query)
         if not AUTOCOMMIT:
             conn.commit()
@@ -787,12 +773,7 @@ SELECT datapoints
       ,x
       ,y
       ,z
-      ,avg_I_peak
-      ,avg_I_peak_sq
-      ,avg_weight_peak
-      ,avg_weighted_I_peak
-      ,avg_weighted_I_peak_sq
-      ,xtrsrc
+      ,runcat
   FROM temprunningcatalog
         """
         cursor.execute(query)
@@ -812,11 +793,66 @@ UPDATE runningcatalog
      ,x = %s
      ,y = %s
      ,z = %s
-     ,avg_I_peak = %s
-     ,avg_I_peak_sq = %s
-     ,avg_weight_peak = %s
-     ,avg_weighted_I_peak = %s
-     ,avg_weighted_I_peak_sq = %s
+WHERE id = %s
+"""
+        for result in results:
+            cursor.execute(query, tuple(result))
+            if not AUTOCOMMIT:
+                conn.commit()
+    except db.Error, e:
+        logging.warn("Failed on query nr %s." % query)
+        raise
+    finally:
+        cursor.close()
+
+def _update_runningcatalog_flux(conn):
+    """Update the runningcatalog_flux
+    
+    Based on the runcat ids in tempruncat, the corresponding
+    entries in runcat_flux should be updated.
+    
+    
+    """
+
+    #TODO: It is possible that for the current runcat source,
+    # no flux entries exist
+    try:
+        cursor = conn.cursor()
+        query = """\
+SELECT f_datapoints
+      ,wm_ra
+      ,wm_decl
+      ,wm_ra_err
+      ,wm_decl_err
+      ,avg_wra
+      ,avg_wdecl
+      ,avg_weight_ra
+      ,avg_weight_decl
+      ,x
+      ,y
+      ,z
+      ,runcat
+      ,band
+      ,stokes
+  FROM temprunningcatalog
+        """
+        cursor.execute(query)
+        results = cursor.fetchall()
+        query = """\
+UPDATE runningcatalog_flux
+  SET datapoints = %s
+     ,zone = %s
+     ,wm_ra = %s
+     ,wm_decl = %s
+     ,wm_ra_err = %s
+     ,wm_decl_err = %s
+     ,avg_wra = %s
+     ,avg_wdecl = %s
+     ,avg_weight_ra = %s
+     ,avg_weight_decl = %s
+     ,x = %s
+     ,y = %s
+     ,z = %s
 WHERE xtrsrc = %s
 """
         for result in results:
@@ -866,54 +902,63 @@ def _count_known_sources(conn, image_id, deRuiter_r):
         cursor.close()
 
 
-def _insert_new_assocs(conn, image_id, deRuiter_r):
-    """Insert new associations for unknown sources
 
-    This inserts new associations for the sources that were not known
-    in the running catalogue (i.e. they did not have an entry in the
-    runningcatalog table).
+def _insert_new_source_runcat(conn, image_id):
+    """Insert new sources into the running catalog
+    
+    Extractedsources for which no counterpart was found in the
+    runningcatalog (i.e. no pair exists in tempruncat),
+    will be added as a new source to the assocxtrsource,
+    runningcatalog and runningcatalog_flux tables.
+    This function inserts the new source in the runningcatalog table,
+    where xtrsrc is the id of the new extractedsource.
+    This is the first of the series, since the other insertions have
+    references to the runningcatalog table.
     """
-
-    cursor = conn.cursor()
     try:
+        cursor = conn.cursor()
         query = """\
-        INSERT INTO assocxtrsource
-          (runcat
-          ,xtrsrc
-          ,assoc_distance_arcsec
-          ,assoc_r
-          ,type
-          )
-          SELECT x1.id as xtrsrc
-                ,x1.id as xtrsrc
-                ,0
-                ,0
-                ,4
-            FROM extractedsource x1
-           WHERE x1.image = %s
-             AND x1.id NOT IN (
-                 SELECT x0.id
-                  FROM extractedsource x0
-                      ,runningcatalog b0
-                      ,image
-                 WHERE x0.image = %s
-                   AND x0.image = image.id
-                   AND image.dataset = b0.dataset
-                   AND b0.zone BETWEEN x0.zone - cast(0.025 as integer)
-                                   AND x0.zone + cast(0.025 as integer)
-                   AND b0.wm_decl BETWEEN x0.decl - 0.025
-                                            AND x0.decl + 0.025
-                   AND b0.wm_ra BETWEEN x0.ra - alpha(0.025,x0.decl)
-                                          AND x0.ra + alpha(0.025,x0.decl)
-                   AND SQRT(  (x0.ra * COS(RADIANS(x0.decl)) - b0.wm_ra * COS(RADIANS(b0.wm_decl)))
-                            * (x0.ra * COS(RADIANS(x0.decl)) - b0.wm_ra * COS(RADIANS(b0.wm_decl)))
-                            / (x0.ra_err * x0.ra_err + b0.wm_ra_err * b0.wm_ra_err)
-                           + (x0.decl - b0.wm_decl) * (x0.decl - b0.wm_decl)
-                            / (x0.decl_err * x0.decl_err + b0.wm_decl_err * b0.wm_decl_err)
-                           ) < %s
-                                    )
-        """
-        cursor.execute(query, (image_id, image_id, deRuiter_r/3600.))
+INSERT INTO runningcatalog
+  (xtrsrc
+  ,dataset
+  ,datapoints
+  ,zone
+  ,wm_ra
+  ,wm_decl
+  ,wm_ra_err
+  ,wm_decl_err
+  ,avg_wra
+  ,avg_wdecl
+  ,avg_weight_ra
+  ,avg_weight_decl
+  ,x
+  ,y
+  ,z
+  )
+  SELECT x0.id
+        ,image.dataset
+        ,1
+        ,x0.zone
+        ,x0.ra
+        ,x0.decl
+        ,x0.ra_err
+        ,x0.decl_err
+        ,x0.ra / (x0.ra_err * x0.ra_err)
+        ,x0.decl / (x0.decl_err * x0.decl_err)
+        ,1 / (x0.ra_err * x0.ra_err)
+        ,1 / (x0.decl_err * x0.decl_err)
+        ,x0.x
+        ,x0.y
+        ,x0.z
+    FROM extractedsource x0
+         LEFT OUTER JOIN temprunningcatalog trc0
+         ON x0.id = trc0.xtrsrc
+        ,image 
+   WHERE trc0.xtrsrc IS NULL
+     AND x0.image = image.id
+     AND x0.image = %s
+"""
+        cursor.execute(query, (image_id,))
         if not AUTOCOMMIT:
             conn.commit()
     except db.Error, e:
@@ -922,84 +967,120 @@ def _insert_new_assocs(conn, image_id, deRuiter_r):
     finally:
         cursor.close()
 
+def _insert_new_assocs(conn, image_id):
+    """Insert new associations for unknown sources
 
-def _insert_new_source_runcat(conn, image_id, deRuiter_r):
-    """Insert new sources into the running catalog"""
-    # TODO: check zone cast in search radius!
+    Extractedsources for which not a counterpart was found in the
+    runningcatalog, will be added as a new source to the assocxtrsource,
+    runningcatalog and runningcatalog_flux tables.
+    This function inserts the new source in the assocxtrsource table,
+    where the runcat and xtrsrc ids are identical to each other 
+    in order to have this data point included in the light curve.
+    
+    The left outer join in combination with the trc0.xtrsrc is null,
+    selects the extracted sources that were not present in 
+    temprunningcatalog, i.e. did not have a counterpart in the runningcatalog.
+    These were just inserted as new sources in the runningcatalog 
+    of which we want to use the ids to have them
+    in the assocxtrsource as well.
+    """
+
+    cursor = conn.cursor()
+    try:
+        query = """\
+INSERT INTO assocxtrsource
+  (runcat
+  ,xtrsrc
+  ,distance_arcsec
+  ,r
+  ,type
+  )
+  SELECT r0.id AS runcat
+        ,x0.id AS xtrsrc
+        ,0
+        ,0
+        ,4
+    FROM runningcatalog r0
+        ,extractedsource x0
+   WHERE r0.xtrsrc = x0.id
+     AND r0.xtrsrc IN (SELECT x1.id
+                      FROM extractedsource x1
+                           LEFT OUTER JOIN temprunningcatalog trc1
+                           ON x1.id = trc1.xtrsrc
+                          ,image
+                     WHERE trc1.xtrsrc IS NULL
+                       AND x1.image = image.id
+                       AND image.id = %s
+                      )
+"""
+        cursor.execute(query, (image_id,))
+        if not AUTOCOMMIT:
+            conn.commit()
+    except db.Error, e:
+        logging.warn("Failed on query nr %s." % query)
+        raise
+    finally:
+        cursor.close()
+
+def _insert_new_source_runcat_flux(conn, image_id):
+    """Insert new sources into the runningicatalog_flux
+    
+    Extractedsources for which not a counterpart was found in the
+    runningcatalog, will be added as a new source to the assocxtrsource,
+    runningcatalog and runningcatalog_flux tables.
+    This function inserts the new source in the runningcatalog table,
+    where xtrsrc is the id of the new extractedsource.
+
+    """
     try:
         cursor = conn.cursor()
         query = """\
-        INSERT INTO runningcatalog
-          (xtrsrc
-          ,dataset
-          ,band
-          ,datapoints
-          ,zone
-          ,wm_ra
-          ,wm_decl
-          ,wm_ra_err
-          ,wm_decl_err
-          ,avg_wra
-          ,avg_wdecl
-          ,avg_weight_ra
-          ,avg_weight_decl
-          ,x
-          ,y
-          ,z
-          ,avg_I_peak
-          ,avg_I_peak_sq
-          ,avg_weight_peak
-          ,avg_weighted_I_peak
-          ,avg_weighted_I_peak_sq
-          )
-          SELECT x1.id
-                ,im1.dataset
-                ,band
-                ,1
-                ,x1.zone
-                ,x1.ra
-                ,x1.decl
-                ,x1.ra_err
-                ,x1.decl_err
-                ,x1.ra / (x1.ra_err * x1.ra_err)
-                ,x1.decl / (x1.decl_err * x1.decl_err)
-                ,1 / (x1.ra_err * x1.ra_err)
-                ,1 / (x1.decl_err * x1.decl_err)
-                ,x1.x
-                ,x1.y
-                ,x1.z
-                ,I_peak
-                ,I_peak * I_peak
-                ,1 / (I_peak_err * I_peak_err)
-                ,I_peak / (I_peak_err * I_peak_err)
-                ,I_peak * I_peak / (I_peak_err * I_peak_err)
-            FROM extractedsource x1
-                ,image im1
-           WHERE x1.image = %s
-             AND x1.image = im1.id
-             AND x1.id NOT IN (
-                 SELECT x0.id
-                  FROM extractedsource x0
-                      ,runningcatalog b0
-                      ,image
-                 WHERE x0.image = %s
-                   AND x0.image = image.id
-                   AND image.dataset = b0.dataset
-                   AND b0.zone BETWEEN CAST(FLOOR(x0.zone - 0.025) AS INTEGER)
-                                   AND CAST(FLOOR(x0.zone + 0.025) AS INTEGER)
-                   AND b0.wm_decl BETWEEN x0.decl - 0.025
-                                      AND x0.decl + 0.025
-                   AND b0.wm_ra BETWEEN x0.ra - alpha(0.025,x0.decl)
-                                    AND x0.ra + alpha(0.025,x0.decl)
-                   AND SQRT(  (x0.ra * COS(RADIANS(x0.decl)) - b0.wm_ra * COS(RADIANS(b0.wm_decl)))
-                            * (x0.ra * COS(RADIANS(x0.decl)) - b0.wm_ra * COS(RADIANS(b0.wm_decl)))
-                            / (x0.ra_err * x0.ra_err + b0.wm_ra_err * b0.wm_ra_err)
-                           + (x0.decl - b0.wm_decl) * (x0.decl - b0.wm_decl)
-                            / (x0.decl_err * x0.decl_err + b0.wm_decl_err * b0.wm_decl_err)
-                           ) < %s
-                   )
-        """
-        cursor.execute(query, (image_id, image_id, deRuiter_r/3600.))
+INSERT INTO runningcatalog_flux
+  (runcat
+  ,band
+  ,stokes
+  ,f_datapoints
+  ,avg_f_peak
+  ,avg_f_peak_sq
+  ,avg_f_peak_weight
+  ,avg_weighted_f_peak
+  ,avg_weighted_f_peak_sq
+  ,avg_f_int
+  ,avg_f_int_sq
+  ,avg_f_int_weight
+  ,avg_weighted_f_int
+  ,avg_weighted_f_int_sq
+  )
+  SELECT r0.id
+        ,image.band
+        ,image.stokes
+        ,1
+        ,x0.f_peak
+        ,x0.f_peak * x0.f_peak
+        ,1 / (x0.f_peak_err * x0.f_peak_err)
+        ,x0.f_peak / (x0.f_peak_err * x0.f_peak_err)
+        ,x0.f_peak * x0.f_peak / (x0.f_peak_err * x0.f_peak_err)
+        ,x0.f_int
+        ,x0.f_int * x0.f_int
+        ,1 / (x0.f_int_err * x0.f_int_err)
+        ,x0.f_int / (x0.f_int_err * x0.f_int_err)
+        ,x0.f_int * x0.f_int / (x0.f_int_err * x0.f_int_err)
+    FROM runningcatalog r0
+        ,image
+        ,extractedsource x0
+   WHERE x0.image = image.id
+     AND x0.id = r0.xtrsrc
+     AND r0.xtrsrc IN (SELECT x1.id
+                         FROM extractedsource x1
+                              LEFT OUTER JOIN temprunningcatalog trc1
+                              ON x1.id = trc1.xtrsrc
+                             ,image
+                        WHERE trc1.xtrsrc IS NULL
+                          AND x1.image = image.id
+                          AND image.id = %s
+                      )
+"""
+        cursor.execute(query, (image_id,))
         if not AUTOCOMMIT:
             conn.commit()
     except db.Error, e:
@@ -1070,9 +1151,12 @@ def associate_extracted_sources(conn, image_id, deRuiter_r=DERUITER_R):
     """
 
     _empty_temprunningcatalog(conn)
+    #+------------------------------------------------------+
+    #| Here we select all extracted sources that have one or|
+    #| more counterparts in the runningcatalog              |
+    #+------------------------------------------------------+
     _insert_temprunningcatalog(conn, image_id, deRuiter_r)
     _flag_multiple_counterparts_in_runningcatalog(conn)
-    #sys.exit()
     _insert_multiple_assocs(conn)
     _insert_first_of_assocs(conn)
     _flag_swapped_assocs(conn)
@@ -1084,10 +1168,16 @@ def associate_extracted_sources(conn, image_id, deRuiter_r=DERUITER_R):
     #+-----------------------------------------------------+
     _insert_single_assocs(conn)
     _update_runningcatalog(conn)
+    #_update_runningcatalog_flux(conn)
+    #_count_known_sources(conn, image_id, deRuiter_r)
+    #+-------------------------------------------------------+
+    #| Here we take care of the extracted sources that could |
+    #| not be associated with any runningcatalog source      |
+    #+-------------------------------------------------------+
+    _insert_new_source_runcat(conn, image_id)
+    _insert_new_assocs(conn, image_id)
+    _insert_new_source_runcat_flux(conn, image_id)
     _empty_temprunningcatalog(conn)
-    _count_known_sources(conn, image_id, deRuiter_r)
-    _insert_new_assocs(conn, image_id, deRuiter_r)
-    _insert_new_source_runcat(conn, image_id, deRuiter_r)
     #_associate_across_frequencies(conn, dataset, image_id, deRuiter_r)
 
 
@@ -1261,9 +1351,9 @@ def detect_variable_sources(conn, dsid, V_lim, eta_lim):
 
 
 def _insert_cat_assocs(conn, image_id, radius, deRuiter_r):
-    """Insert found xtrsrc--catsrc associations into assoccatsources table.
+    """Insert found xtrsrc--catsrc associations into assoccatsource table.
 
-    The search for cataloged counterpart sources is done in the catalogedsources
+    The search for cataloged counterpart sources is done in the catalogedsource
     table, which should have been preloaded with a selection of 
     the catalogedsources, depending on the expected field of view.
     
@@ -1272,20 +1362,20 @@ def _insert_cat_assocs(conn, image_id, radius, deRuiter_r):
     try:
         cursor = conn.cursor()
         query = """\
-        INSERT INTO assoccatsources
+        INSERT INTO assoccatsource
           (xtrsrc
-          ,assoc_catsrc_id
-          ,assoc_distance_arcsec
+          ,catsrc
+          ,distance_arcsec
           ,type
-          ,assoc_r
-          ,assoc_loglr
+          ,r
+          ,loglr
           )
-          SELECT xtrsrcid AS xtrsrc
-                ,catsrcid AS assoc_catsrc_id
+          SELECT x0.id AS xtrsrc
+                ,c0.id AS catsrc
                 ,3600 * DEGREES(2 * ASIN(SQRT((x0.x - c0.x) * (x0.x - c0.x)
                                           + (x0.y - c0.y) * (x0.y - c0.y)
                                           + (x0.z - c0.z) * (x0.z - c0.z)
-                                          ) / 2) ) AS assoc_distance_arcsec
+                                          ) / 2) ) AS distance_arcsec
                 ,3
                 ,3600 * sqrt( ((x0.ra * cos(RADIANS(x0.decl)) - c0.ra * cos(RADIANS(c0.decl))) 
                              * (x0.ra * cos(RADIANS(x0.decl)) - c0.ra * cos(RADIANS(c0.decl)))) 
@@ -1293,7 +1383,7 @@ def _insert_cat_assocs(conn, image_id, radius, deRuiter_r):
                             +
                               ((x0.decl - c0.decl) * (x0.decl - c0.decl)) 
                              / (x0.decl_err * x0.decl_err + c0.decl_err*c0.decl_err)
-                            ) as assoc_r
+                            ) as r
                 ,LOG10(EXP((   (x0.ra * COS(RADIANS(x0.decl)) - c0.ra * COS(RADIANS(c0.decl)))
                              * (x0.ra * COS(RADIANS(x0.decl)) - c0.ra * COS(RADIANS(x0.decl)))
                              / (x0.ra_err * x0.ra_err + c0.ra_err * c0.ra_err)
@@ -1304,8 +1394,8 @@ def _insert_cat_assocs(conn, image_id, radius, deRuiter_r):
                       /
                       (2 * PI() * SQRT(x0.ra_err * x0.ra_err + c0.ra_err * c0.ra_err)
                                 * SQRT(x0.decl_err * x0.decl_err + c0.decl_err * c0.decl_err) * %s)
-                      ) AS assoc_loglr
-            FROM (select xtrsrcid
+                      ) AS loglr
+            FROM (select id
                         ,ra
                         ,decl
                         ,ra_err
@@ -1320,9 +1410,9 @@ def _insert_cat_assocs(conn, image_id, radius, deRuiter_r):
                         ,y
                         ,z
                     from extractedsource
-                   where image_id = %s
+                   where image = %s
                  ) x0
-                ,catalogedsources c0
+                ,catalogedsource c0
            WHERE c0.zone BETWEEN zone_min AND zone_max
              AND c0.decl BETWEEN decl_min AND decl_max
              AND c0.ra BETWEEN ra_min AND ra_max

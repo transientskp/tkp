@@ -68,16 +68,16 @@ def extractedsourcesInImage(conn, image_id, dirname, icolor='magenta'):
         
         cursor = conn.cursor()
         query = """\
-        SELECT xtrsrcid
+        SELECT x0.id
               ,ra
               ,decl
               ,ra_err/2
               ,decl_err/2
               ,url
-          FROM extractedsource
-              ,images
-         WHERE imageid = %s
-           AND image_id = imageid
+          FROM extractedsource x0
+              ,image
+         WHERE image.id = %s
+           AND x0.image = image.id
         """
         cursor.execute(query, (image_id,))
         results = zip(*cursor.fetchall())

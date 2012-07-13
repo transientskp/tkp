@@ -11,7 +11,6 @@ CREATE TABLE dataset
   ,backsize_x SMALLINT NULL
   ,backsize_y SMALLINT NULL
   ,margin_width DOUBLE NULL
-  ,inname VARCHAR(64) NULL
   ,description VARCHAR(100) NOT NULL
   ,node TINYINT NOT NULL DEFAULT %NODE%
   ,nodes TINYINT NOT NULL DEFAULT %NODES%

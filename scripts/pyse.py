@@ -74,7 +74,7 @@ def csv(sourcelist):
     Return a string containing a csv from the extracted sources.
     """
     output = StringIO()
-    print >>output, "ra, ra_err, dec, dec_err, smaj, smaj_err, smin, smin_err, pa, int_flux, int_flux_err, pk_flux, pk_flux_err"
+    print >>output, "ra, ra_err, dec, dec_err, smaj, smaj_err, smin, smin_err, pa, pa_err, int_flux, int_flux_err, pk_flux, pk_flux_err"
     for source in sourcelist:
         print >>output, "%f, %f, %f, %f, %f, %f, %f, %f, %f, %f, %f, %f, %f, %f" % (
             source.ra,

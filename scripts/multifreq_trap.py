@@ -60,9 +60,10 @@ try:
         #print "tuple_sources",tuple_sources
         
         dbu.insert_extracted_sources(db.connection, dbimg.id, tuple_sources)
-        dbu.associate_extracted_sources(db.connection, dbimg.id)
-        dbu.associate_with_catalogedsources(db.connection, dbimg.id)
         print "xtrsrc: ", reg.extractedsourcesInImage(db.connection, dbimg.id, regionfilesdir)
+        dbu.associate_extracted_sources(db.connection, dbimg.id)
+        print "runcat: ", reg.runcatInDataset(db.connection, dataset.id, regionfilesdir)
+        dbu.associate_with_catalogedsources(db.connection, dbimg.id)
         #print "assoccatsrc: ", reg.assoccatsourcesInImage(db.connection, dbimg.id, regionfilesdir)
         #print dbu.detect_variable_sources(db.connection, dataset.id, 0.1, 4)
         my_image.clearcache()

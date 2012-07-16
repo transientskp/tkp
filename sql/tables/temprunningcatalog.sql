@@ -30,6 +30,11 @@ CREATE TABLE temprunningcatalog
   ,avg_f_peak_weight DOUBLE NULL
   ,avg_weighted_f_peak DOUBLE NULL
   ,avg_weighted_f_peak_sq DOUBLE NULL
+  ,avg_f_int DOUBLE NULL
+  ,avg_f_int_sq DOUBLE NULL
+  ,avg_f_int_weight DOUBLE NULL
+  ,avg_weighted_f_int DOUBLE NULL
+  ,avg_weighted_f_int_sq DOUBLE NULL
   ,FOREIGN KEY (runcat) REFERENCES runningcatalog (id)
   ,FOREIGN KEY (xtrsrc) REFERENCES extractedsource (id)
   ,FOREIGN KEY (dataset) REFERENCES dataset (id)

@@ -19,7 +19,8 @@ CREATE TABLE runningcatalog
   ,x DOUBLE NOT NULL
   ,y DOUBLE NOT NULL
   ,z DOUBLE NOT NULL
-  ,margin BOOLEAN NOT NULL DEFAULT 0
+  ,margin BOOLEAN NOT NULL DEFAULT FALSE
+  ,inactive BOOLEAN NOT NULL DEFAULT FALSE
   ,PRIMARY KEY(id)
   ,UNIQUE (xtrsrc)
   ,FOREIGN KEY (xtrsrc) REFERENCES extractedsource (id)

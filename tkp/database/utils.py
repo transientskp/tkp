@@ -157,8 +157,22 @@ def insert_extracted_sources(conn, image_id, results):
     """Insert all extracted sources
 
     Insert the sources that were detected by the Source Extraction
-    procedures into the extractedsource table.
+    procedures into the extractedsources table.
+
+    Therefore, we use a temporary table containing the "raw" detections,
+    from which the sources will then be inserted into extractedsources.
+    
+    (ra , dec , [deg]
+    ra_err, dec_err, [as] 
+    peak, peak_err,  [Jy]
+    flux, flux_err,    [Jy]
+    significance level,
+    beam major width , beam minor width, [as]
+    beam parallactic angle).  [deg]
     """
+    
+    #To do: Figure out a saner method of passing the results around
+    # (Namedtuple for starters?) 
     
     _insert_extractedsources(conn, image_id, results)
 

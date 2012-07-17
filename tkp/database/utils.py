@@ -1939,7 +1939,7 @@ SELECT COUNT(*) FROM monitoringlist WHERE xtrsrc_id = %s"""
     return result
 
 
-def insert_monitoring_sources(conn, results, image_id):
+def insert_monitored_sources(conn, results, image_id):
     """Insert the list of measured monitoring sources for this image into
     extractedsources and runningcatalog.
 

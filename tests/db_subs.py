@@ -21,10 +21,11 @@ def use_test_database_by_default():
     tkp_conf['database']['password'] = test_db_name
     
 def delete_test_database(database):
-    """Use with caution!
-    
-        NB. Not the same as a freshly initialised database.
-            All the sequence counters are offset.
+    """
+    Use with caution!
+
+    NB. Not the same as a freshly initialised database.
+        All the sequence counters are offset.
     """
     import monetdb.sql
     if database.name.lower().find("test") != 0:

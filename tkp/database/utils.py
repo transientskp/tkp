@@ -2386,7 +2386,57 @@ def insert_monitored_sources(conn, results, image_id):
                 cursor.close()
                 raise
     cursor.close()
+
+def add_extractedsources_to_monitoringlist(conn, dataset_id, 
+                          xtrsrc_ids):
+    """
+    Add entries to monitoringlist.
     
+    We first grab the associated source ID, and then 
+    insert that assoc_id if it doesn't already exist.
+    (Action is idempotent).
+    
+    NB the supplied source ids should either be 
+    a. extracted source ids all from the same image
+    or
+    b. All be associated_source_ids
+    
+    Because if multiple extracted source ids belonging to the same lightcurve are supplied,
+    then the monitoringlist will get duplicate entries.
+    
+    This is because we only check if the assoc_ids are already present
+    BEFORE we insert the list - we don't check for duplicates in the list itself.
+    """
+    
+    cursor = conn.cursor()
+    try:
+        ids_placeholder = ", ".join(["%s"] * len(xtrsrc_ids))
+        query = """\
+INSERT INTO monitoringlist
+(xtrsrc_id, ra, decl, ds_id)
+SELECT ax.xtrsrc_id ,0 ,0 ,%s
+FROM assocxtrsources ax
+WHERE assoc_xtrsrc_id in ({srcids_placeholder})
+  AND 
+    ax.xtrsrc_id NOT IN
+    (SELECT xtrsrc_id FROM monitoringlist)
+""".format(srcids_placeholder = ids_placeholder)
+        cursor.execute(query, tuple([dataset_id]+xtrsrc_ids))
+        if not AUTOCOMMIT:
+            conn.commit()
+    except db.Error:
+        query = query 
+        logging.warn("Query %s failed", query)
+        cursor.close()
+        raise
+    cursor.close()
+    pass
+
+def add_manual_entry_to_monitoringlist(conn, dataset_id, 
+                          ra, dec):
+    """TO DO"""
+    pass
+
 
 def insert_transient(conn, transient, dataset, images=None):
     """Insert a transient source in the database.

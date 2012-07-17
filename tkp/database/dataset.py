@@ -356,7 +356,7 @@ class DataSet(DBObject):
         return dbu.detect_variable_sources(
             self.database.connection, self._id, V_lim, eta_lim)
         
-    def find_transient_candidates(self, single_epoch_threshold,
+    def _find_transient_candidates(self, single_epoch_threshold,
                                         combined_threshold):
         """Find sources not present in all epochs.
         
@@ -382,6 +382,34 @@ class DataSet(DBObject):
         #TO DO: Filter out those which only disappear because they drop out of FoV
         ###  --- This will require FoV information in database
         return candidates
+    
+    def _add_extractedsources_to_monitoringlist(self, source_ids):
+        """    
+        NB the supplied source ids should either be 
+        a. extracted source ids all from the same image
+        or
+        b. All be associated_source_ids
+        (See dbu.add_extractedsources_to_monitoringlist for details).
+    """
+        dbu.add_extractedsources_to_monitoringlist(self.database.connection,
+                                                  self._id,
+                                                  source_ids,
+                                                  )
+        
+    def mark_transient_candidates(self, single_epoch_threshold,
+                                  combined_threshold):
+        """
+        Find transient candidates and add to monitoringlist.
+        """
+        
+        candidates = self._find_transient_candidates(
+                     single_epoch_threshold, combined_threshold
+                     )
+        self._add_extractedsources_to_monitoringlist(
+                         [c['xtrsrc_id'] for c in candidates],
+                         )
+        
+        
         
         
 

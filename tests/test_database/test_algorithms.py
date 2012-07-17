@@ -5,15 +5,15 @@ import tkp.database as tkpdb
 from .. import db_subs
 from ..decorators import requires_database
 import tkp.database.utils as db_utils
-import tkp.tests.db_subs as db_subs
-from tkp.tests.decorators import requires_database
 
 class TestSourceAssociation(unittest.TestCase):
     @requires_database()
     def setUp(self):
     
         self.database = tkpdb.DataBase()
-        self.dataset = tkpdb.DataSet(data={'description':"Src. assoc:"+self._testMethodName},
+        #Often fixes things if the database is playing up:
+#        db_subs.delete_test_database(self.database)
+        self.dataset = tkpdb.DataSet(data={'dsinname':"Src. assoc:"+self._testMethodName},
                                                     database = self.database)
         
         self.im_params = db_subs.example_dbimage_datasets(n_images=8)
@@ -201,6 +201,9 @@ class TestTransientCandidateMonitoring(unittest.TestCase):
         self.assertEqual(winkers[2]['datapoints'],2)
         
     def test_candidate_thresholding(self):
+        """test_candidate_thresholding
+        ---Tests the SQL which selects sources based on detection SNR levels.
+        """
         #Grab the source ids
         winkers = db_utils.select_winking_sources(
                    self.database.connection,
@@ -233,18 +236,34 @@ class TestTransientCandidateMonitoring(unittest.TestCase):
         
         
     def test_full_transient_candidate_routine(self):
-        all_results = self.dataset.find_transient_candidates(0,0)
+        all_results = self.dataset._find_transient_candidates(0,0)
         self.assertEqual(len(all_results),3)
 #        self.assertEqual(results[0]['datapoints'],1)
 #        self.assertEqual(results[1]['datapoints'],1)
         self.assertEqual(all_results[2]['datapoints'],2)
         self.assertAlmostEqual(all_results[2]['sum_det_sigma'], 7)
     
-    
-    def test_monitoringlist_insertion(self):
+    def test_monitoringlist_insertion_and_retrieval(self):
+        self.dataset.mark_transient_candidates(0, 0)
+        for dbimg in self.db_imgs[0:3]:
+#            print "Image id:", dbimg.id
+#            print "Monitor list:"
+            srcs_to_monitor = dbimg.monitoringsources()
+            print srcs_to_monitor 
+            self.assertEqual(len(srcs_to_monitor),3)
+            
+        for dbimg in self.db_imgs[3:7]:
+#            print "Image id:", dbimg.id
+#            print "Monitor list:" 
+            srcs_to_monitor = dbimg.monitoringsources()
+            print srcs_to_monitor
+            self.assertEqual(len(srcs_to_monitor),2)
+            
+    def test_monitored_source_insertion(self):
         pass
+            
+        
     
-
 
 #class TestLightCurve(unittest.TestCase):
 #    """This test serves more as an example than as a proper unit

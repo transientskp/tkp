@@ -348,6 +348,19 @@ class DataSet(DBObject):
         for result in results:
             images.add(Image(database=self.database, id=result[0]))
         self.images = images
+        
+    def get_unique_source_ids(self):
+        query = "SELECT xtrsrc_id FROM runningcatalog WHERE ds_id = %s"
+        try:
+            self.database.cursor.execute(query, (self._id,))
+            results = self.database.cursor.fetchall()
+        except db.Error, e:
+            query = query % self._id
+            logging.warn("database failed on query: %s", query)
+            raise
+        return [r[0] for r in results]
+        
+        
                            
     # TO DO: Verify constants
     def detect_variables(self,  V_lim=0.2, eta_lim=3.):

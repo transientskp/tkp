@@ -249,18 +249,53 @@ class TestTransientCandidateMonitoring(unittest.TestCase):
 #            print "Image id:", dbimg.id
 #            print "Monitor list:"
             srcs_to_monitor = dbimg.monitoringsources()
-            print srcs_to_monitor 
+#            print srcs_to_monitor 
             self.assertEqual(len(srcs_to_monitor),3)
             
         for dbimg in self.db_imgs[3:7]:
 #            print "Image id:", dbimg.id
 #            print "Monitor list:" 
             srcs_to_monitor = dbimg.monitoringsources()
-            print srcs_to_monitor
+#            print srcs_to_monitor
             self.assertEqual(len(srcs_to_monitor),2)
             
     def test_monitored_source_insertion(self):
-        pass
+        """
+        test_monitored_source_insertion
+        
+        This is quite a faff, and involved writing some extra helper functions...
+        
+        """
+        self.dataset.mark_transient_candidates(0, 0)
+        for dbimg in self.db_imgs:
+            srcs_to_monitor = dbimg.monitoringsources()
+#           [( ra, dec, xtrsrcid , monitorid )]
+            mon_extractions = []
+            for src in srcs_to_monitor:
+                mon_extractions.append(db_subs.ExtractedSourceTuple(ra=src[0], dec=src[1],
+                                      ra_err=0.1, dec_err=0.1,
+                                      peak = 0, peak_err = 5e-5,
+                                      flux = 0, flux_err = 5e-5,
+                                      sigma = 0,
+                                      beam_maj = 100, beam_min = 100,
+                                      beam_angle = 45
+                                      )
+                                )
+            mon_results = [ (s[2],s[3],m) for  s,m in zip(srcs_to_monitor, mon_extractions)] 
+            dbimg.insert_monitored_sources(mon_results)
+            
+        unique_src_ids = self.dataset.get_unique_source_ids()
+#        print "Unique src ids:", unique_src_ids
+        self.assertEqual(len(unique_src_ids), 4)
+        assoc_counts = tkpdb.utils.count_associated_sources(self.database.connection,
+                                                           unique_src_ids)
+        for count in assoc_counts:
+            self.assertEqual(count[1], 8)
+#        print "Assoc counts:", assoc_counts
+        
+        
+
+        
             
         
     

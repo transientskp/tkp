@@ -1333,6 +1333,44 @@ def associate_extracted_sources(conn, image_id, deRuiter_r=DERUITER_R):
     _insert_new_source_runcat(conn, image_id, deRuiter_r)
     #_associate_across_frequencies(conn, ds_id, image_id, deRuiter_r)
 
+def count_associated_sources(conn, src_ids):
+    """
+    Count the number of extracted sources associated with a given xtrsrc_id
+    
+    Args: A list of src_ids to process.
+    
+    Returns: A list of pairwise tuples,
+            [ (assoc_src_id, assocs_count) ]
+    
+    """
+    cursor = conn.cursor()
+    try:
+        #Thought about trying to do this in one clever SQL statement
+        #But this will have to do for now.
+        ids_placeholder = ", ".join(["%s"] * len(src_ids))
+        query="""\
+SELECT xtrsrc_id 
+FROM assocxtrsources 
+WHERE assoc_xtrsrc_id in ({0})
+""".format(ids_placeholder)
+        cursor.execute(query, tuple(src_ids))
+        runcat_ids = cursor.fetchall()
+        query="""\
+SELECT xtrsrc_id, count(assoc_xtrsrc_id) 
+FROM assocxtrsources 
+WHERE xtrsrc_id in ({0})
+GROUP BY xtrsrc_id
+""".format(ids_placeholder)
+        cursor.execute(query, tuple(i[0] for i in runcat_ids))
+        id_counts = cursor.fetchall()
+    except db.Error:
+        logging.warn("Failed on query %s", query)
+        raise
+    finally:
+        cursor.close()
+    return id_counts
+    
+
 def select_winking_sources(conn, dsid):
     """Select sources not detected in all epochs.
     
@@ -2108,9 +2146,8 @@ def monitoringlist_not_observed(conn, image_id):
         image_id (int): the image under consideration.
 
     Returns (list):
-
-        A list of sources yet to be observed; each list item is a
-        tuple with the ra, dec, xtrsrcid and monitorid of the source.
+        A list of sources yet to be observed; format is:
+        [( ra, dec, xtrsrcid , monitorid )]
     """
 
     try:
@@ -2191,6 +2228,18 @@ def insert_monitored_sources(conn, results, image_id):
     The insertion into runningcatalog can be done by xtrsrc_id from
     monitoringlist. In case it is negative, it is appended to
     runningcatalog, and xtrsrc_id is updated in the monitoringlist.
+    
+    TO DO: Refactor into smaller functions 
+        (+ I think there is probably some code duplication here) 
+    
+    Args notes:
+    
+    results -- list of tuples,
+    [(assoc_src_id, monitoringlist_id, 
+    ra, dec,
+    ...    
+    beam_angle)] 
+    (See tuple unpacking below)     
     """
 
     cursor = conn.cursor()
@@ -2443,8 +2492,9 @@ WHERE assoc_xtrsrc_id in ({srcids_placeholder})
         logging.warn("Query %s failed", query)
         cursor.close()
         raise
-    cursor.close()
-    pass
+    finally:
+        cursor.close()
+    
 
 def add_manual_entry_to_monitoringlist(conn, dataset_id, 
                           ra, dec):

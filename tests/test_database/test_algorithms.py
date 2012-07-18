@@ -67,10 +67,10 @@ class TestSourceAssociation(unittest.TestCase):
                 extracted_source_ids.extend(img_xtrsrc_ids)
                 assocxtrsrcs_rows = tkpdb.utils.columns_from_table(self.database.connection,
                                            table="assocxtrsource",
-                                           keywords=['xtrsrc_id', 'xtrsrc' ],
+                                           keywords=['runcat', 'xtrsrc' ],
                                            where={"xtrsrc":img_xtrsrc_ids[0]})
                 self.assertEqual(len(assocxtrsrcs_rows),1)
-                self.assertEqual(assocxtrsrcs_rows[0]['xtrsrc_id'], img_xtrsrc_ids[0])
+                self.assertEqual(assocxtrsrcs_rows[0]['xtrsrc'], img_xtrsrc_ids[0])
             else:
                 self.assertEqual(len(img_xtrsrc_ids),0)
             
@@ -81,10 +81,10 @@ class TestSourceAssociation(unittest.TestCase):
         self.assertEqual(len(extracted_source_ids),1)
         assocxtrsrcs_rows = tkpdb.utils.columns_from_table(self.database.connection,
                                            table="assocxtrsource",
-                                           keywords=['xtrsrc_id', 'xtrsrc' ],
+                                           keywords=['runcat', 'xtrsrc' ],
                                            where={"xtrsrc":extracted_source_ids[0]})
         self.assertEqual(len(assocxtrsrcs_rows),1)
-        self.assertEqual(assocxtrsrcs_rows[0]['xtrsrc_id'], extracted_source_ids[0])
+        self.assertEqual(assocxtrsrcs_rows[0]['runcat'], extracted_source_ids[0])
             
 #            print "First epoch DSID",self.dataset.id
 #            print "Runcat:", running_cat
@@ -111,7 +111,7 @@ class TestSourceAssociation(unittest.TestCase):
             ds_source_ids.extend(img_xtrsrc_ids)
             assocxtrsrcs_rows = tkpdb.utils.columns_from_table(self.database.connection,
                                        table="assocxtrsource",
-                                       keywords=['xtrsrc_id', 'xtrsrc' ],
+                                       keywords=['runcat', 'xtrsrc' ],
                                        where={"xtrsrc":img_xtrsrc_ids[0]})
 #            print "ImageID:", last_img.id
 #            print "Imgs sources:", img_xtrsrc_ids

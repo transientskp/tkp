@@ -496,7 +496,7 @@ class ExtractedSource(DBObject):
     TABLE = 'extractedsource'
     ID = 'id'
     REQUIRED = ('image', 'zone', 'ra', 'decl', 'ra_err', 'decl_err',
-                'x', 'y', 'z', 'det_sigma')
+                'x', 'y', 'z', 'racosdecl', 'det_sigma')
 
     def __init__(self, data=None, image=None, database=None, id=None):
         """If id is supplied, the data and image arguments are ignored."""

@@ -35,16 +35,18 @@ class TestDataSet(unittest.TestCase):
         dataset2.update()
         self.assertEqual(dataset2.description, "dataset 1")
         self.assertEqual(dataset2.id, dataset1.id)
-        dataset2.update(dsoutname='output.ms',
-                        description='testing of dataset',
+        #dataset2.update(dsoutname='output.ms',
+        #                description='testing of dataset',
+        #                process_ts=datetime.datetime(1970, 1, 1))
+        dataset2.update(type=2,
                         process_ts=datetime.datetime(1970, 1, 1))
         self.assertEqual(dataset2.description, "dataset 1")
-        self.assertEqual(dataset2.id, dsid)
+        self.assertEqual(dataset2.id, dataset1.id)
         # 'data' is ignored if dsid is given:
         dataset3 = DataSet(data={'description': 'dataset 3'},
-                           id=dsid, database=self.database)
+                           id=dataset1.id, database=self.database)
         self.assertEqual(dataset3.description, "dataset 1")
-        self.assertEqual(dataset3.id, dsid)
+        self.assertEqual(dataset3.id, dataset1.id)
 
     @requires_database()
     def test_update(self):
@@ -57,7 +59,7 @@ class TestDataSet(unittest.TestCase):
         self.assertEqual(dataset1.description, "dataset 1")
         dataset1.update(rerun=5, description="new dataset")
         self.database.cursor.execute(
-            "SELECT rerun, description FROM dataset WHERE dsid=%s", (dataset1.id,))
+            "SELECT rerun, description FROM dataset WHERE id=%s", (dataset1.id,))
         results = self.database.cursor.fetchone()
         self.assertEqual(results[0], 5)
         self.assertEqual(results[1], "new dataset")
@@ -85,7 +87,7 @@ class TestImage(unittest.TestCase):
             'freq_bw': 1e6,
             'taustart_ts': datetime.datetime(1999, 9, 9),
             'url': '/path/to/image',
-            'tau_time': 0,
+            #'tau_time': 0,
             }
         dataset1 = DataSet(data={'description': 'dataset with images'},
                            database=self.database)
@@ -182,7 +184,7 @@ class TestExtractedSource(unittest.TestCase):
                       'freq_eff': 80e6,
                       'freq_bw': 1e6})
         data = dict(zone=1, ra=12.12, decl=13.13, ra_err=1.12, decl_err=1.23,
-                    x=0.11, y=0.22, z=0.33, det_sigma=10.)
+                    x=0.11, y=0.22, z=0.33, racosdecl=0.44, det_sigma=10.)
         src1 = ExtractedSource(data=data, image=image)
         src2 = ExtractedSource(data=data, image=image, database=self.database)
         data['image'] = image.id
@@ -219,6 +221,7 @@ class TestExtractedSource(unittest.TestCase):
         data = {'ra': 123.123, 'decl': 23.23,
                 'ra_err': 0.1, 'decl_err': 0.1,
                 'zone': 1, 'x': 0.11, 'y': 0.22, 'z': 0.33,
+                'racosdecl': 0.44,
                 'det_sigma': 10.0}
         source1 = ExtractedSource(image=image1, data=data)
         data['ra'] = 45.45
@@ -271,6 +274,7 @@ class TestExtractedSource(unittest.TestCase):
         data = {'ra': 123.123, 'decl': 23.23,
                 'ra_err': 0.1, 'decl_err': 0.1,
                 'zone': 1, 'x': 0.11, 'y': 0.22, 'z': 0.33,
+                'racosdecl': 0.44,
                 'det_sigma': 11.1}
         source1 = ExtractedSource(image=image1, data=data)
         data['ra'] = 45.45

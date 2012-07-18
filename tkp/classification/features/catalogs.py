@@ -31,13 +31,15 @@ def match_catalogs(transient):
     if import_failed:
         return None
     # Hardcode the catalogs for now
-    catalogs = {3: 'NVSS', 4: 'VLSS', 5: 'WENSS', 6: 'WENSS'} 
+    #catalogs = {3: 'NVSS', 4: 'VLSS', 5: 'WENSS', 6: 'WENSS'} 
+    # We check for all catalogs in the db (VLSS, WENSSm, WENSSp, NVSS, EXO)
     database = DataBase()
     results = {}
     for key, value in catalogs.iteritems():
         results[value] = match_nearests_in_catalogs(
             database.connection, transient.srcid,
-            radius=1, catalogid=key, assoc_r=.1)
+            #radius=1, catalogid=key, assoc_r=.1)
+            radius=0.5, catalogid=key, assoc_r=3.717/3600.)
         if len(results[value]) > 0:
             results[value] = results[value][0]
         else:

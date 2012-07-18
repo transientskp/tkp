@@ -16,8 +16,8 @@
  *
  */
 CREATE FUNCTION insertImage(idataset INT
-                           /*,itau INT
-                           ,itau_time DOUBLE*/
+                           /*,itau INT*/
+                           ,itau_time DOUBLE
                            ,ifreq_eff DOUBLE
                            ,ifreq_bw DOUBLE
                            ,itaustart_ts TIMESTAMP
@@ -32,7 +32,6 @@ BEGIN
   DECLARE oimageid INT;
   DECLARE iband SMALLINT;
   DECLARE itau INT;
-  DECLARE itau_time DOUBLE;
 
   SET iband = getBand(ifreq_eff);
   
@@ -43,7 +42,7 @@ BEGIN
     ,dataset
     /*,tau*/
     ,band
-    /*,tau_time*/
+    ,tau_time
     ,freq_eff
     ,freq_bw
     ,taustart_ts
@@ -57,7 +56,7 @@ BEGIN
     ,idataset
     /*,itau*/
     ,iband
-    /*,itau_time*/
+    ,itau_time
     ,ifreq_eff
     ,ifreq_bw
     ,itaustart_ts

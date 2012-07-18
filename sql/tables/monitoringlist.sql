@@ -1,15 +1,12 @@
-/* TODO: maybe add this?:
-,FOREIGN KEY (xtrsrc) REFERENCES extractedsource (id)
-*/
-
 CREATE TABLE monitoringlist
   (id INTEGER AUTO_INCREMENT
-  ,xtrsrc INTEGER
+  ,runcat INTEGER NULL
   ,ra DOUBLE DEFAULT 0
   ,decl DOUBLE DEFAULT 0
-  ,ds_id INTEGER NOT NULL
+  ,dataset INTEGER NOT NULL
   ,userentry BOOLEAN DEFAULT FALSE
   ,PRIMARY KEY (id)
-
+  ,FOREIGN KEY (runcat) REFERENCES runningcatalog (id)
+  ,FOREIGN KEY (dataset) REFERENCES dataset (id)
   )
 ;

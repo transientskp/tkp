@@ -54,7 +54,7 @@ def insert_image(conn, dataset,
     """Insert an image for a given dataset with the column values
     given in the argument list.
     """
-    tau_mode = 0 ###Placeholder, this variable is not well defined currently.
+    #tau_mode = 0 ###Placeholder, this variable is not well defined currently.
 
     newimgid = None
     try:
@@ -1430,8 +1430,8 @@ SELECT runcat
          WHERE rc0.dataset = %s
            AND rc0.id = rf0.runcat
        ) t1
- WHERE t1.V_inter / t1.avg_i_peak > %s
-   AND t1.eta_inter / t1.avg_weight_peak > %s
+ WHERE t1.V_inter / t1.avg_f_peak > %s
+   AND t1.eta_inter / t1.avg_f_peak_weight > %s
 """
         cursor.execute(query, (dsid, V_lim, eta_lim))
         results = cursor.fetchall()
@@ -1502,28 +1502,15 @@ def _insert_cat_assocs(conn, image_id, radius, deRuiter_r):
                       (2 * PI() * SQRT(x0.ra_err * x0.ra_err + c0.ra_err * c0.ra_err)
                                 * SQRT(x0.decl_err * x0.decl_err + c0.decl_err * c0.decl_err) * %s)
                       ) AS loglr
-            FROM (select id
-                        ,ra
-                        ,decl
-                        ,ra_err
-                        ,decl_err
-                        ,cast(floor(decl - %s) as integer) as zone_min
-                        ,cast(floor(decl + %s) as integer) as zone_max
-                        ,ra + alpha(%s, decl) as ra_max
-                        ,ra - alpha(%s, decl) as ra_min
-                        ,decl - %s as decl_min
-                        ,decl + %s as decl_max
-                        ,x
-                        ,y
-                        ,z
-                    from extractedsource
-                   where image = %s
-                 ) x0
+            FROM extractedsource x0
                 ,catalogedsource c0
-           WHERE c0.zone BETWEEN zone_min AND zone_max
-             AND c0.decl BETWEEN decl_min AND decl_max
-             AND c0.ra BETWEEN ra_min AND ra_max
-             and x0.x*c0.x + x0.y*c0.y + x0.z*c0.z > %s
+           WHERE x0.image = %s
+             AND c0.zone BETWEEN CAST(FLOOR(x0.decl - %s) AS INTEGER)
+                             AND CAST(FLOOR(x0.decl + %s) AS INTEGER)
+             AND c0.decl BETWEEN x0.decl - %s 
+                             AND x0.decl + %s
+             AND c0.ra BETWEEN x0.ra - alpha(%s, x0.decl)
+                           AND x0.ra + alpha(%s, x0.decl)
              AND SQRT(  (x0.ra * COS(RADIANS(x0.decl)) - c0.ra * COS(RADIANS(c0.decl)))
                       * (x0.ra * COS(RADIANS(x0.decl)) - c0.ra * COS(RADIANS(c0.decl)))
                       / (x0.ra_err * x0.ra_err + c0.ra_err * c0.ra_err)
@@ -1531,12 +1518,14 @@ def _insert_cat_assocs(conn, image_id, radius, deRuiter_r):
                       / (x0.decl_err * x0.decl_err + c0.decl_err * c0.decl_err)
                      ) < %s
         """
-        cursor.execute(query, (BG_DENSITY, radius, radius, radius, radius, radius, radius, 
-                               image_id,math.cos(math.pi*radius/180.), deRuiter_r/3600.))
+        cursor.execute(query, (BG_DENSITY, 
+                               image_id, 
+                               radius, radius, radius, radius, radius, radius, 
+                               deRuiter_r/3600.))
         if not AUTOCOMMIT:
             conn.commit()
     except db.Error, e:
-        logging.warn("Query failed: %s." % query)
+        logging.warn("Query failed:\n%s" % query)
         raise
     finally:
         cursor.close()
@@ -1990,27 +1979,27 @@ def monitoringlist_not_observed(conn, image_id):
           FROM (SELECT ml.id AS monitorid
                       ,ml.runcat AS runcat2
                       ,t1.runcat AS runcat
-                      ,t1.xtrsrc AS assoc_xtrsrc_id
+                      ,t1.xtrsrc AS xtrsrc
                       ,t1.image AS image_id
                       ,ml.dataset 
                   FROM monitoringlist ml
                        LEFT OUTER JOIN (SELECT ax.runcat as runcat
                                               ,ex.id as xtrsrcid
                                               ,ex.image 
-                                              ,ax.xtrsrc as assoc_xtrsrc_id
-                                          FROM extractedsources ex
-                                              ,assocxtrsources ax
+                                              ,ax.xtrsrc as xtrsrc
+                                          FROM extractedsource ex
+                                              ,assocxtrsource ax
                                          WHERE ex.id = ax.xtrsrc
                                            AND ex.image = %s
                                        ) t1
                        ON ml.runcat = t1.runcat
                  WHERE t1.xtrsrc IS NULL
                ) t2
-              ,images im
+              ,image im
               ,runningcatalog rc
          WHERE im.dataset = t2.dataset
            AND im.id = %s
-           AND rc.runcat = t2.runcat2
+           AND rc.id = t2.runcat2
         """
         cursor.execute(query, (image_id, image_id))
         results = cursor.fetchall()
@@ -2067,6 +2056,7 @@ def insert_monitoring_sources(conn, results, image_id):
         x = math.cos(math.radians(dec)) * math.cos(math.radians(ra))
         y = math.cos(math.radians(dec)) * math.sin(math.radians(ra))
         z = math.sin(math.radians(dec))
+        racosdecl = ra * math.cos(math.radians(dec))
         # Always insert them into extractedsource
         query = """\
         INSERT INTO extractedsource
@@ -2079,6 +2069,7 @@ def insert_monitoring_sources(conn, results, image_id):
           ,x
           ,y
           ,z
+          ,racosdecl
           ,det_sigma
           ,f_peak
           ,f_peak_err
@@ -2107,13 +2098,14 @@ def insert_monitoring_sources(conn, results, image_id):
           ,%s
           ,%s
           ,%s
+          ,%s
           ,1
           )
         """
         try:
             cursor.execute(
                 query, (image_id, int(math.floor(dec)), ra, dec, ra_err, dec_err,
-                        x, y, z, sigma, peak, peak_err, flux, flux_err,
+                        x, y, z, racosdecl, sigma, peak, peak_err, flux, flux_err,
                         semimajor, semiminor, pa))
             if not AUTOCOMMIT:
                 conn.commit()
@@ -2296,7 +2288,7 @@ def insert_transient(conn, transient, dataset, images=None):
     try:  # Find the possible transient associated with the current source
         query = """\
         SELECT id 
-          FROM transients 
+          FROM transient
          WHERE runcat IN (SELECT runcat
                             FROM assocxtrsource 
                            WHERE runcat = %s
@@ -2306,7 +2298,7 @@ def insert_transient(conn, transient, dataset, images=None):
         transientid = cursor.fetchone()
         if transientid:  # update/replace existing source
             query = """\
-            UPDATE transients 
+            UPDATE transient
                SET runcat = %s
                   ,eta = %s
                   ,V = %s
@@ -2326,12 +2318,12 @@ def insert_transient(conn, transient, dataset, images=None):
                   ,assocxtrsource ax
              WHERE ex.image IN (%s) 
                AND ex.id = ax.xtrsrc 
-               AND ax.xtrsrc = %%s
+               AND ax.runcat = %%s
             """ % image_set
             cursor.execute(query, (srcid,))
             trigger_srcid = cursor.fetchone()[0]
             query = """\
-            INSERT INTO transients 
+            INSERT INTO transient
               (runcat
               ,eta
               ,V
@@ -2353,29 +2345,28 @@ def insert_transient(conn, transient, dataset, images=None):
         cursor.close()
         raise
     try:
+        #TODO: File a MonetDB bug report, since
+        # no two fk can be inserted
         query = """\
         INSERT INTO monitoringlist
-          (xtrsrc_id
+          (runcat
           ,ra
           ,decl
           ,dataset
           )
-          SELECT ex.id
+          SELECT r.id
                 ,0
                 ,0
                 ,%s
-            FROM extractedsource ex
-           WHERE ex.id = %s
-             AND ex.id NOT IN (SELECT xtrsrc_id 
-                                 FROM monitoringlist
-                              )
+            FROM runningcatalog r
+           WHERE r.id = %s
         """
         cursor.execute(query, (dataset, srcid))
         if not AUTOCOMMIT:
             conn.commit()
     except db.Error:
-        query = query % srcid
-        logging.warn("Query %s failed", query)
+        query = query % (dataset,srcid)
+        logging.warn("Failed on query:\n%s" % query)
         cursor.close()
         raise
     cursor.close()

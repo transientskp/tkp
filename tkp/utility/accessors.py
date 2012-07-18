@@ -388,6 +388,7 @@ def dbimage_from_accessor(dataset, image):
     """
     from ..database.dataset import Image as DBImage
 
+    #if image.freqeff == 0 or image.freqeff is None or image.freqbw is None:
     if image.freqeff is None or image.freqbw is None:
         raise ValueError("cannot create database image: frequency information missing")
     data = {'tau_time': image.inttime,

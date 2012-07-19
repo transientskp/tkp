@@ -87,7 +87,7 @@ class TestImage(unittest.TestCase):
             'freq_bw': 1e6,
             'taustart_ts': datetime.datetime(1999, 9, 9),
             'url': '/path/to/image',
-            #'tau_time': 0,
+            'tau_time': 0,
             }
         dataset1 = DataSet(data={'description': 'dataset with images'},
                            database=self.database)

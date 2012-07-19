@@ -8,8 +8,8 @@ BEGIN
   DECLARE ifreqbandid, ofreqbandid SMALLINT;
   DECLARE ibandwidth DOUBLE;
 
-  /* For now, we default the bandwidth of a new band to 10MHz */
-  SET ibandwidth = 10000000;
+  /* For now, we default the bandwidth of a new band to 2MHz */
+  SET ibandwidth = 2000000;
 
   SELECT COUNT(*)
     INTO nfreqbandid

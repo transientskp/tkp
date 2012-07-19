@@ -185,7 +185,7 @@ def _empty_temprunningcatalog(conn):
         cursor.close()
 
 
-def _insert_temprunningcatalog(conn, image_id, deRuiter_r):
+def _insert_temprunningcatalog(conn, image_id, deRuiter_r, radius=0.03):
     """Select matched sources
 
     Here we select the extractedsource that have a positional match
@@ -243,13 +243,43 @@ INSERT INTO temprunningcatalog
   ,avg_weighted_f_int
   ,avg_weighted_f_int_sq
   )
+  /*SELECT t1.runcat
+        ,t1.xtrsrc
+        ,t1.dataset
+        ,t1.band
+        ,t1.stokes
+        ,t1.datapoints
+        ,t1.zone
+        ,t1.wm_ra
+        ,t1.wm_decl
+        ,t1.wm_ra_err
+        ,t1.wm_decl_err
+        ,t1.avg_wra
+        ,t1.avg_wdecl
+        ,t1.avg_weight_ra
+        ,t1.avg_weight_decl
+        ,t1.x
+        ,t1.y
+        ,t1.z
+        ,t1.f_datapoints
+        ,t1.avg_f_peak
+        ,t1.avg_f_peak_sq
+        ,t1.avg_f_peak_weight
+        ,t1.avg_weighted_f_peak
+        ,t1.avg_weighted_f_peak_sq
+        ,t1.avg_f_int
+        ,t1.avg_f_int_sq
+        ,t1.avg_f_int_weight
+        ,t1.avg_weighted_f_int
+        ,t1.avg_weighted_f_int_sq
+    FROM (*/
   SELECT t0.runcat
         ,t0.xtrsrc
         ,t0.dataset
         ,t0.band
         ,t0.stokes
         ,t0.datapoints
-        ,CAST(FLOOR(t0.wm_decl) AS INTEGER)
+        ,CAST(FLOOR(t0.wm_decl) AS INTEGER) AS zone
         ,t0.wm_ra
         ,t0.wm_decl
         ,t0.wm_ra_err
@@ -258,22 +288,82 @@ INSERT INTO temprunningcatalog
         ,t0.avg_wdecl
         ,t0.avg_weight_ra
         ,t0.avg_weight_decl
-        ,COS(RADIANS(t0.wm_decl)) * COS(RADIANS(t0.wm_ra))
-        ,COS(RADIANS(t0.wm_decl)) * SIN(RADIANS(t0.wm_ra))
-        ,SIN(RADIANS(t0.wm_decl))
-        ,t0.f_datapoints
-        ,t0.avg_f_peak
-        ,t0.avg_f_peak_sq
-        ,t0.avg_f_peak_weight
-        ,t0.avg_weighted_f_peak
-        ,t0.avg_weighted_f_peak_sq
-        ,t0.avg_f_int
-        ,t0.avg_f_int_sq
-        ,t0.avg_f_int_weight
-        ,t0.avg_weighted_f_int
-        ,t0.avg_weighted_f_int_sq
-    FROM (SELECT rc0.id as runcat
+        ,COS(RADIANS(t0.wm_decl)) * COS(RADIANS(t0.wm_ra)) AS x
+        ,COS(RADIANS(t0.wm_decl)) * SIN(RADIANS(t0.wm_ra)) AS y
+        ,SIN(RADIANS(t0.wm_decl)) AS z
+          
+                ,CASE WHEN rf0.f_datapoints IS NULL
+                      THEN 1
+                      ELSE rf0.f_datapoints + 1
+                 END AS f_datapoints
+                ,CASE WHEN rf0.f_datapoints IS NULL
+                      THEN t0.f_peak 
+                      ELSE (rf0.f_datapoints * rf0.avg_f_peak 
+                            + t0.f_peak)
+                           / (rf0.f_datapoints + 1) 
+                 END AS avg_f_peak
+                ,CASE WHEN rf0.f_datapoints IS NULL
+                      THEN t0.f_peak * t0.f_peak
+                      ELSE (rf0.f_datapoints * rf0.avg_f_peak_sq 
+                            + t0.f_peak * t0.f_peak)
+                           / (rf0.f_datapoints + 1) 
+                 END AS avg_f_peak_sq
+                ,CASE WHEN rf0.f_datapoints IS NULL
+                      THEN 1 / (t0.f_peak_err * t0.f_peak_err)
+                      ELSE (rf0.f_datapoints * rf0.avg_f_peak_weight 
+                            + 1 / (t0.f_peak_err * t0.f_peak_err))
+                           / (rf0.f_datapoints + 1) 
+                 END AS avg_f_peak_weight
+                ,CASE WHEN rf0.f_datapoints IS NULL
+                      THEN t0.f_peak / (t0.f_peak_err * t0.f_peak_err)
+                      ELSE (rf0.f_datapoints * rf0.avg_weighted_f_peak 
+                            + t0.f_peak / (t0.f_peak_err * t0.f_peak_err))
+                           / (rf0.f_datapoints + 1) 
+                 END AS avg_weighted_f_peak
+                ,CASE WHEN rf0.f_datapoints IS NULL
+                      THEN t0.f_peak * t0.f_peak / (t0.f_peak_err * t0.f_peak_err)
+                      ELSE (rf0.f_datapoints * rf0.avg_weighted_f_peak_sq 
+                            + (t0.f_peak * t0.f_peak) / (t0.f_peak_err * t0.f_peak_err))
+                           / (rf0.f_datapoints + 1) 
+                 END AS avg_weighted_f_peak_sq
+                ,CASE WHEN rf0.f_datapoints IS NULL
+                      THEN t0.f_int
+                      ELSE (rf0.f_datapoints * rf0.avg_f_int 
+                            + t0.f_int)
+                           / (rf0.f_datapoints + 1) 
+                 END AS avg_f_int
+                ,CASE WHEN rf0.f_datapoints IS NULL
+                      THEN t0.f_int * t0.f_int
+                      ELSE (rf0.f_datapoints * rf0.avg_f_int_sq 
+                            + t0.f_int * t0.f_int)
+                           / (rf0.f_datapoints + 1) 
+                 END AS avg_f_int_sq
+                ,CASE WHEN rf0.f_datapoints IS NULL
+                      THEN 1 / (t0.f_int_err * t0.f_int_err)
+                      ELSE (rf0.f_datapoints * rf0.avg_f_int_weight 
+                            + 1 / (t0.f_int_err * t0.f_int_err))
+                           / (rf0.f_datapoints + 1) 
+                 END AS avg_f_int_weight
+                ,CASE WHEN rf0.f_datapoints IS NULL
+                      THEN t0.f_int / (t0.f_int_err * t0.f_int_err)
+                      ELSE (rf0.f_datapoints * rf0.avg_weighted_f_int 
+                            + t0.f_int / (t0.f_int_err * t0.f_int_err))
+                           / (rf0.f_datapoints + 1) 
+                 END AS avg_weighted_f_int
+                ,CASE WHEN rf0.f_datapoints IS NULL
+                      THEN t0.f_int * t0.f_int / (t0.f_int_err * t0.f_int_err)
+                      ELSE (rf0.f_datapoints * rf0.avg_weighted_f_int_sq 
+                            + (t0.f_int * t0.f_int) / (t0.f_int_err * t0.f_int_err))
+                           / (rf0.f_datapoints + 1) 
+                 END AS avg_weighted_f_int_sq
+          
+    FROM (      
+          SELECT rc0.id as runcat
                 ,x0.id as xtrsrc
+                ,x0.f_peak
+                ,x0.f_peak_err
+                ,x0.f_int
+                ,x0.f_int_err
                 ,image.dataset
                 ,image.band
                 ,image.stokes
@@ -311,87 +401,18 @@ INSERT INTO temprunningcatalog
                 ,(datapoints * rc0.avg_weight_decl + 1 /
                   (x0.decl_err * x0.decl_err))
                  / (datapoints + 1) AS avg_weight_decl
-                ,CASE WHEN rf0.f_datapoints IS NULL
-                      THEN 1
-                      ELSE rf0.f_datapoints + 1
-                 END AS f_datapoints
-                ,CASE WHEN rf0.f_datapoints IS NULL
-                      THEN x0.f_peak 
-                      ELSE (rf0.f_datapoints * rf0.avg_f_peak 
-                            + x0.f_peak)
-                           / (rf0.f_datapoints + 1) 
-                 END AS avg_f_peak
-                ,CASE WHEN rf0.f_datapoints IS NULL
-                      THEN x0.f_peak * x0.f_peak
-                      ELSE (rf0.f_datapoints * rf0.avg_f_peak_sq 
-                            + x0.f_peak * x0.f_peak)
-                           / (rf0.f_datapoints + 1) 
-                 END AS avg_f_peak_sq
-                ,CASE WHEN rf0.f_datapoints IS NULL
-                      THEN 1 / (x0.f_peak_err * x0.f_peak_err)
-                      ELSE (rf0.f_datapoints * rf0.avg_f_peak_weight 
-                            + 1 / (x0.f_peak_err * x0.f_peak_err))
-                           / (rf0.f_datapoints + 1) 
-                 END AS avg_f_peak_weight
-                ,CASE WHEN rf0.f_datapoints IS NULL
-                      THEN x0.f_peak / (x0.f_peak_err * x0.f_peak_err)
-                      ELSE (rf0.f_datapoints * rf0.avg_weighted_f_peak 
-                            + x0.f_peak / (x0.f_peak_err * x0.f_peak_err))
-                           / (rf0.f_datapoints + 1) 
-                 END AS avg_weighted_f_peak
-                ,CASE WHEN rf0.f_datapoints IS NULL
-                      THEN x0.f_peak * x0.f_peak / (x0.f_peak_err * x0.f_peak_err)
-                      ELSE (rf0.f_datapoints * rf0.avg_weighted_f_peak_sq 
-                            + (x0.f_peak * x0.f_peak) / (x0.f_peak_err * x0.f_peak_err))
-                           / (rf0.f_datapoints + 1) 
-                 END AS avg_weighted_f_peak_sq
-                ,CASE WHEN rf0.f_datapoints IS NULL
-                      THEN x0.f_int
-                      ELSE (rf0.f_datapoints * rf0.avg_f_int 
-                            + x0.f_int)
-                           / (rf0.f_datapoints + 1) 
-                 END AS avg_f_int
-                ,CASE WHEN rf0.f_datapoints IS NULL
-                      THEN x0.f_int * x0.f_int
-                      ELSE (rf0.f_datapoints * rf0.avg_f_int_sq 
-                            + x0.f_int * x0.f_int)
-                           / (rf0.f_datapoints + 1) 
-                 END AS avg_f_int_sq
-                ,CASE WHEN rf0.f_datapoints IS NULL
-                      THEN 1 / (x0.f_int_err * x0.f_int_err)
-                      ELSE (rf0.f_datapoints * rf0.avg_f_int_weight 
-                            + 1 / (x0.f_int_err * x0.f_int_err))
-                           / (rf0.f_datapoints + 1) 
-                 END AS avg_f_int_weight
-                ,CASE WHEN rf0.f_datapoints IS NULL
-                      THEN x0.f_int / (x0.f_int_err * x0.f_int_err)
-                      ELSE (rf0.f_datapoints * rf0.avg_weighted_f_int 
-                            + x0.f_int / (x0.f_int_err * x0.f_int_err))
-                           / (rf0.f_datapoints + 1) 
-                 END AS avg_weighted_f_int
-                ,CASE WHEN rf0.f_datapoints IS NULL
-                      THEN x0.f_int * x0.f_int / (x0.f_int_err * x0.f_int_err)
-                      ELSE (rf0.f_datapoints * rf0.avg_weighted_f_int_sq 
-                            + (x0.f_int * x0.f_int) / (x0.f_int_err * x0.f_int_err))
-                           / (rf0.f_datapoints + 1) 
-                 END AS avg_weighted_f_int_sq
-            FROM runningcatalog rc0
-                 LEFT OUTER JOIN runningcatalog_flux rf0
-                 ON rc0.id = rf0.runcat
-                ,extractedsource x0
+            FROM extractedsource x0
+                ,runningcatalog rc0
                 ,image
            WHERE image.id = %s
              AND x0.image = image.id
              AND image.dataset = rc0.dataset
-             AND rf0.runcat = rc0.id
-             AND rf0.band = image.band
-             AND rf0.stokes = image.stokes
-             AND rc0.zone BETWEEN CAST(FLOOR(x0.decl - 0.025) as INTEGER)
-                                 AND CAST(FLOOR(x0.decl + 0.025) as INTEGER)
-             AND rc0.wm_decl BETWEEN x0.decl - 0.025
-                                    AND x0.decl + 0.025
-             AND rc0.wm_ra BETWEEN x0.ra - alpha(0.025, x0.decl)
-                                  AND x0.ra + alpha(0.025, x0.decl)
+             AND rc0.zone BETWEEN CAST(FLOOR(x0.decl - %s) as INTEGER)
+                                 AND CAST(FLOOR(x0.decl + %s) as INTEGER)
+             AND rc0.wm_decl BETWEEN x0.decl - %s
+                                    AND x0.decl + %s
+             AND rc0.wm_ra BETWEEN x0.ra - alpha(%s, x0.decl)
+                                  AND x0.ra + alpha(%s, x0.decl)
              AND SQRT(  (x0.ra * COS(RADIANS(x0.decl)) - rc0.wm_ra * COS(RADIANS(rc0.wm_decl)))
                       * (x0.ra * COS(RADIANS(x0.decl)) - rc0.wm_ra * COS(RADIANS(rc0.wm_decl)))
                       / (x0.ra_err * x0.ra_err + rc0.wm_ra_err * rc0.wm_ra_err)
@@ -399,12 +420,27 @@ INSERT INTO temprunningcatalog
                       / (x0.decl_err * x0.decl_err + rc0.wm_decl_err * rc0.wm_decl_err)
                      ) < %s
          ) t0
+         LEFT OUTER JOIN runningcatalog_flux rf0
+         ON t0.runcat = rf0.runcat
+         AND t0.band = rf0.band
+         AND t0.stokes = rf0.stokes
+         /*)t1*/
 """
-        cursor.execute(query, (image_id, deRuiter_r/3600.))
+        #print "Q:\n",query % (image_id, 
+        #                        radius, radius, radius, radius, 
+        #                        radius, radius, deRuiter_r/3600.)
+        #if image_id == 2:
+        #    sys.exit()
+        cursor.execute(query, (image_id, 
+                                radius, radius, radius, radius, 
+                                radius, radius, deRuiter_r/3600.))
         if not AUTOCOMMIT:
             conn.commit()
     except db.Error, e:
-        logging.warn("Failed on query nr %s." % query)
+        q = query % (image_id, 
+                        radius, radius, radius, radius, 
+                        radius, radius, deRuiter_r/3600.)
+        logging.warn("Failed on query\n%s." % q)
         raise
     finally:
         cursor.close()
@@ -1094,7 +1130,8 @@ def _insert_new_runcat(conn, image_id):
         if not AUTOCOMMIT:
             conn.commit()
     except db.Error, e:
-        logging.warn("Failed on query:\n%s." % query)
+        q = query % (image_id,)
+        logging.warn("Failed on query:\n%s." % q)
         raise
     finally:
         cursor.close()
@@ -1531,7 +1568,7 @@ def _insert_cat_assocs(conn, image_id, radius, deRuiter_r):
         cursor.close()
 
 
-def associate_with_catalogedsources(conn, image_id, radius=0.025, deRuiter_r=DERUITER_R):
+def associate_with_catalogedsources(conn, image_id, radius=0.03, deRuiter_r=DERUITER_R):
     """Associate extracted sources in specified image with known sources 
     in the external catalogues
 
@@ -1864,14 +1901,14 @@ def match_nearests_in_catalogs(conn, srcid, radius=1.0,
     results = []
     # TODO: I would suggest this:
     q_alt = """\
-    SELECT r.id
-          ,r.catsrcname
+    SELECT c.id
+          ,c.catsrcname
           ,c.catalog
-          ,k.catname
-          ,r.wm_ra
-          ,r.wm_decl
-          ,r.wm_ra_err
-          ,r.wm_decl_err
+          ,k.name
+          ,c.ra
+          ,c.decl
+          ,c.ra_err
+          ,c.decl_err
           ,3600 * DEGREES(2 * ASIN(SQRT( (r.x - c.x) * (r.x - c.x)
                                        + (r.y - c.y) * (r.y - c.y)
                                        + (r.z - c.z) * (r.z - c.z)
@@ -1884,9 +1921,9 @@ def match_nearests_in_catalogs(conn, srcid, radius=1.0,
                         / (r.wm_decl_err * r.wm_decl_err + c.decl_err * c.decl_err)
                       ) AS assoc_r
       FROM runningcatalog r
-          ,catalogedsources c
+          ,catalogedsource c
           ,catalog k
-     WHERE r.runcat = %s
+     WHERE r.id = %s
        AND c.zone BETWEEN CAST(FLOOR(r.wm_decl - %s) AS INTEGER)
                       AND CAST(FLOOR(r.wm_decl + %s) AS INTEGER)
        AND c.decl BETWEEN r.wm_decl - %s
@@ -2289,10 +2326,7 @@ def insert_transient(conn, transient, dataset, images=None):
         query = """\
         SELECT id 
           FROM transient
-         WHERE runcat IN (SELECT runcat
-                            FROM assocxtrsource 
-                           WHERE runcat = %s
-                            )
+         WHERE runcat = %s
         """
         cursor.execute(query, (srcid,))
         transientid = cursor.fetchone()

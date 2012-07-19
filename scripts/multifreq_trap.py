@@ -7,6 +7,9 @@ import tkp.database.database as database
 import tkp.database.dataset as ds
 import tkp.database.dbregion as reg
 import tkp.database.utils as dbu
+from tkp.classification.features import lightcurve as lcmod
+from tkp.classification.features import catalogs as catmod
+import tkp.classification.transient as tr
 import monetdb.sql
 from tkp.sourcefinder import image
 from tkp.config import config
@@ -39,7 +42,7 @@ try:
     
     iter_start = time.time()
     
-    description = 'TRAP: LOFAR LSC_3C295'
+    description = 'TRAP: LOFAR LBA Multifreq Bands'
     dataset = ds.DataSet(data={'description': description}, database=db)
     print "dataset.id:", dataset.id
 
@@ -69,20 +72,20 @@ try:
         #print "assoccatsrc: ", reg.assoccatsourcesInImage(db.connection, dbimg.id, regionfilesdir)
         
         # monitoringlist
-        fitsimage = accessors.FITSImage(imagesdir + '/' + file)
-        db_image = ds.Image(id=dbimg.id, database=db)
-        sources = db_image.monitoringsources()
+        #fitsimage = accessors.FITSImage(imagesdir + '/' + file)
+        #db_image = ds.Image(id=dbimg.id, database=db)
+        sources = dbimg.monitoringsources()
         # Run the source finder on these sources
         if len(sources):
             print "Measuring %d undetected monitoring sources: %s" % (len(sources), str(sources))
-            data_image = accessors.sourcefinder_image_from_accessor(fitsimage)
-            results = data_image.fit_fixed_positions(
+            #data_image = accessors.sourcefinder_image_from_accessor(fitsimage)
+            results = my_image.fit_fixed_positions(
                 [(source[0], source[1]) for source in sources],
-                boxsize=BOX_IN_BEAMPIX*max(data_image.beam[0], data_image.beam[1]))
+                boxsize=BOX_IN_BEAMPIX*max(my_image.beam[0], my_image.beam[1]))
             # Filter out the bad ones, and combines with xtrsrc_ids
             results = [(source[2], source[3], result.serialize()) for source, result in
                 zip(sources, results) if result is not None]
-            db_image.insert_monitoring_sources(results)
+            dbimg.insert_monitoring_sources(results)
         
         # transient_search
         from scipy.stats import chisqprob
@@ -147,6 +150,41 @@ try:
                     #images=self.inputs['image_ids'])
                     images=[dbimg.id])
                 transients.append(transient)
+                print "transients:",transients
+                
+                # feature_extraction
+                source = ds.ExtractedSource(id=transient.srcid, database=db)
+                lightcurve = lcmod.LightCurve(*zip(*source.lightcurve()))
+                lightcurve.calc_background()
+                lightcurve.calc_stats()
+                lightcurve.calc_duration()
+                lightcurve.calc_fluxincrease()
+                lightcurve.calc_risefall()
+                if lightcurve.duration['total']:
+                    variability = (lightcurve.duration['active'] /
+                                   lightcurve.duration['total'])
+                else:
+                    variability = numpy.NaN
+                features = {
+                    'duration': lightcurve.duration['total'],
+                    'variability': variability,
+                    'wmean': lightcurve.stats['wmean'],
+                    'median': lightcurve.stats['median'],
+                    'wstddev': lightcurve.stats['wstddev'],
+                    'wskew': lightcurve.stats['wskew'],
+                    'wkurtosis': lightcurve.stats['wkurtosis'],
+                    'max': lightcurve.stats['max'],
+                    'peakflux': lightcurve.fluxincrease['peak'],
+                    'relpeakflux': lightcurve.fluxincrease['increase']['relative'],
+                    'risefallratio': lightcurve.risefall['ratio'],
+                    }
+                transient.duration = lightcurve.duration['total']
+                transient.timezero = lightcurve.duration['start']
+                transient.variability = variability
+                transient.features = features
+                transient.catalogs = catmod.match_catalogs(transient)
+                
+                # classification
         else:
             transient_ids = numpy.array([], dtype=numpy.int)
             siglevels = numpy.array([], dtype=numpy.float)
@@ -154,8 +192,6 @@ try:
         #self.outputs['siglevels'] = siglevels
         #self.outputs['transients'] = transients
 
-        
-        
         #print dbu.detect_variable_sources(db.connection, dataset.id, 0.1, 4)
         my_image.clearcache()
         i += 1

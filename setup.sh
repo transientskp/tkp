@@ -75,6 +75,8 @@ parse_arguments() {
 				 ;;
 			 d)
 				 DATABASE=${OPTARG}
+				 USERNAME=${OPTARG}
+				 PASSWORD=${OPTARG}
 				 ;;
 			 u)
 				 USERNAME=${OPTARG}
@@ -193,7 +195,7 @@ echo
 if "${CONFIRM}"; then
     echo 
     echo "WARNING: this will (re)create the database ${DATABASE}."
-    read -p "Continue? " -n 1
+    read -p "Continue? [y/N]" -n 1
     if [[ ! $REPLY =~ ^[Yy]$ ]]
     then
         echo

@@ -21,7 +21,14 @@ class TestSourceAssociation(unittest.TestCase):
         
         self.im_params = db_subs.example_dbimage_datasets(n_images=8)
         self.db_imgs=[]
-        
+
+    def tearDown(self):
+        """remove all stuff after the test has been run"""
+        self.database.connection.rollback()
+        self.database.execute("delete from assocxtrsource")
+        self.database.execute("delete from runningcatalog_flux")
+        self.database.execute("delete from runningcatalog")
+
     
     def test_null_case_sequential(self):
         for im in self.im_params:

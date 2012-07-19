@@ -2498,8 +2498,34 @@ WHERE assoc_xtrsrc_id in ({srcids_placeholder})
 
 def add_manual_entry_to_monitoringlist(conn, dataset_id, 
                           ra, dec):
-    """TO DO"""
-    pass
+    """
+    Add manual entry to monitoringlist.
+    
+    In this case, the xtrsrc_id is set to -1 initially, 
+    since we don't have an extracted source.
+    
+    This will be updated when we perform our first forced extraction 
+    at these co-ordinates. 
+    """
+    
+    cursor = conn.cursor()
+    try:
+        query = """\
+INSERT INTO monitoringlist
+(xtrsrc_id, ra, decl, ds_id, userentry)
+SELECT -1 ,%s ,%s ,%s, true
+"""
+        cursor.execute(query, (ra, dec, dataset_id))
+        if not AUTOCOMMIT:
+            conn.commit()
+    except db.Error:
+        query = query 
+        logging.warn("Query %s failed", query)
+        cursor.close()
+        raise
+    finally:
+        cursor.close()
+    
 
 
 def insert_transient(conn, transient, dataset, images=None):

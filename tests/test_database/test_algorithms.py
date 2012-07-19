@@ -294,8 +294,20 @@ class TestTransientCandidateMonitoring(unittest.TestCase):
 #        print "Assoc counts:", assoc_counts
         
         
-
+    def test_manual_monitor_insertion(self):
+        """test_manual_monitor_insertion
         
+            Check that manually entered entries are dealt with correctly
+        """
+        tkpdb.utils.add_manual_entry_to_monitoringlist(
+                       self.database.connection,
+                       self.dataset.id, 
+                       ra = 123.999,
+                       dec = 15.999)
+        print "DSID:", self.dataset.id
+        for dbimg in self.db_imgs:
+            srcs_to_monitor = dbimg.monitoringsources()
+            self.assertEqual(len(srcs_to_monitor), 1)
             
         
     

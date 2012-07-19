@@ -38,7 +38,7 @@ class TrapImages(control):
         # Create the dataset
         database = DataBase()
         if self.inputs['dataset_id'] == -1:
-            dataset = DataSet(data={'dsinname': self.inputs['job_name']},
+            dataset = DataSet(data={'description': self.inputs['job_name']},
                               database=database)
         else:
             dataset = DataSet(id = self.inputs['dataset_id'],
@@ -47,20 +47,21 @@ class TrapImages(control):
             
         self.logger.info("dataset id = %d", dataset.id)
         with log_time(self.logger):
-            self.logger.info("Processing images ...")
-            outputs = self.run_task("source_extraction", images,
-                                            dataset_id=dataset.id,
-#                                            nproc = self.config.get('DEFAULT', 'default_nproc')
-                                            nproc=1 #Force nproc =1 until issue #3357 is fixed.
-                                    )
-
-            outputs.update(
-                self.run_task("monitoringlist", outputs['image_ids'],
-                              nproc=1))
-            outputs.update(
-                    self.run_task("transient_search", [dataset.id],
-                                   image_ids=outputs['image_ids']))
-
+            if len(images):
+                self.logger.info("Processing images ...")
+                outputs = self.run_task("source_extraction", images,
+                                                dataset_id=dataset.id,
+    #                                            nproc = self.config.get('DEFAULT', 'default_nproc')
+                                                nproc=1 #Force nproc =1 until issue #3357 is fixed.
+                                        )
+    
+                outputs.update(
+                    self.run_task("monitoringlist", 
+                                  [dataset.id],
+                                  nproc=1))
+                outputs.update(
+                        self.run_task("transient_search", [dataset.id],
+                                       image_ids=outputs['image_ids']))
                 outputs.update(
                     self.run_task("feature_extraction", outputs['transients']))
                 
@@ -68,7 +69,8 @@ class TrapImages(control):
                     self.run_task("classification", outputs['transients']))
                 
                 self.run_task("prettyprint", outputs['transients'])
-                
+            else:
+                self.logger.warn("No images found, check parameter files.")
         dataset.process_ts = datetime.datetime.utcnow()
         database.close()
 

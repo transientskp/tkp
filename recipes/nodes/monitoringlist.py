@@ -21,7 +21,7 @@ class monitoringlist(LOFARnodeTCP):
     """
     """
 
-    def run(self, filename, image_id, tkpconfigdir=None):
+    def run(self, filename, image_id, dataset_id, tkpconfigdir=None):
         if tkpconfigdir:   # allow nodes to pick up the TKPCONFIGDIR
             os.environ['TKPCONFIGDIR'] = tkpconfigdir
         from tkp.config import config
@@ -38,6 +38,8 @@ class monitoringlist(LOFARnodeTCP):
             - filename: FITS file
             
             - image_id: database image id
+            
+            - dataset_id: dataset to which the image belongs
 
         """
         
@@ -46,7 +48,14 @@ class monitoringlist(LOFARnodeTCP):
                 # Obtain the list of sources to be monitored (and not already
                 # detected) for this image
                 fitsimage = FITSImage(filename)
-                db_image = DBImage(id=image_id, database=database)
+                
+                ##TO DO: would prefer it if there were an easy way for the image
+                ## to determine its parent dataset without being spoon fed.
+                ## -This would cut down on required recipe arguments and generally
+                ##    make it harder to screw up.
+                dataset = DataSet(id = dataset_id, database=database)
+                db_image = DBImage(id=image_id, database=database, dataset=dataset)
+#                db_image.update()
                 sources = db_image.monitoringsources()
                 # Run the source finder on these sources
                 if len(sources):

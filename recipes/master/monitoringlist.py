@@ -20,15 +20,15 @@ from lofarpipe.support.baserecipe import BaseRecipe
 from lofarpipe.support.clusterdesc import ClusterDesc, get_compute_nodes
 from lofarpipe.support.remotecommand import ComputeJob
 from lofarpipe.support.remotecommand import RemoteCommandRecipeMixIn
+from lofar.parameterset import parameterset
 
-import tkp.database.database
-import tkp.database.dataset
-import tkp.database.utils as dbu
+import tkp.database as tkpdb
+
+import tkp.config
+
 from tkp.classification.transient import Transient
 from tkp.classification.transient import Position
 from tkp.classification.transient import DateTime
-from tkp.database.database import DataBase
-from tkp.database.dataset import DataSet
 
 
 class monitoringlist(BaseRecipe, RemoteCommandRecipeMixIn):
@@ -36,6 +36,10 @@ class monitoringlist(BaseRecipe, RemoteCommandRecipeMixIn):
     Update the monitoring list with newly found transients.
     Transients that are already in the monitoring list will get
     their position updated from the runningcatalog.
+    
+    Args:
+        dataset_id  --- id for the dataset to process.
+    
     """
     
     inputs = {
@@ -44,15 +48,28 @@ class monitoringlist(BaseRecipe, RemoteCommandRecipeMixIn):
             help="Maximum number of simultaneous processes per compute node",
             default=8
         ),
+      'parset': ingredient.FileField(
+             '-p', '--parset',
+            dest='parset',
+            help="Source finder configuration parset (used to pull detection threshold)"
+        ),
         }
     
     def go(self):
         super(monitoringlist, self).go()
+        ds_id = self.inputs['args'][0]
         # Get image_ids and their file names
-        image_ids = self.inputs['args']
-        with closing(DataBase()) as database:
-            ids_filenames = dbu.get_imagefiles_for_ids(
+        with closing(tkpdb.DataBase()) as database:
+            dataset = tkpdb.DataSet(database=database, id = ds_id)
+            dataset.update_images()
+            image_ids = [img.id for img in dataset.images]
+            ids_filenames = tkpdb.utils.get_imagefiles_for_ids(
                 database.connection, image_ids)
+            
+            #Mark sources which need monitoring
+            detection_thresh = parameterset(self.inputs['parset']).getFloat('detection.threshold', 5)
+            dataset.mark_transient_candidates(single_epoch_threshold = detection_thresh,
+                                              combined_threshold = detection_thresh)
         # Obtain available nodes
         clusterdesc = ClusterDesc(self.config.get('cluster', "clusterdesc"))
         if clusterdesc.subclusters:
@@ -77,6 +94,7 @@ class monitoringlist(BaseRecipe, RemoteCommandRecipeMixIn):
                     arguments=[
                         filename,
                         image_id,
+                        dataset.id,
                         tkp.config.CONFIGDIR
                         ]
                     )

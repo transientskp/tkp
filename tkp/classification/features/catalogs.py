@@ -35,13 +35,19 @@ def match_catalogs(transient):
     # We check for all catalogs in the db (VLSS, WENSSm, WENSSp, NVSS, EXO)
     database = DataBase()
     results = {}
-    for key, value in catalogs.iteritems():
-        results[value] = match_nearests_in_catalogs(
-            database.connection, transient.srcid,
-            #radius=1, catalogid=key, assoc_r=.1)
-            radius=0.5, catalogid=key, assoc_r=3.717/3600.)
-        if len(results[value]) > 0:
-            results[value] = results[value][0]
-        else:
-            results[value] = {}
+    #for key, value in catalogs.iteritems():
+    #    results[value] = match_nearests_in_catalogs(
+    #        database.connection, transient.srcid,
+    #        radius=1, catalogid=key, assoc_r=.1)
+    #    if len(results[value]) > 0:
+    #        results[value] = results[value][0]
+    #    else:
+    #        results[value] = {}
+    results = match_nearests_in_catalogs(
+                        database.connection, transient.srcid,
+                        radius=0.5, assoc_r=3.717/3600.)
+    if len(results) > 0:
+        results = results[0]
+    else:
+        results = {}
     return results

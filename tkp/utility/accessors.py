@@ -271,15 +271,19 @@ class FITSImage(DataAccessor):
         @type hdulist: hdulist
         """
         try:
-            if hdu.header['ctype3'] in ('FREQ', 'VOPT'):
-                self.freqeff = hdu.header['crval3']
-                self.freqbw = hdu.header['cdelt3']
-            elif hdu.header['ctype4'] in ('FREQ', 'VOPT'):
-                self.freqeff = hdu.header['crval4']
-                self.freqbw = hdu.header['cdelt4']
+            if hdu.header['TELESCOP'] == 'LOFAR':
+                self.freqeff = hdu.header['RESTFRQ']
+                self.freqbw = 0.0 # TODO: We need this in the header as well...
             else:
-                self.freqeff = hdu.header['restfreq']
-                self.freqbw = 0.0
+                if hdu.header['ctype3'] in ('FREQ', 'VOPT'):
+                    self.freqeff = hdu.header['crval3']
+                    self.freqbw = hdu.header['cdelt3']
+                elif hdu.header['ctype4'] in ('FREQ', 'VOPT'):
+                    self.freqeff = hdu.header['crval4']
+                    self.freqbw = hdu.header['cdelt4']
+                else:
+                    self.freqeff = hdu.header['restfreq']
+                    self.freqbw = 0.0
         except KeyError:
             logging.warn("Frequency not specified in FITS")
 

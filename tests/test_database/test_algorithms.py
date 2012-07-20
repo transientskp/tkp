@@ -11,9 +11,9 @@ class TestSourceAssociation(unittest.TestCase):
     def setUp(self):
     
         self.database = tkpdb.DataBase()
-        #Often fixes things if the database is playing up:
-#        db_subs.delete_test_database(self.database)
-        self.dataset = tkpdb.DataSet(data={'dsinname':"Src. assoc:"+self._testMethodName},
+#        Often fixes things if the database is playing up:
+        db_subs.delete_test_database(self.database)
+        self.dataset = tkpdb.DataSet(data={'description':"Src. assoc:"+self._testMethodName},
                                                     database = self.database)
         
         self.im_params = db_subs.example_dbimage_datasets(n_images=8)
@@ -42,8 +42,18 @@ class TestSourceAssociation(unittest.TestCase):
 #        for im in self.im_params:
 #            self.db_imgs.append( tkpdb.dataset.Image( data=im, dataset=self.dataset) )            
 #        pass
-#    
+    
     def test_only_first_epoch_source(self):
+        """test_only_first_epoch_source
+        
+        - Pretend to extract a source only from the first image.
+        - Run source association for each image, as we would in Trap.
+        - Check the image source listing works
+        - Check runcat and assocxtrsource are correct.
+        
+        """
+            
+            
         first_epoch = True
         extracted_source_ids=[]
         for im in self.im_params:
@@ -55,6 +65,7 @@ class TestSourceAssociation(unittest.TestCase):
                 
             last_img.associate_extracted_sources()
             
+            #First, check the runcat has been updated correctly:
             running_cat = tkpdb.utils.columns_from_table(self.database.connection,
                                            table="runningcatalog",
                                            keywords=['datapoints'],
@@ -89,14 +100,23 @@ class TestSourceAssociation(unittest.TestCase):
                                            keywords=['runcat', 'xtrsrc' ],
                                            where={"xtrsrc":extracted_source_ids[0]})
         self.assertEqual(len(assocxtrsrcs_rows),1)
-        self.assertEqual(assocxtrsrcs_rows[0]['runcat'], extracted_source_ids[0])
+        
+        self.assertEqual(assocxtrsrcs_rows[0]['xtrsrc'], extracted_source_ids[0],
+                         "Runcat xtrsrc entry must match the only extracted source")
             
-#            print "First epoch DSID",self.dataset.id
-#            print "Runcat:", running_cat
 
     def test_single_fixed_source(self):
+        """test_single_fixed_source
+        
+        - Pretend to extract the same source in each of a series of images.
+        - Perform source association 
+        - Check the image source listing works
+        - Check runcat, assocxtrsource.
+        """
+        
         imgs_loaded = 0
-        ds_source_ids=[]
+        first_image = True
+        fixed_src_runcat_id = None
         for im in self.im_params:
             self.db_imgs.append( tkpdb.dataset.Image( data=im, dataset=self.dataset) )
             last_img =self.db_imgs[-1]
@@ -105,15 +125,22 @@ class TestSourceAssociation(unittest.TestCase):
             imgs_loaded+=1
             running_cat = tkpdb.utils.columns_from_table(self.database.connection,
                                            table="runningcatalog",
-                                           keywords=['datapoints'],
+                                           keywords=['id', 'datapoints'],
                                            where={"dataset":self.dataset.id})
             self.assertEqual(len(running_cat), 1)
-            self.assertEqual(running_cat[0]['datapoints'], imgs_loaded)               
+            self.assertEqual(running_cat[0]['datapoints'], imgs_loaded)
+            if first_image:
+                fixed_src_runcat_id = running_cat[0]['id']
+                self.assertIsNotNone(fixed_src_runcat_id, "No runcat id assigned to source")
+            self.assertEqual(running_cat[0]['id'], fixed_src_runcat_id,
+                             "Multiple runcat ids for same fixed source")
+                           
             last_img.update()
             last_img.update_sources()
             img_xtrsrc_ids = [src.id for src in last_img.sources]
             self.assertEqual(len(img_xtrsrc_ids), 1)
-            ds_source_ids.extend(img_xtrsrc_ids)
+
+            #Get the association row for most recent extraction:
             assocxtrsrcs_rows = tkpdb.utils.columns_from_table(self.database.connection,
                                        table="assocxtrsource",
                                        keywords=['runcat', 'xtrsrc' ],
@@ -123,13 +150,11 @@ class TestSourceAssociation(unittest.TestCase):
 #            print "Assoc entries:", assocxtrsrcs_rows 
 #            print "First extracted source id:", ds_source_ids[0]
 #            if len(assocxtrsrcs_rows):
-#                print "Associated source:", assocxtrsrcs_rows[0]['xtrsrc_id']
-            
+#                print "Associated source:", assocxtrsrcs_rows[0]['xtrsrc']
             self.assertEqual(len(assocxtrsrcs_rows),1,
                              msg="No entries in assocxtrsrcs for image number "+str(imgs_loaded))
-            self.assertEqual(assocxtrsrcs_rows[0]['xtrsrc_id'], ds_source_ids[0],
-                             msg="Assocxtrsrcs table incorrectly assocating for image number "
-                             +str(imgs_loaded))
+            self.assertEqual(assocxtrsrcs_rows[0]['runcat'], fixed_src_runcat_id,
+                             "Mismatched runcat id in assocxtrsrc table")
 
         
     
@@ -211,14 +236,14 @@ class TestTransientCandidateMonitoring(unittest.TestCase):
         
         all_results = db_utils.select_transient_candidates_above_thresh(
                     self.database.connection, 
-                    [c['xtrsrc_id'] for c in winkers],
+                    [c['runcat'] for c in winkers],
                     0,
                     0)
         self.assertEqual(len(winkers), len(all_results))
         
         bright_results = db_utils.select_transient_candidates_above_thresh(
                     self.database.connection, 
-                    [c['xtrsrc_id'] for c in winkers],
+                    [c['runcat'] for c in winkers],
                     10,
                     10)
         self.assertEqual(len(bright_results), 1)
@@ -227,23 +252,34 @@ class TestTransientCandidateMonitoring(unittest.TestCase):
         #Should return bright single epoch, and fainter two epoch sources
         solid_results = db_utils.select_transient_candidates_above_thresh(
                     self.database.connection, 
-                    [c['xtrsrc_id'] for c in winkers],
+                    [c['runcat'] for c in winkers],
                     3.5,
                     6.5)
         self.assertEqual(len(solid_results), 2)
         self.assertAlmostEqual(solid_results[1]['max_det_sigma'], 4)
         self.assertAlmostEqual(solid_results[1]['sum_det_sigma'], 7)
         
-        
+#        
     def test_full_transient_candidate_routine(self):
         all_results = self.dataset._find_transient_candidates(0,0)
         self.assertEqual(len(all_results),3)
-#        self.assertEqual(results[0]['datapoints'],1)
-#        self.assertEqual(results[1]['datapoints'],1)
+        self.assertEqual(all_results[0]['datapoints'],1)
+        self.assertEqual(all_results[1]['datapoints'],1)
         self.assertEqual(all_results[2]['datapoints'],2)
         self.assertAlmostEqual(all_results[2]['sum_det_sigma'], 7)
     
     def test_monitoringlist_insertion_and_retrieval(self):
+        """test_monitoringlist_insertion_and_retrieval
+
+            We have faked transient sources for imgs
+            3,4,5 and 6.
+            
+            In total we have 3 different fake transients.
+            
+            Therefore we should monitor all 3 in the imgs with
+            only an extraction from the fixed source. 
+        
+        """
         self.dataset.mark_transient_candidates(0, 0)
         for dbimg in self.db_imgs[0:3]:
 #            print "Image id:", dbimg.id
@@ -263,8 +299,10 @@ class TestTransientCandidateMonitoring(unittest.TestCase):
         """
         test_monitored_source_insertion
         
-        This is quite a faff, and involved writing some extra helper functions...
-        
+        - Test insertion of results for extractions caused by the monitoring list.
+        - After monitoring is complete, we expect a full 8 datapoints for 
+            each of our sources, whether fixed or transient. 
+            (we fake non-detections for all the transient monitoring extractions) 
         """
         self.dataset.mark_transient_candidates(0, 0)
         for dbimg in self.db_imgs:
@@ -283,34 +321,34 @@ class TestTransientCandidateMonitoring(unittest.TestCase):
                                 )
             mon_results = [ (s[2],s[3],m) for  s,m in zip(srcs_to_monitor, mon_extractions)] 
             dbimg.insert_monitored_sources(mon_results)
-            
-        unique_src_ids = self.dataset.get_unique_source_ids()
-#        print "Unique src ids:", unique_src_ids
-        self.assertEqual(len(unique_src_ids), 4)
+#            
+        runcat_rows = self.dataset.get_unique_source_ids()
+#        print "Runcat rows:", runcat_rows
+        self.assertEqual(len(runcat_rows), 4)
         assoc_counts = tkpdb.utils.count_associated_sources(self.database.connection,
-                                                           unique_src_ids)
+                                   [r['xtrsrc'] for r in runcat_rows])
         for count in assoc_counts:
             self.assertEqual(count[1], 8)
 #        print "Assoc counts:", assoc_counts
         
         
-    def test_manual_monitor_insertion(self):
-        """test_manual_monitor_insertion
-        
-            Check that manually entered entries are dealt with correctly
-        """
-        tkpdb.utils.add_manual_entry_to_monitoringlist(
-                       self.database.connection,
-                       self.dataset.id, 
-                       ra = 123.999,
-                       dec = 15.999)
-        print "DSID:", self.dataset.id
-        for dbimg in self.db_imgs:
-            srcs_to_monitor = dbimg.monitoringsources()
-            self.assertEqual(len(srcs_to_monitor), 1)
-            
-        
-    
+#    def test_manual_monitor_insertion(self):
+#        """test_manual_monitor_insertion
+#        
+#            Check that manually entered entries are dealt with correctly
+#        """
+#        tkpdb.utils.add_manual_entry_to_monitoringlist(
+#                       self.database.connection,
+#                       self.dataset.id, 
+#                       ra = 123.999,
+#                       dec = 15.999)
+#        print "DSID:", self.dataset.id
+#        for dbimg in self.db_imgs:
+#            srcs_to_monitor = dbimg.monitoringsources()
+#            self.assertEqual(len(srcs_to_monitor), 1)
+#            
+#        
+#    
 
 #class TestLightCurve(unittest.TestCase):
 #    """This test serves more as an example than as a proper unit

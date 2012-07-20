@@ -1282,7 +1282,7 @@ def associate_extracted_sources(conn, image_id, deRuiter_r=DERUITER_R):
     Here we use a default value of deRuiter_r = 3.717/3600. for a
     reliable association.
     """
-    print "De Ruiter Radius: r = ", deRuiter_r
+#    print "De Ruiter Radius: r = ", deRuiter_r
 
     _empty_temprunningcatalog(conn)
     #+------------------------------------------------------+
@@ -1331,7 +1331,8 @@ def associate_extracted_sources(conn, image_id, deRuiter_r=DERUITER_R):
 
 #### NB: These 3 lines seem to have been deleted in the multifreq branch
 #### But crept back in, during the merge.
-#### Are they still needed? -TS.    
+#### Are they still needed? -TS.  
+#### NB Unit tests suggest we're fine without them.  
 #    _count_known_sources(conn, image_id, deRuiter_r)
 #    _insert_new_assocs(conn, image_id, deRuiter_r)
 #    _insert_new_source_runcat(conn, image_id, deRuiter_r)
@@ -1342,7 +1343,7 @@ def count_associated_sources(conn, src_ids):
     """
     Count the number of extracted sources associated with a given xtrsrc_id
     
-    Args: A list of src_ids to process.
+    Args: A list of xtrsrc_ids to process.
     
     Returns: A list of pairwise tuples,
             [ (assoc_src_id, assocs_count) ]
@@ -1352,19 +1353,23 @@ def count_associated_sources(conn, src_ids):
     try:
         #Thought about trying to do this in one clever SQL statement
         #But this will have to do for now.
+        
+        #First, get the runcat ids for these extracted sources
         ids_placeholder = ", ".join(["%s"] * len(src_ids))
         query="""\
-SELECT xtrsrc_id 
-FROM assocxtrsources 
-WHERE assoc_xtrsrc_id in ({0})
+SELECT runcat 
+FROM assocxtrsource 
+WHERE xtrsrc in ({0})
 """.format(ids_placeholder)
         cursor.execute(query, tuple(src_ids))
         runcat_ids = cursor.fetchall()
+        
+        #Then count the associations
         query="""\
-SELECT xtrsrc_id, count(assoc_xtrsrc_id) 
-FROM assocxtrsources 
-WHERE xtrsrc_id in ({0})
-GROUP BY xtrsrc_id
+SELECT runcat, count(xtrsrc) 
+FROM assocxtrsource 
+WHERE runcat in ({0})
+GROUP BY runcat
 """.format(ids_placeholder)
         cursor.execute(query, tuple(i[0] for i in runcat_ids))
         id_counts = cursor.fetchall()
@@ -1384,7 +1389,7 @@ def select_winking_sources(conn, dsid):
     
     Returns:
     list of dicts:
-        [ {xtrsrc_id, datapoints, avg_i_peak} ]
+        [ {runcat, xtrsrc, datapoints} ]
     """
     
     results = []
@@ -1392,20 +1397,29 @@ def select_winking_sources(conn, dsid):
     try:
         #Thought about trying to do this in one clever SQL statement
         #But this will have to do for now.
-        query="""SELECT COUNT(ds_id) from images where ds_id=%s"""
+        query="""SELECT COUNT(1) from image where dataset=%s"""
         cursor.execute(query, (dsid,))
         nimgs = cursor.fetchone()[0]
+#        query="""\
+#SELECT  xtrsrc
+#        ,datapoints
+#        ,avg_i_peak
+#    FROM runningcatalog 
+#    WHERE ds_id=%s 
+#    AND datapoints<>%s
+#"""
         query="""\
-SELECT  xtrsrc_id
+SELECT  id
+        ,xtrsrc
         ,datapoints
-        ,avg_i_peak
     FROM runningcatalog 
-    WHERE ds_id=%s 
+    WHERE dataset=%s 
     AND datapoints<>%s
 """
         cursor.execute(query, (dsid, nimgs))
         results = cursor.fetchall()
-        results = [dict(xtrsrc_id=x[0], datapoints=x[1], avg_i_peak=x[2])
+#        results = [dict(xtrsrc_id=x[0], datapoints=x[1], avg_i_peak=x[2])
+        results = [dict(runcat=x[0], xtrsrc=x[1], datapoints=x[2])
                    for x in results]
         if not AUTOCOMMIT:
             conn.commit()
@@ -1422,12 +1436,12 @@ def select_transient_candidates_above_thresh(
                     single_epoch_threshold,
                     combined_threshold
                     ):
-    """Takes a list of assoc_ids for candidate transients.
+    """Takes a list of runcat_ids for candidate transients.
     
     Selects info for those which exceed the specified detection thresholds.
     
     Returns: a list of dicts
-        [ {xtrsrc_id, max_det_sigma, sum_det_sigma} ]
+        [ {runcat, max_det_sigma, sum_det_sigma} ]
         
     """
     results = []
@@ -1435,15 +1449,15 @@ def select_transient_candidates_above_thresh(
     try:
         ids_placeholder = ", ".join(["%s"] * len(candidate_assoc_ids))
         query= """\
-SELECT ax.xtrsrc_id 
+SELECT ax.runcat
        ,MAX(ex.det_sigma)
        ,SUM(ex.det_sigma)
     FROM 
-        assocxtrsources ax
-        ,extractedsources ex
-    WHERE ax.xtrsrc_id in ({0}) 
-        AND ax.assoc_xtrsrc_id = ex.xtrsrcid
-    GROUP BY ax.xtrsrc_id
+        assocxtrsource ax
+        ,extractedsource ex
+    WHERE ax.runcat in ({0}) 
+        AND ax.xtrsrc = ex.id
+    GROUP BY ax.runcat
     HAVING 
         MAX(ex.det_sigma)>%s    
         AND SUM(ex.det_sigma)>%s;
@@ -1454,7 +1468,7 @@ SELECT ax.xtrsrc_id
 #        print query % query_tuple
         cursor.execute(query, query_tuple)
         results = cursor.fetchall()
-        results = [dict(xtrsrc_id=x[0], max_det_sigma=x[1], sum_det_sigma=x[2])
+        results = [dict(runcat=x[0], max_det_sigma=x[1], sum_det_sigma=x[2])
                    for x in results]
         if not AUTOCOMMIT:
             conn.commit()
@@ -2455,41 +2469,32 @@ def insert_monitored_sources(conn, results, image_id):
                 raise
     cursor.close()
 
-def add_extractedsources_to_monitoringlist(conn, dataset_id, 
-                          xtrsrc_ids):
+def add_sources_to_monitoringlist(conn, dataset_id, 
+                          runcat_ids):
     """
     Add entries to monitoringlist.
-    
-    We first grab the associated source ID, and then 
-    insert that assoc_id if it doesn't already exist.
+     
+    Insert each runcat id if it doesn't already exist.
     (Action is idempotent).
     
-    NB the supplied source ids should either be 
-    a. extracted source ids all from the same image
-    or
-    b. All be associated_source_ids
-    
-    Because if multiple extracted source ids belonging to the same lightcurve are supplied,
-    then the monitoringlist will get duplicate entries.
-    
-    This is because we only check if the assoc_ids are already present
-    BEFORE we insert the list - we don't check for duplicates in the list itself.
     """
+    
+    #De-duplicate our input list:
+    runcat_ids = list(set(runcat_ids))
     
     cursor = conn.cursor()
     try:
-        ids_placeholder = ", ".join(["%s"] * len(xtrsrc_ids))
+        values_placeholder = ", ".join(["( %s, 0, 0, %s )"] * len(runcat_ids))
+        values_list = []
+        for rcid in runcat_ids:
+            values_list.extend([ rcid, dataset_id])
         query = """\
 INSERT INTO monitoringlist
-(xtrsrc_id, ra, decl, ds_id)
-SELECT ax.xtrsrc_id ,0 ,0 ,%s
-FROM assocxtrsources ax
-WHERE assoc_xtrsrc_id in ({srcids_placeholder})
-  AND 
-    ax.xtrsrc_id NOT IN
-    (SELECT xtrsrc_id FROM monitoringlist)
-""".format(srcids_placeholder = ids_placeholder)
-        cursor.execute(query, tuple([dataset_id]+xtrsrc_ids))
+(runcat, ra, decl, dataset)
+VALUES
+{placeholder}
+""".format(placeholder = values_placeholder)
+        cursor.execute(query, tuple(values_list))
         if not AUTOCOMMIT:
             conn.commit()
     except db.Error:
@@ -2501,36 +2506,36 @@ WHERE assoc_xtrsrc_id in ({srcids_placeholder})
         cursor.close()
     
 
-def add_manual_entry_to_monitoringlist(conn, dataset_id, 
-                          ra, dec):
-    """
-    Add manual entry to monitoringlist.
-    
-    In this case, the xtrsrc_id is set to -1 initially, 
-    since we don't have an extracted source.
-    
-    This will be updated when we perform our first forced extraction 
-    at these co-ordinates. 
-    """
-    
-    cursor = conn.cursor()
-    try:
-        query = """\
-INSERT INTO monitoringlist
-(xtrsrc_id, ra, decl, ds_id, userentry)
-SELECT -1 ,%s ,%s ,%s, true
-"""
-        cursor.execute(query, (ra, dec, dataset_id))
-        if not AUTOCOMMIT:
-            conn.commit()
-    except db.Error:
-        query = query 
-        logging.warn("Query %s failed", query)
-        cursor.close()
-        raise
-    finally:
-        cursor.close()
-    
+#def add_manual_entry_to_monitoringlist(conn, dataset_id, 
+#                          ra, dec):
+#    """
+#    Add manual entry to monitoringlist.
+#    
+#    In this case, the xtrsrc_id is set to -1 initially, 
+#    since we don't have an extracted source.
+#    
+#    This will be updated when we perform our first forced extraction 
+#    at these co-ordinates. 
+#    """
+#    
+#    cursor = conn.cursor()
+#    try:
+#        query = """\
+#INSERT INTO monitoringlist
+#(xtrsrc_id, ra, decl, ds_id, userentry)
+#SELECT -1 ,%s ,%s ,%s, true
+#"""
+#        cursor.execute(query, (ra, dec, dataset_id))
+#        if not AUTOCOMMIT:
+#            conn.commit()
+#    except db.Error:
+#        query = query 
+#        logging.warn("Query %s failed", query)
+#        cursor.close()
+#        raise
+#    finally:
+#        cursor.close()
+#    
 
 
 def insert_transient(conn, transient, dataset, images=None):

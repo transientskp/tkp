@@ -33,17 +33,29 @@ def delete_test_database(database):
                          "Not recommended!")
     try:
         cursor = database.connection.cursor()
-        cursor.execute("DELETE from assocxtrsources")
-        cursor.execute("DELETE from extractedsources")
-        cursor.execute("DELETE from images")
-        cursor.execute("DELETE from runningcatalog")
-        cursor.execute("DELETE from datasets")
-        cursor.execute("DELETE from transients")
-        cursor.execute("DELETE from monitoringlist")
+        query = "DELETE from monitoringlist"
+        cursor.execute(query)
+        query = "DELETE from runningcatalog_flux"
+        cursor.execute(query)
+        query = "DELETE from assocxtrsource"
+        cursor.execute(query)
+        query = "DELETE from temprunningcatalog"
+        cursor.execute(query)
+        query = "DELETE from runningcatalog"
+        cursor.execute(query)
+        query = "DELETE from extractedsource"
+        cursor.execute(query)
+        query = "DELETE from image"
+        cursor.execute(query)
+        query = "DELETE from dataset"
+        cursor.execute(query)
+        query = "DELETE from transient"
+        cursor.execute(query)
         if not tkp_conf['database']['autocommit']:
             database.connection.commit()
     except monetdb.sql.Error:
-        logging.warn("Query failed when trying to blank database")
+        logging.warn("Query failed when trying to blank database\n"
+                     "Query: "+query)
         raise
     finally:
         cursor.close()

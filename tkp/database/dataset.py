@@ -350,15 +350,17 @@ class DataSet(DBObject):
         self.images = images
         
     def get_unique_source_ids(self):
-        query = "SELECT xtrsrc_id FROM runningcatalog WHERE ds_id = %s"
-        try:
-            self.database.cursor.execute(query, (self._id,))
-            results = self.database.cursor.fetchall()
-        except db.Error, e:
-            query = query % self._id
-            logging.warn("database failed on query: %s", query)
-            raise
-        return [r[0] for r in results]
+        """
+        Returns:
+            a list of dictionarys:
+            [{'id,'xtrsrc','datapoints'}]
+            representing rows in runningcatalog,
+            for all sources belonging to this dataset
+        """
+        return dbu.columns_from_table(self.database.connection, 
+                                      'runningcatalog',
+                                      keywords=['id','xtrsrc','datapoints'], 
+                                      where={'dataset':self.id})
         
         
                            
@@ -378,13 +380,17 @@ class DataSet(DBObject):
             - Have at least one extracted source with SNR above the single_epoch_threshold
             - Have a a summed SNR above the combined_threshold 
             - Excludes non-detections due to a shifting field of view (edge cases).
+            
+        Returns: a list of dicts
+        [ {runcat, xtrsrc, datapoints, max_det_sigma, sum_det_sigma} ]
+            
         """
         candidates = dbu.select_winking_sources(
              self.database.connection, self._id)
         
         candidates_sigma = dbu.select_transient_candidates_above_thresh(
                     self.database.connection, 
-                    [c['xtrsrc_id'] for c in candidates],
+                    [c['runcat'] for c in candidates],
                     single_epoch_threshold,
                     combined_threshold
                     )
@@ -396,17 +402,10 @@ class DataSet(DBObject):
         ###  --- This will require FoV information in database
         return candidates
     
-    def _add_extractedsources_to_monitoringlist(self, source_ids):
-        """    
-        NB the supplied source ids should either be 
-        a. extracted source ids all from the same image
-        or
-        b. All be associated_source_ids
-        (See dbu.add_extractedsources_to_monitoringlist for details).
-    """
-        dbu.add_extractedsources_to_monitoringlist(self.database.connection,
+    def _add_sources_to_monitoringlist(self, runcat_ids):
+        dbu.add_sources_to_monitoringlist(self.database.connection,
                                                   self._id,
-                                                  source_ids,
+                                                  runcat_ids,
                                                   )
         
     def mark_transient_candidates(self, single_epoch_threshold,
@@ -418,8 +417,8 @@ class DataSet(DBObject):
         candidates = self._find_transient_candidates(
                      single_epoch_threshold, combined_threshold
                      )
-        self._add_extractedsources_to_monitoringlist(
-                         [c['xtrsrc_id'] for c in candidates],
+        self._add_sources_to_monitoringlist(
+                         [c['runcat'] for c in candidates],
                          )
         
         

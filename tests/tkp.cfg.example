@@ -1,0 +1,9 @@
+# To utilise the database unit tests, you should first set up a test database. (See README.rst)
+# By convention, its name should be prefixed with test, e.g. 'testdb'
+# (The database blanker won't run if this is not the case, for your own safety.)
+# However, if you wish to call it something slightly different e.g. test123,
+# then you will need to add the following lines to ~/.transientskp/tkp.cfg:
+
+[test]
+test_database_name = test123
+

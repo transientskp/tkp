@@ -21,9 +21,9 @@ CREATE FUNCTION insertImage(idataset INT
                            ,ifreq_eff DOUBLE
                            ,ifreq_bw DOUBLE
                            ,itaustart_ts TIMESTAMP
-                           ,ibeam_maj DOUBLE
+                           /*,ibeam_maj DOUBLE
                            ,ibeam_min DOUBLE
-                           ,ibeam_pa DOUBLE
+                           ,ibeam_pa DOUBLE*/
                            ,iurl VARCHAR(1024)
                            ) RETURNS INT
 BEGIN
@@ -47,9 +47,9 @@ BEGIN
     ,freq_eff
     ,freq_bw
     ,taustart_ts
-    ,bsmaj
-    ,bsmin
-    ,bpa
+    /*,bmaj_syn
+    ,bmin_syn
+    ,bpa_syn*/
     ,url
     ) 
   VALUES
@@ -61,9 +61,9 @@ BEGIN
     ,ifreq_eff
     ,ifreq_bw
     ,itaustart_ts
-    ,ibeam_maj 
+    /*,ibeam_maj 
     ,ibeam_min 
-    ,ibeam_pa 
+    ,ibeam_pa */
     ,iurl
     )
   ;

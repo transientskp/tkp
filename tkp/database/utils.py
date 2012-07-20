@@ -215,6 +215,8 @@ def _insert_temprunningcatalog(conn, image_id, deRuiter_r, radius=0.03):
 INSERT INTO temprunningcatalog
   (runcat
   ,xtrsrc
+  ,distance_arcsec
+  ,r
   ,dataset
   ,band
   ,stokes
@@ -243,38 +245,10 @@ INSERT INTO temprunningcatalog
   ,avg_weighted_f_int
   ,avg_weighted_f_int_sq
   )
-  /*SELECT t1.runcat
-        ,t1.xtrsrc
-        ,t1.dataset
-        ,t1.band
-        ,t1.stokes
-        ,t1.datapoints
-        ,t1.zone
-        ,t1.wm_ra
-        ,t1.wm_decl
-        ,t1.wm_ra_err
-        ,t1.wm_decl_err
-        ,t1.avg_wra
-        ,t1.avg_wdecl
-        ,t1.avg_weight_ra
-        ,t1.avg_weight_decl
-        ,t1.x
-        ,t1.y
-        ,t1.z
-        ,t1.f_datapoints
-        ,t1.avg_f_peak
-        ,t1.avg_f_peak_sq
-        ,t1.avg_f_peak_weight
-        ,t1.avg_weighted_f_peak
-        ,t1.avg_weighted_f_peak_sq
-        ,t1.avg_f_int
-        ,t1.avg_f_int_sq
-        ,t1.avg_f_int_weight
-        ,t1.avg_weighted_f_int
-        ,t1.avg_weighted_f_int_sq
-    FROM (*/
   SELECT t0.runcat
         ,t0.xtrsrc
+        ,t0.distance_arcsec
+        ,t0.r
         ,t0.dataset
         ,t0.band
         ,t0.stokes
@@ -291,75 +265,83 @@ INSERT INTO temprunningcatalog
         ,COS(RADIANS(t0.wm_decl)) * COS(RADIANS(t0.wm_ra)) AS x
         ,COS(RADIANS(t0.wm_decl)) * SIN(RADIANS(t0.wm_ra)) AS y
         ,SIN(RADIANS(t0.wm_decl)) AS z
-          
-                ,CASE WHEN rf0.f_datapoints IS NULL
-                      THEN 1
-                      ELSE rf0.f_datapoints + 1
-                 END AS f_datapoints
-                ,CASE WHEN rf0.f_datapoints IS NULL
-                      THEN t0.f_peak 
-                      ELSE (rf0.f_datapoints * rf0.avg_f_peak 
-                            + t0.f_peak)
-                           / (rf0.f_datapoints + 1) 
-                 END AS avg_f_peak
-                ,CASE WHEN rf0.f_datapoints IS NULL
-                      THEN t0.f_peak * t0.f_peak
-                      ELSE (rf0.f_datapoints * rf0.avg_f_peak_sq 
-                            + t0.f_peak * t0.f_peak)
-                           / (rf0.f_datapoints + 1) 
-                 END AS avg_f_peak_sq
-                ,CASE WHEN rf0.f_datapoints IS NULL
-                      THEN 1 / (t0.f_peak_err * t0.f_peak_err)
-                      ELSE (rf0.f_datapoints * rf0.avg_f_peak_weight 
-                            + 1 / (t0.f_peak_err * t0.f_peak_err))
-                           / (rf0.f_datapoints + 1) 
-                 END AS avg_f_peak_weight
-                ,CASE WHEN rf0.f_datapoints IS NULL
-                      THEN t0.f_peak / (t0.f_peak_err * t0.f_peak_err)
-                      ELSE (rf0.f_datapoints * rf0.avg_weighted_f_peak 
-                            + t0.f_peak / (t0.f_peak_err * t0.f_peak_err))
-                           / (rf0.f_datapoints + 1) 
-                 END AS avg_weighted_f_peak
-                ,CASE WHEN rf0.f_datapoints IS NULL
-                      THEN t0.f_peak * t0.f_peak / (t0.f_peak_err * t0.f_peak_err)
-                      ELSE (rf0.f_datapoints * rf0.avg_weighted_f_peak_sq 
-                            + (t0.f_peak * t0.f_peak) / (t0.f_peak_err * t0.f_peak_err))
-                           / (rf0.f_datapoints + 1) 
-                 END AS avg_weighted_f_peak_sq
-                ,CASE WHEN rf0.f_datapoints IS NULL
-                      THEN t0.f_int
-                      ELSE (rf0.f_datapoints * rf0.avg_f_int 
-                            + t0.f_int)
-                           / (rf0.f_datapoints + 1) 
-                 END AS avg_f_int
-                ,CASE WHEN rf0.f_datapoints IS NULL
-                      THEN t0.f_int * t0.f_int
-                      ELSE (rf0.f_datapoints * rf0.avg_f_int_sq 
-                            + t0.f_int * t0.f_int)
-                           / (rf0.f_datapoints + 1) 
-                 END AS avg_f_int_sq
-                ,CASE WHEN rf0.f_datapoints IS NULL
-                      THEN 1 / (t0.f_int_err * t0.f_int_err)
-                      ELSE (rf0.f_datapoints * rf0.avg_f_int_weight 
-                            + 1 / (t0.f_int_err * t0.f_int_err))
-                           / (rf0.f_datapoints + 1) 
-                 END AS avg_f_int_weight
-                ,CASE WHEN rf0.f_datapoints IS NULL
-                      THEN t0.f_int / (t0.f_int_err * t0.f_int_err)
-                      ELSE (rf0.f_datapoints * rf0.avg_weighted_f_int 
-                            + t0.f_int / (t0.f_int_err * t0.f_int_err))
-                           / (rf0.f_datapoints + 1) 
-                 END AS avg_weighted_f_int
-                ,CASE WHEN rf0.f_datapoints IS NULL
-                      THEN t0.f_int * t0.f_int / (t0.f_int_err * t0.f_int_err)
-                      ELSE (rf0.f_datapoints * rf0.avg_weighted_f_int_sq 
-                            + (t0.f_int * t0.f_int) / (t0.f_int_err * t0.f_int_err))
-                           / (rf0.f_datapoints + 1) 
-                 END AS avg_weighted_f_int_sq
-          
-    FROM (      
-          SELECT rc0.id as runcat
+        ,CASE WHEN rf0.f_datapoints IS NULL
+              THEN 1
+              ELSE rf0.f_datapoints + 1
+         END AS f_datapoints
+        ,CASE WHEN rf0.f_datapoints IS NULL
+              THEN t0.f_peak 
+              ELSE (rf0.f_datapoints * rf0.avg_f_peak 
+                    + t0.f_peak)
+                   / (rf0.f_datapoints + 1) 
+         END AS avg_f_peak
+        ,CASE WHEN rf0.f_datapoints IS NULL
+              THEN t0.f_peak * t0.f_peak
+              ELSE (rf0.f_datapoints * rf0.avg_f_peak_sq 
+                    + t0.f_peak * t0.f_peak)
+                   / (rf0.f_datapoints + 1) 
+         END AS avg_f_peak_sq
+        ,CASE WHEN rf0.f_datapoints IS NULL
+              THEN 1 / (t0.f_peak_err * t0.f_peak_err)
+              ELSE (rf0.f_datapoints * rf0.avg_f_peak_weight 
+                    + 1 / (t0.f_peak_err * t0.f_peak_err))
+                   / (rf0.f_datapoints + 1) 
+         END AS avg_f_peak_weight
+        ,CASE WHEN rf0.f_datapoints IS NULL
+              THEN t0.f_peak / (t0.f_peak_err * t0.f_peak_err)
+              ELSE (rf0.f_datapoints * rf0.avg_weighted_f_peak 
+                    + t0.f_peak / (t0.f_peak_err * t0.f_peak_err))
+                   / (rf0.f_datapoints + 1) 
+         END AS avg_weighted_f_peak
+        ,CASE WHEN rf0.f_datapoints IS NULL
+              THEN t0.f_peak * t0.f_peak / (t0.f_peak_err * t0.f_peak_err)
+              ELSE (rf0.f_datapoints * rf0.avg_weighted_f_peak_sq 
+                    + (t0.f_peak * t0.f_peak) / (t0.f_peak_err * t0.f_peak_err))
+                   / (rf0.f_datapoints + 1) 
+         END AS avg_weighted_f_peak_sq
+        ,CASE WHEN rf0.f_datapoints IS NULL
+              THEN t0.f_int
+              ELSE (rf0.f_datapoints * rf0.avg_f_int 
+                    + t0.f_int)
+                   / (rf0.f_datapoints + 1) 
+         END AS avg_f_int
+        ,CASE WHEN rf0.f_datapoints IS NULL
+              THEN t0.f_int * t0.f_int
+              ELSE (rf0.f_datapoints * rf0.avg_f_int_sq 
+                    + t0.f_int * t0.f_int)
+                   / (rf0.f_datapoints + 1) 
+         END AS avg_f_int_sq
+        ,CASE WHEN rf0.f_datapoints IS NULL
+              THEN 1 / (t0.f_int_err * t0.f_int_err)
+              ELSE (rf0.f_datapoints * rf0.avg_f_int_weight 
+                    + 1 / (t0.f_int_err * t0.f_int_err))
+                   / (rf0.f_datapoints + 1) 
+         END AS avg_f_int_weight
+        ,CASE WHEN rf0.f_datapoints IS NULL
+              THEN t0.f_int / (t0.f_int_err * t0.f_int_err)
+              ELSE (rf0.f_datapoints * rf0.avg_weighted_f_int 
+                    + t0.f_int / (t0.f_int_err * t0.f_int_err))
+                   / (rf0.f_datapoints + 1) 
+         END AS avg_weighted_f_int
+        ,CASE WHEN rf0.f_datapoints IS NULL
+              THEN t0.f_int * t0.f_int / (t0.f_int_err * t0.f_int_err)
+              ELSE (rf0.f_datapoints * rf0.avg_weighted_f_int_sq 
+                    + (t0.f_int * t0.f_int) / (t0.f_int_err * t0.f_int_err))
+                   / (rf0.f_datapoints + 1) 
+         END AS avg_weighted_f_int_sq
+    FROM (SELECT rc0.id as runcat
                 ,x0.id as xtrsrc
+                ,3600 * DEGREES(2 * ASIN(SQRT( (rc0.x - x0.x) * (rc0.x - x0.x)
+                                             + (rc0.y - x0.y) * (rc0.y - x0.y)
+                                             + (rc0.z - x0.z) * (rc0.z - x0.z)
+                                             ) / 2) 
+                               ) AS distance_arcsec
+                ,3600 * SQRT(  (rc0.wm_ra * COS(RADIANS(rc0.wm_decl)) - x0.ra * COS(RADIANS(x0.decl)))
+                             * (rc0.wm_ra * COS(RADIANS(rc0.wm_decl)) - x0.ra * COS(RADIANS(x0.decl))) 
+                               / (rc0.wm_ra_err * rc0.wm_ra_err + x0.ra_err * x0.ra_err)
+                            + (rc0.wm_decl - x0.decl) * (rc0.wm_decl - x0.decl)
+                              / (rc0.wm_decl_err * rc0.wm_decl_err + x0.decl_err * x0.decl_err)
+                            ) AS r
                 ,x0.f_peak
                 ,x0.f_peak_err
                 ,x0.f_int
@@ -424,13 +406,10 @@ INSERT INTO temprunningcatalog
          ON t0.runcat = rf0.runcat
          AND t0.band = rf0.band
          AND t0.stokes = rf0.stokes
-         /*)t1*/
 """
         #print "Q:\n",query % (image_id, 
         #                        radius, radius, radius, radius, 
         #                        radius, radius, deRuiter_r/3600.)
-        #if image_id == 2:
-        #    sys.exit()
         cursor.execute(query, (image_id, 
                                 radius, radius, radius, radius, 
                                 radius, radius, deRuiter_r/3600.))
@@ -444,7 +423,6 @@ INSERT INTO temprunningcatalog
         raise
     finally:
         cursor.close()
-
 
 def _flag_multiple_counterparts_in_runningcatalog(conn):
     """Flag the many-to-many and many-to-one association pairs. 
@@ -481,50 +459,39 @@ def _flag_multiple_counterparts_in_runningcatalog(conn):
     try:
         cursor = conn.cursor()
         query = """\
-SELECT t1.runcat
-      ,t1.xtrsrc
-  FROM (SELECT trc0.xtrsrc
-              ,MIN(SQRT(  (x0.ra - rc0.wm_ra) * COS(RADIANS(x0.decl))
-                        * (x0.ra - rc0.wm_ra) * COS(RADIANS(x0.decl))
-                          / (x0.ra_err * x0.ra_err + rc0.wm_ra_err * rc0.wm_ra_err)
-                       +  (x0.decl - rc0.wm_decl) * (x0.decl - rc0.wm_decl)
-                          / (x0.decl_err * x0.decl_err + rc0.wm_decl_err * rc0.wm_decl_err)
-                       )
-                  ) AS min_r1
-          FROM temprunningcatalog trc0
-              ,runningcatalog rc0
-              ,extractedsource x0
-         WHERE trc0.xtrsrc IN (SELECT xtrsrc
-                                 FROM temprunningcatalog
-                               GROUP BY xtrsrc
-                               HAVING COUNT(*) > 1
-                              )
-           AND trc0.runcat = rc0.id
-           AND trc0.xtrsrc = x0.id
-        GROUP BY trc0.xtrsrc
-       ) t0
-      ,(SELECT trc1.runcat
-              ,trc1.xtrsrc
-              ,SQRT(  (x1.ra - rc1.wm_ra) * COS(RADIANS(x1.decl))
-                    * (x1.ra - rc1.wm_ra) * COS(RADIANS(x1.decl))
-                      / (x1.ra_err * x1.ra_err + rc1.wm_ra_err * rc1.wm_ra_err)
-                   +  (x1.decl - rc1.wm_decl) * (x1.decl - rc1.wm_decl)
-                      / (x1.decl_err * x1.decl_err + rc1.wm_decl_err * rc1.wm_decl_err)
-                   ) AS r1
-          FROM temprunningcatalog trc1
-              ,runningcatalog rc1
-              ,extractedsource x1
-         WHERE trc1.xtrsrc IN (SELECT xtrsrc
-                                 FROM temprunningcatalog
-                               GROUP BY xtrsrc
-                               HAVING COUNT(*) > 1
-                              )
-           AND trc1.runcat = rc1.id
-           AND trc1.xtrsrc = x1.id
-       ) t1
- WHERE t1.xtrsrc = t0.xtrsrc
-   AND t1.r1 > t0.min_r1
-"""
+        SELECT t1.runcat
+              ,t1.xtrsrc
+          FROM (SELECT trc0.xtrsrc
+                      ,MIN(trc0.r) AS min_r1
+                  FROM temprunningcatalog trc0
+                      ,runningcatalog rc0
+                      ,extractedsource x0
+                 WHERE trc0.xtrsrc IN (SELECT xtrsrc
+                                         FROM temprunningcatalog
+                                       GROUP BY xtrsrc
+                                       HAVING COUNT(*) > 1
+                                      )
+                   AND trc0.runcat = rc0.id
+                   AND trc0.xtrsrc = x0.id
+                GROUP BY trc0.xtrsrc
+               ) t0
+              ,(SELECT trc1.runcat
+                      ,trc1.xtrsrc
+                      ,trc1.r AS r1
+                  FROM temprunningcatalog trc1
+                      ,runningcatalog rc1
+                      ,extractedsource x1
+                 WHERE trc1.xtrsrc IN (SELECT xtrsrc
+                                         FROM temprunningcatalog
+                                       GROUP BY xtrsrc
+                                       HAVING COUNT(*) > 1
+                                      )
+                   AND trc1.runcat = rc1.id
+                   AND trc1.xtrsrc = x1.id
+               ) t1
+         WHERE t1.xtrsrc = t0.xtrsrc
+           AND t1.r1 > t0.min_r1
+        """
         cursor.execute(query)
         results = zip(*cursor.fetchall())
         if len(results) != 0:
@@ -537,13 +504,13 @@ SELECT t1.runcat
             # This will effectively reduce the tempruncat table with associations of the 
             # one-to-one and one-to-many types.
             query = """\
-            DELETE
-              FROM temprunningcatalog
+            UPDATE temprunningcatalog
+               SET inactive = TRUE
              WHERE runcat = %s
                AND xtrsrc = %s
             """
             for j in range(len(runcat)):
-                print "\nThrowing away many-to-many from tempruncat:", runcat[j], xtrsrc[j]
+                #print "\nThrowing away many-to-many from tempruncat:", runcat[j], xtrsrc[j]
                 cursor.execute(query, (runcat[j], xtrsrc[j]))
                 if not AUTOCOMMIT:
                     conn.commit()
@@ -608,6 +575,7 @@ def _insert_1_to_many_runcat(conn):
             FROM temprunningcatalog
            WHERE runcat IN (SELECT runcat
                               FROM temprunningcatalog
+                             WHERE inactive = FALSE
                             GROUP BY runcat
                             HAVING COUNT(*) > 1
                            )
@@ -667,6 +635,7 @@ def _insert_1_to_many_runcat_flux(conn):
            WHERE trc0.xtrsrc = rc0.xtrsrc
              AND trc0.runcat IN (SELECT runcat
                                    FROM temprunningcatalog
+                                  WHERE inactive = FALSE
                                  GROUP BY runcat
                                  HAVING COUNT(*) > 1
                                 )
@@ -696,25 +665,26 @@ def _insert_1_to_many_basepoint_assoc(conn):
           ,r
           ,type
           )
-          SELECT rc0.id
-                ,trc0.xtrsrc
-                ,0
-                ,0
+          SELECT r.id
+                ,t.xtrsrc
+                ,t.distance_arcsec
+                ,t.r
                 ,2
-            FROM temprunningcatalog trc0
-                ,runningcatalog rc0
-           WHERE trc0.xtrsrc = rc0.xtrsrc
-             AND trc0.runcat IN (SELECT runcat
-                                   FROM temprunningcatalog
-                                 GROUP BY runcat
-                                 HAVING COUNT(*) > 1
-                                )
+            FROM temprunningcatalog t
+                ,runningcatalog r
+           WHERE t.xtrsrc = r.xtrsrc
+             AND t.runcat IN (SELECT runcat
+                                FROM temprunningcatalog
+                               WHERE inactive = FALSE
+                              GROUP BY runcat
+                              HAVING COUNT(*) > 1
+                             )
         """
         cursor.execute(query)
         if not AUTOCOMMIT:
             conn.commit()
     except db.Error, e:
-        logging.warn("Failed on query nr %s." % query)
+        logging.warn("Failed on query:\n%s" % query)
         raise
     finally:
         cursor.close()
@@ -728,7 +698,8 @@ def _insert_1_to_many_assoc(conn):
     were already added (for every extractedsource one), which will replace 
     the existing ones in the runningcatalog. 
     Therefore, we have to update the references to these new ids as well.
-    So, we will update assocxtrsource and delete the entrie in runningcatalog_flux.
+    So, we will append to assocxtrsource and delete the entries from
+    runningcatalog_flux.
 
     NOTE:
     1. We do not update the distance_arcsec and r values of the pairs. 
@@ -756,6 +727,7 @@ def _insert_1_to_many_assoc(conn):
              AND t.runcat = a.runcat
              AND t.runcat IN (SELECT runcat
                                 FROM temprunningcatalog
+                               WHERE inactive = FALSE
                               GROUP BY runcat
                               HAVING COUNT(*) > 1
                              )
@@ -770,11 +742,18 @@ def _insert_1_to_many_assoc(conn):
         cursor.close()
 
 def _delete_1_to_many_inactive_assoc(conn):
-    """Flag the old runcat ids in the runningcatalog to inactive
-    
+    """Delete the association pairs of the old runcat from assocxtrsource
+
+    NOTE: It might sound confusing, but those are not qualified 
+    as inactive in tempruncat (read below).
     Since we replaced this runcat.id with multiple new one, we first
     flag it as inactive, after which we delete it from the runningcatalog
     
+    The subselect selects those valid "old" runcat ids (i.e.,
+    the ones that were not set to inactive for the many-to-many associations).
+
+    NOTE: We do not have to flag these rows as inactive,
+          no furthr processing depends on these in the assoc run
     """
 
     try:
@@ -784,6 +763,7 @@ def _delete_1_to_many_inactive_assoc(conn):
           FROM assocxtrsource
          WHERE runcat IN (SELECT runcat
                             FROM temprunningcatalog
+                           WHERE inactive = FALSE
                           GROUP BY runcat
                           HAVING COUNT(*) > 1
                          )
@@ -812,6 +792,7 @@ def _delete_1_to_many_inactive_runcat_flux(conn):
           FROM runningcatalog_flux
          WHERE runcat IN (SELECT runcat
                             FROM temprunningcatalog
+                           WHERE inactive = FALSE
                           GROUP BY runcat
                           HAVING COUNT(*) > 1
                          )
@@ -828,6 +809,7 @@ def _delete_1_to_many_inactive_runcat_flux(conn):
 def _flag_1_to_many_inactive_runcat(conn):
     """Flag the old runcat ids in the runningcatalog to inactive
     
+    We do noy delete them yet, because we need them later on.
     Since we replaced this runcat.id with multiple new one, we first
     flag it as inactive, after which we delete it from the runningcatalog
     """
@@ -839,6 +821,7 @@ def _flag_1_to_many_inactive_runcat(conn):
            SET inactive = TRUE
          WHERE id IN (SELECT runcat
                         FROM temprunningcatalog
+                       WHERE inactive = FALSE
                       GROUP BY runcat
                       HAVING COUNT(*) > 1
                      )
@@ -852,10 +835,11 @@ def _flag_1_to_many_inactive_runcat(conn):
     finally:
         cursor.close()
 
-def _delete_1_to_many_inactive_tempruncat(conn):
+def _flag_1_to_many_inactive_tempruncat(conn):
     """Delete the one-to-many associations from temprunningcatalog,
     and delete the inactive rows from runningcatalog.
     
+    We do noy delete them yet, because we need them later on.
     After the one-to-many associations have been processed,
     they can be deleted from the temporary table and
     the runningcatalog.
@@ -864,11 +848,17 @@ def _delete_1_to_many_inactive_tempruncat(conn):
 
     try:
         cursor = conn.cursor()
+        # TODO: When we delete the many from the 1-to-many assocs here,
+        #       it will later on pop up again in the list of extracted
+        #       sources that did not have a match in temprunningcatalog
+        #
+        # See also comments at _insert_new_runcat()
         query = """\
-        DELETE
-          FROM temprunningcatalog
+        UPDATE temprunningcatalog
+           SET inactive = TRUE
          WHERE runcat IN (SELECT runcat
                             FROM temprunningcatalog
+                           WHERE inactive = FALSE
                           GROUP BY runcat
                           HAVING COUNT(*) > 1
                          )
@@ -877,33 +867,7 @@ def _delete_1_to_many_inactive_tempruncat(conn):
         if not AUTOCOMMIT:
             conn.commit()
     except db.Error, e:
-        logging.warn("Failed on query:\n%s." % query)
-        raise
-    finally:
-        cursor.close()
-
-def _delete_1_to_many_inactive_runcat(conn):
-    """Delete the one-to-many associations from temprunningcatalog,
-    and delete the inactive rows from runningcatalog.
-    
-    After the one-to-many associations have been processed,
-    they can be deleted from the temporary table and
-    the runningcatalog.
-    
-    """
-
-    try:
-        cursor = conn.cursor()
-        query = """\
-        DELETE
-          FROM runningcatalog
-         WHERE inactive = TRUE
-        """
-        cursor.execute(query)
-        if not AUTOCOMMIT:
-            conn.commit()
-    except db.Error, e:
-        logging.warn("Failed on query:\n%s." % query)
+        logging.warn("Failed on query:\n%s" % query)
         raise
     finally:
         cursor.close()
@@ -925,33 +889,25 @@ def _insert_1_to_1_assoc(conn):
     try:
         cursor = conn.cursor()
         query = """\
-INSERT INTO assocxtrsource
-  (runcat
-  ,xtrsrc
-  ,distance_arcsec
-  ,r
-  ,type
-  )
-  SELECT t.runcat
-        ,t.xtrsrc
-        ,3600 * DEGREES(2 * ASIN(SQRT( (r.x - x.x) * (r.x - x.x)
-                                     + (r.y - x.y) * (r.y - x.y)
-                                     + (r.z - x.z) * (r.z - x.z)
-                                     ) / 2) 
-                       ) AS distance_arcsec
-        ,3600 * SQRT( (r.wm_ra * cos(RADIANS(r.wm_decl)) - x.ra * cos(RADIANS(x.decl)))
-                     * (r.wm_ra * cos(RADIANS(r.wm_decl)) - x.ra * cos(RADIANS(x.decl))) 
-                       / (r.wm_ra_err * r.wm_ra_err + x.ra_err * x.ra_err)
-                    + (r.wm_decl - x.decl) * (r.wm_decl - x.decl)
-                      / (r.wm_decl_err * r.wm_decl_err + x.decl_err * x.decl_err)
-                    ) AS r
-        ,3
-    FROM temprunningcatalog t
-        ,runningcatalog r
-        ,extractedsource x
-   WHERE t.runcat = r.id
-     AND t.xtrsrc = x.id
-"""
+        INSERT INTO assocxtrsource
+          (runcat
+          ,xtrsrc
+          ,distance_arcsec
+          ,r
+          ,type
+          )
+          SELECT t.runcat
+                ,t.xtrsrc
+                ,t.distance_arcsec
+                ,t.r
+                ,3
+            FROM temprunningcatalog t
+                ,runningcatalog r
+                ,extractedsource x
+           WHERE t.runcat = r.id
+             AND r.inactive = FALSE
+             AND t.xtrsrc = x.id
+        """
         cursor.execute(query)
         if not AUTOCOMMIT:
             conn.commit()
@@ -963,53 +919,89 @@ INSERT INTO assocxtrsource
 
 
 def _update_1_to_1_runcat(conn):
-    """Update the running catalog"""
+    """Update the running catalog with the values in temprunningcatalog"""
     
-    # TODO: Change this to a single bulk update query
+    # TODO : Check for clause inactive
     try:
         cursor = conn.cursor()
         query = """\
-        SELECT datapoints
-              ,zone
-              ,wm_ra
-              ,wm_decl
-              ,wm_ra_err
-              ,wm_decl_err
-              ,avg_wra
-              ,avg_wdecl
-              ,avg_weight_ra
-              ,avg_weight_decl
-              ,x
-              ,y
-              ,z
-              ,runcat
-          FROM temprunningcatalog
+        UPDATE runningcatalog
+           SET datapoints = (SELECT datapoints
+                               FROM temprunningcatalog
+                              WHERE temprunningcatalog.runcat = runningcatalog.id
+                          AND temprunningcatalog.inactive = FALSE
+                            )
+              ,zone = (SELECT zone
+                         FROM temprunningcatalog
+                        WHERE temprunningcatalog.runcat = runningcatalog.id
+                          AND temprunningcatalog.inactive = FALSE
+                      )
+              ,wm_ra = (SELECT wm_ra
+                          FROM temprunningcatalog
+                         WHERE temprunningcatalog.runcat = runningcatalog.id
+                          AND temprunningcatalog.inactive = FALSE
+                       )
+              ,wm_decl = (SELECT wm_decl
+                            FROM temprunningcatalog
+                           WHERE temprunningcatalog.runcat = runningcatalog.id
+                          AND temprunningcatalog.inactive = FALSE
+                         )
+              ,wm_ra_err = (SELECT wm_ra_err
+                              FROM temprunningcatalog
+                             WHERE temprunningcatalog.runcat = runningcatalog.id
+                          AND temprunningcatalog.inactive = FALSE
+                           )
+              ,wm_decl_err = (SELECT wm_decl_err
+                                FROM temprunningcatalog
+                               WHERE temprunningcatalog.runcat = runningcatalog.id
+                          AND temprunningcatalog.inactive = FALSE
+                             )
+              ,avg_wra = (SELECT avg_wra
+                            FROM temprunningcatalog
+                           WHERE temprunningcatalog.runcat = runningcatalog.id
+                          AND temprunningcatalog.inactive = FALSE
+                         )
+              ,avg_wdecl = (SELECT avg_wdecl
+                              FROM temprunningcatalog
+                             WHERE temprunningcatalog.runcat = runningcatalog.id
+                          AND temprunningcatalog.inactive = FALSE
+                           )
+              ,avg_weight_ra = (SELECT avg_weight_ra
+                                  FROM temprunningcatalog
+                                 WHERE temprunningcatalog.runcat = runningcatalog.id
+                          AND temprunningcatalog.inactive = FALSE
+                               )
+              ,avg_weight_decl = (SELECT avg_weight_decl
+                                    FROM temprunningcatalog
+                                   WHERE temprunningcatalog.runcat = runningcatalog.id
+                          AND temprunningcatalog.inactive = FALSE
+                                 )
+              ,x = (SELECT x
+                      FROM temprunningcatalog
+                     WHERE temprunningcatalog.runcat = runningcatalog.id
+                          AND temprunningcatalog.inactive = FALSE
+                   )
+              ,y = (SELECT y
+                      FROM temprunningcatalog
+                     WHERE temprunningcatalog.runcat = runningcatalog.id
+                          AND temprunningcatalog.inactive = FALSE
+                   )
+              ,z = (SELECT z
+                      FROM temprunningcatalog
+                     WHERE temprunningcatalog.runcat = runningcatalog.id
+                          AND temprunningcatalog.inactive = FALSE
+                   )
+         WHERE EXISTS (SELECT runcat
+                         FROM temprunningcatalog
+                        WHERE temprunningcatalog.runcat = runningcatalog.id
+                          AND temprunningcatalog.inactive = FALSE
+                      )
         """
         cursor.execute(query)
-        results = cursor.fetchall()
-        query = """\
-        UPDATE runningcatalog
-          SET datapoints = %s
-             ,zone = %s
-             ,wm_ra = %s
-             ,wm_decl = %s
-             ,wm_ra_err = %s
-             ,wm_decl_err = %s
-             ,avg_wra = %s
-             ,avg_wdecl = %s
-             ,avg_weight_ra = %s
-             ,avg_weight_decl = %s
-             ,x = %s
-             ,y = %s
-             ,z = %s
-        WHERE id = %s
-        """
-        for result in results:
-            cursor.execute(query, tuple(result))
-            if not AUTOCOMMIT:
-                conn.commit()
+        if not AUTOCOMMIT:
+            conn.commit()
     except db.Error, e:
-        logging.warn("Failed on query nr %s." % query)
+        logging.warn("Failed on query:\n%s" % query)
         raise
     finally:
         cursor.close()
@@ -1041,6 +1033,7 @@ def _update_1_to_1_runcat_flux(conn):
               ,band
               ,stokes
           FROM temprunningcatalog
+         WHERE inactive = FALSE
         """
         cursor.execute(query)
         results = cursor.fetchall()
@@ -1071,6 +1064,7 @@ def _update_1_to_1_runcat_flux(conn):
     finally:
         cursor.close()
 
+#def _insert_new_runcat(conn, image_id, deRuiter_r, radius=0.03):
 def _insert_new_runcat(conn, image_id):
     """Insert new sources into the running catalog
     
@@ -1085,6 +1079,16 @@ def _insert_new_runcat(conn, image_id):
     """
     try:
         cursor = conn.cursor()
+        # Unfortunately, this does not work,
+        # since we previous deleted the extractedsources from the 
+        # tempruncat table that had the same runcat counterpart 
+        # (1-to-many assocs).
+        # To get it working we need to not to delete the tempruncat entries,
+        # but set them to inactive and empty the table (and the inactive 
+        # runningcatalog sources) at the end of image processing
+        #
+        # NOTE: Here we include all (inactive TRUE&FALSE) tempruncat
+        # source to have the original assocs available
         query = """\
         INSERT INTO runningcatalog
           (xtrsrc
@@ -1103,30 +1107,49 @@ def _insert_new_runcat(conn, image_id):
           ,y
           ,z
           )
-          SELECT x0.id
-                ,image.dataset
-                ,1
-                ,x0.zone
-                ,x0.ra
-                ,x0.decl
-                ,x0.ra_err
-                ,x0.decl_err
-                ,x0.ra / (x0.ra_err * x0.ra_err)
-                ,x0.decl / (x0.decl_err * x0.decl_err)
-                ,1 / (x0.ra_err * x0.ra_err)
-                ,1 / (x0.decl_err * x0.decl_err)
-                ,x0.x
-                ,x0.y
-                ,x0.z
-            FROM extractedsource x0
+          SELECT t0.xtrsrc
+                ,t0.dataset
+                ,t0.datapoints
+                ,t0.zone
+                ,t0.wm_ra
+                ,t0.wm_decl
+                ,t0.wm_ra_err
+                ,t0.wm_decl_err
+                ,t0.avg_wra
+                ,t0.avg_wdecl
+                ,t0.avg_weight_ra
+                ,t0.avg_weight_decl
+                ,t0.x
+                ,t0.y
+                ,t0.z
+            FROM (SELECT x0.id AS xtrsrc
+                        ,i0.dataset
+                        ,1 AS datapoints
+                        ,x0.zone
+                        ,x0.ra AS wm_ra
+                        ,x0.decl AS wm_decl
+                        ,x0.ra_err AS wm_ra_err
+                        ,x0.decl_err AS wm_decl_err
+                        ,x0.ra / (x0.ra_err * x0.ra_err) AS avg_wra
+                        ,x0.decl / (x0.decl_err * x0.decl_err) AS avg_wdecl
+                        ,1 / (x0.ra_err * x0.ra_err) AS avg_weight_ra
+                        ,1 / (x0.decl_err * x0.decl_err) AS avg_weight_decl
+                        ,x0.x
+                        ,x0.y
+                        ,x0.z
+                    FROM extractedsource x0
+                        ,image i0
+                   WHERE x0.image = i0.id
+                     AND x0.image = %s
+                 ) t0
                  LEFT OUTER JOIN temprunningcatalog trc0
-                 ON x0.id = trc0.xtrsrc
-                ,image 
+                 ON t0.xtrsrc = trc0.xtrsrc
            WHERE trc0.xtrsrc IS NULL
-             AND x0.image = image.id
-             AND x0.image = %s
         """
         cursor.execute(query, (image_id,))
+        #cursor.execute(query, (image_id, image_id,
+        #                        radius, radius, radius, radius, radius, radius,
+        #                        deRuiter_r/3600.))
         if not AUTOCOMMIT:
             conn.commit()
     except db.Error, e:
@@ -1136,6 +1159,7 @@ def _insert_new_runcat(conn, image_id):
     finally:
         cursor.close()
 
+#def _insert_new_runcat_flux(conn, image_id, deRuiter_r, radius=0.03):
 def _insert_new_runcat_flux(conn, image_id):
     """Insert new sources into the runningicatalog_flux
     
@@ -1166,9 +1190,9 @@ def _insert_new_runcat_flux(conn, image_id):
           ,avg_weighted_f_int_sq
           )
           SELECT r0.id
-                ,image.band
-                ,image.stokes
-                ,1
+                ,i0.band
+                ,i0.stokes
+                ,1 AS f_datapoints
                 ,x0.f_peak
                 ,x0.f_peak * x0.f_peak
                 ,1 / (x0.f_peak_err * x0.f_peak_err)
@@ -1180,29 +1204,39 @@ def _insert_new_runcat_flux(conn, image_id):
                 ,x0.f_int / (x0.f_int_err * x0.f_int_err)
                 ,x0.f_int * x0.f_int / (x0.f_int_err * x0.f_int_err)
             FROM runningcatalog r0
-                ,image
+                ,image i0
                 ,extractedsource x0
-           WHERE x0.image = image.id
+           WHERE x0.image = i0.id
              AND x0.id = r0.xtrsrc
-             AND r0.xtrsrc IN (SELECT x1.id
-                                 FROM extractedsource x1
+             AND r0.xtrsrc IN (SELECT t0.xtrsrc
+                                 FROM (SELECT x1.id AS xtrsrc
+                                         FROM extractedsource x1
+                                             ,image i1
+                                        WHERE x1.image = i1.id
+                                          AND i1.id = %s
+                                      ) t0
                                       LEFT OUTER JOIN temprunningcatalog trc1
-                                      ON x1.id = trc1.xtrsrc
-                                     ,image
-                                WHERE trc1.xtrsrc IS NULL
-                                  AND x1.image = image.id
-                                  AND image.id = %s
+                                      ON t0.xtrsrc = trc1.xtrsrc
+                                 WHERE trc1.xtrsrc IS NULL
                               )
         """
-        cursor.execute(query, (image_id,))
+        #q = query % (image_id,))
+        #print "Q:\n%s" % q
+        #sys.exit()
+        cursor.execute(query, (image_id, ))
+        #image_id,
+        #                        radius, radius, radius, radius, radius, radius,
+        #                        deRuiter_r/3600.))
         if not AUTOCOMMIT:
             conn.commit()
     except db.Error, e:
-        logging.warn("Failed on query nr %s." % query)
+        q = query % (image_id,)
+        logging.warn("Failed on query:\n%s" % q)
         raise
     finally:
         cursor.close()
 
+#def _insert_new_assoc(conn, image_id, deRuiter_r, radius=0.03):
 def _insert_new_assoc(conn, image_id):
     """Insert new associations for unknown sources
 
@@ -1239,17 +1273,49 @@ def _insert_new_assoc(conn, image_id):
             FROM runningcatalog r0
                 ,extractedsource x0
            WHERE r0.xtrsrc = x0.id
-             AND r0.xtrsrc IN (SELECT x1.id
-                              FROM extractedsource x1
-                                   LEFT OUTER JOIN temprunningcatalog trc1
-                                   ON x1.id = trc1.xtrsrc
-                                  ,image
-                             WHERE trc1.xtrsrc IS NULL
-                               AND x1.image = image.id
-                               AND image.id = %s
+             AND r0.xtrsrc IN (SELECT t0.xtrsrc
+                                 FROM (SELECT x1.id AS xtrsrc
+                                         FROM extractedsource x1
+                                             ,image i1
+                                        WHERE x1.image = i1.id
+                                          AND i1.id = %s
+                                      ) t0
+                                      LEFT OUTER JOIN temprunningcatalog trc1
+                                      ON t0.xtrsrc = trc1.xtrsrc
+                                 WHERE trc1.xtrsrc IS NULL
                               )
         """
         cursor.execute(query, (image_id,))
+        #cursor.execute(query, (image_id, image_id,
+        #                        radius, radius, radius, radius, radius, radius,
+        #                        deRuiter_r/3600.))
+        if not AUTOCOMMIT:
+            conn.commit()
+    except db.Error, e:
+        q = query % (image_id,)
+        logging.warn("Failed on query:\n%s" % q)
+        raise
+    finally:
+        cursor.close()
+
+def _delete_inactive_runcat(conn):
+    """Delete the one-to-many associations from temprunningcatalog,
+    and delete the inactive rows from runningcatalog.
+    
+    After the one-to-many associations have been processed,
+    they can be deleted from the temporary table and
+    the runningcatalog.
+    
+    """
+
+    try:
+        cursor = conn.cursor()
+        query = """\
+        DELETE
+          FROM runningcatalog
+         WHERE inactive = TRUE
+        """
+        cursor.execute(query)
         if not AUTOCOMMIT:
             conn.commit()
     except db.Error, e:
@@ -1297,8 +1363,7 @@ def associate_extracted_sources(conn, image_id, deRuiter_r=DERUITER_R):
     _delete_1_to_many_inactive_assoc(conn)
     _delete_1_to_many_inactive_runcat_flux(conn)
     _flag_1_to_many_inactive_runcat(conn)
-    _delete_1_to_many_inactive_tempruncat(conn)
-    _delete_1_to_many_inactive_runcat(conn)
+    _flag_1_to_many_inactive_tempruncat(conn)
     #+-----------------------------------------------------+
     #| After all this, we are now left with the 1-1 assocs |
     #+-----------------------------------------------------+
@@ -1314,6 +1379,7 @@ def associate_extracted_sources(conn, image_id, deRuiter_r=DERUITER_R):
     _insert_new_runcat_flux(conn, image_id)
     _insert_new_assoc(conn, image_id)
     _empty_temprunningcatalog(conn)
+    _delete_inactive_runcat(conn)
 
 def select_single_epoch_detection(conn, dsid):
     """Select sources from running catalog which have only one detection"""

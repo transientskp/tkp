@@ -4,6 +4,8 @@
 CREATE TABLE temprunningcatalog 
   (runcat INT NOT NULL
   ,xtrsrc INT NOT NULL
+  ,distance_arcsec DOUBLE NOT NULL
+  ,r DOUBLE NOT NULL
   ,dataset INT NOT NULL
   ,band SMALLINT NOT NULL
   ,stokes TINYINT NOT NULL DEFAULT 1
@@ -20,7 +22,8 @@ CREATE TABLE temprunningcatalog
   ,x DOUBLE NOT NULL
   ,y DOUBLE NOT NULL
   ,z DOUBLE NOT NULL
-  ,margin BOOLEAN NOT NULL DEFAULT 0
+  ,margin BOOLEAN NOT NULL DEFAULT FALSE
+  ,inactive BOOLEAN NOT NULL DEFAULT FALSE
   ,beam_semimaj DOUBLE NULL
   ,beam_semimin DOUBLE NULL
   ,beam_pa DOUBLE NULL

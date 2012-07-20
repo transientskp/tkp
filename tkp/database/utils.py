@@ -1314,6 +1314,100 @@ def associate_extracted_sources(conn, image_id, deRuiter_r=DERUITER_R):
     _insert_new_runcat_flux(conn, image_id)
     _insert_new_assoc(conn, image_id)
     _empty_temprunningcatalog(conn)
+    _count_known_sources(conn, image_id, deRuiter_r)
+    _insert_new_assocs(conn, image_id, deRuiter_r)
+    _insert_new_source_runcat(conn, image_id, deRuiter_r)
+    #_associate_across_frequencies(conn, ds_id, image_id, deRuiter_r)
+
+def select_winking_sources(conn, dsid):
+    """Select sources not detected in all epochs.
+    
+    Selects entries in running catalog which
+    are not detected in *all* the images belonging to the dataset.
+    
+    Returns:
+    list of dicts:
+        [ {xtrsrc_id, datapoints, avg_i_peak} ]
+    """
+    
+    results = []
+    cursor = conn.cursor()
+    try:
+        #Thought about trying to do this in one clever SQL statement
+        #But this will have to do for now.
+        query="""SELECT COUNT(ds_id) from images where ds_id=%s"""
+        cursor.execute(query, (dsid,))
+        nimgs = cursor.fetchone()[0]
+        query="""\
+SELECT  xtrsrc_id
+        ,datapoints
+        ,avg_i_peak
+    FROM runningcatalog 
+    WHERE ds_id=%s 
+    AND datapoints<>%s
+"""
+        cursor.execute(query, (dsid, nimgs))
+        results = cursor.fetchall()
+        results = [dict(xtrsrc_id=x[0], datapoints=x[1], avg_i_peak=x[2])
+                   for x in results]
+        if not AUTOCOMMIT:
+            conn.commit()
+    except db.Error:
+        logging.warn("Failed on query %s", query)
+        raise
+    finally:
+        cursor.close()
+    return results
+
+def select_transient_candidates_above_thresh(
+                    conn, 
+                    candidate_assoc_ids,
+                    single_epoch_threshold,
+                    combined_threshold
+                    ):
+    """Takes a list of assoc_ids for candidate transients.
+    
+    Selects info for those which exceed the specified detection thresholds.
+    
+    Returns: a list of dicts
+        [ {xtrsrc_id, max_det_sigma, sum_det_sigma} ]
+        
+    """
+    results = []
+    cursor = conn.cursor()
+    try:
+        ids_placeholder = ", ".join(["%s"] * len(candidate_assoc_ids))
+        query= """\
+SELECT ax.xtrsrc_id 
+       ,MAX(ex.det_sigma)
+       ,SUM(ex.det_sigma)
+    FROM 
+        assocxtrsources ax
+        ,extractedsources ex
+    WHERE ax.xtrsrc_id in ({0}) 
+        AND ax.assoc_xtrsrc_id = ex.xtrsrcid
+    GROUP BY ax.xtrsrc_id
+    HAVING 
+        MAX(ex.det_sigma)>%s    
+        AND SUM(ex.det_sigma)>%s;
+""".format(ids_placeholder)
+        query_tuple = tuple(candidate_assoc_ids +[single_epoch_threshold, combined_threshold])
+        
+#        print "QUERY:"
+#        print query % query_tuple
+        cursor.execute(query, query_tuple)
+        results = cursor.fetchall()
+        results = [dict(xtrsrc_id=x[0], max_det_sigma=x[1], sum_det_sigma=x[2])
+                   for x in results]
+        if not AUTOCOMMIT:
+            conn.commit()
+    except db.Error:
+        logging.warn("Failed on query %s", query)
+        raise
+    finally:
+        cursor.close()
+    return results
+    pass
 
 def select_single_epoch_detection(conn, dsid):
     """Select sources from running catalog which have only one detection"""
@@ -2070,7 +2164,7 @@ def is_monitored(conn, srcid):
     return result
 
 
-def insert_monitoring_sources(conn, results, image_id):
+def insert_monitored_sources(conn, results, image_id):
     """Insert the list of measured monitoring sources for this image into
     extractedsource and runningcatalog.
 
@@ -2404,3 +2498,4 @@ def insert_transient(conn, transient, dataset, images=None):
         cursor.close()
         raise
     cursor.close()
+

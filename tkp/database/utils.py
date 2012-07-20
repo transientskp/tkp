@@ -1328,9 +1328,14 @@ def associate_extracted_sources(conn, image_id, deRuiter_r=DERUITER_R):
     _insert_new_runcat_flux(conn, image_id)
     _insert_new_assoc(conn, image_id)
     _empty_temprunningcatalog(conn)
-    _count_known_sources(conn, image_id, deRuiter_r)
-    _insert_new_assocs(conn, image_id, deRuiter_r)
-    _insert_new_source_runcat(conn, image_id, deRuiter_r)
+
+#### NB: These 3 lines seem to have been deleted in the multifreq branch
+#### But crept back in, during the merge.
+#### Are they still needed? -TS.    
+#    _count_known_sources(conn, image_id, deRuiter_r)
+#    _insert_new_assocs(conn, image_id, deRuiter_r)
+#    _insert_new_source_runcat(conn, image_id, deRuiter_r)
+
     #_associate_across_frequencies(conn, ds_id, image_id, deRuiter_r)
 
 def count_associated_sources(conn, src_ids):

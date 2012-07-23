@@ -3,7 +3,7 @@
 /**
  * This function inserts a row in the datasets table,
  * and returns the value of the id under which it is known.
- * If the dataset name (dsinname) already exists, a new row is added
+ * If the dataset name (description field) already exists, a new row is added
  * and the rerun value is incremented by 1. If not, it is set
  * to its default value 0.
  *
@@ -12,7 +12,7 @@
  * mysql> SET GLOBAL log_bin_trust_function_creators = 1;
  *
  */
-CREATE FUNCTION insertDataset(idescription VARCHAR(50)) RETURNS INT
+CREATE FUNCTION insertDataset(idescription VARCHAR(100)) RETURNS INT
 BEGIN
 
   DECLARE idsid INT;

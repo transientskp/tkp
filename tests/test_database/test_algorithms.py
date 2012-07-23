@@ -29,8 +29,15 @@ class TestSourceAssociation(unittest.TestCase):
 
         
     def test_null_case_sequential(self):
+        """test_null_case_sequential
+        
+        -Check extractedsource insertion routines can deal with empty input!
+        -Check source association can too
+        
+        """
         for im in self.im_params:
             self.db_imgs.append( tkpdb.dataset.Image( data=im, dataset=self.dataset) )
+            self.db_imgs[-1].insert_extracted_sources([])
             self.db_imgs[-1].associate_extracted_sources()
             running_cat = tkpdb.utils.columns_from_table(self.database.connection,
                                            table="runningcatalog",

@@ -22,7 +22,7 @@ DERUITER_R = config['source_association']['deruiter_radius']
 BG_DENSITY = config['source_association']['bg-density']
 
 def insert_dataset(conn, description):
-    """Insert dataset with discription as given by argument.
+    """Insert dataset with description as given by argument.
 
     DB function insertDataset() sets the necessary default values.
     """
@@ -2208,15 +2208,57 @@ def match_nearests_in_catalogs(conn, srcid, radius=1.0,
     return results
 
 
-def monitoringlist_not_observed(conn, image_id):
-    """Return a list of sources from the monitoringlist that have no
-    association with the extracted sources for this image
+def get_monitoringlist_not_observed(conn, image_id, dataset_id):
+    """
+    Return a list of sources from the monitoringlist that have no 
+    association with the extracted sources for this image.
+    
+    Returns (list of tuples), format is:
+        [( ra, dec, runcatid , monitorid )]
+    
+    There is a bit of logic branching here to decide how the 
+    RA, DEC is determined:
+    
+    -For a source with `blind' extractions, i.e. good signal to noise 
+    in some image, position not pre-specified, then we should use the 
+    weighted mean position from runningcatalog.
+    
+    -For a new, manual entry on monitoringlist,we have no choice but 
+    to use the manually specified co-ordinates.
+    
+    -For a manually specified entry with previous extractions,
+    the best course of action is unclear. Should we use the manually specified location, 
+    or a previous association (via runcat weighted ra, dec) that might be somewhat offset?
+    For now, we always just return the manual co-ordinates in this case.   
+    
+    TO DO: Carefully consider this logic case and update if necessary!
+    
+    
+    """
+    not_observed = get_monitoringlist_not_observed_blind_entries(
+                                 conn, image_id, dataset_id)
+    
+    not_observed.extend(
+            get_monitoringlist_not_observed_manual_entries(
+                               conn, image_id, dataset_id)
+                        )
+    return not_observed
+    
+    
 
-    We do this by matching the monitoring list xtrsrcs with the
-    extractedsource xtrsrcids through the assocxtrsource. Using a
-    left outer join, we get nulls in the place where a source should
+def get_monitoringlist_not_observed_blind_entries(conn, image_id, dataset_id):
+    """
+    Return a list of sources from the monitoringlist that have no
+    association with the extracted sources for this image, but 
+    are associated with previous blind extractions rather than 
+    manual additions to the monitoringlist. 
+    (and hence have at least one datapoint)
+    
+    We do this by matching the monitoring list runcat with the
+    extractedsource ids through the assocxtrsource table. 
+    Using a left outer join we get nulls in the place where a source should
     have been, but isn't: these are the sources that are not in
-    extractedosurces and thus weren't automatically picked up by the
+    extractedsources and thus weren't automatically picked up by the
     sourcefinder. We limit our query using the image_id (and dataset
     through image.dataset).
 
@@ -2224,51 +2266,64 @@ def monitoringlist_not_observed(conn, image_id):
     sources to be monitored from the runningcatalog, which shows up in
     the final inner join.
 
+    See also: get_monitoringlist_not_observed_manual_entries
+     
     Args:
 
         conn: A database connection object.
 
         image_id (int): the image under consideration.
+        dataset_id (int): the dataset to which the image belongs.
+            (Specifying this allows us to narrow the query down better,
+            resulting in a much smaller join)
 
     Returns (list):
         A list of sources yet to be observed; format is:
-        [( ra, dec, xtrsrcid , monitorid )]
+        [( ra, decl, runcatid , monitorid )]
     """
-
+    
+    
+#NOTES:
+# t1 : A Table comprising pairs of (runcatid, xtrsrcid) 
+#         for extracted sources in this image.
+#    
+# t2: Pairs of runcatid, monitorid, for runcat entries which do NOT have an 
+#        associated extraction in this image 
+#     --- (Join on runcat id of monitoringlist, t1 contains 
+#          xtrsrcid for entries in the monitoringlist 
+#          which also have an extraction in this image, and  
+#          contains NULL for all other entries.
+#          We filter on xtrsrc=NULL to just give the non-extracted runcat entries.)
+#    
+#    Finally, pull in best estimates for RA, DEC by cross matching into runcat.
+#    
+#    
     try:
         cursor = conn.cursor()
-        #original query refactored:
+        #Query simplified to match new database schema, 23/07/12. -TS
         query = """\
         SELECT rc.wm_ra
               ,rc.wm_decl
-              ,t2.runcat2
+              ,t2.runcat
               ,t2.monitorid
           FROM (SELECT ml.id AS monitorid
-                      ,ml.runcat AS runcat2
-                      ,t1.runcat AS runcat
-                      ,t1.xtrsrc AS xtrsrc
-                      ,t1.image AS image_id
-                      ,ml.dataset 
+                      ,ml.runcat AS runcat
                   FROM monitoringlist ml
                        LEFT OUTER JOIN (SELECT ax.runcat as runcat
-                                              ,ex.id as xtrsrcid
-                                              ,ex.image 
                                               ,ax.xtrsrc as xtrsrc
                                           FROM extractedsource ex
                                               ,assocxtrsource ax
                                          WHERE ex.id = ax.xtrsrc
                                            AND ex.image = %s
-                                       ) t1
+                       ) t1
                        ON ml.runcat = t1.runcat
-                 WHERE t1.xtrsrc IS NULL
+                     WHERE t1.xtrsrc IS NULL
+                         AND ml.dataset = %s
                ) t2
-              ,image im
               ,runningcatalog rc
-         WHERE im.dataset = t2.dataset
-           AND im.id = %s
-           AND rc.id = t2.runcat2
+         WHERE rc.id = t2.runcat
         """
-        cursor.execute(query, (image_id, image_id))
+        cursor.execute(query, (image_id, dataset_id))
         results = cursor.fetchall()
     except db.Error, e:
         query = query % (image_id, image_id)
@@ -2278,9 +2333,60 @@ def monitoringlist_not_observed(conn, image_id):
         cursor.close()
     return results
 
+def get_monitoringlist_not_observed_manual_entries(conn, image_id, dataset_id):
+    """
+    Return a list of manually added entries from the monitoringlist that have no
+    association with the extracted sources for this image.
     
-def is_monitored(conn, srcid):
-    """Return whether a source is in the monitoring list"""
+    Currently always returns the manually specified co-ordinates.
+    (TO DO: This needs reviewing, we might need something smarter) 
+    
+    Returns (list of tuples), format is:
+        [( ra, decl, runcatid , monitorid )]
+    """
+    
+    
+##Notes:
+# See: comments for blind entries function.
+# NB if ml entry is new, runcat will be NULL
+#    but this will still generate a valid row in the left join 
+#    (with xtrsrc=NULL), so it's fine.
+#
+    try:
+        cursor = conn.cursor()        
+        query = """\
+        SELECT ml.ra as ra
+                ,ml.decl AS decl
+                ,ml.id AS monitorid
+                ,ml.runcat AS runcat
+          FROM monitoringlist ml
+           LEFT OUTER JOIN (SELECT ax.runcat as runcat
+                                  ,ax.xtrsrc as xtrsrc
+                              FROM extractedsource ex
+                              ,assocxtrsource ax
+                             WHERE ex.id = ax.xtrsrc
+                               AND ex.image = %s
+               ) t1
+               ON ml.runcat = t1.runcat
+             WHERE t1.xtrsrc IS NULL
+             AND ml.dataset = %s
+             AND ml.userentry = true
+        """
+        cursor.execute(query, (image_id, dataset_id))
+        results = cursor.fetchall()
+    except db.Error, e:
+        query = query % (image_id, image_id)
+        logging.warn("Query failed: %s", query)
+        raise
+    finally:
+        cursor.close()
+    return results
+
+def is_monitored(conn, runcatid):
+    """Check whether a source is in the monitoring list.
+    
+        Returns: boolean
+    """
 
     cursor = conn.cursor()
     try:
@@ -2289,10 +2395,10 @@ def is_monitored(conn, srcid):
           FROM monitoringlist 
          WHERE runcat = %s
         """
-        cursor.execute(query, (srcid,))
+        cursor.execute(query, (runcatid,))
         result = bool(cursor.fetchone()[0])
     except db.Error, e:
-        query = query % srcid
+        query = query % runcatid
         logging.warn("Query failed: %s", query)
         raise
     finally:
@@ -2572,36 +2678,35 @@ VALUES
         cursor.close()
     
 
-#def add_manual_entry_to_monitoringlist(conn, dataset_id, 
-#                          ra, dec):
-#    """
-#    Add manual entry to monitoringlist.
-#    
-#    In this case, the xtrsrc_id is set to -1 initially, 
-#    since we don't have an extracted source.
-#    
-#    This will be updated when we perform our first forced extraction 
-#    at these co-ordinates. 
-#    """
-#    
-#    cursor = conn.cursor()
-#    try:
-#        query = """\
-#INSERT INTO monitoringlist
-#(xtrsrc_id, ra, decl, ds_id, userentry)
-#SELECT -1 ,%s ,%s ,%s, true
-#"""
-#        cursor.execute(query, (ra, dec, dataset_id))
-#        if not AUTOCOMMIT:
-#            conn.commit()
-#    except db.Error:
-#        query = query 
-#        logging.warn("Query %s failed", query)
-#        cursor.close()
-#        raise
-#    finally:
-#        cursor.close()
-#    
+def add_manual_entry_to_monitoringlist(conn, dataset_id, 
+                          ra, dec):
+    """
+    Add manual entry to monitoringlist.
+    
+    In this case, the runcat_id defaults to null initially, 
+    since there is no associated source yet.
+    (This is updated when we perform our first forced extraction 
+    at these co-ordinates.) 
+    """
+    
+    cursor = conn.cursor()
+    try:
+        query = """\
+INSERT INTO monitoringlist
+(ra, decl, dataset, userentry)
+SELECT %s ,%s ,%s, true
+"""
+        cursor.execute(query, (ra, dec, dataset_id))
+        if not AUTOCOMMIT:
+            conn.commit()
+    except db.Error:
+        query = query 
+        logging.warn("Query %s failed", query)
+        cursor.close()
+        raise
+    finally:
+        cursor.close()
+    
 
 
 def insert_transient(conn, transient, dataset, images=None):

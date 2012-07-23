@@ -544,8 +544,10 @@ class Image(DBObject):
         
 
     def monitoringsources(self):
-        return dbu.monitoringlist_not_observed(self.database.connection,
-                                               self._id)
+        return dbu.get_monitoringlist_not_observed(
+                           self.database.connection,
+                           self._id,
+                           self.dataset.id)
 
     def insert_monitored_sources(self, results):
         """Insert the list of measured monitoring sources for this image into

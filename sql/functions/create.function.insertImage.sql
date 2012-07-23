@@ -3,9 +3,6 @@
 /**
  * This function inserts a row in the image table,
  * and returns the value of the id under which it is known.
- * If the dataset name (dsinname) already exists, a new row is added
- * and the rerun value is incremented by 1. If not, it is set
- * to its default value 0.
  *
  * Note I: To be able to create a function that modifies data 
  * (by insertion) we have to set the global bin log var:

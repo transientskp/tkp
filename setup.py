@@ -6,6 +6,7 @@ setup(
     packages=[
         'tkp',
         'tkp.database',
+        'tkp.database.utils',
         'tkp.sourcefinder',
         'tkp.classification',
         'tkp.classification.features',

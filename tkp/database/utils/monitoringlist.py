@@ -516,10 +516,6 @@ SELECT %s ,%s ,%s, true
         raise
     finally:
         cursor.close()
-    
-
-
-
 
 def select_winking_sources(conn, dsid):
     """Select sources not detected in all epochs.

@@ -390,7 +390,7 @@ def dbimage_from_accessor(dataset, image):
 
         (dataset.Image): a dataset.Image instance.
     """
-    from ..database.dataset import Image as DBImage
+    from ..database import Image as DBImage
 
     #if image.freqeff == 0 or image.freqeff is None or image.freqbw is None:
     if image.freqeff is None or image.freqbw is None:

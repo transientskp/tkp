@@ -14,7 +14,8 @@ A collection of back end subroutines (mostly SQL queries).
 In this module we collect together various routines 
 that don't fit into a more specific collection. 
 
-Most of the basic insertion routines are kept here.
+Most of the basic insertion routines are kept here,
+with exceptions of monitoringlist and transients. 
 """
 
 import os

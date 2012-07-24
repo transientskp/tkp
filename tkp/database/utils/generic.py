@@ -9,9 +9,6 @@
 """
 A collection of generic functions used to generate SQL queries
 and return data in an easy to use format such as dictionaries. 
-
-Also imports the backend routines used for manipulating various tables,
-so you can import tkp.database.utils to get access to all the backend stuff.
 """
 
 import os

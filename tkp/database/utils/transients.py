@@ -4,7 +4,6 @@ A collection of back end subroutines (mostly SQL queries).
 This module contains the routines dealing with analysis of transients,
 mostly involving the 'transient' table.
 
-See also: monitoringlist.py
 """
 import os
 import sys

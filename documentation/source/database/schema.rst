@@ -247,7 +247,7 @@ This table is empty BEFORE an observation.  DURING an observation new sources ar
     * NOTE & TODO: This is not implemented yet.
 
 **det_sigma**
-    The sigma level of the detection (Hanno's thesis): 20*(I_peak/det_sigma) gives the rms of the detection.
+    The sigma level of the detection (Hanno's thesis): 20*(f_peak/det_sigma) gives the rms of the detection.
 
 **semimajor**
     Semi-major axis that was used for gauss fitting [in arcsec]
@@ -400,51 +400,87 @@ This table keeps track of zones (declinations) of the stored sources on the node
 runningcatalog
 ==============
 
-This table contains the unique sources that were detected during an observation.
+This table contains all the unique sources that are being detected during an observation.
+Extracted sources are being positionally matched with counterpart candidated in the runningcatalog table. Depending on their association parameters the extracted source -- runningcatalog source pair is being added to the assocxtrsource. The source properties, position, fluxes and errors in the runningcatalog and -_flux tables are then updated to include the counterpart values from the extracted source.
 
 TODO: The resolution element (from images table) is not implemented yet.
 
 Extractedsources not in this table are appended when there is no positional match or when a source was detected in a higher resolution image.
 
-We maintain weighted averages for the sources (see ch4, Bevington).
+We maintain weighted averages for sources positions and fluxes according to Bevington, Ch. 4.
+If we have a source property x and error e), its weighted mean is 
+.. math::
 
-**wm_** 
-    weighted mean
+wm_x = \sum_{i=1}^{N} \frac{w_i x_i}{w_i},
+
+where :math: `w_i = \\frac{1}{{e_i}^2}`
+is the weight of the i-th measurement of x.
+
+
+**id**
+    Every source in the running catalog gets a unique id.
+    
+**xtrsrc**
+    The id of the extractedsource for which this runningcatalog source was detected for the first time.
+
+**dataset** 
+    The dataset to which the runningcatalog source belongs to.
+
+**datapoints**
+    The number of datapoints (or number of times this source was detected) that is included in the calculation of the averages.
+
+**zone**
+    The zone id in which the source declination resides.  The sphere is devided into zones of equal width: here fixed to 1 degree, and the zone is effectively the truncated declination. (decl=31.3 => zone=31, decl=31.9 => zone=31)
 
 **wm_ra**
-    avg_wra/avg_weight_ra
+    The weighted mean of RA of the source.
 
 **wm_decl**
-    avg_wdecl/avg_weight_decl
+    The weighted mean of Declination of the source.
 
 **wm_ra_err**
-    1/(N * avg_weight_ra)
+    The weighted mean of the ra_err of the source
 
 **wm_decl_err**
-    1/(N * avg_weight_decl)
+    The weighted mean of the decl_err of the source
 
 **avg_wra**
-    avg(ra/ra_err^2)
+    The average of ra/ra_err^2, used for calculating the average weight of ra.
+    (This alleviates the computations, when we have lots of datapoints.)
 
 **avg_wdecl**
-    avg(decl/decl_err^2)
+    Analogous to avg_wra.
 
 **avg_weight_ra**
-    avg(1/ra_err^2) 
+    The average of 1/ra_err^2, used for calculating the average weight of ra.
+        (This alleviates the computations, when we have lots of datapoints.)
 
 **avg_weight_decl**
-    avg(1/decl_err^2)
+    Analogous to avg_weight_ra
 
 
 
 runningcatalog_flux
 ===================
 
+The runningcatalog_flux table contains the averaged flux measurements of a runningcatalog source, per band and stokes parameter. The combination runcat, band and stokes is the primary key.
+
+The flux squared and weights are used for calculations of the variability indices, V and eta.
+
+**runcat**
+    Reference to the runningcatalog id to which this band/stokes/flux belongs to
+
+**band**
+    Reference to the frequency band of this flux
+
 **stokes**
     Stokes parameter: 1 = I, 2 = Q, 3 = U, 4 = V
 
 **f_datapoints**
     the number of datapoints for which the averages were calculated
+
+**resolution**
+    Not used.
 
 **avg_f_peak**
     average of peak flux
@@ -461,6 +497,20 @@ runningcatalog_flux
 **avg_weighted_f_peak_sq**
     average of ratio of (peak flux squared) and (peak flux errors squared)
 
+**avg_f_int**
+    average of int flux
+
+**avg_f_int_sq**
+    average of (int flux)^2
+
+**avg_f_int_weight**
+    average of one over int flux errors squared
+
+**avg_weighted_f_int**
+    average of ratio of (int flux) and (int flux errors squared)
+
+**avg_weighted_f_int_sq**
+    average of ratio of (int flux squared) and (int flux errors squared)
 
 temprunningcatalog
 ==================

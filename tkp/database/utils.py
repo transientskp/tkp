@@ -173,8 +173,8 @@ def insert_extracted_sources(conn, image_id, results):
     
     #To do: Figure out a saner method of passing the results around
     # (Namedtuple for starters?) 
-    
-    _insert_extractedsources(conn, image_id, results)
+    if len(results):
+        _insert_extractedsources(conn, image_id, results)
 
 # The following set of functions are private to the module;
 # these are called by associate_extracted_sources, and should

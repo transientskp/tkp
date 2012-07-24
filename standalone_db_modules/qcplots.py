@@ -12,6 +12,12 @@ import time as tm
 # Local tkp_lib functionality
 import monetdb.sql as db
 
+"""NB There are quite a few overlapping functions between this module,
+and tkpweb.apps.dataset.quality.
+
+TO DO: Refactor the relevant functions so the code is only in one place. 
+"""
+
 def rms_distance_from_fieldcentre(conn, dsid, dist_arcsec_cutoff=None):
     """
     Plot the rms of extracted sources in given dataset vs their 

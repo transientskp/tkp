@@ -1,5 +1,5 @@
 add_subdirectory (external)
-add_subdirectory (scripts)
+add_subdirectory (enduser_scripts)
 
 add_custom_target (tkp_python_lib
   ALL

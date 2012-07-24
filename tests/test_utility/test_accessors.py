@@ -14,7 +14,8 @@ import os
 import pyfits
 import tkp.config
 from tkp.utility import accessors
-
+from tkp.database import DataSet
+from tkp.database import DataBase
 DATAPATH = tkp.config.config['test']['datapath']
 
 class PyfitsFitsFile(unittest.TestCase):
@@ -99,7 +100,7 @@ class DataBaseImage(unittest.TestCase):
     @requires_data(os.path.join(DATAPATH, 'L15_12h_const/observed-all.fits'))
     def testDBImageFromAccessor(self):
         import tkp.database.database 
-        from tkp.database.dataset import DataSet
+
         image = accessors.FitsFile(os.path.join(DATAPATH, 'L15_12h_const/observed-all.fits'),
                                       beam=(54./3600, 54./3600, 0.))
         
@@ -114,8 +115,6 @@ class FrequencyInformation(unittest.TestCase):
     @requires_data(os.path.join(DATAPATH, 'L21641_SB098.restored.image'))
     @requires_data(os.path.join(DATAPATH, 'VLSS.fits'))
     def testFreqinfo(self):
-        from tkp.database.database import DataBase
-        from tkp.database.dataset import DataSet
         database = DataBase()
         dataset = DataSet(data={'inname': 'dataset'}, database=database)
         image = accessors.AIPSppImage(

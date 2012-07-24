@@ -36,7 +36,7 @@ class TestSourceAssociation(unittest.TestCase):
         
         """
         for im in self.im_params:
-            self.db_imgs.append( tkpdb.dataset.Image( data=im, dataset=self.dataset) )
+            self.db_imgs.append( tkpdb.Image( data=im, dataset=self.dataset) )
             self.db_imgs[-1].insert_extracted_sources([])
             self.db_imgs[-1].associate_extracted_sources()
             running_cat = tkpdb.utils.columns_from_table(self.database.connection,
@@ -47,7 +47,7 @@ class TestSourceAssociation(unittest.TestCase):
             
 #    def test_null_case_post_insert(self):
 #        for im in self.im_params:
-#            self.db_imgs.append( tkpdb.dataset.Image( data=im, dataset=self.dataset) )            
+#            self.db_imgs.append( tkpdb.Image( data=im, dataset=self.dataset) )            
 #        pass
     
     def test_only_first_epoch_source(self):
@@ -64,7 +64,7 @@ class TestSourceAssociation(unittest.TestCase):
         first_epoch = True
         extracted_source_ids=[]
         for im in self.im_params:
-            self.db_imgs.append( tkpdb.dataset.Image( data=im, dataset=self.dataset) )
+            self.db_imgs.append( tkpdb.Image( data=im, dataset=self.dataset) )
             last_img =self.db_imgs[-1] 
             
             if first_epoch:
@@ -125,7 +125,7 @@ class TestSourceAssociation(unittest.TestCase):
         first_image = True
         fixed_src_runcat_id = None
         for im in self.im_params:
-            self.db_imgs.append( tkpdb.dataset.Image( data=im, dataset=self.dataset) )
+            self.db_imgs.append( tkpdb.Image( data=im, dataset=self.dataset) )
             last_img =self.db_imgs[-1]
             last_img.insert_extracted_sources([db_subs.example_extractedsource_tuple()])
             last_img.associate_extracted_sources()
@@ -209,7 +209,7 @@ class TestTransientCandidateMonitoring(unittest.TestCase):
                 
         for i in xrange(self.n_images):
             self.db_imgs.append(
-                        tkpdb.dataset.Image(data=self.im_params[i], 
+                        tkpdb.Image(data=self.im_params[i], 
                                             dataset=self.dataset)
                                 )
             self.db_imgs[i].insert_extracted_sources(source_lists[i])
@@ -388,7 +388,7 @@ class TestTransientCandidateMonitoring(unittest.TestCase):
 #        from operator import attrgetter, itemgetter
 #        dataset = DataSet(data={'description': 'dataset with images'},
 #                          database=self.database)
-#        # create 4 images, separated by one day each
+#        # create 4 images, separated by one day each    
 #        images = [
 #            Image(
 #                dataset=dataset,

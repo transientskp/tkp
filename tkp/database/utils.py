@@ -524,7 +524,7 @@ def _flag_multiple_counterparts_in_runningcatalog(conn):
                AND xtrsrc = %s
             """
             for j in range(len(runcat)):
-                #print "\nThrowing away many-to-many from tempruncat:", runcat[j], xtrsrc[j]
+                print "\nUpdating many-to-many to inactive in tempruncat:", runcat[j], xtrsrc[j]
                 cursor.execute(query, (runcat[j], xtrsrc[j]))
                 if not AUTOCOMMIT:
                     conn.commit()
@@ -587,9 +587,9 @@ def _insert_1_to_many_runcat(conn):
                 ,y
                 ,z
             FROM temprunningcatalog
-           WHERE runcat IN (SELECT runcat
+           WHERE inactive = FALSE
+             AND runcat IN (SELECT runcat
                               FROM temprunningcatalog
-                             WHERE inactive = FALSE
                             GROUP BY runcat
                             HAVING COUNT(*) > 1
                            )
@@ -598,7 +598,7 @@ def _insert_1_to_many_runcat(conn):
         if not AUTOCOMMIT:
             conn.commit()
     except db.Error, e:
-        logging.warn("Failed on query nr %s." % query)
+        logging.warn("Failed on query:\n%s" % query)
         raise
     finally:
         cursor.close()
@@ -647,9 +647,9 @@ def _insert_1_to_many_runcat_flux(conn):
             FROM temprunningcatalog trc0
                 ,runningcatalog rc0
            WHERE trc0.xtrsrc = rc0.xtrsrc
+             AND trc0.inactive = FALSE
              AND trc0.runcat IN (SELECT runcat
                                    FROM temprunningcatalog
-                                  WHERE inactive = FALSE
                                  GROUP BY runcat
                                  HAVING COUNT(*) > 1
                                 )
@@ -686,10 +686,10 @@ def _insert_1_to_many_basepoint_assoc(conn):
                 ,2
             FROM temprunningcatalog t
                 ,runningcatalog r
-           WHERE t.xtrsrc = r.xtrsrc
+           WHERE t.inactive = FALSE
+             AND t.xtrsrc = r.xtrsrc
              AND t.runcat IN (SELECT runcat
                                 FROM temprunningcatalog
-                               WHERE inactive = FALSE
                               GROUP BY runcat
                               HAVING COUNT(*) > 1
                              )
@@ -737,11 +737,11 @@ def _insert_1_to_many_assoc(conn):
             FROM assocxtrsource a
                 ,runningcatalog r
                 ,temprunningcatalog t
-           WHERE t.xtrsrc = r.xtrsrc
+           WHERE t.inactive = FALSE
+             AND t.xtrsrc = r.xtrsrc
              AND t.runcat = a.runcat
              AND t.runcat IN (SELECT runcat
                                 FROM temprunningcatalog
-                               WHERE inactive = FALSE
                               GROUP BY runcat
                               HAVING COUNT(*) > 1
                              )

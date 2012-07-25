@@ -91,7 +91,8 @@ def columns_from_table(conn, table, keywords=None, where=None):
         results = cursor.fetchall()
         if keywords is None:
             keywords = [desc[0] for desc in cursor.description]
-        results = [dict([(keyword, value) for keyword, value in zip(keywords, result)]) for result in results]
+        results = [ dict((keyword, value) for keyword, value in zip(keywords, result)) 
+                    for result in results ]
     except db.Error, exc:
         query = query % where_args
         logging.warn("Query failed: %s" % query)

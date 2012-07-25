@@ -194,46 +194,6 @@ def _insert_extractedsources(conn, image_id, results):
 # only be used in that way
 
 
-def count_associated_sources(conn, src_ids):
-    """
-    Count the number of extracted sources associated with a given xtrsrc_id
-    
-    Args: A list of xtrsrc_ids to process.
-    
-    Returns: A list of pairwise tuples,
-            [ (assoc_src_id, assocs_count) ]
-    
-    """
-    cursor = conn.cursor()
-    try:
-        #Thought about trying to do this in one clever SQL statement
-        #But this will have to do for now.
-        
-        #First, get the runcat ids for these extracted sources
-        ids_placeholder = ", ".join(["%s"] * len(src_ids))
-        query="""\
-SELECT runcat 
-FROM assocxtrsource 
-WHERE xtrsrc in ({0})
-""".format(ids_placeholder)
-        cursor.execute(query, tuple(src_ids))
-        runcat_ids = cursor.fetchall()
-        
-        #Then count the associations
-        query="""\
-SELECT runcat, count(xtrsrc) 
-FROM assocxtrsource 
-WHERE runcat in ({0})
-GROUP BY runcat
-""".format(ids_placeholder)
-        cursor.execute(query, tuple(i[0] for i in runcat_ids))
-        id_counts = cursor.fetchall()
-    except db.Error:
-        logging.warn("Failed on query %s", query)
-        raise
-    finally:
-        cursor.close()
-    return id_counts
     
 
 def lightcurve(conn, xtrsrcid):

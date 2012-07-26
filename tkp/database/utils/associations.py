@@ -1350,8 +1350,8 @@ def _insert_new_runcat(conn, image_id):
         #cursor.execute(query, (image_id, image_id,
         #                        radius, radius, radius, radius, radius, radius,
         #                        deRuiter_r/3600.))
-        if ins > 0:
-            print "new runcats:",ins
+#        if ins > 0:
+#            print "new runcats:",ins
         if not AUTOCOMMIT:
             conn.commit()
     except db.Error, e:

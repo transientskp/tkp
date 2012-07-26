@@ -346,17 +346,22 @@ class DataSet(DBObject):
             images.add(Image(database=self.database, id=result[0]))
         self.images = images
         
-    def get_unique_source_ids(self):
+    def runcat_entries(self):
         """
         Returns:
             a list of dictionarys:
-            [{'id,'xtrsrc','datapoints'}]
             representing rows in runningcatalog,
             for all sources belonging to this dataset
+            
+            Column 'id' is returned with the key 'runcat'
+            
+            Currently only returns 3 columns:
+            [{'runcat,'xtrsrc','datapoints'}]
         """
         return dbu.columns_from_table(self.database.connection, 
                                       'runningcatalog',
-                                      keywords=['id','xtrsrc','datapoints'], 
+                                      keywords=['id','xtrsrc','datapoints'],
+                                      alias={'id':'runcat'}, 
                                       where={'dataset':self.id})
         
         
@@ -367,6 +372,23 @@ class DataSet(DBObject):
 
         return dbu.detect_variable_sources(
             self.database.connection, self._id, V_lim, eta_lim)
+        
+    def mark_transient_candidates(self, single_epoch_threshold,
+                                  combined_threshold):
+        """
+        Find transient candidates and add to monitoringlist.
+        """
+        
+        candidates = self._find_transient_candidates(
+                     single_epoch_threshold, combined_threshold
+                     )
+        self._add_runcat_sources_to_monitoringlist(
+                         [c['runcat'] for c in candidates],
+                         )
+    def add_manual_entry_to_monitoringlist(self, ra, dec):
+        dbu.add_manual_entry_to_monitoringlist(self.database.connection, 
+                                               self.id, 
+                                               ra, dec)
         
     def _find_transient_candidates(self, single_epoch_threshold,
                                         combined_threshold):
@@ -399,24 +421,15 @@ class DataSet(DBObject):
         ###  --- This will require FoV information in database
         return candidates
     
-    def _add_sources_to_monitoringlist(self, runcat_ids):
-        dbu.add_sources_to_monitoringlist(self.database.connection,
+    def _add_runcat_sources_to_monitoringlist(self, runcat_ids):
+        dbu.add_runcat_sources_to_monitoringlist(self.database.connection,
                                                   self._id,
                                                   runcat_ids,
                                                   )
         
-    def mark_transient_candidates(self, single_epoch_threshold,
-                                  combined_threshold):
-        """
-        Find transient candidates and add to monitoringlist.
-        """
+#    def add_manual_entry_to_monitoringlist
         
-        candidates = self._find_transient_candidates(
-                     single_epoch_threshold, combined_threshold
-                     )
-        self._add_sources_to_monitoringlist(
-                         [c['runcat'] for c in candidates],
-                         )
+
         
         
         

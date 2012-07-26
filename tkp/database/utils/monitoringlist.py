@@ -10,6 +10,7 @@ import math
 import logging
 import monetdb.sql as db
 from tkp.config import config
+from . import generic
 
 
 AUTOCOMMIT = config['database']['autocommit']
@@ -152,6 +153,7 @@ def get_monitoringlist_not_observed_blind_entries(conn, image_id, dataset_id):
                        ON ml.runcat = t1.runcat
                      WHERE t1.xtrsrc IS NULL
                          AND ml.dataset = %s
+                         AND ml.userentry = false
                ) t2
               ,runningcatalog rc
          WHERE rc.id = t2.runcat
@@ -398,6 +400,7 @@ def insert_monitored_sources(conn, results, image_id):
             # original, possibly negative, xtrsrc_id is still held
             # safely in memory)
             # TODO: This must be defect for while...
+            # TODO: FIXME
             query = """\
             UPDATE monitoringlist 
                SET xtrsrc_id = %s
@@ -451,7 +454,7 @@ def insert_monitored_sources(conn, results, image_id):
                 raise
     cursor.close()
 
-def add_sources_to_monitoringlist(conn, dataset_id, 
+def add_runcat_sources_to_monitoringlist(conn, dataset_id, 
                           runcat_ids):
     """
     Add entries to monitoringlist.
@@ -462,30 +465,55 @@ def add_sources_to_monitoringlist(conn, dataset_id,
     """
     
     #De-duplicate our input list:
-    runcat_ids = list(set(runcat_ids))
     
-    cursor = conn.cursor()
-    try:
-        values_placeholder = ", ".join(["( %s, 0, 0, %s )"] * len(runcat_ids))
-        values_list = []
-        for rcid in runcat_ids:
-            values_list.extend([ rcid, dataset_id])
-        query = """\
-INSERT INTO monitoringlist
-(runcat, ra, decl, dataset)
-VALUES
-{placeholder}
-""".format(placeholder = values_placeholder)
-        cursor.execute(query, tuple(values_list))
-        if not AUTOCOMMIT:
-            conn.commit()
-    except db.Error:
-        query = query 
-        logging.warn("Query %s failed", query)
-        cursor.close()
-        raise
-    finally:
-        cursor.close()
+    
+    ##NB Should be able to check for pre-existing runcats, 
+    ## and insert, all in one go with something like:
+    
+#    INSERT INTO monitoringlist
+#    (runcat, dataset)
+#    SELECT id, dataset
+#    FROM runningcatalog
+#    WHERE id in ()
+#      AND
+#    id NOT IN
+#    (SELECT runcat FROM monitoringlist)
+
+## But I can't get it to work, so I'll do it the simple way.
+
+    prior_runcat_entries = generic.columns_from_table(conn, 
+                              'monitoringlist', 
+                              ['runcat'], 
+                              where={'dataset':dataset_id})
+    
+
+    runcat_ids = set(runcat_ids).difference(
+                           set(e['runcat'] for e in prior_runcat_entries)
+                           )
+    
+    if len(runcat_ids):
+        cursor = conn.cursor()
+        try:
+            values_placeholder = ", ".join(["( %s, %s )"] * len(runcat_ids))
+            values_list = []
+            for rcid in runcat_ids:
+                values_list.extend([ rcid, dataset_id])
+            query = """\
+    INSERT INTO monitoringlist
+    (runcat, dataset)
+    VALUES
+    {placeholder}
+    """.format(placeholder = values_placeholder)
+            cursor.execute(query, tuple(values_list))
+            if not AUTOCOMMIT:
+                conn.commit()
+        except db.Error:
+            query = query 
+            logging.warn("Query %s failed", query)
+            cursor.close()
+            raise
+        finally:
+            cursor.close()
     
 
 def add_manual_entry_to_monitoringlist(conn, dataset_id, 
@@ -568,7 +596,7 @@ SELECT  id
 
 def select_transient_candidates_above_thresh(
                     conn, 
-                    candidate_assoc_ids,
+                    runcat_ids,
                     single_epoch_threshold,
                     combined_threshold
                     ):
@@ -583,7 +611,7 @@ def select_transient_candidates_above_thresh(
     results = []
     cursor = conn.cursor()
     try:
-        ids_placeholder = ", ".join(["%s"] * len(candidate_assoc_ids))
+        ids_placeholder = ", ".join(["%s"] * len(runcat_ids))
         query= """\
 SELECT ax.runcat
        ,MAX(ex.det_sigma)
@@ -598,7 +626,7 @@ SELECT ax.runcat
         MAX(ex.det_sigma)>%s    
         AND SUM(ex.det_sigma)>%s;
 """.format(ids_placeholder)
-        query_tuple = tuple(candidate_assoc_ids +[single_epoch_threshold, combined_threshold])
+        query_tuple = tuple(runcat_ids +[single_epoch_threshold, combined_threshold])
         
 #        print "QUERY:"
 #        print query % query_tuple

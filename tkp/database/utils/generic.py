@@ -24,7 +24,10 @@ DERUITER_R = config['source_association']['deruiter_radius']
 BG_DENSITY = config['source_association']['bg-density']
 
 
-def columns_from_table(conn, table, keywords=None, where=None):
+def columns_from_table(conn, table, 
+                       keywords=None,
+                       alias=None,  
+                       where=None):
     """Obtain specific column (keywords) values from 'table', with
     kwargs limitations.
 
@@ -61,6 +64,9 @@ def columns_from_table(conn, table, keywords=None, where=None):
             of 'key = value' comparisons. Comparisons are and-ed
             together. Obviously, only 'is equal' comparisons are
             possible.
+            
+        alias (dict): Chosen aliases for the column names, 
+                    used when constructing the returned list of dictionaries 
 
     Returns:
 
@@ -91,6 +97,10 @@ def columns_from_table(conn, table, keywords=None, where=None):
         results = cursor.fetchall()
         if keywords is None:
             keywords = [desc[0] for desc in cursor.description]
+        if alias is not None: #Replace column names with chosen alias
+            for index, k in enumerate(keywords):
+                if k in alias:
+                    keywords[index] = alias[k]
         results = [ dict((keyword, value) for keyword, value in zip(keywords, result)) 
                     for result in results ]
     except db.Error, exc:

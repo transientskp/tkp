@@ -11,6 +11,7 @@ import logging
 import monetdb.sql as db
 from tkp.config import config
 from . import generic
+from . import general
 
 
 AUTOCOMMIT = config['database']['autocommit']
@@ -235,10 +236,10 @@ def insert_monitored_sources(conn, results, image_id):
     TO DO: Refactor into smaller functions 
         (+ I think there is probably some code duplication here) 
     
-    Args notes:
+    Args:
     
     results -- list of tuples,
-    [(assoc_src_id, monitoringlist_id, 
+    [(runcat_id, monitoringlist_id, 
     ra, dec,
     ...    
     beam_angle)] 
@@ -247,14 +248,50 @@ def insert_monitored_sources(conn, results, image_id):
 
     cursor = conn.cursor()
     # step through all the indiviudal results (/sources)
-    for runcat, monitorid, result in results:
-        ra, dec, ra_err, dec_err, peak, peak_err, flux, flux_err, sigma, \
-            semimajor, semiminor, pa = result
-        x = math.cos(math.radians(dec)) * math.cos(math.radians(ra))
-        y = math.cos(math.radians(dec)) * math.sin(math.radians(ra))
-        z = math.sin(math.radians(dec))
-        racosdecl = ra * math.cos(math.radians(dec))
+    for runcatid, monitorid, result in results:
+
+        
+        #TO DO: This whole logic flow probably needs cleaning up more, and optimizing.
+        
         # Always insert them into extractedsource
+        xtrsrcid =_insert_user_monitored_source_into_extractedsource(
+                             cursor, image_id, result)
+        
+        if runcatid is None: 
+            #This is a userentry, measured for the first time. It needs a runcat entry.
+            runcatid = _insert_user_monitored_source_into_runcat(
+                                 cursor, xtrsrcid, image_id)
+            
+            #Also update the monitoringlist entry
+            _update_monitoringlist_entry_rcid(cursor, monitorid, runcatid )
+            
+        
+        # Whether the source is user or blind-extraction generated,
+        # We don't update the runningcatalog, because:
+        # - the fluxes are below the detection limit, and
+        #   add little to nothing to the average flux
+        # - the positions will have large errors, and
+        #   contribute very litte to the average position
+        # We thus only need to update the association table,
+        _insert_monitored_source_into_assocxtrsource(cursor,runcatid,xtrsrcid)
+
+    if not AUTOCOMMIT:
+        conn.commit()                        
+    cursor.close()
+        
+def _insert_user_monitored_source_into_extractedsource(cursor, image_id, result):
+    """Returns: xtrsrcid
+    
+       TO DO: Could use general purpose extractedsource insertion routine,
+               if only it returned the xtrsrc ids.
+    """
+    ra, dec, ra_err, dec_err, peak, peak_err, flux, flux_err, sigma, \
+    semimajor, semiminor, pa = result
+    x = math.cos(math.radians(dec)) * math.cos(math.radians(ra))
+    y = math.cos(math.radians(dec)) * math.sin(math.radians(ra))
+    z = math.sin(math.radians(dec))
+    racosdecl = ra * math.cos(math.radians(dec))
+    if True: #Temporary indentation hack to make it easier to track diff
         query = """\
         INSERT INTO extractedsource
           (image
@@ -304,9 +341,7 @@ def insert_monitored_sources(conn, results, image_id):
                 query, (image_id, int(math.floor(dec)), ra, dec, ra_err, dec_err,
                         x, y, z, racosdecl, sigma, peak, peak_err, flux, flux_err,
                         semimajor, semiminor, pa))
-            if not AUTOCOMMIT:
-                conn.commit()
-            xtrsrcid = cursor.lastrowid
+            return cursor.lastrowid
         except db.Error, e:
             query = query % (
                 image_id, int(math.floor(dec)), ra, dec, ra_err, dec_err,
@@ -315,8 +350,14 @@ def insert_monitored_sources(conn, results, image_id):
             logging.warn("Query failed: %s", query)
             cursor.close()
             raise
-        if runcat < 0:
-            # TODO: When is this the case?
+        
+        
+
+def _insert_user_monitored_source_into_runcat(cursor, xtrsrcid, image_id):
+    """Returns: runcatid"""
+    if True: #Temporary indentation hack to make it easier to track diff
+        if True: #Remove once everything working fine.
+            
             # Insert as new source into the running catalog
             # and update the monitoringlist.xtrsrc
             query = """\
@@ -360,72 +401,33 @@ def insert_monitored_sources(conn, results, image_id):
             # TODO: Add runcat_flux as well!
             try:
                 cursor.execute(query, (xtrsrcid, image_id))
-                if not AUTOCOMMIT:
-                    conn.commit()
+                return cursor.lastrowid
             except db.Error, e:
                 query = query % (image_id, xtrsrcid)
                 logging.warn("query failed: %s", query)
                 cursor.close()
                 raise
-            # Add it to the association table as well, so we can
-            # obtain the lightcurve
-            query = """\
-            INSERT INTO assocxtrsource
-              (runcat
-              ,xtrsrc
-              ,type
-              ,distance_arcsec
-              ,r
-              ,loglr
-              )
-              SELECT runcat
-                    ,xtrsrc
-                    ,0
-                    ,0
-                    ,0
-                    ,0
-                FROM runningcatalog
-               WHERE xtrsrc = %s
-            """
-            try:
-                cursor.execute(query, (xtrsrcid, ))
-                if not AUTOCOMMIT:
-                    conn.commit()
-            except db.Error, e:
-                query = query % (xtrsrcid, xtrsrcid)
-                logging.warn("query failed: %s", query)
-                cursor.close()
-                raise
-            # Now update the monitoringlist.xtrsrc (note: the
-            # original, possibly negative, xtrsrc_id is still held
-            # safely in memory)
-            # TODO: This must be defect for while...
-            # TODO: FIXME
+            
+def _update_monitoringlist_entry_rcid(cursor, monitorid, runcatid ):
+    if True: #Temporary indentation hack to make it easier to track diff
+        if True: #Remove once everything working fine.
+            # Now update the monitoringlist.runcat
             query = """\
             UPDATE monitoringlist 
-               SET xtrsrc_id = %s
-                  ,image_id = %s 
-             WHERE monitorid = %s
+               SET runcat = %s 
+             WHERE id = %s
             """
             try:
-                cursor.execute(query, (xtrsrcid, image_id, monitorid))
-                if not AUTOCOMMIT:
-                    conn.commit()
+                cursor.execute(query, (runcatid, monitorid))
             except db.Error, e:
-                query = query % (xtrsrcid, xtrsrc_id)
+#                query = query % (xtrsrcid, xtrsrc_id)
                 logging.warn("query failed: %s", query)
                 cursor.close()
                 raise                    
-        else:
-            # We don't update the runningcatalog, because:
-            # - the fluxes are below the detection limit, and
-            #   add little to nothing to the average flux
-            # - the positions will have large errors, and
-            #   contribute very litte to the average position
-            # We thus only need to update the association table,
-            # and the image_id in the monitoringlist
-            # the xtrsrc_id from the monitoringlist already
-            # points to the original/first point
+            
+def _insert_monitored_source_into_assocxtrsource(cursor,runcatid,xtrsrcid):
+    if True: #Temporary indentation hack to make it easier to track diff
+        if True: #Remove once everything working fine. 
             query = """\
             INSERT INTO assocxtrsource 
               (runcat
@@ -444,15 +446,13 @@ def insert_monitored_sources(conn, results, image_id):
               ,0)
             """
             try:
-                cursor.execute(query, (runcat, xtrsrcid))
-                if not AUTOCOMMIT:
-                    conn.commit()
+                cursor.execute(query, (runcatid, xtrsrcid))
             except db.Error, e:
-                query = query % (xtrsrc_id, xtrsrcid)
+                query = query % (runcatid, xtrsrcid)
                 logging.warn("query failed: %s", query)
                 cursor.close()
                 raise
-    cursor.close()
+
 
 def add_runcat_sources_to_monitoringlist(conn, dataset_id, 
                           runcat_ids):

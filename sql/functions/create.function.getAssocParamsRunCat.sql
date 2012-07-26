@@ -8,36 +8,36 @@ create function getAssocParamsRunCat(runcat_id INT
 begin
 
   return table (
-    select 3600 * DEGREES(2 * ASIN(SQRT( (r1.x - x2.x) * (r1.x - x2.x)
-                                       + (r1.y - x2.y) * (r1.y - x2.y)
-                                       + (r1.z - x2.z) * (r1.z - x2.z)
+    select 3600 * DEGREES(2 * ASIN(SQRT( (r.x - x.x) * (r.x - x.x)
+                                       + (r.y - x.y) * (r.y - x.y)
+                                       + (r.z - x.z) * (r.z - x.z)
                                        )
                                   / 2
                                   )
                          ) AS distance_arcsec
-          ,3600 * SQRT( (r1.wm_ra * COS(RADIANS(r1.wm_decl)) - x2.ra * COS(RADIANS(x2.decl))) 
-                      * (r1.wm_ra * COS(RADIANS(r1.wm_decl)) - x2.ra * COS(RADIANS(x2.decl))) 
-                        / (r1.wm_ra_err * r1.wm_ra_err + x2.ra_err * x2.ra_err)
-                      + (r1.wm_decl - x2.decl) * (r1.wm_decl - x2.decl)  
-                        / (r1.wm_decl_err * r1.wm_decl_err + x2.decl_err * x2.decl_err)
+          ,3600 * SQRT( (r.wm_ra * COS(RADIANS(r.wm_decl)) - x.ra * COS(RADIANS(x.decl))) 
+                      * (r.wm_ra * COS(RADIANS(r.wm_decl)) - x.ra * COS(RADIANS(x.decl))) 
+                        / (r.wm_ra_err * r.wm_ra_err + x.ra_err * x.ra_err)
+                      + (r.wm_decl - x.decl) * (r.wm_decl - x.decl)  
+                        / (r.wm_decl_err * r.wm_decl_err + x.decl_err * x.decl_err)
                       ) AS r
-          ,LOG10(EXP((( (r1.wm_ra * COS(RADIANS(r1.wm_decl)) - x2.ra * COS(RADIANS(x2.decl))) 
-                      * (r1.wm_ra * COS(RADIANS(r1.wm_decl)) - x2.ra * COS(RADIANS(x2.decl))) 
-                        / (r1.wm_ra_err * r1.wm_ra_err + x2.ra_err * x2.ra_err)
-                      + (r1.wm_decl - x2.decl) * (r1.wm_decl - x2.decl)  
-                        / (r1.wm_decl_err * r1.wm_decl_err + x2.decl_err * x2.decl_err)
+          ,LOG10(EXP((( (r.wm_ra * COS(RADIANS(r.wm_decl)) - x.ra * COS(RADIANS(x.decl))) 
+                      * (r.wm_ra * COS(RADIANS(r.wm_decl)) - x.ra * COS(RADIANS(x.decl))) 
+                        / (r.wm_ra_err * r.wm_ra_err + x.ra_err * x.ra_err)
+                      + (r.wm_decl - x.decl) * (r.wm_decl - x.decl)  
+                        / (r.wm_decl_err * r.wm_decl_err + x.decl_err * x.decl_err)
                       )
                      ) / 2
                     )
                  /
-                 (2 * PI() * SQRT(r1.wm_ra_err * r1.wm_ra_err + x2.ra_err * x2.ra_err) 
-                           * SQRT(r1.wm_decl_err * r1.wm_decl_err + x2.decl_err * x2.decl_err) 
+                 (2 * PI() * SQRT(r.wm_ra_err * r.wm_ra_err + x.ra_err * x.ra_err) 
+                           * SQRT(r.wm_decl_err * r.wm_decl_err + x.decl_err * x.decl_err) 
                            * 4.02439375E-06)
                 ) AS loglr
-  from runningcatalog r1
-      ,extractedsources x1
- where r1.id = runcat_id
-   and x1.id = xtrsrc_id
+  from runningcatalog r
+      ,extractedsource x
+ where r.id = runcat_id
+   and x.id = xtrsrc_id
   )
   ;
 

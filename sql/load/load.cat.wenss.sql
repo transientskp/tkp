@@ -46,9 +46,9 @@ VALUES
 ;
 
 SET ifreq_eff_main = 325000000.0;
-SET iband_main = getBand(ifreq_eff_main);
+SET iband_main = getBand(ifreq_eff_main, 10000000);
 SET ifreq_eff_pole = 352000000.0;
-SET iband_pole = getBand(ifreq_eff_pole);
+SET iband_pole = getBand(ifreq_eff_pole, 20000000);
 
 CREATE TABLE aux_catalogedsource
   (aviz_RAJ2000 DOUBLE

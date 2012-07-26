@@ -4,7 +4,7 @@ DECLARE iname VARCHAR(50);
 
 SET iname = 'VLSS'; 
 SET i_freq_eff = 73800000;
-SET iband = getBand(i_freq_eff);
+SET iband = getBand(i_freq_eff,1600000);
 
 INSERT INTO catalog
   (name

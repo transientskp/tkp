@@ -11,9 +11,7 @@ A collection of back end subroutines (mostly SQL queries),
 In this module we deal with source association.
 
 """
-import os
-import sys
-import math
+
 import logging
 import monetdb.sql as db
 from tkp.config import config

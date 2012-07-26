@@ -429,7 +429,7 @@ class Image(DBObject):
 
     TABLE = 'image'
     ID = 'id'
-    REQUIRED = ('dataset', 'tau_time', 'freq_eff', 'freq_bw', 'taustart_ts')
+    REQUIRED = ('dataset', 'tau_time', 'freq_eff', 'freq_bw', 'taustart_ts', 'url')
     
     def __init__(self, data=None, dataset=None, database=None, id=None):
         """If id is supplied, the data and image arguments are ignored."""

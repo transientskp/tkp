@@ -4,12 +4,14 @@ try:
 except AttributeError:
     import unittest2 as unittest
 
-import logging
-    
+
 import tkp.database as tkpdb
 from .. import db_subs
 from ..decorators import requires_database
 import tkp.database.utils as db_utils
+
+
+
 
 class TestSourceAssociation(unittest.TestCase):
     @requires_database()
@@ -168,12 +170,15 @@ class TestSourceAssociation(unittest.TestCase):
             self.assertEqual(assocxtrsrcs_rows[0]['runcat'], fixed_src_runcat_id,
                              "Mismatched runcat id in assocxtrsrc table")
 
-        
-    
+
+
+
+
+
+
 class TestTransientCandidateMonitoring(unittest.TestCase):
     @requires_database()
     def setUp(self):
-        import datetime
         self.database = tkpdb.DataBase()
         self.dataset = tkpdb.DataSet(data={'description':"Mon:"+self._testMethodName},
                                     database = self.database)

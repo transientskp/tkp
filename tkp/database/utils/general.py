@@ -70,7 +70,7 @@ def insert_image(conn, dataset,
     try:
         cursor = conn.cursor()
         query = """\
-        SELECT insertImage(%s, %s, %s, %s, %s, %s)
+        SELECT insertImage(%s, %s, %s, %s, %s, %s, %s, %s, %s)
         """
         cursor.execute(query, (dataset
                               #,tau_mode
@@ -78,9 +78,9 @@ def insert_image(conn, dataset,
                               ,freq_eff
                               ,freq_bw
                               ,taustart_ts
-                              #,beam_maj
-                              #,beam_min
-                              #,beam_pa
+                              ,beam_maj
+                              ,beam_min
+                              ,beam_pa
                               ,url
                               ))
         newimgid = cursor.fetchone()[0]

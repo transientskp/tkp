@@ -62,8 +62,6 @@ GROUP BY runcat
         cursor.close()
     return id_counts
 
-
-
 def associate_extracted_sources(conn, image_id, deRuiter_r=DERUITER_R):
     """Associate extracted sources with sources detected in the running
     catalog
@@ -74,7 +72,6 @@ def associate_extracted_sources(conn, image_id, deRuiter_r=DERUITER_R):
     Here we use a default value of deRuiter_r = 3.717/3600. for a
     reliable association.
     """
-#    print "De Ruiter Radius: r = ", deRuiter_r
 
     _empty_temprunningcatalog(conn)
     #+------------------------------------------------------+
@@ -86,11 +83,15 @@ def associate_extracted_sources(conn, image_id, deRuiter_r=DERUITER_R):
     #+------------------------------------------------------+
     _insert_temprunningcatalog(conn, image_id, deRuiter_r)
     #+------------------------------------------------------+
-    #| Here we process the many-to-many AND many-to-one     |
-    #| associations.                                        |
+    #| Here we process (flag) the many-to-many associations.|
     #+------------------------------------------------------+
-    # _process_many_to_many() & _process_many_to_1()
-    _flag_multiple_counterparts_in_runningcatalog(conn)
+    # _process_many_to_many() 
+    _flag_many_to_many_tempruncat(conn)
+    #+------------------------------------------------------+
+    #| After this, the assocs have been reduced to many-to-1|
+    #| which are treated identical as 1-to-1, and 1-to-many.|
+    #+------------------------------------------------------+
+    # _process_many_to_1() => process_1_to_1()
     #+------------------------------------------------------+
     #| Here we process the one-to-many associations.        |
     #+------------------------------------------------------+
@@ -105,12 +106,12 @@ def associate_extracted_sources(conn, image_id, deRuiter_r=DERUITER_R):
     _flag_1_to_many_inactive_runcat(conn)
     _flag_1_to_many_inactive_tempruncat(conn)
     #+-----------------------------------------------------+
-    #| After all this, we are now left with the 1-1 assocs |
+    #| Here we process the one-to-one associations         |
     #+-----------------------------------------------------+
     # _process_1_to_1()
     _insert_1_to_1_assoc(conn)
     _update_1_to_1_runcat(conn)
-    _update_1_to_1_runcat_flux(conn)
+    _select_for_update_1_to_1_runcat_flux(conn)
     #+-------------------------------------------------------+
     #| Here we take care of the extracted sources that could |
     #| not be associated with any runningcatalog source      |
@@ -121,16 +122,6 @@ def associate_extracted_sources(conn, image_id, deRuiter_r=DERUITER_R):
     _empty_temprunningcatalog(conn)
     _delete_inactive_runcat(conn)
 
-#### NB: These 3 lines seem to have been deleted in the multifreq branch
-#### But crept back in, during the merge.
-#### Are they still needed? -TS.  
-#### NB Unit tests suggest we're fine without them.  
-#    _count_known_sources(conn, image_id, deRuiter_r)
-#    _insert_new_assocs(conn, image_id, deRuiter_r)
-#    _insert_new_source_runcat(conn, image_id, deRuiter_r)
-
-    #_associate_across_frequencies(conn, ds_id, image_id, deRuiter_r)
-    
 def associate_with_catalogedsources(conn, image_id, radius=0.03, deRuiter_r=DERUITER_R):
     """Associate extracted sources in specified image with known sources 
     in the external catalogues
@@ -149,9 +140,8 @@ def associate_with_catalogedsources(conn, image_id, radius=0.03, deRuiter_r=DERU
 
     _insert_cat_assocs(conn, image_id, radius, deRuiter_r)
 
-
-def associate_catalogued_sources_in_area(conn, ra, dec, radius, deRuiter_r=DERUITER_R/3600.):
-    pass
+#def associate_catalogued_sources_in_area(conn, ra, dec, radius, deRuiter_r=DERUITER_R/3600.):
+#    pass
 
 
 ###############################################################################################
@@ -418,85 +408,74 @@ INSERT INTO temprunningcatalog
     finally:
         cursor.close()
 
-def _flag_multiple_counterparts_in_runningcatalog(conn):
-    """Flag the many-to-many and many-to-one association pairs. 
+def _flag_many_to_many_tempruncat(conn):
+    """Select the many-to-many association pairs in temprunningcatalog. 
 
-    -1- many running-catalogue sources  <-> many extracted sources
-        many running-catalogue sources  <-> one extracted source
-
-    We take care of the many-to-many associations and the 
-    many-to-one associations in the same way.
-
-    NOTE: We do not yet handle the case where two or more extractedsource have
-    two or more counterparts in the runningcatalog, and all can be cross-
-    associated, the so-called many-to-many associations. However,
-    those pairs will be split up in a set of many-to-one associations
-    and handled as such.
-    
-    What we do is filtering on single extracted sources that have 
-    multiple counterparts in the running catalogue, 
-    i.e. the many-to-one associations.
-    We only keep the association pair that has the lowest De Ruiter radius, 
-    namely the highest association probability, 
-    whereas the other pairs will be omitted.
-
-    NOTES & TODO:
-    1. The calculation of min_r1 and r1 is an approximation.
-    2. It is worth considering whether this might be changed to selecting
-    the brightest neighbour source, instead of just the closest neighbour. 
-    (There are case [when flux_lim > 10Jy] that the nearest source has a 
-    lower flux level, causing unexpected spectral indices.)
-    3. TODO: We should not throw away those outlier pairs, but flag
-    them as such in temprunningcatag.
+    By flagging the many-to-many associations, we reduce the 
+    processing to one-to-many and many-to-one (identical to one-to-one)
+    relationships
     """
 
     try:
         cursor = conn.cursor()
+        # This one selects the farthest out of the many-to-many assocs
         query = """\
-        SELECT t1.runcat
-              ,t1.xtrsrc
-          FROM (SELECT trc0.xtrsrc
-                      ,MIN(trc0.r) AS min_r1
-                  FROM temprunningcatalog trc0
-                      ,runningcatalog rc0
-                      ,extractedsource x0
-                 WHERE trc0.xtrsrc IN (SELECT xtrsrc
-                                         FROM temprunningcatalog
-                                       GROUP BY xtrsrc
-                                       HAVING COUNT(*) > 1
-                                      )
-                   AND trc0.runcat = rc0.id
-                   AND trc0.xtrsrc = x0.id
-                GROUP BY trc0.xtrsrc
-               ) t0
-              ,(SELECT trc1.runcat
-                      ,trc1.xtrsrc
-                      ,trc1.r AS r1
-                  FROM temprunningcatalog trc1
-                      ,runningcatalog rc1
-                      ,extractedsource x1
-                 WHERE trc1.xtrsrc IN (SELECT xtrsrc
-                                         FROM temprunningcatalog
-                                       GROUP BY xtrsrc
-                                       HAVING COUNT(*) > 1
-                                      )
-                   AND trc1.runcat = rc1.id
-                   AND trc1.xtrsrc = x1.id
-               ) t1
-         WHERE t1.xtrsrc = t0.xtrsrc
-           AND t1.r1 > t0.min_r1
+SELECT t1.runcat
+      ,t1.xtrsrc
+  FROM (SELECT xtrsrc
+              ,MIN(r) as min_r
+          FROM temprunningcatalog 
+         WHERE runcat IN (SELECT runcat 
+                            FROM temprunningcatalog 
+                           WHERE runcat IN (SELECT runcat 
+                                              FROM temprunningcatalog 
+                                             WHERE xtrsrc IN (SELECT xtrsrc
+                                                                FROM temprunningcatalog
+                                                              GROUP BY xtrsrc
+                                                              HAVING COUNT(*) > 1
+                                                             )
+                                           ) 
+                          GROUP BY runcat 
+                          HAVING COUNT(*) > 1
+                         ) 
+           AND xtrsrc IN (SELECT xtrsrc
+                            FROM temprunningcatalog
+                          GROUP BY xtrsrc
+                          HAVING COUNT(*) > 1
+                         )
+        GROUP BY xtrsrc
+       ) t0
+      ,(SELECT runcat
+              ,xtrsrc
+              ,r 
+          FROM temprunningcatalog 
+         WHERE runcat IN (SELECT runcat 
+                            FROM temprunningcatalog 
+                           WHERE runcat IN (SELECT runcat 
+                                              FROM temprunningcatalog 
+                                             WHERE xtrsrc IN (SELECT xtrsrc
+                                                                FROM temprunningcatalog
+                                                              GROUP BY xtrsrc
+                                                              HAVING COUNT(*) > 1
+                                                             )
+                                           ) 
+                          GROUP BY runcat 
+                          HAVING COUNT(*) > 1
+                         ) 
+           AND xtrsrc IN (SELECT xtrsrc
+                            FROM temprunningcatalog
+                          GROUP BY xtrsrc
+                          HAVING COUNT(*) > 1
+                         )
+       ) t1
+ WHERE t0.xtrsrc = t1.xtrsrc
+   AND t0.min_r < t1.r
         """
         cursor.execute(query)
         results = zip(*cursor.fetchall())
         if len(results) != 0:
             runcat = results[0]
             xtrsrc = results[1]
-            # TODO: See NOTE 3 above: Consider setting row to inactive instead of deleting
-            # Here, for the many-to-many and many-to-one associations, we throw away
-            # the pairs of which the De Ruiter radius is larger that the smallest one
-            # of the set.
-            # This will effectively reduce the tempruncat table with associations of the 
-            # one-to-one and one-to-many types.
             query = """\
             UPDATE temprunningcatalog
                SET inactive = TRUE
@@ -504,15 +483,171 @@ def _flag_multiple_counterparts_in_runningcatalog(conn):
                AND xtrsrc = %s
             """
             for j in range(len(runcat)):
-                #print "\nThrowing away many-to-many from tempruncat:", runcat[j], xtrsrc[j]
+                print "Many-to-many in tempruncat set to inactive:", runcat[j], xtrsrc[j]
                 cursor.execute(query, (runcat[j], xtrsrc[j]))
                 if not AUTOCOMMIT:
                     conn.commit()
+            #sys.exit()
+        cursor.close()
     except db.Error, e:
         logging.warn("Failed on query nr %s." % query)
         raise
-    finally:
-        cursor.close()
+
+#def _flag_many_to_1_tempruncat(conn):
+#    """Flag those many-to-one associations that have asUpdate the runningcatalog with the many-to-one associations
+#    """
+#    try:
+#        cursor = conn.cursor()
+#        # 2nd query has to run in case of identical minimal distances:
+#        query = """\
+#        SELECT runcat
+#              ,xtrsrc
+#              ,distance_arcsec
+#              ,r
+#              ,inactive
+#          FROM temprunningcatalog
+#         WHERE inactive = FALSE 
+#           AND xtrsrc IN (
+#                SELECT xtrsrc 
+#                  FROM temprunningcatalog
+#                 WHERE runcat IN (SELECT runcat 
+#                                    FROM temprunningcatalog 
+#                                   WHERE runcat IN (SELECT runcat 
+#                                                      FROM temprunningcatalog 
+#                                                     WHERE xtrsrc IN (SELECT xtrsrc
+#                                                                        FROM temprunningcatalog
+#                                                                      GROUP BY xtrsrc
+#                                                                      HAVING COUNT(*) > 1
+#                                                                     )
+#                                                   ) 
+#                                  GROUP BY runcat 
+#                                  HAVING COUNT(*) > 1
+#                                 ) 
+#                   AND xtrsrc IN (SELECT xtrsrc
+#                                    FROM temprunningcatalog
+#                                  GROUP BY xtrsrc
+#                                  HAVING COUNT(*) > 1
+#                                 )
+#                  AND inactive = FALSE
+#                GROUP BY xtrsrc
+#                HAVING COUNT(*) > 1
+#                ) 
+#        ORDER BY runcat DESC
+#        """
+#        #cursor.execute(query)
+#        if not AUTOCOMMIT:
+#            conn.commit()
+#        cursor.close()
+#    except db.Error, e:
+#        logging.warn("Failed on query:\n%s" % query)
+#        raise
+
+
+def _insert_many_to_1_assocs(conn):
+    pass
+
+
+#def _deprflag_many_to_many_tempruncat(conn):
+#    """Flag the many-to-many and many-to-one association pairs. 
+#
+#    -1- many running-catalogue sources  <-> many extracted sources
+#        many running-catalogue sources  <-> one extracted source
+#
+#    We take care of the many-to-many associations and the 
+#    many-to-one associations in the same way.
+#
+#    NOTE: We do not yet handle the case where two or more extractedsource have
+#    two or more counterparts in the runningcatalog, and all can be cross-
+#    associated, the so-called many-to-many associations. However,
+#    those pairs will be split up in a set of many-to-one associations
+#    and handled as such.
+#    
+#    What we do is filtering on single extracted sources that have 
+#    multiple counterparts in the running catalogue, 
+#    i.e. the many-to-one associations.
+#    We only keep the association pair that has the lowest De Ruiter radius, 
+#    namely the highest association probability, 
+#    whereas the other pairs will be omitted.
+#
+#    NOTES & TODO:
+#    1. The calculation of min_r1 and r1 is an approximation.
+#    2. It is worth considering whether this might be changed to selecting
+#    the brightest neighbour source, instead of just the closest neighbour. 
+#    (There are case [when flux_lim > 10Jy] that the nearest source has a 
+#    lower flux level, causing unexpected spectral indices.)
+#    3. TODO: We should not throw away those outlier pairs, but flag
+#    them as such in temprunningcatag.
+#    """
+#
+#    try:
+#        cursor = conn.cursor()
+#        # MonetDB bug:, we have to calculate dist here instead of in insert_tempruncat
+#        # And now select the min(r)
+#        """
+#        select runcat,xtrsrc,r from temprunningcatalog where runcat in (select runcat from temprunningcatalog where xtrsrc in (select xtrsrc from temprunningcatalog group by xtrsrc having count(*) > 1) group by runcat having count(*) > 1) order by runcat,xtrsrc;
+#        """
+#        query = """\
+#        SELECT t1.runcat
+#              ,t1.xtrsrc
+#          FROM (SELECT trc0.xtrsrc
+#                      ,MIN(trc0.r) AS min_r1
+#                  FROM temprunningcatalog trc0
+#                      ,runningcatalog rc0
+#                      ,extractedsource x0
+#                 WHERE trc0.xtrsrc IN (SELECT xtrsrc
+#                                         FROM temprunningcatalog
+#                                       GROUP BY xtrsrc
+#                                       HAVING COUNT(*) > 1
+#                                      )
+#                   AND trc0.runcat = rc0.id
+#                   AND trc0.xtrsrc = x0.id
+#                GROUP BY trc0.xtrsrc
+#               ) t0
+#              ,(SELECT trc1.runcat
+#                      ,trc1.xtrsrc
+#                      ,trc1.r AS r1
+#                  FROM temprunningcatalog trc1
+#                      ,runningcatalog rc1
+#                      ,extractedsource x1
+#                 WHERE trc1.xtrsrc IN (SELECT xtrsrc
+#                                         FROM temprunningcatalog
+#                                       GROUP BY xtrsrc
+#                                       HAVING COUNT(*) > 1
+#                                      )
+#                   AND trc1.runcat = rc1.id
+#                   AND trc1.xtrsrc = x1.id
+#               ) t1
+#         WHERE t1.xtrsrc = t0.xtrsrc
+#           AND t1.r1 > t0.min_r1
+#        """
+#        #cursor.execute(query)
+#        #results = zip(*cursor.fetchall())
+#        #if len(results) != 0:
+#        #    runcat = results[0]
+#        #    xtrsrc = results[1]
+#        #    # TODO: See NOTE 3 above: Consider setting row to inactive instead of deleting
+#        #    # Here, for the many-to-many and many-to-one associations, we throw away
+#        #    # the pairs of which the De Ruiter radius is larger that the smallest one
+#        #    # of the set.
+#        #    # This will effectively reduce the tempruncat table with associations of the 
+#        #    # one-to-one and one-to-many types.
+#        #    query = """\
+#        #    UPDATE temprunningcatalog
+#        #       SET inactive = TRUE
+#        #     WHERE runcat = %s
+#        #       AND xtrsrc = %s
+#        #    """
+#        #    for j in range(len(runcat)):
+#        #        print "\nNow we don't update many-to-1 to inactive in tempruncat:", runcat[j], xtrsrc[j]
+#        #        #cursor.execute(query, (runcat[j], xtrsrc[j]))
+#        #        #if not AUTOCOMMIT:
+#        #        #    conn.commit()
+#        #    #sys.exit()
+#    except db.Error, e:
+#        logging.warn("Failed on query nr %s." % query)
+#        raise
+#    finally:
+#        cursor.close()
 
 def _insert_1_to_many_runcat(conn):
     """Insert the extracted sources that belong to one-to-many 
@@ -567,7 +702,8 @@ def _insert_1_to_many_runcat(conn):
                 ,y
                 ,z
             FROM temprunningcatalog
-           WHERE runcat IN (SELECT runcat
+           WHERE inactive = FALSE
+             AND runcat IN (SELECT runcat
                               FROM temprunningcatalog
                              WHERE inactive = FALSE
                             GROUP BY runcat
@@ -578,7 +714,7 @@ def _insert_1_to_many_runcat(conn):
         if not AUTOCOMMIT:
             conn.commit()
     except db.Error, e:
-        logging.warn("Failed on query nr %s." % query)
+        logging.warn("Failed on query:\n%s" % query)
         raise
     finally:
         cursor.close()
@@ -627,6 +763,7 @@ def _insert_1_to_many_runcat_flux(conn):
             FROM temprunningcatalog trc0
                 ,runningcatalog rc0
            WHERE trc0.xtrsrc = rc0.xtrsrc
+             AND trc0.inactive = FALSE
              AND trc0.runcat IN (SELECT runcat
                                    FROM temprunningcatalog
                                   WHERE inactive = FALSE
@@ -666,7 +803,8 @@ def _insert_1_to_many_basepoint_assoc(conn):
                 ,2
             FROM temprunningcatalog t
                 ,runningcatalog r
-           WHERE t.xtrsrc = r.xtrsrc
+           WHERE t.inactive = FALSE
+             AND t.xtrsrc = r.xtrsrc
              AND t.runcat IN (SELECT runcat
                                 FROM temprunningcatalog
                                WHERE inactive = FALSE
@@ -717,7 +855,8 @@ def _insert_1_to_many_assoc(conn):
             FROM assocxtrsource a
                 ,runningcatalog r
                 ,temprunningcatalog t
-           WHERE t.xtrsrc = r.xtrsrc
+           WHERE t.inactive = FALSE
+             AND t.xtrsrc = r.xtrsrc
              AND t.runcat = a.runcat
              AND t.runcat IN (SELECT runcat
                                 FROM temprunningcatalog
@@ -1000,11 +1139,12 @@ def _update_1_to_1_runcat(conn):
     finally:
         cursor.close()
 
-def _update_1_to_1_runcat_flux(conn):
+def _select_for_update_1_to_1_runcat_flux(conn):
     """Update the runningcatalog_flux
     
     Based on the runcat ids in tempruncat, the fluxes of the corresponding
     entries in runcat_flux should be updated.
+    If they do not exist yet, they will be inserted
     
     """
 
@@ -1031,29 +1171,95 @@ def _update_1_to_1_runcat_flux(conn):
         """
         cursor.execute(query)
         results = cursor.fetchall()
+        cursor.close()
+        if len(results) > 0:
+            for result in results:
+                _insert_or_update_1_to_1_runcat_flux(conn, tuple(result))
+    except db.Error, e:
+        logging.warn("Failed on query:\n%s" % query)
+        raise
+
+def _insert_or_update_1_to_1_runcat_flux(conn, result):
+    """Insert or update the runningcatalog_flux, depending on existing entries
+    
+    If the runcat,band,stokes entry does not exist in runcat_flux,
+    we need to do an insert, otherwise an update
+    
+    NOTE: Together with previous query this should be optimised,
+          in order to reduce data I/O
+    """
+
+    try:
+        cursor = conn.cursor()
         query = """\
-        UPDATE runningcatalog_flux
-           SET f_datapoints = %s
-              ,avg_f_peak = %s
-              ,avg_f_peak_sq = %s
-              ,avg_f_peak_weight = %s
-              ,avg_weighted_f_peak = %s
-              ,avg_weighted_f_peak_sq = %s
-              ,avg_f_int = %s
-              ,avg_f_int_sq = %s
-              ,avg_f_int_weight = %s
-              ,avg_weighted_f_int = %s
-              ,avg_weighted_f_int_sq = %s
+        SELECT COUNT(*)
+          FROM runningcatalog_flux
          WHERE runcat = %s
            AND band = %s
            AND stokes = %s
         """
-        for result in results:
-            cursor.execute(query, tuple(result))
-            if not AUTOCOMMIT:
-                conn.commit()
+        # Be aware that the last items must correspond to the query  
+        # in _select_for_update_1_to_1_runcat_flux()
+        cursor.execute(query, (result[-3], result[-2], result[-1]))
+        cnt = cursor.fetchone()[0]
+        if cnt == 0:
+            query = """\
+            INSERT INTO runningcatalog_flux
+              (f_datapoints 
+              ,avg_f_peak 
+              ,avg_f_peak_sq 
+              ,avg_f_peak_weight 
+              ,avg_weighted_f_peak 
+              ,avg_weighted_f_peak_sq 
+              ,avg_f_int 
+              ,avg_f_int_sq 
+              ,avg_f_int_weight 
+              ,avg_weighted_f_int 
+              ,avg_weighted_f_int_sq 
+              ,runcat 
+              ,band 
+              ,stokes 
+              )
+            VALUES
+              (%s
+              ,%s
+              ,%s
+              ,%s
+              ,%s
+              ,%s
+              ,%s
+              ,%s
+              ,%s
+              ,%s
+              ,%s
+              ,%s
+              ,%s
+              ,%s
+              )
+            """
+        else:
+            query = """\
+            UPDATE runningcatalog_flux
+               SET f_datapoints = %s
+                  ,avg_f_peak = %s
+                  ,avg_f_peak_sq = %s
+                  ,avg_f_peak_weight = %s
+                  ,avg_weighted_f_peak = %s
+                  ,avg_weighted_f_peak_sq = %s
+                  ,avg_f_int = %s
+                  ,avg_f_int_sq = %s
+                  ,avg_f_int_weight = %s
+                  ,avg_weighted_f_int = %s
+                  ,avg_weighted_f_int_sq = %s
+             WHERE runcat = %s
+               AND band = %s
+               AND stokes = %s
+            """
+        cursor.execute(query, tuple(result))
+        if not AUTOCOMMIT:
+            conn.commit()
     except db.Error, e:
-        logging.warn("Failed on query:\n%s." % query)
+        logging.warn("Failed on query:\n%s" % query)
         raise
     finally:
         cursor.close()
@@ -1140,10 +1346,12 @@ def _insert_new_runcat(conn, image_id):
                  ON t0.xtrsrc = trc0.xtrsrc
            WHERE trc0.xtrsrc IS NULL
         """
-        cursor.execute(query, (image_id,))
+        ins = cursor.execute(query, (image_id,))
         #cursor.execute(query, (image_id, image_id,
         #                        radius, radius, radius, radius, radius, radius,
         #                        deRuiter_r/3600.))
+        if ins > 0:
+            print "new runcats:",ins
         if not AUTOCOMMIT:
             conn.commit()
     except db.Error, e:
@@ -1318,7 +1526,6 @@ def _delete_inactive_runcat(conn):
     finally:
         cursor.close()
 
-
 def _insert_cat_assocs(conn, image_id, radius, deRuiter_r):
     """Insert found xtrsrc--catsrc associations into assoccatsource table.
 
@@ -1391,5 +1598,6 @@ def _insert_cat_assocs(conn, image_id, radius, deRuiter_r):
         raise
     finally:
         cursor.close()
+
 
 

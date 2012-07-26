@@ -7,15 +7,17 @@ import sys
 import datetime
 import random
 from ..decorators import requires_database
-
+from tkp.database import DataSet
+from tkp.database import DataBase
+from tkp.database import Image
+from tkp.database import ExtractedSource
 # We're cheating here: a unit test shouldn't really depend on an
 # external dependency like the database being up and running
 
 class TestDataSet(unittest.TestCase):
 
     def setUp(self):
-        import tkp.database.database
-        self.database = tkp.database.database.DataBase()
+        self.database = DataBase()
 
     def tearDown(self):
         self.database.close()
@@ -23,9 +25,6 @@ class TestDataSet(unittest.TestCase):
     @requires_database()
     def test_create(self):
         """Create a new dataset, and retrieve it"""
-        from tkp.database.dataset import DataSet
-        import tkp.database.database
-        import monetdb
         dataset1 = DataSet(data={'description': 'dataset 1'},
                            database=self.database)
         # The name for the following dataset will be ignored, and set
@@ -51,9 +50,6 @@ class TestDataSet(unittest.TestCase):
     @requires_database()
     def test_update(self):
         """Update all or individual dataset columns"""
-        from tkp.database.dataset import DataSet
-        import tkp.database.database
-        import monetdb
         dataset1 = DataSet(data={'description': 'dataset 1'},
                             database=self.database)
         self.assertEqual(dataset1.description, "dataset 1")
@@ -78,10 +74,6 @@ class TestImage(unittest.TestCase):
 
     @requires_database()
     def test_create(self):
-        from tkp.database.dataset import DataSet
-        from tkp.database.dataset import Image
-        import tkp.database.database
-        import monetdb
         data = {
             'freq_eff': 80e6,
             'freq_bw': 1e6,
@@ -115,10 +107,6 @@ class TestImage(unittest.TestCase):
 
     @requires_database()
     def test_update(self):
-        from tkp.database.dataset import DataSet
-        from tkp.database.dataset import Image
-        import tkp.database.database
-        import monetdb
         dataset1 = DataSet(data={'description':
                                   'dataset with changing images'},
                                   database=self.database)
@@ -170,9 +158,7 @@ class TestExtractedSource(unittest.TestCase):
 
     @requires_database()
     def test_create(self):
-        from tkp.database.dataset import DataSet
-        from tkp.database.dataset import Image
-        from tkp.database.dataset import ExtractedSource
+        
         dataset = DataSet(data={'description': 'dataset with images'},
                           database=self.database)
         # create 4 images, separated by one day each
@@ -200,11 +186,6 @@ class TestExtractedSource(unittest.TestCase):
 
     @requires_database()
     def test_create2(self):
-        from tkp.database.dataset import DataSet
-        from tkp.database.dataset import Image
-        from tkp.database.dataset import ExtractedSource
-        import tkp.database.database
-        import monetdb
         data = {
             'freq_eff': 80e6,
             'freq_bw': 1e6,
@@ -254,11 +235,6 @@ class TestExtractedSource(unittest.TestCase):
 
     @requires_database()
     def test_update(self):
-        from tkp.database.dataset import DataSet
-        from tkp.database.dataset import Image
-        from tkp.database.dataset import ExtractedSource
-        import tkp.database.database
-        import monetdb
         data = {
             'freq_eff': 80e6,
             'freq_bw': 1e6,

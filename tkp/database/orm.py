@@ -3,7 +3,7 @@
 #
 # LOFAR Transients Key Project
 #
-# Evert Rol
+# Evert Rol, Tim Staley
 #
 # discovery@transientskp.org
 #
@@ -13,9 +13,9 @@
 #
 
 """
-This module contains container objects that corresponds to a dataset,
-image or extracted source in the database; it is actually a mini
-Object Relation Mapper (ORM). The correspondence between the object
+This module contains lightweight container objects that corresponds
+to a dataset, image or extracted source in the database; it is actually a
+mini Object Relation Mapper (ORM). The correspondence between the object
 and table row is matched through the private _id attributes.
 
 Each dataset contains several database Images; each Image contains a
@@ -29,12 +29,9 @@ The current setup is done in large part to keep the database and
 sourcefinder (and other parts of the TKP package) separate; tightly
 integrated database tables/sourcefinder images/disk files make it more
 difficult to improve the code or distribute parts separately. While
-not tested, it seems unlikely this will have a noticable influence on
+not tested, it seems unlikely this will have a noticeable influence on
 the functioning of the actual TKP pipeline (TraP).
 
-Every container object inherits from DBObject, which forms the
-starting point for any new container objects created. See the doc
-strings for DBOject for more information on how to do this.
 
 Usage
 =====
@@ -432,7 +429,7 @@ class Image(DBObject):
 
     TABLE = 'image'
     ID = 'id'
-    REQUIRED = ('dataset', 'tau_time', 'freq_eff', 'freq_bw', 'taustart_ts')
+    REQUIRED = ('dataset', 'tau_time', 'freq_eff', 'freq_bw', 'taustart_ts', 'url')
     
     def __init__(self, data=None, dataset=None, database=None, id=None):
         """If id is supplied, the data and image arguments are ignored."""

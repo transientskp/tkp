@@ -3,7 +3,7 @@
 #
 # LOFAR Transients Key Project
 #
-# Evert Rol
+# Evert Rol, Tim Staley
 #
 # discovery@transientskp.org
 #

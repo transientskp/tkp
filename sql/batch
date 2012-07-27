@@ -42,6 +42,7 @@ functions/create.function.decl2deg.sql
 functions/create.function.decl2dms.sql
 functions/create.function.getAssocParams.sql
 functions/create.function.getAssocParamsByPos.sql
+functions/create.function.getAssocParamsRunCat.sql
 functions/create.function.ra2deg.sql
 functions/create.function.ra2hms.sql
 functions/create.function.getSkyDensity_sr.sql

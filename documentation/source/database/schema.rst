@@ -4,7 +4,7 @@
 Schema
 ++++++
 
-.. image:: schema.jpg
+.. image:: schema.png
 
 assoccatsource
 ==============

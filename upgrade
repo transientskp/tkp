@@ -1,4 +1,9 @@
 #!/usr/bin/env python
+"""
+This script is used to upgrade or downgrade a TKP database to the latest or a specific revision. For this the
+SQL files in sql/upgrade are used. Run this script directly from your shell, use -h or --help to get more info
+on how to use it.
+"""
 
 import argparse
 import monetdb
@@ -13,14 +18,16 @@ parser.add_argument('-H', '--hostname', help="on what machine is the database ru
 parser.add_argument('-P', '--port', help="on what port is the database running", default=50000, type=int)
 
 def get_upgrades():
+    """ Returns nested list of available upgrade paths"""
     location = path.join(path.dirname(__file__), 'sql/upgrade')
     files = [x for x in os.listdir(location) if x.endswith('.sql')]
-    return [x[:-4].split('_to_') for x in files]
+    versions =  [(x[:-4].split('_to_')) for x in files]
+    return [tuple(int(j) for j in i) for i in versions]
 
 def get_version(cursor):
+    """ returns version of current database schema"""
     cursor.execute("SELECT value FROM version WHERE name='revision'")
     return cursor.fetchall()[0][0]
-
 
 def main():
     args = vars(parser.parse_args())
@@ -33,8 +40,33 @@ def main():
     connection = monetdb.sql.connect(database=database, username=username, password=password, hostname=hostname, port=port)
     cursor = connection.cursor()
     version = get_version(cursor)
-    print version
-    print get_upgrades()
+    upgrades = get_upgrades()
+
+    latest = version
+    steps = []
+    while True:
+        options = [to for from_,to in upgrades if from_ == latest and to > latest]
+        if options:
+            choice = max(options)
+            steps.append((latest, choice))
+            latest = choice
+        else:
+            break
+
+    answer = False
+    if latest > version:
+        msg = "a new version (%s) is available. You have %s. Upgrade?" % (latest, version)
+        answer = True if raw_input("%s (y/N) " % msg).lower() == 'y' else False
+        if answer:
+            print "upgrading to %s!" % latest
+    else:
+        print "you already have the latest revision (%s)" % latest
+
+    if version == latest or not answer:
+        msg = "do you want to up/down grade to a different revision? If so, which version?"
+        answer = raw_input("%s (rev no) " % msg)
+
+
 
 if __name__ == "__main__":
     main()

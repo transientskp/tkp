@@ -82,20 +82,20 @@ class Transient(object):
     these cases.
     """
 
-    def __init__(self, srcid=0, duration=None, variability=None, database=None,
+    def __init__(self, runcatid=None, duration=None, variability=None, database=None,
                  position=None, timezero=None, shape=None, spectralindex=None,
                  features=None, activity=None):
         """
 
         Kwargs:
 
-            srcid (int): database source ID, where known
+            runcatid (int): database runcat ID, where known
 
             duration (float): total duration of the transient
 
             variability (float): measure of the variability
 
-            database (dcit): dictionary of databases with which the
+            database (dict): dictionary of databases with which the
                 source can be associated. Each value contains details
                 about the matched database source.
 
@@ -112,7 +112,10 @@ class Transient(object):
                 automated classification.
 
         """
-        self.srcid = int(srcid)
+        if runcatid is not None:
+            self.runcatid = int(runcatid)
+        else:
+            self.runcatid = None
         self.duration = Undefined() if duration is None else duration
         self.variability = Undefined() if variability is None else variability
         self.activity = Undefined() if activity is None else activity
@@ -136,7 +139,9 @@ class Transient(object):
             return "transient source"
 
     def __repr__(self):
-        arglist = ["srcid=%d" % self.srcid]
+        arglist = []
+        if self.runcatid is not None:
+            arglist.append("runcatid=%d" % self.runcatid)
         if not isinstance(self.duration, Undefined):
             arglist.append("duration=%.1f" % self.duration)
         if not isinstance(self.variability, Undefined):

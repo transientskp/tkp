@@ -62,8 +62,9 @@ def get_monitoringlist_not_observed(conn, image_id, dataset_id):
     to use the manually specified co-ordinates.
     
     -For a manually specified entry with previous extractions,
-    the best course of action is unclear. Should we use the manually specified location, 
-    or a previous association (via runcat weighted ra, dec) that might be somewhat offset?
+    the best course of action is unclear. Should we use the manually specified 
+    location, or a previous association (via runcat weighted ra, dec) that 
+    might be somewhat offset?
     For now, we always just return the manual co-ordinates in this case.   
     
     TO DO: Carefully consider this logic case and update if necessary!
@@ -248,6 +249,7 @@ def insert_monitored_sources(conn, results, image_id):
 
     cursor = conn.cursor()
     # step through all the indiviudal results (/sources)
+    #NB Commit at the end.
     for runcatid, monitorid, result in results:
 
         
@@ -480,7 +482,7 @@ def add_runcat_sources_to_monitoringlist(conn, dataset_id,
 #    (SELECT runcat FROM monitoringlist)
 
 ## But I can't get it to work, so I'll do it the simple way.
-
+               
     prior_runcat_entries = generic.columns_from_table(conn, 
                               'monitoringlist', 
                               ['runcat'], 

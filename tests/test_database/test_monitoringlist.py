@@ -19,36 +19,9 @@ class TestTransientCandidateMonitoring(unittest.TestCase):
         self.n_images = 8                
         self.im_params = db_subs.example_dbimage_datasets(self.n_images)
         self.db_imgs=[]
-        
-        FixedSource = db_subs.example_extractedsource_tuple()            
-        SlowTransient1 = FixedSource._replace(ra=123.888,
-                                      peak = 5e-3, 
-                                      flux = 5e-3,
-                                      sigma = 4,
-                                      )
-        SlowTransient2 = SlowTransient1._replace(sigma = 3)    
-        BrightFastTransient = FixedSource._replace(dec=15.666,
-                                        peak = 30e-3,
-                                        flux = 30e-3, 
-                                        sigma = 15,
-                                      )
-        
-        WeakFastTransient = FixedSource._replace(dec=15.777,
-                                        peak = 10e-3,
-                                        flux = 10e-3, 
-                                        sigma = 5,
-                                      )
-        
-            
-        source_lists=[]
-        for i in xrange(self.n_images):
-            source_lists.append([FixedSource])
-        
-        source_lists[3].append(BrightFastTransient)
-        
-        source_lists[4].append(WeakFastTransient)        
-        source_lists[5].append(SlowTransient1)
-        source_lists[6].append(SlowTransient2)
+
+        source_lists=db_subs.example_source_lists(n_images=8,
+                                                  include_non_detections=False)
                 
         for i in xrange(self.n_images):
             self.db_imgs.append(

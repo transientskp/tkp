@@ -12,8 +12,12 @@ import logging
 import monetdb.sql as db
 from tkp.config import config
 import numpy
+from scipy.stats import chisqprob
 from . import monitoringlist
 
+from tkp.classification.transient import Transient
+from tkp.classification.transient import Position
+from tkp.classification.transient import DateTime
 
 AUTOCOMMIT = config['database']['autocommit']
 DERUITER_R = config['source_association']['deruiter_radius']
@@ -61,17 +65,19 @@ def insert_transient(conn, transient, dataset_id, image_ids=None):
             # First, let's find the current xtrsrc_id that belongs to the
             # current image: this is the trigger source id
             if image_ids is None:
-                image_set = ""
+                query_tail = ""
             else:
                 image_set = ", ".join([str(image) for image in image_ids])
+                query_tail = " AND ex.image IN (%s)" % image_set  
             query = """\
             SELECT ex.id 
               FROM extractedsource ex
                   ,assocxtrsource ax
-             WHERE ex.image IN (%s) 
-               AND ex.id = ax.xtrsrc 
-               AND ax.runcat = %%s
-            """ % image_set
+             WHERE 
+                 ex.id = ax.xtrsrc 
+               AND ax.runcat = %s
+            """ + query_tail
+            
             cursor.execute(query, (runcatid,))
             trigger_srcid = cursor.fetchone()[0]
             query = """\
@@ -186,15 +192,18 @@ def detect_variable_sources(conn, dsid, V_lim, eta_lim):
     return _select_variability_indices(conn, dsid, V_lim, eta_lim)
 
 
-def transient_search(dataset, 
+def transient_search(conn, 
+                     dataset, 
                      eta_lim, V_lim,
-                     detection_threshold, 
+                     probability_threshold, 
                      minpoints,
-                     logger):
+                     image_ids=None,
+                     logger=None):
     results = dataset.detect_variables(eta_lim, V_lim)
     transients = []
     if len(results) > 0:
-        logger.info("Found %d variable sources", len(results))
+        if logger is not None:
+            logger.info("Found %d variable sources", len(results))
         
         # need (want) sorting by sigma
         # This is not pretty, but it works:
@@ -204,7 +213,7 @@ def transient_search(dataset,
         weightedpeaks, dof = (numpy.array(tmpresults['v_nu']),
                               numpy.array(tmpresults['npoints'])-1)
         probability = 1 - chisqprob(tmpresults['eta_nu'] * dof, dof)
-        selection = probability > detection_threshold
+        selection = probability > probability_threshold
         selected_rcids = numpy.array(runcatids)[selection]
         selected_results = numpy.array(results)[selection]
         siglevels = probability[selection]
@@ -215,14 +224,18 @@ def transient_search(dataset,
             position = Position(ra=result['ra'], dec=result['dec'],
                                 error=(result['ra_err'], result['dec_err']))
             transient = Transient(runcatid=result['runcatid'], position=position)
+            
+            #FIXME: Monkey patching isn't exactly documentation friendly...
+            # You need to see what is done here before you understand 
+            # the called function!
             transient.siglevel = siglevel
             transient.eta = result['eta_nu']
             transient.V = result['v_nu']
             transient.dataset = result['dataset']
-            transient.monitored = dbu.is_monitored(
-                self.database.connection, transient.srcid)
-            insert_transient(self.database.connection, transient,
-                                 dataset_id, images=self.inputs['image_ids'])
+            transient.monitored = monitoringlist.is_monitored(
+                conn, transient.runcatid)
+            insert_transient(conn, transient,
+                                 dataset.id, image_ids)
             transients.append(transient)
     else:
         selected_rcids = numpy.array([], dtype=numpy.int)

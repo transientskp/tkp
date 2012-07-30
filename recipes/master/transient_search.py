@@ -94,7 +94,7 @@ class transient_search(BaseRecipe):
                      probability_threshold = prob_threshold, 
                      minpoints = minpoints,
                      image_ids=self.inputs['image_ids'],
-                     logger=None):
+                     logger=None)
 
         self.outputs['transient_ids'] = map(int, transient_ids)
         self.outputs['siglevels'] = siglevels

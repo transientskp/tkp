@@ -1,1 +1,1 @@
-UPDATE version SET revision=1;
+UPDATE version SET value=1 WHERE name='revision';

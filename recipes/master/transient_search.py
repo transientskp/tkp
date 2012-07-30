@@ -14,9 +14,6 @@ __last_modification__ = '2010-08-24'
 import sys
 import os
 
-from scipy.stats import chisqprob
-import numpy
-
 from lofarpipe.support.baserecipe import BaseRecipe
 from lofarpipe.support import lofaringredient
 from lofar.parameterset import parameterset
@@ -25,9 +22,7 @@ from tkp.config import config
 import tkp.database.database
 import tkp.database.dataset
 import tkp.database.utils as dbu
-from tkp.classification.transient import Transient
-from tkp.classification.transient import Position
-from tkp.classification.transient import DateTime
+
 
 
 class IntList(lofaringredient.ListField):
@@ -81,53 +76,30 @@ class transient_search(BaseRecipe):
         self.database = tkp.database.database.DataBase()
         self.dataset = tkp.database.dataset.DataSet(
             id=dataset_id, database=self.database)
-        limits = {'eta': parset.getFloat(
-            'probability.eta_lim', config['transient_search']['eta_lim']),
-                  'V': parset.getFloat(
-            'probability.V_lim', config['transient_search']['V_lim'])}
-        results = self.dataset.detect_variables(
-            eta_lim=limits['eta'], V_lim=limits['V'])
-        transients = []
-        if len(results) > 0:
-            self.logger.info("Found %d variable sources", len(results))
-            detection_threshold = parset.getFloat(
-                'probability.threshold',
-                config['transient_search']['probability'])
-            # need (want) sorting by sigma
-            # This is not pretty, but it works:
-            tmpresults = dict((key,  [result[key] for result in results])
-                           for key in ('srcid', 'npoints', 'v_nu', 'eta_nu'))
-            srcids = numpy.array(tmpresults['srcid'])
-            weightedpeaks, dof = (numpy.array(tmpresults['v_nu']),
-                                  numpy.array(tmpresults['npoints'])-1)
-            probability = 1 - chisqprob(tmpresults['eta_nu'] * dof, dof)
-            selection = probability > detection_threshold
-            transient_ids = numpy.array(srcids)[selection]
-            selected_results = numpy.array(results)[selection]
-            siglevels = probability[selection]
-            minpoints = parset.getInt('probability.minpoints',
-                                      config['transient_search']['minpoints'])
-            for siglevel, result in zip(siglevels, selected_results):
-                if result['npoints'] < minpoints:
-                    continue
-                position = Position(ra=result['ra'], dec=result['dec'],
-                                    error=(result['ra_err'], result['dec_err']))
-                transient = Transient(srcid=result['srcid'], position=position)
-                transient.siglevel = siglevel
-                transient.eta = result['eta_nu']
-                transient.V = result['v_nu']
-                transient.dataset = result['dataset']
-                transient.monitored = dbu.is_monitored(
-                    self.database.connection, transient.srcid)
-                dbu.insert_transient(self.database.connection, transient,
-                                     dataset_id, images=self.inputs['image_ids'])
-                transients.append(transient)
-        else:
-            transient_ids = numpy.array([], dtype=numpy.int)
-            siglevels = numpy.array([], dtype=numpy.float)
+        eta_lim = parset.getFloat(
+            'probability.eta_lim', config['transient_search']['eta_lim'])
+        V_lim= parset.getFloat(
+            'probability.V_lim', config['transient_search']['V_lim'])
+        prob_threshold = parset.getFloat(
+                                'probability.threshold',
+                                config['transient_search']['probability'])
+        minpoints = parset.getInt('probability.minpoints',
+                                  config['transient_search']['minpoints'])
+        
+        transient_ids, siglevels, transients = dbu.transient_search(
+                    conn = self.database.connection, 
+                     dataset = self.dataset, 
+                     eta_lim = eta_lim, 
+                     V_lim = V_lim,
+                     probability_threshold = prob_threshold, 
+                     minpoints = minpoints,
+                     image_ids=self.inputs['image_ids'],
+                     logger=None):
+
         self.outputs['transient_ids'] = map(int, transient_ids)
         self.outputs['siglevels'] = siglevels
         self.outputs['transients'] = transients
+        
         return 0
 
 

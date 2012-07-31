@@ -265,13 +265,6 @@ def insert_monitored_sources(conn, results, image_id):
         xtrsrcid =_insert_user_monitored_source_into_extractedsource(
                              cursor, image_id, result)
         
-        cursor.close()
-        print "*** Image xtrsrcs: *****"
-        print generic.columns_from_table(conn,
-                                         "extractedsource",
-                                         where={'image':image_id})
-        
-        cursor = conn.cursor()
         if runcatid is None: 
             #This is a userentry, measured for the first time. It needs a runcat entry.
             runcatid = _insert_user_monitored_source_into_runcat(

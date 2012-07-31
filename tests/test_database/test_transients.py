@@ -38,7 +38,7 @@ class TestTransientRoutines(unittest.TestCase):
             self.db_imgs[i].associate_extracted_sources(deRuiter_r=3.7)
             
         runcats = self.dataset.runcat_entries()
-        self.assertIsNot(len(runcats),0)
+        self.assertNotEqual(len(runcats),0)
         arbitrary_valid_rcid = runcats[0]['runcat']
         self.dummy_transient = Transient(runcatid = arbitrary_valid_rcid)
         self.dummy_transient.eta = 2 #Reduced Chi-squared

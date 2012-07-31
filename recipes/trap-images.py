@@ -32,7 +32,7 @@ class TrapImages(control):
             default=-1
             ),
         'monitor_coords': ingredient.ListField(
-            '--monitor-coords',
+            '-m', '--monitor-coords',
             #Unfortunately the ingredient system cannot handle spaces in 
             #parameter fields
             # I have tried enclosing with quotes, switching to StringField, 

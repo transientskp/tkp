@@ -13,6 +13,11 @@ from tkp.config import config
 from . import generic
 from . import general
 
+from collections import namedtuple
+
+MonitorTuple = namedtuple('MonitorTuple', 
+                          ('ra', 'decl', 'runcat','monitorid')
+                          )
 
 AUTOCOMMIT = config['database']['autocommit']
 DERUITER_R = config['source_association']['deruiter_radius']
@@ -48,8 +53,9 @@ def get_monitoringlist_not_observed(conn, image_id, dataset_id):
     Return a list of sources from the monitoringlist that have no 
     association with the extracted sources for this image.
     
-    Returns (list of tuples), format is:
-        [( ra, dec, runcatid , monitorid )]
+    Returns:
+         List of MonitorTuples.
+        
     
     There is a bit of logic branching here to decide how the 
     RA, DEC is determined:
@@ -168,7 +174,7 @@ def get_monitoringlist_not_observed_blind_entries(conn, image_id, dataset_id):
         raise
     finally:
         cursor.close()
-    return results
+    return [MonitorTuple._make(r) for r in results]
 
 def get_monitoringlist_not_observed_manual_entries(conn, image_id, dataset_id):
     """
@@ -178,8 +184,8 @@ def get_monitoringlist_not_observed_manual_entries(conn, image_id, dataset_id):
     Currently always returns the manually specified co-ordinates.
     (TO DO: This needs reviewing, we might need something smarter) 
     
-    Returns (list of tuples), format is:
-        [( ra, decl, runcatid , monitorid )]
+    Returns:
+        List of MonitorTuples
     """
     
     
@@ -194,8 +200,8 @@ def get_monitoringlist_not_observed_manual_entries(conn, image_id, dataset_id):
         query = """\
         SELECT ml.ra as ra
                 ,ml.decl AS decl
-                ,ml.id AS monitorid
                 ,ml.runcat AS runcat
+                ,ml.id AS monitorid
           FROM monitoringlist ml
            LEFT OUTER JOIN (SELECT ax.runcat as runcat
                                   ,ax.xtrsrc as xtrsrc
@@ -217,7 +223,7 @@ def get_monitoringlist_not_observed_manual_entries(conn, image_id, dataset_id):
         raise
     finally:
         cursor.close()
-    return results
+    return [MonitorTuple._make(r) for r in results]
 
 
 def insert_monitored_sources(conn, results, image_id):
@@ -259,6 +265,13 @@ def insert_monitored_sources(conn, results, image_id):
         xtrsrcid =_insert_user_monitored_source_into_extractedsource(
                              cursor, image_id, result)
         
+        cursor.close()
+        print "*** Image xtrsrcs: *****"
+        print generic.columns_from_table(conn,
+                                         "extractedsource",
+                                         where={'image':image_id})
+        
+        cursor = conn.cursor()
         if runcatid is None: 
             #This is a userentry, measured for the first time. It needs a runcat entry.
             runcatid = _insert_user_monitored_source_into_runcat(
@@ -402,8 +415,20 @@ def _insert_user_monitored_source_into_runcat(cursor, xtrsrcid, image_id):
             """
             # TODO: Add runcat_flux as well!
             try:
+#                print "*** QUERY: ***"
+#                print query % (xtrsrcid, image_id)
                 cursor.execute(query, (xtrsrcid, image_id))
-                return cursor.lastrowid
+                #Doesn't work, returns -1
+                #TO DO: Figure out why?
+#                print "****LASTROWID: ",cursor.lastrowid, "*****"
+#                ret_id = cursor.lastrowid
+                query = """SELECT id 
+                FROM runningcatalog
+                WHERE xtrsrc = %s"""
+                cursor.execute(query, (xtrsrcid,))
+                rc_id = cursor.fetchone()[0]
+                print "***RCID***:", rc_id
+                return rc_id
             except db.Error, e:
                 query = query % (image_id, xtrsrcid)
                 logging.warn("query failed: %s", query)
@@ -423,7 +448,7 @@ def _update_monitoringlist_entry_rcid(cursor, monitorid, runcatid ):
                 cursor.execute(query, (runcatid, monitorid))
             except db.Error, e:
 #                query = query % (xtrsrcid, xtrsrc_id)
-                logging.warn("query failed: %s", query)
+                logging.warn("query failed: %s", query % (runcatid, monitorid))
                 cursor.close()
                 raise                    
             

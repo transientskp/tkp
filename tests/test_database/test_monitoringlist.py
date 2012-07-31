@@ -6,6 +6,7 @@ import unittest
 
 
 import tkp.database as tkpdb
+import tkp.database.utils as dbutils
 from .. import db_subs
 from ..decorators import requires_database
 
@@ -30,6 +31,17 @@ class TestTransientCandidateMonitoring(unittest.TestCase):
                                 )
             self.db_imgs[i].insert_extracted_sources(source_lists[i])
             self.db_imgs[i].associate_extracted_sources(deRuiter_r=3.7)
+            
+        fixed_src_rc_entries = dbutils.columns_from_table(
+                                           self.database.connection, 
+                                           'runningcatalog',
+                                           ['id'],
+                                           alias={'id':'runcat'},
+                                           where={'dataset':self.dataset.id,
+                                                  'datapoints': self.n_images}
+                                                     )
+        self.fixed_src_runcatids = [i['runcat'] for i in fixed_src_rc_entries]
+#        print "Fixed src RCID:", self.fixed_src_runcatid 
         
             
     def tearDown(self):
@@ -134,6 +146,14 @@ class TestTransientCandidateMonitoring(unittest.TestCase):
         for dbimg in self.db_imgs[0:3]:
             srcs_to_monitor = dbimg.monitoringsources()
             self.assertEqual(len(srcs_to_monitor),3)
+            
+            retrieved_mon_rc_ids = [src.runcat for src in srcs_to_monitor]
+            all_runcat_ids = [i['runcat'] for i in self.dataset.runcat_entries()]
+            known_mon_rcids = set(all_runcat_ids).difference(set(self.fixed_src_runcatids))
+            self.assertEqual(set(retrieved_mon_rc_ids),known_mon_rcids )
+            
+                 
+                
         for dbimg in self.db_imgs[3:7]:
             srcs_to_monitor = dbimg.monitoringsources()
             self.assertEqual(len(srcs_to_monitor),2) 
@@ -180,8 +200,9 @@ class TestTransientCandidateMonitoring(unittest.TestCase):
         
             Check that manually entered entries are dealt with correctly
         """
-        self.dataset.add_manual_entry_to_monitoringlist(ra = 123.999,
-                                                        dec = 15.999)
+        test_coords = (123.999,15.999)
+        self.dataset.add_manual_entry_to_monitoringlist(ra = test_coords[0],
+                                                        dec = test_coords[1])
 #        tkpdb.utils.add_manual_entry_to_monitoringlist(
 #                       self.database.connection,
 #                       self.dataset.id, 
@@ -190,11 +211,14 @@ class TestTransientCandidateMonitoring(unittest.TestCase):
         for dbimg in self.db_imgs:
             manual_srcs = tkpdb.utils.get_monitoringlist_not_observed_manual_entries(
                              self.database.connection,
-                             dbimg.id, 
+                             dbimg.id,
                              self.dataset.id)
             self.assertEqual(len(manual_srcs), 1)
             all_srcs_to_monitor = dbimg.monitoringsources()
             self.assertEqual(len(manual_srcs), len(all_srcs_to_monitor))
+            self.assertEqual(all_srcs_to_monitor[0].runcat,None)
+            self.assertAlmostEqual(all_srcs_to_monitor[0].ra,test_coords[0])
+            self.assertAlmostEqual(all_srcs_to_monitor[0].decl,test_coords[1])
 #            print "Monitor:", all_srcs_to_monitor
 
     def test_mixed_retrieval(self):

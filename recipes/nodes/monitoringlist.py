@@ -58,8 +58,7 @@ class monitoringlist(LOFARnodeTCP):
                 sources = db_image.monitoringsources()
                 # Run the source finder on these sources
                 if len(sources):
-                    self.logger.info("Measuring %d undetected monitoring sources: %s",
-                                     len(sources), str(sources))
+                    self.logger.info("Measuring %d undetected monitoring sources.")
                     data_image = sourcefinder_image_from_accessor(fitsimage)
                     results = data_image.fit_fixed_positions(
                         [(source[0], source[1]) for source in sources],

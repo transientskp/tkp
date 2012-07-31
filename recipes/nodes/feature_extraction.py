@@ -35,7 +35,7 @@ class feature_extraction(LOFARnodeTCP):
     def run(self, transient, tkpconfigdir=None):
         if tkpconfigdir:   # allow nodes to pick up the TKPCONFIGDIR
             os.environ['TKPCONFIGDIR'] = tkpconfigdir
-        from tkp.database.database import DataBase
+        from tkp.database import DataBase
         from tkp.classification.features import lightcurve as lcmod
         from tkp.classification.features import catalogs as catmod
         from tkp.database.dataset import ExtractedSource

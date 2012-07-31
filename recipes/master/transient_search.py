@@ -19,8 +19,7 @@ from lofarpipe.support import lofaringredient
 from lofar.parameterset import parameterset
 
 from tkp.config import config
-import tkp.database.database
-import tkp.database.dataset
+from tkp.database import DataBase, DataSet
 import tkp.database.utils as dbu
 
 
@@ -73,9 +72,8 @@ class transient_search(BaseRecipe):
         self.logger.info("Finding transient sources in the database")
         parset = parameterset(self.inputs['parset'])
         dataset_id = self.inputs['args'][0]
-        self.database = tkp.database.database.DataBase()
-        self.dataset = tkp.database.dataset.DataSet(
-            id=dataset_id, database=self.database)
+        self.database = DataBase()
+        self.dataset = DataSet(id=dataset_id, database=self.database)
         eta_lim = parset.getFloat(
             'probability.eta_lim', config['transient_search']['eta_lim'])
         V_lim= parset.getFloat(

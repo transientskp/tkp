@@ -71,8 +71,7 @@ class source_extraction(LOFARnodeTCP):
             os.environ['TKPCONFIGDIR'] = tkpconfigdir
         import tkp
         from tkp.config import config
-        from tkp.database.database import DataBase
-        from tkp.database.dataset import DataSet
+        from tkp.database import DataBase, DataSet
         from tkp.utility.accessors import FITSImage
         from tkp.utility.accessors import dbimage_from_accessor
         from tkp.utility.accessors import sourcefinder_image_from_accessor

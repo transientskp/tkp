@@ -45,7 +45,7 @@ from contextlib import closing
 from operator import itemgetter
 import smtplib
 
-from tkp.database.database import DataBase
+from tkp.database import DataBase
 import tkp.database.utils as dbutils
 
 from lofarpipe.support.clusterdesc import ClusterDesc, get_compute_nodes

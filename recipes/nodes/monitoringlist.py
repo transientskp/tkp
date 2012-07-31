@@ -25,9 +25,8 @@ class monitoringlist(LOFARnodeTCP):
         if tkpconfigdir:   # allow nodes to pick up the TKPCONFIGDIR
             os.environ['TKPCONFIGDIR'] = tkpconfigdir
         from tkp.config import config
-        from tkp.database.database import DataBase
-        from tkp.database.dataset import DataSet
-        from tkp.database.dataset import Image as DBImage
+        from tkp.database import DataBase, DataSet 
+        from tkp.database import Image as DBImage
         from tkp.utility.accessors import FITSImage
         from tkp.utility.accessors import dbimage_from_accessor
         from tkp.utility.accessors import sourcefinder_image_from_accessor

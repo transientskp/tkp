@@ -430,7 +430,7 @@ password = %s
         except ImportError, exc:
             self.logger.error("MonetDB Python can't be imported: %s\n", str(exc))
             raise
-        from tkp.database.database import DataBase
+        from tkp.database import DataBase
         try:
             database = DataBase()
         except Exception, exc:

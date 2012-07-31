@@ -7,7 +7,7 @@ import traceback
 import lofarpipe.support.lofaringredient as ingredient
 from lofarpipe.support.baserecipe import BaseRecipe
 from lofarpipe.support.lofarexceptions import PipelineException
-from tkp.database.database import DataBase
+from tkp.database import DataBase
 
 
 header_line = """\

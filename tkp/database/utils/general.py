@@ -58,8 +58,7 @@ def insert_dataset(conn, description):
 def insert_image(conn, dataset,
                  freq_eff, freq_bw, 
                  taustart_ts, tau_time,
-                 beam_maj, beam_min,
-                 beam_pa,  
+                 beam_maj, beam_min, beam_pa,  
                  url):
     """Insert an image for a given dataset with the column values
     given in the argument list.
@@ -73,7 +72,6 @@ def insert_image(conn, dataset,
         SELECT insertImage(%s, %s, %s, %s, %s, %s, %s, %s, %s)
         """
         cursor.execute(query, (dataset
-                              #,tau_mode
                               ,tau_time
                               ,freq_eff
                               ,freq_bw
@@ -104,7 +102,7 @@ def insert_extracted_sources(conn, image_id, results):
     from which the sources will then be inserted into extractedsources.
     
     (ra , dec , [deg]
-    ra_err, dec_err, [as] 
+    ra_err, dec_err, [deg, but converted to as in db] 
     peak, peak_err,  [Jy]
     flux, flux_err,    [Jy]
     significance level,

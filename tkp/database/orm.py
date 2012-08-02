@@ -484,7 +484,7 @@ class Image(DBObject):
                     self._data['taustart_ts'],self._data['tau_time'],
                     self._data['bsmaj'],self._data['bsmin'],  
                     self._data['bpa'],
-                    self._data['url'],
+                    self._data['url']
                 )
             except self.database.Error, e:
                 logging.warn("insertion of Image() into the database failed")

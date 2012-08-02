@@ -6,7 +6,9 @@ import logging
 import tkp.database.database as database
 import tkp.database.dataset as ds
 import tkp.database.dbregion as reg
-import tkp.database.utils as dbu
+import tkp.database.utils.general as dbg
+import tkp.database.utils.associations as dbu
+import tkp.database.utils.transients as dbt
 from tkp.classification.features import lightcurve as lcmod
 from tkp.classification.features import catalogs as catmod
 import tkp.classification.transient as tr
@@ -64,7 +66,7 @@ try:
         #print "tuple_sources",tuple_sources
         
         # source_extraction
-        dbu.insert_extracted_sources(db.connection, dbimg.id, tuple_sources)
+        dbg.insert_extracted_sources(db.connection, dbimg.id, tuple_sources)
         print "xtrsrc: ", reg.extractedsourcesInImage(db.connection, dbimg.id, regionfilesdir)
         dbu.associate_extracted_sources(db.connection, dbimg.id)
         print "runcat: ", reg.runcatInDataset(db.connection, dataset.id, regionfilesdir)
@@ -111,7 +113,7 @@ try:
         #    'probability.eta_lim', config['transient_search']['eta_lim']),
         #          'V': parset.getFloat(
         #    'probability.V_lim', config['transient_search']['V_lim'])}
-        varsources = dbu.detect_variable_sources(db.connection, dataset.id, V_lim=0.1, eta_lim=5.0)
+        varsources = dbt.detect_variable_sources(db.connection, dataset.id, V_lim=0.1, eta_lim=5.0)
         transients = []
         if len(varsources) > 0:
             print "Found", len(varsources), "variable sources"

@@ -13,7 +13,6 @@
  *
  */
 CREATE FUNCTION insertImage(idataset INT
-                           /*,itau INT*/
                            ,itau_time DOUBLE
                            ,ifreq_eff DOUBLE
                            ,ifreq_bw DOUBLE
@@ -27,7 +26,6 @@ BEGIN
 
   DECLARE iimageid INT;
   DECLARE oimageid INT;
-  /*DECLARE iseq_nr INT;*/
   DECLARE iband SMALLINT;
   DECLARE itau INT;
 
@@ -38,7 +36,6 @@ BEGIN
   INSERT INTO image
     (id
     ,dataset
-    /*,tau*/
     ,band
     ,tau_time
     ,freq_eff
@@ -52,7 +49,6 @@ BEGIN
   VALUES
     (iimageid
     ,idataset
-    /*,itau*/
     ,iband
     ,itau_time
     ,ifreq_eff

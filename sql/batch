@@ -17,6 +17,8 @@ tables/node.sql
 tables/monitoringlist.sql
 tables/transient.sql
 tables/classification.sql
+tables/rejectreason.sql
+tables/rejection.sql
 #
 #system functions
 #

@@ -10,6 +10,7 @@ import readline
 import os
 import sys
 import monetdb
+import monetdb.sql
 
 sql_folder = os.path.join(os.path.dirname(__file__), 'sql/upgrade')
 
@@ -72,7 +73,7 @@ def construct_sql(steps):
         with open(os.path.join(sql_folder, '%s_to_%s.sql' % step), 'r') as f:
             for line in f.readlines():
                 strings.append(line)
-    return "\n".join(strings)
+    return "".join(strings)
 
 def ask_version(version):
     """ interact with user to determine what to do"""

@@ -69,12 +69,11 @@ class TrapImages(control):
                         self.run_task("transient_search", [dataset.id],
                                        image_ids=outputs['image_ids']))
                 
-                #FIXME: These need updating too... *sigh*
-#                outputs.update(
-#                    self.run_task("feature_extraction", outputs['transients']))
-#                
-#                outputs.update(
-#                    self.run_task("classification", outputs['transients']))
+                outputs.update(
+                    self.run_task("feature_extraction", outputs['transients']))
+
+                outputs.update(
+                    self.run_task("classification", outputs['transients']))
                 
 #                self.run_task("prettyprint", outputs['transients'])
             else:

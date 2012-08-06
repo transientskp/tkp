@@ -372,7 +372,20 @@ This table contains the list of sources that are monitored. This implies that th
 
 These positions are 0 by default, since they can be retrieved by joining with the runningcatalog.
 
-For user defined sources, however, positions may be available that are more precise than those in the runningcatalog. Hence the ra and decl columns are still necessary for these sources.  The xtrsrc_id refers to the xtrsrc_id in the runningcatalog, when available. Eg, manually inserted sources with positions obtained differently will not have an xtrsrc_id to start with (hence the default of -1), until the first time the flux has been measured; then these sources (even when actual upper limits) will be inserted into extractedsources and runningcatalog, and have an xtrsrc_id.  They will still have userentry set to true, so that the position used is that in this table (the more precise position), not that of the runningcatalog.
+For user defined sources, however, positions may be available that are more precise than those in the runningcatalog. Hence the ra and decl columns are still necessary for these sources.  The runcat refers to the id in the runningcatalog, when available. Eg, manually inserted sources with positions obtained differently will not have a runcat to start with (in which case runcat will have the NULL value), until the first time the flux has been measured; then these sources (even when actual upper limits) will be inserted into extractedsources and runningcatalog, and have a runcat.  They will still have userentry set to true, so that the position used is that in this table (the more precise position), not that of the runningcatalog.
+
+**id**
+    Every source in the monitoringlist gets a unique id
+**runcat**
+    Refers to the id in runningcatalog.  
+**ra**
+    The Right Ascension (J2000) of the source
+**decl** 
+    The Declination (J2000) of the source
+**dataset**
+    Refers to the id in dataset, to which this monitoringlist belongs to.
+**userentry** 
+    Boolean to state whether it is an user inserted soure (true) or by the trap (false)
 
 
 node

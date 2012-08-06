@@ -184,7 +184,7 @@ SELECT runcat
         cursor.close()
     return results
 
-        
+
 def detect_variable_sources(conn, dsid, V_lim, eta_lim):
     """Detect variability in extracted sources compared to the previous
     detections"""
@@ -192,19 +192,19 @@ def detect_variable_sources(conn, dsid, V_lim, eta_lim):
     return _select_variability_indices(conn, dsid, V_lim, eta_lim)
 
 
-def transient_search(conn, 
-                     dataset, 
+def transient_search(conn,
+                     dataset,
                      eta_lim, V_lim,
-                     probability_threshold, 
+                     probability_threshold,
                      minpoints,
                      image_ids=None,
                      logger=None):
-    results = dataset.detect_variables(eta_lim, V_lim)
+    results = dataset.detect_variables(V_lim, eta_lim)
     transients = []
     if len(results) > 0:
         if logger is not None:
             logger.info("Found %d variable sources", len(results))
-        
+
         # need (want) sorting by sigma
         # This is not pretty, but it works:
         tmpresults = dict((key,  [result[key] for result in results])
@@ -217,16 +217,16 @@ def transient_search(conn,
         selected_rcids = numpy.array(runcatids)[selection]
         selected_results = numpy.array(results)[selection]
         siglevels = probability[selection]
-        
+
         for siglevel, result in zip(siglevels, selected_results):
             if result['npoints'] < minpoints:
                 continue
             position = Position(ra=result['ra'], dec=result['dec'],
                                 error=(result['ra_err'], result['dec_err']))
             transient = Transient(runcatid=result['runcatid'], position=position)
-            
+
             #FIXME: Monkey patching isn't exactly documentation friendly...
-            # You need to see what is done here before you understand 
+            # You need to see what is done here before you understand
             # the called function!
             transient.siglevel = siglevel
             transient.eta = result['eta_nu']
@@ -240,5 +240,5 @@ def transient_search(conn,
     else:
         selected_rcids = numpy.array([], dtype=numpy.int)
         siglevels = numpy.array([], dtype=numpy.float)
-        
+
     return selected_rcids, siglevels, transients

@@ -57,12 +57,11 @@ class TrapImages(control):
 #                       nproc = self.config.get('DEFAULT', 'default_nproc')
                         nproc=1 # Issue #3357
                     )
-                    if ctr > 1: # monitoring list fails on first image
-                        outputs.update(
-                                self.run_task("monitoringlist", [dataset.id],
-                                nproc=1 # Issue #3357
-                            )
+                    outputs.update(
+                            self.run_task("monitoringlist", [dataset.id],
+                            nproc=1 # Issue #3357
                         )
+                    )
                     outputs.update(
                             self.run_task(
                                 "transient_search", [dataset.id],

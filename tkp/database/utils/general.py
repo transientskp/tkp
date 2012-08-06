@@ -283,7 +283,7 @@ def get_imagefiles_for_ids(conn, image_ids):
     return results
 
 
-def match_nearests_in_catalogs(conn, srcid, radius=1.0,
+def match_nearests_in_catalogs(conn, runcatid, radius=1.0,
                               catalogid=None, assoc_r=DERUITER_R/3600.):
     """Match a source with position ra, decl with catalogedsources
     within radius
@@ -296,7 +296,7 @@ def match_nearests_in_catalogs(conn, srcid, radius=1.0,
     
     Args:
 
-        srcid: xtrsrc in runningcatalog
+        runcatid: id of source in runningcatalog
 
     Kwargs:
     
@@ -448,7 +448,7 @@ def match_nearests_in_catalogs(conn, srcid, radius=1.0,
         #cursor.execute(query,  (radius, radius, radius, zoneheight,
         #                        radius, zoneheight, radius, radius,
         #                        srcid, radius, assoc_r))
-        cursor.execute(q_alt,  (srcid,
+        cursor.execute(q_alt,  (runcatid,
                                 radius, radius, radius, radius,
                                 radius, radius, 
                                 radius,
@@ -466,7 +466,7 @@ def match_nearests_in_catalogs(conn, srcid, radius=1.0,
         #                 radius, zoneheight,
         #                 radius, radius, srcid, radius, assoc_r)
         #logging.warn("Query failed: %s", query)
-        query = q_alt % (srcid,
+        query = q_alt % (runcatid,
                          radius, radius, radius, radius,
                          radius, radius,
                          radius,

@@ -74,7 +74,7 @@ class TrapImages(control):
                     outputs.update(
                         self.run_task("classification", outputs['transients'])
                     )
-#                   self.run_task("prettyprint", outputs['transients'])
+                    self.run_task("prettyprint", outputs['transients'])
             else:
                 self.logger.warn("No images found, check parameter files.")
         dataset.process_ts = datetime.datetime.utcnow()

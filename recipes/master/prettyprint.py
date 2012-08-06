@@ -62,7 +62,7 @@ class prettyprint(BaseRecipe):
 |   classification:
 %s
 \033[0m
-""" % (transient.srcid, transient.dataset,
+""" % (transient.runcatid, transient.dataset,
        transient.timezero, transient.duration,
        transient.position,
        features, catalogs,

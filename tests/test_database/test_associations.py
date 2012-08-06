@@ -37,7 +37,7 @@ class TestOne2One(unittest.TestCase):
         for im in im_params:
             image = tkpdb.Image(database=self.database, dataset=dataset, data=im)
             src.append(db_subs.example_extractedsource_tuple())
-            print type(src[-1])
+#            print type(src[-1])
             results = []
             results.append(src[-1])
             dbgen.insert_extracted_sources(self.database.connection, image.id, results)

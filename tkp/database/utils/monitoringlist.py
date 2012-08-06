@@ -628,7 +628,9 @@ def select_transient_candidates_above_thresh(
         [ {runcat, max_det_sigma, sum_det_sigma} ]
         
     """
-    results = []
+    
+    if not runcat_ids:
+        return []
     cursor = conn.cursor()
     try:
         ids_placeholder = ", ".join(["%s"] * len(runcat_ids))

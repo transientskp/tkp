@@ -82,24 +82,20 @@ def example_dbimage_datasets(n_images):
     
     return im_params
 
-#def example_extractedsource_tuple():
-#    return ExtractedSourceTuple(ra=123.123, dec=10.5,
-#                                ra_err=5./3600, dec_err=6./3600, # degrees (converted to as in db)
-#                                peak = 15e-3, peak_err = 5e-4,
-#                                flux = 15e-3, flux_err = 5e-4,
-#                                sigma = 15,
-#                                beam_maj = 100, beam_min = 100, beam_angle = 45
-#                               )
-    
-def example_extractedsource_tuple(ra=123.123, dec=10.5, ra_err=5./3600, dec_err=6./3600, 
-                                  peak = 15e-3, peak_err = 5e-4, flux = 15e-3, flux_err = 5e-4,
+def example_extractedsource_tuple(ra=123.123, dec=10.5, 
+                                  ra_err=5./3600, dec_err=6./3600, 
+                                  peak = 15e-3, peak_err = 5e-4, 
+                                  flux = 15e-3, flux_err = 5e-4,
                                   sigma = 15,
-                                  beam_maj = 100, beam_min = 100, beam_angle = 45):
+                                  beam_maj = 100, beam_min = 100, 
+                                  beam_angle = 45):
     # NOTE: ra_err & dec_err are in degrees (they are converted to arcsec in the db)
     return ExtractedSourceTuple(ra=ra, dec=dec, ra_err=ra_err, dec_err=dec_err, 
-                                peak = peak, peak_err = peak_err, flux = flux, flux_err = flux_err,
+                                peak = peak, peak_err = peak_err, 
+                                flux = flux, flux_err = flux_err,
                                 sigma = sigma,
-                                beam_maj = beam_maj, beam_min = beam_min, beam_angle = beam_angle
+                                beam_maj = beam_maj, beam_min = beam_min, 
+                                beam_angle = beam_angle
                                )
     
 def example_source_lists(n_images, include_non_detections):

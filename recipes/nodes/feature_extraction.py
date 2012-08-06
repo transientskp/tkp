@@ -45,7 +45,11 @@ class feature_extraction(LOFARnodeTCP):
         with log_time(self.logger):
             with closing(DataBase()) as database:
                 try:
-                    source = ExtractedSource(id=transient.runcatid, database=database)
+                    # Dirty harry hack to get the xtrsrc (for now). !!!!!!!!!!! FIXME TIM !!!!!!!!!!!!
+                    db.execute("select a.xtrsrc from assocxtrsource a where runcat=%s LIMIT 1", transient.runcatid)
+                    srcid = db.fetchall()[0][0]
+                    # end dirty harry hack
+                    source = ExtractedSource(id=srcid, database=database)
                     lightcurve = lcmod.LightCurve(*zip(*source.lightcurve()))
                     lightcurve.calc_background()
                     lightcurve.calc_stats()

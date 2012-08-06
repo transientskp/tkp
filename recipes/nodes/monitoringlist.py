@@ -25,7 +25,7 @@ class monitoringlist(LOFARnodeTCP):
         if tkpconfigdir:   # allow nodes to pick up the TKPCONFIGDIR
             os.environ['TKPCONFIGDIR'] = tkpconfigdir
         from tkp.config import config
-        from tkp.database import DataBase, DataSet 
+        from tkp.database import DataBase, DataSet
         from tkp.database import Image as DBImage
         from tkp.utility.accessors import FITSImage
         from tkp.utility.accessors import dbimage_from_accessor
@@ -35,19 +35,19 @@ class monitoringlist(LOFARnodeTCP):
         Args:
 
             - filename: FITS file
-            
+
             - image_id: database image id
-            
+
             - dataset_id: dataset to which the image belongs
 
         """
-        
+
         with log_time(self.logger):
             with closing(DataBase()) as database:
                 # Obtain the list of sources to be monitored (and not already
                 # detected) for this image
                 fitsimage = FITSImage(filename)
-                
+
                 ##TO DO: would prefer it if there were an easy way for the image
                 ## to determine its parent dataset without being spoon fed.
                 ## -This would cut down on required recipe arguments and generally
@@ -58,7 +58,7 @@ class monitoringlist(LOFARnodeTCP):
                 sources = db_image.monitoringsources()
                 # Run the source finder on these sources
                 if len(sources):
-                    self.logger.info("Measuring %d undetected monitoring sources.")
+                    self.logger.info("Measuring %d undetected monitoring sources." % (len(sources),))
                     data_image = sourcefinder_image_from_accessor(fitsimage)
                     results = data_image.fit_fixed_positions(
                         [(source[0], source[1]) for source in sources],
@@ -67,7 +67,7 @@ class monitoringlist(LOFARnodeTCP):
                     results = [(source[2], source[3], result.serialize()) for source, result in
                                zip(sources, results) if result is not None]
                     db_image.insert_monitored_sources(results)
-                
+
         return 0
 
 if __name__ == "__main__":

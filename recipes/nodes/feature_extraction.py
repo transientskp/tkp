@@ -38,19 +38,17 @@ class feature_extraction(LOFARnodeTCP):
         from tkp.database import DataBase
         from tkp.classification.features import lightcurve as lcmod
         from tkp.classification.features import catalogs as catmod
-        from tkp.database.dataset import ExtractedSource
+        from tkp.database import ExtractedSource
         from tkp.classification.transient import Transient
         from tkp.classification.transient import Position
         from tkp.classification.transient import DateTime
         with log_time(self.logger):
             with closing(DataBase()) as database:
                 try:
-
                     # Dirty harry hack to get the xtrsrc (for now). !!!!!!!!!!! FIXME TIM !!!!!!!!!!!!
                     db.execute("select a.xtrsrc from assocxtrsource a where runcat=%s LIMIT 1", transient.runcatid)
                     srcid = db.fetchall()[0][0]
                     # end dirty harry hack
-
                     source = ExtractedSource(id=srcid, database=database)
                     lightcurve = lcmod.LightCurve(*zip(*source.lightcurve()))
                     lightcurve.calc_background()

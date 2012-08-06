@@ -32,14 +32,13 @@ class classification(LOFARnodeTCP):
             paths.insert(0, tkpconfigdir)
         from tkp.classification.manual.classifier import Classifier
         from tkp.classification.transient import Transient
-        import tkp        
+
         with log_time(self.logger):
             try:
                 parset = parameterset(parset)
                 weight_cutoff = parset.getFloat('weighting.cutoff')
 
-                self.logger.info("Classifying transient #%d", 
-                    transient.srcid)
+                self.logger.info("Classifying transient #%d", transient.runcatid)
                 classifier = Classifier(transient, paths=paths)
                 results = classifier.classify()
                 transient.classification = {}

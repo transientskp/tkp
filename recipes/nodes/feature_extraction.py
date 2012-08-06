@@ -47,7 +47,7 @@ class feature_extraction(LOFARnodeTCP):
                 try:
 
                     # Dirty harry hack to get the xtrsrc (for now). !!!!!!!!!!! FIXME TIM !!!!!!!!!!!!
-                    db.execute("select a.xtrsrc from trap.assocxtrsource a where runcat=%s LIMIT 1", transient.runcatid)
+                    db.execute("select a.xtrsrc from assocxtrsource a where runcat=%s LIMIT 1", transient.runcatid)
                     srcid = db.fetchall()[0][0]
                     # end dirty harry hack
 

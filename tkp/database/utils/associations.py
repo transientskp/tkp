@@ -99,12 +99,14 @@ def associate_extracted_sources(conn, image_id, deRuiter_r=DERUITER_R):
     _insert_1_to_many_runcat_flux(conn)
     _insert_1_to_many_basepoint_assoc(conn)
     _insert_1_to_many_assoc(conn)
-    #TODO: It is probably best to update the transient and
-    # monitoringlist tables here at the same time
+    #_insert_1_to_many_monitoringlist(conn)
+    #_insert_1_to_many_transient(conn)
     _delete_1_to_many_inactive_assoc(conn)
     _delete_1_to_many_inactive_runcat_flux(conn)
     _flag_1_to_many_inactive_runcat(conn)
     _flag_1_to_many_inactive_tempruncat(conn)
+    _delete_1_to_many_inactive_monitoringlist(conn)
+    _delete_1_to_many_inactive_transient(conn)
     #+-----------------------------------------------------+
     #| Here we process the one-to-one associations         |
     #+-----------------------------------------------------+
@@ -493,162 +495,6 @@ SELECT t1.runcat
         logging.warn("Failed on query nr %s." % query)
         raise
 
-#def _flag_many_to_1_tempruncat(conn):
-#    """Flag those many-to-one associations that have asUpdate the runningcatalog with the many-to-one associations
-#    """
-#    try:
-#        cursor = conn.cursor()
-#        # 2nd query has to run in case of identical minimal distances:
-#        query = """\
-#        SELECT runcat
-#              ,xtrsrc
-#              ,distance_arcsec
-#              ,r
-#              ,inactive
-#          FROM temprunningcatalog
-#         WHERE inactive = FALSE 
-#           AND xtrsrc IN (
-#                SELECT xtrsrc 
-#                  FROM temprunningcatalog
-#                 WHERE runcat IN (SELECT runcat 
-#                                    FROM temprunningcatalog 
-#                                   WHERE runcat IN (SELECT runcat 
-#                                                      FROM temprunningcatalog 
-#                                                     WHERE xtrsrc IN (SELECT xtrsrc
-#                                                                        FROM temprunningcatalog
-#                                                                      GROUP BY xtrsrc
-#                                                                      HAVING COUNT(*) > 1
-#                                                                     )
-#                                                   ) 
-#                                  GROUP BY runcat 
-#                                  HAVING COUNT(*) > 1
-#                                 ) 
-#                   AND xtrsrc IN (SELECT xtrsrc
-#                                    FROM temprunningcatalog
-#                                  GROUP BY xtrsrc
-#                                  HAVING COUNT(*) > 1
-#                                 )
-#                  AND inactive = FALSE
-#                GROUP BY xtrsrc
-#                HAVING COUNT(*) > 1
-#                ) 
-#        ORDER BY runcat DESC
-#        """
-#        #cursor.execute(query)
-#        if not AUTOCOMMIT:
-#            conn.commit()
-#        cursor.close()
-#    except db.Error, e:
-#        logging.warn("Failed on query:\n%s" % query)
-#        raise
-
-
-def _insert_many_to_1_assocs(conn):
-    pass
-
-
-#def _deprflag_many_to_many_tempruncat(conn):
-#    """Flag the many-to-many and many-to-one association pairs. 
-#
-#    -1- many running-catalogue sources  <-> many extracted sources
-#        many running-catalogue sources  <-> one extracted source
-#
-#    We take care of the many-to-many associations and the 
-#    many-to-one associations in the same way.
-#
-#    NOTE: We do not yet handle the case where two or more extractedsource have
-#    two or more counterparts in the runningcatalog, and all can be cross-
-#    associated, the so-called many-to-many associations. However,
-#    those pairs will be split up in a set of many-to-one associations
-#    and handled as such.
-#    
-#    What we do is filtering on single extracted sources that have 
-#    multiple counterparts in the running catalogue, 
-#    i.e. the many-to-one associations.
-#    We only keep the association pair that has the lowest De Ruiter radius, 
-#    namely the highest association probability, 
-#    whereas the other pairs will be omitted.
-#
-#    NOTES & TODO:
-#    1. The calculation of min_r1 and r1 is an approximation.
-#    2. It is worth considering whether this might be changed to selecting
-#    the brightest neighbour source, instead of just the closest neighbour. 
-#    (There are case [when flux_lim > 10Jy] that the nearest source has a 
-#    lower flux level, causing unexpected spectral indices.)
-#    3. TODO: We should not throw away those outlier pairs, but flag
-#    them as such in temprunningcatag.
-#    """
-#
-#    try:
-#        cursor = conn.cursor()
-#        # MonetDB bug:, we have to calculate dist here instead of in insert_tempruncat
-#        # And now select the min(r)
-#        """
-#        select runcat,xtrsrc,r from temprunningcatalog where runcat in (select runcat from temprunningcatalog where xtrsrc in (select xtrsrc from temprunningcatalog group by xtrsrc having count(*) > 1) group by runcat having count(*) > 1) order by runcat,xtrsrc;
-#        """
-#        query = """\
-#        SELECT t1.runcat
-#              ,t1.xtrsrc
-#          FROM (SELECT trc0.xtrsrc
-#                      ,MIN(trc0.r) AS min_r1
-#                  FROM temprunningcatalog trc0
-#                      ,runningcatalog rc0
-#                      ,extractedsource x0
-#                 WHERE trc0.xtrsrc IN (SELECT xtrsrc
-#                                         FROM temprunningcatalog
-#                                       GROUP BY xtrsrc
-#                                       HAVING COUNT(*) > 1
-#                                      )
-#                   AND trc0.runcat = rc0.id
-#                   AND trc0.xtrsrc = x0.id
-#                GROUP BY trc0.xtrsrc
-#               ) t0
-#              ,(SELECT trc1.runcat
-#                      ,trc1.xtrsrc
-#                      ,trc1.r AS r1
-#                  FROM temprunningcatalog trc1
-#                      ,runningcatalog rc1
-#                      ,extractedsource x1
-#                 WHERE trc1.xtrsrc IN (SELECT xtrsrc
-#                                         FROM temprunningcatalog
-#                                       GROUP BY xtrsrc
-#                                       HAVING COUNT(*) > 1
-#                                      )
-#                   AND trc1.runcat = rc1.id
-#                   AND trc1.xtrsrc = x1.id
-#               ) t1
-#         WHERE t1.xtrsrc = t0.xtrsrc
-#           AND t1.r1 > t0.min_r1
-#        """
-#        #cursor.execute(query)
-#        #results = zip(*cursor.fetchall())
-#        #if len(results) != 0:
-#        #    runcat = results[0]
-#        #    xtrsrc = results[1]
-#        #    # TODO: See NOTE 3 above: Consider setting row to inactive instead of deleting
-#        #    # Here, for the many-to-many and many-to-one associations, we throw away
-#        #    # the pairs of which the De Ruiter radius is larger that the smallest one
-#        #    # of the set.
-#        #    # This will effectively reduce the tempruncat table with associations of the 
-#        #    # one-to-one and one-to-many types.
-#        #    query = """\
-#        #    UPDATE temprunningcatalog
-#        #       SET inactive = TRUE
-#        #     WHERE runcat = %s
-#        #       AND xtrsrc = %s
-#        #    """
-#        #    for j in range(len(runcat)):
-#        #        print "\nNow we don't update many-to-1 to inactive in tempruncat:", runcat[j], xtrsrc[j]
-#        #        #cursor.execute(query, (runcat[j], xtrsrc[j]))
-#        #        #if not AUTOCOMMIT:
-#        #        #    conn.commit()
-#        #    #sys.exit()
-#    except db.Error, e:
-#        logging.warn("Failed on query nr %s." % query)
-#        raise
-#    finally:
-#        cursor.close()
-
 def _insert_1_to_many_runcat(conn):
     """Insert the extracted sources that belong to one-to-many 
     associations in the runningcatalog.
@@ -823,7 +669,7 @@ def _insert_1_to_many_basepoint_assoc(conn):
 
 def _insert_1_to_many_assoc(conn):
     """Update the runcat id for the one-to-many associations,
-    and delete the runningcatalog_flux entries of the old runcat id
+    and delete the assocxtrsource entries of the old runcat id
     (the new ones have been added earlier).
 
     In this case, new entries in the runningcatalog and runningcatalog_flux
@@ -835,6 +681,7 @@ def _insert_1_to_many_assoc(conn):
 
     NOTE:
     1. We do not update the distance_arcsec and r values of the pairs. 
+
     """
     
     try:
@@ -870,6 +717,159 @@ def _insert_1_to_many_assoc(conn):
             conn.commit()
     except db.Error, e:
         logging.warn("Failed on query:\n%s." % query)
+        raise
+    finally:
+        cursor.close()
+
+def _insert_1_to_many_monitoringlist(conn):
+    """Insert one-to-many in monitoringlist
+    
+    In case where we have a source in the monitoringlist that goes
+    one-to-many in the associations, we have to "split" it up into
+    the new runcat ids and delete the old runcat.
+
+    """
+    
+    try:
+        cursor = conn.cursor()
+        query = """\
+        INSERT INTO monitoringlist
+          (runcat
+          ,dataset
+          )
+          SELECT r.id
+                ,r.dataset
+            FROM monitoringlist m
+                ,temprunningcatalog t
+                ,runningcatalog r
+           WHERE t.xtrsrc = r.xtrsrc
+             AND t.inactive = FALSE
+             AND t.runcat IN (SELECT runcat
+                                FROM temprunningcatalog
+                               WHERE inactive = FALSE
+                              GROUP BY runcat
+                              HAVING COUNT(*) > 1
+                             )
+        """
+        cursor.execute(query)
+        if not AUTOCOMMIT:
+            conn.commit()
+    except db.Error, e:
+        logging.warn("Failed on query:\n%s" % query)
+        raise
+    finally:
+        cursor.close()
+
+def _insert_1_to_many_transient(conn):
+    """Update the runcat id for the one-to-many associations,
+    and delete the transient entries of the old runcat id
+    (the new ones have been added earlier).
+
+    In this case, new entries in the runningcatalog and runningcatalog_flux
+    were already added (for every extractedsource one), which will replace 
+    the existing ones in the runningcatalog. 
+    Therefore, we have to update the references to these new ids as well.
+    So, we will append these to monitoringlist and delete the entries referring 
+    to the old runncat.
+    """
+    
+    try:
+        cursor = conn.cursor()
+        query = """\
+        INSERT INTO transient
+          (runcat
+          ,siglevel
+          ,v
+          ,eta
+          ,detection_level
+          ,trigger_xtrsrc
+          ,status
+          ,t_start
+          )
+          SELECT r.id
+                ,tr.siglevel
+                ,tr.v
+                ,tr.eta
+                ,tr.detection_level
+                ,tr.trigger_xtrsrc
+                ,tr.status
+                ,tr.t_start
+            FROM temprunningcatalog t
+                ,runningcatalog r
+                ,transient tr
+           WHERE t.xtrsrc = r.xtrsrc
+             AND t.inactive = FALSE
+             AND t.runcat = tr.runcat
+             AND t.runcat IN (SELECT runcat
+                                FROM temprunningcatalog
+                               WHERE inactive = FALSE
+                              GROUP BY runcat
+                              HAVING COUNT(*) > 1
+                             )
+        """
+        cursor.execute(query)
+        if not AUTOCOMMIT:
+            conn.commit()
+    except db.Error, e:
+        logging.warn("Failed on query:\n%s" % query)
+        raise
+    finally:
+        cursor.close()
+
+def _delete_1_to_many_inactive_monitoringlist(conn):
+    """Delete the monitoringlist sources of the old runcat 
+
+    Since we replaced this runcat.id with multiple new ones, we now
+    delete the old one. 
+    
+    """
+
+    try:
+        cursor = conn.cursor()
+        query = """\
+        DELETE 
+          FROM monitoringlist
+         WHERE id IN (SELECT m.id
+                        FROM monitoringlist m
+                            ,runningcatalog r
+                       WHERE m.runcat = r.id
+                         AND r.inactive = TRUE
+                     )
+        """
+        cursor.execute(query)
+        if not AUTOCOMMIT:
+            conn.commit()
+    except db.Error, e:
+        logging.warn("Failed on query:\n%s" % query)
+        raise
+    finally:
+        cursor.close()
+
+def _delete_1_to_many_inactive_transient(conn):
+    """Delete the transient sources of the old runcat 
+
+    Since we replaced this runcat.id with multiple new ones, we now
+    delete the old one. 
+    
+    """
+
+    try:
+        cursor = conn.cursor()
+        query = """\
+        DELETE 
+          FROM transient
+         WHERE id IN (SELECT tr.id
+                        FROM transient tr
+                            ,runningcatalog r
+                       WHERE tr.runcat = r.id
+                         AND r.inactive = TRUE
+                     )
+        """
+        cursor.execute(query)
+        if not AUTOCOMMIT:
+            conn.commit()
+    except db.Error, e:
+        logging.warn("Failed on query:\n%s" % query)
         raise
     finally:
         cursor.close()

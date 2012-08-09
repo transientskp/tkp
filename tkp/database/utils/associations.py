@@ -99,7 +99,7 @@ def associate_extracted_sources(conn, image_id, deRuiter_r=DERUITER_R):
     _insert_1_to_many_runcat_flux(conn)
     _insert_1_to_many_basepoint_assoc(conn)
     _insert_1_to_many_assoc(conn)
-    #_insert_1_to_many_monitoringlist(conn)
+    #_insert_1_to_many_userentry_monitoringlist(conn)
     #_insert_1_to_many_transient(conn)
     _delete_1_to_many_inactive_assoc(conn)
     _delete_1_to_many_inactive_runcat_flux(conn)
@@ -721,12 +721,14 @@ def _insert_1_to_many_assoc(conn):
     finally:
         cursor.close()
 
-def _insert_1_to_many_monitoringlist(conn):
+def _insert_1_to_many_userentry_monitoringlist(conn):
     """Insert one-to-many in monitoringlist
     
     In case where we have a source in the monitoringlist that goes
     one-to-many in the associations, we have to "split" it up into
     the new runcat ids and delete the old runcat.
+    
+    TODO: See discussion in issue #3564 how to proceed
 
     """
     
@@ -737,10 +739,10 @@ def _insert_1_to_many_monitoringlist(conn):
           (runcat
           ,dataset
           )
+          
+          /* the new runcat ids: */
           SELECT r.id
-                ,r.dataset
-            FROM monitoringlist m
-                ,temprunningcatalog t
+            FROM temprunningcatalog t
                 ,runningcatalog r
            WHERE t.xtrsrc = r.xtrsrc
              AND t.inactive = FALSE
@@ -749,6 +751,19 @@ def _insert_1_to_many_monitoringlist(conn):
                                WHERE inactive = FALSE
                               GROUP BY runcat
                               HAVING COUNT(*) > 1
+                             )
+          
+          /* the old runcat's in monlist that need to be replaced (with the above r.id's : */
+          select m.runcat
+            from monitoringlist m
+                ,runningcatalog r
+           where m.runcat = r.id
+             and m.userentry = true
+             and m.runcat in (select runcat
+                                from temprunningcatalog
+                               where inactive = false
+                              group by runcat
+                              having count(*) > 1
                              )
         """
         cursor.execute(query)
@@ -1038,7 +1053,7 @@ def _insert_1_to_1_assoc(conn):
                 ,runningcatalog r
                 ,extractedsource x
            WHERE t.runcat = r.id
-             AND r.inactive = FALSE
+             AND t.inactive = FALSE
              AND t.xtrsrc = x.id
         """
         cursor.execute(query)

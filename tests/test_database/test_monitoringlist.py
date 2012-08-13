@@ -10,6 +10,7 @@ import tkp.database.utils as dbutils
 from .. import db_subs
 from ..decorators import requires_database
 
+@unittest.skipIf(not (locals().has_key('long_tests') and long_tests == True), "skipping long test")
 class TestTransientCandidateMonitoring(unittest.TestCase):
     @requires_database()
     def setUp(self):

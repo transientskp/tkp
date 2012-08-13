@@ -36,6 +36,7 @@ TRUE_DECONV_SMIN = 0.5*4.6794/2.
 TRUE_DECONV_BPA = -0.5*(-49.8)
 
 
+@unittest.skipIf(not (locals().has_key('long_tests') and long_tests == True), "skipping long test")
 class SourceParameters(unittest.TestCase):
 
     def setUp(self):

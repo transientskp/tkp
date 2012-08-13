@@ -47,6 +47,8 @@ from ..decorators import requires_data
 DATAPATH = tkp.config.config['test']['datapath']
 NUMBER_INSERTED = float(3969)
 
+
+@unittest.skipIf(not (locals().has_key('long_tests') and long_tests == True), "skipping long test")
 class test_maps(unittest.TestCase):
     def setUp(self):
         uncorr_map = accessors.FitsFile(os.path.join(DATAPATH, 'UNCORRELATED_NOISE.FITS'))

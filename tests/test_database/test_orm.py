@@ -1,12 +1,6 @@
 import unittest
-try:
-    unittest.TestCase.assertIsInstance
-except AttributeError:
-    import unittest2 as unittest
-import sys
 import datetime
-import random
-from ..decorators import requires_database
+from decorators import requires_database
 from tkp.database import DataSet
 from tkp.database import DataBase
 from tkp.database import Image

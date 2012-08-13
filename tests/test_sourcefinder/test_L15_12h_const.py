@@ -1,16 +1,12 @@
 # Tests for simulated LOFAR datasets.
 
 import unittest
-try:
-    unittest.TestCase.assertIsInstance
-except AttributeError:
-    import unittest2 as unittest
 import os
 from tkp.utility import accessors
 import tkp.sourcefinder.image as image
 import tkp.utility.coordinates as coords
 import tkp.config
-from ..decorators import requires_data
+from decorators import requires_data
 
 DATAPATH = tkp.config.config['test']['datapath']
 # The simulation code causes a factor of 2 difference in the

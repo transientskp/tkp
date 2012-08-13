@@ -3,12 +3,6 @@
 import unittest
 import datetime
 import pytz
-try:
-    unittest.TestCase.assertIsInstance
-except AttributeError:
-    import unittest2 as unittest
-from tkp.utility import coordinates
-
 
 class ratohmsTest(unittest.TestCase):
     knownValues = ((0, (0, 0, 0)),

@@ -1,13 +1,7 @@
 import unittest
-try:
-    unittest.TestCase.assertIsInstance
-except AttributeError:
-    import unittest2 as unittest
-
-
 import tkp.database as tkpdb
-from .. import db_subs
-from ..decorators import requires_database
+import db_subs
+from decorators import requires_database
 import tkp.database.utils as db_utils
 
 

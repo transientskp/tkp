@@ -12,11 +12,6 @@
 # deblending algorithm.
 
 import unittest
-try:
-    unittest.TestCase.assertIsInstance
-except AttributeError:
-    import unittest2 as unittest
-
 import os
 import numpy as np
 
@@ -24,7 +19,7 @@ from tkp.utility.accessors import FitsFile
 from tkp.sourcefinder import image
 
 import tkp.config
-from ..decorators import requires_data
+from decorators import requires_data
 
 
 DATAPATH = tkp.config.config['test']['datapath']
@@ -36,7 +31,7 @@ TRUE_DECONV_SMIN = 0.5*4.6794/2.
 TRUE_DECONV_BPA = -0.5*(-49.8)
 
 
-@unittest.skipIf(not (locals().has_key('long_tests') and long_tests == True), "skipping long test")
+@unittest.skipIf(not (locals().has_key('long_tests') and long_tests), "skipping long test")
 class SourceParameters(unittest.TestCase):
 
     def setUp(self):

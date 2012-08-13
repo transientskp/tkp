@@ -5,12 +5,7 @@ Test the classification Transient class, and the Undefined helper class
 """
 
 import unittest
-try:
-    unittest.TestCase.assertIsInstance
-except AttributeError:
-    import unittest2 as unittest
 from tkp.classification.transient import Undefined
-
 
 
 class TestUndefined(unittest.TestCase):

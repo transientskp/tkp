@@ -1,16 +1,10 @@
 import unittest
-#try:
-#    unittest.TestCase.assertIsInstance
-#except AttributeError:
-#    import unittest2 as unittest
-
-
 import tkp.database as tkpdb
 import tkp.database.utils as dbutils
-from .. import db_subs
-from ..decorators import requires_database
+import db_subs
+from decorators import requires_database
 
-@unittest.skipIf(not (locals().has_key('long_tests') and long_tests == True), "skipping long test")
+@unittest.skipIf(not (locals().has_key('long_tests') and long_tests), "skipping long test")
 class TestTransientCandidateMonitoring(unittest.TestCase):
     @requires_database()
     def setUp(self):

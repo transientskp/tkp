@@ -1,14 +1,8 @@
 # Tests for simulated LOFAR datasets.
 
 import unittest
-try:
-    unittest.TestCase.assertIsInstance
-except AttributeError:
-    import unittest2 as unittest
-
-from ..decorators import requires_data
-from ..decorators import requires_database
-from ..decorators import requires_module
+from decorators import requires_data
+from decorators import requires_database
 
 import os
 import pyfits

@@ -1,19 +1,11 @@
 import unittest
-#try:
-#    unittest.TestCase.assertIsInstance
-#except AttributeError:
-#    import unittest2 as unittest
-
-
 import tkp.database as tkpdb
-
-from tkp.classification.transient import Transient 
-
-from .. import db_subs
-from ..decorators import requires_database
+from tkp.classification.transient import Transient
+import db_subs
+from decorators import requires_database
 
 
-@unittest.skipIf(not (locals().has_key('long_tests') and long_tests == True), "skipping long test")
+@unittest.skipIf(not (locals().has_key('long_tests') and long_tests), "skipping long test")
 class TestTransientRoutines(unittest.TestCase):
     @requires_database()
     def setUp(self):

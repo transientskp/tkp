@@ -6,8 +6,8 @@ from collections import namedtuple
 
 import tkp.database as tkpdb
 import tkp.database.utils.general as dbgen
-from .. import db_subs
-from ..decorators import requires_database
+import db_subs
+from decorators import requires_database
 
 
 class TestOne2One(unittest.TestCase):

@@ -15,23 +15,13 @@ number. Multiplying by the order of magnitude ascertains the
 comparison is more approritate.
 """
 
-
-import sys
-import os
 import unittest
-try:
-    unittest.TestCase.assertIsInstance
-except AttributeError:
-    import unittest2 as unittest
-from optparse import OptionParser
 from datetime import datetime
 from datetime import timedelta
-import logging
-import math
 import numpy
 from tkp.classification.features import lightcurve as lcmod
 from tkp.classification.transient import DateTime
-from ..decorators import requires_module
+from decorators import requires_module
 
 
 class TestLightcurve(unittest.TestCase):

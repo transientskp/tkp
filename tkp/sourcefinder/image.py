@@ -22,7 +22,6 @@ except ImportError:
     from scipy import ndimage
 from ..config import config
 from ..utility import containers
-from ..utility import coordinates
 from ..utility.memoize import Memoize
 from . import utils
 from . import stats
@@ -39,14 +38,6 @@ class ImageData(object):
     facilities for source extraction and measurement, etc.
 
     """
-    ###########################################################################
-    #                                                                         #
-    # Object construction and serialisation.                                  #
-    #                                                                         #
-    # Note that ImageData objects may be initalised directly (__init__()),    #
-    # but should also be pickleable (__getstate__() and __setstate__()).      #
-    #                                                                         #
-    ###########################################################################
     def __init__(self, data, beam, wcs):
         """Sets up an ImageData object.
 

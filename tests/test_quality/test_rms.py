@@ -35,6 +35,15 @@ class test_maps(unittest.TestCase):
         check[400, 400] = 203
         assert_almost_equal(clipped,  check, decimal=5)
 
+    def testTheoreticalMaxValue(self):
+        bandwidth = self.uncorr_map.freqbw
+        freq = self.uncorr_map.freqeff
+
+        # TODO: integration time is 0? that's not correct right?
+        integration_time = self.uncorr_map.inttime
+        integration_time = 1
+        rms.theoretical_max_rms(freq, bandwidth, integration_time)
+
 
 if __name__ == '__main__':
     unittest.main()

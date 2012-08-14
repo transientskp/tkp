@@ -28,3 +28,19 @@ def rms(data):
         (float): RMS value of image
     """
     return math.sqrt(numpy.power(data, 2).sum())
+
+
+def theoretical_max_rms():
+
+    # Boltzmann constant
+    k = 1.3806503 × 10-23
+
+    # Ts0= 60 ± 20 K for Galactic latitudes between 10 and 90 degrees.
+    T_s0 = 60
+
+    T_sky = T_s0 * lamda ^ 2.55
+
+    T_sys = T_sky + T_inst
+
+    #System Equivalent Flux Density
+    S_sys = (2 * n * k / A_eff) * T_sys

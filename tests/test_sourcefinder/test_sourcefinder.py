@@ -2,7 +2,8 @@ __author__ = 'Gijs Molenaar'
 __email__ = "gijs.molenaar@uva.nl"
 
 import unittest
-
+if not  hasattr(unittest.TestCase, 'assertIsInstance'):
+    import unittest2 as unittest
 from tkp.sourcefinder.utils import maximum_pixel_method_variance, fudge_max_pix
 
 # format: semimajor, semiminor, theta, correction, variance

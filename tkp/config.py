@@ -165,9 +165,10 @@ def set_default_config():
 
     from tkp import __path__ as testpath
     config.add_section('test')
-    config.set('test', 'datapath', os.path.join(testpath[0], "..", "tests", "data"))
+    config.set('test', 'datapath', os.path.abspath(os.path.join(testpath[0], "..", "tests", "data")))
     config.set('test', 'test_database_name', 'testdb')
     config.set('test', 'reset_test_database', 'False')
+    config.set('test', 'long', 'False')
     config.set('test', 'test_database_dump_dir', 'None')
     return config
 

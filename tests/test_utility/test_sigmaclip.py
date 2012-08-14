@@ -1,4 +1,6 @@
 import unittest
+if not  hasattr(unittest.TestCase, 'assertIsInstance'):
+    import unittest2 as unittest
 import numpy
 from tkp.utility import sigmaclip
 

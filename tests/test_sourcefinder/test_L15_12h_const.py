@@ -1,6 +1,8 @@
 # Tests for simulated LOFAR datasets.
 
 import unittest
+if not  hasattr(unittest.TestCase, 'assertIsInstance'):
+    import unittest2 as unittest
 import os
 from tkp.utility import accessors
 import tkp.sourcefinder.image as image

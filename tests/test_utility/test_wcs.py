@@ -1,6 +1,8 @@
 # Test wcslib wrapper
 
 import unittest
+if not  hasattr(unittest.TestCase, 'assertIsInstance'):
+    import unittest2 as unittest
 from tkp.utility import coordinates
 from tkp.sourcefinder import extract
 from tkp.utility.uncertain import Uncertain

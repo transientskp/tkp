@@ -1,4 +1,7 @@
 import unittest
+if not  hasattr(unittest.TestCase, 'assertIsInstance'):
+    import unittest2 as unittest
+
 import tkp.database as tkpdb
 import db_subs
 from decorators import requires_database

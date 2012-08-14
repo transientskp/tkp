@@ -34,6 +34,8 @@
 # (TEST_DECONV.FITS).
 
 import unittest
+if not  hasattr(unittest.TestCase, 'assertIsInstance'):
+    import unittest2 as unittest
 import os
 from tkp.utility import accessors
 from tkp.sourcefinder import image
@@ -44,7 +46,7 @@ DATAPATH = tkp.config.config['test']['datapath']
 NUMBER_INSERTED = float(3969)
 
 
-@unittest.skipIf(not (locals().has_key('long_tests') and long_tests), "skipping long test")
+@unittest.skipIf(not eval(tkp.config.config['test']['long']), "not runnig prolonged test suite")
 class test_maps(unittest.TestCase):
     def setUp(self):
         uncorr_map = accessors.FitsFile(os.path.join(DATAPATH, 'UNCORRELATED_NOISE.FITS'))

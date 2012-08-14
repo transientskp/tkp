@@ -1,4 +1,6 @@
 import unittest
+if not  hasattr(unittest.TestCase, 'assertIsInstance'):
+    import unittest2 as unittest
 from decorators import requires_data
 from decorators import requires_module
 import tkp.sourcefinder 

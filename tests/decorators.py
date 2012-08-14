@@ -2,9 +2,7 @@ import os
 import tkp.config
 
 import unittest
-try:
-    unittest.TestCase.assertIsInstance
-except AttributeError:
+if not  hasattr(unittest.TestCase, 'assertIsInstance'):
     import unittest2 as unittest
     
 import db_subs

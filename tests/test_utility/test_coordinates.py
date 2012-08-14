@@ -1,8 +1,11 @@
 # Test functions used for manipulating coordinates in the TKP pipeline.
 
 import unittest
+if not  hasattr(unittest.TestCase, 'assertIsInstance'):
+    import unittest2 as unittest
 import datetime
 import pytz
+from tkp.utility import coordinates
 
 class ratohmsTest(unittest.TestCase):
     knownValues = ((0, (0, 0, 0)),

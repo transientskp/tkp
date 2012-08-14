@@ -1,4 +1,6 @@
 import unittest
+if not  hasattr(unittest.TestCase, 'assertIsInstance'):
+    import unittest2 as unittest
 from tkp.config import double_list_from_string
 
 

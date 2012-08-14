@@ -16,6 +16,9 @@ comparison is more approritate.
 """
 
 import unittest
+if not  hasattr(unittest.TestCase, 'assertIsInstance'):
+    import unittest2 as unittest
+
 from datetime import datetime
 from datetime import timedelta
 import numpy

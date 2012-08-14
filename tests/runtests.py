@@ -18,7 +18,7 @@ def handle_args(args):
     usage = """runtests.py [--datapath=/path/to/test_data] [Standard nosetests args]  
 e.g.
 
-"runtests.py --datapath=/path/to/test_data -sv tests/test_database"
+"runtests.py --datapath=/path/to/test_data -sv test_database"
                 
 Default path to TKP test data: {0}
 """.format(default_datapath)

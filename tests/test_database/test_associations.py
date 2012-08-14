@@ -1,9 +1,9 @@
 
 import unittest
-import datetime
-import math
-from collections import namedtuple
+if not  hasattr(unittest.TestCase, 'assertIsInstance'):
+    import unittest2 as unittest
 
+import math
 import tkp.database as tkpdb
 import tkp.database.utils.general as dbgen
 import db_subs

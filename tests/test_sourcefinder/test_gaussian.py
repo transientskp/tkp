@@ -1,8 +1,9 @@
 # Tests for elliptical Gaussian fitting code in the TKP pipeline.
 
 import unittest
+if not  hasattr(unittest.TestCase, 'assertIsInstance'):
+    import unittest2 as unittest
 import numpy
-
 from tkp.sourcefinder.gaussian import gaussian
 from tkp.sourcefinder.fitting import moments, fitgaussian
 

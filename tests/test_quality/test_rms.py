@@ -13,15 +13,14 @@ from decorators import requires_data
 import numpy
 from numpy.testing import assert_array_equal, assert_almost_equal
 
-
-DATAPATH = tkp.config.config['test']['datapath']
-
+fits_file = '/home/gijs/Data/antonia_april/original/img1.fits'
 
 
-@requires_data(os.path.join(DATAPATH, 'UNCORRELATED_NOISE.FITS'))
+@requires_data(fits_file)
+@unittest.skip
 class test_maps(unittest.TestCase):
     def setUp(self):
-        self.uncorr_map = accessors.FitsFile(os.path.join(DATAPATH, 'UNCORRELATED_NOISE.FITS'))
+        self.uncorr_map = accessors.FitsFile('/home/gijs/Data/antonia_april/original/img1.fits')
 
     def testRms(self):
         #self.rms = rms.rms(self.uncorr_map.data)
@@ -41,8 +40,8 @@ class test_maps(unittest.TestCase):
 
         # TODO: integration time is 0? that's not correct right?
         integration_time = self.uncorr_map.inttime
-        integration_time = 1
-        rms.theoretical_max_rms(freq, bandwidth, integration_time)
+        #integration_time = 1
+        rms.noise_level(freq, bandwidth, integration_time)
 
 
 if __name__ == '__main__':

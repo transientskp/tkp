@@ -5,6 +5,82 @@ import numpy
 import scipy.constants
 
 
+SEFDcore_LBA_inner = {
+    15 : 2783900,
+    30 : 211270,
+    45 : 47560,
+    60 : 31600,
+    75 : 50950,
+}
+
+SEFDcore_LBA_outer = {
+    15 : 480170,
+    30 : 88760,
+    45 : 38160,
+    60 : 29590,
+    75 : 49330,
+}
+
+SEFDcore_HBA = {
+    120 : 3570,
+    150 : 2820,
+    180 : 3230,
+    200 : 3520,
+    210 : 3660,
+    240 : 4060,
+}
+
+SEFDremote_LBA_inner = {
+    15 : 2783900,
+    30 : 211270,
+    45 : 47560,
+    60 : 31600,
+    75 : 50950,
+}
+
+SEFDremote_LBA_outer = {
+    15 : 480170,
+    30 : 88760,
+    45 : 38160,
+    60 : 29590,
+    75 : 49330,
+}
+
+SEFDremote_HBA = {
+    120 : 1790,
+    150 : 1410,
+    180 : 1620,
+    200 : 1760,
+    210 : 1830,
+    240 : 2030,
+}
+
+SEFDintl_LBA_inner = {
+    15 : 518740,
+    30 : 40820,
+    45 : 18840,
+    60 : 14760,
+    75 : 24660,
+}
+
+SEFDintl_LBA_outer = {
+    15 : 518740,
+    30 : 40820,
+    45 : 18840,
+    60 : 14760,
+    75 : 24660
+}
+
+SEFDintl_HBA = {
+    120 : 890,
+    150 : 710,
+    180 : 810,
+    200 : 880,
+    210 : 920,
+    240 : 1020,
+}
+
+
 def clip(data, sigma=3):
     """
     Clips values in array above defined sigma from median
@@ -24,7 +100,74 @@ def rms(data):
     return math.sqrt(numpy.power(data, 2).sum())
 
 
-def theoretical_max_rms(frequency, bandwidth, integration_time):
+def noise_level(frequency, subbandwidth, intgr_time, subbands=1, channels=64, Ncore=24, Nremote=16, Nintl=8, inner=True):
+    """
+    bandwidth - in Hz (should be 144042.96875 (144 kHz) or 180053.7109375 (180 kHz))
+    intgr_time - in seconds
+    inner - in case of LBA, inner or outer
+    """
+    bandwidth = subbandwidth * subbands
+    channelwidth = subbandwidth / channels
+
+    baselines_core = (Ncore * (Ncore - 1)) / 2
+    baselines_remote = (Nremote * (Nremote - 1)) / 2
+    baselines_intl = (Nintl * (Nintl - 1)) / 2
+    baselines_cr = (Ncore * Nremote)
+    baselines_ci = (Ncore * Nintl)
+    baselines_ri = (Nremote * Nintl)
+
+    if frequency > 100:
+        SEFD_core = SEFDcore_HBA[frequency]
+    elif inner:
+        SEFD_core = SEFDcore_LBA_inner[frequency]
+    else:
+        SEFD_core = SEFDcore_LBA_outer[frequency]
+
+    if frequency > 100:
+        SEFD_remote = SEFDremote_HBA[frequency]
+    elif inner:
+        SEFD_remote = SEFDremote_LBA_inner[frequency]
+    else:
+        SEFD_remote = SEFDremote_LBA_outer[frequency]
+
+    if frequency > 100:
+        SEFD_intl = SEFDintl_HBA[frequency]
+    elif inner:
+        SEFD_intl = SEFDintl_LBA_inner[frequency]
+    else:
+        SEFD_intl = SEFDintl_LBA_outer[frequency]
+
+
+    SEFD_cr = math.sqrt(SEFD_core) * math.sqrt(SEFD_remote)
+    SEFD_ci = math.sqrt(SEFD_core) * math.sqrt(SEFD_intl)
+    SEFD_ri = math.sqrt(SEFD_remote) * math.sqrt(SEFD_intl)
+
+    # factor for increase of noise due to the weighting scheme
+    W = 1 # taken from PHP script
+
+    t_core = baselines_core / pow(SEFD_core, 2)
+    t_remote = baselines_remote / pow(SEFD_remote, 2)
+    t_intl = baselines_intl / pow(SEFD_intl, 2)
+    t_cr = baselines_cr / pow(SEFD_cr, 2)
+    t_ci = baselines_ci / pow(SEFD_ci, 2)
+    t_ri = baselines_ri / pow(SEFD_ri, 2)
+
+    # The noise level in a LOFAR image
+    image_sens = W / math.sqrt(4 * bandwidth * intgr_time * ( t_core + t_remote + t_intl + t_cr + t_ci + t_ri))
+    channel_sens = W / math.sqrt(4 * channelwidth * time * ( t_core + t_remote + t_intl + t_cr + t_ci + t_ri))
+    return image_sens
+
+
+def Aeff_dipole(wavelength, distance):
+    if wavelength > 3:
+    # LBA dipole
+        Aeff_dipole = min(pow(wavelength, 2) / 3, (math.pi * power(distance, 2)) / 4)
+    else:
+        # HBA dipole
+        Aeff_dipole = min(pow(wavelength, 2) / 3, 1.5625)
+
+
+def system_sensitivity(frequency, bandwidth, intgr_time, channels, inner=True, Ncore=24, Nremote = 16):
     """
     calculates the maximum possible RMS value as described here:
 
@@ -33,64 +176,40 @@ def theoretical_max_rms(frequency, bandwidth, integration_time):
 
     wavelength = scipy.constants.c/frequency
 
-    # T_s0 = 60 +/- 20 K for Galactic latitudes between 10 and 90 degrees.
-    T_s0 = 60
+    # Ts0 = 60 +/- 20 K for Galactic latitudes between 10 and 90 degrees.
+    Ts0 = 60
 
     # For all LOFAR frequencies the sky brightness temperature is dominated by the Galactic radiation, which depends
     # strongly on the wavelength
-    T_sky = T_s0 * wavelength ** 2.55
+    Tsky = Ts0 * wavelength ** 2.55
 
     #The instrumental noise temperature follows from measurements or simulations
-    T_inst = 0 # ?
+    Tinst = 0 # ?
 
-    T_sys = T_sky + T_inst
+    Tsys = Tsky + Tinst
 
     # system efficiency factor (~ 1.0)
     n = 1
 
     # the total collecting area
-    A_eff = 1 # ?
+    Aeff = 1 # ?
 
     #System Equivalent Flux Density
-    S_sys = (2 * n * scipy.constants.k / A_eff) * T_sys
+    Ssys = (2 * n * scipy.constants.k / Aeff) * Tsys
 
     # distance to nearest dipole within the full array
     d =  0 # ?
 
-    # Lower limit for the effective area
-    if wavelength > 3:
-         # LBA dipole
-        A_eff_dipole = min(pow(wavelength, 2) / 3, (math.pi * power(d, 2)) / 4)
-    else:
-        # HBA dipole
-        A_eff_dipole = min(pow(wavelength, 2) / 3, 1.5625)
-
-    # The sensitivity D_S (in Jy) of a single dipole (or half an 'antenna')
-    #D_S_dipole = S_sys_dipole / (math.sqrt(2 * bandwidth, integration_time))
+    # The sensitivity DS (in Jy) of a single dipole (or half an 'antenna')
+    DS_dipole = Ssys_dipole / (math.sqrt(2 * bandwidth, intgr_time))
 
     # An antenna that consists of two (equal) dipoles placed perpendicular to eac
-    #D_S_antenna = D_S_dipole / math.sqrt(2)
+    DS_antenna = DS_dipole / math.sqrt(2)
 
     # For one station, the overlap in effective area from different dipoles has to be taken into account.
-    #D_S_station = S_sys_station / (math.sqrt(2 * bandwith, integration_time))
+    DS_station = Ssys_station / (math.sqrt(2 * bandwith, intgr_time))
 
-    # SEFD for core stations
-    S_core = (2 * n * scipy.constants.k / A_eff) * T_sys # ?
+    # SEFD or system sensitivity
+    S = (2 * n * scipy.constants.k / Aeff) * Tsys
 
-    # SEFD for remote stations
-    S_remote = (2 * n * scipy.constants.k / A_eff) * T_sys # ?
 
-    # a factor for increase of noise due to the weighting scheme (which depends on the type of weighting: natural, uniform, robust, ...)
-    W = 0 # ?
-
-    # Number of core stations
-    Nc = 36 # ?
-
-    # Number of remote stations
-    Nr = 8 # ?
-
-    # The noise level in a LOFAR image
-    t1 = (Nc * (Nc - 1) / 2) / pow(S_core, 2)
-    t2 = (Nc * Nr) / (S_core * S_remote)
-    t3 = (Nr * (Nr - 1) / 2) / pow(S_remote, 2)
-    D_S = W / (math.sqrt(2 * 2 * bandwidth * integration_time * (t1 + t2 + t3)))

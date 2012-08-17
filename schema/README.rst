@@ -26,10 +26,6 @@ To reverse engineer the Django models van the MonetDB schema::
 
 To create a graphical representation of the Django models::
 
-  $ ./manage.py graph_models -a -o schema.png
-
-  
-
-
+  $ ./manage.py graph_models -o schema.png tkpdb
 
 

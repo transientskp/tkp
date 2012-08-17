@@ -1,10 +1,13 @@
-__author__ = 'gijs'
-
+"""
+functions for calculating noise levels of LOFAR equipment
+"""
 import math
-import numpy
 import scipy.constants
 import scipy.interpolate
 
+
+# Below are all Aeff values for the relevant subsets of LOFAR dipoles. values are taken from:
+# http://www.astron.nl/radio-observatory/astronomers/lofar-imaging-capabilities-sensitivity/sensitivity-lofar-array/sensiti
 
 SEFDcore_LBA_inner = {
     15 : 2783900,
@@ -92,25 +95,6 @@ def interpolate(SEFD_dict, frequency):
     return i(frequency)
 
 
-def clip(data, sigma=3):
-    """
-    Clips values in array above defined sigma from median
-    """
-    median = numpy.median(data)
-    std = numpy.std(data)
-    copy = data.copy()
-    threshold = median + sigma * std
-    copy[data > threshold] = threshold
-    return copy
-
-
-def rms(data):
-    """
-    returns the RMS of an image
-    """
-    return math.sqrt(numpy.power(data, 2).sum())
-
-
 def SEFD(frequency, inner):
     """
     returns a tuple of SEFD's for core, remote and intl
@@ -173,7 +157,10 @@ def noise_level(frequency, subbandwidth, intgr_time, subbands=1, channels=64, Nc
 
     # The noise level in a LOFAR image
     image_sens = W / math.sqrt(4 * bandwidth * intgr_time * ( t_core + t_remote + t_intl + t_cr + t_ci + t_ri))
-    channel_sens = W / math.sqrt(4 * channelwidth * intgr_time * ( t_core + t_remote + t_intl + t_cr + t_ci + t_ri))
+
+    # TODO: do we need this?
+    #channel_sens = W / math.sqrt(4 * channelwidth * intgr_time * ( t_core + t_remote + t_intl + t_cr + t_ci + t_ri))
+
     return image_sens
 
 
@@ -187,6 +174,9 @@ def Aeff_dipole(wavelength, distance):
 
 
 def system_sensitivity(frequency, bandwidth, intgr_time, channels, inner=True, Ncore=24, Nremote = 16):
+    """
+    TODO: eventually this should replace the hard coded SEFD dicts above, for now I don't understand the doc
+    """
     wavelength = scipy.constants.c/frequency
 
     # Ts0 = 60 +/- 20 K for Galactic latitudes between 10 and 90 degrees.
@@ -194,7 +184,6 @@ def system_sensitivity(frequency, bandwidth, intgr_time, channels, inner=True, N
 
     # system efficiency factor (~ 1.0)
     n = 1
-
 
     # For all LOFAR frequencies the sky brightness temperature is dominated by the Galactic radiation, which depends
     # strongly on the wavelength

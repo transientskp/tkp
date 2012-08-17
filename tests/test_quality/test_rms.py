@@ -17,10 +17,10 @@ fits_file = '/home/gijs/Data/antonia_april/original/img1.fits'
 
 
 @requires_data(fits_file)
-@unittest.skip
+#@unittest.skip
 class test_maps(unittest.TestCase):
     def setUp(self):
-        self.uncorr_map = accessors.FitsFile('/home/gijs/Data/antonia_april/original/img1.fits')
+        self.uncorr_map = accessors.FitsFile(fits_file)
 
     def testRms(self):
         #self.rms = rms.rms(self.uncorr_map.data)
@@ -37,11 +37,14 @@ class test_maps(unittest.TestCase):
     def testTheoreticalMaxValue(self):
         bandwidth = self.uncorr_map.freqbw
         freq = self.uncorr_map.freqeff
-
-        # TODO: integration time is 0? that's not correct right?
         integration_time = self.uncorr_map.inttime
-        #integration_time = 1
-        rms.noise_level(freq, bandwidth, integration_time)
+
+        # TODO: somehow these are 0 is some images sometimes?
+        if bandwidth == 0.0: bandwidth = 1.0
+        if integration_time == 0.0: integration_time = 1.0
+
+        noise_level = rms.noise_level(freq, bandwidth, integration_time)
+        noise_level
 
 
 if __name__ == '__main__':

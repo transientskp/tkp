@@ -3,6 +3,7 @@ __author__ = 'gijs'
 import math
 import numpy
 import scipy.constants
+import scipy.interpolate
 
 
 SEFDcore_LBA_inner = {
@@ -81,6 +82,16 @@ SEFDintl_HBA = {
 }
 
 
+def interpolate(SEFD_dict, frequency):
+    """interpolates between frequencies defined in SEFD dicts above"""
+    items = SEFD_dict.items()
+    items.sort(key=lambda tup: tup[0])
+    freq, Aeff = zip(*items)
+    freq = [x * 10**6 for x in freq]
+    i = scipy.interpolate.interp1d(freq, Aeff)
+    return i(frequency)
+
+
 def clip(data, sigma=3):
     """
     Clips values in array above defined sigma from median
@@ -100,6 +111,34 @@ def rms(data):
     return math.sqrt(numpy.power(data, 2).sum())
 
 
+def SEFD(frequency, inner):
+    """
+    returns a tuple of SEFD's for core, remote and intl
+    """
+    if frequency > 100:
+        SEFD_core = interpolate(SEFDcore_HBA, frequency)
+    elif inner:
+        SEFD_core = interpolate(SEFDcore_LBA_inner, frequency)
+    else:
+        SEFD_core = interpolate(SEFDcore_LBA_outer, frequency)
+
+    if frequency > 100:
+        SEFD_remote = interpolate(SEFDremote_HBA, frequency)
+    elif inner:
+        SEFD_remote = interpolate(SEFDremote_LBA_inner, frequency)
+    else:
+        SEFD_remote = interpolate(SEFDremote_LBA_outer, frequency)
+
+    if frequency > 100:
+        SEFD_intl = interpolate(SEFDintl_HBA, frequency)
+    elif inner:
+        SEFD_intl = interpolate(SEFDintl_LBA_inner, frequency)
+    else:
+        SEFD_intl = interpolate(SEFDintl_LBA_outer, frequency)
+
+    return SEFD_core, SEFD_remote, SEFD_intl
+
+
 def noise_level(frequency, subbandwidth, intgr_time, subbands=1, channels=64, Ncore=24, Nremote=16, Nintl=8, inner=True):
     """
     bandwidth - in Hz (should be 144042.96875 (144 kHz) or 180053.7109375 (180 kHz))
@@ -116,27 +155,7 @@ def noise_level(frequency, subbandwidth, intgr_time, subbands=1, channels=64, Nc
     baselines_ci = (Ncore * Nintl)
     baselines_ri = (Nremote * Nintl)
 
-    if frequency > 100:
-        SEFD_core = SEFDcore_HBA[frequency]
-    elif inner:
-        SEFD_core = SEFDcore_LBA_inner[frequency]
-    else:
-        SEFD_core = SEFDcore_LBA_outer[frequency]
-
-    if frequency > 100:
-        SEFD_remote = SEFDremote_HBA[frequency]
-    elif inner:
-        SEFD_remote = SEFDremote_LBA_inner[frequency]
-    else:
-        SEFD_remote = SEFDremote_LBA_outer[frequency]
-
-    if frequency > 100:
-        SEFD_intl = SEFDintl_HBA[frequency]
-    elif inner:
-        SEFD_intl = SEFDintl_LBA_inner[frequency]
-    else:
-        SEFD_intl = SEFDintl_LBA_outer[frequency]
-
+    SEFD_core, SEFD_remote, SEFD_intl = SEFD(frequency, inner)
 
     SEFD_cr = math.sqrt(SEFD_core) * math.sqrt(SEFD_remote)
     SEFD_ci = math.sqrt(SEFD_core) * math.sqrt(SEFD_intl)
@@ -154,7 +173,7 @@ def noise_level(frequency, subbandwidth, intgr_time, subbands=1, channels=64, Nc
 
     # The noise level in a LOFAR image
     image_sens = W / math.sqrt(4 * bandwidth * intgr_time * ( t_core + t_remote + t_intl + t_cr + t_ci + t_ri))
-    channel_sens = W / math.sqrt(4 * channelwidth * time * ( t_core + t_remote + t_intl + t_cr + t_ci + t_ri))
+    channel_sens = W / math.sqrt(4 * channelwidth * intgr_time * ( t_core + t_remote + t_intl + t_cr + t_ci + t_ri))
     return image_sens
 
 
@@ -168,37 +187,26 @@ def Aeff_dipole(wavelength, distance):
 
 
 def system_sensitivity(frequency, bandwidth, intgr_time, channels, inner=True, Ncore=24, Nremote = 16):
-    """
-    calculates the maximum possible RMS value as described here:
-
-    http://www.astron.nl/radio-observatory/astronomers/lofar-imaging-capabilities-sensitivity/sensitivity-lofar-array/sensiti
-    """
-
     wavelength = scipy.constants.c/frequency
 
     # Ts0 = 60 +/- 20 K for Galactic latitudes between 10 and 90 degrees.
     Ts0 = 60
+
+    # system efficiency factor (~ 1.0)
+    n = 1
+
 
     # For all LOFAR frequencies the sky brightness temperature is dominated by the Galactic radiation, which depends
     # strongly on the wavelength
     Tsky = Ts0 * wavelength ** 2.55
 
     #The instrumental noise temperature follows from measurements or simulations
-    Tinst = 0 # ?
+    Tinst = 1 # ?
 
     Tsys = Tsky + Tinst
 
-    # system efficiency factor (~ 1.0)
-    n = 1
-
     # the total collecting area
     Aeff = 1 # ?
-
-    #System Equivalent Flux Density
-    Ssys = (2 * n * scipy.constants.k / Aeff) * Tsys
-
-    # distance to nearest dipole within the full array
-    d =  0 # ?
 
     # The sensitivity DS (in Jy) of a single dipole (or half an 'antenna')
     DS_dipole = Ssys_dipole / (math.sqrt(2 * bandwidth, intgr_time))
@@ -211,5 +219,7 @@ def system_sensitivity(frequency, bandwidth, intgr_time, channels, inner=True, N
 
     # SEFD or system sensitivity
     S = (2 * n * scipy.constants.k / Aeff) * Tsys
+
+    return S
 
 

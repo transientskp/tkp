@@ -1,7 +1,6 @@
 """
 functions for calculating statistical properties of LOFAR images
 """
-
 import math
 import numpy
 
@@ -15,7 +14,6 @@ def clip(data, sigma=3):
     threshold = median + sigma * std
     copy[data > threshold] = threshold
     return copy
-
 
 def rms(data):
     """

@@ -21,10 +21,10 @@ fits_file = '/home/gijs/Data/antonia_april/original/img1.fits'
 #@unittest.skip
 class test_maps(unittest.TestCase):
     def setUp(self):
-        self.uncorr_map = accessors.FitsFile(fits_file)
+        self.fits = accessors.FitsFile(fits_file)
 
     def testRms(self):
-        #self.rms = rms.rms(self.uncorr_map.data)
+        rms = statistics.rms(self.fits.data)
         self.assertEquals(statistics.rms(numpy.ones([4,4])*4), 16)
 
     def testClip(self):
@@ -36,9 +36,9 @@ class test_maps(unittest.TestCase):
         assert_almost_equal(clipped,  check, decimal=5)
 
     def testTheoreticalMaxValue(self):
-        bandwidth = self.uncorr_map.freqbw
-        freq = self.uncorr_map.freqeff
-        integration_time = self.uncorr_map.inttime
+        bandwidth = self.fits.freqbw
+        freq = self.fits.freqeff
+        integration_time = self.fits.inttime
 
         # TODO: somehow these are 0 is some images sometimes?
         if bandwidth == 0.0: bandwidth = 1.0

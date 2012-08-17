@@ -84,7 +84,6 @@ SEFDintl_HBA = {
     240 : 1020,
 }
 
-
 def interpolate(SEFD_dict, frequency):
     """interpolates between frequencies defined in SEFD dicts above"""
     items = SEFD_dict.items()
@@ -93,7 +92,6 @@ def interpolate(SEFD_dict, frequency):
     freq = [x * 10**6 for x in freq]
     i = scipy.interpolate.interp1d(freq, Aeff)
     return i(frequency)
-
 
 def SEFD(frequency, inner):
     """
@@ -121,7 +119,6 @@ def SEFD(frequency, inner):
         SEFD_intl = interpolate(SEFDintl_LBA_outer, frequency)
 
     return SEFD_core, SEFD_remote, SEFD_intl
-
 
 def noise_level(frequency, subbandwidth, intgr_time, subbands=1, channels=64, Ncore=24, Nremote=16, Nintl=8, inner=True):
     """
@@ -163,7 +160,6 @@ def noise_level(frequency, subbandwidth, intgr_time, subbands=1, channels=64, Nc
 
     return image_sens
 
-
 def Aeff_dipole(wavelength, distance):
     if wavelength > 3:
     # LBA dipole
@@ -171,7 +167,6 @@ def Aeff_dipole(wavelength, distance):
     else:
         # HBA dipole
         Aeff_dipole = min(pow(wavelength, 2) / 3, 1.5625)
-
 
 def system_sensitivity(frequency, bandwidth, intgr_time, channels, inner=True, Ncore=24, Nremote = 16):
     """

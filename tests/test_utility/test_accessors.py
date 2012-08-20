@@ -152,7 +152,7 @@ class TestLofarFile(unittest.TestCase):
 
         file_handler = h5py.File(lofar_file,'r')
         image = LofarImage(file_handler)
-        #sfimage = accessors.sourcefinder_image_from_accessor(image)
+        sfimage = accessors.sourcefinder_image_from_accessor(image)
         pass
 
 if __name__ == '__main__':

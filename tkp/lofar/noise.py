@@ -84,6 +84,43 @@ SEFDintl_HBA = {
     240 : 1020,
 }
 
+def parse_antennafile(positionsFile):
+    file_handler = open(positionsFile, 'r')
+    parsed = {}
+    state = 0
+    array = None
+    position = None # where is the station relative to the centre of the earth
+    antennanum = 0
+    positions = []
+    antennacount = 0
+
+    for line in file_handler:
+        line = line.strip()
+
+        if not line or line.startswith('#'):
+            continue
+        if state == 0: # array type
+            array = line
+            state = 1
+        elif state == 1: # array position
+            position = [float(x) for x in line.split()[2:5]]
+            state = 2
+        elif state == 2: # array properties meta data
+            antennanum = int(line.split()[0])
+            antennacount = antennanum
+            state = 3
+        elif state == 3:
+            if antennacount > 0:
+                positions.append([float(x) for x in line.split()])
+                antennacount -= 1
+            else:
+                assert(line == "]")
+                state = 0
+                parsed[array] = positions
+                positions = []
+    return parsed
+
+
 def interpolate(SEFD_dict, frequency):
     """interpolates between frequencies defined in SEFD dicts above"""
     items = SEFD_dict.items()

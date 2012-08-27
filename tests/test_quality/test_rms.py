@@ -44,13 +44,23 @@ class test_maps(unittest.TestCase):
         if bandwidth == 0.0: bandwidth = 1.0
         if integration_time == 0.0: integration_time = 1.0
 
+        frequencies_lba = [x*10**6 for x in [15, 30, 45, 60, 75]]
+        frequencies_hba = [x*10**6 for x in [120, 150, 180, 210, 240]]
+        configurations = ["HBA", "LBA_INNER", "LBA_OUTER", "LBA_SPARSE0", "LBA_SPARSE1"]
         parsed = tkp.lofar.noise.parse_antennafile(antenna_file)
-        lba_outer = parsed['LBA_OUTER']
-        frequency = 15 * 10**6
-        distances = tkp.lofar.noise.shortest_distances(lba_outer)
-        aeff = sum([tkp.lofar.noise.Aeff_dipole(frequency, x) for x in distances])
-        noise_level = tkp.lofar.noise.system_sensitivity(frequency, aeff)
-        self.assertGreater(noise_level, 0)
+
+        for configuration in configurations:
+            print "\n" + configuration
+            if configuration.startswith("LBA"):
+                freqiencies = frequencies_lba
+            else:
+                freqiencies = frequencies_hba
+            positions = parsed[configuration]
+            for frequency in freqiencies:
+                distances = tkp.lofar.noise.shortest_distances(positions)
+                aeff = sum([tkp.lofar.noise.Aeff_dipole(frequency, x) for x in distances])
+                noise_level = tkp.lofar.noise.system_sensitivity(frequency, aeff)
+                print frequency, "\t", aeff
 
 if __name__ == '__main__':
     unittest.main()

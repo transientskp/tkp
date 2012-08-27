@@ -40,26 +40,17 @@ class test_maps(unittest.TestCase):
         freq = self.fits.freqeff
         integration_time = self.fits.inttime
 
-        # TODO: somehow these are 0 is some images sometimes?
+        # TODO: somehow these are 0 in some images sometimes?
         if bandwidth == 0.0: bandwidth = 1.0
         if integration_time == 0.0: integration_time = 1.0
 
-        noise_level = tkp.lofar.noise.noise_level(freq, bandwidth, integration_time)
-        self.assertGreater(noise_level, 0)
-
-    def testParse(self):
         parsed = tkp.lofar.noise.parse_antennafile(antenna_file)
         lba_outer = parsed['LBA_OUTER']
-
-        #temp_distance = None
-        #while len(lba_outer) > 0:
-        #    current = lba_outer.pop()
-        #    for dipole in lba_outer:
-        #        distance = pow((current[0] - dipole[0]), 2) + pow((current[1] - dipole[1]), 2) + pow((current[2] - dipole[2]), 2)
-        #        temp_distance = min(temp_distance, distance) if temp_distance else distance
-
-
-
+        frequency = 15 * 10**6
+        distances = tkp.lofar.noise.shortest_distances(lba_outer)
+        aeff = sum([tkp.lofar.noise.Aeff_dipole(frequency, x) for x in distances])
+        noise_level = tkp.lofar.noise.system_sensitivity(frequency, aeff)
+        self.assertGreater(noise_level, 0)
 
 if __name__ == '__main__':
     unittest.main()

@@ -1,90 +1,17 @@
 """
 functions for calculating noise levels of LOFAR equipment
+
+more info:
+http://www.astron.nl/radio-observatory/astronomers/lofar-imaging-capabilities-sensitivity/sensitivity-lofar-array/sensiti
 """
 import math
 import scipy.constants
 import scipy.interpolate
 
-
-# Below are all Aeff values for the relevant subsets of LOFAR dipoles. values are taken from:
-# http://www.astron.nl/radio-observatory/astronomers/lofar-imaging-capabilities-sensitivity/sensitivity-lofar-array/sensiti
-
-SEFDcore_LBA_inner = {
-    15 : 2783900,
-    30 : 211270,
-    45 : 47560,
-    60 : 31600,
-    75 : 50950,
-}
-
-SEFDcore_LBA_outer = {
-    15 : 480170,
-    30 : 88760,
-    45 : 38160,
-    60 : 29590,
-    75 : 49330,
-}
-
-SEFDcore_HBA = {
-    120 : 3570,
-    150 : 2820,
-    180 : 3230,
-    200 : 3520,
-    210 : 3660,
-    240 : 4060,
-}
-
-SEFDremote_LBA_inner = {
-    15 : 2783900,
-    30 : 211270,
-    45 : 47560,
-    60 : 31600,
-    75 : 50950,
-}
-
-SEFDremote_LBA_outer = {
-    15 : 480170,
-    30 : 88760,
-    45 : 38160,
-    60 : 29590,
-    75 : 49330,
-}
-
-SEFDremote_HBA = {
-    120 : 1790,
-    150 : 1410,
-    180 : 1620,
-    200 : 1760,
-    210 : 1830,
-    240 : 2030,
-}
-
-SEFDintl_LBA_inner = {
-    15 : 518740,
-    30 : 40820,
-    45 : 18840,
-    60 : 14760,
-    75 : 24660,
-}
-
-SEFDintl_LBA_outer = {
-    15 : 518740,
-    30 : 40820,
-    45 : 18840,
-    60 : 14760,
-    75 : 24660
-}
-
-SEFDintl_HBA = {
-    120 : 890,
-    150 : 710,
-    180 : 810,
-    200 : 880,
-    210 : 920,
-    240 : 1020,
-}
-
 def parse_antennafile(positionsFile):
+    """
+    This parses the files in LOFAR/MAC/Deployment/data/StaticMetaData/AntennaArrays in the LOFAR system software repo.
+    """
     file_handler = open(positionsFile, 'r')
     parsed = {}
     state = 0
@@ -120,42 +47,28 @@ def parse_antennafile(positionsFile):
                 positions = []
     return parsed
 
-
-def interpolate(SEFD_dict, frequency):
-    """interpolates between frequencies defined in SEFD dicts above"""
-    items = SEFD_dict.items()
-    items.sort(key=lambda tup: tup[0])
-    freq, Aeff = zip(*items)
-    freq = [x * 10**6 for x in freq]
-    i = scipy.interpolate.interp1d(freq, Aeff)
-    return i(frequency)
-
-def SEFD(frequency, inner):
+def shortest_distances(coordinates):
     """
-    returns a tuple of SEFD's for core, remote and intl
+    expects a list of 3 value tuples that represent x,y and z coordinates of antenna's.
+    It returns a list of distances for each antenna relative to its closest neighbour
+
     """
-    if frequency > 100:
-        SEFD_core = interpolate(SEFDcore_HBA, frequency)
-    elif inner:
-        SEFD_core = interpolate(SEFDcore_LBA_inner, frequency)
-    else:
-        SEFD_core = interpolate(SEFDcore_LBA_outer, frequency)
-
-    if frequency > 100:
-        SEFD_remote = interpolate(SEFDremote_HBA, frequency)
-    elif inner:
-        SEFD_remote = interpolate(SEFDremote_LBA_inner, frequency)
-    else:
-        SEFD_remote = interpolate(SEFDremote_LBA_outer, frequency)
-
-    if frequency > 100:
-        SEFD_intl = interpolate(SEFDintl_HBA, frequency)
-    elif inner:
-        SEFD_intl = interpolate(SEFDintl_LBA_inner, frequency)
-    else:
-        SEFD_intl = interpolate(SEFDintl_LBA_outer, frequency)
-
-    return SEFD_core, SEFD_remote, SEFD_intl
+    distances = []
+    cursor1 = 0
+    while cursor1 < len(coordinates):
+        cursor2 = 0
+        shortest_distance = None
+        a = coordinates[cursor1]
+        while cursor2 < len(coordinates):
+            if cursor1 != cursor2:
+                b = coordinates[cursor2]
+                distance = pow((a[0] - b[0]), 2) + pow((a[1] - b[1]), 2) + pow((a[2] - b[2]), 2)
+                if distance < shortest_distance or not shortest_distance:
+                    shortest_distance = distance
+            cursor2 += 1
+        distances.append(shortest_distance)
+        cursor1 += 1
+    return [math.sqrt(x) for x in distances]
 
 def noise_level(frequency, subbandwidth, intgr_time, subbands=1, channels=64, Ncore=24, Nremote=16, Nintl=8, inner=True):
     """
@@ -197,18 +110,18 @@ def noise_level(frequency, subbandwidth, intgr_time, subbands=1, channels=64, Nc
 
     return image_sens
 
-def Aeff_dipole(wavelength, distance):
-    if wavelength > 3:
-    # LBA dipole
-        Aeff_dipole = min(pow(wavelength, 2) / 3, (math.pi * power(distance, 2)) / 4)
-    else:
-        # HBA dipole
-        Aeff_dipole = min(pow(wavelength, 2) / 3, 1.5625)
+def Aeff_dipole(frequency, distance):
+    """
+    The effective area of each dipole in the array is determined by its distance to the nearest dipole (d)
+    within the full array.
+    """
+    wavelength = scipy.constants.c/frequency
+    if wavelength > 3: # LBA dipole
+        return min(pow(wavelength, 2) / 3, (math.pi * pow(distance, 2)) / 4)
+    else: # HBA dipole
+        return min(pow(wavelength, 2) / 3, 1.5625)
 
-def system_sensitivity(frequency, bandwidth, intgr_time, channels, inner=True, Ncore=24, Nremote = 16):
-    """
-    TODO: eventually this should replace the hard coded SEFD dicts above, for now I don't understand the doc
-    """
+def system_sensitivity(frequency, Aeff):
     wavelength = scipy.constants.c/frequency
 
     # Ts0 = 60 +/- 20 K for Galactic latitudes between 10 and 90 degrees.
@@ -229,6 +142,12 @@ def system_sensitivity(frequency, bandwidth, intgr_time, channels, inner=True, N
     # the total collecting area
     Aeff = 1 # ?
 
+    # SEFD or system sensitivity
+    S = (2 * n * scipy.constants.k / Aeff) * Tsys
+
+    return S
+
+def DS():
     # The sensitivity DS (in Jy) of a single dipole (or half an 'antenna')
     DS_dipole = Ssys_dipole / (math.sqrt(2 * bandwidth, intgr_time))
 
@@ -237,10 +156,4 @@ def system_sensitivity(frequency, bandwidth, intgr_time, channels, inner=True, N
 
     # For one station, the overlap in effective area from different dipoles has to be taken into account.
     DS_station = Ssys_station / (math.sqrt(2 * bandwith, intgr_time))
-
-    # SEFD or system sensitivity
-    S = (2 * n * scipy.constants.k / Aeff) * Tsys
-
-    return S
-
 

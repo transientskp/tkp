@@ -187,13 +187,6 @@ def _insert_extractedsources(conn, image_id, results):
         cursor.close()
 
 
-# The following set of functions are private to the module;
-# these are called by associate_extracted_sources, and should
-# only be used in that way
-
-
-    
-
 def lightcurve(conn, xtrsrcid):
     """Obtain a light curve for a specific extractedsource
 
@@ -249,9 +242,6 @@ def lightcurve(conn, xtrsrcid):
         cursor.close()
     return results
 
-
-# This function is private to the module, and is only called by
-# 
 
 
 

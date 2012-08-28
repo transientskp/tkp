@@ -12,7 +12,8 @@ setup(
         'tkp.classification.features',
         'tkp.classification.transient',
         'tkp.classification.manual',
-        'tkp.utility'
+        'tkp.utility',
+        'tkp.utility.accessors'
     ],
     description="LOFAR Transients Key Project Python libraries",
     author="TKP Discovery WG",

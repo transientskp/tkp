@@ -430,12 +430,6 @@ class DataSet(DBObject):
 #    def add_manual_entry_to_monitoringlist
         
 
-        
-        
-        
-        
-
-
 
 class Image(DBObject):
     """Class corresponding to the images table in the database"""

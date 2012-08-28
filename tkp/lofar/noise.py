@@ -47,27 +47,24 @@ def parse_antennafile(positionsFile):
                 positions = []
     return parsed
 
-def shortest_distances(coordinates):
+def shortest_distances(coordinates, full_array):
     """
-    expects a list of 3 value tuples that represent x,y and z coordinates of antenna's.
-    It returns a list of distances for each antenna relative to its closest neighbour
+    coordinates - a list of 3 value tuples that represent x,y and
+                  z coordinates of a subset of the array
+    full_array  - a list of x,y,z coordinates of a full array
+
+    returns a list of distances for each antenna relative to its
+    closest neighbour
 
     """
     distances = []
-    cursor1 = 0
-    while cursor1 < len(coordinates):
-        cursor2 = 0
+    for a in coordinates:
         shortest_distance = None
-        a = coordinates[cursor1]
-        while cursor2 < len(coordinates):
-            if cursor1 != cursor2:
-                b = coordinates[cursor2]
-                distance = pow((a[0] - b[0]), 2) + pow((a[1] - b[1]), 2) + pow((a[2] - b[2]), 2)
-                if distance < shortest_distance or not shortest_distance:
-                    shortest_distance = distance
-            cursor2 += 1
+        for b in coordinates:
+            distance = pow((a[0] - b[0]), 2) + pow((a[1] - b[1]), 2) + pow((a[2] - b[2]), 2)
+            if distance > 0.1 and (distance < shortest_distance or not shortest_distance):
+                shortest_distance = distance
         distances.append(shortest_distance)
-        cursor1 += 1
     return [math.sqrt(x) for x in distances]
 
 def noise_level(frequency, subbandwidth, intgr_time, subbands=1, channels=64, Ncore=24, Nremote=16, Nintl=8, inner=True):

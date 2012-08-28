@@ -44,6 +44,8 @@ class test_maps(unittest.TestCase):
         if bandwidth == 0.0: bandwidth = 1.0
         if integration_time == 0.0: integration_time = 1.0
 
+        # TODO: where can I fond the number of core stations etc in a FITS file?
+
         frequencies_lba = [x*10**6 for x in [15, 30, 45, 60, 75]]
         frequencies_hba = [x*10**6 for x in [120, 150, 180, 210, 240]]
         configurations = ["HBA", "LBA_INNER", "LBA_OUTER", "LBA_SPARSE0", "LBA_SPARSE1"]
@@ -53,11 +55,13 @@ class test_maps(unittest.TestCase):
             print "\n" + configuration
             if configuration.startswith("LBA"):
                 freqiencies = frequencies_lba
+                full_array = parsed["LBA"]
             else:
                 freqiencies = frequencies_hba
+                full_array = parsed["HBA"]
             positions = parsed[configuration]
             for frequency in freqiencies:
-                distances = tkp.lofar.noise.shortest_distances(positions)
+                distances = tkp.lofar.noise.shortest_distances(positions, full_array)
                 aeff = sum([tkp.lofar.noise.Aeff_dipole(frequency, x) for x in distances])
                 noise_level = tkp.lofar.noise.system_sensitivity(frequency, aeff)
                 print frequency, "\t", aeff

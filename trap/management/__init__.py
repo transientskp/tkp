@@ -8,18 +8,25 @@ import argparse
 def parse_arguments():
     parser = argparse.ArgumentParser(description='Manage your TRAP runtime project')
     parser_subparsers = parser.add_subparsers()
+
     initproject_parser = parser_subparsers.add_parser('initproject')
     initproject_parser.add_argument('initprojectname', help='project folder name')
+    initproject_parser.add_argument('--target', help='location of new TRAP project')
+
     initjob_parser = parser_subparsers.add_parser('initjob')
     initjob_parser.add_argument('initjobname', help='Name of new job')
+
     clean_parser = parser_subparsers.add_parser('clean')
     clean_parser.add_argument('cleanjobname', help='Name of job to clean')
+
     info_parser = parser_subparsers.add_parser('info')
     info_parser.add_argument('infojobname', help='Name of job to print info of')
+
     parsed = vars(parser.parse_args())
     return parsed
 
-def initproject(projectname):
+def initproject(projectname, target=None):
+    if not target:
     print "TODO: initing project %s" % projectname
 
 def initjob(jobname):
@@ -35,7 +42,9 @@ def main():
     parsed = parse_arguments()
 
     if parsed.has_key('initprojectname'):
-        initproject(parsed['initprojectname'])
+        target = parsed.get(target)
+        initproject(parsed['initprojectname'], target)
+
     if parsed.has_key('initjob'):
         initjob(parsed['initjob'])
     if parsed.has_key('cleanjob'):

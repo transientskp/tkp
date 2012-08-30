@@ -4,9 +4,9 @@ setup(
     name="TKP recipes",
     version="0.1.dev",
     packages=[
-        'recipes',
-        'recipes.master',
-        'recipes.nodes',
+        'trap.recipes',
+        'trap.recipes.master',
+        'trap.recipes.nodes',
     ],
     description="LOFAR Transients Key Project pipeline recipes",
     author="TKP Discovery WG",

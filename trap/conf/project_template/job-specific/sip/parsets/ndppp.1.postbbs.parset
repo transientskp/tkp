@@ -1,0 +1,16 @@
+msin.startchan = 0
+msin.nchan = 1
+msin.datacolumn = CORRECTED_DATA
+msout.datacolumn = CORRECTED_DATA
+
+steps = [preflag]   # if defined as [] the MS will be copied and NaN/infinite will be  flagged
+
+
+preflag.type=preflagger  
+preflag.corrtype=cross
+preflag.amplmax=500
+preflag.baseline=[ [CS*,CS*] ]
+
+
+
+

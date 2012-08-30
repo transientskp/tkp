@@ -1,0 +1,19 @@
+msin.datacolumn = DATA
+msin.startchan = 0
+msin.nchan = 1
+msout.datacolumn = DATA
+
+steps = [preflag1, preflag3, preflag4]
+
+preflag1.type=preflagger
+preflag1.corrtype=auto
+
+preflag3.type=preflagger   
+preflag3.corrtype=cross
+preflag3.baseline=[ [CS*,RS*] ]
+
+preflag4.type=preflagger   
+preflag4.corrtype=cross
+preflag4.baseline=[ [RS*,RS*] ]
+
+

@@ -1,0 +1,42 @@
+BBSControl.Strategy.ChunkSize = 0
+BBSControl.Strategy.UseSolver = F
+BBSControl.Strategy.Steps = [solve,correct]
+BBSControl.Strategy.TimeRange = []
+             
+BBSControl.Step.solve.Operation = SOLVE
+BBSControl.Step.solve.Model.Sources = []
+BBSControl.Step.solve.Model.Bandpass.Enable = F
+BBSControl.Step.solve.Model.Gain.Enable = T
+BBSControl.Step.solve.Model.DirectionalGain.Enable = F
+BBSControl.Step.solve.Model.Ionosphere.Enable = F
+BBSControl.Step.solve.Model.Beam.Enable = T
+BBSControl.Step.solve.Model.Cache.Enable = T
+BBSControl.Step.solve.Solve.Parms = ["Gain:0:0:*", "Gain:1:1:*"]
+BBSControl.Step.solve.Solve.ExclParms = []
+BBSControl.Step.solve.Solve.CalibrationGroups = []
+BBSControl.Step.solve.Solve.CellSize.Freq = 0
+BBSControl.Step.solve.Solve.CellSize.Time = 2
+BBSControl.Step.solve.Solve.CellChunkSize = 10
+BBSControl.Step.solve.Solve.PropagateSolutions = F
+BBSControl.Step.solve.Solve.Options.MaxIter = 50
+BBSControl.Step.solve.Solve.Options.EpsValue = 1e-9
+BBSControl.Step.solve.Solve.Options.EpsDerivative = 1e-9
+BBSControl.Step.solve.Solve.Options.ColFactor = 1e-9
+BBSControl.Step.solve.Solve.Options.LMFactor = 1.0
+BBSControl.Step.solve.Solve.Options.BalancedEqs = F
+BBSControl.Step.solve.Solve.Options.UseSVD = T
+#BBSControl.Step.solve.Solve.UVRange = [50.0]
+
+#BBSControl.Step.solve.Solve.Algorithm = L2
+# Enable robust iteration.
+#BBSControl.Step.solve.Solve.OutlierRejection.Enable = T
+# Do not change unless you know what you are doing (AIPS defaults).
+#BBSControl.Step.solve.Solve.OutlierRejection.Threshold = [7.0, 5.0, 4.0, 3.5, 3.0, 2.8, 2.6, 2.4, 2.2, 2.5]
+
+
+BBSControl.Step.correct.Operation = CORRECT
+BBSControl.Step.correct.Model.Sources = []
+BBSControl.Step.correct.Model.Gain.Enable = T
+BBSControl.Step.correct.Output.Column = CORRECTED_DATA
+BBSControl.Step.correct.Model.Beam.Enable = T
+

@@ -170,8 +170,8 @@ def main():
     parsed = parse_arguments()
 
     if parsed.has_key('initprojectname'):
-        target = parsed.get(target)
-        initproject(parsed['initprojectname'], target)
+        target = parsed.get('target', '')
+        init_project(parsed['initprojectname'], target)
 
     if parsed.has_key('initjobname'):
         init_job(parsed['initjobname'])

@@ -7,11 +7,11 @@
 
 add_subdirectory (libwcstools)
 
-if (F2PY_EXECUTABLE)
-  add_subdirectory (deconv)
-else (F2PY_EXECUTABLE)
-  message (SEND_ERROR "ERROR: Missing f2py executable!")
-endif (F2PY_EXECUTABLE)
+#if (F2PY_EXECUTABLE)
+  #add_subdirectory (deconv)
+#else (F2PY_EXECUTABLE)
+  #message (SEND_ERROR "ERROR: Missing f2py executable!")
+#endif (F2PY_EXECUTABLE)
 
 if (WCSLIB_FOUND)
   if (BOOST_FOUND)

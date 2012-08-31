@@ -1,4 +1,7 @@
+#!/usr/bin/env python
+
 from distutils.core import setup
+from numpy.distutils.core import setup, Extension
 
 setup(
     name="tkp",
@@ -19,4 +22,11 @@ setup(
     author="TKP Discovery WG",
     author_email="discovery@transientskp.org",
     url="http://www.transientskp.org/",
+)
+
+from numpy.distutils.core import setup, Extension
+setup(
+  name="deconv",
+  version="1.0",
+  ext_modules = [Extension( 'deconv', ['external/deconv/deconv.f'] )],
 )

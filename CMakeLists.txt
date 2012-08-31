@@ -26,7 +26,9 @@ endforeach (_syslib)
 include (${PROJECT_SOURCE_DIR}/cmake/FindBoost_TKP.cmake)
 include (${PROJECT_SOURCE_DIR}/cmake/FindF2Py.cmake)
 include (${PROJECT_SOURCE_DIR}/cmake/FindCFITSIO.cmake)
-include (${PROJECT_SOURCE_DIR}/cmake/FindPython.cmake)
+include(FindPythonInterp)
+include(FindPythonLibs)
+set(PYTHON_LOCAL_PACKAGE_DIR lib/python${PYTHON_VERSION_MAJOR}.${PYTHON_VERSION_MINOR})
 include (${PROJECT_SOURCE_DIR}/cmake/FindWCSLIB.cmake)
 
 ##  Configuration summary

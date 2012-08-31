@@ -1,3 +1,10 @@
+Installtion
+===========
+This is now build with numpy.distutils from the TKP root.
+
+Readme
+======
+
 This directory contains the AIPS deconv routine (deconv.f), that
 deconvolves two 2D Gaussians.  The routine is converted to a compiled
 Python module with the use of f2py: deconv.so

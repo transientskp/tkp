@@ -36,5 +36,4 @@ else (APPLE)
 endif (APPLE)
 
 
-install (TARGETS wcslib
-	 DESTINATION ${CMAKE_INSTALL_PREFIX}/lib)
+install (TARGETS wcslib DESTINATION ${PYTHON_LOCAL_PACKAGE_DIR})

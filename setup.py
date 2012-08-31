@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 
 from distutils.core import setup
-from numpy.distutils.core import setup, Extension
 
 setup(
     name="tkp",
@@ -24,6 +23,7 @@ setup(
     url="http://www.transientskp.org/",
 )
 
+# use numpy to compile fortran stuff into python module
 from numpy.distutils.core import setup, Extension
 setup(
   name="deconv",

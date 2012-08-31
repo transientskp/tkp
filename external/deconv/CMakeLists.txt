@@ -8,5 +8,5 @@ add_custom_target(deconv
 )
 
 install (FILES ${CMAKE_CURRENT_BINARY_DIR}/deconv.so
-    DESTINATION ${CMAKE_INSTALL_PREFIX}/lib)
+    DESTINATION ${CMAKE_INSTALL_PREFIX}/${PYTHON_LOCAL_PACKAGE_DIR})
 

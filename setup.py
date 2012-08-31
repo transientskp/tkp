@@ -1,8 +1,8 @@
 from distutils.core import setup
 
 setup(
-    name="TKP Libraries",
-    version="0.1.dev",
+    name="tkp",
+    version="0.1",
     packages=[
         'tkp',
         'tkp.database',
@@ -15,7 +15,7 @@ setup(
         'tkp.utility',
         'tkp.utility.accessors'
     ],
-    description="LOFAR Transients Key Project Python libraries",
+    description="LOFAR Transients Key Project (TKP)",
     author="TKP Discovery WG",
     author_email="discovery@transientskp.org",
     url="http://www.transientskp.org/",

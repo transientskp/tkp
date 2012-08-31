@@ -1,0 +1,35 @@
+#
+#   VizieR Astronomical Server: cdsarc.u-strasbg.fr 	2008-12-12T11:43:06
+#   (replaces the 'Astrores' format originally described at
+#    http://vizier.u-strasbg.fr/doc/astrores.htx)
+#   In case of problem, please report to:	question@simbad.u-strasbg.fr
+#
+#
+#Coosys	J2000:	eq_FK5 J2000
+#INFO	-ref=VOTx24202	
+#INFO	-out.max=50000	
+
+#RESOURCE=yCat_8031
+#Name: VIII/31
+#Title: Revised source list for the Rees 38-MHz survey (Hales+ 1995)
+#Coosys	B1950:	eq_FK4 B1950
+#Coosys	G:	galactic
+#Table	VIII_31_8c:
+#Name: VIII/31/8c
+#Title: 38-MHz data on 5859 sources
+#Column	_Glon	(F7.3)	Galactic longitude (computed by VizieR, not part of the original data)	[ucd=pos.galactic.lon]
+#Column	_Glat	(F7.3)	Galactic latitude (computed by VizieR, not part of the original data)	[ucd=pos.galactic.lat]
+#Column	_RAJ2000	(F7.3)	Right ascension (FK5) Equinox=J2000. (computed by VizieR, not part of the original data)	[ucd=pos.eq.ra;meta.main]
+#Column	_DEJ2000	(F7.3)	Declination (FK5) Equinox=J2000. (computed by VizieR, not part of the original data)	[ucd=pos.eq.dec;meta.main]
+#Column	recno	(I8)	Record number within the original table (starting from 1)	[ucd=meta.record]
+#Column	RAB1950	(A8)	Right Ascension B1950 (hours)	[ucd=pos.eq.ra;meta.main]
+#Column	DEB1950	(A9)	Declination B1950 (sign)	[ucd=pos.eq.dec;meta.main]
+#Column	SType	(A1)	*[PC] Source type	[ucd=src.class]
+#Column	Speak	(F7.1)	*Peak brightness (Jy/beam)	[ucd=phot.flux.density;em.radio.20-100MHz]
+#Column	Sinteg	(F7.1)	*Integrated flux density (Jy)	[ucd=phot.flux.density;em.radio.20-100MHz]
+#Column	Size	(F5.1)	*Size (integrated area/synth beam)	[ucd=phys.angSize;src]
+#Column	S/N	(F7.1)	*Signal-to-noise ratio of detection	[ucd=stat.snr]
+#Column	AtlasNum	(a5)	*Number of contour plot in Rees 1990	[ucd=meta.number]
+_Glon;_Glat;_RAJ2000;_DEJ2000;recno;RAB1950;DEB1950;SType;Speak;Sinteg;Size;S/N;AtlasNum
+deg;deg;deg;deg;;"h:m:s";"d:m:s";;Jy;Jy;;;
+-------;-------;-------;-------;--------;--------;---------;-;-------;-------;-----;-------;-----

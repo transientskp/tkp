@@ -3,8 +3,8 @@ Usage
 
 First setup a test database::
 
- $ cd ../../../database
- $ ./setup.sh -d testdb -u testdb -p testdb
+ $ cd ../database
+ $ ./setup -d testdb -u testdb -p testdb
 
 Then obtain the test data (requires authentication)::
 

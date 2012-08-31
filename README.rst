@@ -14,6 +14,7 @@ You can use CMake to build this project::
 Don't forget that you need to populate a database also. see the database
 subdirectory for details.
 
+
 Requirements
 ============
 
@@ -44,32 +45,55 @@ Optional:
 - pygsl <http://pygsl.sourceforge.net/>
 
 
+testing
+-------
+
+- nosetests
+
+
 Testing
 =======
 
-It is vital that the test suite be run before changes are committed. If your
-changes cause additional test failures, they must be accompanied by
-appropriate adjustments to the test suite and a full explanation in the commit
-message.
+To run the tests you need a test database::
 
-Some tests require external data files. These are available from the
-repository at <http://svn.transientskp.org/data/>. Their location should be
-specified in the user configuration file (see below)::
+ $ database
+ $ ./setup -d testdb -u testdb -p testdb
 
-   $ svn export http://svn.transientskp.org/data/ /path/to/storage
-   $ cat >> ~/.tkp.cfg
-   [test]
-   datapath = /path/to/storage/unittests/tkp_lib
-
-Note that the full system is rather complex: in order to run all the tests, a
-complete installation of MonetDB is required. This may be impractical for all
-developers. Tests which require the database are disabled if database is
-turned off in the user configuration::
+If you don't want to test the DB you can turn these tests off::
 
    $ cat >> ~/.tkp.cfg
    [database]
    enabled = False
 
+Then obtain the test data (requires authentication)::
+
+ $ svn co http://svn.transientskp.org/data/unittests/tkp_lib tests/data
+
+tests/data is the default location You can change the location here::
+
+   $ cat >> ~/.tkp.cfg
+   [test]
+   datapath = /path/to/storage/unittests/tkp_lib
+
+
+Then setup your PYTHONPATH to point to the TKP source folder (and maybe other
+packages like monetdb)::
+
+ $ export PYTHONPATH=<location of TKP project>
+
+And then run python nose from the tests folder::
+
+ $ cd tests && nosetests
+
+
+It is vital that the test suite be run before changes are committed. If your
+changes cause additional test failures, they must be accompanied by
+appropriate adjustments to the test suite and a full explanation in the commit
+message.
+Note that the full system is rather complex: in order to run all the tests, a
+complete installation of MonetDB is required. This may be impractical for all
+developers. Tests which require the database are disabled if database is
+turned off in the user configuration::
 Finally, some parts of the code will fail their tests if the optional
 dependencies listed above are not available.
 

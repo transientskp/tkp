@@ -55,5 +55,25 @@ class TestManagement(unittest.TestCase):
 
         trap.management.info_job(job_name)
 
+    def test_run_job(self):
+        """
+        test the creation of a TRAP job
+        """
+        # cleanup
+        if os.access(target, os.X_OK):
+            shutil.rmtree(target)
+
+        os.chdir(parent)
+        trap.management.init_project(project_name)
+
+        os.chdir(target)
+
+        # test called from current working dir
+        trap.management.init_job(job_name)
+
+        trap.management.run_job(job_name)
+
+
+
 if __name__ == '__main__':
     unittest.main()

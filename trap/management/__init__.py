@@ -9,6 +9,9 @@ from os import path
 import shutil
 import re
 import errno
+import getpass
+import sys
+import subprocess
 
 import trap
 
@@ -27,6 +30,9 @@ class CommandError(Exception):
     """
     pass
 
+def check_if_exists(filename):
+    if not os.access(filename, os.R_OK):
+        raise CommandError("can't read %s" % filename)
 
 def parse_arguments():
     parser = argparse.ArgumentParser(description='Manage your TRAP runtime project')
@@ -38,6 +44,9 @@ def parse_arguments():
 
     initjob_parser = parser_subparsers.add_parser('initjob')
     initjob_parser.add_argument('initjobname', help='Name of new job')
+
+    initjob_parser = parser_subparsers.add_parser('runjob')
+    initjob_parser.add_argument('runjobname', help='Name of job to run')
 
     clean_parser = parser_subparsers.add_parser('clean')
     clean_parser.add_argument('cleanjobname', help='Name of job to clean')
@@ -63,6 +72,16 @@ def make_writeable(filename):
         st = os.stat(filename)
         new_permissions = stat.S_IMODE(st.st_mode) | stat.S_IWUSR
         os.chmod(filename, new_permissions)
+
+def line_replace(substitutes, line):
+    """substitutions - list of 2 item tuples.
+    every occurance of the first item in the tuple in line will be replaces with the second
+
+    the to be replaced thingy should be in Django template format e.g. {% user_name %}
+    """
+    for pattern, repl in substitutes:
+        line = re.sub("{%\s*" + pattern + "\s*%}", repl, line)
+    return line
 
 def copy_template(job_or_project, name, target=None, **options):
     """
@@ -103,6 +122,12 @@ def copy_template(job_or_project, name, target=None, **options):
     template_dir = os.path.join(get_template_dir(), base_subdir)
     prefix_length = len(template_dir) + 1
 
+    # these are used for string replacement in templates
+    substitutes = (
+        ("default_username", getpass.getuser()),
+        ("runtime_directory", top_dir)
+        )
+
     for root, dirs, files in os.walk(template_dir):
 
         path_rest = root[prefix_length:]
@@ -129,16 +154,12 @@ def copy_template(job_or_project, name, target=None, **options):
                                    "directory won't replace conflicting "
                                    "files" % new_path)
 
-            # Only render the Python files, as we don't want to
-            # accidentally render Django templates files
             with open(old_path, 'r') as template_file:
                 content = template_file.read()
-            # TODO: maybe we need this later for string replace
-            """
-            if filename.endswith(extensions) or filename in extra_files:
-                template = Template(content)
-                content = template.render(context)
-            """
+
+            if content:
+                content = line_replace(substitutes, content)
+
             with open(new_path, 'w') as new_file:
                 new_file.write(content)
 
@@ -160,6 +181,25 @@ def init_job(jobname, target=None):
     print "creating job '%s'" % jobname
     return copy_template("job", jobname, target)
 
+def run_job(jobname):
+    print "running job '%s'" % jobname
+
+    project_dir = os.getcwd()
+    job_dir = os.path.join(project_dir, jobname)
+
+    os.chdir(job_dir)
+
+    args = ["python",
+            os.path.join(project_dir, "trip.py"),
+            "-c " + os.path.join(project_dir, "pipeline.cfg"),
+            "-t " + os.path.join(project_dir, "trap-tasks.cfg"),
+            "-d",
+            "-j " + jobname
+    ]
+    if not subprocess.call(args):
+        raise CommandError("Error calling trip.py script")
+
+
 def clean_job(jobname):
     print "TODO: cleaning job %s" % jobname
 
@@ -179,6 +219,7 @@ def main():
         clean_job(parsed['cleanjobname'])
     if parsed.has_key('infojobname'):
         clean_job(parsed['infojobname'])
-
+    if parsed.has_key('runjobname'):
+        clean_job(parsed['runjobname'])
 if __name__ == '__main__':
     main()

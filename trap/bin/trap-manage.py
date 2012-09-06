@@ -1,5 +1,10 @@
 #!/usr/bin/env python
 
+import os, sys
 import trap.management
 
-trap.management.main()
+if __name__ == "__main__":
+    # TODO: maybe we should add a django style config thingy?
+    #os.environ.setdefault("TRAP_SETTINGS_MODULE", "settings")
+
+    trap.management.main()

@@ -183,19 +183,23 @@ def init_job(jobname, target=None):
 
 def run_job(jobname):
     print "running job '%s'" % jobname
-
     project_dir = os.getcwd()
     job_dir = os.path.join(project_dir, jobname)
 
-    os.chdir(job_dir)
+    #os.chdir(job_dir)
 
+    # add job dir to pythonpath for subprocess so we can find datafiles_to_process
+    os.environ["PYTHONPATH"] = os.environ.get("PYTHONPATH", "") + ":" + job_dir
+
+    print os.environ["PYTHONPATH"]
     args = ["python",
             os.path.join(project_dir, "trip.py"),
-            "-c " + os.path.join(project_dir, "pipeline.cfg"),
-            "-t " + os.path.join(project_dir, "trap-tasks.cfg"),
+            "-c", os.path.join(project_dir, "pipeline.cfg"),
+            "-t", os.path.join(project_dir, "trap-tasks.cfg"),
             "-d",
             "-j " + jobname
     ]
+    print "running", " ".join(args)
     if not subprocess.call(args):
         raise CommandError("Error calling trip.py script")
 

@@ -6,8 +6,8 @@ if not  hasattr(unittest.TestCase, 'assertIsInstance'):
 import math
 import tkp.database as tkpdb
 import tkp.database.utils.general as dbgen
-import db_subs
-from decorators import requires_database
+import tests.db_subs as db_subs
+from tests.decorators import requires_database
 
 
 class TestOne2One(unittest.TestCase):
@@ -37,7 +37,7 @@ class TestOne2One(unittest.TestCase):
         for im in im_params:
             image = tkpdb.Image(database=self.database, dataset=dataset, data=im)
             src.append(db_subs.example_extractedsource_tuple())
-#            print type(src[-1])
+            # print type(src[-1])
             results = []
             results.append(src[-1])
             dbgen.insert_extracted_sources(self.database.connection, image.id, results)
@@ -476,6 +476,161 @@ class TestMany2One(unittest.TestCase):
         self.assertEqual(axtrsrc2[1], im1src[1])
         self.assertEqual(axtrsrc2[2], im2src[0])
         self.assertEqual(axtrsrc2[3], im2src[0])
+        self.assertEqual(atype2[0], 4)
+        self.assertEqual(atype2[1], 4)
+        self.assertEqual(atype2[2], 3)
+        self.assertEqual(atype2[3], 3)
+        self.assertEqual(aimage2[0], imageid1)
+        self.assertEqual(aimage2[1], imageid1)
+        self.assertEqual(aimage2[2], imageid2)
+        self.assertEqual(aimage2[3], imageid2)
+        #TODO: Add runcat_flux test
+
+class TestMany2Many(unittest.TestCase):
+    """
+    These tests will check the many-to-many source associations, i.e. many extractedsources
+    that has two (or more) counterparts in the runningcatalog.
+
+    """
+    @requires_database()
+    def setUp(self):
+
+        self.database = tkpdb.DataBase()
+
+    def tearDown(self):
+        """remove all stuff after the test has been run"""
+        #self.database.connection.rollback()
+        #self.database.execute("delete from assocxtrsource")
+        #self.database.execute("delete from runningcatalog_flux")
+        #self.database.execute("delete from runningcatalog")
+        self.database.close()
+
+    def test_many2many(self):
+        dataset = tkpdb.DataSet(database=self.database, data={'description': 'assoc test set: n-m'})
+        n_images = 2
+        im_params = db_subs.example_dbimage_datasets(n_images)
+
+        # image 1
+        image = tkpdb.Image(database=self.database, dataset=dataset, data=im_params[1])
+        imageid1 = image.id
+        src1 = []
+        # 2 sources (located close together, so the catching the many-to-1 case in next image
+        src1.append(db_subs.example_extractedsource_tuple(ra=123.12349, dec=10.549,
+                                                     ra_err=5./3600, dec_err=6./3600, 
+                                                     peak = 15e-3, peak_err = 5e-4,
+                                                     flux = 15e-3, flux_err = 5e-4,
+                                                     sigma = 15,
+                                                     beam_maj = 100, beam_min = 100, beam_angle = 45
+                                                        ))
+        src1.append(db_subs.example_extractedsource_tuple(ra=123.12351, dec=10.551,
+                                                     ra_err=5./3600, dec_err=6./3600, 
+                                                     peak = 15e-3, peak_err = 5e-4,
+                                                     flux = 15e-3, flux_err = 5e-4,
+                                                     sigma = 15,
+                                                     beam_maj = 100, beam_min = 100, beam_angle = 45
+                                                        ))
+        results = []
+        results.append(src1[0])
+        results.append(src1[1])
+        dbgen.insert_extracted_sources(self.database.connection, imageid1, results)
+        tkpdb.utils.associate_extracted_sources(self.database.connection, imageid1)
+
+        query = """\
+        SELECT id
+          FROM extractedsource 
+         WHERE image = %s
+        ORDER BY id
+        """
+        self.database.cursor.execute(query, (imageid1,))
+        im1 = zip(*self.database.cursor.fetchall())
+        self.assertNotEqual(len(im1), 0)
+        im1src = im1[0]
+        self.assertEqual(len(im1src), len(src1))
+        
+        # image 2
+        image = tkpdb.Image(database=self.database, dataset=dataset, data=im_params[0])
+        imageid2 = image.id
+        src2 = []
+        # 2 sources as well
+        src2.append(db_subs.example_extractedsource_tuple(ra=123.12348, dec=10.548,
+                                                     ra_err=5./3600, dec_err=6./3600, 
+                                                     peak = 15e-3, peak_err = 5e-4,
+                                                     flux = 15e-3, flux_err = 5e-4,
+                                                     sigma = 15,
+                                                     beam_maj = 100, beam_min = 100, beam_angle = 45
+                                                        ))
+        src2.append(db_subs.example_extractedsource_tuple(ra=123.12352, dec=10.552,
+                                                     ra_err=5./3600, dec_err=6./3600, 
+                                                     peak = 15e-3, peak_err = 5e-4,
+                                                     flux = 15e-3, flux_err = 5e-4,
+                                                     sigma = 15,
+                                                     beam_maj = 100, beam_min = 100, beam_angle = 45
+                                                        ))
+        results = []
+        results.append(src2[0])
+        results.append(src2[1])
+        dbgen.insert_extracted_sources(self.database.connection, imageid2, results)
+        tkpdb.utils.associate_extracted_sources(self.database.connection, imageid2)
+        
+        query = """\
+        SELECT id
+          FROM extractedsource 
+         WHERE image = %s
+        """
+        self.database.cursor.execute(query, (imageid2,))
+        im2 = zip(*self.database.cursor.fetchall())
+        self.assertNotEqual(len(im2), 0)
+        im2src = im2[0]
+        self.assertEqual(len(im2src), len(src2))
+
+        query = """\
+        SELECT id
+              ,xtrsrc
+              ,datapoints
+          FROM runningcatalog
+         WHERE dataset = %s
+        ORDER BY xtrsrc
+        """
+        self.database.cursor.execute(query, (dataset.id,))
+        rc2 = zip(*self.database.cursor.fetchall())
+        self.assertNotEqual(len(rc2), 0)
+        runcat2 = rc2[0]
+        xtrsrc2 = rc2[1]
+        datapoints = rc2[2]
+        self.assertEqual(len(runcat2), 2)
+        self.assertEqual(xtrsrc2[0], im1src[0])
+        self.assertEqual(xtrsrc2[1], im1src[1])
+        self.assertEqual(datapoints[0], datapoints[1])
+        self.assertEqual(datapoints[0], 2)
+        
+        query = """\
+        SELECT a.runcat
+              ,a.xtrsrc
+              ,a.type
+              ,x.image 
+          FROM assocxtrsource a
+              ,runningcatalog r
+              ,extractedsource x 
+         WHERE a.runcat = r.id 
+           AND a.xtrsrc = x.id 
+           AND r.dataset = %s
+        ORDER BY xtrsrc
+                ,runcat
+        """
+        self.database.cursor.execute(query, (dataset.id,))
+        assoc2 = zip(*self.database.cursor.fetchall())
+        self.assertNotEqual(len(assoc2), 0)
+        aruncat2 = assoc2[0]
+        axtrsrc2 = assoc2[1]
+        atype2 = assoc2[2]
+        aimage2 = assoc2[3]
+        self.assertEqual(len(aruncat2), 4)
+        self.assertEqual(aruncat2[0], aruncat2[2])
+        self.assertEqual(aruncat2[1], aruncat2[3])
+        self.assertEqual(axtrsrc2[0], im1src[0])
+        self.assertEqual(axtrsrc2[1], im1src[1])
+        self.assertEqual(axtrsrc2[2], im2src[0])
+        self.assertEqual(axtrsrc2[3], im2src[1])
         self.assertEqual(atype2[0], 4)
         self.assertEqual(atype2[1], 4)
         self.assertEqual(atype2[2], 3)

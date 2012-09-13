@@ -2,9 +2,9 @@ if (BOOST_INCLUDES)
   include_directories (${BOOST_INCLUDES})
 endif (BOOST_INCLUDES)
 
-if (PYTHON_INCLUDES)
-  include_directories (${PYTHON_INCLUDES})
-endif (PYTHON_INCLUDES)
+if (PYTHON_INCLUDE_DIRS)
+  include_directories (${PYTHON_INCLUDE_DIRS})
+endif (PYTHON_INCLUDE_DIRS)
 
 if (WCSLIB_INCLUDES)
   include_directories (
@@ -36,5 +36,4 @@ else (APPLE)
 endif (APPLE)
 
 
-install (TARGETS wcslib
-	 DESTINATION ${PYTHON_LOCAL_PACKAGE_DIR})
+install (TARGETS wcslib DESTINATION ${PYTHON_LOCAL_PACKAGE_DIR})

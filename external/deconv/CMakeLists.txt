@@ -1,11 +1,12 @@
-add_custom_target (deconv
+set(SOURCE_FILES
+    ${CMAKE_CURRENT_SOURCE_DIR}/deconv.f
+)
+add_custom_target(deconv
   ALL
-  COMMAND ${F2PY_EXECUTABLE} -m deconv -c ${CMAKE_CURRENT_SOURCE_DIR}/deconv.f
-  DEPENDS deconv.f
-  WORKING_DIRECTORY ${CMAKE_CURRENT_BUILD_DIR}
-  COMMENT "Compiling deconv.f ..."
-  SOURCES deconv.f
-  )
+  SOURCES ${SOURCE_FILES}
+  COMMAND ${F2PY_EXECUTABLE} -m deconv -c ${SOURCE_FILES}
+)
 
 install (FILES ${CMAKE_CURRENT_BINARY_DIR}/deconv.so
-	 DESTINATION ${PYTHON_LOCAL_PACKAGE_DIR})
+    DESTINATION ${CMAKE_INSTALL_PREFIX}/${PYTHON_LOCAL_PACKAGE_DIR})
+

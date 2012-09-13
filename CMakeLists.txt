@@ -17,8 +17,6 @@ set(PYTHON_PACKAGES_DIR
     CACHE PATH "location of where you want your python modules installed"
 )
 
-set(PYTHON_PACKAGES_DIR lib/python${PYTHON_VERSION_MAJOR}.${PYTHON_VERSION_MINOR}/site-packages)
-
 install (CODE
     "execute_process(
         COMMAND ${PYTHON_EXECUTABLE} ./setup.py install

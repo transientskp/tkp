@@ -56,6 +56,7 @@ message (STATUS "+------------------------------------------------------------+"
 
 add_subdirectory (external)
 add_subdirectory (enduser_scripts)
+add_subdirectory (database)
 
 add_custom_target (tkp_python_lib
   ALL

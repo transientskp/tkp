@@ -28,7 +28,12 @@ include (${PROJECT_SOURCE_DIR}/cmake/FindF2Py.cmake)
 include (${PROJECT_SOURCE_DIR}/cmake/FindCFITSIO.cmake)
 include(FindPythonInterp)
 include(FindPythonLibs)
-set(PYTHON_LOCAL_PACKAGE_DIR lib/python${PYTHON_VERSION_MAJOR}.${PYTHON_VERSION_MINOR}/site-packages)
+
+#set(PYTHON_LOCAL_PACKAGE_DIR lib/python${PYTHON_VERSION_MAJOR}.${PYTHON_VERSION_MINOR}/site-packages) 
+#Incompatible with CMake versions <2.8.6, i.e. Ubuntu <12.04
+#(Also, confuses my build scripts)
+
+set(PYTHON_LOCAL_PACKAGE_DIR lib/python)
 include (${PROJECT_SOURCE_DIR}/cmake/FindWCSLIB.cmake)
 
 ##  Configuration summary
@@ -56,6 +61,7 @@ message (STATUS "+------------------------------------------------------------+"
 
 add_subdirectory (external)
 add_subdirectory (enduser_scripts)
+add_subdirectory (database)
 
 add_custom_target (tkp_python_lib
   ALL

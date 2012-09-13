@@ -35,6 +35,7 @@ include (${PROJECT_SOURCE_DIR}/cmake/FindWCSLIB.cmake)
 
 add_subdirectory (external)
 add_subdirectory (enduser_scripts)
+add_subdirectory (database)
 
 install (CODE
     "execute_process(

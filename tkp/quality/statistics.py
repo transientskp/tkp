@@ -6,18 +6,22 @@ import numpy
 
 def clip(data, sigma=3):
     """
-    Clips values in array above defined sigma from median
+    returns a mask for values above threshold defined by sigma from median
     """
     median = numpy.median(data)
     std = numpy.std(data)
-    copy = data.copy()
     threshold = median + sigma * std
-    copy[data > threshold] = threshold
-    return copy
 
-def rms(data):
+    mask = numpy.ones(data.shape)
+    mask[data > threshold] = 0
+    return mask
+
+def rms(data, mask=None):
     """
-    returns the RMS of an image
+    returns the RMS of an image, you can optionally supply a mask
     """
-    return math.sqrt(numpy.power(data, 2).sum())
+    if mask:
+        data = data * mask
+    n = data.sum()
+    return math.sqrt(numpy.power(data, 2).sum()/n)
 

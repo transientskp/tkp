@@ -4,8 +4,9 @@ if not  hasattr(unittest.TestCase, 'assertIsInstance'):
 import tkp.database as tkpdb
 import tkp.database.utils as dbutils
 import tkp.config
-import db_subs
-from decorators import requires_database
+import tests.db_subs as db_subs
+import tests.db_queries as dbq
+from tests.decorators import requires_database
 
 @unittest.skipIf(not eval(tkp.config.config['test']['long']), "not runnig prolonged test suite")
 class TestTransientCandidateMonitoring(unittest.TestCase):
@@ -182,12 +183,11 @@ class TestTransientCandidateMonitoring(unittest.TestCase):
                                 )
             mon_results = [ (s[2],s[3],m) for  s,m in zip(srcs_to_monitor, mon_extractions)] 
             dbimg.insert_monitored_sources(mon_results)
-#            
-        runcat_entries = self.dataset.runcat_entries()
+#       
+        runcat_entries = dbq.count_runcat_entries(self.database.connection, self.dataset.id)
 #        print "Runcat rows:", runcat_rows
         self.assertEqual(len(runcat_entries), 4)
-        assoc_counts = tkpdb.utils.count_associated_sources(self.database.connection,
-                                   [r['xtrsrc'] for r in runcat_entries])
+        assoc_counts = dbq.count_associated_sources(self.database.connection, self.dataset.id)
         for count in assoc_counts:
             self.assertEqual(count[1], 8)
 #        print "Assoc counts:", assoc_counts

@@ -17,6 +17,8 @@ from tkp.config import config
 def count_runcat_entries(conn, dataset):
     """Count the number of runningcatalog sources
     for a specific dataset
+    
+    Returns an integer.
     """
 
     try:
@@ -27,7 +29,7 @@ def count_runcat_entries(conn, dataset):
          WHERE dataset = %s
         """
         cursor.execute(query, (dataset,))
-        runcat_count = cursor.fetchall()
+        runcat_count = cursor.fetchall()[0][0]
         if not config['database']['autocommit']:
             conn.commit()
         cursor.close()
@@ -39,6 +41,9 @@ def count_runcat_entries(conn, dataset):
 def count_associated_sources(conn, dataset):
     """Count the number of associations for runningcatalog sources
     for a specific dataset
+    
+    Returns: A list of pairwise tuples,
+         [ (assoc_src_id, assocs_count) ]
     """
 
     try:

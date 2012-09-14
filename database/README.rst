@@ -11,7 +11,7 @@ make symlinks, something like this::
 
 then run the setup script to populate your database::
  
-  $ ./setup
+  $ ./setup.sh
 
 
 Upgrading your database
@@ -20,5 +20,5 @@ Upgrading your database
 If you already have a database and want to upgrade to a later version
 run the upgrade script::
 
-  $ ./upgrade -h
+  $ ./upgrade.py -h
 

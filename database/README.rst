@@ -1,11 +1,3 @@
-NB THIS REPOSITORY HAS BEEN DEPRECATED.
-
-Latest database files are now kept in the tkp repository, in the 
-database folder.
-
-This repository is currently being kept for reference but 
-will be deleted eventually.
-
 
 Setting up the TKP database
 ===========================
@@ -19,5 +11,14 @@ make symlinks, something like this::
 
 then run the setup script to populate your database::
  
-  $ ./setup.sh
+  $ ./setup
+
+
+Upgrading your database
+=======================
+
+If you already have a database and want to upgrade to a later version
+run the upgrade script::
+
+  $ ./upgrade -h
 

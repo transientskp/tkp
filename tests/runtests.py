@@ -31,11 +31,13 @@ Default path to TKP test data: {0}
     if args[1].find("--datapath=")!=-1: #args[0] is script name
         datapath=args[1][len("--datapath="):]
         return datapath, args[0:1]+args[2:]                
+    else:
+        print "Using default datapath:",datapath
     return datapath, args
 
 if __name__ == "__main__":
     import logging
-    import monetdb.sql
+    import monetdb
     try:
         import tkp.config
     except ImportError:
@@ -43,7 +45,8 @@ if __name__ == "__main__":
         sys.exit(1)
 
     datapath, args = handle_args(sys.argv) 
-    monetdb.sql.logger.setLevel(logging.ERROR) #Suppress MonetDB debug log. 
+    logging.getLogger('monetdb').setLevel(logging.ERROR) #Suppress MonetDB debug log. 
+    logging.getLogger().setLevel(logging.ERROR)
     tkp.config.config['test']['datapath']=datapath
     nose.run(argv=args)
 

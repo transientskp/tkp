@@ -5,6 +5,7 @@ import tkp.database as tkpdb
 import tkp.database.utils as dbutils
 import tkp.config
 import tests.db_subs as db_subs
+import tests.db_queries as dbq
 from tests.decorators import requires_database
 
 @unittest.skipIf(not eval(tkp.config.config['test']['long']), "not runnig prolonged test suite")
@@ -182,53 +183,11 @@ class TestTransientCandidateMonitoring(unittest.TestCase):
                                 )
             mon_results = [ (s[2],s[3],m) for  s,m in zip(srcs_to_monitor, mon_extractions)] 
             dbimg.insert_monitored_sources(mon_results)
-#            
-        runcat_entries = self.dataset.runcat_entries()
+#       
+        runcat_entries = dbq.count_runcat_entries(self.database.connection, self.dataset.id)
 #        print "Runcat rows:", runcat_rows
         self.assertEqual(len(runcat_entries), 4)
-        
-        """
-        Count the number of extracted sources associated with a given xtrsrc_id
-        
-        Args: A list of xtrsrc_ids to process.
-        
-        Returns: A list of pairwise tuples,
-        [ (assoc_src_id, assocs_count) ]
-        
-        """
-        src_ids = [r['xtrsrc'] for r in runcat_entries]
-        try:
-            #Thought about trying to do this in one clever SQL statement
-            #But this will have to do for now.
-            
-            #First, get the runcat ids for these extracted sources
-            ids_placeholder = ", ".join(["%s"] * len(src_ids))
-            query="""\
-SELECT runcat
-FROM assocxtrsource
-WHERE xtrsrc in ({0})
-""".format(ids_placeholder)
-            self.database.cursor.execute(query, tuple(src_ids))
-            runcat_ids = self.database.cursor.fetchall()
-            
-            #Then count the associations
-            query="""\
-SELECT runcat, count(xtrsrc)
-FROM assocxtrsource
-WHERE runcat in ({0})
-GROUP BY runcat
-""".format(ids_placeholder)
-            self.database.cursor.execute(query, tuple(i[0] for i in runcat_ids))
-            id_counts = self.database.cursor.fetchall()
-        except db.Error:
-            logging.warn("Failed on query %s", query)
-            raise
-        finally:
-            self.database.cursor.close()
-        
-        assoc_counts = id_counts
-        #assoc_counts = tkpdb.utils.count_associated_sources(self.database.connection,
-        #                           [r['xtrsrc'] for r in runcat_entries])
+        assoc_counts = dbq.count_associated_sources(self.database.connection, self.dataset.id)
         for count in assoc_counts:
             self.assertEqual(count[1], 8)
 #        print "Assoc counts:", assoc_counts

@@ -1,3 +1,11 @@
+NB THIS REPOSITORY HAS BEEN DEPRECATED.
+
+Latest database files are now kept in the tkp repository, in the 
+database folder.
+
+This repository is currently being kept for reference but 
+will be deleted eventually.
+
 
 Setting up the TKP database
 ===========================

@@ -1,0 +1,38 @@
+#
+#   VizieR Astronomical Server: webviz.u-strasbg.fr 	2008-08-14T12:57:21
+#   (replaces the 'Astrores' format originally described at
+#    http://vizier.u-strasbg.fr/doc/astrores.htx)
+#   In case of problem, please report to:	question@simbad.u-strasbg.fr
+#
+#
+#Coosys	J2000:	eq_FK5 J2000
+#INFO	-ref=VOTx13540	
+#INFO	-out.max=50000	
+
+#RESOURCE=yCat_8062
+#Name: VIII/62
+#Title: The Westerbork Northern Sky Survey (Leiden, 1998)
+#Table	VIII_62_wenss:
+#Name: VIII/62/wenss
+#Title: WENSS catalogue, concatenation of the {\bf main part} (28 to 76\deg) and the {\bf polar part} (above 72\deg)
+#Column	_RAJ2000	(F9.5)	Right ascension (FK5) Equinox=J2000. (computed by VizieR, not part of the original data)	[ucd=pos.eq.ra;meta.main]
+#Column	_DEJ2000	(F9.5)	Declination (FK5) Equinox=J2000. (computed by VizieR, not part of the original data)	[ucd=pos.eq.dec;meta.main]
+#Column	recno	(I8)	Record number within the original table (starting from 1)	[ucd=meta.record]
+#Column	Name	(a13)	Designation of the source	[ucd=meta.id;meta.main]
+#Column	f_Name	(A1)	[abmp] Several objects share the same name	[ucd=meta.code.error]
+#Column	RA1950	(A11)	Right Ascension B1950 (hours)	[ucd=pos.eq.ra;meta.main]
+#Column	DE1950	(A11)	Declination B1950 (degrees)	[ucd=pos.eq.dec;meta.main]
+#Column	RAJ2000	(A11)	Right Ascension J2000 (hours)	[ucd=pos.eq.ra;meta.main]
+#Column	DEJ2000	(A11)	Declination J2000 (degrees)	[ucd=pos.eq.dec;meta.main]
+#Column	flg1	(A1)	[SMEC] source type flag	[ucd=meta.code]
+#Column	flg2	(A1)	[*] problems in fitting the source	[ucd=meta.code]
+#Column	Speak	(I6)	Peak flux density at 330MHz in mJy/beam	[ucd=phot.flux.density;em.radio.200-400MHz]
+#Column	Sint	(I7)	Integrated flux density 330MHz in mJy	[ucd=phot.flux.density;em.radio.200-400MHz]
+#Column	MajAxis	(I4)	Major axis	[ucd=phys.angSize;src]
+#Column	MinAxis	(I3)	Minor axis	[ucd=phys.angSize;src]
+#Column	PA	(I3)	Position angle (North to East)	[ucd=pos.posAng]
+#Column	Nse	(F4.1)	Local rms-noise level in mJy/beam	[ucd=instr.skyLevel]
+#Column	Frame	(a9)	Frame from which the source was obtained	[ucd=obs.field]
+_RAJ2000;_DEJ2000;recno;Name;f_Name;RA1950;DE1950;RAJ2000;DEJ2000;flg1;flg2;Speak;Sint;MajAxis;MinAxis;PA;Nse;Frame
+deg;deg;;;;"h:m:s";"d:m:s";"h:m:s";"d:m:s";;;mJy;mJy;arcsec;arcsec;deg;mJy;
+---------;---------;--------;-------------;-;-----------;-----------;-----------;-----------;-;-;------;-------;----;---;---;----;---------

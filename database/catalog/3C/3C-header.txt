@@ -1,0 +1,44 @@
+#
+#   VizieR Astronomical Server: webviz.u-strasbg.fr 	2008-09-23T12:49:04
+#   (replaces the 'Astrores' format originally described at
+#    http://vizier.u-strasbg.fr/doc/astrores.htx)
+#   In case of problem, please report to:	question@simbad.u-strasbg.fr
+#
+#
+#Coosys	J2000:	eq_FK5 J2000
+#INFO	-ref=VOTx22631	
+#INFO	-out.max=50000	
+
+#RESOURCE=yCat_8001
+#Name: VIII/1A
+#Title: The 3C and 3CR Catalogues (Edge+ 1959-1962)
+#Coosys	B1950:	eq_FK4 B1950
+#Table	VIII_1A_3c:
+#Name: VIII/1A/3c
+#Title: 3C catalog of radio sources (1959)
+#Column	_RAJ2000	(F7.3)	Right ascension (FK5) Equinox=J2000. (computed by VizieR, not part of the original data)	[ucd=pos.eq.ra;meta.main]
+#Column	_DEJ2000	(F7.3)	Declination (FK5) Equinox=J2000. (computed by VizieR, not part of the original data)	[ucd=pos.eq.dec;meta.main]
+#Column	recno	(I8)	Record number within the original table (starting from 1)	[ucd=meta.record]
+#Column	3C	(I3)	[1,471] 3C source designation	[ucd=meta.id;meta.main]
+#Column	u_3C	(A1)	[)] sources with open doubt (1)	[ucd=meta.code.error]
+#Column	f_3C	(A1)	[+] observed in both 3C(a) and 3C(c) surveys	[ucd=meta.code.error]
+#Column	q_3C	(A1)	[*] sources with considerable confidence	[ucd=meta.code.qual]
+#Column	n_3C	(A1)	[AB] Analysis flag (2)	[ucd=meta.note]
+#Column	f_RAs	(A3)	[-<> ] Possible lobe confusion on R.A. (3)	[ucd=meta.code.error]
+#Column	RA1950	(A10)	Right ascension (1950.0)	[ucd=pos.eq.ra;meta.main]
+#Column	e_RAs	(I2)	? rms uncertainty on right ascension	[ucd=stat.error]
+#Column	f_DEm	(A2)	[v^ ] Possible lobe confusion on Decl. (3)	[ucd=meta.code.error]
+#Column	DE1950	(A8)	Declination (1950.0)	[ucd=pos.eq.dec;meta.main]
+#Column	e_DEm	(I2)	? rms uncertainty on declination	[ucd=stat.error]
+#Column	u_DEm	(A1)	[)] Uncertainty flag on DE rms	[ucd=meta.code.error]
+#Column	S159MHz	(F7.1)	Flux density at 159MHz	[ucd=phot.flux.density;em.radio.100-200MHz]
+#Column	n_S159MHz	(A1)	[W] indicates a flux density taken from Whitfield (1957MNRAS.117..680W)	[ucd=meta.note]
+#Column	e_S159MHz	(F5.1)	? rms uncertainty on S159MHz	[ucd=stat.error]
+#Column	u_S159MHz	(A1)	[)] Uncertainty flag on flux rms	[ucd=meta.code.error]
+#Column	l_Diam	(A1)	[~<>] Limit flag on Diam	[ucd=meta.code.error]
+#Column	Diam	(F4.1)	? Angular diameter	[ucd=phys.angSize;src]
+#Column	e_Diam	(F4.1)	? rms uncertainty on Diam	[ucd=stat.error]
+#Column	n_Diam	(A4)	Note (C: Complex, >12' upper limit for Diam)	[ucd=meta.note]
+#Column	Notes	(a52)	Suggested correspondences and notes (4)	[ucd=meta.note]
+_RAJ2000;_DEJ2000;recno;3C;u_3C;f_3C;q_3C;n_3C;f_RAs;RA1950;e_RAs;f_DEm;DE1950;e_DEm;u_DEm;S159MHz;n_S159MHz;e_S159MHz;u_S159MHz;l_Diam;Diam;e_Diam;n_Diam;Notes
+deg;deg;;;;;;;;"h:m:s";s;;"d:m:s";arcmin;;Jy;;Jy;;;arcmin;arcmin;;

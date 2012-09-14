@@ -1,0 +1,38 @@
+#
+#   VizieR Astronomical Server: vizier.u-strasbg.fr 	2009-11-25T12:41:47
+#   (replaces the 'Astrores' format originally described at
+#    http://vizier.u-strasbg.fr/doc/astrores.htx)
+#   In case of problem, please report to:	question@simbad.u-strasbg.fr
+#
+#
+#Coosys	J2000:	eq_FK5 J2000
+#INFO	-ref=VIZ4b0d257c3518	
+#INFO	-out.max=50000	
+
+#RESOURCE=yCat_8071
+#Name: VIII/71
+#Title: The FIRST Survey Catalog, Version 03Apr11 (Becker+ 2003)
+#Table	VIII_71_first:
+#Name: VIII/71/first
+#Title: North & South Galactic Caps\vizContent{image/fits}
+#Column	_RAJ2000	(F9.5)	Right ascension (FK5) Equinox=J2000. (computed by VizieR, not part of the original data)	[ucd=pos.eq.ra;meta.main]
+#Column	_DEJ2000	(F9.5)	Declination (FK5) Equinox=J2000. (computed by VizieR, not part of the original data)	[ucd=pos.eq.dec;meta.main]
+#Column	recno	(I8)	Record number within the original table (starting from 1)	[ucd=meta.record]
+#Column	FIRST	(a16)	FIRST Source designation	[ucd=meta.id;meta.main]
+#Column	RAJ2000	(A12)	Right Ascension J2000 (hours)	[ucd=pos.eq.ra;meta.main]
+#Column	DEJ2000	(A12)	Declination J2000 (degrees)	[ucd=pos.eq.dec;meta.main]
+#Column	Wflag	(A1)	[W] Warning flag	[ucd=meta.code]
+#Column	Fpeak	(F8.2)	Peak flux density at 1.4GHz	[ucd=phot.flux.density;em.radio.750-1500MHz]
+#Column	Fint	(F8.2)	Integrated flux density at 1.4GHz	[ucd=phot.flux.density;em.radio.750-1500MHz]
+#Column	Rms	(F6.3)	Local noise estimate	[ucd=instr.det.noise]
+#Column	MajAxis	(F6.2)	Major axis (FWHM)	[ucd=phys.angSize]
+#Column	MinAxis	(F6.2)	Minor axis (FWHM)	[ucd=phys.angSize]
+#Column	PA	(F5.1)	Position angle	[ucd=pos.posAng]
+#Column	fMaj	(F6.2)	Fitted MajAxis before deconvolution	[ucd=phys.angSize]
+#Column	fMin	(F6.2)	Fitted MinAxis before deconvolution	[ucd=phys.angSize]
+#Column	fPA	(F5.1)	Fitted PA before deconvolution	[ucd=pos.posAng]
+#Column	Field	(a12)	Name of the coadded image containing the source	[ucd=obs.image]
+#Column	Link	(A4)	Get a fully WCS-qualified FITS image of the target	[ucd=meta.ref]
+_RAJ2000;_DEJ2000;recno;FIRST;RAJ2000;DEJ2000;Wflag;Fpeak;Fint;Rms;MajAxis;MinAxis;PA;fMaj;fMin;fPA;Field;Link
+deg;deg;;;"h:m:s";"d:m:s";;mJy;mJy;mJy;arcsec;arcsec;deg;arcsec;arcsec;deg;;
+---------;---------;--------;----------------;------------;------------;-;--------;--------;------;------;------;-----;------;------;-----;------------;----

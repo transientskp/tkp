@@ -1,8 +1,8 @@
 .. _database_upgrading:
 
-++++++
++++++++++
 Upgrading
-++++++
++++++++++
 
 The TKP database repo has basic support for upgrading an existing database schema to a newer version. Note that the
 migration SQL scripts still need to be written by hand, currently the upgrade script only determines which upgrade

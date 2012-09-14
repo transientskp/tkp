@@ -405,7 +405,7 @@ This table keeps track of zones (declinations) of the stored sources on the node
     Boolean determining whether the minimum zone is included.
 **zone_max_incl**
     Boolean determining whether the maximum zone is included.
-**zoneheight** 
+**zoneheight**
     The zone height of a zone, in degrees
 **nodes**
     The total number of nodes in the sharded database configuration.
@@ -421,22 +421,22 @@ TODO: The resolution element (from images table) is not implemented yet.
 Extractedsources not in this table are appended when there is no positional match or when a source was detected in a higher resolution image.
 
 We maintain weighted averages for sources positions and fluxes according to Bevington, Ch. 4.
-If we have a source property x and error e), its weighted mean is 
+If we have a source property x and error e), its weighted mean is
+
 .. math::
 
-wm_x = \sum_{i=1}^{N} \frac{w_i x_i}{w_i},
+   wm_x = \sum_{i=1}^{N} \frac{w_i x_i}{w_i},
 
-where :math: `w_i = \\frac{1}{{e_i}^2}`
-is the weight of the i-th measurement of x.
-
+where :math:`w_i = \frac{1}{{e_i}^2}` is the weight of the i-th measurement of
+x.
 
 **id**
     Every source in the running catalog gets a unique id.
-    
+
 **xtrsrc**
     The id of the extractedsource for which this runningcatalog source was detected for the first time.
 
-**dataset** 
+**dataset**
     The dataset to which the runningcatalog source belongs to.
 
 **datapoints**

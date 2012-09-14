@@ -57,7 +57,7 @@ Testing
 To run the tests you need a test database::
 
  $ cd database
- $ ./setup -d testdb -u testdb -p testdb
+ $ ./setup.sh -d testdb -u testdb -p testdb
 
 If you don't want to test the DB you can turn these tests off::
 

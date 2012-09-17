@@ -42,5 +42,7 @@ def rms(data, mask=None):
         data = data * mask
     n = data.sum()
     median = numpy.median(data)
-    return math.sqrt(numpy.power(data-median, 2).sum()/n)
+    normalized = numpy.zeros(data.shape, data.dtype)
+    normalized[mask] = data[mask] - median
+    return math.sqrt(numpy.power(normalized, 2).sum()/n)
 

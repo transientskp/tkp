@@ -184,9 +184,9 @@ class TestTransientCandidateMonitoring(unittest.TestCase):
             mon_results = [ (s[2],s[3],m) for  s,m in zip(srcs_to_monitor, mon_extractions)] 
             dbimg.insert_monitored_sources(mon_results)
 #       
-        runcat_entries = dbq.count_runcat_entries(self.database.connection, self.dataset.id)
+        n_runcat_entries = dbq.count_runcat_entries(self.database.connection, self.dataset.id)
 #        print "Runcat rows:", runcat_rows
-        self.assertEqual(len(runcat_entries), 4)
+        self.assertEqual(n_runcat_entries, 4)
         assoc_counts = dbq.count_associated_sources(self.database.connection, self.dataset.id)
         for count in assoc_counts:
             self.assertEqual(count[1], 8)

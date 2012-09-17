@@ -19,9 +19,19 @@ import scipy.integrate
 from .gaussian import gaussian
 
 
+def circular_mask(xdim, ydim, radius):
+    """
+    Returns a numpy array of shape (xdim, ydim). All points with radius of
+    the centre are set to 0; outside that region, they are set to 1.
+    """
+    centre_x, centre_y = (xdim-1)/2.0, (ydim-1)/2.0
+    x, y = numpy.ogrid[-centre_x:xdim-centre_x, -centre_y:ydim-centre_y]
+    return x*x + y*y >= radius*radius
+
+
 def generate_result_maps(data, sourcelist):
     """Return a source and residual image
-    
+
     Given a data array (image) and list of sources, return two images, one
     showing the sources themselves and the other the residual after the
     sources have been removed from the input data.
@@ -72,7 +82,7 @@ def calculate_beamsize(semimajor, semiminor):
 
 def fudge_max_pix(semimajor, semiminor, theta):
     """Estimate peak flux correction at pixel of maximum flux
-    
+
     Previously, we adopted Rengelink's correction for the
     underestimate of the peak of the Gaussian by the maximum pixel
     method: fudge_max_pix = 1.06. See the WENSS paper
@@ -109,7 +119,7 @@ def fudge_max_pix(semimajor, semiminor, theta):
 
 def maximum_pixel_method_variance(semimajor, semiminor, theta):
     """Estimate variance for peak flux at pixel position of maximum
-    
+
     When we use the maximum pixel method, with a correction
     fudge_max_pix, there should be no bias, unless the peaks of the
     Gaussians are not randomly distributed, but relatively close to

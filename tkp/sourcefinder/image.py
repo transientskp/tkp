@@ -118,11 +118,14 @@ class ImageData(object):
     def _get_data(self):
         """Masked image data"""
         margin = CONFIG['margin']
-        margin_mask = 0
-        if not CONFIG['margin'] == 0:
+        mask = self.reliable_window()
+        if CONFIG['margin']:
             margin_mask = numpy.ones((self.xdim, self.ydim))
             margin_mask[margin:-margin, margin:-margin] = 0
-        mask = numpy.logical_or(margin_mask, self.reliable_window())
+            mask = numpy.logical_or(mask, margin_mask)
+        if CONFIG['radius']:
+            radius_mask = utils.circular_mask(self.xdim, self.ydim, CONFIG['radius'])
+            mask = numpy.logical_or(mask, radius_mask)
         mask = numpy.logical_or(mask, numpy.where(self.rawdata == 0, 1, 0))
         return numpy.ma.array(self.rawdata, mask=mask)
     data = property(fget=_get_data, fdel=_get_data.delete)
@@ -354,14 +357,17 @@ class ImageData(object):
                     startx:startx + CONFIG['back_sizex'],
                     starty:starty + CONFIG['back_sizey']
                 ].ravel()
+                if not chunk.any():
+                    rmsrow.append(False)
+                    bgrow.append(False)
+                    continue
                 chunk, sigma, median, num_clip_its = stats.sigma_clip(
                     chunk, self.beam)
-                mean = numpy.mean(chunk)
-
                 if len(chunk) == 0 or not chunk.any():
                     rmsrow.append(False)
                     bgrow.append(False)
                 else:
+                    mean = numpy.mean(chunk)
                     rmsrow.append(sigma)
                     # In the case of a crowded field, the distribution will be
                     # skewed and we take the median as the background level.

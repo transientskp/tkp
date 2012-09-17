@@ -11,9 +11,27 @@ def clip(data, sigma=3):
     median = numpy.median(data)
     std = numpy.std(data)
     threshold = median + sigma * std
+    mask = numpy.zeros(data.shape)
+    mask[data < threshold] = 1
+    return mask
 
-    mask = numpy.ones(data.shape)
-    mask[data > threshold] = 0
+def iterative_clip(data, sigma=3):
+    """
+    returns a mask for values above threshold defined by sigma from median
+    iterative means keep clipping at 3 sigma until nothing more is getting clipped.
+    """
+    median = numpy.median(data)
+    std = numpy.std(data)
+    threshold = median + sigma * std
+
+    mask = numpy.zeros(data.shape)
+    while True:
+        new_mask = numpy.zeros(data.shape)
+        new_mask[data < threshold] = 1
+        mask = numpy.logical_or(mask, new_mask)
+        diff = numpy.logical_and(new_mask, numpy.logical_not(mask))
+        if diff.sum(): # stop if there are no new mask pixels
+            break
     return mask
 
 def rms(data, mask=None):

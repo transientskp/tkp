@@ -55,9 +55,9 @@ For Ubuntu
 
 All packages above (except pyrap and pygsl) are available in debian/ubuntu or pypi::
 
-    $ sudo apt-get install build-essential cmake python-numpy python-scipy python-dateutil python-pyfits libboost-python-dev libwcs4 wcslib-dev python-h5py python-pip scons
+    $ sudo apt-get install build-essential cmake python-numpy python-scipy python-dateutil python-pyfits libboost-python-dev libwcs4 wcslib-dev python-h5py python-pip scons python-tz
 
-    $ sudo pip install pytz python-monetdb
+    $ sudo pip install python-monetdb
 
 To install pyrap or pygsl download the source from the website and follow the instructions in the README.
 

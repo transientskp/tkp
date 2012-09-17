@@ -30,7 +30,7 @@ def iterative_clip(data, sigma=3):
         new_mask[data < threshold] = 1
         mask = numpy.logical_or(mask, new_mask)
         diff = numpy.logical_and(new_mask, numpy.logical_not(mask))
-        if diff.sum(): # stop if there are no new mask pixels
+        if not diff.sum(): # stop if there are no new mask pixels
             break
     return mask
 

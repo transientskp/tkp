@@ -41,7 +41,7 @@ For core functionality:
 
 Optional:
 
-- pyrap <https://code.google.com/p/casacore/>
+- pyrap <http://code.google.com/p/pyrap/>
 - pygsl <http://pygsl.sourceforge.net/>
 
 
@@ -49,6 +49,18 @@ testing
 -------
 
 - nosetests
+
+For Ubuntu
+----------
+
+All packages above (except pyrap and pygsl) are available in debian/ubuntu or pypi::
+
+    $ sudo apt-get install build-essential cmake python-numpy python-scipy python-dateutil python-pyfits libboost-python-dev libwcs4 wcslib-dev python-h5py python-pip scons
+
+    $ sudo pip install pytz python-monetdb
+
+To install pyrap or pygsl download the source from the website and follow the instructions in the README.
+
 
 
 Testing

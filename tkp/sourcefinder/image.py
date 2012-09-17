@@ -357,14 +357,17 @@ class ImageData(object):
                     startx:startx + CONFIG['back_sizex'],
                     starty:starty + CONFIG['back_sizey']
                 ].ravel()
+                if not chunk.any():
+                    rmsrow.append(False)
+                    bgrow.append(False)
+                    continue
                 chunk, sigma, median, num_clip_its = stats.sigma_clip(
                     chunk, self.beam)
-                mean = numpy.mean(chunk)
-
                 if len(chunk) == 0 or not chunk.any():
                     rmsrow.append(False)
                     bgrow.append(False)
                 else:
+                    mean = numpy.mean(chunk)
                     rmsrow.append(sigma)
                     # In the case of a crowded field, the distribution will be
                     # skewed and we take the median as the background level.

@@ -97,6 +97,9 @@ def sigma_clip(data, beam, sigma=unbiased_sigma, max_iter=100,
     centre = centref(data)
     N = numpy.size(data)
     N_indep = indep_pixels(N, beam)
+    if N_indep < 1:
+        # This chunk is too small for processing; return an empty array.
+        return numpy.array([]), 0, 0, 0
 
     # If sigma is callable, use it to dynamically calculate the clipping
     # limits.

@@ -1,12 +1,12 @@
-================================================================
-Transients Project Source Extraction & Measurement Demonstration
-================================================================
+==================================
+PySE: Source Finding & Measurement
+==================================
 
 Preamble
 ========
 
 This document briefly describes the means by which the Transients Project
-source extraction & measurement code (henceforth ``pyse'') may be used to
+source extraction & measurement code (henceforth ``pyse``) may be used to
 obtain a list of sources found in a collection of images stored as FITS files.
 It does not attempt to act as a complete reference to the TKP codebase.
 
@@ -33,25 +33,25 @@ Pyse provides the following capabilities:
 - All measurements made are accompanied by a comprehensive error analysis.
 
 For details of all algorithms implemented, the reader is referred to the PhD
-thesis by Spreeuw (University of Amsterdam, 2010,
-<http://dare.uva.nl/en/record/340633>).
+thesis by `Spreeuw <http://dare.uva.nl/en/record/340633>`_ (University of
+Amsterdam, 2010).
 
 It is worth emphasizing that there are a number of differences compared to
-projects such as, for example, BDSM. In particular, the pyse code is made
+projects such as, for example, BDSM. In particular, the ``pyse`` code is made
 available in the form or Python modules, primarily designed for integration
 into a pipeline or other script, rather than for use as an interactive
 analysis environment. Further, it is reasonable to assume that astronomical
-transients are unresolved, so the code does not attempt to decompose
-complex, extended sources into a multiple component model.
+transients are unresolved, so the code does not attempt to decompose complex,
+extended sources into a multiple component model.
 
 Command Line Usage
 ==================
 
 A script is available to make it possible to test the basic functionality of
-the pyse code. It does not make all the features listed above available. In
-particular, at the present time, the FDR algorithm is not available.
+the ``pyse`` code. It does not make all the features listed above available.
+In particular, at the present time, the FDR algorithm is not available.
 
-On the LOFAR CEP1 cluster, run the script as:
+On the LOFAR CEP1 cluster, run the script as::
 
   $ ~swinbank/sourcefinder/tkp/bin/pyse file1.fits ... fileN.fits
 
@@ -59,7 +59,7 @@ For each file specified, a list of sources identified is printed to the
 screen.
 
 A list of available command line option may be obtained with the -h/--help
-option:
+option::
 
   $ ~swinbank/sourcefinder/tkp/bin/pyse -h
   Usage: pyse.py [options] file1 ... fileN
@@ -78,36 +78,39 @@ option:
     --grid=GRID           Background grid segment size
 
 
-The --detection argument specifies the multiple of the RMS noise which is
-required for detection; ie, setting --detection=5 is equivalent to requiring
-pixels used for detecting sources to be at 5 sigma.
+The ``--detection`` argument specifies the multiple of the RMS noise which is
+required for detection; ie, setting ``--detection=5`` is equivalent to
+requiring pixels used for detecting sources to be at 5 sigma.
 
-The --analysis argument specifies the significance level used when performing
-fitting. It should be lower than --detection, such that once islands have been
-identified a larger number of pixels is included for the fitting process.
+The ``--analysis`` argument specifies the significance level used when
+performing fitting. It should be lower than ``--detection``, such that once
+islands have been identified a larger number of pixels is included for the
+fitting process.
 
-If the --regions option is specified, a DS9-compatible region file is output
-showing the shapes & positions of the sources. It is named according to the
-input filename with the extension changed to ".reg".
+If the ``--regions`` option is specified, a DS9-compatible region file is
+output showing the shapes & positions of the sources. It is named according to
+the input filename with the extension changed to ``.reg``.
 
-If the --residuals option is specified, a FITS file is produced showing the
-residuals left after the fitted sources have been subtraced from the input
-image. It is named according to the input filename with ".residuals" inserted
-before the extension.
+If the ``--residuals`` option is specified, a FITS file is produced showing
+the residuals left after the fitted sources have been subtraced from the input
+image. It is named according to the input filename with ``.residuals``
+inserted before the extension.
 
-If the --islands option is specified, a FITS file is produced showing the
+If the ``--islands`` option is specified, a FITS file is produced showing the
 Gaussians which have been fitted in the data. It is named according to the
-input filename with ".islands" inserted before the extension. The sum of this
-file with that produced by --residuals above should total the input image.
+input filename with ``.islands`` inserted before the extension. The sum of
+this file with that produced by ``--residuals`` above should total the input
+image.
 
---bmaj, --bmin and --bpa specify the shape of the restoring beam. They are
-equivalent to the BMAJ, BMIN and BPA FITS headers. Normally, the code will
-read the beam shape from the image metadata; however, if it is not available,
-it must be manually specified using these arguments or the process will abort.
+``--bmaj``, ``--bmin`` and ``--bpa`` specify the shape of the restoring beam.
+They are equivalent to the ``BMAJ``, ``BMIN`` and ``BPA`` FITS headers.
+Normally, the code will read the beam shape from the image metadata; however,
+if it is not available, it must be manually specified using these arguments or
+the process will abort.
 
 When generating background and RMS maps of the image prior to source
 detection, it is segmented into a grid. The size of the grid can be specified
-using the --grid option. The optimal value is a compromise: it should be
+using the ``--grid`` option. The optimal value is a compromise: it should be
 significantly larger than the most extended sources in the image, but small
 enough to account for small-scale variation across the image.
 
@@ -119,19 +122,21 @@ Output Definition
 
 The Gaussian fitted to sources is defined as:
 
-  peak * exp(ln(2.0) * ((x * cos(theta) + y * sin(theta)) / semiminor)^2 + ((y * cos(theta) - x * sin(theta)) / semimajor)^2)
+.. math::
+
+   peak * exp(ln(2.0) * ((x * cos(theta) + y * sin(theta)) / semiminor)^2 + ((y * cos(theta) - x * sin(theta)) / semimajor)^2)
 
 In other words:
 
-- x and y are the Cartesian coordinates of the centre of the Gaussian;
+- ``x`` and ``y`` are the Cartesian coordinates of the centre of the Gaussian;
 
-- peak is the value at the centre of the Gaussian;
+- ``peak`` is the value at the centre of the Gaussian;
 
-- theta is the position angle of the major axis measured counterclockwise from
-  the y axis;
+- ``theta`` is the position angle of the major axis measured counterclockwise
+  from the y axis;
 
-- semimajor and semiminor are the half-widths at half-maximum of the Gaussian
-  along its major and minor axes, respectively.
+- ``semimajor`` and ``semiminor`` are the half-widths at half-maximum of the
+  Gaussian along its major and minor axes, respectively.
 
 Final Remarks
 =============

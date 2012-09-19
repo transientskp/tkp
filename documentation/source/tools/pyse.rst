@@ -51,17 +51,17 @@ A script is available to make it possible to test the basic functionality of
 the ``pyse`` code. It does not make all the features listed above available.
 In particular, at the present time, the FDR algorithm is not available.
 
-On the LOFAR CEP1 cluster, run the script as::
+Assuming ``pyse`` exists on your ``$PATH``, it is involed by simply providing
+a list of filenames::
 
-  $ ~swinbank/sourcefinder/tkp/bin/pyse file1.fits ... fileN.fits
+  $ pyse file1.fits ... fileN.fits
 
 For each file specified, a list of sources identified is printed to the
 screen.
 
-A list of available command line option may be obtained with the -h/--help
-option::
+A list of available command line option may be obtained with the
+``-h``/``--help`` option::
 
-  $ ~swinbank/sourcefinder/tkp/bin/pyse -h
   Usage: pyse.py [options] file1 ... fileN
 
   Options:
@@ -72,10 +72,17 @@ option::
     --regions             Generate DS9 region file(s)
     --residuals           Generate residual maps
     --islands             Generate island maps
+    --deblend             Deblend composite sources
+    --deblend-thresholds=DEBLEND_THRESHOLDS
+                          Number of deblending subthresholds
     --bmaj=BMAJ           Major axis of beam
     --bmin=BMIN           Minor axis of beam
     --bpa=BPA             Beam position angle
     --grid=GRID           Background grid segment size
+    --margin=MARGIN       Margin applied to each edge of image (in pixels)
+    --radius=RADIUS       Radius of usable portion of image (in pixels)
+    --skymodel            Generate sky model
+    --csv                 Generate csv text file for use in programs such as
 
 
 The ``--detection`` argument specifies the multiple of the RMS noise which is
@@ -102,6 +109,20 @@ input filename with ``.islands`` inserted before the extension. The sum of
 this file with that produced by ``--residuals`` above should total the input
 image.
 
+If the ``--skymodel`` option is given, a skymodel file suitable for use with
+BBS will be generated. It is named according to the input filename with the
+extension changed to ``.skymodel``.
+
+If the ``--csv`` option is given, a comma-separated list of sources will be
+written to file. It is named according to the input filename with the
+extension changed to ``.csv``.
+
+If the ``--deblend`` option is specified, ``pyse`` will attempt to separate
+composite sources into multiple components and fit each one independently. The
+number of subthresholds used in this process can be specified using the
+``--deblend-thresholds`` argument. Refer to Spreeuw's thesis for a detailed
+description of the algorithm used.
+
 ``--bmaj``, ``--bmin`` and ``--bpa`` specify the shape of the restoring beam.
 They are equivalent to the ``BMAJ``, ``BMIN`` and ``BPA`` FITS headers.
 Normally, the code will read the beam shape from the image metadata; however,
@@ -114,6 +135,13 @@ using the ``--grid`` option. The optimal value is a compromise: it should be
 significantly larger than the most extended sources in the image, but small
 enough to account for small-scale variation across the image.
 
+Sometimes, it is useful to exclude the edge regions of an image from
+processing. The ``--margin`` takes an argument given in pixels and masks off
+all portions of the image within the given distance of the edge before
+processing. The ``--radius`` argument is similar, but rather masks off all
+parts of the image more than the given distance from the centre. This options
+are cumulative.
+
 All of these arguments are optional (with the caveat that the beam shape must
 be provided if not included with the image).
 
@@ -124,18 +152,18 @@ The Gaussian fitted to sources is defined as:
 
 .. math::
 
-   peak * exp(ln(2.0) * ((x * cos(theta) + y * sin(theta)) / semiminor)^2 + ((y * cos(theta) - x * sin(theta)) / semimajor)^2)
+   peak * \exp(\ln(2.0) * ((x \cos(\theta) + y \sin(\theta)) / semiminor)^2 + ((y \cos(\theta) - x \sin(\theta)) / semimajor)^2)
 
 In other words:
 
-- ``x`` and ``y`` are the Cartesian coordinates of the centre of the Gaussian;
+- :math:`x` and :math:`y` are the Cartesian coordinates of the centre of the Gaussian;
 
-- ``peak`` is the value at the centre of the Gaussian;
+- :math:`peak` is the value at the centre of the Gaussian;
 
-- ``theta`` is the position angle of the major axis measured counterclockwise
+- :math:`theta` is the position angle of the major axis measured counterclockwise
   from the y axis;
 
-- ``semimajor`` and ``semiminor`` are the half-widths at half-maximum of the
+- :math:`semimajor` and :math:`semiminor` are the half-widths at half-maximum of the
   Gaussian along its major and minor axes, respectively.
 
 Final Remarks

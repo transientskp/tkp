@@ -38,7 +38,7 @@ def rms(data, mask=None):
     """
     returns the RMS of an image, you can optionally supply a mask
     """
-    if mask:
+    if mask is not None:
         data = data * mask
     n = data.sum()
     median = numpy.median(data)

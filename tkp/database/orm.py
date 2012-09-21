@@ -565,8 +565,8 @@ class Image(DBObject):
 
         dbu.insert_monitored_sources(self.database.connection, results,
                                       self._id)
-        
-        
+
+
 class ExtractedSource(DBObject):
     """Class corresponding to the extractedsource table in the database"""
 
@@ -603,9 +603,9 @@ class ExtractedSource(DBObject):
 
                 - integration time (float)
 
-                - peak flux (float)
+                - integrated flux (float)
 
-                - peak flux error (float)
+                - integrated flux error (float)
 
                 - database ID of this particular source
         """

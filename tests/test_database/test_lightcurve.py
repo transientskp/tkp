@@ -49,12 +49,13 @@ class TestLightCurve(unittest.TestCase):
         # Insert the 3 sources in each image, while further varying the flux
         for i, image in enumerate(images):
             # Create the "source finding results"
+            # Note that we reuse 'i_peak' as both peak & integrated flux.
             sources = []
             for data in data_list:
                 source = (data['ra'], data['decl'],
                      data['ra_err'], data['decl_err'],
-                     data['i_peak']*(1+i), data['i_peak_err'],
-                     data['i_peak']*(1+i), data['i_peak_err'],
+                     data['i_peak']*(1+i), data['i_peak_err'], # Peak
+                     data['i_peak']*(1+i), data['i_peak_err'], # Integrated
                      10., # Significance level
                      1, 1, 0) # Beam params (width arcsec major, width arcsec minor, parallactic angle)
                 sources.append(source)

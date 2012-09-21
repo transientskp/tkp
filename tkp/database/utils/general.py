@@ -201,13 +201,13 @@ def lightcurve(conn, xtrsrcid):
         A list of 5-tuples, each tuple containing (in order):
 
             - observation start time as a datetime.datetime object
-            
+
             - integration time (float)
-            
-            - peak flux (float)
-            
-            - peak flux error (float)
-            
+
+            - integrated flux (float)
+
+            - integrated flux error (float)
+
             - database ID of this particular source
     """
     #TODO: This lightcurve returns fluxes for every band and stokes if available.
@@ -217,14 +217,14 @@ def lightcurve(conn, xtrsrcid):
         query = """\
         SELECT im.taustart_ts
               ,im.tau_time
-              ,ex.f_peak
-              ,ex.f_peak_err
+              ,ex.f_int
+              ,ex.f_int_err
               ,ex.id
           FROM extractedsource ex
               ,assocxtrsource ax
               ,image im
-         WHERE ax.runcat IN (SELECT runcat 
-                               FROM assocxtrsource 
+         WHERE ax.runcat IN (SELECT runcat
+                               FROM assocxtrsource
                               WHERE xtrsrc = %s
                             )
            AND ax.xtrsrc = ex.id

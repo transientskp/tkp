@@ -20,7 +20,9 @@ antenna_file = '/home/gijs/Work/lofar_system_software/LOFAR/MAC/Deployment/data/
 DATAPATH = tkp.config.config['test']['datapath']
 
 bad_file = os.path.join(DATAPATH, 'quality/noise/bad/home-pcarrol-msss-3C196a-analysis-band1.corr.fits')
-good_file = os.path.join(DATAPATH, 'quality/noise/good/home-pcarrol-msss-L086+69-analysis-band1.corr.fits')
+good_file = os.path.join(DATAPATH, 'quality/noise/good/home-pcarrol-msss-L086+69-analysis-band2.corr.fits')
+
+numpy.seterr(all='raise')
 
 @requires_data(bad_file)
 @requires_data(good_file)

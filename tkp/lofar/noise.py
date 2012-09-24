@@ -48,19 +48,20 @@ def parse_antennafile(positionsFile):
     return parsed
 
 def shortest_distances(coordinates, full_array):
-    """
-    coordinates - a list of 3 value tuples that represent x,y and
-                  z coordinates of a subset of the array
-    full_array  - a list of x,y,z coordinates of a full array
+    """ returns a list of distances for each antenna relative to its closest neighbour
 
-    returns a list of distances for each antenna relative to its
-    closest neighbour
+    Args:
+        coordinates: a list of 3 value tuples that represent x,y and
+                  z coordinates of a subset of the array
+        full_array: a list of x,y,z coordinates of a full array
+
+
 
     """
     distances = []
     for a in coordinates:
         shortest_distance = None
-        for b in coordinates:
+        for b in full_array:
             distance = pow((a[0] - b[0]), 2) + pow((a[1] - b[1]), 2) + pow((a[2] - b[2]), 2)
             if distance > 0.1 and (distance < shortest_distance or not shortest_distance):
                 shortest_distance = distance
@@ -68,10 +69,12 @@ def shortest_distances(coordinates, full_array):
     return [math.sqrt(x) for x in distances]
 
 def noise_level(frequency, subbandwidth, intgr_time, subbands=1, channels=64, Ncore=24, Nremote=16, Nintl=8, inner=True):
-    """
-    bandwidth - in Hz (should be 144042.96875 (144 kHz) or 180053.7109375 (180 kHz))
-    intgr_time - in seconds
-    inner - in case of LBA, inner or outer
+    """ Returns the theoretical noise level given the supplied array configuration
+
+    Args:
+        subbandwidth: in Hz (should be 144042.96875 (144 kHz) or 180053.7109375 (180 kHz))
+        intgr_time: in seconds
+        inner: in case of LBA, inner or outer
     """
     bandwidth = subbandwidth * subbands
     channelwidth = subbandwidth / channels
@@ -108,8 +111,7 @@ def noise_level(frequency, subbandwidth, intgr_time, subbands=1, channels=64, Nc
     return image_sens
 
 def Aeff_dipole(frequency, distance):
-    """
-    The effective area of each dipole in the array is determined by its distance to the nearest dipole (d)
+    """The effective area of each dipole in the array is determined by its distance to the nearest dipole (d)
     within the full array.
     """
     wavelength = scipy.constants.c/frequency
@@ -144,7 +146,8 @@ def system_sensitivity(frequency, Aeff):
 
     return S
 
-def DS():
+def delta_sensitivity(Ssys_dipole,Ssys_station, bandwidth, intgr_time):
+
     # The sensitivity DS (in Jy) of a single dipole (or half an 'antenna')
     DS_dipole = Ssys_dipole / (math.sqrt(2 * bandwidth, intgr_time))
 
@@ -152,5 +155,5 @@ def DS():
     DS_antenna = DS_dipole / math.sqrt(2)
 
     # For one station, the overlap in effective area from different dipoles has to be taken into account.
-    DS_station = Ssys_station / (math.sqrt(2 * bandwith, intgr_time))
+    DS_station = Ssys_station / (math.sqrt(2 * bandwidth, intgr_time))
 

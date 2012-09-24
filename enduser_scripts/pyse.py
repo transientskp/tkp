@@ -129,6 +129,7 @@ def handle_args():
     parser.add_option("--bpa", type="float", help="Beam position angle")
     parser.add_option("--grid", default=64, type="int", help="Background grid segment size")
     parser.add_option("--margin", default=0, type="int", help="Margin applied to each edge of image (in pixels)")
+    parser.add_option("--radius", default=0, type="float", help="Radius of usable portion of image (in pixels)")
     parser.add_option("--skymodel", action="store_true", help="Generate sky model")
     parser.add_option("--csv", action="store_true", help="Generate csv text file for use in programs such as TopCat")
     return parser.parse_args()
@@ -145,6 +146,7 @@ def set_configuration(options):
     config['back_sizex'] = options.grid
     config['back_sizey'] = options.grid
     config['margin'] = options.margin
+    config['radius'] = options.radius
     config['deblend'] = bool(options.deblend)
     config['deblend_nthresh'] = options.deblend_thresholds
     if options.residuals or options.islands:

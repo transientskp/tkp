@@ -123,6 +123,7 @@ def set_default_config():
     config.set('source_extraction', 'mf_threshold', '0')
     config.set('source_extraction', 'interpolate_order', '1')
     config.set('source_extraction', 'margin', '0')
+    config.set('source_extraction', 'radius', '0')
     config.set('source_extraction', 'max_degradation', '0.2')
     config.set('source_extraction', 'fdr_alpha', '1e-2')
     config.set('source_extraction', 'structuring_element',
@@ -245,6 +246,7 @@ def parse_config(config):
     floats = (('source_association', 'deruiter_radius'),
               ('source_extraction', 'mf_threshold'),
               ('source_extraction', 'margin'),
+              ('source_extraction', 'radius'),
               ('source_extraction', 'max_degradation'),
               ('source_extraction', 'fdr_alpha'),
               ('source_extraction', 'deblend_mincont'),

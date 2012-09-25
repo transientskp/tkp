@@ -138,9 +138,6 @@ def system_sensitivity(frequency, Aeff):
 
     Tsys = Tsky + Tinst
 
-    # the total collecting area
-    Aeff = 1 # ?
-
     # SEFD or system sensitivity
     S = (2 * n * scipy.constants.k / Aeff) * Tsys
 

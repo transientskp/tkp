@@ -31,18 +31,15 @@ class test_maps(unittest.TestCase):
         self.bad_image = accessors.FitsFile(bad_file, plane=0)
         self.good_image = accessors.FitsFile(good_file, plane=0)
 
-    """
     def testRms(self):
-        rms = statistics.rms(self.good_image.data)
-        #self.assertEquals(statistics.rms(numpy.ones([4,4])*4), 16)
+        self.assertEquals(statistics.rms(numpy.ones([4,4])*4), 0)
 
     def testClip(self):
-        a = numpy.ones([800, 800]) * 200
-        a[400, 400] = 1000
+        a = numpy.ones([50, 50]) * 10
+        a[20, 20] = 20
         clipped = statistics.clip(a)
-        check = numpy.ones([800, 800])
-        check[400,400] = 0
-        assert_almost_equal(clipped,  check, decimal=5)
+        check = numpy.array([10] * (50*50-1))
+        assert_array_equal(clipped,  check)
 
     def testTheoreticalMaxValue(self):
         bandwidth = self.good_image.freqbw
@@ -72,13 +69,17 @@ class test_maps(unittest.TestCase):
                 aeff = sum([tkp.lofar.noise.Aeff_dipole(frequency, x) for x in distances])
                 noise_level = tkp.lofar.noise.system_sensitivity(frequency, aeff)
                 #print frequency, "\t", aeff
-    """
 
     def testRmsFits(self):
         bad_rms = statistics.rms(self.bad_image.data)
         good_rms = statistics.rms(self.good_image.data)
 
-        print bad_rms, good_rms
+        for i in range(1,9):
+            bad_file = os.path.join(DATAPATH, 'quality/noise/bad/home-pcarrol-msss-3C196a-analysis-band%i.corr.fits' % i)
+            self.bad_image = accessors.FitsFile(bad_file, plane=0)
+            bad_rms = statistics.rms(self.bad_image.data)
+            print bad_file
+            print bad_rms
 
 if __name__ == '__main__':
     unittest.main()

@@ -18,7 +18,7 @@ from numpy.testing import assert_array_equal, assert_almost_equal
 antenna_file = '/home/gijs/Work/lofar_system_software/LOFAR/MAC/Deployment/data/StaticMetaData/AntennaArrays/CS001-AntennaArrays.conf'
 antenna_file2 = '/home/gijs/Work/lofar_system_software/LOFAR/MAC/Deployment/data/StaticMetaData/AntennaArrays/CS103-AntennaArrays.conf'
 DATAPATH = tkp.config.config['test']['datapath']
-bad_file = os.path.join(DATAPATH, 'quality/noise/bad/home-pcarrol-msss-3C196a-analysis-band1.corr.fits')
+bad_file = os.path.join(DATAPATH, 'quality/noise/bad/home-pcarrol-msss-3C196a-analysis-band5.corr.fits')
 good_file = os.path.join(DATAPATH, 'quality/noise/good/home-pcarrol-msss-L086+69-analysis-band2.corr.fits')
 
 #numpy.seterr(all='raise')
@@ -29,7 +29,7 @@ good_file = os.path.join(DATAPATH, 'quality/noise/good/home-pcarrol-msss-L086+69
 class test_maps(unittest.TestCase):
     def setUp(self):
         self.bad_image = accessors.FitsFile(bad_file, plane=0)
-        #self.good_image = accessors.FitsFile(good_file, plane=0)
+        self.good_image = accessors.FitsFile(good_file, plane=0)
 
     """
     def testRms(self):
@@ -75,31 +75,10 @@ class test_maps(unittest.TestCase):
     """
 
     def testRmsFits(self):
-        #bad_rms = statistics.rms(self.bad_image.data)
-        #good_rms = statistics.rms(self.good_image.data)
-        #bad_mask = statistics.iterative_clip(self.bad_image.data)
-        #bad_rms = statistics.rms(self.bad_image.data, bad_mask)
-        #good_mask = statistics.iterative_clip(self.good_image.data)
-        #good_rms = statistics.rms(self.good_image.data, good_mask)
-        #clipped = statistics.sigma_clip(self.bad_image.data)
-        #bad_rms_john = statistics.clipped_rms(self.bad_image.data)
-        #good_rms_john = statistics.clipped_rms(self.good_image.data)
+        bad_rms = statistics.rms(self.bad_image.data)
+        good_rms = statistics.rms(self.good_image.data)
 
-
-        print "john"
-        t = time.time()
-        rms_john = statistics.john_rms(self.bad_image.data)
-        print time.time() - t
-
-
-
-        print "\ngijs"
-        t = time.time()
-        mask = statistics.clip(self.bad_image.data)
-        rms = statistics.rms(self.bad_image.data, mask)
-        print time.time() - t
-
-        self.assertEqual(rms_john, rms)
+        print bad_rms, good_rms
 
 if __name__ == '__main__':
     unittest.main()

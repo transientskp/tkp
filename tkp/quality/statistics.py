@@ -42,3 +42,10 @@ def clip_mask(data, sigma=3):
             return mask
         masked = data[~mask]
         new_mask[:,:] = False
+
+def beam_correction(bmaj, bmin):
+    """ Calculates a beam correction from the beam properties
+    Args:
+        bmaj, bmin: beam properties
+    """
+    return 1

@@ -1,83 +1,36 @@
 """
-functions for calculating noise levels of LOFAR equipment
+functions for calculating theoretical noise levels of LOFAR equipment
 
 more info:
 http://www.astron.nl/radio-observatory/astronomers/lofar-imaging-capabilities-sensitivity/sensitivity-lofar-array/sensiti
 """
+import os
 import math
 import scipy.constants
 import scipy.interpolate
-
-def parse_antennafile(positionsFile):
-    """
-    This parses the files in LOFAR/MAC/Deployment/data/StaticMetaData/AntennaArrays in the LOFAR system software repo.
-    """
-    file_handler = open(positionsFile, 'r')
-    parsed = {}
-    state = 0
-    array = None
-    position = None # where is the station relative to the centre of the earth
-    antennanum = 0
-    positions = []
-    antennacount = 0
-
-    for line in file_handler:
-        line = line.strip()
-
-        if not line or line.startswith('#'):
-            continue
-        if state == 0: # array type
-            array = line
-            state = 1
-        elif state == 1: # array position
-            position = [float(x) for x in line.split()[2:5]]
-            state = 2
-        elif state == 2: # array properties meta data
-            antennanum = int(line.split()[0])
-            antennacount = antennanum
-            state = 3
-        elif state == 3:
-            if antennacount > 0:
-                positions.append([float(x) for x in line.split()])
-                antennacount -= 1
-            else:
-                assert(line == "]")
-                state = 0
-                parsed[array] = positions
-                positions = []
-    return parsed
-
-def shortest_distances(coordinates, full_array):
-    """ returns a list of distances for each antenna relative to its closest neighbour
-
-    Args:
-        coordinates: a list of 3 value tuples that represent x,y and
-                  z coordinates of a subset of the array
-        full_array: a list of x,y,z coordinates of a full array
+import tkp
+import tkp.lofar.antennaarrays
 
 
-
-    """
-    distances = []
-    for a in coordinates:
-        shortest_distance = None
-        for b in full_array:
-            distance = pow((a[0] - b[0]), 2) + pow((a[1] - b[1]), 2) + pow((a[2] - b[2]), 2)
-            if distance > 0.1 and (distance < shortest_distance or not shortest_distance):
-                shortest_distance = distance
-        distances.append(shortest_distance)
-    return [math.sqrt(x) for x in distances]
-
-def noise_level(frequency, subbandwidth, intgr_time, subbands=1, channels=64, Ncore=24, Nremote=16, Nintl=8, inner=True):
+def noise_level(frequency, subbandwidth, intgr_time, configuration, subbands=1, channels=64, Ncore=24, Nremote=16, Nintl=8):
     """ Returns the theoretical noise level given the supplied array configuration
 
     Args:
         subbandwidth: in Hz (should be 144042.96875 (144 kHz) or 180053.7109375 (180 kHz))
         intgr_time: in seconds
         inner: in case of LBA, inner or outer
+        configuration: LBA_INNER, LBA_OUTER, LBA_SPARSE, LBA or HBA
     """
     bandwidth = subbandwidth * subbands
     channelwidth = subbandwidth / channels
+
+    if configuration.startswith("LBA"):
+        ds = tkp.lofar.antennaarrays.dipole_distances[configuration]
+        Aeff = sum([tkp.lofar.noise.Aeff_dipole(frequency, x) for x in ds])
+    else:
+        Aeff = tkp.lofar.noise.Aeff_dipole(frequency)
+
+    Ssys = system_sensitivity(frequency, Aeff)
 
     baselines_core = (Ncore * (Ncore - 1)) / 2
     baselines_remote = (Nremote * (Nremote - 1)) / 2
@@ -86,7 +39,10 @@ def noise_level(frequency, subbandwidth, intgr_time, subbands=1, channels=64, Nc
     baselines_ci = (Ncore * Nintl)
     baselines_ri = (Nremote * Nintl)
 
-    SEFD_core, SEFD_remote, SEFD_intl = SEFD(frequency, inner)
+    # not sure if this is correct
+    SEFD_core = Ssys
+    SEFD_remote = Ssys
+    SEFD_intl = Ssys
 
     SEFD_cr = math.sqrt(SEFD_core) * math.sqrt(SEFD_remote)
     SEFD_ci = math.sqrt(SEFD_core) * math.sqrt(SEFD_intl)
@@ -110,9 +66,9 @@ def noise_level(frequency, subbandwidth, intgr_time, subbands=1, channels=64, Nc
 
     return image_sens
 
-def Aeff_dipole(frequency, distance):
+def Aeff_dipole(frequency, distance=None):
     """The effective area of each dipole in the array is determined by its distance to the nearest dipole (d)
-    within the full array.
+    within the full array. Distance is distance to nearest dipole, only required for LBA.
     """
     wavelength = scipy.constants.c/frequency
     if wavelength > 3: # LBA dipole

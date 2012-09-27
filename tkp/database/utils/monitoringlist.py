@@ -299,179 +299,172 @@ def _insert_user_monitored_source_into_extractedsource(cursor, image_id, result)
     y = math.cos(math.radians(dec)) * math.sin(math.radians(ra))
     z = math.sin(math.radians(dec))
     racosdecl = ra * math.cos(math.radians(dec))
-    if True: #Temporary indentation hack to make it easier to track diff
-        query = """\
-        INSERT INTO extractedsource
-          (image
-          ,zone
-          ,ra
-          ,decl
-          ,ra_err
-          ,decl_err
-          ,x
-          ,y
-          ,z
-          ,racosdecl
-          ,det_sigma
-          ,f_peak
-          ,f_peak_err
-          ,f_int
-          ,f_int_err
-          ,semimajor
-          ,semiminor
-          ,pa
-          ,extract_type
-          )
-        VALUES
-          (%s
-          ,%s
-          ,%s
-          ,%s
-          ,%s
-          ,%s
-          ,%s
-          ,%s
-          ,%s
-          ,%s
-          ,%s
-          ,%s
-          ,%s
-          ,%s
-          ,%s
-          ,%s
-          ,%s
-          ,%s
-          ,1
-          )
-        """
-        try:
-            cursor.execute(
-                query, (image_id, int(math.floor(dec)), ra, dec, ra_err, dec_err,
-                        x, y, z, racosdecl, sigma, peak, peak_err, flux, flux_err,
-                        semimajor, semiminor, pa))
-            return cursor.lastrowid
-        except db.Error, e:
-            query = query % (
-                image_id, int(math.floor(dec)), ra, dec, ra_err, dec_err,
-                x, y, z, sigma, peak, peak_err, flux, flux_err,
-                semimajor, semiminor, pa)
-            logging.warn("Query failed: %s", query)
-            cursor.close()
-            raise
+    query = """\
+    INSERT INTO extractedsource
+      (image
+      ,zone
+      ,ra
+      ,decl
+      ,ra_err
+      ,decl_err
+      ,x
+      ,y
+      ,z
+      ,racosdecl
+      ,det_sigma
+      ,f_peak
+      ,f_peak_err
+      ,f_int
+      ,f_int_err
+      ,semimajor
+      ,semiminor
+      ,pa
+      ,extract_type
+      )
+    VALUES
+      (%s
+      ,%s
+      ,%s
+      ,%s
+      ,%s
+      ,%s
+      ,%s
+      ,%s
+      ,%s
+      ,%s
+      ,%s
+      ,%s
+      ,%s
+      ,%s
+      ,%s
+      ,%s
+      ,%s
+      ,%s
+      ,1
+      )
+    """
+    try:
+        cursor.execute(
+            query, (image_id, int(math.floor(dec)), ra, dec, ra_err, dec_err,
+                    x, y, z, racosdecl, sigma, peak, peak_err, flux, flux_err,
+                    semimajor, semiminor, pa))
+        return cursor.lastrowid
+    except db.Error, e:
+        query = query % (
+            image_id, int(math.floor(dec)), ra, dec, ra_err, dec_err,
+            x, y, z, sigma, peak, peak_err, flux, flux_err,
+            semimajor, semiminor, pa)
+        logging.warn("Query failed: %s", query)
+        cursor.close()
+        raise
         
         
 
 def _insert_user_monitored_source_into_runcat(cursor, xtrsrcid, image_id):
     """Returns: runcatid"""
-    if True: #Temporary indentation hack to make it easier to track diff
-        if True: #Remove once everything working fine.
-            
-            # Insert as new source into the running catalog
-            # and update the monitoringlist.xtrsrc
-            query = """\
-            INSERT INTO runningcatalog
-                (xtrsrc
-                ,dataset
-                ,datapoints
-                ,zone
-                ,wm_ra
-                ,wm_decl
-                ,wm_ra_err
-                ,wm_decl_err
-                ,avg_wra
-                ,avg_wdecl
-                ,avg_weight_ra
-                ,avg_weight_decl
-                ,x
-                ,y
-                ,z
-                )
-                SELECT x0.id
-                      ,i0.dataset
-                      ,1
-                      ,x0.zone
-                      ,x0.ra
-                      ,x0.decl
-                      ,x0.ra_err
-                      ,x0.decl_err
-                      ,x0.ra / (x0.ra_err * x0.ra_err)
-                      ,x0.decl / (x0.decl_err * x0.decl_err)
-                      ,1 / (x0.ra_err * x0.ra_err)
-                      ,1 / (x0.decl_err * x0.decl_err)
-                      ,x0.x
-                      ,x0.y
-                      ,x0.z
-                  FROM extractedsource x0
-                      ,image i0
-                 WHERE x0.id = %s
-                   AND i0.id = %s
-            """
-            # TODO: Add runcat_flux as well!
-            try:
+    
+    # Insert as new source into the running catalog
+    # and update the monitoringlist.xtrsrc
+    query = """\
+    INSERT INTO runningcatalog
+        (xtrsrc
+        ,dataset
+        ,datapoints
+        ,zone
+        ,wm_ra
+        ,wm_decl
+        ,wm_ra_err
+        ,wm_decl_err
+        ,avg_wra
+        ,avg_wdecl
+        ,avg_weight_ra
+        ,avg_weight_decl
+        ,x
+        ,y
+        ,z
+        )
+        SELECT x0.id
+              ,i0.dataset
+              ,1
+              ,x0.zone
+              ,x0.ra
+              ,x0.decl
+              ,x0.ra_err
+              ,x0.decl_err
+              ,x0.ra / (x0.ra_err * x0.ra_err)
+              ,x0.decl / (x0.decl_err * x0.decl_err)
+              ,1 / (x0.ra_err * x0.ra_err)
+              ,1 / (x0.decl_err * x0.decl_err)
+              ,x0.x
+              ,x0.y
+              ,x0.z
+          FROM extractedsource x0
+              ,image i0
+         WHERE x0.id = %s
+           AND i0.id = %s
+    """
+    # TODO: Add runcat_flux as well!
+    try:
 #                print "*** QUERY: ***"
 #                print query % (xtrsrcid, image_id)
-                cursor.execute(query, (xtrsrcid, image_id))
-                #Doesn't work, returns -1
-                #TO DO: Figure out why?
+        cursor.execute(query, (xtrsrcid, image_id))
+        #Doesn't work, returns -1
+        #TO DO: Figure out why?
 #                print "****LASTROWID: ",cursor.lastrowid, "*****"
 #                ret_id = cursor.lastrowid
-                query = """SELECT id 
-                FROM runningcatalog
-                WHERE xtrsrc = %s"""
-                cursor.execute(query, (xtrsrcid,))
-                rc_id = cursor.fetchone()[0]
-                print "***RCID***:", rc_id
-                return rc_id
-            except db.Error, e:
-                query = query % (image_id, xtrsrcid)
-                logging.warn("query failed: %s", query)
-                cursor.close()
-                raise
+        query = """SELECT id 
+        FROM runningcatalog
+        WHERE xtrsrc = %s"""
+        cursor.execute(query, (xtrsrcid,))
+        rc_id = cursor.fetchone()[0]
+        print "***RCID***:", rc_id
+        return rc_id
+    except db.Error, e:
+        query = query % (image_id, xtrsrcid)
+        logging.warn("query failed: %s", query)
+        cursor.close()
+        raise
             
 def _update_monitoringlist_entry_rcid(cursor, monitorid, runcatid ):
-    if True: #Temporary indentation hack to make it easier to track diff
-        if True: #Remove once everything working fine.
-            # Now update the monitoringlist.runcat
-            query = """\
-            UPDATE monitoringlist 
-               SET runcat = %s 
-             WHERE id = %s
-            """
-            try:
-                cursor.execute(query, (runcatid, monitorid))
-            except db.Error, e:
+    # Now update the monitoringlist.runcat
+    query = """\
+    UPDATE monitoringlist 
+       SET runcat = %s 
+     WHERE id = %s
+    """
+    try:
+        cursor.execute(query, (runcatid, monitorid))
+    except db.Error, e:
 #                query = query % (xtrsrcid, xtrsrc_id)
-                logging.warn("query failed: %s", query % (runcatid, monitorid))
-                cursor.close()
-                raise                    
+        logging.warn("query failed: %s", query % (runcatid, monitorid))
+        cursor.close()
+        raise                    
             
 def _insert_monitored_source_into_assocxtrsource(cursor,runcatid,xtrsrcid):
-    if True: #Temporary indentation hack to make it easier to track diff
-        if True: #Remove once everything working fine. 
-            query = """\
-            INSERT INTO assocxtrsource 
-              (runcat
-              ,xtrsrc
-              ,type
-              ,distance_arcsec
-              ,r
-              ,loglr
-              )
-            VALUES 
-              (%s
-              ,%s
-              ,0
-              ,0
-              ,0
-              ,0)
-            """
-            try:
-                cursor.execute(query, (runcatid, xtrsrcid))
-            except db.Error, e:
-                query = query % (runcatid, xtrsrcid)
-                logging.warn("query failed: %s", query)
-                cursor.close()
-                raise
+    query = """\
+    INSERT INTO assocxtrsource 
+      (runcat
+      ,xtrsrc
+      ,type
+      ,distance_arcsec
+      ,r
+      ,loglr
+      )
+    VALUES 
+      (%s
+      ,%s
+      ,0
+      ,0
+      ,0
+      ,0)
+    """
+    try:
+        cursor.execute(query, (runcatid, xtrsrcid))
+    except db.Error, e:
+        query = query % (runcatid, xtrsrcid)
+        logging.warn("query failed: %s", query)
+        cursor.close()
+        raise
 
 
 def add_runcat_sources_to_monitoringlist(conn, dataset_id, 
@@ -645,8 +638,8 @@ SELECT ax.runcat
         AND ax.xtrsrc = ex.id
     GROUP BY ax.runcat
     HAVING 
-        MAX(ex.det_sigma)>%s    
-        AND SUM(ex.det_sigma)>%s;
+        MAX(ex.det_sigma)>=%s    
+        AND SUM(ex.det_sigma)>=%s;
 """.format(ids_placeholder)
         query_tuple = tuple(runcat_ids +[single_epoch_threshold, combined_threshold])
         

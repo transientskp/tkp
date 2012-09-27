@@ -12,18 +12,16 @@ import tkp.config
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from decorators import requires_data
 import numpy
-import time
 from numpy.testing import assert_array_equal, assert_almost_equal
 
-antenna_file = '/home/gijs/Work/lofar_system_software/LOFAR/MAC/Deployment/data/StaticMetaData/AntennaArrays/CS001-AntennaArrays.conf'
-antenna_file2 = '/home/gijs/Work/lofar_system_software/LOFAR/MAC/Deployment/data/StaticMetaData/AntennaArrays/CS103-AntennaArrays.conf'
+
 DATAPATH = tkp.config.config['test']['datapath']
 bad_file = os.path.join(DATAPATH, 'quality/noise/bad/home-pcarrol-msss-3C196a-analysis-band5.corr.fits')
 good_file = os.path.join(DATAPATH, 'quality/noise/good/home-pcarrol-msss-L086+69-analysis-band2.corr.fits')
+antenna_file = os.path.join(DATAPATH, 'lofar/CS001-AntennaArrays.conf')
 
 #numpy.seterr(all='raise')
 
-@requires_data(fits_file)
 @requires_data(antenna_file)
 @requires_data(bad_file)
 @requires_data(good_file)
@@ -76,12 +74,6 @@ class test_maps(unittest.TestCase):
         bad_rms = statistics.rms(self.bad_image.data)
         good_rms = statistics.rms(self.good_image.data)
 
-        for i in range(1,9):
-            bad_file = os.path.join(DATAPATH, 'quality/noise/bad/home-pcarrol-msss-3C196a-analysis-band%i.corr.fits' % i)
-            self.bad_image = accessors.FitsFile(bad_file, plane=0)
-            bad_rms = statistics.rms(self.bad_image.data)
-            print bad_file
-            print bad_rms
 
 if __name__ == '__main__':
     unittest.main()

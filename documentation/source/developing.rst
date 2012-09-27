@@ -1,8 +1,8 @@
 .. _developing:
 
-++++++++++++++++++++++++++++++++++++++
-Developing for the Transients Pipeline
-++++++++++++++++++++++++++++++++++++++
++++++++++++++++++++++++++
+Guidelines for Developers
++++++++++++++++++++++++++
 
 This documents deals (shortly) with writing software for the
 Transients Pipeline, either the TraP part (recipes) or the underlying
@@ -257,8 +257,8 @@ The following log files are created during the build process:
    possible user databases) as well.
 
 
-Coding guideline
-================
+Coding guidelines
+=================
 
 We try to follow PEP 8 as much as possible, although at times, this is
 flexible (e.g., short variable names sometimes make more sense in the
@@ -329,7 +329,7 @@ I suggest to follow at least one simple rule:
 .. pull-quote::
 
    **If a bug shows up and is fixed, or a function is changed, write a
-   unit tests, detailing the bug (and its fix) or the change.**
+   unit test, detailing the bug (and its fix) or the change.**
 
 
 Unit tests

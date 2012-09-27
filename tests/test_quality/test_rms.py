@@ -23,6 +23,8 @@ good_file = os.path.join(DATAPATH, 'quality/noise/good/home-pcarrol-msss-L086+69
 
 #numpy.seterr(all='raise')
 
+@requires_data(fits_file)
+@requires_data(antenna_file)
 @requires_data(bad_file)
 @requires_data(good_file)
 

@@ -638,8 +638,8 @@ SELECT ax.runcat
         AND ax.xtrsrc = ex.id
     GROUP BY ax.runcat
     HAVING 
-        MAX(ex.det_sigma)>%s    
-        AND SUM(ex.det_sigma)>%s;
+        MAX(ex.det_sigma)>=%s    
+        AND SUM(ex.det_sigma)>=%s;
 """.format(ids_placeholder)
         query_tuple = tuple(runcat_ids +[single_epoch_threshold, combined_threshold])
         

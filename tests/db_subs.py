@@ -99,51 +99,80 @@ def example_extractedsource_tuple(ra=123.123, dec=10.5,
                                )
     
 def example_source_lists(n_images, include_non_detections):
+    """
+        Return source lists for more than 7 images, 1 fixed source, 3 transients.
+        
+        Mock sources are as follows:
+            1 Fixed source, present in all lists returned.
+            2 `fast transients`
+                1 present in images[3], sigma = 15
+                1 present in images[4], sigma = 5
+            1 `slow transient`, 
+                present in images indices [5]  (sigma = 4) and [6], (sigma = 3)
+                
+        To do: Create a proper `mock_transient` class to encode this information?
+    
+    """
     assert n_images >= 7
-    FixedSource = example_extractedsource_tuple()            
+    FixedSource = example_extractedsource_tuple()           
+    FixedSource_image_indices = range(n_images) 
+    
     SlowTransient1 = FixedSource._replace(ra=123.888,
                                   peak = 5e-3, 
                                   flux = 5e-3,
                                   sigma = 4,
                                   )
-    SlowTransient2 = SlowTransient1._replace(sigma = 3)    
+    SlowTransient1_image_indices = [5]
+    
+    SlowTransient2 = SlowTransient1._replace(sigma = 3)
+    SlowTransient2_image_indices = [6]    
     
     BrightFastTransient = FixedSource._replace(dec=15.666,
                                     peak = 30e-3,
                                     flux = 30e-3, 
                                     sigma = 15,
                                   )
+    BrightFastTransient_image_indices = [3]
     
     WeakFastTransient = FixedSource._replace(dec=15.777,
                                     peak = 10e-3,
                                     flux = 10e-3, 
                                     sigma = 5,
                                   )
-    source_lists=[]
-    for i in xrange(n_images):
-        source_lists.append([FixedSource])
+    WeakFastTransient_image_indices = [4]
     
-    source_lists[3].append(BrightFastTransient)
-    source_lists[4].append(WeakFastTransient)        
-    source_lists[5].append(SlowTransient1)
-    source_lists[6].append(SlowTransient2)
+    source_lists=[list() for _ in range(n_images)]
     
-    if include_non_detections:
-        #nd_sigma = 0.0
-        nd_sigma = 0.01 #Workaround for issue 3532
-        # https://support.astron.nl/lofar_issuetracker/issues/3532
-        for sl in source_lists[:5]+source_lists[7:]:
-            sl.append(SlowTransient1._replace(peak=0,
+    def insert_source_into_source_lists(src_list, 
+                                        transient, transient_image_indices,
+                                        include_non_detections):
+        for i in transient_image_indices:
+            src_list[i].append(transient)
+            
+        if include_non_detections:
+            for i in len(src_list):
+                if i not in transient_image_indices:
+                    src_list[i].append(transient._replace(peak=0,
                                                flux=0, 
-                                               sigma=nd_sigma))
-        for sl in source_lists[:3]+source_lists[4:]:
-            sl.append(BrightFastTransient._replace(peak=0,
-                                                   flux=0, 
-                                                   sigma=nd_sigma))
-        for sl in source_lists[:4]+source_lists[5:]:
-            sl.append(WeakFastTransient._replace(peak=0,
-                                                   flux=0, 
-                                                   sigma=nd_sigma))
+                                               sigma=0)
+                                       )
+    insert_source_into_source_lists(source_lists, 
+                                FixedSource, FixedSource_image_indices,
+                                include_non_detections)
+    
+    insert_source_into_source_lists(source_lists, 
+                                SlowTransient1, SlowTransient1_image_indices,
+                                include_non_detections)
+    insert_source_into_source_lists(source_lists, 
+                                SlowTransient2, SlowTransient2_image_indices,
+                                include_non_detections)
+    insert_source_into_source_lists(source_lists, 
+                            BrightFastTransient, BrightFastTransient_image_indices,
+                            include_non_detections)
+    insert_source_into_source_lists(source_lists, 
+                            WeakFastTransient, WeakFastTransient_image_indices,
+                            include_non_detections)
+    
     
 #    print "Source list lengths:"
 #    print ", ".join([str(len(l)) for l in source_lists])

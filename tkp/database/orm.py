@@ -404,22 +404,25 @@ class DataSet(DBObject):
         [ {runcat, xtrsrc, datapoints, max_det_sigma, sum_det_sigma} ]
             
         """
-        candidates = dbu.select_winking_sources(
+        all_candidates = dbu.select_winking_sources(
              self.database.connection, self._id)
-        
-        candidates_sigma = dbu.select_transient_candidates_above_thresh(
-                    self.database.connection, 
-                    [c['runcat'] for c in candidates],
-                    single_epoch_threshold,
-                    combined_threshold
+                
+        thresholded_candidates = dbu.select_transient_candidates_above_thresh(
+                    conn=self.database.connection,
+                    runcat_ids=[c['runcat'] for c in all_candidates],
+                    single_epoch_threshold=single_epoch_threshold,
+                    combined_threshold=combined_threshold
                     )
-        for i in xrange(len(candidates)):
-            candidates[i].update(candidates_sigma[i])
         
+        #Pull in the  xtrsrc and datapoints info
+        for tc in thresholded_candidates:
+            for ac in all_candidates:
+                if tc['runcat']==ac['runcat']:
+                    tc.update(ac)
         
         #TO DO: Filter out those which only disappear because they drop out of FoV
         ###  --- This will require FoV information in database
-        return candidates
+        return thresholded_candidates
     
     def _add_runcat_sources_to_monitoringlist(self, runcat_ids):
         dbu.add_runcat_sources_to_monitoringlist(self.database.connection,

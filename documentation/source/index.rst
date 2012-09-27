@@ -10,7 +10,8 @@ Contents:
 
 .. toctree::
    :maxdepth: 2
-
+    
+   caveat
    introduction
    installation
    cookbook
@@ -18,6 +19,7 @@ Contents:
    setup
    database
    trap_py
+   logic
    recipes
    classification
    monitoringlist

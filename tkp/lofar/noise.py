@@ -28,7 +28,8 @@ def noise_level(frequency, subbandwidth, intgr_time, configuration, subbands=1, 
         ds = tkp.lofar.antennaarrays.dipole_distances[configuration]
         Aeff = sum([tkp.lofar.noise.Aeff_dipole(frequency, x) for x in ds])
     else:
-        Aeff = tkp.lofar.noise.Aeff_dipole(frequency)
+        # todo: check if this is correct. There are 16 antennae per tile. There are 24 tiles per core station
+        Aeff = 16 * 24 * tkp.lofar.noise.Aeff_dipole(frequency)
 
     Ssys = system_sensitivity(frequency, Aeff)
 
@@ -39,7 +40,7 @@ def noise_level(frequency, subbandwidth, intgr_time, configuration, subbands=1, 
     baselines_ci = (Ncore * Nintl)
     baselines_ri = (Nremote * Nintl)
 
-    # not sure if this is correct
+    # todo: not sure if this is correct
     SEFD_core = Ssys
     SEFD_remote = Ssys
     SEFD_intl = Ssys

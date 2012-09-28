@@ -9,6 +9,9 @@ make symlinks, something like this::
  $ ln -s /scratch/catfiles/VLSS-all_strip.csv catfiles/vlss/vlss.csv
  $ ln -s /scratch/catfiles/WENSS-all_strip.csv catfiles/wenss/wenss.csv
 
+Note that the database user needs to be able to access these files,
+not your current id.
+
 then run the setup script to populate your database::
  
   $ ./setup.sh

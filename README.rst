@@ -59,11 +59,14 @@ All packages above (except pyrap and pygsl) are available in debian/ubuntu or py
         python-pyfits libboost-python-dev libwcs4 wcslib-dev python-h5py python-pip scons \
         python-tz gfortran
 
-    $ sudo pip install python-monetdb
-
 To install pyrap or pygsl download the source from the website and follow the instructions in the README.
 
+TKP uses MonetDB for storing all data. If you want to run a MonetDB server follow the
+instructions described here: http://dev.monetdb.org/downloads/deb/
 
+TKP uses the latest version of the MonetDB API which is only availably through PYPI at the moment::
+
+    $ sudo pip install python-monetdb
 
 Testing
 =======

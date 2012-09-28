@@ -4,3 +4,4 @@ CREATE TABLE rejectreason (
 	PRIMARY KEY (id)
 );
 
+INSERT INTO rejectreason VALUES (0, 'RMS too high');

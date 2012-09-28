@@ -22,16 +22,31 @@ def noise_level(frequency, subbandwidth, intgr_time, configuration, subbands=1, 
         configuration: LBA_INNER, LBA_OUTER, LBA_SPARSE, LBA or HBA
     """
     bandwidth = subbandwidth * subbands
-    channelwidth = subbandwidth / channels
 
     if configuration.startswith("LBA"):
-        ds = tkp.lofar.antennaarrays.dipole_distances[configuration]
-        Aeff = sum([tkp.lofar.noise.Aeff_dipole(frequency, x) for x in ds])
+        ds_core = tkp.lofar.antennaarrays.core_dipole_distances[configuration]
+        Aeff_core = sum([tkp.lofar.noise.Aeff_dipole(frequency, x) for x in ds_core])
+        ds_remote = tkp.lofar.antennaarrays.remote_dipole_distances[configuration]
+        Aeff_remote = sum([tkp.lofar.noise.Aeff_dipole(frequency, x) for x in ds_remote])
+        ds_intl = tkp.lofar.antennaarrays.intl_dipole_distances[configuration]
+        Aeff_intl = sum([tkp.lofar.noise.Aeff_dipole(frequency, x) for x in ds_intl])
     else:
         # todo: check if this is correct. There are 16 antennae per tile. There are 24 tiles per core station
-        Aeff = 16 * 24 * tkp.lofar.noise.Aeff_dipole(frequency)
+        Aeff_core = 16 * 24 * tkp.lofar.noise.Aeff_dipole(frequency)
+        Aeff_remote = 16 * 24 * tkp.lofar.noise.Aeff_dipole(frequency)
+        Aeff_intl = 16 * 24 * tkp.lofar.noise.Aeff_dipole(frequency)
 
-    Ssys = system_sensitivity(frequency, Aeff)
+    Ssys_core = system_sensitivity(frequency, Aeff_core)
+    Ssys_remote = system_sensitivity(frequency, Aeff_remote)
+    Ssys_intl = system_sensitivity(frequency, Aeff_intl)
+
+    SEFD_core = Ssys_core
+    SEFD_remote = Ssys_remote
+    SEFD_intl = Ssys_intl
+
+    SEFD_cr = math.sqrt(SEFD_core) * math.sqrt(SEFD_remote)
+    SEFD_ci = math.sqrt(SEFD_core) * math.sqrt(SEFD_intl)
+    SEFD_ri = math.sqrt(SEFD_remote) * math.sqrt(SEFD_intl)
 
     baselines_core = (Ncore * (Ncore - 1)) / 2
     baselines_remote = (Nremote * (Nremote - 1)) / 2
@@ -39,18 +54,7 @@ def noise_level(frequency, subbandwidth, intgr_time, configuration, subbands=1, 
     baselines_cr = (Ncore * Nremote)
     baselines_ci = (Ncore * Nintl)
     baselines_ri = (Nremote * Nintl)
-
-    # todo: not sure if this is correct
-    SEFD_core = Ssys
-    SEFD_remote = Ssys
-    SEFD_intl = Ssys
-
-    SEFD_cr = math.sqrt(SEFD_core) * math.sqrt(SEFD_remote)
-    SEFD_ci = math.sqrt(SEFD_core) * math.sqrt(SEFD_intl)
-    SEFD_ri = math.sqrt(SEFD_remote) * math.sqrt(SEFD_intl)
-
-    # factor for increase of noise due to the weighting scheme
-    W = 1 # taken from PHP script
+    baselines_total = baselines_core + baselines_remote + baselines_intl + baselines_cr + baselines_ci + baselines_ri
 
     t_core = baselines_core / pow(SEFD_core, 2)
     t_remote = baselines_remote / pow(SEFD_remote, 2)
@@ -59,13 +63,18 @@ def noise_level(frequency, subbandwidth, intgr_time, configuration, subbands=1, 
     t_ci = baselines_ci / pow(SEFD_ci, 2)
     t_ri = baselines_ri / pow(SEFD_ri, 2)
 
+    # factor for increase of noise due to the weighting scheme
+    W = 1 # taken from PHP script
+
     # The noise level in a LOFAR image
     image_sens = W / math.sqrt(4 * bandwidth * intgr_time * ( t_core + t_remote + t_intl + t_cr + t_ci + t_ri))
 
     # TODO: do we need this?
+    channelwidth = subbandwidth / channels
     #channel_sens = W / math.sqrt(4 * channelwidth * intgr_time * ( t_core + t_remote + t_intl + t_cr + t_ci + t_ri))
 
     return image_sens
+
 
 def Aeff_dipole(frequency, distance=None):
     """The effective area of each dipole in the array is determined by its distance to the nearest dipole (d)
@@ -77,7 +86,10 @@ def Aeff_dipole(frequency, distance=None):
     else: # HBA dipole
         return min(pow(wavelength, 2) / 3, 1.5625)
 
+
 def system_sensitivity(frequency, Aeff):
+    """ Returns the SEFD of a system, given the frequency and effective collecting area. Returns SEFD in Jansky's.
+    """
     wavelength = scipy.constants.c/frequency
 
     # Ts0 = 60 +/- 20 K for Galactic latitudes between 10 and 90 degrees.
@@ -91,6 +103,7 @@ def system_sensitivity(frequency, Aeff):
     Tsky = Ts0 * wavelength ** 2.55
 
     #The instrumental noise temperature follows from measurements or simulations
+    # TODO: we can try to mimic the results in Fig 5 here http://www.skatelescope.org/uploaded/59513_113_Memo_Nijboer.pdf
     Tinst = 1 # ?
 
     Tsys = Tsky + Tinst
@@ -98,16 +111,5 @@ def system_sensitivity(frequency, Aeff):
     # SEFD or system sensitivity
     S = (2 * n * scipy.constants.k / Aeff) * Tsys
 
-    return S
-
-def delta_sensitivity(Ssys_dipole,Ssys_station, bandwidth, intgr_time):
-
-    # The sensitivity DS (in Jy) of a single dipole (or half an 'antenna')
-    DS_dipole = Ssys_dipole / (math.sqrt(2 * bandwidth, intgr_time))
-
-    # An antenna that consists of two (equal) dipoles placed perpendicular to eac
-    DS_antenna = DS_dipole / math.sqrt(2)
-
-    # For one station, the overlap in effective area from different dipoles has to be taken into account.
-    DS_station = Ssys_station / (math.sqrt(2 * bandwidth, intgr_time))
-
+    # S is in Watts per square metre per Hertz.  One Jansky = 10**-26 Watts/sq metre/Hz
+    return S * 10**26

@@ -10,6 +10,7 @@ from __future__ import with_statement
 import sys
 import os
 import datetime
+import json
 
 from pyrap.quanta import quantity
 
@@ -29,15 +30,25 @@ class TrapImages(control):
             help='Specify a previous dataset id to append the results to.',
             default=-1
         ),
-        'monitor_coords': ingredient.ListField(
+        'monitor_coords': ingredient.StringField(
             '-m', '--monitor-coords',
             # Unfortunately the ingredient system cannot handle spaces in
             # parameter fields. I have tried enclosing with quotes, switching
             # to StringField, still no good.
-            help='Specify a list of RA,DEC co-ordinates to monitor\n'
+            help='Specify a list of RA,DEC co-ordinate pairs to monitor\n'
             '(decimal degrees, no spaces), e.g.:\n'
-            '--monitor-coords=[137.01,14.02,137.05,15.01]',
-            default=[]
+            '--monitor-coords=[[137.01,14.02],[137.05,15.01]]',
+            optional=True
+        ),
+      'monitor_list': ingredient.FileField(
+            '-l', '--monitor-list',
+            help='Specify a file containing a list of RA,DEC' 
+                    'co-ordinates to monitor, e.g.\n'
+            '--monitor-list=my_coords.txt\n'
+            'File should contain a list of RA,DEC pairs (each in list form), e.g.\n'
+            '[ [137.01,14.02], [137.05,15.01]] \n'
+            ,
+            optional=True
         ),
     }
 
@@ -98,29 +109,29 @@ class TrapImages(control):
 
     def add_manual_monitoringlist_entries(self, dataset):
         """Parses co-ords from self.inputs, loads them into the monitoringlist"""
-        mon_coords = self.parse_monitoringlist_coords()
-        for c in mon_coords:
-            dataset.add_manual_entry_to_monitoringlist(c[0],c[1])
-
-    def parse_monitoringlist_coords(self):
-        """Returns a list of coord 2-tuples, format is: [(RA,DEC)] """
-        if len(self.inputs['monitor_coords']):
-            raw_monitor_list =  self.inputs['monitor_coords']
-
-            if len(raw_monitor_list)%2 != 0:
-                raise ValueError(
-                    "Odd number of monitor co-ordinates supplied: "
-                    "please supply RA,DEC pairs *with commas but no spaces*."
-                )
-            ra_list = raw_monitor_list[0::2]
-            dec_list = raw_monitor_list[1::2]
-            monitor_coords = zip(ra_list, dec_list)
-
-            print "You specified monitoring at coords:"
+        monitor_coords=[]
+        if 'monitor_coords' in self.inputs:
+            try:
+                monitor_coords.extend(json.loads(self.inputs['monitor_coords']))
+            except ValueError:
+                self.logger.error("Could not parse monitor-coords from command line")
+                sys.exit(1)
+                
+        if 'monitor_list' in self.inputs:
+            try:
+                mon_list = json.load(open(self.inputs['monitor_list']))
+                monitor_coords.extend(mon_list)
+            except ValueError:
+                self.logger.error("Could not parse monitor-coords from file: "
+                                  +self.inputs['monitor_list'])
+                sys.exit(1)
+                
+        if len(monitor_coords):
+            self.logger.info( "You specified monitoring at coords:")
             for i in monitor_coords:
-                print "RA,", i[0]," ; Dec, " , i[1]
-            return monitor_coords
-        return []
+                self.logger.info( "RA, %f ; Dec, %f " % (i[0],i[1]))
+        for c in monitor_coords:
+            dataset.add_manual_entry_to_monitoringlist(c[0],c[1])
 
 if __name__ == '__main__':
     sys.exit(TrapImages().main())

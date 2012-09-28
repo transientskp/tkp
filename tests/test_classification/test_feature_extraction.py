@@ -19,11 +19,13 @@ import unittest
 if not  hasattr(unittest.TestCase, 'assertIsInstance'):
     import unittest2 as unittest
 
+import os, sys
+import numpy
 from datetime import datetime
 from datetime import timedelta
-import numpy
 from tkp.classification.features import lightcurve as lcmod
 from tkp.classification.transient import DateTime
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from decorators import requires_module
 
 

@@ -24,6 +24,7 @@ from cStringIO import StringIO
 from optparse import OptionParser
 
 import pyfits
+import numpy
 
 from tkp.utility.accessors import FitsFile
 from tkp.utility.accessors import sourcefinder_image_from_accessor
@@ -132,6 +133,8 @@ def handle_args():
     parser.add_option("--radius", default=0, type="float", help="Radius of usable portion of image (in pixels)")
     parser.add_option("--skymodel", action="store_true", help="Generate sky model")
     parser.add_option("--csv", action="store_true", help="Generate csv text file for use in programs such as TopCat")
+    parser.add_option("--rmsmap", action="store_true", help="Generate RMS map")
+    parser.add_option("--sigmap", action="store_true", help="Generate significance map")
     return parser.parse_args()
 
 def set_configuration(options):
@@ -193,6 +196,12 @@ def run_sourcefinder(files, options):
         if options.islands:
             islandfile = os.path.splitext(os.path.basename(filename))[0] + ".islands.fits"
             writefits(islandfile, gaussian_map, pyfits.getheader(filename))
+        if options.rmsmap:
+            rmsfile = os.path.splitext(os.path.basename(filename))[0] + ".rms.fits"
+            writefits(rmsfile, numpy.array(imagedata.rmsmap), pyfits.getheader(filename))
+        if options.sigmap:
+            sigfile = os.path.splitext(os.path.basename(filename))[0] + ".sig.fits"
+            writefits(sigfile, numpy.array(imagedata.data_bgsubbed/imagedata.rmsmap), pyfits.getheader(filename))
         if options.skymodel:
             skymodelfile = os.path.splitext(os.path.basename(filename))[0] + ".skymodel"
             skymodelfile = open(skymodelfile, 'w')

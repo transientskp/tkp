@@ -182,17 +182,18 @@ notes below *may be dangerous*.
     :math:`L_2`? In either case, what if they can't be associated with
     :math:`f_1` and :math:`f_2`?
 
-Inter-Band One-to-Many Association
+Inter-Band Many-to-One Association
 ++++++++++++++++++++++++++++++++++
 
 .. graphviz:: assoc/many2one.crossband.dot
 
-Here, a many-to-one association takes place in band 2, as both :math:`f_{11}`
-and :math:`f_{12}` are associated with :math:`f_{13}`. Again, two lightcurves
-result: :math:`L_1` with average flux :math:`\overline{f_{1,3,5,7}}` in band 1
-and :math:`\overline{f_{9,11,13,14}}` in band 2, and :math:`L_2` with average
-flux :math:`\overline{f_{2,4,6,8}}` in band 1 and
-:math:`\overline{f_{10,12,13,14}}` in band 2. Note that :math:`f_{13}` and
-:math:`f_{14}` are counted twice. However, there are no "gaps" in any of the
-lightcurves: unlike the above, neither lightcurve is truncated, and there is
-no need for a forced fit to archival images.
+In this case, we initially have two well-defined lightcurves. However, at
+:math:`t_3`, both lightcurves in band 1 (represented by points :math:`f_5` and
+:math:`f_6`) are associated with a single point in band 2 (point
+:math:`f_{13}`).
+
+In the event that both :math:`f_{11}` and :math:`f_{12}` are also associated
+with :math:`f_{13}`, this reduces to the same situation as the intra-band
+many-to-one association discussion above. However, this is not guaranteed: as
+in the diagram above, it is possible for :math:`f_{12}` to be associated to a
+different point (:math:`f_{15}` in this case). At this point... what???

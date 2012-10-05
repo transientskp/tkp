@@ -1,0 +1,49 @@
+digraph many2many {
+    rankdir=LR;
+    f1 [label=<f<SUB>1</SUB>>];
+    f2 [label=<f<SUB>2</SUB>>];
+    f3 [label=<f<SUB>3</SUB>>];
+    f4 [label=<f<SUB>4</SUB>>];
+    f5 [label=<f<SUB>5</SUB>>];
+    f6 [label=<f<SUB>6</SUB>>];
+    f7 [label=<f<SUB>7</SUB>>];
+    f8 [label=<f<SUB>8</SUB>>];
+
+    f1 -> f3 -> f5 -> f7 [color=blue];
+    f2 -> f4 -> f6 -> f8 [color=green];
+    f1 -> f3 -> f6 -> f8 [color=coral];
+    f2 -> f4 -> f5 -> f7 [color=gold];
+
+    f1 -> f3 -> f6 -> f7 [color=aquamarine];
+    f2 -> f4 -> f5 -> f8 [color=blueviolet];
+
+    f1 -> f3 -> f5 -> f8 [color=darkslateblue];
+    f2 -> f4 -> f6 -> f7 [color=lawngreen];
+
+    node[shape=box, color=red];
+    l1 [label=<L<SUB>1</SUB>>];
+    l2 [label=<L<SUB>2</SUB>>];
+    l3 [label=<L<SUB>3</SUB>>];
+    l4 [label=<L<SUB>4</SUB>>];
+    l5 [label=<L<SUB>5</SUB>>];
+    l6 [label=<L<SUB>6</SUB>>];
+    l7 [label=<L<SUB>7</SUB>>];
+    l8 [label=<L<SUB>8</SUB>>];
+
+    f7 -> l1 [style=dashed, color=blue];
+    f8 -> l2 [style=dashed, color=green];
+    f8 -> l3 [style=dashed, color=coral];
+    f7 -> l4 [style=dashed, color=gold];
+    f7 -> l5 [style=dashed, color=aquamarine];
+    f8 -> l6 [style=dashed, color=blueviolet];
+    f8 -> l7 [style=dashed, color=darkslateblue];
+    f7 -> l8 [style=dashed, color=lawngreen];
+
+    edge[style=invis];
+    node[shape=none];
+    t1 [label=<t<SUB>1</SUB>>];
+    t2 [label=<t<SUB>2</SUB>>];
+    t3 [label=<t<SUB>3</SUB>>];
+    t4 [label=<t<SUB>4</SUB>>];
+    t1 -> t2 -> t3 -> t4;
+}

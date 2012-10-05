@@ -1,0 +1,23 @@
+digraph many2one {
+    rankdir=LR;
+    f1 [label=<f<SUB>1</SUB>>];
+    f2 [label=<f<SUB>2</SUB>>];
+    f3 [label=<f<SUB>3</SUB>>];
+    f4 [label=<f<SUB>4</SUB>>];
+    f5 [label=<f<SUB>5</SUB>>];
+    f6 [label=<f<SUB>6</SUB>>];
+    f1 -> f3 -> f5 -> f6 [color=blue];
+    f2 -> f4 -> f5 -> f6 [color=green];
+    node[shape=box, color=red];
+    l1 [label=<L<SUB>1</SUB>>];
+    l2 [label=<L<SUB>2</SUB>>];
+    f6 -> l1 [style=dashed, color=blue];
+    f6 -> l2 [style=dashed, color=green];
+    edge[style=invis];
+    node[shape=none];
+    t1 [label=<t<SUB>1</SUB>>];
+    t2 [label=<t<SUB>2</SUB>>];
+    t3 [label=<t<SUB>3</SUB>>];
+    t4 [label=<t<SUB>4</SUB>>];
+    t1 -> t2 -> t3 -> t4;
+}

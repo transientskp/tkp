@@ -1,0 +1,18 @@
+digraph one2one {
+    rankdir=LR;
+    f1 [label=<f<SUB>1</SUB>>];
+    f2 [label=<f<SUB>2</SUB>>];
+    f3 [label=<f<SUB>3</SUB>>];
+    f4 [label=<f<SUB>4</SUB>>];
+    f1 -> f2 -> f3 -> f4 [color=blue];
+    node[shape=box, color=red];
+    l1 [label=<L<SUB>1</SUB>>];
+    f4 -> l1 [style=dashed, color=blue];
+    node[shape=none];
+    edge[style=invis];
+    t1 [label=<t<SUB>1</SUB>>];
+    t2 [label=<t<SUB>2</SUB>>];
+    t3 [label=<t<SUB>3</SUB>>];
+    t4 [label=<t<SUB>4</SUB>>];
+    t1 -> t2 -> t3 -> t4;
+}

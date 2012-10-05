@@ -15,4 +15,5 @@ Modules from the ``tkp.database`` package.
    dataset
    utils
    schema
+   assoc
    upgrading

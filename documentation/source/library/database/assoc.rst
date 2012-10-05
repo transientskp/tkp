@@ -104,6 +104,26 @@ flux :math:`\overline{f_{1,3,5,6}}` and :math:`L_2` having average flux
 :math:`\overline{f_{2,4,5,6}}`. Again, note that :math:`f_5` and :math:`f_6`
 are counted twice.
 
+Many-to-Many Association
+++++++++++++++++++++++++
+
+.. graphviz:: assoc/many2many.dot
+
+Above, we see first a many-to-many association of :math:`f_3` and :math:`f_4`
+with :math:`f_5` and :math:`f_6`. At this point, four separate lightcurves can
+be made: :math:`f_{1,3,5}`, :math:`f_{1,3,6}`, :math:`f_{2,4,5}` and
+:math:`f_{2,4,6}`. At the next timestep, it's likely that the measurements
+:math:`f_7` and :math:`f_8` will be similar to :math:`f_5` and :math:`f_6`
+(assuming that the same sources are visible, and neither the sky nor the
+telescope configuration has changed). Thus, these are associated and the
+number of lightcurves doubles again, as show.
+
+.. note::
+
+    I'm assuming (hoping...) I've got this wrong, because otherwise the number
+    of lightcurves increases quadratically whenever there are two sources near
+    each other in an image, which is obviously unsustainable.
+
 Multiple Frequency Bands
 ------------------------
 

@@ -1,4 +1,4 @@
-digraph one2one {
+digraph many2one {
     rankdir=LR;
     f1 [label=<f<SUB>1</SUB>>];
     f2 [label=<f<SUB>2</SUB>>];

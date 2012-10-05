@@ -83,7 +83,8 @@ A list of available command line option may be obtained with the
     --radius=RADIUS       Radius of usable portion of image (in pixels)
     --skymodel            Generate sky model
     --csv                 Generate csv text file for use in programs such as
-
+    --rmsmap              Generate RMS map
+    --sigmap              Generate significance map
 
 The ``--detection`` argument specifies the multiple of the RMS noise which is
 required for detection; ie, setting ``--detection=5`` is equivalent to
@@ -116,6 +117,15 @@ extension changed to ``.skymodel``.
 If the ``--csv`` option is given, a comma-separated list of sources will be
 written to file. It is named according to the input filename with the
 extension changed to ``.csv``.
+
+If the ``--rmsmap`` option is given, a FITS file is produced showing the noise
+map which has been generated during the source-finding process. It is named
+according to the input filename with ``.rms`` inserted before the extension.
+
+If the ``--sigmap`` option is given, a FITS file is produced showing the
+significance of each pixel: that is, the background-subtracted image pixel
+value divided by the RMS noise at that pixel. It is named according to the
+input filename with ``.sigmap`` inserted before the extension.
 
 If the ``--deblend`` option is specified, ``pyse`` will attempt to separate
 composite sources into multiple components and fit each one independently. The

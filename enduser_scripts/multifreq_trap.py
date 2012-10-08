@@ -7,7 +7,7 @@ import logging
 import tkp.database.database as database
 from tkp.database import ExtractedSource
 import tkp.database.orm as ds
-import tkp.database.dbregion as reg
+import tkp.database.qc.region as reg
 import tkp.database.utils.general as dbg
 import tkp.database.utils.associations as dbu
 import tkp.database.utils.monitoringlist as mon
@@ -47,7 +47,8 @@ try:
     
     iter_start = time.time()
     
-    description = 'TRAP: LOFAR LBA Multifreq Bands'
+    #description = 'TRAP: LOFAR LBA Multifreq Bands'
+    description = 'TRAP: multifreq var indices test'
     dataset = ds.DataSet(data={'description': description}, database=db)
     print "dataset.id:", dataset.id
 
@@ -118,7 +119,7 @@ try:
                                 V_lim = config['transient_search']['V_lim'],
                                 probability_threshold = config['transient_search']['probability'],
                                 minpoints = config['transient_search']['minpoints'],
-                                image_ids=[dbimg.id,])
+                                imageid=dbimg.id)
         # feature_extraction
         for transient in transients:
             source = ExtractedSource(id=transient.runcatid, database=db)

@@ -4,10 +4,9 @@
 Source Association
 ++++++++++++++++++
 
-.. note::
+.. warning::
 
-    *Caveat Emptor:* This page is still a work in progress, and likely
-    contains inaccuracies.
+    This page is still a work in progress, and likely contains inaccuracies.
 
 Source association—the process by which individual measurements recorded from
 an image corresponding to a given time, frequency and Stokes parameter are
@@ -112,6 +111,12 @@ are counted twice.
 Many-to-Many Association
 ++++++++++++++++++++++++
 
+.. note::
+
+    First we illustrate "true" many-to-many association. However, for reasons
+    that will become obvious, this is never actually performed: instead, we
+    reduce it to a simpler, one-to-one association.
+
 .. graphviz:: assoc/many2many.dot
 
 Above, we see first a many-to-many association of :math:`f_3` and :math:`f_4`
@@ -123,11 +128,14 @@ be made: :math:`f_{1,3,5}`, :math:`f_{1,3,6}`, :math:`f_{2,4,5}` and
 telescope configuration has changed). Thus, these are associated and the
 number of lightcurves doubles again, as show.
 
+It should be obvious that the scenario described is untenable: the number
+lightcurves being tracked increases quadratically with time. Instead, all
+many-to-many associations are automatically reduced by only taking the source
+pairs with the smallest De Ruiter radii.
+
 .. note::
 
-    I'm assuming (hoping...) I've got this wrong, because otherwise the number
-    of lightcurves increases quadratically whenever there are two sources near
-    each other in an image, which is obviously unsustainable.
+    But how? Bart will explain!
 
 Multiple Frequency Bands
 ------------------------
@@ -222,3 +230,91 @@ with :math:`f_{13}`, this reduces to the same situation as the intra-band
 many-to-one association discussion above. However, this is not guaranteed: as
 in the diagram above, it is possible for :math:`f_{12}` to be associated to a
 different point (:math:`f_{15}` in this case). At this point... what???
+
+Discussion
+==========
+
+It is immediately obvious from the examples given above that, in all but the
+simplest cases, there is potential for confusion here. In particular, note
+that simply summing the average fluxes of all the lightcurves in the
+``runningcatalog_flux`` table in a given band is not an appropriate way to
+estimate the total brightness of the sky: this may count individual flux
+measurements multiple times.
+
+Further, the way the source association is handled may result in false
+detections of transients. In the case of a one-to-many association, for
+example, a single bright source can be associated with two sources each of a
+fraction of the brightness. This results in two lightcurves, both containing a
+(very transient like!) sudden step in flux. A similar outcome can, of course,
+also result from a many-to-one association.
+
+There are two potential areas of improvement which should be investigated.
+
+.. rubric:: Flux division
+
+In a one-to-many or many-to-one association, rather than simply allocating the
+full flux of the "one" measurement to each of the "many" lightcurves, it
+could be split such that each was only alloted a portion of the total. In this
+way, the total brightness of the sky could be maintained.
+
+The most appropriate division is not obvious. A simple model could allocate
+each of :math:`n` lightcurves a fraction :math:`1/n` of the total flux of the
+single measurement. A more elaborate procedure would weight the allocation by
+the flux in each of the :math:`n` lightcurves, such that brighter sources are
+allocated a larger fraction of the flux.
+
+Whatever flux allocation procedure is adopted, however, involves making
+assumptions about what fraction should be allocated to each source.
+Further, it may also increase the computational complexity in the
+database, as lightcurve statistics are no longer simply calculated over
+source measurements, but must also take account of fractional allocations.
+
+.. rubric:: Smarter association
+
+The current association procedure is purely based on the positions of the
+sources and their uncertainties. By incorporating more information about
+the sources, ambiguities in association could often be avoided.
+
+For example, consider the case of a many-to-many association involving an
+extended source and a point source. It is likely perfectly reasonable to
+assume that the measurement of the extended source at time :math:`t_2`
+should only be associated with the extended source at time :math:`t_1`,
+and similarly for the point source: in this way, the many-to-many
+association can be easily reduced to a much simpler case.
+
+Again, though, a number of assumptions go into any procedure like this. In
+particular, given that our ultimate aim is to detect transient and
+variable sources, we should be wary of any procedure that implicitly
+assumes the sky is unchanging. Further, again the issue of database
+complexity should be considered: incorporating more logic of this sort is
+expensive, in terms of both compute and developer time.
+
+Recommendations
+===============
+
+Although it is clear that improvements can and will need to be made to the
+procedures adopted, it is not immediately obvious how best to proceed.
+Therefore, it is suggested that refinements be deferred until more practical
+experience has been obtained.
+
+To that end, we suggest the following:
+
+#. Commissioners and scientists working with the lightcurve database, as well
+   as developers of tools designed to detect transients based upon it, must
+   familiarize themselves with the issues described above.
+
+#. The `TKP Lightcurve Archive <http://archive.transientskp.org/>`_ should be
+   explicit about which measurements have gone into a displayed lightcurve or
+   other measurement. The figures which accompany this document are easy to
+   programmatically generate using `GraphViz <http://www.graphviz.org/>`_, and
+   show clearly the heritage of a given lightcurve; we suggest, therefore,
+   that they or a derivative of them shoudl be shown on the website.
+
+#. As more source measurements are collected, statistics can be collected to
+   demonstrate to what extent the problems anticipated are observed in
+   real-world use. For example, in the ideal case, the total number of
+   measurements included in all the lightcurves would be equal to the number
+   of measurements made on images; in practice, however, the former will be
+   bigger, since measurements may be counted twice. Observing the
+   "overcounting fraction" as the database grows will help understand the
+   nature and severity of the problem.

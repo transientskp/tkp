@@ -199,63 +199,24 @@ Builds
 ======
 
 The installation procedure is described in :ref:`the TRAP installation
-documentation <trap:installation>`. This section just gives the
-information on the nightly builds as they are currently occurring on
-the heastro system.
+documentation <trap:installation>`. This section summarizes the nightly build
+procedure on the ``heastro`` system in Amsterdam.
 
-A cron job starts up the overall script in
-:file:`/home/evert/.local/bin/daily_tkp_build.bash`::
+A build is performed at 04:30 every morning. This build is currently performed
+by the script ``/zfs/heastro-plex/scratch/swinbank/build/build-tkp.sh``. It
+builds and installs the HEAD of the ``master`` branch of both the
+`transientskp/tkp <https://github.com/transientskp/tkp/>`_ and
+`transientskp/trap <https://github.com/transientskp/trap>`_ repositories.
+Files are installed under ``/opt/tkp/${BUILD_DATE}`` and, after successful
+installation, the symlink ``/opt/tkp/latest`` is pointed at that location.
+Thus, end-users can always access the latest successful build as
+``/opt/tkp/latest/``.
 
-    10 4 *  *   *   PATH=${PATH}:/opt/monetdb/bin /home/evert/.local/bin/daily_tkp_build.bash > /home/evert/.local/logs/tkp_daily_build-`date +\%F`.log 2>&1
+The file ``/opt/tkp/init.sh`` may be sourced (ie, run ``. /opt/tkp/init.sh``
+at your prompt) by ``bash`` shell users to set all the necessary environment
+variables to run the TKP code.
 
-The :file:`daily_tkp_build.bash` script first updates the Subversion
-repository in the scratch area (this repository is only used for the
-installation, not for updating code); it removes any files that do not
-belong to the repository (such as the :file:`build` directory), then
-builds the development version of the pipeline (the "milestone 1"
-stable release and the special database release builds are skipped
-nowadays).
-
-The build will run the :file:`build.bash` script, which in turns does
-the following:
-
-- configure the build
-
-- build (compile) the actual code
-
-- test the code *in the build directory*. This uses an separate test
-  database, which is created and destroyed on the fly. Testing takes
-  quite a bit of time: up to 20 minutes.
-
-- Install all the code in the development directory
-  (:file:`/opt/tkp/dev/tkp-<date>` on heastro; a symlink
-  :file:`/opt/tkp/dev/tkp` is created to this daily build).
-
-- Destroy and recreate the `tkpdev` MonetDB database.
-
-The following log files are created during the build process:
-
-- :file:`/home/evert/.local/logs/tkp_daily_build-<date>.log`: the
-  overall process log file. This file is almost empty, but would show
-  if there was a problem updating the Subversion repository.
-
-- :file:`/opt/tkp/build_develop-<date>.log`: the overall build log
-  file. This is the main file to look to see where the build process
-  would have failed.
-
-- :file:`/opt/tkp/testing-<date>.log`: the results of the unit tests.
-
-
-.. note::
-
-   Whenever the development build is deemed "good and stable enough"
-   (rather a subjective measure), a symbolic link is made from
-   :file:`/opt/tkp/tkp-<date>` to :file:`/opt/tkp/dev/tkp-<date>`, and
-   from :file:`/opt/tkp/tkp-<date>` to :file:`/opt/tkp/tkp`. This will
-   bring the more stable version of the pipeline up to the current
-   release. Be sure to upgrade the necessary databases (`tkp` and
-   possible user databases) as well.
-
+Logs of all build attempts are available under ``/opt/tkp/logs``.
 
 Coding guidelines
 =================

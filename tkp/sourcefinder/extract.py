@@ -621,8 +621,8 @@ def source_profile_and_errors(data, threshold, noise, beam, fixed=None):
             "semiminor": 1,
             "theta": 0
             })
-        logging.warn("""\
-Unable to estimate gaussian parameters. Proceeding with defaults %s""",
+        logging.debug("Unable to estimate gaussian parameters."
+                      " Proceeding with defaults %s""",
                      str(param))
 
     ranges = data.nonzero()
@@ -849,18 +849,25 @@ class Detection(object):
 
         # Now we have to sort out which combination of errorx_proj and
         # errory_proj gives the largest errors in RA and Dec.
-        end_ra1, end_dec1 = self.imagedata.wcs.p2s(
-            [self.x.value+errorx_proj, self.y.value])
-        end_ra2, end_dec2 = self.imagedata.wcs.p2s(
-            [self.x.value, self.y.value+errory_proj])
-
-        # Here we include the position calibration errors
-        self.ra.error = CONFIG['eps_ra'] + max(
-            numpy.fabs(self.ra.value - end_ra1),
-            numpy.fabs(self.ra.value - end_ra2))
-        self.dec.error = CONFIG['eps_dec'] + max(
-            numpy.fabs(self.dec.value - end_dec1),
-            numpy.fabs(self.dec.value - end_dec2))
+        try:
+            end_ra1, end_dec1 = self.imagedata.wcs.p2s(
+                                       [self.x.value+errorx_proj, self.y.value])
+            end_ra2, end_dec2 = self.imagedata.wcs.p2s(
+                [self.x.value, self.y.value+errory_proj])
+            # Here we include the position calibration errors
+            self.ra.error = CONFIG['eps_ra'] + max(
+                numpy.fabs(self.ra.value - end_ra1),
+                numpy.fabs(self.ra.value - end_ra2))
+            self.dec.error = CONFIG['eps_dec'] + max(
+                numpy.fabs(self.dec.value - end_dec1),
+                numpy.fabs(self.dec.value - end_dec2))
+        except RuntimeError:
+            #We get a runtime error from wcs.p2s if the errors place the 
+            #limits outside of the image.
+            #In which case we set the RA / DEC uncertainties to infinity
+            self.ra.error = float('inf')
+            self.dec.error = float('inf')
+            
 
         # Now we can compute the BPA, east from local north.
         # That these angles can simply be added is not completely trivial.

@@ -123,7 +123,7 @@ class FitToPointTestCase(unittest.TestCase):
     @requires_data(os.path.join(DATAPATH, 'L15_12h_const/corrected-all.fits'))
     def testFixed(self):
         d = self.my_im.fit_to_point(1379.00938273, 1438.38801493, 20,
-                                    threshold=2)
+                                    threshold=2, fixed='position')
         self.assertAlmostEqual(d.x.value, 1379.00938273)
         self.assertAlmostEqual(d.y.value, 1438.38801493)
 

@@ -741,7 +741,7 @@ class ImageData(object):
                         detections.append(fit_results)
                 except IndexError as e:
                     logging.warning("Input pixel coordinates (%.2f, %.2f) "
-                                    "could not be fit.",
+                                    "could not be fit because: " + e.message,
                                     source[0], source[1])
                     detections.append(None)
 

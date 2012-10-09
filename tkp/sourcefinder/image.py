@@ -619,7 +619,7 @@ class ImageData(object):
         return (slice(x - ibr, x + ibr + 1),
                 slice(y - ibr, y + ibr + 1))
 
-    def fit_to_point(self, x, y, boxsize, threshold, fixed='position'):
+    def fit_to_point(self, x, y, boxsize, threshold, fixed):
         """Fit an elliptical Gaussian to a specified point on the image.
 
         The fit is carried on a square section of the image, of length

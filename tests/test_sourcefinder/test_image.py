@@ -7,6 +7,7 @@ import tkp.sourcefinder
 from tkp.sourcefinder import image as sfimage
 import tkp.config
 from tkp.utility import accessors
+from tkp.utility.uncertain import Uncertain
 
 import numpy as np
 import os
@@ -171,7 +172,6 @@ class TestFitFixedPositions(unittest.TestCase):
         
         If given position is outside image then result should be NoneType"""
         img = self.image
-        print 
         p1 = img.wcs.p2s((0,0))
         p2 = img.wcs.p2s((img.data.shape[0], img.data.shape[1]))
 #        print "Sky lower left",p1 
@@ -190,7 +190,6 @@ class TestFitFixedPositions(unittest.TestCase):
         
         Same if right on the edge -- too few pixels to fit"""
         img = self.image
-        print 
         
         boxsize = BOX_IN_BEAMPIX*max(img.beam[0], img.beam[1])
         edge_posn = img.wcs.p2s((0 + boxsize/2 -2, img.data.shape[1]/2.0))
@@ -204,6 +203,39 @@ class TestFitFixedPositions(unittest.TestCase):
 #        print "XY:", img.wcs.s2p(edge_posn)
 #        print "Results:" , results
         self.assertListEqual([None], results)
+        
+    def testErrorBoxOverlapsEdge(self):
+        """testErrorBoxOverlapsEdge
+        
+        Sometimes when fitting at a fixed position,
+        we get extremely large uncertainty values.
+        
+        These create an error box on position which extends outside the image,
+        causing errors when we try to calculate the RA / Dec uncertainties.
+        
+        This test ensures we handle this case gracefully.
+        """
+        
+        img = self.image
+        
+        fake_params = tkp.sourcefinder.extract.ParamSet()
+        fake_params.values.update({
+                           'peak': Uncertain(0.0,0.5),
+                           'flux':Uncertain(0.0,0.5),
+                           'xbar': Uncertain(5.5 , 10000.5), # Danger Will Robinson
+                           'ybar': Uncertain(5.5 , 3),
+                           'semimajor': Uncertain(4 , 200),
+                           'semiminor': Uncertain(4 , 2),
+                           'theta': Uncertain(30 , 10),
+                           })
+        fake_params.sig = 0
+        det = tkp.sourcefinder.extract.Detection(fake_params, img)
+        #Raises runtime error prior to bugfix for issue #3294
+        det._physical_coordinates() 
+        self.assertEqual(det.ra.error, float('inf'))
+        self.assertEqual(det.dec.error, float('inf'))
+        
+        
     
         
 class TestSimpleImageSourceFind(unittest.TestCase):
@@ -236,10 +268,4 @@ class TestSimpleImageSourceFind(unittest.TestCase):
         results = self.image.extract(det=5, anl=3)
         results = [result.serialize() for result in results]
         self.assertTupleEqual(known_result, results[0])
-            
-            
-        1
-            
-#        
-        
         

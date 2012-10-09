@@ -687,8 +687,8 @@ class ImageData(object):
             fixed=fixed)
 
         try:
-            assert(abs(measurement['xbar'] < boxsize))
-            assert(abs(measurement['ybar'] < boxsize))
+            assert(abs(measurement['xbar']) < boxsize)
+            assert(abs(measurement['ybar']) < boxsize)
         except AssertionError:
             logging.warn('Fit falls outside of box.')
 

@@ -876,9 +876,15 @@ class ImageData(object):
         for island in island_list:
             measurement, residual = island.fit()
             try:
-                results.append(
-                    extract.Detection(measurement, self, chunk=island.chunk)
-                )
+                det = extract.Detection(measurement, self, chunk=island.chunk)
+                if (det.ra.error == float('inf') or 
+                        det.dec.error == float('inf')):
+                    logging.warn('Bad fit from blind extraction at pixel coords:'
+                                  '%f %f - measurement discarded'
+                                  '(increase fitting margin?)', det.x, det.y )
+                else:
+                    results.append(det)
+                    
                 if CONFIG['residuals']:
                     self.residuals_from_deblending[island.chunk] -= (
                         island.data.filled(fill_value=0.))

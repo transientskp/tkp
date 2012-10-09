@@ -702,7 +702,8 @@ class ImageData(object):
         return extract.Detection(
             measurement, self)
 
-    def fit_fixed_positions(self, sources, boxsize, threshold=None, fixed='position+error'):
+    def fit_fixed_positions(self, sources, boxsize, threshold=None, 
+                            fixed='position+error'):
         """Convenience function to fit a list of sources at the given positions
 
         This function wraps around fit_to_point().
@@ -728,9 +729,16 @@ class ImageData(object):
                     raise
             else:
                 try:
-                    detections.append(self.fit_to_point(
-                        x, y, boxsize=boxsize, threshold=threshold,
-                        fixed=fixed))
+                    fit_results = self.fit_to_point(x, y, 
+                                                boxsize=boxsize, 
+                                                threshold=threshold,
+                                                fixed=fixed)
+                    #Handle case where position errors extend outside image
+                    if ( fit_results.ra.error == float('inf') or
+                          fit_results.dec.error == float('inf')):
+                        detections.append(None)
+                    else:
+                        detections.append(fit_results)
                 except IndexError as e:
                     logging.warning("Input pixel coordinates (%.2f, %.2f) "
                                     "could not be fit.",

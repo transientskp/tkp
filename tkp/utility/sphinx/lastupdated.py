@@ -3,13 +3,12 @@
 #
 #   .. |last_updated| last_updated::
 #
-#   *This document last updated:* |last_updated|. 
+#   *This document last updated:* |last_updated|.
 
 import subprocess
 from email.utils import parsedate_tz
 from docutils import nodes
 from sphinx.util.compat import Directive
-from sphinx.util.compat import make_admonition
 
 def setup(app):
     app.add_config_value('lastupdated_enabled', True, True)

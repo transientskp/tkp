@@ -15,7 +15,8 @@ setup(
         'tkp.classification.transient',
         'tkp.classification.manual',
         'tkp.utility',
-        'tkp.utility.accessors'
+        'tkp.utility.accessors',
+        'tkp.utility.sphinx'
     ],
     description="LOFAR Transients Key Project (TKP)",
     author="TKP Discovery WG",

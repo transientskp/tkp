@@ -1,13 +1,13 @@
 .. _front:
 
-Welcome to TRAP's documentation!
-================================
+LOFAR Transients Pipeline ("Trap")
+==================================
 
 Contents:
 
 .. toctree::
    :maxdepth: 2
-    
+
    caveat
    introduction
    installation
@@ -21,7 +21,7 @@ Contents:
    classification
    monitoringlist
    alerts
-   
+
 
 Indices and tables
 ==================

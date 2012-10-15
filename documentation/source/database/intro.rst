@@ -3,6 +3,10 @@
 Database
 ========
 
+.. warning::
+
+   The information on this page is old and, in places, outdated.
+
 This section concerns the (MonetDB) database that is used to store
 extracted sources and determine variable sources. In addition, it
 stores catalogs from previous surveys, which can be used for creating

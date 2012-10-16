@@ -92,7 +92,7 @@ This table will be pre-loaded in the database, in order to have it available all
     The Stokes parameter. Four possible values 1 - I, 2 - Q, 3 - U, 4 - V. (Currently the external catalogues only report the Stokes I values).
 
 **freq_eff**
-    The effective frequency (in Hz) of the survey, as reported 
+    The effective frequency (in Hz) of the survey, as reported in the catalog
 
 **zone**
     The zone id in which the source declination resides, calculated by the database.  The sphere is devided into zones of equal width: currently fixed to 1 degree, and the zone is effectively the truncated declination. (decl=31.3 => zone=31, decl=31.9 => zone=31). This column is primarly for speeding up source look-up queries.

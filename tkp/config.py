@@ -168,9 +168,7 @@ def set_default_config():
     config.add_section('test')
     config.set('test', 'datapath', os.path.abspath(os.path.join(testpath[0], "..", "tests", "data")))
     config.set('test', 'test_database_name', 'testdb')
-    config.set('test', 'reset_test_database', 'False')
-    config.set('test', 'long', 'False')
-    config.set('test', 'test_database_dump_dir', 'None')
+    config.set('test', 'max_duration', '0') #Default = 0, implies 'Run all tests'.
     return config
 
 
@@ -242,6 +240,7 @@ def parse_config(config):
                 ('source_extraction', 'deblend_nthresh'),
                 ('transient_search', 'minpoints'),
                 ('alerts', 'port'),
+                ('test', 'max_duration')
                 )
     floats = (('source_association', 'deruiter_radius'),
               ('source_extraction', 'mf_threshold'),

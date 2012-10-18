@@ -30,9 +30,4 @@ The division in subpackages follows these steps roughly:
 
 - utility routines
 
-
-
-
-
-
 """

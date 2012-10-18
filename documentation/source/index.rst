@@ -1,4 +1,4 @@
-.. _index:
+.. _front:
 
 ++++++++++++++++++++++
 LOFAR Transients Tools
@@ -12,6 +12,7 @@ LOFAR Transients Tools
 
    developing
    tools/index
+   database/index
    library/index
 
 

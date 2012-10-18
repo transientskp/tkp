@@ -5,7 +5,7 @@ Transients Pipeline Cookbook
 
 .. |last_updated| last_updated::
 
-   *This document last updated:* |last_updated|.
+*This document last updated:* |last_updated|.
 
 .. warning::
 

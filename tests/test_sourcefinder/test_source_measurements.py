@@ -33,7 +33,7 @@ TRUE_DECONV_SMIN = 0.5*4.6794/2.
 TRUE_DECONV_BPA = -0.5*(-49.8)
 
 
-@unittest.skipIf(not eval(tkp.config.config['test']['long']), "not runnig prolonged test suite")
+
 class SourceParameters(unittest.TestCase):
 
     def setUp(self):

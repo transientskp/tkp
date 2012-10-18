@@ -8,7 +8,7 @@ import tests.db_subs as db_subs
 import tests.db_queries as dbq
 from tests.decorators import requires_database         
 
-@unittest.skipIf(not eval(tkp.config.config['test']['long']), "not runnig prolonged test suite")
+
 class TestTransientCandidateMonitoring(unittest.TestCase):
     @requires_database()
     def setUp(self):

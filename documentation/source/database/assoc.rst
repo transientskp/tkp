@@ -3,10 +3,12 @@
 ++++++++++++++++++
 Source Association
 ++++++++++++++++++
+.. |last_updated| last_updated::
 
 .. warning::
 
     This page is still a work in progress, and likely contains inaccuracies.
+    Last updated: |last_updated|.
 
 Source association—the process by which individual measurements recorded from
 an image corresponding to a given time, frequency and Stokes parameter are

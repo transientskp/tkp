@@ -41,14 +41,16 @@ astronomical source. Each such source is given an entry in the
 entry in ``runningcatalog`` can be thought of as a reference to the lightcurve
 of a particular source.
 
-Each lightcurve may be composed of measurements in one or more frequency
-bands (as defined in the ``frequencyband`` table). Within each band flux
+Each lightcurve may be composed of measurements in one or more frequency bands
+(as defined in the ``frequencyband`` table). Within each band flux
 measurements are collated. These include the average flux of the source in
 that band, as well as assorted measures of variability. Each row in the
 ``runningcatalog_flux`` table contains flux statistics of this sort for a
 given band of a given flux. Thus, each row in ``runningcatalog`` may be
 associated with both multiple rows in ``extractedsources`` and in
-``runningcatalog_flux``.
+``runningcatalog_flux``.  Bear in mind, however, that each lightcurve has a
+*single* average position associated with it, stored in the ``runningcatalog``
+table.
 
 Case Studies
 ============
@@ -115,7 +117,7 @@ Many-to-Many Association
 
     First we illustrate "true" many-to-many association. However, for reasons
     that will become obvious, this is never actually performed: instead, we
-    reduce it to a simpler, one-to-one association.
+    reduce it to a simpler, one-to-one or one-to-many association.
 
 .. graphviz:: assoc/many2many.dot
 
@@ -131,11 +133,18 @@ number of lightcurves doubles again, as show.
 It should be obvious that the scenario described is untenable: the number
 lightcurves being tracked increases quadratically with time. Instead, all
 many-to-many associations are automatically reduced by only taking the source
-pairs with the smallest De Ruiter radii.
+pairs with the smallest De Ruiter radii such that they become either
+one-to-one or one-to-many associations.
 
-.. note::
+For example, using this criterion, we both :math:`f_5` and :math:`f_6` might
+be associated with :math:`f_3` in the above. The following situation results:
 
-    But how? Bart will explain!
+.. graphviz:: assoc/many2many-reduced.dot
+
+Note that :math:`f_5` is now not associated with :math:`f_6`: the
+many-to-many association is removed, but at the cost of truncating
+:math:`L_2`.
+
 
 Multiple Frequency Bands
 ------------------------
@@ -189,47 +198,36 @@ Inter-Band One-to-Many Association
 
 In band 1, a chain of simple one-to-one associations is made. At first,
 cross-band one-to-one associations are made between band 1 and band 2.
-However, at time :math:`t_3`, :math:`f_3` in band 1 can be associated with
-both :math:`f_7` and :math:`f_8` in band 2. However, only :math:`f_7` is
-associated with :math:`f_6`, the previous measurement in band 2. Two
-lightcurves are generated: :math:`L_1` containing :math:`f_{1\cdots{}4}` in
-band 1 and :math:`f_{5,6,7,9}` in band 2, and :math:`L_2`, also containing
-:math:`f_{1\cdots{}4}` in band 1 but :math:`f_8` and :math:`f_{10}` in band 2.
-
-Note that the transients pipeline may then backtrack and perform a force-fit
-in archival images in an attempt to complete the truncated lightcurve
-:math:`L_2` in band 2. This could result in the measurements :math:`f_{11}` and
-:math:`f_{12}`. It should be emphasized that this procedure is a
-post-processing step, rather than intrinsic to the database, and, as per the
-notes below *may be dangerous*.
-
-.. note::
-
-    What happens if :math:`f_{11}` and :math:`f_{12}` can be associated with
-    :math:`f_5` and :math:`f_6`? Do the fluxes included in :math:`L_1` change?
-
-.. note::
-
-    Are the positions of the forced fits at :math:`f_{11}` and :math:`f_{12}`
-    are based on the position of :math:`f_8` or on the average position of
-    :math:`L_2`? In either case, what if they can't be associated with
-    :math:`f_1` and :math:`f_2`?
+However, at time :math:`t_3`, both :math:`f_7` and :math:`f_8` in band 2 can
+be associated with the existing lightcurve. Two lightcurves are therefore
+generated.
 
 Inter-Band Many-to-One Association
 ++++++++++++++++++++++++++++++++++
 
 .. graphviz:: assoc/many2one.crossband.dot
 
-In this case, we initially have two well-defined lightcurves. However, at
-:math:`t_3`, both lightcurves in band 1 (represented by points :math:`f_5` and
-:math:`f_6`) are associated with a single point in band 2 (point
-:math:`f_{13}`).
+In this case, we initially have two separate lightcurves. However, at
+:math:`t_3`, both lightcurves are associated with :math:`f_{13}` in band 2.
+The result is as shown.
 
-In the event that both :math:`f_{11}` and :math:`f_{12}` are also associated
-with :math:`f_{13}`, this reduces to the same situation as the intra-band
-many-to-one association discussion above. However, this is not guaranteed: as
-in the diagram above, it is possible for :math:`f_{12}` to be associated to a
-different point (:math:`f_{15}` in this case). At this point... what???
+It is worth considering the ordering of database insertion at this point. In
+particular, consider that either one of :math:`f_6` and :math:`f_{14}` must be
+inserted before the other. After each insertion, the average position of the
+source is recalculated, and may affect future associations.
+
+For example, assume that :math:`f_6` is inserted before :math:`f_{14}`. In
+this case, the average position of :math:`f_{2,4,6,10,12}` is not associated
+with :math:`f_{14}`. However, if :math:`f_{14}` were to be inserted first, it
+would be compared for association with the average position of
+:math:`f_{2,4,10,12}`. This may well produce a different result!
+
+For obvious reasons, it is desirable for the database contents to be
+independent of the order of inswertion (otherwise, it's ultimate contents
+become non-deterministic given the input data). For this reason, every
+insertion at a given timestep causes the associations for *all* datapoints at
+that timestep to be revaluated, rather than simply the inserted measurement
+simply being associated with the already extant lightcurves.
 
 Discussion
 ==========

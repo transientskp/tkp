@@ -21,7 +21,7 @@ dependencies like wcslib, pyrap, hdf5 are installed in system directories and
 will be picked up automatically.
 
 This document does *not* describe runnign the "Trip" (a putative imaging
-pipeline developed for Transients use). This pipeline is currently depreacted.
+pipeline developed for Transients use). This pipeline is currently deprecated.
 Start the Trap using (FITS) image files for now.
 
 Setting up the directory structure and configuration files

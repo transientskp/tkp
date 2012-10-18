@@ -14,7 +14,6 @@ Contents:
    cookbook
    troubleshooting
    setup
-   database
    trap_py
    logic
    recipes

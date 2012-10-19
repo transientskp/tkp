@@ -5,10 +5,9 @@ import tkp.database as tkpdb
 from tkp.classification.transient import Transient
 import tkp.config
 import db_subs
-from decorators import requires_database
+from decorators import requires_database, duration
 
 
-@unittest.skipIf(not eval(tkp.config.config['test']['long']), "not runnig prolonged test suite")
 class TestTransientRoutines(unittest.TestCase):
     @requires_database()
     def setUp(self):

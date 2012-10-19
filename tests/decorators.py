@@ -24,3 +24,11 @@ def requires_module(module_name):
     except ImportError:
         return unittest.skip("Required module (%s) not available" % module_name)
     return lambda func: func
+
+def duration(test_duration):
+    if tkp.config.config['test']['max_duration']:
+        if tkp.config.config['test']['max_duration'] < test_duration:
+            return unittest.skip(
+             "Tests of duration > %s disabled in tkp.config['test'] section." % 
+                tkp.config.config['test']['max_duration'])
+    return lambda func: func

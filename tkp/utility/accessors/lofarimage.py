@@ -1,6 +1,6 @@
-
 from tkp.utility.coordinates import WCS
 from tkp.utility.accessors.dataaccessor import DataAccessor
+import pytz
 import numpy
 import re
 
@@ -16,7 +16,7 @@ class LofarImage(DataAccessor):
         if not beam:
             self._beamsizeparse(source)
         else:
-            super(FITSImage, self)._beamsizeparse(beam[0], beam[1], beam[2])
+            super(DataAccessor, self)._beamsizeparse(beam[0], beam[1], beam[2])
 
         # Attempt to do something sane with timestamps.
         timezone = pytz.utc

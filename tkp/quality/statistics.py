@@ -26,21 +26,10 @@ def clip(data, sigma=3):
     else:
         return newdata
 
-def clip_mask(data, sigma=3):
+def subregion(data, f=4):
     """
-    returns a mask for values above threshold defined by sigma from median
-    uses iterative clipping at sigma value until nothing more is getting clipped.
+    returns the inner region of a image, according to f.
+    if f is for example 4, the returned region will be 1/4th of the total.
     """
-    mask = numpy.zeros(data.shape, bool)
-    new_mask = numpy.zeros(data.shape, bool)
-    masked = data
-    while True:
-        median = numpy.median(masked)
-        std = numpy.std(masked)
-        new_mask[numpy.abs(data - median) > sigma * std] = True
-        diff = new_mask & ~mask
-        mask = mask | new_mask
-        if not diff.any():
-            return mask
-        masked = data[~mask]
-        new_mask[:,:] = False
+    x,y = data.shape
+    return data[(x/2 - x/f):(x/2 + x/f), (y/2 - y/f):(y/2 + y/f)]

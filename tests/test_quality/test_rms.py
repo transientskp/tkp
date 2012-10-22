@@ -34,6 +34,10 @@ good_files = [os.path.join(DATAPATH, 'quality/noise/good/home-pcarrol-msss-L086+
 @requires_data(core_antennas)
 @requires_data(bad_files[0])
 class TestNoise(unittest.TestCase):
+    def testSubrgion(self):
+        sub = statistics.subregion(numpy.ones((800, 800)))
+        self.assertEqual(sub.shape, (400, 400))
+
     def testRms(self):
         """ basic check if RMS calculation works
         """

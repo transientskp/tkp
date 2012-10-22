@@ -6,7 +6,7 @@ The quality checks are described in the "LOFAR Transients Key Science Project Qu
 """
 
 
-def rms_too_high(rms, noise, factor=10):
+def rms_too_high(rms, noise, factor=1):
     """ Is the RMS value of an image too high?
     Args:
         rms: RMS value of an image, can be computed with tkp.quality.statistics.rms

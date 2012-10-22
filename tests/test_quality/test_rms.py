@@ -10,6 +10,7 @@ import math
 from tkp.utility import accessors
 import tkp.quality
 from tkp.quality import statistics
+import tkp.database as tkpdb
 import tkp.lofar.noise
 import tkp.config
 import tkp.lofar.antennaarrays

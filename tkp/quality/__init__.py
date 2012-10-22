@@ -15,9 +15,3 @@ def rms_too_high(rms, noise, factor=10):
     """
     return rms > noise * factor
 
-
-def reject_image(image_id):
-    pass
-
-def reject(image_id, reason):
-    pass

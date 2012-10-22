@@ -73,15 +73,13 @@ class TestNoise(unittest.TestCase):
         # TODO: find a nice way to test this
         for bad_file in bad_files:
             bad_image = accessors.FitsFile(bad_file, plane=0)
-            beam_correction = statistics.beam_correction(bad_image)
             bad_rms = statistics.rms(bad_image.data)
-            #print bad_file, bad_rms, bad_rms/beam_correction
+            #print bad_file, bad_rms
 
         for good_file in good_files:
             good_image = accessors.FitsFile(good_file, plane=0)
-            beam_correction = statistics.beam_correction(good_image)
             good_rms = statistics.rms(good_image.data)
-            #print good_file, good_rms, good_rms/beam_correction
+            #print good_file, good_rms
 
 
     def testDistanses(self):

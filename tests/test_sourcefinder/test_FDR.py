@@ -40,13 +40,13 @@ import os
 from tkp.utility import accessors
 from tkp.sourcefinder import image
 import tkp.config
-from decorators import requires_data
+from decorators import requires_data, duration
 
 DATAPATH = tkp.config.config['test']['datapath']
 NUMBER_INSERTED = float(3969)
 
 
-@unittest.skipIf(not eval(tkp.config.config['test']['long']), "not runnig prolonged test suite")
+
 class test_maps(unittest.TestCase):
     def setUp(self):
         uncorr_map = accessors.FitsFile(os.path.join(DATAPATH, 'UNCORRELATED_NOISE.FITS'))
@@ -66,6 +66,7 @@ class test_maps(unittest.TestCase):
     @requires_data(os.path.join(DATAPATH, 'UNCORRELATED_NOISE.FITS'))
     @requires_data(os.path.join(DATAPATH, 'CORRELATED_NOISE.FITS'))
     @requires_data(os.path.join(DATAPATH, 'TEST_DECONV.FITS'))
+    @duration(100)
     def testNumSources(self):
         self.assertEqual(self.number_detections_uncorr, 0)
         self.assertEqual(self.number_detections_corr, 0)

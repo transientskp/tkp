@@ -1,0 +1,53 @@
+digraph one2many {
+    rankdir=LR;
+    f1 [label=<f<SUB>1</SUB>>];
+    f2 [label=<f<SUB>2</SUB>>];
+    f3 [label=<f<SUB>3</SUB>>];
+    f4 [label=<f<SUB>4</SUB>>];
+    f5 [label=<f<SUB>5</SUB>>];
+    f6 [label=<f<SUB>6</SUB>>];
+    f7 [label=<f<SUB>7</SUB>>];
+    f8 [label=<f<SUB>8</SUB>>];
+    f9 [label=<f<SUB>9</SUB>>];
+    f10 [label=<f<SUB>10</SUB>>];
+
+    subgraph cluster0 {
+        node [style=filled,color=white];
+        f1 -> f2 -> f3 -> f5 [color=blue];
+        f1 -> f2 -> f4 -> f6 [color=green];
+        label = "Band 1";
+    }
+    subgraph cluster1 {
+        rank = min;
+        node [style=filled];
+        f7 -> f8 -> f9 -> f10 [color=blue];
+        f7 -> f8 -> f9 -> f10 [color=green];
+        label = "Band 2";
+    }
+    edge[color=blue, constraint=false];
+    f1 -> f7;
+    f2 -> f8;
+    f3 -> f9;
+    f5 -> f10;
+    edge[color=green, constraint=false];
+    f1 -> f7;
+    f2 -> f8;
+    f4 -> f9;
+    f6 -> f10;
+    edge[constraint=true];
+
+    f5 -> l1 [style=dashed, color=blue];
+    f10 -> l1 [style=dashed, color=blue];
+    l1[label=<L<SUB>1</SUB>>, shape=box, color=red];
+    f6 -> l2 [style=dashed, color=green];
+    f10 -> l2 [style=dashed, color=green];
+    l2[label=<L<SUB>2</SUB>>, shape=box, color=red];
+
+    node[shape=none];
+    edge[style=invis];
+    t1 [label=<t<SUB>1</SUB>>];
+    t2 [label=<t<SUB>2</SUB>>];
+    t3 [label=<t<SUB>3</SUB>>];
+    t4 [label=<t<SUB>4</SUB>>];
+    t1 -> t2 -> t3 -> t4;
+}

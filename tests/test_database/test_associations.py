@@ -32,16 +32,18 @@ class TestOne2One(unittest.TestCase):
         dataset = tkpdb.DataSet(database=self.database, data={'description': 'assoc test set: 1-1'})
         n_images = 8
         im_params = db_subs.example_dbimage_datasets(n_images)
-        
-        src = []
+
+        steady_srcs = []
+        n_steady_srcs = 3
+        for i in range(n_steady_srcs):
+            src = db_subs.example_extractedsource_tuple()
+            src = src._replace(ra=src.ra + 2 * i)
+            steady_srcs.append(src)
+
         for im in im_params:
             image = tkpdb.Image(database=self.database, dataset=dataset, data=im)
-            src.append(db_subs.example_extractedsource_tuple())
-            # print type(src[-1])
-            results = []
-            results.append(src[-1])
-            dbgen.insert_extracted_sources(self.database.connection, image.id, results)
-            tkpdb.utils.associate_extracted_sources(self.database.connection, image.id)
+            image.insert_extracted_sources(steady_srcs)
+            image.associate_extracted_sources()
 
         # Check runningcatalog, runningcatalog_flux, assocxtrsource
         query = """\
@@ -68,16 +70,25 @@ class TestOne2One(unittest.TestCase):
         y = runcat[6]
         z = runcat[7]
         # Check for 1 entry in runcat
-        self.assertEqual(len(dp), 1)
-        self.assertEqual(dp[0], len(src))
-        self.assertAlmostEqual(wm_ra[0], src[0].ra)
-        self.assertAlmostEqual(wm_decl[0], src[0].dec)
-        self.assertAlmostEqual(wm_ra_err[0], math.sqrt(1./(len(src)/((src[0].ra_err*3600.)**2))))
-        self.assertAlmostEqual(wm_decl_err[0], math.sqrt(1./(len(src)/((src[0].dec_err*3600.)**2))))
-        self.assertAlmostEqual(x[0], math.cos(math.radians(src[0].dec))*math.cos(math.radians(src[0].ra)))
-        self.assertAlmostEqual(y[0], math.cos(math.radians(src[0].dec))*math.sin(math.radians(src[0].ra)))
-        self.assertAlmostEqual(z[0], math.sin(math.radians(src[0].dec)))
-    
+        self.assertEqual(len(dp), len(steady_srcs))
+        self.assertEqual(dp[0], n_images)
+        self.assertAlmostEqual(wm_ra[0], steady_srcs[0].ra)
+        self.assertAlmostEqual(wm_decl[0], steady_srcs[0].dec)
+        self.assertAlmostEqual(wm_ra_err[0], math.sqrt( 
+                           1./ (n_images / ((steady_srcs[0].ra_err*3600.)**2)) 
+                               ))
+        self.assertAlmostEqual(wm_decl_err[0], math.sqrt( 
+                           1./ (n_images / ((steady_srcs[0].dec_err*3600.)**2)) 
+                               )) 
+
+        self.assertAlmostEqual(x[0], 
+                    math.cos(math.radians(steady_srcs[0].dec))*
+                        math.cos(math.radians(steady_srcs[0].ra)))
+        self.assertAlmostEqual(y[0], 
+                   math.cos(math.radians(steady_srcs[0].dec))*
+                        math.sin(math.radians(steady_srcs[0].ra)))
+        self.assertAlmostEqual(z[0], math.sin(math.radians(steady_srcs[0].dec)))
+
         # Check that xtrsrc ids in assocxtrsource are the ones from extractedsource
         query ="""\
         SELECT a.runcat
@@ -93,7 +104,7 @@ class TestOne2One(unittest.TestCase):
         self.assertNotEqual(len(assoc), 0)
         aruncat = assoc[0]
         axtrsrc = assoc[1]
-        self.assertEqual(len(axtrsrc), len(src))
+        self.assertEqual(len(axtrsrc), n_images * n_steady_srcs)
         
         query = """\
         SELECT x.id 
@@ -107,7 +118,7 @@ class TestOne2One(unittest.TestCase):
         xtrsrcs = zip(*self.database.cursor.fetchall())
         self.assertNotEqual(len(xtrsrcs), 0)
         xtrsrc = xtrsrcs[0]
-        self.assertEqual(len(xtrsrc), len(src))
+        self.assertEqual(len(xtrsrc), n_images * n_steady_srcs)
         
         for i in range(len(xtrsrc)):
             self.assertEqual(axtrsrc[i], xtrsrc[i])
@@ -134,12 +145,12 @@ class TestOne2One(unittest.TestCase):
         avg_f_peak_weight = fluxes[4]
         avg_f_int = fluxes[5]
         avg_f_int_weight = fluxes[6]
-        self.assertEqual(len(f_datapoints), 1)
-        self.assertEqual(f_datapoints[0], len(src))
-        self.assertEqual(avg_f_peak[0], src[0].peak)
-        self.assertEqual(avg_f_peak_weight[0], 1./src[0].peak_err**2)
-        self.assertEqual(avg_f_int[0], src[0].flux)
-        self.assertEqual(avg_f_int_weight[0], 1./src[0].flux_err**2)
+        self.assertEqual(len(f_datapoints), n_steady_srcs)
+        self.assertEqual(f_datapoints[0], n_images)
+        self.assertEqual(avg_f_peak[0], steady_srcs[0].peak)
+        self.assertEqual(avg_f_peak_weight[0], 1./steady_srcs[0].peak_err**2)
+        self.assertEqual(avg_f_int[0], steady_srcs[0].flux)
+        self.assertEqual(avg_f_int_weight[0], 1./steady_srcs[0].flux_err**2)
 
 class TestOne2Many(unittest.TestCase):
     """

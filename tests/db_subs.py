@@ -150,11 +150,11 @@ def example_source_lists(n_images, include_non_detections):
             src_list[i].append(transient)
             
         if include_non_detections:
-            for i in len(src_list):
+            for i in range(len(src_list)):
                 if i not in transient_image_indices:
-                    src_list[i].append(transient._replace(peak=0,
-                                               flux=0, 
-                                               sigma=0)
+                    src_list[i].append(transient._replace(peak=0.0001,
+                                               flux=0.0001, 
+                                               sigma=0.0001)
                                        )
     insert_source_into_source_lists(source_lists, 
                                 FixedSource, FixedSource_image_indices,

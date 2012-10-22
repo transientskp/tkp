@@ -44,24 +44,3 @@ def clip_mask(data, sigma=3):
             return mask
         masked = data[~mask]
         new_mask[:,:] = False
-
-def beam_correction(FitsImage):
-    """ Calculates a beam correction from the beam properties
-
-    TODO: this should probably be moved into the TKP Fits accessor
-
-    Args:
-        bmaj, bmin: beam properties
-    """
-    # extract pixel size from HISTORY junk in fits header.
-    history = FitsImage.header['HISTORY*']
-    xy_line = [i for i in history.values() if 'cellx' in i][0]
-    extracted = re.search(r"cellx='(?P<x>\d+).*celly='(?P<y>\d+)", xy_line).groupdict()
-    pixelsize = int(extracted['x']) # X and Y should be the same
-    bmaj = FitsImage.header['BMAJ'] * 3600 # convert from degrees to arcsec
-    bmin = FitsImage.header['BMIN'] * 3600
-
-    bmaj_scaled = bmaj / pixelsize
-    bmin_scaled = bmin / pixelsize
-    area = math.pi * bmaj_scaled * bmin_scaled
-    return area

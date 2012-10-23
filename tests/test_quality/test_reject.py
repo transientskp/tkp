@@ -9,11 +9,13 @@ import monetdb
 import tkp.quality
 import tkp.database
 import tkp.database.quality
-
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 import db_subs
+from decorators import requires_database
+
 
 class TestReject(unittest.TestCase):
+    @requires_database()
     def setUp(self):
         self.database = tkp.database.DataBase()
         self.fake_images = db_subs.example_dbimage_datasets(n_images=1)
@@ -42,7 +44,7 @@ class TestReject(unittest.TestCase):
         tkp.database.quality.reject(self.database.connection, self.image.id, tkp.database.quality.reason['rms'],
             "10 times too high")
         self.assertEqual(tkp.database.quality.isrejected(self.database.connection, self.image.id),
-            [tkp.database.quality.reason['rms'],])
+            [tkp.database.quality.reason['rms'], ])
 
 if __name__ == '__main__':
     unittest.main()

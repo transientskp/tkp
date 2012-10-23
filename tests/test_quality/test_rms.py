@@ -88,8 +88,7 @@ class TestNoise(unittest.TestCase):
 
 
     def testDistanses(self):
-        """
-        check if all precomputed values match with distances in files
+        """check if all precomputed values match with distances in files
         """
         parsed = tkp.lofar.antennaarrays.parse_antennafile(core_antennas)
         for conf in "LBA", "LBA_INNER", "LBA_OUTER", "LBA_SPARSE0", "LBA_SPARSE1":

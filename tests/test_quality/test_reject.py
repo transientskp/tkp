@@ -36,5 +36,13 @@ class TestReject(unittest.TestCase):
         self.assertRaises(monetdb.exceptions.OperationalError, tkp.database.quality.reject,
             self.database.connection, self.image.id, 666666, "bad reason")
 
+    def test_isrejected(self):
+        tkp.database.quality.unreject(self.database.connection, self.image.id)
+        self.assertFalse(tkp.database.quality.isrejected(self.database.connection, self.image.id))
+        tkp.database.quality.reject(self.database.connection, self.image.id, tkp.database.quality.reason['rms'],
+            "10 times too high")
+        self.assertEqual(tkp.database.quality.isrejected(self.database.connection, self.image.id),
+            tkp.database.quality.reason['rms'])
+
 if __name__ == '__main__':
     unittest.main()

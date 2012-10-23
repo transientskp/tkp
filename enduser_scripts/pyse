@@ -1,6 +1,0 @@
-#!/bin/sh
-
-export LD_LIBRARY_PATH=`dirname ${0}`/../lib${LD_LIBRARY_PATH:+:${LD_LIBRARY_PATH}}
-export PYTHONPATH=`dirname ${0}`/../lib/python${PYTHONPATH:+:${PYTHONPATH}}
-
-python `dirname ${0}`/pyse.py $*

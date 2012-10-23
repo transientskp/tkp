@@ -185,8 +185,10 @@ def run_sourcefinder(files, options):
             ff = FitsFile(filename, plane=0)
         imagedata = sourcefinder_image_from_accessor(ff)
         if options.fdr:
+            print "Using False Detection Rate algorithm with alpha = %f" % (options.alpha,)
             sr = imagedata.fd_extract(options.alpha)
         else:
+            print "Thresholding with det = %f sigma, analysis = %f sigma" % (options.detection, options.analysis)
             sr = imagedata.extract(options.detection, options.analysis)
         if options.regions:
             regionfile = os.path.splitext(os.path.basename(filename))[0] + ".reg"

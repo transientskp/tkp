@@ -38,7 +38,7 @@ def isrejected(connection, imageid):
         False if not rejected, reason id if rejected
     """
     query = "SELECT rejectreason FROM rejection WHERE image=%(image)s" % {'image': imageid}
-    cursor = tkp.database.query(connection, query, commit=True)
+    cursor = tkp.database.query(connection, query)
     rejections = cursor.fetchall()
     if len(rejections) > 0:
         return rejections[0][0]

@@ -5,19 +5,13 @@ The quality checks are described in the "LOFAR Transients Key Science Project Qu
 
 """
 
-
-def rms_too_high(rms, noise, factor=10):
+def rms_valid(rms, noise, low_factor=1, high_factor=50):
     """ Is the RMS value of an image too high?
     Args:
         rms: RMS value of an image, can be computed with tkp.quality.statistics.rms
         noise: Theoretical noise level of instrument, can be calculated with tkp.lofar.noise.noise_level
-        factor: The allowed factor
+        low_factor: multiplied with noise to define lower threshold
+        high_factor: multiplied with noise to define upper threshold
     """
-    return rms > noise * factor
+    return (rms > noise * low_factor) and (rms < noise * high_factor)
 
-
-def reject_image(image_id):
-    pass
-
-def reject(image_id, reason):
-    pass

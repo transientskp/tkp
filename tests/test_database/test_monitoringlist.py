@@ -88,15 +88,15 @@ class TestTransientCandidateMonitoring(unittest.TestCase):
                     0,
                     0)
         self.assertEqual(len(winkers), len(all_results))
-        
+
         bright_results = tkpdb.utils.select_transient_candidates_above_thresh(
                     self.database.connection, 
                     [c['runcat'] for c in winkers],
                     10,
                     10)
         self.assertEqual(len(bright_results), 1)
-        self.assertEqual(bright_results[0]['max_det_sigma'], 15)
-        
+        self.assertEqual(bright_results[0]['max_det_sigma'], 30)
+
         #Should return bright single epoch, and fainter two epoch sources
         solid_results = tkpdb.utils.select_transient_candidates_above_thresh(
                     self.database.connection, 

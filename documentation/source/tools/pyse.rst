@@ -20,8 +20,9 @@ Pyse provides the following capabilities:
   - By a simple thresholding technique (ie, locating contiguous islands of
     pixels above some multiple of the noise in the image), or
 
-  - By making use of a False Detection Rate (FDR) algorithm (Hopkins et al.,
-    AJ, 123, 1086, 2002).
+  - By making use of a False Detection Rate (FDR) algorithm (`Hopkins et al.,
+    AJ, 123, 1086, 2002
+    <http://adsabs.harvard.edu/abs/2002AJ....123.1086H>`_).
 
 - Deblending merged sources.
 
@@ -49,7 +50,6 @@ Command Line Usage
 
 A script is available to make it possible to test the basic functionality of
 the ``pyse`` code. It does not make all the features listed above available.
-In particular, at the present time, the FDR algorithm is not available.
 
 Assuming ``pyse`` exists on your ``$PATH``, it is involed by simply providing
 a list of filenames::
@@ -66,6 +66,8 @@ A list of available command line option may be obtained with the
 
   Options:
     -h, --help            show this help message and exit
+    --fdr                 Use False Detection Rate algorithm
+    --alpha=ALPHA         FDR Alpha
     --detection=DETECTION
                           Detection threshold
     --analysis=ANALYSIS   Analysis threshold
@@ -83,8 +85,13 @@ A list of available command line option may be obtained with the
     --radius=RADIUS       Radius of usable portion of image (in pixels)
     --skymodel            Generate sky model
     --csv                 Generate csv text file for use in programs such as
+                          TopCat
     --rmsmap              Generate RMS map
     --sigmap              Generate significance map
+
+By default, source extraction is carried out by thresholding: that is,
+identifying islands of pixels which exceed a particular multiple of the RMS
+noise. In this mode, the following two parameters are may be supplied:
 
 The ``--detection`` argument specifies the multiple of the RMS noise which is
 required for detection; ie, setting ``--detection=5`` is equivalent to
@@ -94,6 +101,15 @@ The ``--analysis`` argument specifies the significance level used when
 performing fitting. It should be lower than ``--detection``, such that once
 islands have been identified a larger number of pixels is included for the
 fitting process.
+
+However, if the ``--fdr`` option is given, a False Detection Rate algorithm is
+used instead. In this case, an additional ``--alpha`` argument may be given to
+specify the :math:`\alpha` parameter (as defined by `Hopkins
+<http://adsabs.harvard.edu/abs/2002AJ....123.1086H>`_).
+
+*Note* that if ``--fdr`` is specified, any values given for ``--detection``
+and ``--analysis`` are *not used*. Conversely, if ``--fdr`` is not specified,
+any value given for ``--alpha`` is *not used*.
 
 If the ``--regions`` option is specified, a DS9-compatible region file is
 output showing the shapes & positions of the sources. It is named according to
@@ -179,7 +195,6 @@ In other words:
 Final Remarks
 =============
 
-Other functionality (eg FDR code) can be exposed through this interface if
-required.
+Other functionality can be exposed through this interface if required.
 
 Bug reports and comments are welcome! Please use the LOFAR issue tracker.

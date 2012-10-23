@@ -35,10 +35,10 @@ def isrejected(connection, imageid):
         connection: A database connection object
         image: The image ID of the image to reject
     returns:
-        False if not rejected, reason id if rejected
+        False if not rejected, a list of reason id's if rejected
     """
     query = "SELECT rejectreason FROM rejection WHERE image=%(image)s" % {'image': imageid}
     cursor = tkp.database.query(connection, query)
     rejections = cursor.fetchall()
     if len(rejections) > 0:
-        return rejections[0][0]
+        return [x[0] for x in rejections]

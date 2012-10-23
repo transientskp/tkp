@@ -42,7 +42,7 @@ class TestReject(unittest.TestCase):
         tkp.database.quality.reject(self.database.connection, self.image.id, tkp.database.quality.reason['rms'],
             "10 times too high")
         self.assertEqual(tkp.database.quality.isrejected(self.database.connection, self.image.id),
-            tkp.database.quality.reason['rms'])
+            [tkp.database.quality.reason['rms'],])
 
 if __name__ == '__main__':
     unittest.main()

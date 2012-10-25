@@ -60,7 +60,7 @@ class TestRms(unittest.TestCase):
 
         # this stuff should be in the header of a LOFAR image some day
         integration_time = 18654.3 # s, should be self.good_image.inttime some day
-        subbandwidth = 200 * 10**6 # Hz, shoud probably be self.good_image.freqbw some day
+        subbandwidth = 200 * 10**3 # Hz, shoud probably be self.good_image.freqbw some day
         ncore = 23 # ~
         nremote = 8 # ~
         nintl = 0
@@ -73,7 +73,7 @@ class TestRms(unittest.TestCase):
         rms = statistics.rms_with_clipped_subregion(good_image.data)
 
         # Todo: this test fails, since the RMS value is higher than the theoretical noise. hm...
-        #self.assertTrue(tkp.quality.rms_valid(rms, noise))
+        self.assertTrue(tkp.quality.rms_valid(rms, noise))
 
     def test_rms_fits(self):
         for bad_file in bad_files:

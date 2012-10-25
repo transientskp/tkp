@@ -1,5 +1,5 @@
 
 from lofarpipe.support.lofarnode import LOFARnodeTCP
 
-class QualityCheck(LOFARnodeTCP):
+class quality_check(LOFARnodeTCP):
     pass

@@ -36,42 +36,42 @@ def noise_level(frequency, subbandwidth, intgr_time, configuration, subbands=1, 
         Aeff_remote = 16 * 24 * tkp.lofar.noise.Aeff_dipole(frequency)
         Aeff_intl = 16 * 24 * tkp.lofar.noise.Aeff_dipole(frequency)
 
-    Ssys_core = system_sensitivity(frequency, Aeff_core)
-    Ssys_remote = system_sensitivity(frequency, Aeff_remote)
-    Ssys_intl = system_sensitivity(frequency, Aeff_intl)
+    # c = core, r = remote, i = international. So for example cc is core-core baseline
+    Ssys_cc = system_sensitivity(frequency, Aeff_core)
+    Ssys_rr = system_sensitivity(frequency, Aeff_remote)
+    Ssys_ii = system_sensitivity(frequency, Aeff_intl)
 
-    SEFD_core = Ssys_core
-    SEFD_remote = Ssys_remote
-    SEFD_intl = Ssys_intl
+    SEFD_cc = Ssys_cc
+    SEFD_rr = Ssys_rr
+    SEFD_ii = Ssys_ii
 
-    SEFD_cr = math.sqrt(SEFD_core) * math.sqrt(SEFD_remote)
-    SEFD_ci = math.sqrt(SEFD_core) * math.sqrt(SEFD_intl)
-    SEFD_ri = math.sqrt(SEFD_remote) * math.sqrt(SEFD_intl)
+    SEFD_cr = math.sqrt(SEFD_cc) * math.sqrt(SEFD_rr)
+    SEFD_ci = math.sqrt(SEFD_cc) * math.sqrt(SEFD_ii)
+    SEFD_ri = math.sqrt(SEFD_rr) * math.sqrt(SEFD_ii)
 
-    baselines_core = (Ncore * (Ncore - 1)) / 2
-    baselines_remote = (Nremote * (Nremote - 1)) / 2
-    baselines_intl = (Nintl * (Nintl - 1)) / 2
+    baselines_cc = (Ncore * (Ncore - 1)) / 2
+    baselines_rr = (Nremote * (Nremote - 1)) / 2
+    baselines_ii = (Nintl * (Nintl - 1)) / 2
     baselines_cr = (Ncore * Nremote)
     baselines_ci = (Ncore * Nintl)
     baselines_ri = (Nremote * Nintl)
-    baselines_total = baselines_core + baselines_remote + baselines_intl + baselines_cr + baselines_ci + baselines_ri
-
-    t_core = baselines_core / pow(SEFD_core, 2)
-    t_remote = baselines_remote / pow(SEFD_remote, 2)
-    t_intl = baselines_intl / pow(SEFD_intl, 2)
-    t_cr = baselines_cr / pow(SEFD_cr, 2)
-    t_ci = baselines_ci / pow(SEFD_ci, 2)
-    t_ri = baselines_ri / pow(SEFD_ri, 2)
+    baselines_total = baselines_cc + baselines_rr + baselines_ii + baselines_cr + baselines_ci + baselines_ri
 
     # factor for increase of noise due to the weighting scheme
     W = 1 # taken from PHP script
 
     # The noise level in a LOFAR image
-    image_sens = W / math.sqrt(4 * bandwidth * intgr_time * ( t_core + t_remote + t_intl + t_cr + t_ci + t_ri))
+    t_cc = baselines_cc / pow(SEFD_cc, 2)
+    t_rr = baselines_rr / pow(SEFD_rr, 2)
+    t_ii = baselines_ii / pow(SEFD_ii, 2)
+    t_cr = baselines_cr / pow(SEFD_cr, 2)
+    t_ci = baselines_ci / pow(SEFD_ci, 2)
+    t_ri = baselines_ri / pow(SEFD_ri, 2)
 
-    # TODO: do we need this?
-    channelwidth = subbandwidth / channels
-    #channel_sens = W / math.sqrt(4 * channelwidth * intgr_time * ( t_core + t_remote + t_intl + t_cr + t_ci + t_ri))
+    image_sens = W / math.sqrt(4 * bandwidth * intgr_time * ( t_cc + t_rr + t_ii + t_cr + t_ci + t_ri))
+
+    #channelwidth = subbandwidth / channels
+    #channel_sens = W / math.sqrt(4 * channelwidth * intgr_time * ( t_cc + t_rr + t_ii + t_cr + t_ci + t_ri))
 
     return image_sens
 

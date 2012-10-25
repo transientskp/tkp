@@ -18,7 +18,7 @@ The TraP makes use the Transients Key Project (TKP) library, a Python
 package which contains the necessary routines for source finding,
 source associations, determination of source characteristics and
 source classification. These are described in the :ref:`TKP library
-documentation <tkpapi:index>`. The pipeline itself (the framework) is
+documentation <tkpapi:front>`. The pipeline itself (the framework) is
 the `LOFAR pipeline system
 <http://lus.lofar.org/documentation/pipeline/>`_.
 

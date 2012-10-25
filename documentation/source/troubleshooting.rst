@@ -36,8 +36,8 @@ for `ERROR` will often lead one directly to the actual error in such
 cases.
 
 
-Commong errors
---------------
+Common errors
+-------------
 
 BBS: inconsistent time axis
   ::

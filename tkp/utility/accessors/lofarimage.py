@@ -1,8 +1,6 @@
-from tkp.utility.coordinates import WCS
 from tkp.utility.accessors.dataaccessor import DataAccessor
-import pytz
 import numpy
-import re
+
 
 class LofarImage(DataAccessor):
     def __init__(self, source, plane=False, beam=False):
@@ -10,103 +8,8 @@ class LofarImage(DataAccessor):
 
         self.plane = plane
 
+        self._beamsizeparse(source)
         self._read_data(source)
-        self._coordparse(source)
-
-        if not beam:
-            self._beamsizeparse(source)
-        else:
-            super(DataAccessor, self)._beamsizeparse(beam[0], beam[1], beam[2])
-
-        # Attempt to do something sane with timestamps.
-        timezone = pytz.utc
-        try:
-            try:
-                timestamp = dateutil.parser.parse(hdu.header['date-obs'])
-            except AttributeError:
-                # Maybe it's a float, Westerbork-style?
-                if isinstance(hdu.header['date-obs'], float):
-                    logging.warn("Non-standard date specified in FITS file!")
-                    frac, year = numpy.modf(hdu.header['date-obs'])
-                    timestamp = datetime.datetime(int(year), 1, 1)
-                    delta = datetime.timedelta(365.242199 * frac)
-                    timestamp += delta
-                else:
-                    raise KeyError("Timestamp in fits file unreadable")
-            try:
-                timezone = pytz.timezone(hdu.header['timesys'])
-            except (pytz.UnknownTimeZoneError, KeyError):
-                logging.debug(
-                    "Timezone not specified in FITS file: assuming UTC")
-            timestamp = timestamp.replace(tzinfo=timezone)
-            self.utc = pytz.utc.normalize(timestamp.astimezone(pytz.utc))
-        except KeyError:
-            logging.warn("Timestamp not specified in FITS file; using now")
-            self.utc = datetime.datetime.now().replace(tzinfo=pytz.utc)
-        self.obstime = self.utc
-        try:
-            endtime = dateutil.parser.parse(hdu.header['end_utc'])
-            endtime = endtime.replace(tzinfo=timezone)
-            self.utc_end = pytz.utc.normalize(endtime.astimezone(pytz.utc))
-            delta = self.utc_end - self.utc
-            # In Python 2.7, we can use delta.total_seconds instead
-            self.inttime = (delta.days*86400 + delta.seconds +
-                            delta.microseconds/1e6)
-        except KeyError:
-            logging.warn("End time not specified or unreadable")
-            self.inttime = 0.
-
-        if isinstance(source, basestring):
-            # If we opened the FITS file ourselves, we'd better ensure it's
-            # closed
-            hdulist.close()
-
-    def _coordparse(self, source):
-        """Set some 'shortcut' variables for access to the coordinate
-        parameters in the FITS file header.
-        """
-        # These are maintained for legacy reasons -- better to access by
-        # header name through __getattr__?
-        self.wcs = WCS()
-        try:
-            self.wcs.crval = source["coordinfo"]["coords"]["direction0"].attrs["crval"]
-            self.wcs.crpix = source["coordinfo"]["coords"]["direction0"].attrs["crpix"]
-            self.wcs.cdelt = source["coordinfo"]["coords"]["direction0"].attrs["cdelt"]
-        except KeyError:
-            logging.warn("Coordinate system not specified in FITS")
-            raise
-        try:
-            self.wcs.ctype = source['ctype1'], source['ctype2']
-        except KeyError:
-            self.wcs.ctype = 'unknown', 'unknown'
-        try:
-            self.wcs.crota = float(source['crota1']), float(source['crota2'])
-        except KeyError:
-            self.wcs.crota = 0., 0.
-        try:
-            self.wcs.cunits = source['cunit1'], source['cunit2']
-        except KeyError:
-            self.wcs.cunits = 'unknown', 'unknown'
-
-        self.wcs.wcsset()
-        self.pix_to_position = self.wcs.p2s
-
-
-    def get_header(self):
-        # Preserved for API compatibility.
-        return self.header
-
-    def _read_data(self, source):
-        """
-        Read and store data from our FITS file.
-        """
-        self.data = numpy.squeeze(source["map"])
-
-        if len(self.data.shape) != 2:
-            raise IndexError("Data has wrong shape")
-
-        # TODO: do we need to transpose?
-        #self.data = data.transpose()
 
         coordinfo = source["/coordinfo"]
         attrgroups = source["/ATTRGROUPS"]
@@ -152,38 +55,24 @@ class LofarImage(DataAccessor):
         notes = source.attrs['NOTES']
 
 
+    def get_header(self):
+        # Preserved for API compatibility.
+        return self.header
+
+    def _read_data(self, source):
+        self.data = numpy.squeeze(source["map"])
+
+        if len(self.data.shape) != 2:
+            raise IndexError("Data has wrong shape")
+
+        # TODO: do we need to transpose?
+        #self.data = data.transpose()
 
 
     def _beamsizeparse(self, source):
         """Read and return the beam properties bmaj, bmin and bpa values from
         the fits header
-
-        Only Miriad and AIPS cleaned images can be handled by this method.
-        If no (key) values can be read we use the WENSS values.
         """
+        # todo: this data is net present in the h5 lofar example file in the data repo
+        pass
 
-        bmaj, bmin, bpa = None, None, None
-        try:
-            # MIRIAD FITS file
-            bmaj = source['BMAJ']
-            bmin = source['BMIN']
-            bpa = source['BPA']
-        except KeyError:
-            pass
-        if bmaj is None:
-            # if not provided and not found we are lost and
-            # have to bomb out.
-            raise ValueError("Basic processing is impossible without adequate information about the resolution element")
-        super(FITSImage, self)._beamsizeparse(bmaj, bmin, bpa)
-
-    def __getattr__(self, attrname):
-        """
-        Read FITS source for unknown attributes.
-
-        If they're not found, throw an AttributeError.
-
-        @type attrname: string
-        """
-        if attrname in self.source:
-            return self.source[attrname]
-        raise AttributeError(attrname)

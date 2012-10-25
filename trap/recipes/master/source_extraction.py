@@ -1,7 +1,4 @@
 from __future__ import with_statement
-from contextlib import contextmanager
-
-import os
 import sys
 import itertools
 import lofarpipe.support.lofaringredient as ingredient

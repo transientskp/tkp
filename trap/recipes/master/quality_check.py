@@ -15,15 +15,15 @@ stuff you can set in the parset file:
     f = 4                   # determines size of subsection, result will be 1/fth of the image size
     low_bound = 1           # multiplied with noise to define lower threshold
     high_bound = 50         # multiplied with noise to define upper threshold
-    frequency = 45*10**6
-    subbandwidth = 200*10**3 # in Hz
+    frequency = 450000000
+    subbandwidth = 200000 # in Hz
     intgr_time = 18654      # integration time in seconds
     configuration = LBA_INNER
     subbands = 10           # number of subbands
     channels = 64           # number of channels
     ncore = 24              # number of core stations
     nremote = 16            # number of remote stations
-    nintl 8                 # number of international stations
+    nintl = 8                 # number of international stations
 
 """
 

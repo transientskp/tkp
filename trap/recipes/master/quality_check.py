@@ -1,10 +1,21 @@
+"""
+This recipe will perform some basic quality checks on a given image.
+
+For now it:
+    * Checks if the RMS value of an image is within a acceptable range,
+    * More to come.
+
+If an image passes theses tests, the image id will be put in the image_ids
+output variable, otherwise an rejection entry with put in the rejection
+database table.
+"""
+
 import itertools
 from lofarpipe.support.baserecipe import BaseRecipe
 from lofarpipe.support.remotecommand import RemoteCommandRecipeMixIn
 import lofarpipe.support.lofaringredient as ingredient
 from lofarpipe.support.clusterdesc import ClusterDesc, get_compute_nodes
 from lofarpipe.support.remotecommand import ComputeJob
-import tkp.config
 
 class quality_check(BaseRecipe, RemoteCommandRecipeMixIn):
     inputs = {
@@ -39,10 +50,6 @@ class quality_check(BaseRecipe, RemoteCommandRecipeMixIn):
             }
         nodes = list(itertools.chain(*available_nodes.values()))
 
-        # Running this on nodes, in case we want to perform source extraction
-        # on individual images that are still stored on the compute nodes
-        # Note that for that option, we will need host <-> data mapping,
-        # eg VDS files
         command = "python %s" % self.__file__.replace('master', 'nodes')
         jobs = []
         hosts = itertools.cycle(nodes)
@@ -59,8 +66,7 @@ class quality_check(BaseRecipe, RemoteCommandRecipeMixIn):
             )
         jobs = self._schedule_jobs(jobs)
         self.outputs['image_ids'] = [job.results['image_id'] for job in jobs.itervalues()]
-        #                Check if we recorded a failing process before returning
-        # ----------------------------------------------------------------------
+
         if self.error.isSet():
             self.logger.warn("Failed quality control process detected")
             return 1

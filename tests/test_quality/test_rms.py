@@ -24,6 +24,7 @@ core_antennas = os.path.join(DATAPATH, 'lofar/CS001-AntennaArrays.conf')
 intl_antennas = os.path.join(DATAPATH, 'lofar/DE601-AntennaArrays.conf')
 remote_antennas = os.path.join(DATAPATH, 'lofar/RS106-AntennaArrays.conf')
 
+# These all actually have a quite acceptable noise level, only bad_files[5] is very high
 bad_files = [os.path.join(DATAPATH, 'quality/noise/bad/home-pcarrol-msss-3C196a-analysis-band%i.corr.fits' % i) for i in range(1, 8)]
 good_files = [os.path.join(DATAPATH, 'quality/noise/good/home-pcarrol-msss-L086+69-analysis-band%i.corr.fits' % i) for i in range(2, 8)]
 
@@ -53,9 +54,9 @@ class TestRms(unittest.TestCase):
         rms = statistics.rms(clip)
         self.assertEqual(rms, statistics.rms_with_clipped_subregion(o))
 
-
     def test_theoreticalnoise(self):
         good_image = accessors.FitsFile(good_files[0], plane=0)
+        bad_image = accessors.FitsFile(bad_files[5], plane=0)
         frequency = good_image.freqeff
 
         # this stuff should be in the header of a LOFAR image some day
@@ -70,21 +71,14 @@ class TestRms(unittest.TestCase):
 
         noise = tkp.lofar.noise.noise_level(frequency, subbandwidth, integration_time, configuration, num_subband,
                         num_channels, ncore, nremote, nintl)
-        rms = statistics.rms_with_clipped_subregion(good_image.data)
+        rms_good = statistics.rms_with_clipped_subregion(good_image.data)
+        rms_bad = statistics.rms_with_clipped_subregion(bad_image.data)
 
-        # Todo: this test fails, since the RMS value is higher than the theoretical noise. hm...
-        self.assertTrue(tkp.quality.rms_valid(rms, noise))
+        self.assertTrue(tkp.quality.rms_valid(rms_good, noise))
+        self.assertFalse(tkp.quality.rms_valid(rms_bad, noise))
 
     def test_rms_fits(self):
-        for bad_file in bad_files:
-            bad_image = accessors.FitsFile(bad_file, plane=0)
-            bad_rms = statistics.rms_with_clipped_subregion(bad_image.data)
-            print bad_file, "bad:", bad_rms
-
-        for good_file in good_files:
-            good_image = accessors.FitsFile(good_file, plane=0)
-            good_rms = statistics.rms_with_clipped_subregion(good_image.data)
-            print good_file, "(good)", good_rms
+        accessors.FitsFile(good_files[0], plane=0)
 
     def test_distanses(self):
         """check if all precomputed values match with distances in files"""

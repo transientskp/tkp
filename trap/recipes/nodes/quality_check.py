@@ -5,6 +5,7 @@ from lofarpipe.support.utilities import log_time
 from tkp.quality.statistics import rms_with_clipped_subregion
 from tkp.lofar.noise import noise_level
 import tkp.quality
+import tkp.database.quality
 from tkp.database import DataBase, DataSet
 from tkp.utility.accessors import FITSImage
 from tkp.utility.accessors import dbimage_from_accessor
@@ -20,16 +21,17 @@ class quality_check(LOFARnodeTCP):
 
                 # todo: get this stuff from header
                 noise = noise_level(45*10**6, 200*10**3, 18654, "LBA_INNER", 10, 24, 23, 8, 0)
-                
+
                 if tkp.quality.rms_valid(rms, noise):
                     self.outputs['image_id'] = db_image.id
                 else:
+                    ratio = rms / noise
+                    reason = "noise level is %s times theoretical value" % ratio
+                    self.logger.info("image %s invalid: %s " % (db_image.id, reason) )
+                    tkp.database.quality.reject(database.connection, db_image.id, tkp.database.quality.reason['rms'], reason)
                     self.outputs['image_id'] = None
         return 0
 
 if __name__ == "__main__":
-    #   If invoked directly, parse command line arguments for logger information
-    #                        and pass the rest to the run() method defined above
-    # --------------------------------------------------------------------------
     jobid, jobhost, jobport = sys.argv[1:4]
     sys.exit(quality_check(jobid, jobhost, jobport).run_with_stored_arguments())

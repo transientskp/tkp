@@ -8,6 +8,23 @@ For now it:
 If an image passes theses tests, the image id will be put in the image_ids
 output variable, otherwise an rejection entry with put in the rejection
 database table.
+
+stuff you can set in the parset file:
+
+    sigma = 3               # sigma value used for iterave clipping image before RMS calculation
+    f = 4                   # determines size of subsection, result will be 1/fth of the image size
+    low_bound = 1           # multiplied with noise to define lower threshold
+    high_bound = 50         # multiplied with noise to define upper threshold
+    frequency = 45*10**6
+    subbandwidth = 200*10**3 # in Hz
+    intgr_time = 18654      # integration time in seconds
+    configuration = LBA_INNER
+    subbands = 10           # number of subbands
+    channels = 64           # number of channels
+    ncore = 24              # number of core stations
+    nremote = 16            # number of remote stations
+    nintl 8                 # number of international stations
+
 """
 
 import itertools
@@ -23,6 +40,11 @@ class quality_check(BaseRecipe, RemoteCommandRecipeMixIn):
             '--dataset-id',
             help='Dataset to which images belong',
             default=None
+        ),
+        'parset': ingredient.FileField(
+            '-p', '--parset',
+            dest='parset',
+            help="Quality check configuration parset"
         ),
     }
     outputs = {
@@ -61,6 +83,7 @@ class quality_check(BaseRecipe, RemoteCommandRecipeMixIn):
                     arguments=[
                         image,
                         dataset_id,
+                        self.inputs['parset'],
                     ]
                 )
             )

@@ -1,5 +1,4 @@
 import sys
-from contextlib import closing
 from lofarpipe.support.lofarnode import LOFARnodeTCP
 from lofarpipe.support.utilities import log_time
 from tkp.quality.statistics import rms_with_clipped_subregion
@@ -9,24 +8,41 @@ import tkp.database.quality
 from tkp.database import DataBase, DataSet
 from tkp.utility.accessors import FITSImage
 from tkp.utility.accessors import dbimage_from_accessor
+#from lofar.parameterset import parameterset
+from lofarpipe.support.parset import parameterset
 
 class quality_check(LOFARnodeTCP):
-    def run(self, image, dataset_id):
+    def run(self, image, dataset_id, parset):
         log_time(self.logger)
         self.database = DataBase()
         self.dataset = DataSet(id=dataset_id, database=self.database)
-        self.fitsimage = FITSImage(image)
+        self.fitsimage = FITSImage(image, plane=0)
         self.db_image = dbimage_from_accessor(dataset=self.dataset,  image=self.fitsimage)
+        self.parset = parameterset(parset)
         self.rms()
         return 0
 
     def rms(self):
-        rms = rms_with_clipped_subregion(self.fitsimage.data)
 
-        # todo: get this stuff from header
-        noise = noise_level(45*10**6, 200*10**3, 18654, "LBA_INNER", 10, 24, 23, 8, 0)
+        sigma = self.parset.getInt('sigma', 3)
+        f = self.parset.getInt('f', 4)
+        low_bound = self.parset.getFloat('low_bound', 1)
+        high_bound = self.parset.getInt('high_bound', 50)
+        frequency = self.parset.getInt('frequency', 45*10**6)
+        subbandwidth = self.parset.getInt('subbandwidth', 200*10**3)
+        intgr_time = self.parset.getFloat('intgr_time', 18654)
+        configuration = self.parset.getString('configuration', "LBA_INNER")
+        subbands = self.parset.getInt('subbands', 10)
+        channels = self.parset.getInt('channels', 64)
+        ncore = self.parset.getInt('ncore', 24)
+        nremote = self.parset.getInt('nremote',16)
+        nintl = self.parset.getInt('nintl', 8)
 
-        if tkp.quality.rms_valid(rms, noise):
+        rms = rms_with_clipped_subregion(self.fitsimage.data, sigma=sigma, f=f)
+
+        noise = noise_level(frequency, subbandwidth, intgr_time, configuration, subbands, channels, ncore, nremote, nintl)
+
+        if tkp.quality.rms_valid(rms, noise, low_bound=low_bound, high_bound=high_bound):
             self.outputs['image_id'] = self.db_image.id
         else:
             ratio = rms / noise

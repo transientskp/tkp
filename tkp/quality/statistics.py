@@ -40,6 +40,6 @@ def rms_with_clipped_subregion(data, sigma=3, f=4):
     Args:
         data: A numpy array
         sigma: sigma value used for clipping
-        f: determines size of subjection, result will be 1/fth of the image size
+        f: determines size of subsection, result will be 1/fth of the image size
     """
     return rms(clip(subregion(data, f), sigma))

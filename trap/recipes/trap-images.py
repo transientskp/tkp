@@ -64,9 +64,14 @@ class TrapImages(control):
                 self.logger.info("Processing images ...")
                 for ctr, image in enumerate(images):
                     outputs = self.run_task(
-                        "source_extraction", [image], dataset_id=dataset.id,
-#                       nproc = self.config.get('DEFAULT', 'default_nproc')
-                        nproc=1 # Issue #3357
+                        "quality_check", [image], dataset_id=dataset.id 
+                    )
+                    outputs.update(
+                        self.run_task(
+                            "source_extraction", [image], dataset_id=dataset.id,
+    #                       nproc = self.config.get('DEFAULT', 'default_nproc')
+                            nproc=1 # Issue #3357
+                        )
                     )
                     outputs.update(
                             self.run_task("monitoringlist", [dataset.id],

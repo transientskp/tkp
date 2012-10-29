@@ -8,16 +8,11 @@ Images should be prepared with the correct keywords.
 from __future__ import with_statement
 
 import sys
-import os
 import datetime
 import json
 
-from pyrap.quanta import quantity
-
-import lofarpipe.support
 from lofarpipe.support.control import control
 from lofarpipe.support.utilities import log_time
-from lofarpipe.support.parset import patched_parset
 import lofarpipe.support.lofaringredient as ingredient
 
 from tkp.database import DataBase

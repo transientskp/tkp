@@ -26,10 +26,6 @@ import tkp.database as tkpdb
 
 import tkp.config
 
-from tkp.classification.transient import Transient
-from tkp.classification.transient import Position
-from tkp.classification.transient import DateTime
-
 
 class monitoringlist(BaseRecipe, RemoteCommandRecipeMixIn):
     """
@@ -95,7 +91,6 @@ class monitoringlist(BaseRecipe, RemoteCommandRecipeMixIn):
                         filename,
                         image_id,
                         dataset.id,
-                        tkp.config.CONFIGDIR
                         ]
                     )
                 )

@@ -169,13 +169,10 @@ class FITSImage(DataAccessor):
         data = numpy.float64(hdu.data.squeeze())
         if not isinstance(self.plane, bool) and len(data.shape) > 2:
             data = data[self.plane].squeeze()
-        if len(data.shape) != 2:
-            # This basically takes Stokes I if we have an image cube instead
-            # of an image.
-            # self.data=self.data[0,:,:]
-            # If you make some assumptions about the data format, that may
-            # be true, but...
-            raise IndexError("Data has wrong shape")
+        planes = len(data.shape)
+        if planes != 2:
+            logging.warn("received database with %s planes, assuming Stokes I and taking plane 0" % planes)
+            data=data[0,:,:]
         self.data = data.transpose()
 
     def _beamsizeparse(self, hdu):

@@ -4,19 +4,18 @@ import unittest
 if not  hasattr(unittest.TestCase, 'assertIsInstance'):
     import unittest2 as unittest
 import os
-
+import sys
 import pyfits
 import h5py
-
-from decorators import requires_data
-from decorators import requires_database
 import tkp.config
 from tkp.utility import accessors
 from tkp.utility.accessors.lofarimage import LofarImage
 from tkp.utility.accessors.fitsimage import FITSImage
 from tkp.database import DataSet
 from tkp.database import DataBase
-
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+from decorators import requires_data
+from decorators import requires_database
 
 DATAPATH = tkp.config.config['test']['datapath']
 

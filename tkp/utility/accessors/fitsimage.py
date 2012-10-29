@@ -171,7 +171,7 @@ class FITSImage(DataAccessor):
             data = data[self.plane].squeeze()
         planes = len(data.shape)
         if planes != 2:
-            logging.warn("received database with %s planes, assuming Stokes I and taking plane 0" % planes)
+            logging.warn("received datacube with %s planes, assuming Stokes I and taking plane 0" % planes)
             data=data[0,:,:]
         self.data = data.transpose()
 

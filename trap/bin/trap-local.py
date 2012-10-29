@@ -6,8 +6,10 @@ import sys
 import logging
 from tkp.database import DataBase
 from tkp.database import DataSet
+import tkp.database as tkpdb
 import trap.quality
 import trap.source_extraction
+import trap.monitoringlist
 from lofarpipe.support.control import control
 #from images_to_process import images
 
@@ -28,12 +30,22 @@ class TrapImages(control):
 
         for image in images:
             self.logger.info("Processing image %s ..." % image)
-            # quality check
             if not trap.quality.noise(image, dataset.id, quality_parset_file):
                 continue
 
             trap.source_extraction.extract_sources(image, dataset.id, srcxtr_parset_file, False, "",  0, "")
 
+        dataset.update_images()
+        image_ids = [img.id for img in dataset.images]
+        ids_filenames = tkpdb.utils.get_imagefiles_for_ids(database.connection, image_ids)
+
+        for image_id, filename in ids_filenames:
+            trap.monitoringlist.monitoringlist(filename, image_id, dataset.id)
+
+        #"transient_search", [dataset.id], image_ids=outputs['image_ids']
+        #"feature_extraction", outputs['transients'])
+        #"classification", outputs['transients'])
+        #"prettyprint", outputs['transients'])
 
 if __name__ == '__main__':
     logging.basicConfig(level=logging.INFO)

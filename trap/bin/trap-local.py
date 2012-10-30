@@ -10,6 +10,7 @@ import tkp.database as tkpdb
 import trap.quality
 import trap.source_extraction
 import trap.monitoringlist
+import trap.persistence
 from lofarpipe.support.control import control
 #from images_to_process import images
 
@@ -22,25 +23,26 @@ class TrapImages(control):
     inputs = {}
 
     def pipeline_logic(self):
-        database = DataBase()
-        dataset = DataSet({'description': 'trap-local dev run'}, database)
         quality_parset_file = self.task_definitions.get("quality_check", "parset")
         srcxtr_parset_file = self.task_definitions.get("source_extraction", "parset")
-        self.logger.info("Processing images ...")
 
-        for image in images:
-            self.logger.info("Processing image %s ..." % image)
-            if not trap.quality.noise(image, dataset.id, quality_parset_file):
-                continue
+        self.logger.info("creating dataset in database ...")
+        dataset_id = trap.persistence.store(images, 'trap-local dev run')
+        self.logger.info("added dataset with ID %s" % dataset_id)
 
-            trap.source_extraction.extract_sources(image, dataset.id, srcxtr_parset_file, False, "",  0, "")
-
+        dataset = DataSet(id=dataset_id, database=DataBase())
         dataset.update_images()
-        image_ids = [img.id for img in dataset.images]
-        ids_filenames = tkpdb.utils.get_imagefiles_for_ids(database.connection, image_ids)
 
-        for image_id, filename in ids_filenames:
-            trap.monitoringlist.monitoringlist(filename, image_id, dataset.id)
+        good_images = []
+        for image in dataset.images:
+            if trap.quality.noise(image.id, quality_parset_file):
+                    good_images.append(image)
+
+        for image in good_images:
+            trap.source_extraction.extract_sources(image.id, srcxtr_parset_file)
+
+        for image in good_images:
+            trap.monitoringlist.monitoringlist(image.id)
 
         #"transient_search", [dataset.id], image_ids=outputs['image_ids']
         #"feature_extraction", outputs['transients'])

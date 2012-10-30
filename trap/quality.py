@@ -1,13 +1,15 @@
 
 import logging
 from lofarpipe.support.parset import parameterset
-from tkp.database import DataBase, DataSet
+from tkp.database import DataBase
 from tkp.quality.statistics import rms_with_clipped_subregion
 from tkp.lofar.noise import noise_level
 from tkp.utility.accessors import FITSImage
-from tkp.utility.accessors import dbimage_from_accessor
 import tkp.database.quality
 import tkp.quality
+from tkp.database.orm import Image
+
+logger = logging.getLogger(__name__)
 
 def parse_parset(parset_file):
     parset = parameterset(parset_file)
@@ -27,32 +29,30 @@ def parse_parset(parset_file):
     result['nintl'] = parset.getInt('nintl', 8)
     return result
 
-def noise(image, dataset_id, parset_file):
+def noise(image_id, parset_file):
     """ checks if an image passes the RMS quality check. If not, a rejection entry is added to the database.
     args:
-        fitsimage: a fitsimage accessor
-        db_image: a database image object
-        database: a tkp database object
+        image_id: id of image in database
+        parset_file: parset file location with quality check parameters
     Returns:
-        image database ID if the images passes the test, None otherwise
+        True if image passes tests, false if not
     """
     database = DataBase()
-    dataset = DataSet(id=dataset_id, database=database)
-    fitsimage = FITSImage(image)
-    db_image = dbimage_from_accessor(dataset=dataset,  image=fitsimage)
+    db_image = Image(database=database, id=image_id)
+    fitsimage = FITSImage(db_image.url)
     p = parse_parset(parset_file)
 
     rms = rms_with_clipped_subregion(fitsimage.data, sigma=p['sigma'], f=p['f'])
     noise = noise_level(p['frequency'], p['subbandwidth'], p['intgr_time'],
-                        p['configuration'], p['subbands'], p['channels'],
-                        p['ncore'], p['nremote'], p['nintl'])
+        p['configuration'], p['subbands'], p['channels'],
+        p['ncore'], p['nremote'], p['nintl'])
 
     if tkp.quality.rms_valid(rms, noise, low_bound=p['low_bound'], high_bound=p['high_bound']):
-        return db_image.id
+        return True
     else:
         ratio = rms / noise
         reason = "noise level is %s times theoretical value" % ratio
-        logging.info("image %s invalid: %s " % (db_image.id, reason) )
+        logger.info("image %s invalid: %s " % (db_image.id, reason) )
         tkp.database.quality.reject(database.connection, db_image.id,
             tkp.database.quality.reason['rms'], reason)
-        return None
+        return False

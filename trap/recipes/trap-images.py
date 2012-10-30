@@ -59,7 +59,7 @@ class TrapImages(control):
                 self.logger.info("Processing images ...")
                 for ctr, image in enumerate(images):
                     outputs = self.run_task(
-                        "quality_check", [image], dataset_id=dataset.id 
+                        "quality_check", [image], dataset_id=dataset.id
                     )
                     outputs.update(
                         self.run_task(

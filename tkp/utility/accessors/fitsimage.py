@@ -8,6 +8,8 @@ import dateutil.parser
 import logging
 import re
 
+logger = logging.getLogger(__name__)
+
 class FITSImage(DataAccessor):
     """
     Use PyFITS to pull image data out of a FITS file.
@@ -61,7 +63,7 @@ class FITSImage(DataAccessor):
             except AttributeError:
                 # Maybe it's a float, Westerbork-style?
                 if isinstance(hdu.header['date-obs'], float):
-                    logging.warn("Non-standard date specified in FITS file!")
+                    logger.warn("Non-standard date specified in FITS file!")
                     frac, year = numpy.modf(hdu.header['date-obs'])
                     timestamp = datetime.datetime(int(year), 1, 1)
                     delta = datetime.timedelta(365.242199 * frac)
@@ -71,12 +73,12 @@ class FITSImage(DataAccessor):
             try:
                 timezone = pytz.timezone(hdu.header['timesys'])
             except (pytz.UnknownTimeZoneError, KeyError):
-                logging.debug(
+                logger.debug(
                     "Timezone not specified in FITS file: assuming UTC")
             timestamp = timestamp.replace(tzinfo=timezone)
             self.utc = pytz.utc.normalize(timestamp.astimezone(pytz.utc))
         except KeyError:
-            logging.warn("Timestamp not specified in FITS file; using now")
+            logger.warn("Timestamp not specified in FITS file; using now")
             self.utc = datetime.datetime.now().replace(tzinfo=pytz.utc)
         self.obstime = self.utc
         try:
@@ -88,7 +90,7 @@ class FITSImage(DataAccessor):
             self.inttime = (delta.days*86400 + delta.seconds +
                             delta.microseconds/1e6)
         except KeyError:
-            logging.warn("End time not specified or unreadable")
+            logger.warn("End time not specified or unreadable")
             self.inttime = 0.
 
         if isinstance(source, basestring):
@@ -109,7 +111,7 @@ class FITSImage(DataAccessor):
             self.wcs.crpix = header['crpix1'], header['crpix2']
             self.wcs.cdelt = header['cdelt1'], header['cdelt2']
         except KeyError:
-            logging.warn("Coordinate system not specified in FITS")
+            logger.warn("Coordinate system not specified in FITS")
             raise
         try:
             self.wcs.ctype = header['ctype1'], header['ctype2']
@@ -150,7 +152,7 @@ class FITSImage(DataAccessor):
                     self.freqeff = hdu.header['restfreq']
                     self.freqbw = 0.0
         except KeyError:
-            logging.warn("Frequency not specified in FITS")
+            logger.warn("Frequency not specified in FITS")
 
     def get_header(self):
         # Preserved for API compatibility.
@@ -171,7 +173,7 @@ class FITSImage(DataAccessor):
             data = data[self.plane].squeeze()
         planes = len(data.shape)
         if planes != 2:
-            logging.warn("received datacube with %s planes, assuming Stokes I and taking plane 0" % planes)
+            logger.warn("received datacube with %s planes, assuming Stokes I and taking plane 0" % planes)
             data=data[0,:,:]
         self.data = data.transpose()
 

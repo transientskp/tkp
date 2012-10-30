@@ -9,6 +9,7 @@ setup(
         'tkp',
         'tkp.database',
         'tkp.database.utils',
+        'tkp.database.quality',
         'tkp.sourcefinder',
         'tkp.classification',
         'tkp.classification.features',

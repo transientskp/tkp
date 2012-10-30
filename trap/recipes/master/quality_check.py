@@ -36,11 +36,6 @@ from lofarpipe.support.remotecommand import ComputeJob
 
 class quality_check(BaseRecipe, RemoteCommandRecipeMixIn):
     inputs = {
-        'dataset_id': ingredient.IntField(
-            '--dataset-id',
-            help='Dataset to which images belong',
-            default=None
-        ),
         'parset': ingredient.FileField(
             '-p', '--parset',
             dest='parset',
@@ -48,7 +43,7 @@ class quality_check(BaseRecipe, RemoteCommandRecipeMixIn):
         ),
     }
     outputs = {
-        'image_ids': ingredient.ListField()
+        'good_image_ids': ingredient.ListField()
     }
 
 
@@ -57,7 +52,6 @@ class quality_check(BaseRecipe, RemoteCommandRecipeMixIn):
         super(quality_check, self).go()
         images = self.inputs['args']
         print 'IMAGES =', images
-        dataset_id = self.inputs['dataset_id']
 
         # Obtain available nodes
         clusterdesc = ClusterDesc(self.config.get('cluster', "clusterdesc"))
@@ -82,13 +76,12 @@ class quality_check(BaseRecipe, RemoteCommandRecipeMixIn):
                     host, command,
                     arguments=[
                         image,
-                        dataset_id,
                         self.inputs['parset'],
                     ]
                 )
             )
         jobs = self._schedule_jobs(jobs)
-        self.outputs['image_ids'] = [job.results['image_id'] for job in jobs.itervalues()]
+        self.outputs['good_image_ids'] = [job.results['image_id'] for job in jobs.itervalues() if job.results['pass']]
 
         if self.error.isSet():
             self.logger.warn("Failed quality control process detected")

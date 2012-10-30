@@ -3,8 +3,8 @@ from lofarpipe.support.lofarnode import LOFARnodeTCP
 import trap.monitoringlist
 
 class monitoringlist(LOFARnodeTCP):
-    def run(self, filename, image_id, dataset_id):
-        trap.monitoringlist.monitoringlist(filename, image_id, dataset_id)
+    def run(self, image_id):
+        trap.monitoringlist.update_monitoringlist(image_id)
         return 0
 
 if __name__ == "__main__":

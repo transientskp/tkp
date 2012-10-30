@@ -21,11 +21,9 @@ from lofarpipe.support.clusterdesc import ClusterDesc, get_compute_nodes
 from lofarpipe.support.remotecommand import ComputeJob
 from lofarpipe.support.remotecommand import RemoteCommandRecipeMixIn
 from lofar.parameterset import parameterset
-
 import tkp.database as tkpdb
-
 import tkp.config
-
+import trap.monitoringlist
 
 class monitoringlist(BaseRecipe, RemoteCommandRecipeMixIn):
     """
@@ -44,28 +42,22 @@ class monitoringlist(BaseRecipe, RemoteCommandRecipeMixIn):
             help="Maximum number of simultaneous processes per compute node",
             default=8
         ),
-      'parset': ingredient.FileField(
-             '-p', '--parset',
+        'parset': ingredient.FileField(
+            '-p', '--parset',
             dest='parset',
             help="Source finder configuration parset (used to pull detection threshold)"
         ),
-        }
+    }
     
     def go(self):
         super(monitoringlist, self).go()
-        ds_id = self.inputs['args'][0]
-        # Get image_ids and their file names
-        with closing(tkpdb.DataBase()) as database:
-            dataset = tkpdb.DataSet(database=database, id = ds_id)
-            dataset.update_images()
-            image_ids = [img.id for img in dataset.images]
-            ids_filenames = tkpdb.utils.get_imagefiles_for_ids(
-                database.connection, image_ids)
-            
-            #Mark sources which need monitoring
-            detection_thresh = parameterset(self.inputs['parset']).getFloat('detection.threshold', 5)
-            dataset.mark_transient_candidates(single_epoch_threshold = detection_thresh,
-                                              combined_threshold = detection_thresh)
+        dataset_id = self.inputs['args'][0]
+        database = tkpdb.DataBase()
+        dataset = tkpdb.DataSet(database=database, id = dataset_id)
+        dataset.update_images()
+        image_ids = [img.id for img in dataset.images]
+        trap.monitoringlist.mark_sources(dataset_id, self.inputs['parset'])
+
         # Obtain available nodes
         clusterdesc = ClusterDesc(self.config.get('cluster', "clusterdesc"))
         if clusterdesc.subclusters:
@@ -82,22 +74,19 @@ class monitoringlist(BaseRecipe, RemoteCommandRecipeMixIn):
         command = "python %s" % self.__file__.replace('master', 'nodes')
         jobs = []
         hosts = itertools.cycle(nodes)
-        for image_id, filename in ids_filenames:
+        for image_id in image_ids:
             host = hosts.next()
             jobs.append(
                 ComputeJob(
                     host, command,
                     arguments=[
-                        filename,
-                        image_id,
-                        dataset.id,
+                            image_id,
                         ]
                     )
                 )
         jobs = self._schedule_jobs(jobs, max_per_node=self.inputs['nproc'])
         
-        #                Check if we recorded a failing process before returning
-        # ----------------------------------------------------------------------
+        # Check if we recorded a failing process before returning
         if self.error.isSet():
             self.logger.warn("Failed monitoringlist process detected")
             return 1
@@ -105,4 +94,4 @@ class monitoringlist(BaseRecipe, RemoteCommandRecipeMixIn):
 
 
 if __name__ == '__main__':
-    sys.exit(transient_search().main())
+    sys.exit(monitoringlist().main())

@@ -1,7 +1,8 @@
 import os
 import logging
 from lofarpipe.support.lofarexceptions import PipelineException
-from tkp.database import DataBase
+from lofar.parameterset import parameterset
+from tkp.database import DataBase, DataSet
 from tkp.utility.accessors import FITSImage
 from tkp.utility.accessors import sourcefinder_image_from_accessor
 from lofarpipe.support.utilities import log_time
@@ -11,7 +12,14 @@ logger = logging.getLogger(__name__)
 
 BOX_IN_BEAMPIX = 10 # TODO:  FIXME! (see also 'image' unit test)
 
-def monitoringlist(image_id):
+def mark_sources(dataset_id, parset):
+    database = DataBase()
+    dataset = DataSet(database=database, id = dataset_id)
+    dataset.update_images()
+    detection_thresh = parameterset(parset).getFloat('detection.threshold', 5)
+    dataset.mark_transient_candidates(single_epoch_threshold = detection_thresh, combined_threshold = detection_thresh)
+
+def update_monitoringlist(image_id):
     """ Update the monitoring list with newly found transients. Transients that are already in the monitoring
     list will get their position updated from the runningcatalog.
     Args:
@@ -25,6 +33,7 @@ def monitoringlist(image_id):
     db_image = Image(database=database, id=image_id)
     if not os.path.exists(db_image.url):
         raise PipelineException("Image '%s' not found" % db_image.url)
+
 
     # Obtain the list of sources to be monitored (and not already
     # detected) for this image

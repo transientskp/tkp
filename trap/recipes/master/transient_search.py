@@ -1,28 +1,13 @@
 from __future__ import with_statement
 from __future__ import division
 
-
-__author__ = 'Evert Rol / TKP software group'
-__email__ = 'evert.astro@gmail.com'
-__contact__ = __author__ + ', ' + __email__
-__copyright__ = '2010, University of Amsterdam'
-__version__ = '0.1'
-__last_modification__ = '2010-08-24'
-
-
-
 import sys
-import os
 
 from lofarpipe.support.baserecipe import BaseRecipe
 from lofarpipe.support import lofaringredient
-from lofar.parameterset import parameterset
-
-from tkp.config import config
-from tkp.database import DataBase, DataSet
-import tkp.database.utils as dbu
 
 
+import trap.transient_search
 
 class IntList(lofaringredient.ListField):
     """Input that defines a list of ints"""
@@ -67,37 +52,9 @@ class transient_search(BaseRecipe):
         }
 
     def go(self):
-        # parset default values:
         super(transient_search, self).go()
-        self.logger.info("Finding transient sources in the database")
-        parset = parameterset(self.inputs['parset'])
-        dataset_id = self.inputs['args'][0]
-        self.database = DataBase()
-        self.dataset = DataSet(id=dataset_id, database=self.database)
-        eta_lim = parset.getFloat(
-            'probability.eta_lim', config['transient_search']['eta_lim'])
-        V_lim= parset.getFloat(
-            'probability.V_lim', config['transient_search']['V_lim'])
-        prob_threshold = parset.getFloat(
-                                'probability.threshold',
-                                config['transient_search']['probability'])
-        minpoints = parset.getInt('probability.minpoints',
-                                  config['transient_search']['minpoints'])
-        
-        transient_ids, siglevels, transients = dbu.transient_search(
-                    conn = self.database.connection, 
-                     dataset = self.dataset, 
-                     eta_lim = eta_lim, 
-                     V_lim = V_lim,
-                     probability_threshold = prob_threshold, 
-                     minpoints = minpoints,
-                     image_ids=self.inputs['image_ids'],
-                     logger=None)
-
-        self.outputs['transient_ids'] = map(int, transient_ids)
-        self.outputs['siglevels'] = siglevels
-        self.outputs['transients'] = transients
-        
+        self.outputs.update(trap.transient_search.search_transients(image_ids=self.inputs['image_ids'],
+                            dataset_id=self.inputs['args'][0], parset=self.inputs['parset']))
         return 0
 
 

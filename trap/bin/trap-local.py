@@ -4,13 +4,12 @@ This is for development purposes only.
 """
 import sys
 import logging
-from tkp.database import DataBase
-from tkp.database import DataSet
-import tkp.database as tkpdb
+from tkp.database import DataBase, DataSet
 import trap.quality
 import trap.source_extraction
 import trap.monitoringlist
 import trap.persistence
+import trap.transient_search
 from lofarpipe.support.control import control
 #from images_to_process import images
 
@@ -25,6 +24,7 @@ class TrapImages(control):
     def pipeline_logic(self):
         quality_parset_file = self.task_definitions.get("quality_check", "parset")
         srcxtr_parset_file = self.task_definitions.get("source_extraction", "parset")
+        transientsearch_file = self.task_definitions.get("transient_search", "parset")
 
         self.logger.info("creating dataset in database ...")
         dataset_id = trap.persistence.store(images, 'trap-local dev run')
@@ -43,6 +43,8 @@ class TrapImages(control):
 
         for image in good_images:
             trap.monitoringlist.monitoringlist(image.id)
+
+        result = trap.transient_search.search_transients([x.id for x in good_images], dataset_id, transientsearch_file)
 
         #"transient_search", [dataset.id], image_ids=outputs['image_ids']
         #"feature_extraction", outputs['transients'])

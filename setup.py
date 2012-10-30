@@ -17,8 +17,7 @@ setup(
         'tkp.utility',
         'tkp.utility.accessors',
         'tkp.utility.sphinx',
-        'tkp.quality',
-        'tkp.quality.statistics'
+        'tkp.quality'
     ],
     description="LOFAR Transients Key Project (TKP)",
     author="TKP Discovery WG",

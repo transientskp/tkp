@@ -118,6 +118,8 @@ def handle_args():
     """
     usage = "usage: %prog [options] file1 ... fileN"
     parser = OptionParser(usage)
+    parser.add_option("--fdr", action="store_true", dest="fdr", help="Use False Detection Rate algorithm")
+    parser.add_option("--alpha", default=1e-2, type="float", help="FDR Alpha")
     parser.add_option("--detection", default=10, type="float", help="Detection threshold")
     parser.add_option("--analysis", default=3, type="float", help="Analysis threshold")
     parser.add_option("--regions", action="store_true", help="Generate DS9 region file(s)")
@@ -182,7 +184,12 @@ def run_sourcefinder(files, options):
         else:
             ff = FitsFile(filename, plane=0)
         imagedata = sourcefinder_image_from_accessor(ff)
-        sr = imagedata.extract(options.detection, options.analysis)
+        if options.fdr:
+            print "Using False Detection Rate algorithm with alpha = %f" % (options.alpha,)
+            sr = imagedata.fd_extract(options.alpha)
+        else:
+            print "Thresholding with det = %f sigma, analysis = %f sigma" % (options.detection, options.analysis)
+            sr = imagedata.extract(options.detection, options.analysis)
         if options.regions:
             regionfile = os.path.splitext(os.path.basename(filename))[0] + ".reg"
             regionfile = open(regionfile, 'w')

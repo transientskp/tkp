@@ -41,6 +41,7 @@ class TrapImages(control):
         for image in good_images:
             trap.source_extraction.extract_sources(image.id, srcxtr_parset_file)
 
+        trap.monitoringlist.mark_sources(dataset_id, srcxtr_parset_file)
         for image in good_images:
             trap.monitoringlist.monitoringlist(image.id)
 

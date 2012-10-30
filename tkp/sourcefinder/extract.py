@@ -32,11 +32,12 @@ from .gaussian import gaussian
 from . import fitting
 from . import utils
 
+logger = logging.getLogger(__name__)
 
 CONFIG = config['source_extraction']
 # If we deblend too far, we hit the recursion limit. And it's slow.
 if CONFIG['deblend'] and CONFIG['deblend_nthresh'] > 300:
-    logging.warn("Limiting to 300 deblending subtresholds")
+    logger.warn("Limiting to 300 deblending subtresholds")
     CONFIG['deblend_nthresh'] = 300
 
 class Island(object):
@@ -621,7 +622,7 @@ def source_profile_and_errors(data, threshold, noise, beam, fixed=None):
             "semiminor": 1,
             "theta": 0
             })
-        logging.debug("Unable to estimate gaussian parameters."
+        logger.debug("Unable to estimate gaussian parameters."
                       " Proceeding with defaults %s""",
                      str(param))
 
@@ -637,9 +638,9 @@ def source_profile_and_errors(data, threshold, noise, beam, fixed=None):
         try:
             param.update(fitting.fitgaussian(data, param, fixed=fixed))
             param.gaussian = True
-            logging.info('Gauss fitting was successful.')
+            logger.info('Gauss fitting was successful.')
         except ValueError:
-            logging.warn('Gauss fitting failed.')
+            logger.warn('Gauss fitting failed.')
     else:
         if fixed:
             # moments can't handle fixed params
@@ -692,7 +693,7 @@ class Detection(object):
         try:
             self._physical_coordinates()
         except RuntimeError:
-            logging.warn("Physical coordinates failed at %f, %f" % (
+            logger.warn("Physical coordinates failed at %f, %f" % (
                 self.x, self.y))
             raise
 
@@ -727,7 +728,7 @@ class Detection(object):
         try:
             self._physical_coordinates()
         except RuntimeError, e:
-            logging.warn("Physical coordinates failed at %f, %f" % (
+            logger.warn("Physical coordinates failed at %f, %f" % (
                 self.x, self.y))
             raise
 

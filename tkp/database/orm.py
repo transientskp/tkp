@@ -457,6 +457,8 @@ class Image(DBObject):
             raise ValueError(
                 "can't create Image object without a DataBase() object")
         self._init_data()
+        if not self.dataset:
+            self.dataset = DataSet(id=self._data['dataset'], database=self.database)
 
     # Inserting images is handled a little different than normal inserts
     # -- We call an SQL function 'insertImage' which takes care of  

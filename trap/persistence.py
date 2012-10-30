@@ -28,7 +28,7 @@ def store_to_mongodb(filename, hostname, port, db):
         logger.warn("Could not store image to MongoDB: %s" % (str(e)))
 
 
-def store(images, description, store_images=False, mongo_host="localhost", mongo_port=27017, mongo_db="trap"):
+def store(images, description, dataset_id=-1, store_images=False, mongo_host="localhost", mongo_port=27017, mongo_db="trap"):
     """ Add dataset to database, optionally create copy of images
     Args:
         images: list of file paths pointing to image files
@@ -39,7 +39,10 @@ def store(images, description, store_images=False, mongo_host="localhost", mongo
     log_time(logger)
 
     database = DataBase()
-    dataset = DataSet({'description': description}, database)
+    if dataset_id == -1:
+        dataset = DataSet({'description': description}, database)
+    else:
+        dataset = DataSet(id=dataset_id, database=database)
 
     for image in images:
         if not os.path.exists(image):

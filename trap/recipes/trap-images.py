@@ -50,44 +50,55 @@ class TrapImages(control):
     def pipeline_logic(self):
         from images_to_process import images
 
-        database = DataBase()
-        dataset = self.initialise_dataset(database)
-        self.add_manual_monitoringlist_entries(dataset)
+        log_time(self.logger)
+        if not images:
+            self.logger.warn("No images found, check parameter files.")
+            return 1
 
-        with log_time(self.logger):
-            if images:
-                self.logger.info("Processing images ...")
-                for ctr, image in enumerate(images):
-                    outputs = self.run_task(
-                        "quality_check", [image], dataset_id=dataset.id
-                    )
-                    outputs.update(
-                        self.run_task(
-                            "source_extraction", [image], dataset_id=dataset.id,
-    #                       nproc = self.config.get('DEFAULT', 'default_nproc')
-                            nproc=1 # Issue #3357
-                        )
-                    )
-                    outputs.update(
-                            self.run_task("monitoringlist", [dataset.id],
-                            nproc=1 # Issue #3357
-                        )
-                    )
-                    outputs.update(
-                            self.run_task(
-                                "transient_search", [dataset.id],
-                                image_ids=outputs['image_ids']
-                            )
-                    )
-                    outputs.update(
-                        self.run_task("feature_extraction", outputs['transients'])
-                    )
-                    outputs.update(
-                        self.run_task("classification", outputs['transients'])
-                    )
-                    self.run_task("prettyprint", outputs['transients'])
-            else:
-                self.logger.warn("No images found, check parameter files.")
+        self.logger.info("creating dataset in database ...")
+        self.outputs.update(self.run_task(
+            "persistence",
+            images,
+            description=self.inputs['job_name'], dataset_id=self.inputs['dataset_id']
+        ))
+
+        dataset = DataSet(id=self.outputs['dataset_id'], database=DataBase())
+        dataset.update_images()
+
+        self.outputs.update(self.run_task(
+            "quality_check",
+            [i.id for i in dataset.images],
+        ))
+
+        self.outputs.update(self.run_task(
+            "source_extraction",
+            self.outputs['good_image_ids'],
+            #nproc = self.config.get('DEFAULT', 'default_nproc')
+            nproc=1 # Issue #3357
+        ))
+
+        self.outputs.update(self.run_task(
+            "monitoringlist", [dataset.id],
+            nproc=1 # Issue #3357
+        ))
+
+        self.outputs.update(self.run_task(
+            "transient_search", [dataset.id],
+            image_ids=outputs['image_ids']
+        ))
+
+        self.outputs.update(self.run_task(
+            "feature_extraction",
+            outputs['transients']
+        ))
+
+        self.outputs.update(self.run_task(
+            "classification",
+            outputs['transients']
+        ))
+
+        self.run_task("prettyprint", outputs['transients'])
+
         dataset.process_ts = datetime.datetime.utcnow()
         database.close()
 

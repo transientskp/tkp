@@ -5,6 +5,7 @@ from lofarpipe.support.utilities import log_time
 from tkp.database import DataBase, DataSet
 from tkp.utility.accessors import FITSImage
 from tkp.utility.accessors import dbimage_from_accessor
+from contextlib import closing
 
 logger = logging.getLogger(__name__)
 
@@ -36,26 +37,25 @@ def store(images, description, dataset_id=-1, store_images=False, mongo_host="lo
     Returns:
         the database ID of this dataset
     """
-    log_time(logger)
+    with log_time(logger):
+        with closing(DataBase()) as database:
+            if dataset_id == -1:
+                dataset = DataSet({'description': description}, database)
+            else:
+                dataset = DataSet(id=dataset_id, database=database)
 
-    database = DataBase()
-    if dataset_id == -1:
-        dataset = DataSet({'description': description}, database)
-    else:
-        dataset = DataSet(id=dataset_id, database=database)
+            for image in images:
+                if not os.path.exists(image):
+                    message = "Image '%s' not found" % image
+                    logger.error(message)
+                    raise PipelineException(message)
 
-    for image in images:
-        if not os.path.exists(image):
-            message = "Image '%s' not found" % image
-            logger.error(message)
-            raise PipelineException(message)
+                logging.info("storing %s in the database" % image)
+                fitsimage = FITSImage(image)
+                db_image = dbimage_from_accessor(dataset=dataset, image=fitsimage)
 
-        logging.info("storing %s in the database" % image)
-        fitsimage = FITSImage(image)
-        db_image = dbimage_from_accessor(dataset=dataset, image=fitsimage)
+                if store_images:
+                    logging.info("saving local copy of %s" % image)
+                    store_to_mongodb(image, mongo_host, mongo_port, mongo_db, logger)
 
-        if store_images:
-            logging.info("saving local copy of %s" % image)
-            store_to_mongodb(image, mongo_host, mongo_port, mongo_db, logger)
-
-    return dataset.id
+            return dataset.id

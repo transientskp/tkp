@@ -97,10 +97,10 @@ class TrapImages(control):
             self.outputs['transients']
         ))
 
-        self.run_task("prettyprint", outputs['transients'])
+        self.run_task("prettyprint", self.outputs['transients'])
 
         dataset.process_ts = datetime.datetime.utcnow()
-        database.close()
+
 
     def initialise_dataset(self, database):
         """Either inits a fresh dataset, or grabs the dataset specified

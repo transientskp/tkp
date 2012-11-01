@@ -10,6 +10,9 @@ import trap.source_extraction
 import trap.monitoringlist
 import trap.persistence
 import trap.transient_search
+import trap.feature_extraction
+import trap.classification
+import trap.prettyprint
 from lofarpipe.support.control import control
 #from images_to_process import images
 
@@ -43,14 +46,17 @@ class TrapImages(control):
 
         trap.monitoringlist.mark_sources(dataset_id, srcxtr_parset_file)
         for image in good_images:
-            trap.monitoringlist.monitoringlist(image.id)
+            trap.monitoringlist.update_monitoringlist(image.id)
 
-        result = trap.transient_search.search_transients([x.id for x in good_images], dataset_id, transientsearch_file)
+        transient_results = trap.transient_search.search_transients([x.id for x in good_images], dataset_id, transientsearch_file)
+        transients = transient_results['transients']
 
-        #"transient_search", [dataset.id], image_ids=outputs['image_ids']
-        #"feature_extraction", outputs['transients'])
-        #"classification", outputs['transients'])
-        #"prettyprint", outputs['transients'])
+        for transient in transients:
+            trap.feature_extraction.extract_features(transient)
+
+        trap.classification.classify(transients)
+
+        trap.prettyprint.prettyprint(transients)
 
 if __name__ == '__main__':
     logging.basicConfig(level=logging.INFO)

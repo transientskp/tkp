@@ -25,3 +25,13 @@ run the upgrade script::
 
   $ ./upgrade.py -h
 
+
+Creating an upgrade script
+==========================
+
+ 1. create an upgrade sql file (2_to_3.sql for example) and put the
+    sql statements in it required to upgrade to this version
+ 2. also create an downgrade sql (3_to_2.sql) file that inverses the
+    changes described in point 1.
+ 3. update the current version in sql/tables/version.sql.
+

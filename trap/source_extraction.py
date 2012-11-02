@@ -18,6 +18,8 @@ def extract_sources(image_id, parset, tkpconfigdir=None):
               radius, the last one in units of the de Ruiter
               radius.
     """
+
+
     if tkpconfigdir:   # allow nodes to pick up the TKPCONFIGDIR
         os.environ['TKPCONFIGDIR'] = tkpconfigdir
     import tkp
@@ -35,7 +37,7 @@ def extract_sources(image_id, parset, tkpconfigdir=None):
             seconfig = config['source_extraction']
             parset = parameterset(parset)
 
-            logger.info("Detecting sources in %s at %f level", image_id, parset.getFloat('detection.threshold'))
+            logger.info("Detecting sources in image %s at detection threshold %f", image_id, parset.getFloat('detection.threshold'))
 
             data_image = sourcefinder_image_from_accessor(fitsimage)
 

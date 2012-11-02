@@ -32,6 +32,8 @@ def search_transients(image_ids, dataset_id, parset, tkpconfigdir=None):
         image_ids=image_ids,
         logger=None)
 
+    logger.info("found %s transients! woohoo! yeah!" % len(transients))
+
     return {
         'transient_ids': map(int, transient_ids),
         'siglevels': siglevels,

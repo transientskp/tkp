@@ -14,12 +14,16 @@ import trap.feature_extraction
 import trap.classification
 import trap.prettyprint
 from lofarpipe.support.control import control
-#from images_to_process import images
 
+#sys.path.append("/home/gijs/pipeline-runtime/jobs/devel/control")
+from images_to_process import images
+
+"""
 images = [
     '/home/gijs/Work/tkp-data/unittests/tkp_lib/quality/noise/bad/home-pcarrol-msss-3C196a-analysis-band6.corr.fits',
     '/home/gijs/Work/tkp-data/unittests/tkp_lib/quality/noise/good/home-pcarrol-msss-L086+69-analysis-band6.corr.fits',
 ]
+"""
 
 class TrapImages(control):
     inputs = {}
@@ -28,6 +32,7 @@ class TrapImages(control):
         quality_parset_file = self.task_definitions.get("quality_check", "parset")
         srcxtr_parset_file = self.task_definitions.get("source_extraction", "parset")
         transientsearch_file = self.task_definitions.get("transient_search", "parset")
+        classification_file = self.task_definitions.get("classification", "parset")
 
         self.logger.info("creating dataset in database ...")
         dataset_id = trap.persistence.store(images, 'trap-local dev run')
@@ -36,27 +41,19 @@ class TrapImages(control):
         dataset = DataSet(id=dataset_id, database=DataBase())
         dataset.update_images()
 
-        good_images = []
         for image in dataset.images:
-            if trap.quality.noise(image.id, quality_parset_file):
-                    good_images.append(image)
+            if not trap.quality.noise(image.id, quality_parset_file):
+                # don't process rejected files any further
+                continue
 
-        for image in good_images:
             trap.source_extraction.extract_sources(image.id, srcxtr_parset_file)
-
-        trap.monitoringlist.mark_sources(dataset_id, srcxtr_parset_file)
-        for image in good_images:
+            trap.monitoringlist.mark_sources(dataset_id, srcxtr_parset_file)
             trap.monitoringlist.update_monitoringlist(image.id)
-
-        transient_results = trap.transient_search.search_transients([x.id for x in good_images], dataset_id, transientsearch_file)
-        transients = transient_results['transients']
-
-        for transient in transients:
-            trap.feature_extraction.extract_features(transient)
-
-        trap.classification.classify(transients)
-
-        trap.prettyprint.prettyprint(transients)
+            transient_results = trap.transient_search.search_transients([image.id], dataset_id, transientsearch_file)
+            transients = transient_results['transients']
+            for transient in transients:
+                trap.feature_extraction.extract_features(transient)
+                trap.classification.classify(transient, classification_file)
 
 if __name__ == '__main__':
     logging.basicConfig(level=logging.INFO)

@@ -27,6 +27,7 @@ from . import utils
 from . import stats
 from . import extract
 
+logger = logging.getLogger(__name__)
 
 CONFIG = config['source_extraction']
 
@@ -255,7 +256,7 @@ class ImageData(object):
             mask[limits[0]:limits[1], limits[2]:limits[3]] = 0
 
         elif max_degradation:
-            logging.warn("Not SIN projection: reliable window not calculated.")
+            logger.warn("Not SIN projection: reliable window not calculated.")
             mask[:] = 0.0
         else:
             mask[:] = 0.0
@@ -377,11 +378,11 @@ class ImageData(object):
                     # (mean - median) / sigma is a quick n' dirty skewness
                     # estimator devised by Karl Pearson.
                     if numpy.fabs(mean - median) / sigma >= 0.3:
-                        logging.debug(
+                        logger.debug(
                             'bg skewed, %f clipping iterations', num_clip_its)
                         bgrow.append(median)
                     else:
-                        logging.debug(
+                        logger.debug(
                             'bg not skewed, %f clipping iterations', num_clip_its)
                         bgrow.append(2.5 * median - 1.5 * mean)
 
@@ -495,7 +496,7 @@ class ImageData(object):
         if anl is None:
             anl = CONFIG['analysis_threshold']
         if anl > det:
-            logging.warn(
+            logger.warn(
                 "Analysis threshold is higher than detection threshold"
             )
         if (type(bgmap).__name__ == 'ndarray' or
@@ -690,14 +691,14 @@ class ImageData(object):
             assert(abs(measurement['xbar']) < boxsize)
             assert(abs(measurement['ybar']) < boxsize)
         except AssertionError:
-            logging.warn('Fit falls outside of box.')
+            logger.warn('Fit falls outside of box.')
 
         measurement['xbar'] += x-boxsize/2.0
         measurement['ybar'] += y-boxsize/2.0
         measurement.sig = (fitme / self.rmsmap[chunk]).max()
 
         if not measurement.moments and not measurement.gaussian:
-            logging.warn("Moments & Gaussian fit failed at %f, %f", x, y)
+            logger.warn("Moments & Gaussian fit failed at %f, %f", x, y)
             return None
         return extract.Detection(
             measurement, self)
@@ -722,7 +723,7 @@ class ImageData(object):
             except RuntimeError, e:
                 if (str(e).startswith("wcsp2s error: 8:") or
                     str(e).startswith("wcsp2s error: 9:")):
-                    logging.warning("Input coordinates (%.2f, %.2f) invalid: ",
+                    logger.warning("Input coordinates (%.2f, %.2f) invalid: ",
                                     source[0], source[1])
                     detections.append(None)
                 else:
@@ -740,7 +741,7 @@ class ImageData(object):
                     else:
                         detections.append(fit_results)
                 except IndexError as e:
-                    logging.warning("Input pixel coordinates (%.2f, %.2f) "
+                    logger.warning("Input pixel coordinates (%.2f, %.2f) "
                                     "could not be fit because: " + e.message,
                                     source[0], source[1])
                     detections.append(None)
@@ -879,7 +880,7 @@ class ImageData(object):
                 det = extract.Detection(measurement, self, chunk=island.chunk)
                 if (det.ra.error == float('inf') or 
                         det.dec.error == float('inf')):
-                    logging.warn('Bad fit from blind extraction at pixel coords:'
+                    logger.warn('Bad fit from blind extraction at pixel coords:'
                                   '%f %f - measurement discarded'
                                   '(increase fitting margin?)', det.x, det.y )
                 else:
@@ -890,6 +891,6 @@ class ImageData(object):
                         island.data.filled(fill_value=0.))
                     self.residuals_from_gauss_fitting[island.chunk] += residual
             except RuntimeError:
-                logging.warn("Island not processed; unphysical?")
+                logger.warn("Island not processed; unphysical?")
                 raise
         return results

@@ -15,15 +15,8 @@ import trap.classification
 import trap.prettyprint
 from lofarpipe.support.control import control
 
-#sys.path.append("/home/gijs/pipeline-runtime/jobs/devel/control")
 from images_to_process import images
 
-"""
-images = [
-    '/home/gijs/Work/tkp-data/unittests/tkp_lib/quality/noise/bad/home-pcarrol-msss-3C196a-analysis-band6.corr.fits',
-    '/home/gijs/Work/tkp-data/unittests/tkp_lib/quality/noise/good/home-pcarrol-msss-L086+69-analysis-band6.corr.fits',
-]
-"""
 
 class TrapImages(control):
     inputs = {}

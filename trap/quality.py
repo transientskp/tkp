@@ -51,11 +51,12 @@ def noise(image_id, parset_file):
                 p['ncore'], p['nremote'], p['nintl'])
 
             if tkp.quality.rms_valid(rms, noise, low_bound=p['low_bound'], high_bound=p['high_bound']):
+                logging.info("image %i accepted: rms: %.3e, theoretical noise: %.3e" % (db_image.id, rms, noise))
                 return True
             else:
                 ratio = rms / noise
-                reason = "noise level is %s times theoretical value" % ratio
-                logger.info("image %s invalid: %s " % (db_image.id, reason) )
+                reason = "rms value (%.2e) is %.2e times theoretical noise (%.2e)" % (rms, ratio, noise)
+                logger.info("image %s REJECTED: %s " % (db_image.id, reason) )
                 tkp.database.quality.reject(database.connection, db_image.id,
                     tkp.database.quality.reason['rms'], reason)
                 return False

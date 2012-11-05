@@ -31,6 +31,13 @@ def parse_parset(parset_file):
     result['nintl'] = parset.getInt('nintl', 8)
     return result
 
+def nice_format(f):
+    if f > 9999 or f < 0.01:
+        return "%.2e" % f
+    else:
+        return "%.2f" % f
+
+
 def noise(image_id, parset_file):
     """ checks if an image passes the RMS quality check. If not, a rejection entry is added to the database.
     args:
@@ -51,11 +58,11 @@ def noise(image_id, parset_file):
                 p['ncore'], p['nremote'], p['nintl'])
 
             if tkp.quality.rms_valid(rms, noise, low_bound=p['low_bound'], high_bound=p['high_bound']):
-                logging.info("image %i accepted: rms: %.3e, theoretical noise: %.3e" % (db_image.id, rms, noise))
+                logging.info("image %i accepted: rms: %s, theoretical noise: %s" % (db_image.id, nice_format(rms), nice_format(noise)))
                 return True
             else:
                 ratio = rms / noise
-                reason = "rms value (%.2e) is %.2e times theoretical noise (%.2e)" % (rms, ratio, noise)
+                reason = "rms value (%s) is %s times theoretical noise (%s)" % (nice_format(rms), nice_format(ratio), nice_format(noise))
                 logger.info("image %s REJECTED: %s " % (db_image.id, reason) )
                 tkp.database.quality.reject(database.connection, db_image.id,
                     tkp.database.quality.reason['rms'], reason)

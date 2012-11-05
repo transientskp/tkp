@@ -9,12 +9,13 @@ from contextlib import closing
 
 logger = logging.getLogger(__name__)
 
+
 def store_to_mongodb(filename, hostname, port, db):
     try:
         import pymongo
         import gridfs
     except ImportError:
-        logger.warn("Could not import MongoDB modules")
+        logger.error("Could not import MongoDB modules")
         return
 
     try:
@@ -26,7 +27,7 @@ def store_to_mongodb(filename, hostname, port, db):
         new_file.close()
         connection.close()
     except Exception, e:
-        logger.warn("Could not store image to MongoDB: %s" % (str(e)))
+        logger.error("Could not store image to MongoDB: %s" % (str(e)))
 
 
 def store(images, description, dataset_id=-1, store_images=False, mongo_host="localhost", mongo_port=27017, mongo_db="trap"):
@@ -56,6 +57,6 @@ def store(images, description, dataset_id=-1, store_images=False, mongo_host="lo
 
                 if store_images:
                     logging.info("saving local copy of %s" % image)
-                    store_to_mongodb(image, mongo_host, mongo_port, mongo_db, logger)
+                    store_to_mongodb(image, mongo_host, mongo_port, mongo_db)
 
             return dataset.id

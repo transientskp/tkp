@@ -51,10 +51,8 @@ class persistence(BaseRecipe, RemoteCommandRecipeMixIn):
     }
 
     def go(self):
-        self.logger.info("Extracting sources")
         super(persistence, self).go()
         images = self.inputs['args']
-        print 'IMAGES =', images
         self.outputs['dataset_id'] = trap.persistence.store(images, self.inputs['description'], self.inputs['dataset_id'])
         return 0
 

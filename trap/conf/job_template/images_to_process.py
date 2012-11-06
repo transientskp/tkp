@@ -3,7 +3,7 @@
 ###################################################################################
 import os
 import glob
-images = sorted( glob.glob(os.path.expanduser("~/test/ami/120422/images/*.fits")) )
+images = sorted( glob.glob(os.path.expanduser("/home/gijs/Data/small_multifreq/*.fits")) )
 
 #Just for show:
 print "***** IMAGES: ********"

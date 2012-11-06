@@ -1,18 +1,22 @@
 #!/bin/bash
 
-BUILD_VER=stable
-RECIPE_DIR=/opt/lofar-${BUILD_VER}/symlinks/tkp-root/recipes
-USER_CONFIG_REPO=$(dirname $(readlink -f $BASH_SOURCE))
+HERE="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
-source /opt/soft/reset-paths.sh 
-source /opt/lofar-${BUILD_VER}/init-lofar.sh
+if [ -z "$1" ]; then
+    echo "please supply a job name"
+    exit 1
+fi
 
-#Use a specific tkp.cfg:
-#export TKPCONFIGDIR=`pwd`
+JOB=$1
+JOBDIR=${HERE}/${JOB}
 
-rm -rf statefile
-PYTHONPATH=./:$PYTHONPATH \
-python $RECIPE_DIR/trap-images.py \
- -c $USER_CONFIG_REPO/pipeline.cfg \
- -t $USER_CONFIG_REPO/trap-tasks.cfg -d $*
+if [ ! -x ${JOBDIR} ]; then
+    echo "${JOB} doesn't exists"
+    exit
+fi
 
+PYTHONPATH=${JOBDIR}:$PYTHONPATH
+
+trap-run.py \
+ -c $HERE/pipeline.cfg \
+ -t $HERE/tasks.cfg -d -j ${JOB}

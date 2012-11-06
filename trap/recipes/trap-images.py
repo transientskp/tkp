@@ -50,73 +50,59 @@ class TrapImages(control):
     def pipeline_logic(self):
         from images_to_process import images
 
-        log_time(self.logger)
-        if not images:
-            self.logger.warn("No images found, check parameter files.")
-            return 1
+        with log_time(self.logger):
+            if not images:
+                self.logger.warn("No images found, check parameter files.")
+                return 1
 
-        self.logger.info("creating dataset in database ...")
-        self.outputs.update(self.run_task(
-            "persistence",
-            images,
-            description=self.inputs['job_name'], dataset_id=self.inputs['dataset_id']
-        ))
+            self.logger.info("creating dataset in database ...")
+            self.outputs.update(self.run_task(
+                "persistence",
+                images,
+                description=self.inputs['job_name'], dataset_id=self.inputs['dataset_id']
+            ))
 
-        dataset = DataSet(id=self.outputs['dataset_id'], database=DataBase())
-        dataset.update_images()
+            dataset = DataSet(id=self.outputs['dataset_id'], database=DataBase())
+            dataset.update_images()
 
-        self.outputs.update(self.run_task(
-            "quality_check",
-            [i.id for i in dataset.images],
-        ))
+            self.add_manual_monitoringlist_entries(dataset)
 
-        self.outputs.update(self.run_task(
-            "source_extraction",
-            self.outputs['good_image_ids'],
-            #nproc = self.config.get('DEFAULT', 'default_nproc')
-            nproc=1 # Issue #3357
-        ))
+            self.outputs.update(self.run_task(
+                "quality_check",
+                [i.id for i in dataset.images],
+            ))
 
-        self.outputs.update(self.run_task(
-            "monitoringlist", [dataset.id],
-            nproc=1 # Issue #3357
-        ))
+            self.outputs.update(self.run_task(
+                "source_extraction",
+                self.outputs['good_image_ids'],
+                #nproc = self.config.get('DEFAULT', 'default_nproc')
+                nproc=1 # Issue #3357
+            ))
 
-        self.outputs.update(self.run_task(
-            "transient_search", [dataset.id],
-            image_ids=self.outputs['good_image_ids']
-        ))
+            self.outputs.update(self.run_task(
+                "monitoringlist", [dataset.id],
+                nproc=1 # Issue #3357
+            ))
 
-        self.outputs.update(self.run_task(
-            "feature_extraction",
-            self.outputs['transients']
-        ))
+            self.outputs.update(self.run_task(
+                "transient_search", [dataset.id],
+                image_ids=self.outputs['good_image_ids']
+            ))
 
-        self.outputs.update(self.run_task(
-            "classification",
-            self.outputs['transients']
-        ))
+            self.outputs.update(self.run_task(
+                "feature_extraction",
+                self.outputs['transients']
+            ))
 
-        self.run_task("prettyprint", self.outputs['transients'])
+            self.outputs.update(self.run_task(
+                "classification",
+                self.outputs['transients']
+            ))
 
-        dataset.process_ts = datetime.datetime.utcnow()
+            self.run_task("prettyprint", self.outputs['transients'])
 
+            dataset.process_ts = datetime.datetime.utcnow()
 
-    def initialise_dataset(self, database):
-        """Either inits a fresh dataset, or grabs the dataset specified
-            at command line"""
-        if self.inputs['dataset_id'] == -1:
-            dataset = DataSet(
-                data={'description': self.inputs['job_name']},
-                database=database
-            )
-        else:
-            dataset = DataSet(
-                id = self.inputs['dataset_id'], database=database
-            )
-            self.logger.info("Appending results to previously entered dataset")
-        self.logger.info("dataset id = %d", dataset.id)
-        return dataset
 
     def add_manual_monitoringlist_entries(self, dataset):
         """Parses co-ords from self.inputs, loads them into the monitoringlist"""

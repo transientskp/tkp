@@ -1,2 +1,0 @@
-# any classification with a weight (score) below the cutoff will be output
-weighting.cutoff = 0.1

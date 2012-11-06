@@ -1,18 +1,14 @@
 from __future__ import with_statement
 import sys
-import itertools
 import lofarpipe.support.lofaringredient as ingredient
 from lofarpipe.support.baserecipe import BaseRecipe
-from lofarpipe.support.clusterdesc import ClusterDesc, get_compute_nodes
-from lofarpipe.support.remotecommand import ComputeJob
 from lofarpipe.support.remotecommand import RemoteCommandRecipeMixIn
-import tkp.config
+from lofarpipe.support.utilities import log_time
 import trap.persistence
 
+
 class persistence(BaseRecipe, RemoteCommandRecipeMixIn):
-    """
-    Store an image into the database
-    """
+    """Store an image into the database"""
 
     inputs = {
         'dataset_id': ingredient.IntField(
@@ -52,8 +48,10 @@ class persistence(BaseRecipe, RemoteCommandRecipeMixIn):
 
     def go(self):
         super(persistence, self).go()
-        images = self.inputs['args']
-        self.outputs['dataset_id'] = trap.persistence.store(images, self.inputs['description'], self.inputs['dataset_id'])
+        with log_time(self.logger):
+            images = self.inputs['args']
+            trap.persistence.logger = self.logger
+            self.outputs['dataset_id'] = trap.persistence.store(images, self.inputs['description'], self.inputs['dataset_id'])
         return 0
 
 if __name__ == '__main__':

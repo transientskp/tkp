@@ -6,6 +6,7 @@ import trap.quality
 class quality_check(LOFARnodeTCP):
     def run(self, image_id, parset_file):
         self.outputs['image_id'] = image_id
+        trap.quality.logger = self.logger
         self.outputs['pass'] = trap.quality.noise(image_id, parset_file)
 
 if __name__ == "__main__":

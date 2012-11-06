@@ -1,9 +1,3 @@
-#!/usr/bin/python
-
-"""
-This main recipe accepts a list of images (through images_to_process.py).
-Images should be prepared with the correct keywords.
-"""
 
 from __future__ import with_statement
 
@@ -18,7 +12,7 @@ import lofarpipe.support.lofaringredient as ingredient
 from tkp.database import DataBase
 from tkp.database import DataSet
 
-class TrapImages(control):
+class Trap(control):
     inputs = {
         'dataset_id': ingredient.IntField(
             '--dataset-id',
@@ -31,21 +25,21 @@ class TrapImages(control):
             # parameter fields. I have tried enclosing with quotes, switching
             # to StringField, still no good.
             help='Specify a list of RA,DEC co-ordinate pairs to monitor\n'
-            '(decimal degrees, no spaces), e.g.:\n'
-            '--monitor-coords=[[137.01,14.02],[137.05,15.01]]',
+                 '(decimal degrees, no spaces), e.g.:\n'
+                 '--monitor-coords=[[137.01,14.02],[137.05,15.01]]',
             optional=True
         ),
-      'monitor_list': ingredient.FileField(
+        'monitor_list': ingredient.FileField(
             '-l', '--monitor-list',
-            help='Specify a file containing a list of RA,DEC' 
-                    'co-ordinates to monitor, e.g.\n'
-            '--monitor-list=my_coords.txt\n'
-            'File should contain a list of RA,DEC pairs (each in list form), e.g.\n'
-            '[ [137.01,14.02], [137.05,15.01]] \n'
+            help='Specify a file containing a list of RA,DEC'
+                 'co-ordinates to monitor, e.g.\n'
+                 '--monitor-list=my_coords.txt\n'
+                 'File should contain a list of RA,DEC pairs (each in list form), e.g.\n'
+                 '[ [137.01,14.02], [137.05,15.01]] \n'
             ,
             optional=True
         ),
-    }
+        }
 
     def pipeline_logic(self):
         from images_to_process import images
@@ -127,7 +121,7 @@ class TrapImages(control):
             except ValueError:
                 self.logger.error("Could not parse monitor-coords from command line")
                 sys.exit(1)
-                
+
         if 'monitor_list' in self.inputs:
             try:
                 mon_list = json.load(open(self.inputs['monitor_list']))
@@ -136,13 +130,10 @@ class TrapImages(control):
                 self.logger.error("Could not parse monitor-coords from file: "
                                   +self.inputs['monitor_list'])
                 sys.exit(1)
-                
+
         if len(monitor_coords):
             self.logger.info( "You specified monitoring at coords:")
             for i in monitor_coords:
                 self.logger.info( "RA, %f ; Dec, %f " % (i[0],i[1]))
         for c in monitor_coords:
             dataset.add_manual_entry_to_monitoringlist(c[0],c[1])
-
-if __name__ == '__main__':
-    sys.exit(TrapImages().main())

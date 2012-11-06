@@ -37,7 +37,6 @@ def nice_format(f):
     else:
         return "%.2f" % f
 
-
 def noise(image_id, parset_file):
     """ checks if an image passes the RMS quality check. If not, a rejection entry is added to the database.
     args:
@@ -58,7 +57,7 @@ def noise(image_id, parset_file):
                 p['ncore'], p['nremote'], p['nintl'])
 
             if tkp.quality.rms_valid(rms, noise, low_bound=p['low_bound'], high_bound=p['high_bound']):
-                logging.info("image %i accepted: rms: %s, theoretical noise: %s" % (db_image.id, nice_format(rms), nice_format(noise)))
+                logger.info("image %i accepted: rms: %s, theoretical noise: %s" % (db_image.id, nice_format(rms), nice_format(noise)))
                 return True
             else:
                 ratio = rms / noise

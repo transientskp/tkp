@@ -22,35 +22,19 @@ follow from a combination of 'fast transient' and an external trigger).
 
 """
 
-
-__author__ = 'Evert Rol / LOFAR Transients Key Project'
-__email__ = 'discovery@transientskp.org'
-__contact__ = __author__ + ', ' + __email__
-__copyright__ = '2010-2012, University of Amsterdam'
-__version__ = '0.2'
-__last_modification__ = '2012-01-20'
-
-
 import sys
-import os
 import itertools
 import datetime
 from contextlib import closing
-
 from tkp.database import DataBase
-import tkp.database.utils as dbutils
-
 from lofarpipe.support.clusterdesc import ClusterDesc, get_compute_nodes
 from lofarpipe.support.baserecipe import BaseRecipe
 from lofarpipe.support.remotecommand import RemoteCommandRecipeMixIn
 from lofarpipe.support.remotecommand import ComputeJob
 from lofarpipe.support import lofaringredient
-
 import tkp.config
 import tkp.classification
 import tkp.classification.manual
-from tkp.classification.manual.classifier import Classifier
-from tkp.classification.transient import Position
 from tkp.classification.transient import DateTime
 
 
@@ -119,7 +103,6 @@ class classification(BaseRecipe, RemoteCommandRecipeMixIn):
             return 1
         else:
             return 0
-
 
 if __name__ == '__main__':
     sys.exit(classification().main())

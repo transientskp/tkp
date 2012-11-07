@@ -1,44 +1,10 @@
-from __future__ import with_statement
-
-"""
-
-This recipe extracts characteristics ("features") from the variable light curve,
-such as the duration, flux increase.
-
-To do:
-
-  - separate out the main loop over different compute nodes
-
-  - calculate a variability measurement (use Bayesian blocks?)
-
-  - extract non-light curve features (spectral slopes, source associations)
-  
-"""
-
-
-__author__ = 'Evert Rol / TKP software group'
-__email__ = 'evert.astro@gmail.com'
-__contact__ = __author__ + ', ' + __email__
-__copyright__ = '2010, University of Amsterdam'
-__version__ = '0.1'
-__last_modification__ = '2010-07-28'
-
-
-SECONDS_IN_DAY = 86400.
-
-import sys, os
-from datetime import timedelta
-import pickle
+import sys
 import itertools
-
 from lofarpipe.support.clusterdesc import ClusterDesc, get_compute_nodes
 from lofarpipe.support.baserecipe import BaseRecipe
 from lofarpipe.support.remotecommand import RemoteCommandRecipeMixIn
 from lofarpipe.support.remotecommand import ComputeJob
 from lofarpipe.support import lofaringredient
-
-import tkp.config
-
 
 class feature_extraction(BaseRecipe, RemoteCommandRecipeMixIn):
 
@@ -78,7 +44,6 @@ class feature_extraction(BaseRecipe, RemoteCommandRecipeMixIn):
                     command,
                     arguments=[
                         transient,
-                        tkp.config.CONFIGDIR
                         ]
                     )
                 )

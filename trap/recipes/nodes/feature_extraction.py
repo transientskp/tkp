@@ -1,10 +1,13 @@
 import sys
 from lofarpipe.support.lofarnode import LOFARnodeTCP
+from lofarpipe.support.utilities import log_time
 import trap.feature_extraction
 
 class feature_extraction(LOFARnodeTCP):
     def run(self, transient, tkpconfigdir=None):
-        self.outputs['transient'] = trap.feature_extraction.extract_features(transient)
+        with log_time(self.logger):
+            trap.feature_extraction.logger = self.logger
+            self.outputs['transient'] = trap.feature_extraction.extract_features(transient)
         return 0
 
 if __name__ == "__main__":

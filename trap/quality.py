@@ -8,8 +8,6 @@ from tkp.utility.accessors import FITSImage
 import tkp.database.quality
 import tkp.quality
 from tkp.database.orm import Image
-from lofarpipe.support.utilities import log_time
-from contextlib import closing
 
 logger = logging.getLogger(__name__)
 
@@ -51,18 +49,23 @@ def noise(image_id, parset_file):
             fitsimage = FITSImage(db_image.url)
             p = parse_parset(parset_file)
 
-            rms = rms_with_clipped_subregion(fitsimage.data, sigma=p['sigma'], f=p['f'])
-            noise = noise_level(p['frequency'], p['subbandwidth'], p['intgr_time'],
-                p['configuration'], p['subbands'], p['channels'],
-                p['ncore'], p['nremote'], p['nintl'])
+    database = DataBase()
+    db_image = Image(database=database, id=image_id)
+    fitsimage = FITSImage(db_image.url)
+    p = parse_parset(parset_file)
 
-            if tkp.quality.rms_valid(rms, noise, low_bound=p['low_bound'], high_bound=p['high_bound']):
-                logger.info("image %i accepted: rms: %s, theoretical noise: %s" % (db_image.id, nice_format(rms), nice_format(noise)))
-                return True
-            else:
-                ratio = rms / noise
-                reason = "rms value (%s) is %s times theoretical noise (%s)" % (nice_format(rms), nice_format(ratio), nice_format(noise))
-                logger.info("image %s REJECTED: %s " % (db_image.id, reason) )
-                tkp.database.quality.reject(database.connection, db_image.id,
-                    tkp.database.quality.reason['rms'], reason)
-                return False
+    rms = rms_with_clipped_subregion(fitsimage.data, sigma=p['sigma'], f=p['f'])
+    noise = noise_level(p['frequency'], p['subbandwidth'], p['intgr_time'],
+        p['configuration'], p['subbands'], p['channels'],
+        p['ncore'], p['nremote'], p['nintl'])
+
+    if tkp.quality.rms_valid(rms, noise, low_bound=p['low_bound'], high_bound=p['high_bound']):
+        logger.info("image %i accepted: rms: %s, theoretical noise: %s" % (db_image.id, nice_format(rms), nice_format(noise)))
+        return True
+    else:
+        ratio = rms / noise
+        reason = "rms value (%s) is %s times theoretical noise (%s)" % (nice_format(rms), nice_format(ratio), nice_format(noise))
+        logger.info("image %s REJECTED: %s " % (db_image.id, reason) )
+        tkp.database.quality.reject(database.connection, db_image.id,
+            tkp.database.quality.reason['rms'], reason)
+        return False

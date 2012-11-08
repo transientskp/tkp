@@ -1,10 +1,9 @@
 from __future__ import with_statement
 from __future__ import division
-
 import sys
-
 from lofarpipe.support.baserecipe import BaseRecipe
 from lofarpipe.support import lofaringredient
+from lofarpipe.support.utilities import log_time
 
 
 import trap.transient_search
@@ -53,8 +52,10 @@ class transient_search(BaseRecipe):
 
     def go(self):
         super(transient_search, self).go()
-        self.outputs.update(trap.transient_search.search_transients(image_ids=self.inputs['image_ids'],
-                            dataset_id=self.inputs['args'][0], parset=self.inputs['parset']))
+        with log_time(self.logger):
+            trap.transient_search.logger = self.logger
+            self.outputs.update(trap.transient_search.search_transients(image_ids=self.inputs['image_ids'],
+                                dataset_id=self.inputs['args'][0], parset=self.inputs['parset']))
         return 0
 
 

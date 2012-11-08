@@ -1,11 +1,15 @@
-import sys, os
+import sys
 from lofarpipe.support.lofarnode import LOFARnodeTCP
+from lofarpipe.support.utilities import log_time
 import trap.classification
 
 class classification(LOFARnodeTCP):
 
     def run(self, transient, parset, tkpconfigdir=None):
-        self.outputs['transient'] = trap.classification.classify(transient, parset, tkpconfigdir)
+
+        with log_time(self.logger):
+            trap.classification.logger = self.logger
+            self.outputs['transient'] = trap.classification.classify(transient, parset, tkpconfigdir)
         return 0
 
 if __name__ == "__main__":

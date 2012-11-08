@@ -1,5 +1,6 @@
 import sys
 from lofarpipe.support.lofarnode import LOFARnodeTCP
+from lofarpipe.support.utilities import log_time
 import trap.source_extraction
 
 class source_extraction(LOFARnodeTCP):
@@ -12,7 +13,9 @@ class source_extraction(LOFARnodeTCP):
                   radius, the last one in units of the de Ruiter
                   radius.
         """
-        self.outputs['image_id'] = trap.source_extraction.extract_sources(image, parset, tkpconfigdir)
+        with log_time(self.logger):
+            trap.source_extraction.logger = self.logger
+            self.outputs['image_id'] = trap.source_extraction.extract_sources(image, parset, tkpconfigdir)
 
         return 0
 

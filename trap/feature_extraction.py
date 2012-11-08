@@ -20,37 +20,36 @@ from tkp.database import ExtractedSource
 logger = logging.getLogger(__name__)
 
 def extract_features(transient):
-    with log_time(logger):
-        with closing(DataBase()) as database:
-            source = ExtractedSource(id=transient.runcatid, database=database)
-            lightcurve = lcmod.LightCurve(*zip(*source.lightcurve()))
-            lightcurve.calc_background()
-            lightcurve.calc_stats()
-            lightcurve.calc_duration()
-            lightcurve.calc_fluxincrease()
-            lightcurve.calc_risefall()
-            if lightcurve.duration['total']:
-                variability = (lightcurve.duration['active'] /
-                               lightcurve.duration['total'])
-            else:
-                variability = numpy.NaN
-            features = {
-                'duration': lightcurve.duration['total'],
-                'variability': variability,
-                'wmean': lightcurve.stats['wmean'],
-                'median': lightcurve.stats['median'],
-                'wstddev': lightcurve.stats['wstddev'],
-                'wskew': lightcurve.stats['wskew'],
-                'wkurtosis': lightcurve.stats['wkurtosis'],
-                'max': lightcurve.stats['max'],
-                'peakflux': lightcurve.fluxincrease['peak'],
-                'relpeakflux': lightcurve.fluxincrease['increase']['relative'],
-                'risefallratio': lightcurve.risefall['ratio'],
-                }
-            transient.duration = lightcurve.duration['total']
-            transient.timezero = lightcurve.duration['start']
-            transient.variability = variability
-            transient.features = features
-            transient.catalogs = catmod.match_catalogs(transient)
+    database = DataBase()
+    source = ExtractedSource(id=transient.runcatid, database=database)
+    lightcurve = lcmod.LightCurve(*zip(*source.lightcurve()))
+    lightcurve.calc_background()
+    lightcurve.calc_stats()
+    lightcurve.calc_duration()
+    lightcurve.calc_fluxincrease()
+    lightcurve.calc_risefall()
+    if lightcurve.duration['total']:
+        variability = (lightcurve.duration['active'] /
+                       lightcurve.duration['total'])
+    else:
+        variability = numpy.NaN
+    features = {
+        'duration': lightcurve.duration['total'],
+        'variability': variability,
+        'wmean': lightcurve.stats['wmean'],
+        'median': lightcurve.stats['median'],
+        'wstddev': lightcurve.stats['wstddev'],
+        'wskew': lightcurve.stats['wskew'],
+        'wkurtosis': lightcurve.stats['wkurtosis'],
+        'max': lightcurve.stats['max'],
+        'peakflux': lightcurve.fluxincrease['peak'],
+        'relpeakflux': lightcurve.fluxincrease['increase']['relative'],
+        'risefallratio': lightcurve.risefall['ratio'],
+        }
+    transient.duration = lightcurve.duration['total']
+    transient.timezero = lightcurve.duration['start']
+    transient.variability = variability
+    transient.features = features
+    transient.catalogs = catmod.match_catalogs(transient)
 
-            return transient
+    return transient

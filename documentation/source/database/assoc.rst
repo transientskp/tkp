@@ -143,9 +143,9 @@ be associated with :math:`f_3` in the above. The following situation results:
 
 .. graphviz:: assoc/many2many-reduced.dot
 
-Note that :math:`f_5` is now not associated with :math:`f_6`: the
-many-to-many association is removed, but at the cost of truncating
-:math:`L_2`.
+Note that :math:`f_4` is now not associated with either :math:`f_5` or
+:math:`f_6`: the many-to-many association is removed, but at the cost of
+truncating :math:`L_2`.
 
 
 Multiple Frequency Bands

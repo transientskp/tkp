@@ -43,12 +43,6 @@ def noise(image_id, parset_file):
     Returns:
         True if image passes tests, false if not
     """
-    with log_time(logger):
-        with closing(DataBase()) as database:
-            db_image = Image(database=database, id=image_id)
-            fitsimage = FITSImage(db_image.url)
-            p = parse_parset(parset_file)
-
     database = DataBase()
     db_image = Image(database=database, id=image_id)
     fitsimage = FITSImage(db_image.url)

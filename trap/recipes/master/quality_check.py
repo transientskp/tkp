@@ -41,6 +41,11 @@ class quality_check(BaseRecipe, RemoteCommandRecipeMixIn):
             dest='parset',
             help="Quality check configuration parset"
         ),
+        'nproc': ingredient.IntField(
+            '--nproc',
+            help="Maximum number of simultaneous processes per compute node",
+            default=8
+        ),
     }
     outputs = {
         'good_image_ids': ingredient.ListField()
@@ -80,8 +85,13 @@ class quality_check(BaseRecipe, RemoteCommandRecipeMixIn):
                     ]
                 )
             )
-        jobs = self._schedule_jobs(jobs)
-        self.outputs['good_image_ids'] = [job.results['image_id'] for job in jobs.itervalues() if job.results['pass']]
+        jobs = self._schedule_jobs(jobs, max_per_node=self.inputs['nproc'])
+
+        # TODO: some jobs don't have a 'pass' in it. For now it is unclear why.
+        self.outputs['good_image_ids'] = [
+                job.results['image_id'] for job in jobs.itervalues() if job.results.get('pass', False)
+        ]
+
 
         if self.error.isSet():
             self.logger.warn("Failed quality control process detected")

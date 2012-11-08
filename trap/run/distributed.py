@@ -62,6 +62,7 @@ class Trap(control):
         self.outputs.update(self.run_task(
             "quality_check",
             [i.id for i in dataset.images],
+            nproc=1 # Issue #3357
         ))
 
         self.outputs.update(self.run_task(

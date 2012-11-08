@@ -82,6 +82,7 @@ class TrapImages(control):
 
             self.outputs.update(self.run_task(
                 "monitoringlist", [dataset.id],
+                nproc=1 # Issue #3357
             ))
 
             self.outputs.update(self.run_task(

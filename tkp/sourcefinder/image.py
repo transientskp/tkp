@@ -825,6 +825,12 @@ class ImageData(object):
             # accounts for label=0 which is the background, which we do not
             # want.
 
+            # If there's only one island, ndimage.maximum will return a float,
+            # rather than a list. The rest of this function assumes that it's
+            # always a list, so we need to convert it.
+            if isinstance(maximum_values, float):
+                maximum_values = [maximum_values]
+
             labels_above_det_thr = (
                 numpy.array(maximum_values) >= 0.0).nonzero()[0] + 1
             # The "+1" in the statement above may seem a bit awkward, but

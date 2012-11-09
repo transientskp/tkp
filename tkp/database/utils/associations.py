@@ -152,6 +152,9 @@ def _insert_temprunningcatalog(conn, image_id, deRuiter_r, radius=0.03):
     for a single known source in runningcatalog.
 
     The n-1 assocs will be treated similar as the 1-1 assocs.
+    
+    NOTE: Beware of the extra condition on x0.image in the WHERE clause, 
+    preventing the query to grow exponentially in response time
     """
 
     try:
@@ -333,6 +336,7 @@ INSERT INTO temprunningcatalog
                 ,image
            WHERE image.id = %s
              AND x0.image = image.id
+             AND x0.image = %s
              AND image.dataset = rc0.dataset
              AND rc0.zone BETWEEN CAST(FLOOR(x0.decl - %s) as INTEGER)
                                  AND CAST(FLOOR(x0.decl + %s) as INTEGER)
@@ -355,13 +359,13 @@ INSERT INTO temprunningcatalog
         #print "Q:\n",query % (image_id, 
         #                        radius, radius, radius, radius, 
         #                        radius, radius, deRuiter_r/3600.)
-        cursor.execute(query, (image_id, 
+        cursor.execute(query, (image_id, image_id,
                                 radius, radius, radius, radius, 
                                 radius, radius, deRuiter_r/3600.))
         if not AUTOCOMMIT:
             conn.commit()
     except db.Error, e:
-        q = query % (image_id, 
+        q = query % (image_id, image_id,
                         radius, radius, radius, radius, 
                         radius, radius, deRuiter_r/3600.)
         logging.warn("Failed on query\n%s." % q)

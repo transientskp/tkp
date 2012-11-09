@@ -1,10 +1,11 @@
 #!/usr/bin/env python
 """
-This main recipe accepts a list of images (through images_to_process.py).
-Images should be prepared with the correct keywords.
+this is here for backwards compatibility
 """
 import sys
 import trap.run.distributed
 
 if __name__ == '__main__':
+    print "WARNING: this script is here for backwards compatibility."
+    print "Please use the trap-run.py script in <TRAP_INSTALL_PREFIX>/bin"
     sys.exit(trap.run.distributed.Trap().main())

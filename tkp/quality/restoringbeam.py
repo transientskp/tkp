@@ -11,12 +11,13 @@ def parse_fits(fitsfile):
     return (bmaj, bmin, cellsize)
 
 
-def undersampled(bmaj,bmin, cellsize):
+def undersampled(semibmaj, semibmin):
     """
-    We want more than 2 pixels across the beam major and minor axes. The
-    beam axes are given in the image header in degrees and the pixel
-    cellsize is also in the image header in arcsec.
+    We want more than 2 pixels across the beam major and minor axes.
+    Semibmaj and semibmin describe the beam size in pixels
     Returns:
+
+      Worth pointing out that semimaj and semimin are *half* the axis lengths in pixels. So when Antonia wants 2 pixels along the axis, you need to compare that to semimaj or semimin times 2.
         True if the beam is undersampled
     """
     return bmaj/(cellsize/3600.0) > 2 and bmin/(cellsize/3600.0) > 2
@@ -44,7 +45,7 @@ def highly_elliptical(bmaj, bmin, x=2.0):
     return bmaj/bmin < x
 
 
-def full_fieldofview(nx, ny, cellsize, fov):
+def not_full_fieldofview(nx, ny, cellsize, fov):
     """
     This has been raised as an interesting test, as if the full field of
     view (FOV) has not been imaged we may want to image the full dataset.
@@ -54,6 +55,6 @@ def full_fieldofview(nx, ny, cellsize, fov):
     :Returns:
         True if the full FOV is imaged
     """
-    return nx*ny*(cellsize/3600)*(cellsize/3600) > fov
+    return nx*ny*(cellsize/3600)*(cellsize/3600) < fov
 
 

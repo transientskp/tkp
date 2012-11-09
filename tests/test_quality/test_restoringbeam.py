@@ -3,15 +3,13 @@ if not  hasattr(unittest.TestCase, 'assertIsInstance'):
     import unittest2 as unittest
 import os
 import sys
+import scipy.constants
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from decorators import requires_data
-
 from tkp.utility import accessors
 import tkp.quality.restoringbeam
-
-import tkp.lofar.noise
+import tkp.lofar.beam
 import tkp.config
-import tkp.lofar.antennaarrays
 
 DATAPATH = tkp.config.config['test']['datapath']
 fits_file = os.path.join(DATAPATH, 'quality/noise/bad/home-pcarrol-msss-3C196a-analysis-band6.corr.fits')
@@ -21,9 +19,13 @@ class TestRestoringBeam(unittest.TestCase):
     def test_header(self):
         image = accessors.FitsFile(fits_file, plane=0)
         bmaj, bmin, cellsize = tkp.quality.restoringbeam.parse_fits(image)
-        #self.assertFalse(tkp.quality.restoringbeam.oversampled(bmaj, bmin, cellsize))
-        #self.assertFalse(tkp.quality.restoringbeam.undersampled(bmaj, bmin, cellsize))
-
+        (semimaj, semimin, theta) = image.beam
+        frequency = image.freqeff
+        wavelength = scipy.constants.c/frequency
+        d = 32.25
+        fwhm = tkp.lofar.beam.fwhm(wavelength, d)
+        fov = tkp.lofar.beam.fov(fwhm)
+        self.assertFalse(tkp.quality.beam_invalid(bmaj, bmin, cellsize, nx, ny, fov))
 
 if __name__ == '__main__':
     unittest.main()

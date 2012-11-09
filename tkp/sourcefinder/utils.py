@@ -39,16 +39,30 @@ def generate_result_maps(data, sourcelist):
     residual_map = numpy.array(data) # array constructor copies by default
     gaussian_map = numpy.zeros(residual_map.shape)
     for src in sourcelist:
+        # Include everything with 6 times the std deviation along the major
+        # axis. Should be very very close to 100% of the flux.
+        box_size = 6 * src.smaj.value / math.sqrt(2 * math.log(2))
+
+        lower_bound_x = max(0, int(src.x.value - 1 - box_size))
+        upper_bound_x = min(residual_map.shape[0], int(src.x.value - 1 + box_size))
+        lower_bound_y = max(0, int(src.y.value - 1 - box_size))
+        upper_bound_y = min(residual_map.shape[1], int(src.y.value - 1 + box_size))
+
         local_gaussian = gaussian(
             src.peak.value,
-            src.x.value - 1, # FITS pixel vs
-            src.y.value - 1, # numpy array coordinates
+            src.x.value - 1, # -1 offset due to difference between FITS and
+            src.y.value - 1, # NumPy array indexing.
             src.smaj.value,
             src.smin.value,
             src.theta.value
-        )(*numpy.indices(residual_map.shape))
-        gaussian_map += local_gaussian
-        residual_map -= local_gaussian
+        )(
+            numpy.indices(residual_map.shape)[0,lower_bound_x:upper_bound_x,lower_bound_y:upper_bound_y],
+            numpy.indices(residual_map.shape)[1,lower_bound_x:upper_bound_x,lower_bound_y:upper_bound_y]
+        )
+
+        gaussian_map[lower_bound_x:upper_bound_x, lower_bound_y:upper_bound_y] += local_gaussian
+        residual_map[lower_bound_x:upper_bound_x, lower_bound_y:upper_bound_y] -= local_gaussian
+
     return gaussian_map, residual_map
 
 

@@ -50,8 +50,9 @@ class persistence(BaseRecipe, RemoteCommandRecipeMixIn):
         super(persistence, self).go()
         with log_time(self.logger):
             images = self.inputs['args']
+            del self.inputs['args']
             trap.persistence.logger = self.logger
-            self.outputs['dataset_id'] = trap.persistence.store(images, self.inputs['description'], self.inputs['dataset_id'])
+            self.outputs['dataset_id'] = trap.persistence.store(images, **self.inputs)
         return 0
 
 if __name__ == '__main__':

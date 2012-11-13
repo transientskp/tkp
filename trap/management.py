@@ -1,7 +1,12 @@
 """
-This is a tool for managing a TRAP runtime project.
+This is a tool for managing a TRAP project. It can be used to initialize a
+TRAP project and manage (init, clean, remove) its containing jobs.
 
-It can be used to initialize a runtime project and manage (init, clean, remove) its jobs
+To start using this tool you first create a TRAP project by running:
+
+ $ trap-manage.py initproject <projectname>
+
+ In the folder where you want to put the TRAP project.
 """
 import argparse
 import os
@@ -10,10 +15,10 @@ import shutil
 import re
 import errno
 import getpass
-import sys
+import stat
 import subprocess
-
 import trap
+
 
 class CommandError(Exception):
     """
@@ -30,12 +35,14 @@ class CommandError(Exception):
     """
     pass
 
+
 def check_if_exists(filename):
     if not os.access(filename, os.R_OK):
         raise CommandError("can't read %s" % filename)
 
+
 def parse_arguments():
-    parser = argparse.ArgumentParser(description='Manage your TRAP runtime project')
+    parser = argparse.ArgumentParser(description='This is a tool for managing a TRAP project', epilog=__doc__)
     parser_subparsers = parser.add_subparsers()
 
     initproject_parser = parser_subparsers.add_parser('initproject')
@@ -57,11 +64,13 @@ def parse_arguments():
     parsed = vars(parser.parse_args())
     return parsed
 
+
 def get_template_dir():
     """
     Determines where the job and project templates are.
     """
     return path.join(trap.__path__[0], 'conf')
+
 
 def make_writeable(filename):
     """
@@ -73,6 +82,7 @@ def make_writeable(filename):
         new_permissions = stat.S_IMODE(st.st_mode) | stat.S_IWUSR
         os.chmod(filename, new_permissions)
 
+
 def line_replace(substitutes, line):
     """substitutions - list of 2 item tuples.
     every occurance of the first item in the tuple in line will be replaces with the second
@@ -82,6 +92,7 @@ def line_replace(substitutes, line):
     for pattern, repl in substitutes:
         line = re.sub("{%\s*" + pattern + "\s*%}", repl, line)
     return line
+
 
 def copy_template(job_or_project, name, target=None, **options):
     """
@@ -169,19 +180,22 @@ def copy_template(job_or_project, name, target=None, **options):
                 make_writeable(new_path)
             except OSError:
                 print >> stderr, ("Notice: Couldn't set permission bits on %s. You're "
-                    "probably using an uncommon filesystem setup. No "
-                    "problem.\n" % new_path)
+                                  "probably using an uncommon filesystem setup. No "
+                                  "problem.\n" % new_path)
 
 
 def init_project(projectname, target=None):
     print "creating project '%s'" % projectname
     return copy_template("project", projectname, target)
 
+
 def init_job(jobname, target=None):
     print "creating job '%s'" % jobname
     return copy_template("job", jobname, target)
 
+
 def run_job(jobname):
+    print "this is not implemented yet, please use the run.sh script in the job folder"
     print "running job '%s'" % jobname
     project_dir = os.getcwd()
     job_dir = os.path.join(project_dir, jobname)
@@ -195,7 +209,7 @@ def run_job(jobname):
     args = ["python",
             os.path.join(project_dir, "trip.py"),
             "-c", os.path.join(project_dir, "pipeline.cfg"),
-            "-t", os.path.join(project_dir, "trap-tasks.cfg"),
+            "-t", os.path.join(project_dir, "tasks.cfg"),
             "-d",
             "-j " + jobname
     ]
@@ -207,8 +221,10 @@ def run_job(jobname):
 def clean_job(jobname):
     print "TODO: cleaning job %s" % jobname
 
+
 def info_job(jobname):
     print "TODO: print info about job %s" % jobname
+
 
 def main():
     parsed = parse_arguments()
@@ -216,14 +232,17 @@ def main():
     if parsed.has_key('initprojectname'):
         target = parsed.get('target', '')
         init_project(parsed['initprojectname'], target)
-
-    if parsed.has_key('initjobname'):
+    elif parsed.has_key('initjobname'):
         init_job(parsed['initjobname'])
-    if parsed.has_key('cleanjobname'):
+    elif parsed.has_key('cleanjobname'):
         clean_job(parsed['cleanjobname'])
-    if parsed.has_key('infojobname'):
-        clean_job(parsed['infojobname'])
-    if parsed.has_key('runjobname'):
-        clean_job(parsed['runjobname'])
+    elif parsed.has_key('infojobname'):
+        info_job(parsed['infojobname'])
+    elif parsed.has_key('runjobname'):
+        run_job(parsed['runjobname'])
+    else:
+        parsed.print_help()
+
+
 if __name__ == '__main__':
     main()

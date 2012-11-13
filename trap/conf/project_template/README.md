@@ -1,11 +1,16 @@
 tkp-user-config
 ===============
 
-Example pipeline invocation scripts and configuration files aimed at end users of the LOFAR-TKP software packages. The aim of this repository is to maintain an up to date, minimal and easily configurable working set.
+Example pipeline invocation scripts and configuration files aimed at end users of the LOFAR-TKP software packages.
+The aim of this repository is to maintain an up to date, minimal and easily configurable working set.
 
-I have attempted to layout the files and scripts in such a way that the user only ever needs one central set of files, with the exception of the parset (and data listing) files which probably *should* be job specific. Note that if you wish to use the same set of parsets for a whole bunch of data this is easy - just set the `default_parset_directory` in `pipeline.cfg` accordingly.
+I have attempted to layout the files and scripts in such a way that the user only ever needs one central set of files,
+with the exception of the parset (and data listing) files which probably *should* be job specific. Note that if you wish
+to use the same set of parsets for a whole bunch of data this is easy - just set the `default_parset_directory` in
+`pipeline.cfg` accordingly.
 
-Likewise if you wish to use specific config (`pipeline.cfg`) or tasks files, you should simply edit the runblah.sh scripts. These are short and fairly self-explanatory, I leave the rest to you!
+Likewise if you wish to use specific config (`pipeline.cfg`) or tasks files, you should simply edit the runblah.sh
+scripts. These are short and fairly self-explanatory, I leave the rest to you!
 
 
 The .cfg files use the python configparser syntax. For details, see: <http://docs.python.org/library/configparser.html>.

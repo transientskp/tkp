@@ -7,7 +7,7 @@ import tkp.database.utils.transients as dbt
 import tkp.database.utils as dbutils
 from tkp.classification.transient import Transient
 import tkp.config
-import db_subs
+from .. import db_subs
 from decorators import requires_database, duration
 
 
@@ -45,33 +45,39 @@ class TestTransientRoutines(unittest.TestCase):
 
     def tearDown(self):
         self.database.close()
-            
+
     def test_single_band_transient_search(self):
+        """test_single_band_transient_search
+
+            Test simplest functional case - only source is a transient source.
+            This makes it simple to verify the database properties.
+
+        """
         # We have to add a dataset, some images all with some measurements
         # After insertion, and source association, we run the transient search.
         dataset = tkpdb.DataSet(database=self.database,
                                 data={'description':"Trans:" + self._testMethodName})
         n_images = 4
         im_params = db_subs.example_dbimage_datasets(n_images)
-        TransientSource = db_subs.example_extractedsource_tuple()
-        # Set to easy number...
-        TransientSource._replace(flux=20e-3)
 
-        measurements = []
-        image = []
-        for i in range(len(im_params)):
-            image.append(tkpdb.Image(database=self.database, dataset=dataset, data=im_params[i]))
-            if i == n_images - 2:
-                s = TransientSource._replace(flux=20e-2)
-            elif i == n_images - 1:
-                s = TransientSource._replace(flux=10e-3)
-            else:
-                s = TransientSource
-            measurements.append(s)
+        TransientSource = db_subs.MockSource(
+             ex=db_subs.example_extractedsource_tuple(),
+             lightcurve=[
+                 db_subs.MockLCPoint(index=2, peak=20e-2, flux=20e-2, sigma=200),
+                 db_subs.MockLCPoint(index=3, peak=1e-2, flux=1e-2, sigma=10),
+                    ]
+                 )
 
-            dbgen.insert_extracted_sources(self.database.connection, image[i].id,
-                                           [ measurements[-1] ])
-            image[-1].associate_extracted_sources()
+        measurements = TransientSource.synthesise_measurements(
+                                               n_images,
+                                               include_non_detections=True)
+
+        images = []
+        for idx in range(len(im_params)):
+            images.append(tkpdb.Image(dataset=dataset, data=im_params[idx]))
+            if measurements[idx] is not None:
+                images[-1].insert_extracted_sources([ measurements[idx] ])
+            images[-1].associate_extracted_sources()
             freq_bands = dataset.frequency_bands()
             self.assertEqual(len(freq_bands), 1)
             transient_ids, siglevels, transients = dbt.transient_search(
@@ -82,7 +88,7 @@ class TestTransientRoutines(unittest.TestCase):
                                             V_lim=0.1,
                                             probability_threshold=0.7,
                                             minpoints=1,
-                                            imageid=image[-1].id)
+                                            imageid=images[-1].id)
             #print "transient_ids:",transient_ids
             #print "siglevels:",siglevels
 
@@ -126,7 +132,7 @@ class TestTransientRoutines(unittest.TestCase):
         taustart_ts = zip(*self.database.cursor.fetchall())
         self.assertEqual(len(taustart_ts), 1)
         ts = taustart_ts[0][0]
-        self.assertEqual(ts, image[2].taustart_ts)
+        self.assertEqual(ts, images[2].taustart_ts)
 
         # Check the variability indices, first eta_int:
         #query = """\
@@ -183,7 +189,7 @@ class TestTransientRoutines(unittest.TestCase):
     #                 probability_threshold = 0.01, 
     #                 imageid = img.id,
     #                 minpoints = 1)
-    
+
 
 #    def test_insertion_with_no_images(self):
 #        tkpdb.utils.insert_transient(self.database.connection,

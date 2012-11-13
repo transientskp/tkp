@@ -11,38 +11,10 @@ from .. import db_subs
 from decorators import requires_database, duration
 
 
-class TestTransientRoutines(unittest.TestCase):
+class TestTransientBasics(unittest.TestCase):
     @requires_database()
     def setUp(self):
         self.database = tkpdb.DataBase()
-#        self.dataset = tkpdb.DataSet(data={'description':"Trans:" + self._testMethodName},
-#                                    database=self.database)
-#
-#        self.n_images = 8
-#        self.im_params = db_subs.example_dbimage_datasets(self.n_images)
-#        self.db_imgs = []
-#
-#        #Insert transient source extractions, 
-#        #Include the non-detection points we expect from using monitoringlist:
-#        source_lists = db_subs.example_source_lists(n_images=8,
-#                                                  include_non_detections=True)
-#
-#        for i in xrange(self.n_images):
-#            self.db_imgs.append(
-#                        tkpdb.Image(data=self.im_params[i],
-#                                            dataset=self.dataset)
-#                                )
-#
-#            self.db_imgs[i].insert_extracted_sources(source_lists[i])
-#            self.db_imgs[i].associate_extracted_sources(deRuiter_r=3.7)
-#
-#        runcats = self.dataset.runcat_entries()
-#        self.assertNotEqual(len(runcats), 0)
-#        arbitrary_valid_rcid = runcats[0]['runcat']
-#        self.dummy_transient = Transient(runcatid=arbitrary_valid_rcid)
-#        self.dummy_transient.eta = 2 #Reduced Chi-squared
-#        self.dummy_transient.V = 0.5 #Fractional std. dev.
-
     def tearDown(self):
         self.database.close()
 
@@ -56,7 +28,8 @@ class TestTransientRoutines(unittest.TestCase):
         # We have to add a dataset, some images all with some measurements
         # After insertion, and source association, we run the transient search.
         dataset = tkpdb.DataSet(database=self.database,
-                                data={'description':"Trans:" + self._testMethodName})
+                                data={'description':"Trans:"
+                                        + self._testMethodName})
         n_images = 4
         im_params = db_subs.example_dbimage_datasets(n_images)
 
@@ -101,19 +74,11 @@ class TestTransientRoutines(unittest.TestCase):
         for tr in transients:
             self.assertEqual(freq_bands[0], tr.band)
 
-        # Check that there is only one runcat source, and that this
-        # is the ref in the transient table
-        query = """\
-        SELECT id
-          FROM runningcatalog
-         WHERE dataset = %s
-        """
-        self.database.cursor.execute(query, (dataset.id,))
-        runcatids = zip(*self.database.cursor.fetchall())[0]
-        self.assertEqual(len(runcatids), 1)
+        runcats = dataset.runcat_entries()
+        self.assertEqual(len(runcats), 1)
         for tr in transients:
             print "tr.siglevel:", tr.siglevel
-            self.assertEqual(runcatids[0], tr.runcatid)
+            self.assertEqual(runcats[0]['runcat'], tr.runcatid)
 
         # Check that the trigger xtrsrc happened in the third image
         query = """\
@@ -129,9 +94,9 @@ class TestTransientRoutines(unittest.TestCase):
                       )
         """
         self.database.cursor.execute(query, (dataset.id,))
-        taustart_ts = zip(*self.database.cursor.fetchall())
+        taustart_ts = zip(*self.database.cursor.fetchall())[0]
         self.assertEqual(len(taustart_ts), 1)
-        ts = taustart_ts[0][0]
+        ts = taustart_ts[0]
         self.assertEqual(ts, images[2].taustart_ts)
 
         # Check the variability indices, first eta_int:
@@ -142,6 +107,8 @@ class TestTransientRoutines(unittest.TestCase):
         # where a.xtrsrc = x.id 
         #   and a.runcat = 7
         #"""
+
+        #FIXME: I'm not sure what this query is for?
         query = """\
         select sum((f_int - 0.06) * (f_int - 0.06) / (f_int_err * f_int_err)) / 3
           from assocxtrsource a
@@ -156,69 +123,44 @@ class TestTransientRoutines(unittest.TestCase):
         """
         #self.assertAlmostEqual(1, 2)
 
-    #def test_insertion_with_no_images(self):
-    #    tkpdb.utils.insert_transient(self.database.connection,
-    #                                 self.dummy_transient,
-    #                                 self.dataset.id,
-    #                                 image_ids=None)
-    #    
-    #def test_insertion_with_one_image(self):
-    #    image_ids = [ self.db_imgs[-1].id ] 
-    #    tkpdb.utils.insert_transient(self.database.connection,
-    #                                 self.dummy_transient,
-    #                                 self.dataset.id,
-    #                                 image_ids=image_ids)
-    #    
-    #def test_insertion_with_multiple_images(self):
-    #    #image_ids = [ img.id for img in  self.db_imgs[0:4] ] 
-    #    for img in self.db_imgs[:]:
-    #        #print img.band
-    #        tkpdb.utils.insert_transient(self.database.connection,
-    #                                 self.dummy_transient,
-    #                                 self.dataset.id,
-    #                                 #image_ids=image_ids)
-    #                                 imageid=img.id)
+class TestTransientRoutines(unittest.TestCase):
+    @requires_database()
+    def setUp(self):
+        self.database = tkpdb.DataBase()
+        self.dataset = tkpdb.DataSet(data={'description':"Trans:" +
+                                                        self._testMethodName},
+                                    database=self.database)
 
-    #def test_full_transient_search_routine(self):
-    #    for img in self.db_imgs[:]:
-    #        tkpdb.utils.transient_search(
-    #                 conn = self.database.connection,
-    #                 dataset = self.dataset, 
-    #                 eta_lim = 1.1,
-    #                 V_lim = 0.01,
-    #                 probability_threshold = 0.01, 
-    #                 imageid = img.id,
-    #                 minpoints = 1)
+        self.n_images = 8
+        self.im_params = db_subs.example_dbimage_datasets(self.n_images)
+        self.db_imgs = []
 
+        #Insert transient source extractions, 
+        #Include the non-detection points we expect from using monitoringlist:
+        source_lists = db_subs.example_source_lists(n_images=8,
+                                                  include_non_detections=True)
+        for i in xrange(self.n_images):
+            self.db_imgs.append(
+                        tkpdb.Image(data=self.im_params[i],
+                                            dataset=self.dataset)
+                                )
 
-#    def test_insertion_with_no_images(self):
-#        tkpdb.utils.insert_transient(self.database.connection,
-#                                     self.dummy_transient,
-#                                     self.dataset.id,
-#                                     image_ids=None)
-#
-#    def test_insertion_with_one_image(self):
-#        image_ids = [ self.db_imgs[-1].id ]
-#        tkpdb.utils.insert_transient(self.database.connection,
-#                                     self.dummy_transient,
-#                                     self.dataset.id,
-#                                     image_ids=image_ids)
-#
-#    def test_insertion_with_multiple_images(self):
-#        image_ids = [ img.id for img in  self.db_imgs[0:4] ]
-#        tkpdb.utils.insert_transient(self.database.connection,
-#                                     self.dummy_transient,
-#                                     self.dataset.id,
-#                                     image_ids=image_ids)
-#
-#    def test_full_transient_search_routine(self):
-#        tkpdb.utils.transient_search(
-#                     conn=self.database.connection,
-#                     dataset=self.dataset,
-#                     eta_lim=1.1,
-#                     V_lim=0.01,
-#                     probability_threshold=0.01,
-#                     minpoints=1)
+            self.db_imgs[i].insert_extracted_sources(source_lists[i])
+            self.db_imgs[i].associate_extracted_sources(deRuiter_r=3.7)
 
+    def tearDown(self):
+        self.database.close()
 
-
+    def test_full_transient_search_routine(self):
+        bands = self.dataset.frequency_bands()
+        self.assertEqual(len(bands), 1)
+        transient_ids, siglevels, transients = dbutils.transient_search(
+                 conn=self.database.connection,
+                 dsid=self.dataset.id,
+                 freq_band=bands[0],
+                 eta_lim=1.1,
+                 V_lim=0.01,
+                 probability_threshold=0.01,
+                 imageid=self.db_imgs[-1].id,
+                 minpoints=1)
+        self.assertEqual(len(transients), 3)

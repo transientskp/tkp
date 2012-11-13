@@ -166,7 +166,7 @@ def fitgaussian(data, params, fixed=None):
         else:
             initial.append(params[key])
 
-    for key, value in fixed.keys():
+    for key, value in fixed.iteritems():
         if key not in FIT_PARAMS:
             raise ValueError("Fixed parameter %s not recognized" % key)
         index = FIT_PARAMS.index(key)

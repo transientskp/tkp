@@ -50,10 +50,14 @@ def extract_sources(image_id, parset, tkpconfigdir=None):
         seconfig['deblend'])
     seconfig['deblend_nthresh'] = parset.getInt('deblend_nthresh',
         seconfig['deblend_nthresh'])
+    seconfig['radius'] = parset.getFloat('radius',
+        seconfig['radius'])
 
 
-    logger.info("Employing margin: %f, deblend: %s, deblend_nthresh:%d",
+    logger.info("Employing margin: %f, extraction radius: %f,\n"
+                 "deblend: %s, deblend_nthresh:%d",
         seconfig['margin'],
+        seconfig['radius'],
         seconfig['deblend'],
         seconfig['deblend_nthresh']
     )

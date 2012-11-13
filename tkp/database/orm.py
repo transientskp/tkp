@@ -137,7 +137,7 @@ If an ``id`` is supplied, ``data`` is ignored.
 
 from __future__ import with_statement
 import logging
-import utils as dbu
+from . import utils as dbu
 import monetdb.sql as db
 from ..config import config
 from .database import ENGINE
@@ -367,11 +367,14 @@ class DataSet(DBObject):
         
                            
     # TO DO: Verify constants
-    def detect_variables(self,  V_lim=0.2, eta_lim=3.):
+    def detect_variables(self, freq_band, V_lim=0.2, eta_lim=3.):
         """Search through the whole dataset for variable sources"""
 
-        return dbu.detect_variable_sources(
-            self.database.connection, self._id, V_lim, eta_lim)
+        return dbu.select_variability_indices(
+                   self.database.connection,
+                   self._id,
+                   freq_band,
+                   V_lim, eta_lim)
         
     def mark_transient_candidates(self, single_epoch_threshold,
                                   combined_threshold):
@@ -390,6 +393,19 @@ class DataSet(DBObject):
                                                self.id, 
                                                ra, dec)
         
+    def frequency_bands(self):
+        """Return a list of distinct bands present in the dataset."""
+        query = """\
+        SELECT DISTINCT(band)
+          FROM image
+         WHERE dataset = %s
+        """
+        self.database.cursor.execute(query, (self.id,))
+        bands = zip(*self.database.cursor.fetchall())[0]
+        return bands
+
+
+
     def _find_transient_candidates(self, single_epoch_threshold,
                                         combined_threshold):
         """Find sources not present in all epochs.

@@ -36,19 +36,19 @@ def update_monitoringlist(image_id):
         raise PipelineException("Image '%s' not found" % db_image.url)
 
 
-    # Obtain the list of sources to be monitored (and not already
+    # Obtain the list of targets to be monitored (and not already
     # detected) for this image
     fitsimage = FITSImage(db_image.url)
-    sources = db_image.monitoringsources()
+    mon_targets = db_image.monitoringsources()
 
-    # Run the source finder on these sources
-    if len(sources):
-        logger.info("Measuring %d undetected monitoring sources." % (len(sources),))
+    # Run the source finder on these mon_targets
+    if len(mon_targets):
+        logger.info("Measuring %d undetected monitoring targets." % (len(mon_targets),))
         data_image = sourcefinder_image_from_accessor(fitsimage)
         results = data_image.fit_fixed_positions(
-            [(source[0], source[1]) for source in sources],
+            [(m.ra, m.decl) for m in mon_targets],
             boxsize=BOX_IN_BEAMPIX*max(data_image.beam[0], data_image.beam[1]))
         # Filter out the bad ones, and combines with xtrsrc_ids
-        results = [(source[2], source[3], result.serialize()) for source, result in
-                   zip(sources, results) if result is not None]
+        results = [(tgt.runcat, tgt.monitorid, result.serialize()) for tgt, result in
+                   zip(mon_targets, results) if result is not None]
         db_image.insert_monitored_sources(results)

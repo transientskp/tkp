@@ -28,16 +28,23 @@ class TrapLocal(control):
         dataset = DataSet(id=dataset_id, database=DataBase())
         dataset.update_images()
 
+        good_images = []
         for image in dataset.images:
-            if not trap.quality.noise(image.id, quality_parset_file):
-                # don't process rejected files any further
-                continue
+            if trap.quality.noise(image.id, quality_parset_file):
+                good_images.append(image)
 
+        for image in good_images:
             trap.source_extraction.extract_sources(image.id, srcxtr_parset_file)
-            trap.monitoringlist.mark_sources(dataset_id, srcxtr_parset_file)
+
+        trap.monitoringlist.mark_sources(dataset_id, srcxtr_parset_file)
+
+        for image in good_images:
             trap.monitoringlist.update_monitoringlist(image.id)
-            transient_results = trap.transient_search.search_transients([image.id], dataset_id, transientsearch_file)
-            transients = transient_results['transients']
-            for transient in transients:
-                trap.feature_extraction.extract_features(transient)
-                trap.classification.classify(transient, classification_file)
+
+        good_ids =[ i.id for i in good_images]
+        transient_results = trap.transient_search.search_transients(good_ids, dataset_id,  transientsearch_file)
+
+        transients = transient_results['transients']
+        for transient in transients:
+            trap.feature_extraction.extract_features(transient)
+            trap.classification.classify(transient, classification_file)

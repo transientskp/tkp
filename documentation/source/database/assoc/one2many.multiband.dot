@@ -24,17 +24,6 @@ digraph one2many {
         f7 -> f8 -> f9 -> f10 [color=green];
         label = "Band 2";
     }
-    edge[color=blue, constraint=false];
-    f1 -> f7;
-    f2 -> f8;
-    f3 -> f9;
-    f5 -> f10;
-    edge[color=green, constraint=false];
-    f1 -> f7;
-    f2 -> f8;
-    f4 -> f9;
-    f6 -> f10;
-    edge[constraint=true];
 
     f5 -> l1 [style=dashed, color=blue];
     f10 -> l1 [style=dashed, color=blue];

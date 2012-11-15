@@ -23,8 +23,8 @@ highlighting potential issues. For a full discussion of the algorithms
 involved, the user is referred to the thesis by `Scheers
 <http://dare.uva.nl/en/record/367374>`_.
 
-Database Structure
-==================
+Database Structure & Association Procedure
+==========================================
 
 The structure of the database is discussed in detail :ref:`elsewhere
 <database_schema>`: here, only a brief overview of the relevant tables is
@@ -53,6 +53,23 @@ associated with both multiple rows in ``extractedsources`` and in
 ``runningcatalog_flux``.  Bear in mind, however, that each lightcurve has a
 *single* average position associated with it, stored in the ``runningcatalog``
 table.
+
+When a new source measurement is made, the association procedure compares it
+against the records in ``runningcatalog``. Note that the comparison is based
+upon position *only*: an association is made if the new measurement is a good
+fit with a position in ``runningcatalog``, regardless of the time or frequency
+associated with it. After the association has been made, the position recorded
+for the source in ``runningcatalog`` is updated to take account of the new
+measurement.
+
+It is important to note that source association must as far as possible be
+*commutative*. That is, given a set of measurements, the final contents of the
+database should not be dependent upon the order of their insertion. This is
+not possible in the general case—it would involve a quadratic number of
+source comparisons—but source association procedures should be designed with
+this goal in mind. In particular, we require that source association be
+commutative if all measurements made at time :math:`t_n` are inserted and
+associated before any measurements made at time :math:`t_{n+1}`.
 
 Case Studies
 ============
@@ -84,12 +101,12 @@ One-to-Many Association
 
 .. graphviz:: assoc/one2many.dot
 
-Here, both :math:`f_3` and :math:`f_4` can be associated with :math:`f_2` (a
-"one-to-many" association).  Since :math:`f_3` and :math:`f_4` are distinct,
-though, they result in *two* entries in the ``runningcatalog`` table, or,
-equivalently, two lightcurves: :math:`L_1` with average flux
-:math:`\overline{f_{1,2,3,5}}` and :math:`L_2` with average flux
-:math:`\overline{f_{1,2,4,6}}`.
+Here, both :math:`f_3` and :math:`f_4` can be associated with the lightcurve
+containing :math:`f_2` and :math:`f_1`: a "one-to-many" association.  Since
+:math:`f_3` and :math:`f_4` are distinct, though, they result in *two* entries
+in the ``runningcatalog`` table, or, equivalently, two lightcurves:
+:math:`L_1` with average flux :math:`\overline{f_{1,2,3,5}}` and :math:`L_2`
+with average flux :math:`\overline{f_{1,2,4,6}}`.
 
 Note that :math:`f_1` and :math:`f_2`: are now being counted *twice*. Even if
 :math:`f_3` and :math:`f_4` each contribute only half the total flux of
@@ -106,7 +123,7 @@ This situation is similar to that seen above, but in reverse. Initially, two
 lightcurves are seen :math:`L_1` consisting of :math:`f_1` and :math:`f_3` and
 :math:`L_2` consisting of :math:`f_2` and :math:`f_4`. However, at timestep
 :math:`t_3` a new measurement is made, :math:`f_5`, which is associated with both
-:math:`f_3` and :math:`f_4`. This, and the subsequent measurement :math:`f_6`,
+:math:`L_1` and :math:`L_2`. This, and the subsequent measurement :math:`f_6`,
 are then appended to both lightcurves, resulting in :math:`L_1` having average
 flux :math:`\overline{f_{1,3,5,6}}` and :math:`L_2` having average flux
 :math:`\overline{f_{2,4,5,6}}`. Again, note that :math:`f_5` and :math:`f_6`
@@ -123,29 +140,27 @@ Many-to-Many Association
 
 .. graphviz:: assoc/many2many.dot
 
-Above, we see first a many-to-many association of :math:`f_3` and :math:`f_4`
-with :math:`f_5` and :math:`f_6`. At this point, four separate lightcurves can
-be made: :math:`f_{1,3,5}`, :math:`f_{1,3,6}`, :math:`f_{2,4,5}` and
-:math:`f_{2,4,6}`. At the next timestep, it's likely that the measurements
-:math:`f_7` and :math:`f_8` will be similar to :math:`f_5` and :math:`f_6`
-(assuming that the same sources are visible, and neither the sky nor the
-telescope configuration has changed). Thus, these are associated and the
-number of lightcurves doubles again, as show.
+As shown above, many-to-many association grows quadratically in complexity, as
+every possible combination of sources results involved in the association
+results in a new lightcurve. Further, assuming that neither the sky nor the
+telescope configuration change significantly from observation to observation,
+it's likely that subsequent measurements will also result in many-to-many
+associations, doubling the number of lightcurves at every timestep.
 
-It should be obvious that the scenario described is untenable: the number
-lightcurves being tracked increases quadratically with time. Instead, all
+It should be obvious that the scenario described is untenable. Instead, all
 many-to-many associations are automatically reduced by only taking the source
 pairs with the smallest De Ruiter radii such that they become either
 one-to-one or one-to-many associations.
 
-For example, using this criterion, we both :math:`f_5` and :math:`f_6` might
-be associated with :math:`f_3` in the above. The following situation results:
+For example, using this criterion, both :math:`f_5` and :math:`f_6` might be
+associated with a lightcurve consisting of :math:`f_1` and :math:`f_3` in the
+above. The following situation results:
 
 .. graphviz:: assoc/many2many-reduced.dot
 
-Note that :math:`f_4` is now not associated with either :math:`f_5` or
-:math:`f_6`: the many-to-many association is removed, but at the cost of
-truncating :math:`L_2`.
+Note that :math:`L_2` contains no measurements for timesteps later than
+:math:`t_2`: the many-to-many association is removed, but at the cost of
+truncating this lightcurve.
 
 
 Multiple Frequency Bands
@@ -156,17 +171,21 @@ sky being observed at the same time, but at different frequencies. Here, we
 use just two bands for illustration, but in practice several could be
 involved.
 
+When considering multiple frequency bands, the same association procedure,
+based only on position, as described above, is employed. However, extra care
+must be taken to ensure that the commutative nature of association is
+preserved.
+
+
 Intra-Band One-to-One Association
 +++++++++++++++++++++++++++++++++
 
 .. graphviz:: assoc/one2one.multiband.dot
 
-In the simplest case, each measurement undergoes a pair of one-to-one
-associations: one with the next measurement of the same source in the same
-band, and one with the simultaneous meaurement taken in a different band. A
-single entry in the ``runningcatalog`` table result, which we label
-:math:`L_1`, but for which two average fluxes are calculated:
-:math:`\overline{f_{1\cdots{}4}}` in band 1 and
+In the simplest case, a one-to-one association is made between each
+measurement and an entry in the ``runningcatalog`` table. A single lightcurve
+results, which we label :math:`L_1`, but for which two average fluxes are
+calculated: :math:`\overline{f_{1\cdots{}4}}` in band 1 and
 :math:`\overline{f_{5\cdots{}8}}` in band 2.
 
 Intra-Band One-to-Many Association
@@ -174,35 +193,36 @@ Intra-Band One-to-Many Association
 
 .. graphviz:: assoc/one2many.multiband.dot
 
-Here, a one-to-many association takes place in band 1. This results in two
-lightcurves: :math:`L_1` with average fluxes :math:`\overline{f_{1,2,3,5}}` in
-band 1 and :math:`\overline{f_{7\cdots{}10}}` in band 2, and :math:`L_2` with
-average fluxes :math:`\overline{f_{1,2,4,6}}` in band 1 and
-:math:`\overline{f_{7\cdots{}10}}` in band 2. Note that the entire flux in
-band 2, as well as :math:`f_1` and :math:`f_2`, is now counted twice.
+Initially, we proceed as above. However, at :math:`t_1`, a one-to-many
+association takes place in Band 1. That band therefore bifurcates, and we are
+left with two lightcurves: :math:`L_1` and :math:`L_2`.
+
+No such bifurcation is seen in Band 2. The single measurement :math:`f_9` may
+be associated with one or both of :math:`L_1` and :math:`L_2`, depending on
+their relative positions. In the former case, one of the lightcurves is
+truncated in Band 2. In the latter, a chain of one-to-many associations takes
+place with measurements in this band, as both :math:`f_9` and :math:`f_{10}`
+are associated with both lightcurves.
+
+In the situation shown, the resulting average fluxes for :math:`L_1` are
+:math:`\overline{f_{1,2,3,5}}` in Band 1 and
+:math:`\overline{f_{7\cdots{}10}}` in Band 2, while those for :math:`L_2` are
+:math:`\overline{f_{1,2,4,6}}`  and :math:`\overline{f_{7\cdots{}10}}`
+respectively. Note that the entire flux in Band 2, as well as :math:`f_1` and
+:math:`f_2`, is now counted twice.
 
 Intra-Band Many-to-One Association
 ++++++++++++++++++++++++++++++++++
 
 .. graphviz:: assoc/many2one.multiband.dot
 
-Here, a many-to-one association takes place in band 1. This This results in
-two lightcurves: :math:`L_1` with average fluxes
-:math:`\overline{f_{1,3,5,6}}` in band 1 and
-:math:`\overline{f_{7,9,11,13}}` in band 2, and :math:`L_2` with average
-fluxes :math:`\overline{f_{2,4,5,6}}` in band 1 and
-:math:`\overline{f_{8,10,12,14}}` in band 2.
-
-Inter-Band One-to-Many Association
-++++++++++++++++++++++++++++++++++
-
-.. graphviz:: assoc/one2many.crossband.dot
-
-In band 1, a chain of simple one-to-one associations is made. At first,
-cross-band one-to-one associations are made between band 1 and band 2.
-However, at time :math:`t_3`, both :math:`f_7` and :math:`f_8` in band 2 can
-be associated with the existing lightcurve. Two lightcurves are therefore
-generated.
+At first, :math:`L_1` and :math:`L_2` are completely independent. However, at
+:math:`t_3`, :math:`f_5` is undergoes a one-to-many association with both of
+them. The same applies to :math:`f_6`. In Band 2, the lightcurves remain
+indpendent.  :math:`L_1` therefore has average fluxes
+:math:`\overline{f_{1,3,5,6}}` in Band 1 and :math:`\overline{f_{7,9,11,13}}`
+in Band 2, and :math:`L_2` has average fluxes :math:`\overline{f_{2,4,5,6}}`
+in Band 1 and :math:`\overline{f_{8,10,12,14}}` in Band 2.
 
 Inter-Band Many-to-One Association
 ++++++++++++++++++++++++++++++++++
@@ -210,13 +230,15 @@ Inter-Band Many-to-One Association
 .. graphviz:: assoc/many2one.crossband.dot
 
 In this case, we initially have two separate lightcurves. However, at
-:math:`t_3`, both lightcurves are associated with :math:`f_{13}` in band 2.
-The result is as shown.
+:math:`t_3`, :math:`f_{13}` is associated with both lightcurves in Band 2,
+while :math:`f_{14}` is associated with neither. Three lightcurves result, as
+shown.
 
 It is worth considering the ordering of database insertion at this point. In
 particular, consider that either one of :math:`f_6` and :math:`f_{14}` must be
 inserted before the other. After each insertion, the average position of the
-source is recalculated, and may affect future associations.
+``runningcatalog`` entry is recalculated, and this may affect future
+associations.
 
 For example, assume that :math:`f_6` is inserted before :math:`f_{14}`. In
 this case, the average position of :math:`f_{2,4,6,10,12}` is not associated

@@ -258,6 +258,8 @@ class ParamSet(DictMixin):
         if self.gaussian:
             return self._condon_formulae(noise, beam)
         elif self.moments:
+            if not threshold:
+                threshold = 0
             return self._error_bars_from_moments(noise, beam, threshold)
         else:
             return False

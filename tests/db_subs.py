@@ -165,7 +165,10 @@ class MockSource(object):
                     return self.ex._replace(peak=p.peak,
                                             flux=p.flux,
                                             sigma=p.sigma)
-            return self.ex._replace(peak=0, flux=0, sigma=0)
+            #These values are non-zero as a workaround for 
+            # issue 3816 
+            # https://support.astron.nl/lofar_issuetracker/issues/3816
+            return self.ex._replace(peak=1e-6, flux=1e-6, sigma=1e-6)
 
     def synthesise_measurements(self, n_images, include_non_detections,
                                 non_detection_sigma_threshold=None):

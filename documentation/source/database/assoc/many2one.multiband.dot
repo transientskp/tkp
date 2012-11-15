@@ -28,17 +28,6 @@ digraph many2one {
         f8 -> f10 -> f12 -> f14 [color=green];
         label = "Band 2";
     }
-    edge[color=blue, constraint=false];
-    f1 -> f7;
-    f3 -> f9;
-    f5 -> f11;
-    f6 -> f13;
-    edge[color=green, constraint=false];
-    f2 -> f8;
-    f4 -> f10;
-    f5 -> f12;
-    f6 -> f14;
-    edge[constraint=true];
 
 
     f6 -> l1 [style=dashed, color=blue];

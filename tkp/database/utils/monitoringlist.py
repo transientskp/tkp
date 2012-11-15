@@ -4,14 +4,12 @@ A collection of back end subroutines (mostly SQL queries).
 This module contains the routines to deal with flagging and monitoring 
 of transient candidates, mostly involving the monitoringlist.
 """
-import os
-import sys
 import math
 import logging
 import monetdb.sql as db
 from tkp.config import config
 from . import generic
-from . import general
+import tkp.database
 
 from collections import namedtuple
 
@@ -565,47 +563,19 @@ def select_winking_sources(conn, dsid):
     are not detected in *all* the images belonging to the dataset.
     
     Returns:
-    list of dicts:
-        [ {runcat, xtrsrc, datapoints} ]
+        list of dicts:
+            [ {runcat, xtrsrc, datapoints} ]
     """
-    
-    results = []
-    cursor = conn.cursor()
-    try:
-        #Thought about trying to do this in one clever SQL statement
-        #But this will have to do for now.
-        query="""SELECT COUNT(1) from image where dataset=%s"""
-        cursor.execute(query, (dsid,))
-        nimgs = cursor.fetchone()[0]
-#        query="""\
-#SELECT  xtrsrc
-#        ,datapoints
-#        ,avg_i_peak
-#    FROM runningcatalog 
-#    WHERE ds_id=%s 
-#    AND datapoints<>%s
-#"""
-        query="""\
-SELECT  id
-        ,xtrsrc
-        ,datapoints
-    FROM runningcatalog 
-    WHERE dataset=%s 
-    AND datapoints<>%s
-"""
-        cursor.execute(query, (dsid, nimgs))
-        results = cursor.fetchall()
-#        results = [dict(xtrsrc_id=x[0], datapoints=x[1], avg_i_peak=x[2])
-        results = [dict(runcat=x[0], xtrsrc=x[1], datapoints=x[2])
-                   for x in results]
-        if not AUTOCOMMIT:
-            conn.commit()
-    except db.Error:
-        logging.warn("Failed on query %s", query)
-        raise
-    finally:
-        cursor.close()
-    return results
+
+    query = "SELECT count(1) FROM image WHERE dataset=%s AND id NOT IN (SELECT image FROM rejection)" % dsid
+    cursor = tkp.database.query(conn, query)
+    nimgs = cursor.fetchone()[0]
+
+    query = "SELECT id, xtrsrc, datapoints FROM runningcatalog WHERE dataset=%s AND datapoints<>%s" % (dsid, nimgs)
+    cursor = tkp.database.query(conn, query)
+    results = cursor.fetchall()
+    resultdict = [dict(runcat=x[0], xtrsrc=x[1], datapoints=x[2]) for x in results]
+    return resultdict
 
 def select_transient_candidates_above_thresh(
                     conn, 

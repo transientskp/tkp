@@ -137,7 +137,7 @@ If an ``id`` is supplied, ``data`` is ignored.
 
 from __future__ import with_statement
 import logging
-import utils as dbu
+from . import utils as dbu
 import monetdb.sql as db
 from ..config import config
 from .database import ENGINE
@@ -365,7 +365,7 @@ class DataSet(DBObject):
                                       where={'dataset':self.id})
         
     # TODO: Verify constants
-    def detect_variables(self,  V_lim=0.2, eta_lim=3.):
+    def detect_variables(self,  freq_band, V_lim=0.2, eta_lim=3.):
         """Search through the whole dataset for variable sources"""
         return dbu.detect_variable_sources(
             self.database.connection, self._id, V_lim, eta_lim)
@@ -378,6 +378,17 @@ class DataSet(DBObject):
     def add_manual_entry_to_monitoringlist(self, ra, dec):
         dbu.add_manual_entry_to_monitoringlist(self.database.connection, self.id, ra, dec)
         
+    def frequency_bands(self):
+        """Return a list of distinct bands present in the dataset."""
+        query = """\
+        SELECT DISTINCT(band)
+          FROM image
+         WHERE dataset = %s
+        """
+        self.database.cursor.execute(query, (self.id,))
+        bands = zip(*self.database.cursor.fetchall())[0]
+        return bands
+
     def _find_transient_candidates(self, single_epoch_threshold, combined_threshold):
         """Find sources not present in all epochs.
         
@@ -413,7 +424,7 @@ class DataSet(DBObject):
     def _add_runcat_sources_to_monitoringlist(self, runcat_ids):
         dbu.add_runcat_sources_to_monitoringlist(self.database.connection, self._id, runcat_ids)
 
-        
+
 class Image(DBObject):
     """Class corresponding to the images table in the database"""
 

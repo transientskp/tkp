@@ -22,7 +22,7 @@ def query(conn, query, commit=False):
         cursor.execute(query)
         if not autocommit and commit:
             conn.commit()
-    except monetdb.sql.Error, e:
-        logging.warn("Query failed: %s." % query)
+    except monetdb.sql.Error as e:
+        logging.error("Query failed: %s. Query: %s." % (e, query))
         raise
     return cursor

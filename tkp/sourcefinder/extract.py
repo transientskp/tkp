@@ -643,10 +643,10 @@ def source_profile_and_errors(data, threshold, noise, beam, fixed=None):
             logger.info('Gauss fitting was successful.')
         except ValueError:
             logger.warn('Gauss fitting failed.')
-    else:
-        if fixed:
-            # moments can't handle fixed params
-            raise ValueError("fit failed with given fixed parameters")
+
+    if fixed and not param.gaussian:
+        # moments can't handle fixed params
+        raise ValueError("fit failed with given fixed parameters")
 
     beamsize = utils.calculate_beamsize(beam[0], beam[1])
     param["flux"] = (numpy.pi * param["peak"] * param["semimajor"] *

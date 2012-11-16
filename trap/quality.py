@@ -27,10 +27,12 @@ def parse_parset(parset_file):
     result['ncore'] = parset.getInt('ncore', 24)
     result['nremote'] = parset.getInt('nremote',16)
     result['nintl'] = parset.getInt('nintl', 8)
+    result['oversampled_x'] = parset.getInt('oversampled_x', 30)
+    result['elliptical_x'] = parset.getFloat('elliptical_x', 2.0)
     return result
 
-def noise(image_id, parset_file):
-    """ checks if an image passes the RMS quality check. If not, a rejection
+def check(image_id, parset_file):
+    """ checks if an image passes the quality check. If not, a rejection
         entry is added to the database.
     args:
         image_id: id of image in database
@@ -61,7 +63,8 @@ def noise(image_id, parset_file):
         return False
 
     (semimaj, semimin, theta) = fitsimage.beam
-    beam_invalid = tkp.quality.beam_invalid(semimaj, semimin)
+    beam_invalid = tkp.quality.beam_invalid(semimaj, semimin,
+                                        p['oversampled_x'], p['elliptical_x'])
 
     if not beam_invalid:
         logger.info("image %i accepted: semimaj: %s, semimin: %s" % (db_image.id,

@@ -9,7 +9,7 @@ class quality_check(LOFARnodeTCP):
         with log_time(self.logger):
             self.outputs['image_id'] = image_id
             trap.quality.logger = self.logger
-            self.outputs['pass'] = trap.quality.noise(image_id, parset_file)
+            self.outputs['pass'] = trap.quality.check(image_id, parset_file)
         return 0
 
 if __name__ == "__main__":

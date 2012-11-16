@@ -31,7 +31,7 @@ class TrapLocal(control):
 
         good_images = []
         for image in dataset.images:
-            if trap.quality.noise(image.id, quality_parset_file):
+            if trap.quality.check(image.id, quality_parset_file):
                 good_images.append(image)
 
         for image in good_images:

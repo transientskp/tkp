@@ -93,12 +93,13 @@ class TestLightCurve(unittest.TestCase):
         self.assertAlmostEqual(lightcurve[3][2], 40.)
 
         # Since the light curves are very similar, only eta_nu is different
-        results = self.dataset.detect_variables()
-        results = sorted(results, key=itemgetter('eta_nu'))
+        results = self.dataset.detect_variables(
+                                            self.dataset.frequency_bands()[0])
+        results = sorted(results, key=itemgetter('eta_int'))
         for result, eta_nu in zip(results, (16666.66666667, 66666.666666667,
                                             150000.0)):
             self.assertEqual(result['npoints'], 4)
-            self.assertAlmostEqual(result['eta_nu'], eta_nu)
-            self.assertAlmostEqual(result['v_nu'], 0.516397779494)
+            self.assertAlmostEqual(result['eta_int'], eta_nu)
+            self.assertAlmostEqual(result['v_int'], 0.516397779494)
 
     

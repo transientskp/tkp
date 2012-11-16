@@ -27,26 +27,20 @@ digraph many2one {
         rank = min;
         node [style=filled];
         f9 -> f11 -> f13 -> f15 [color=blue];
-        f10 -> f12 -> f14 -> f16 [color=green];
+        f10 -> f12 -> f13 -> f15 [color=green];
+        f12 -> f14 [style=invis];
+        f14 -> f16 [color=gold];
         label = "Band 2";
     }
-    edge[color=blue, constraint=false];
-    f1 -> f9;
-    f3 -> f11;
-    f5 -> f13;
-    f7 -> f15;
-    edge[color=green, constraint=false];
-    f2 -> f10;
-    f4 -> f12;
-    f6 -> f13;
-    f8 -> f15;
-    edge[constraint=true];
 
     f7 -> l1 [style=dashed, color=blue];
     f15 -> l1 [style=dashed, color=blue];
     l1[label=<L<SUB>1</SUB>>, shape=box, color=red];
     f8 -> l2 [style=dashed, color=green];
+    f15 -> l2 [style=dashed, color=green];
     l2[label=<L<SUB>2</SUB>>, shape=box, color=red];
+    f16 -> l3 [style=dashed, color=gold]
+    l3[label=<L<SUB>3</SUB>>, shape=box, color=red];
 
     node[shape=none];
     edge[style=invis];

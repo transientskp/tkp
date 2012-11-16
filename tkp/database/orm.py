@@ -364,34 +364,19 @@ class DataSet(DBObject):
                                       alias={'id':'runcat'}, 
                                       where={'dataset':self.id})
         
-        
-                           
-    # TO DO: Verify constants
-    def detect_variables(self, freq_band, V_lim=0.2, eta_lim=3.):
+    # TODO: Verify constants
+    def detect_variables(self,  freq_band, V_lim=0.2, eta_lim=3.):
         """Search through the whole dataset for variable sources"""
-
         return dbu.select_variability_indices(
-                   self.database.connection,
-                   self._id,
-                   freq_band,
-                   V_lim, eta_lim)
+            self.database.connection, self._id, freq_band, V_lim, eta_lim)
         
-    def mark_transient_candidates(self, single_epoch_threshold,
-                                  combined_threshold):
-        """
-        Find transient candidates and add to monitoringlist.
-        """
-        
-        candidates = self._find_transient_candidates(
-                     single_epoch_threshold, combined_threshold
-                     )
-        self._add_runcat_sources_to_monitoringlist(
-                         [c['runcat'] for c in candidates],
-                         )
+    def mark_transient_candidates(self, single_epoch_threshold, combined_threshold):
+        """Find transient candidates and add to monitoringlist."""
+        candidates = self._find_transient_candidates(single_epoch_threshold, combined_threshold)
+        self._add_runcat_sources_to_monitoringlist([c['runcat'] for c in candidates])
+
     def add_manual_entry_to_monitoringlist(self, ra, dec):
-        dbu.add_manual_entry_to_monitoringlist(self.database.connection, 
-                                               self.id, 
-                                               ra, dec)
+        dbu.add_manual_entry_to_monitoringlist(self.database.connection, self.id, ra, dec)
         
     def frequency_bands(self):
         """Return a list of distinct bands present in the dataset."""
@@ -404,10 +389,7 @@ class DataSet(DBObject):
         bands = zip(*self.database.cursor.fetchall())[0]
         return bands
 
-
-
-    def _find_transient_candidates(self, single_epoch_threshold,
-                                        combined_threshold):
+    def _find_transient_candidates(self, single_epoch_threshold, combined_threshold):
         """Find sources not present in all epochs.
         
         Returns a list of associated source ids, which 
@@ -420,8 +402,7 @@ class DataSet(DBObject):
         [ {runcat, xtrsrc, datapoints, max_det_sigma, sum_det_sigma} ]
             
         """
-        all_candidates = dbu.select_winking_sources(
-             self.database.connection, self._id)
+        all_candidates = dbu.select_winking_sources(self.database.connection, self._id)
                 
         thresholded_candidates = dbu.select_transient_candidates_above_thresh(
                     conn=self.database.connection,
@@ -436,18 +417,12 @@ class DataSet(DBObject):
                 if tc['runcat']==ac['runcat']:
                     tc.update(ac)
         
-        #TO DO: Filter out those which only disappear because they drop out of FoV
+        #TODO: Filter out those which only disappear because they drop out of FoV
         ###  --- This will require FoV information in database
         return thresholded_candidates
     
     def _add_runcat_sources_to_monitoringlist(self, runcat_ids):
-        dbu.add_runcat_sources_to_monitoringlist(self.database.connection,
-                                                  self._id,
-                                                  runcat_ids,
-                                                  )
-        
-#    def add_manual_entry_to_monitoringlist
-        
+        dbu.add_runcat_sources_to_monitoringlist(self.database.connection, self._id, runcat_ids)
 
 
 class Image(DBObject):

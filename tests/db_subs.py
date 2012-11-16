@@ -109,6 +109,21 @@ class MockSource(object):
     """Defines a MockSource for generating mock source lists.
 
     (These can be used to test the database routines.)
+
+    When initialised with a transient lightcurve (a list of MockLCPoint tuples),
+    the source lists can be populated with non-detections (zero measurements)
+    at the images for which the lightcurve is not defined.
+
+    When the lightcurve is not provided, the extractedsource tuple serves as
+    the basis for a fixed source.
+    A list of identical measurements will then be generated for the required
+    number of images.
+
+    This makes it much easier to easily generate source lists for testing
+    the database!
+
+     See also: `example_source_lists` for a usage example.
+
     """
     def __init__(self,
                  ex,
@@ -150,7 +165,38 @@ class MockSource(object):
                     return self.ex._replace(peak=p.peak,
                                             flux=p.flux,
                                             sigma=p.sigma)
-            return self.ex._replace(peak=0, flux=0, sigma=0)
+            #These values are non-zero as a workaround for 
+            # issue 3816 
+            # https://support.astron.nl/lofar_issuetracker/issues/3816
+            return self.ex._replace(peak=1e-6, flux=1e-6, sigma=1e-6)
+
+    def synthesise_measurements(self, n_images, include_non_detections,
+                                non_detection_sigma_threshold=None):
+        """Return a list of measurements corresponding to images.
+
+        If include_non_detections is false, then images where the lightcurve
+        falls below the threshold are represented by a 'None' element
+        in the list.
+
+        """
+
+        if include_non_detections is False:
+            if non_detection_sigma_threshold is None:
+                raise ValueError('Must supply a non-detection threshold '
+                 'when synthesising a patchy lightcurve.')
+
+        measurements = []
+        for i in xrange(n_images):
+            ex = self.value_at_image(i)
+            if include_non_detections:
+                measurements.append(ex)
+            else:
+                if ex.sigma > non_detection_sigma_threshold:
+                    measurements.append(ex)
+                else:
+                    measurements.append(None)
+        assert len(measurements) == n_images
+        return measurements
 
 
 def example_source_lists(n_images, include_non_detections,
@@ -170,8 +216,6 @@ def example_source_lists(n_images, include_non_detections,
             A little refinement here would probably go a long way.
     """
     assert n_images >= 7
-
-
 
     FixedSource = MockSource(example_extractedsource_tuple(ra=123.123, dec=10.5))
 
@@ -206,14 +250,14 @@ def example_source_lists(n_images, include_non_detections,
 
     img_source_lists = []
     for i in range(n_images):
-        l = []
-        for s in all_sources:
-            ex = s.value_at_image(i)
-            if include_non_detections:
-                l.append(ex)
-            else:
-                if ex.sigma > non_detection_sigma_threshold:
-                    l.append(ex)
-        img_source_lists.append(l)
+        img_source_lists.append([])
 
+    for s in all_sources:
+        measurements = s.synthesise_measurements(n_images,
+                                                 include_non_detections,
+                                                 non_detection_sigma_threshold)
+        for index, m in enumerate(measurements):
+            if m is not None:
+                img_source_lists[index].append(m)
     return img_source_lists
+

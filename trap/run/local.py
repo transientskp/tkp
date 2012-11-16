@@ -11,6 +11,7 @@ from lofarpipe.support.control import control
 
 from images_to_process import images
 
+#TODO: KeyError: 'dataset_id'
 
 class TrapLocal(control):
     inputs = {}
@@ -36,6 +37,7 @@ class TrapLocal(control):
         for image in good_images:
             trap.source_extraction.extract_sources(image.id, srcxtr_parset_file)
 
+        # TODO: this should be updated to work on a list of images, not on a dataset ID
         trap.monitoringlist.mark_sources(dataset_id, srcxtr_parset_file)
 
         for image in good_images:

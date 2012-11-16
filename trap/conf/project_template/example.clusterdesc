@@ -1,0 +1,4 @@
+ClusterName = Local
+Compute.Nodes = [ example ]
+Compute.RemoteDisks = [ / ]
+Compute.RemoteFileSys = [ example:/ ]

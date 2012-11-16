@@ -20,11 +20,6 @@ digraph one2one {
         f5 -> f6 -> f7 -> f8 [color=blue];
         label = "Band 2";
     }
-    edge[color=blue, constraint=false];
-    f1 -> f5;
-    f2 -> f6;
-    f3 -> f7;
-    f4 -> f8;
 
     edge[color=blue, style=dashed, constraint=true];
     f8 -> l1;

@@ -27,16 +27,13 @@ def parse_parset(parset_file):
     result['ncore'] = parset.getInt('ncore', 24)
     result['nremote'] = parset.getInt('nremote',16)
     result['nintl'] = parset.getInt('nintl', 8)
+    result['oversampled_x'] = parset.getInt('oversampled_x', 30)
+    result['elliptical_x'] = parset.getFloat('elliptical_x', 2.0)
     return result
 
-def nice_format(f):
-    if f > 9999 or f < 0.01:
-        return "%.2e" % f
-    else:
-        return "%.2f" % f
-
-def noise(image_id, parset_file):
-    """ checks if an image passes the RMS quality check. If not, a rejection entry is added to the database.
+def check(image_id, parset_file):
+    """ checks if an image passes the quality check. If not, a rejection
+        entry is added to the database.
     args:
         image_id: id of image in database
         parset_file: parset file location with quality check parameters
@@ -53,13 +50,30 @@ def noise(image_id, parset_file):
         p['configuration'], p['subbands'], p['channels'],
         p['ncore'], p['nremote'], p['nintl'])
 
-    if tkp.quality.rms_valid(rms, noise, low_bound=p['low_bound'], high_bound=p['high_bound']):
-        logger.info("image %i accepted: rms: %s, theoretical noise: %s" % (db_image.id, nice_format(rms), nice_format(noise)))
-        return True
+    rms_invalid = tkp.quality.rms_invalid(rms, noise, low_bound=p['low_bound'],
+        high_bound=p['high_bound'])
+    if not rms_invalid:
+        logger.info("image %i accepted: rms: %s, theoretical noise: %s" % \
+                        (db_image.id, tkp.quality.nice_format(rms),
+                         tkp.quality.nice_format(noise)))
     else:
-        ratio = rms / noise
-        reason = "rms value (%s) is %s times theoretical noise (%s)" % (nice_format(rms), nice_format(ratio), nice_format(noise))
-        logger.info("image %s REJECTED: %s " % (db_image.id, reason) )
+        logger.info("image %s REJECTED: %s " % (db_image.id, rms_invalid) )
         tkp.database.quality.reject(database.connection, db_image.id,
-            tkp.database.quality.reason['rms'], reason)
+                    tkp.database.quality.reason['rms'], rms_invalid)
         return False
+
+    (semimaj, semimin, theta) = fitsimage.beam
+    beam_invalid = tkp.quality.beam_invalid(semimaj, semimin,
+                                        p['oversampled_x'], p['elliptical_x'])
+
+    if not beam_invalid:
+        logger.info("image %i accepted: semimaj: %s, semimin: %s" % (db_image.id,
+                                             tkp.quality.nice_format(semimaj),
+                                             tkp.quality.nice_format(semimin)))
+    else:
+        logger.info("image %s REJECTED: %s " % (db_image.id, beam_invalid) )
+        tkp.database.quality.reject(database.connection, db_image.id,
+                            tkp.database.quality.reason['rms'], beam_invalid)
+        return False
+
+    return True

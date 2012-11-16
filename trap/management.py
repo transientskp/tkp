@@ -16,7 +16,7 @@ import re
 import errno
 import getpass
 import stat
-import subprocess
+import sys
 import trap
 
 
@@ -52,8 +52,12 @@ def parse_arguments():
     initjob_parser = parser_subparsers.add_parser('initjob')
     initjob_parser.add_argument('initjobname', help='Name of new job')
 
-    initjob_parser = parser_subparsers.add_parser('runjob')
+    initjob_parser = parser_subparsers.add_parser('run')
     initjob_parser.add_argument('runjobname', help='Name of job to run')
+
+    initjob_parser = parser_subparsers.add_parser('runlocal')
+    initjob_parser.add_argument('runlocaljobname', help='Name of job to run ('
+                                                        'local run)')
 
     clean_parser = parser_subparsers.add_parser('clean')
     clean_parser.add_argument('cleanjobname', help='Name of job to clean')
@@ -193,33 +197,34 @@ def init_job(jobname, target=None):
     print "creating job '%s'" % jobname
     return copy_template("job", jobname, target)
 
+def prepare_job(jobname):
+    here = os.getcwd()
+    jobdir = os.path.join(here, jobname)
+    pipelinefile = os.path.join(here, "pipeline.cfg")
+    tasksfile = os.path.join(here, "tasks.cfg")
+    sys.path.append(jobdir)
+    sys.argv += ["-d", "-c", pipelinefile, "-t", tasksfile, "-j", jobname]
 
 def run_job(jobname):
-    print "this is not implemented yet, please use the run.sh script in the job folder"
     print "running job '%s'" % jobname
-    project_dir = os.getcwd()
-    job_dir = os.path.join(project_dir, jobname)
+    prepare_job(jobname)
+    import trap.run.distributed
+    sys.exit(trap.run.distributed.Trap().main())
 
-    #os.chdir(job_dir)
-
-    # add job dir to pythonpath for subprocess so we can find datafiles_to_process
-    os.environ["PYTHONPATH"] = os.environ.get("PYTHONPATH", "") + ":" + job_dir
-
-    print os.environ["PYTHONPATH"]
-    args = ["python",
-            os.path.join(project_dir, "trip.py"),
-            "-c", os.path.join(project_dir, "pipeline.cfg"),
-            "-t", os.path.join(project_dir, "tasks.cfg"),
-            "-d",
-            "-j " + jobname
-    ]
-    print "running", " ".join(args)
-    if not subprocess.call(args):
-        raise CommandError("Error calling trip.py script")
-
+def runlocal_job(jobname):
+    print "running job '%s' (local)" % jobname
+    prepare_job(jobname)
+    import trap.run.local
+    sys.exit(trap.run.local.TrapLocal().main())
 
 def clean_job(jobname):
-    print "TODO: cleaning job %s" % jobname
+    here = os.getcwd()
+    statefile = os.path.join(here, jobname, "statefile")
+    if os.access(statefile, os.R_OK):
+        print "Removing state file for job %s" % jobname
+        os.unlink(statefile)
+    else:
+        print "no statefile for job %s" % jobname
 
 
 def info_job(jobname):
@@ -228,7 +233,6 @@ def info_job(jobname):
 
 def main():
     parsed = parse_arguments()
-
     if parsed.has_key('initprojectname'):
         target = parsed.get('target', '')
         init_project(parsed['initprojectname'], target)
@@ -240,6 +244,8 @@ def main():
         info_job(parsed['infojobname'])
     elif parsed.has_key('runjobname'):
         run_job(parsed['runjobname'])
+    elif parsed.has_key('runlocaljobname'):
+        runlocal_job(parsed['runlocaljobname'])
     else:
         parsed.print_help()
 

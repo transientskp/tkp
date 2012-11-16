@@ -367,8 +367,8 @@ class DataSet(DBObject):
     # TODO: Verify constants
     def detect_variables(self,  freq_band, V_lim=0.2, eta_lim=3.):
         """Search through the whole dataset for variable sources"""
-        return dbu.detect_variable_sources(
-            self.database.connection, self._id, V_lim, eta_lim)
+        return dbu.select_variability_indices(
+            self.database.connection, self._id, freq_band, V_lim, eta_lim)
         
     def mark_transient_candidates(self, single_epoch_threshold, combined_threshold):
         """Find transient candidates and add to monitoringlist."""

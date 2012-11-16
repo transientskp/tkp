@@ -567,7 +567,7 @@ def select_winking_sources(conn, dsid):
             [ {runcat, xtrsrc, datapoints} ]
     """
 
-    query = "SELECT count(1) FROM image WHERE dataset=%s AND id NOT IN (SELECT image FROM rejection)" % dsid
+    query = "SELECT count(*) FROM image WHERE dataset=%s AND id NOT IN (SELECT image FROM rejection)" % dsid
     cursor = tkp.database.query(conn, query)
     nimgs = cursor.fetchone()[0]
 

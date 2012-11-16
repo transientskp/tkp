@@ -2,28 +2,31 @@ import re
 
 
 def parse_fits(fitsfile):
+    """
+    Extract relevant info from headers in FITS file.
+    This should go into the DataAccessor code some day
+    """
     history = fitsfile.header['HISTORY*']
     xy_line = [i for i in history.values() if 'cellx' in i][0]
     extracted = re.search(r"cellx='(?P<x>\d+).*celly='(?P<y>\d+)", xy_line).groupdict()
-    cellsize = int(extracted['x'])
-    bmaj = fitsfile.header['BMAJ']
-    bmin = fitsfile.header['BMIN']
-    return (bmaj, bmin, cellsize)
+    data = {}
+    data['cellsize'] = int(extracted['x'])
+    data['bmaj'] = fitsfile.header['BMAJ']
+    data['bmin'] = fitsfile.header['BMIN']
+    data['nx'] = fitsfile.header['NAXIS1']
+    data['ny'] = fitsfile.header['NAXIS2']
+    return data
 
 
 def undersampled(semibmaj, semibmin):
     """
     We want more than 2 pixels across the beam major and minor axes.
     Semibmaj and semibmin describe the beam size in pixels
-    Returns:
-
-      Worth pointing out that semimaj and semimin are *half* the axis lengths in pixels. So when Antonia wants 2 pixels along the axis, you need to compare that to semimaj or semimin times 2.
-        True if the beam is undersampled
     """
-    return bmaj/(cellsize/3600.0) > 2 and bmin/(cellsize/3600.0) > 2
+    return semibmaj * 2 <= 1 or semibmin * 2 <= 1
 
 
-def oversampled(bmaj,bmin, cellsize, x=30):
+def oversampled(semibmaj, semibmin, x=30):
     """
     It has been identified that having too many pixels across the restoring
     beam can lead to bad images, however further testing is required to
@@ -31,10 +34,10 @@ def oversampled(bmaj,bmin, cellsize, x=30):
     Returns:
         True if the beam is oversampled
     """
-    return bmaj/(cellsize/3600.0) < x and bmin/(cellsize/3600.0) < x
+    return semibmaj > x or semibmin > x
 
 
-def highly_elliptical(bmaj, bmin, x=2.0):
+def highly_elliptical(semibmaj, semibmin, x=2.0):
     """
     If the beam is highly elliptical it can cause source association
     problems within TraP. Again further testing is required to determine
@@ -42,7 +45,7 @@ def highly_elliptical(bmaj, bmin, x=2.0):
     returns:
         True if the beam is highly elliptical
     """
-    return bmaj/bmin < x
+    return semibmaj / semibmin > x
 
 
 def not_full_fieldofview(nx, ny, cellsize, fov):
@@ -55,6 +58,6 @@ def not_full_fieldofview(nx, ny, cellsize, fov):
     :Returns:
         True if the full FOV is imaged
     """
-    return nx*ny*(cellsize/3600)*(cellsize/3600) < fov
+    return nx * ny * (cellsize/3600) * (cellsize/3600) < fov
 
 

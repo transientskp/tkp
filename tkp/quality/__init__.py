@@ -1,31 +1,57 @@
 """
 placeholder for all quality checking related code.
 
-The quality checks are described in the "LOFAR Transients Key Science Project Quality Control Document V1.1"
+The quality checks are described in the "LOFAR Transients Key Science Project
+Quality Control Document V1.1"
 
 """
 
 import tkp.quality.restoringbeam
 
-def rms_valid(rms, noise, low_bound=1, high_bound=50):
+
+def nice_format(f):
+    if f > 9999 or f < 0.01:
+        return "%.2e" % f
+    else:
+        return "%.2f" % f
+
+
+def rms_invalid(rms, noise, low_bound=1, high_bound=50):
     """ Is the RMS value of an image too high?
     Args:
-        rms: RMS value of an image, can be computed with tkp.quality.statistics.rms
-        noise: Theoretical noise level of instrument, can be calculated with tkp.lofar.noise.noise_level
+        rms: RMS value of an image, can be computed with
+             tkp.quality.statistics.rms
+        noise: Theoretical noise level of instrument, can be calculated with
+               tkp.lofar.noise.noise_level
         low_bound: multiplied with noise to define lower threshold
         high_bound: multiplied with noise to define upper threshold
     """
-    return (rms > noise * low_bound) and (rms < noise * high_bound)
-
-
-def beam_invalid(bmaj, bmin, cellsize, nx, ny, fov):
-    if tkp.quality.restoringbeam.undersampled(bmaj, bmin, cellsize):
-        return "Beam over sampled. Bmaj=XXXarcsec and Bmin=XXXarcsec"
-    elif tkp.quality.restoringbeam.undersampled(bmaj, bmin, cellsize):
-        return "Beam under sampled. Bmaj=XXXarcsec and Bmin=XXXarcsec"
-    elif tkp.quality.restoringbeam.highly_elliptical(bmaj, bmin):
-        return "Beam too elliptical. Bmaj=XXXarcsec and Bmin=XXXarcsec"
-    elif not tkp.quality.restoringbeam.full_fieldofview(nx, ny, cellsize, fov):
-        return "Full field of view not imaged. Imaged FoV=XXdegrees, Observed FoV=XXdegrees"
+    if (rms < noise * low_bound) or (rms > noise * high_bound):
+        ratio = rms / noise
+        return "rms value (%s) is %s times theoretical noise (%s)" % \
+                    (nice_format(rms), nice_format(ratio), nice_format(noise))
     else:
-        return True
+        return False
+
+
+def beam_invalid(semibmaj, semibmin):
+    """ Are the beam shape propperties ok?
+    Args:
+        semibmaj, semibmin: size of the beam in pixels
+    """
+
+    formatted = "semibmaj=%s and semibmin=%s" % (nice_format(semibmaj),
+                                                 nice_format(semibmin))
+    if tkp.quality.restoringbeam.undersampled(semibmaj, semibmin):
+        return "Beam oversampled. %s" % formatted
+    elif tkp.quality.restoringbeam.undersampled(semibmaj, semibmin):
+        return "Beam undersampled. %s" % formatted
+    elif tkp.quality.restoringbeam.highly_elliptical(semibmaj, semibmin):
+        return "Beam too elliptical. %s" % formatted
+
+    #TODO: this test has been disabled untill antonia solves issue discribed in #3802
+    #elif not tkp.quality.restoringbeam.full_fieldofview(nx, ny, cellsize, fov):
+    #    return "Full field of view not imaged. Imaged FoV=XXdegrees, Observed FoV=XXdegrees"
+
+    else:
+        return False

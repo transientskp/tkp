@@ -34,7 +34,7 @@ def rms_invalid(rms, noise, low_bound=1, high_bound=50):
         return False
 
 
-def beam_invalid(semibmaj, semibmin):
+def beam_invalid(semibmaj, semibmin, oversampled_x=30, elliptical_x=2.0):
     """ Are the beam shape propperties ok?
     Args:
         semibmaj, semibmin: size of the beam in pixels
@@ -42,11 +42,13 @@ def beam_invalid(semibmaj, semibmin):
 
     formatted = "semibmaj=%s and semibmin=%s" % (nice_format(semibmaj),
                                                  nice_format(semibmin))
+
     if tkp.quality.restoringbeam.undersampled(semibmaj, semibmin):
-        return "Beam oversampled. %s" % formatted
-    elif tkp.quality.restoringbeam.undersampled(semibmaj, semibmin):
         return "Beam undersampled. %s" % formatted
-    elif tkp.quality.restoringbeam.highly_elliptical(semibmaj, semibmin):
+    elif tkp.quality.restoringbeam.oversampled(semibmaj, semibmin,
+        oversampled_x):
+        return "Beam oversampled. %s" % formatted
+    elif tkp.quality.restoringbeam.highly_elliptical(semibmaj, semibmin, elliptical_x):
         return "Beam too elliptical. %s" % formatted
 
     #TODO: this test has been disabled untill antonia solves issue discribed in #3802

@@ -150,6 +150,9 @@ def fitgaussian(data, params, fixed=None):
     dict with the same names as fit_params (below) will be "locked" in the
     fitting process.
     """
+    if not fixed:
+        fixed = {}
+
     bounds=[
         (None, None), # Peak
         (None, None), # xbar

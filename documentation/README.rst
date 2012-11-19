@@ -21,9 +21,12 @@
 - Edit source/conf.py if you want to change options or overall settings
   (such as the main title, authors or copyright).
 
-- These docs (or at least the conf.py and Makefile) was generated
+- These docs (or at least the conf.py and Makefile) were generated
   using Sphinx 1.0.7. If you use an older version, you may have
   problems generating the HTML or PDF documentation.
+
+- Some of the diagrams also require Graphviz version 2.28 or greater.
+    (Try ``dot -V`` to determine your current version.)
 
 - For an example of how to use Sphinx, see eg 
   http://packages.python.org/an_example_pypi_project/sphinx.html

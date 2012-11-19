@@ -189,7 +189,7 @@ def fitgaussian(data, params, fixed=None):
 
     solution, value, d = scipy.optimize.fmin_l_bfgs_b(
         errorfunction, initial,
-        fprime=None, approx_grad=True, bounds=bounds
+        fprime=None, approx_grad=True, bounds=bounds, epsilon=1e-10
     )
 
     if d['warnflag'] > 0:

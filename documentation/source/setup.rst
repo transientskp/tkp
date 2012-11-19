@@ -6,7 +6,7 @@ Setup
 
 .. warning::
 
-   The workflow described here has been largely superseded by the trap-manage 
+   The workflow described here has been largely superseded by the ``trap-manage`` 
    script - documentation for which is coming soon.
 
 Preamble

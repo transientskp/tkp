@@ -17,6 +17,7 @@ import errno
 import getpass
 import stat
 import sys
+import logging
 import trap
 
 
@@ -42,7 +43,9 @@ def check_if_exists(filename):
 
 
 def parse_arguments():
-    parser = argparse.ArgumentParser(description='This is a tool for managing a TRAP project', epilog=__doc__)
+    parser = argparse.ArgumentParser(
+        description='This is a tool for managing a TRAP project',
+        epilog=__doc__)
     parser_subparsers = parser.add_subparsers()
 
     initproject_parser = parser_subparsers.add_parser('initproject')
@@ -52,12 +55,14 @@ def parse_arguments():
     initjob_parser = parser_subparsers.add_parser('initjob')
     initjob_parser.add_argument('initjobname', help='Name of new job')
 
-    initjob_parser = parser_subparsers.add_parser('run')
-    initjob_parser.add_argument('runjobname', help='Name of job to run')
+    run_parser = parser_subparsers.add_parser('run')
+    run_parser.add_argument('runjobname', help='Name of job to run')
+    run_parser.add_argument('-d', '--debug', help='enable debug logging', action='store_true')
 
-    initjob_parser = parser_subparsers.add_parser('runlocal')
-    initjob_parser.add_argument('runlocaljobname', help='Name of job to run ('
-                                                        'local run)')
+    runlocal_parser = parser_subparsers.add_parser('runlocal')
+    runlocal_parser.add_argument('runlocaljobname', help='Name of job to run'
+                                                         ' (local run)')
+    runlocal_parser.add_argument('-d', '--debug', help='enable debug logging', action='store_true')
 
     clean_parser = parser_subparsers.add_parser('clean')
     clean_parser.add_argument('cleanjobname', help='Name of job to clean')
@@ -89,9 +94,9 @@ def make_writeable(filename):
 
 def line_replace(substitutes, line):
     """substitutions - list of 2 item tuples.
-    every occurance of the first item in the tuple in line will be replaces with the second
-
-    the to be replaced thingy should be in Django template format e.g. {% user_name %}
+    every occurance of the first item in the tuple in line will be replaces
+    with the second. The to be replaced thingy should be in Django
+    template format e.g. {% user_name %}
     """
     for pattern, repl in substitutes:
         line = re.sub("{%\s*" + pattern + "\s*%}", repl, line)
@@ -197,23 +202,30 @@ def init_job(jobname, target=None):
     print "creating job '%s'" % jobname
     return copy_template("job", jobname, target)
 
-def prepare_job(jobname):
+def prepare_job(jobname, debug=False):
     here = os.getcwd()
     jobdir = os.path.join(here, jobname)
     pipelinefile = os.path.join(here, "pipeline.cfg")
     tasksfile = os.path.join(here, "tasks.cfg")
     sys.path.append(jobdir)
-    sys.argv += ["-d", "-c", pipelinefile, "-t", tasksfile, "-j", jobname]
+    if debug:
+        sys.argv.append("-d")
+    # the lofar pipeline utils parse sys.argv to determine some options
+    sys.argv += ["-c", pipelinefile, "-t", tasksfile, "-j", jobname]
 
-def run_job(jobname):
+def run_job(jobname, debug=False):
     print "running job '%s'" % jobname
-    prepare_job(jobname)
+    if debug:
+        logging.basicConfig(level=logging.DEBUG)
+    else:
+        logging.basicConfig(level=logging.INFO)
+    prepare_job(jobname, debug)
     import trap.run.distributed
     sys.exit(trap.run.distributed.Trap().main())
 
-def runlocal_job(jobname):
+def runlocal_job(jobname, debug=False):
     print "running job '%s' (local)" % jobname
-    prepare_job(jobname)
+    prepare_job(jobname, debug)
     import trap.run.local
     sys.exit(trap.run.local.TrapLocal().main())
 
@@ -243,9 +255,9 @@ def main():
     elif parsed.has_key('infojobname'):
         info_job(parsed['infojobname'])
     elif parsed.has_key('runjobname'):
-        run_job(parsed['runjobname'])
+        run_job(parsed['runjobname'], parsed['debug'])
     elif parsed.has_key('runlocaljobname'):
-        runlocal_job(parsed['runlocaljobname'])
+        runlocal_job(parsed['runlocaljobname'], parsed['debug'])
     else:
         parsed.print_help()
 

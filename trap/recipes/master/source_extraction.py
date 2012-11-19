@@ -35,7 +35,6 @@ class source_extraction(BaseRecipe, RemoteCommandRecipeMixIn):
         self.logger.info("Extracting sources")
         super(source_extraction, self).go()
         images = self.inputs['args']
-        print 'IMAGES =', images
 
         # Obtain available nodes
         clusterdesc = ClusterDesc(self.config.get('cluster', "clusterdesc"))

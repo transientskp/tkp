@@ -202,6 +202,7 @@ def init_job(jobname, target=None):
     print "creating job '%s'" % jobname
     return copy_template("job", jobname, target)
 
+
 def prepare_job(jobname, debug=False):
     here = os.getcwd()
     jobdir = os.path.join(here, jobname)
@@ -209,25 +210,32 @@ def prepare_job(jobname, debug=False):
     tasksfile = os.path.join(here, "tasks.cfg")
     sys.path.append(jobdir)
     if debug:
+        # show us DEBUG logging
         sys.argv.append("-d")
+    else:
+        # show us INFO logging
+        sys.argv.append("-v")
     # the lofar pipeline utils parse sys.argv to determine some options
     sys.argv += ["-c", pipelinefile, "-t", tasksfile, "-j", jobname]
 
+
 def run_job(jobname, debug=False):
     print "running job '%s'" % jobname
+    prepare_job(jobname, debug)
+    import trap.run.distributed
+    sys.exit(trap.run.distributed.Trap().main())
+
+
+def runlocal_job(jobname, debug=False):
+    print "running job '%s' (local)" % jobname
     if debug:
         logging.basicConfig(level=logging.DEBUG)
     else:
         logging.basicConfig(level=logging.INFO)
     prepare_job(jobname, debug)
-    import trap.run.distributed
-    sys.exit(trap.run.distributed.Trap().main())
-
-def runlocal_job(jobname, debug=False):
-    print "running job '%s' (local)" % jobname
-    prepare_job(jobname, debug)
     import trap.run.local
     sys.exit(trap.run.local.TrapLocal().main())
+
 
 def clean_job(jobname):
     here = os.getcwd()

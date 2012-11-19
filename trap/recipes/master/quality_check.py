@@ -56,7 +56,6 @@ class quality_check(BaseRecipe, RemoteCommandRecipeMixIn):
         self.logger.info("Performing quality checks")
         super(quality_check, self).go()
         images = self.inputs['args']
-        print 'IMAGES =', images
 
         # Obtain available nodes
         clusterdesc = ClusterDesc(self.config.get('cluster', "clusterdesc"))

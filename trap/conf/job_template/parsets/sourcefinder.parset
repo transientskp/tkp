@@ -7,3 +7,4 @@ backsize.y = 32
 margin = 10
 deblend = False
 deblend_nthresh = 32
+radius=280

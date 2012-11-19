@@ -1,12 +1,13 @@
+#################
 Setup
-=====
+#################
 .. |last_updated| last_updated::
-
-*This document last updated:* |last_updated|.
+:Last updated: |last_updated|
 
 .. warning::
 
-   At the last revision this document was not fully checked for correctness.
+   The workflow described here has been largely superseded by the ``trap-manage`` 
+   script - documentation for which is coming soon.
 
 Preamble
 --------

@@ -2,9 +2,10 @@
 
 Monitoring list
 ===============
+.. |last_updated| last_updated::
 
 :author: Evert Rol
-:date: |today|
+:Last updated: |last_updated|
 
 
 Introduction

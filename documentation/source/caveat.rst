@@ -1,7 +1,8 @@
-+++++++++++++++++++++++
+######################
 Caveat Emptor
-+++++++++++++++++++++++
-`Last updated: 26/09/12`
+######################
+.. |last_updated| last_updated::
+:Last updated: |last_updated|
 
 This documentation is by necessity largely hand-edited. 
 Coupled with the current rate of developmental change,

@@ -1,10 +1,9 @@
 .. _installation:
-
+######################
 Installation
-============
-..  |last_updated| last_updated::
-
-*This document last updated:* |last_updated|
+######################
+.. |last_updated| last_updated::
+:Last updated: |last_updated|
 
 This page documents only how to install the Trap recipes. In order to run the
 pipeline, you will also need to have installed the relevant dependencies (see
@@ -12,7 +11,7 @@ below) and have access to an appropriately configured :ref:`database
 <database-section>`.
 
 Dependencies
-------------
+===============================
 
 Installation of the Trap requires that the :ref:`TKP library
 <tkpapi:introduction>` and all of its dependencies be available. Please refer
@@ -39,7 +38,7 @@ In addition, the Trap requires:
   This is used by the classification module in the TKP library.
 
 Obtaining and installing the code
----------------------------------
+==================================
 
 The Trap code is stored in our `GitHub repository
 <http://www.github.com/transientskp/trap>`_. The code is currently only

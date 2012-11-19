@@ -10,16 +10,11 @@ Contents:
 
    caveat
    introduction
-   installation
-   cookbook
-   troubleshooting
-   setup
-   trap_py
    logic
+   installation
+   setup
    recipes
-   classification
-   monitoringlist
-   alerts
+   troubleshooting
 
 
 Indices and tables

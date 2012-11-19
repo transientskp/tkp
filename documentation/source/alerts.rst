@@ -2,9 +2,9 @@
 
 Alerts recipe
 =============
-
+.. |last_updated| last_updated::
 :author: Evert Rol
-:date: |today|
+:date: |last_updated|
 
 
 Introduction

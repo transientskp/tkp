@@ -1,6 +1,6 @@
-===========================
+############################
 The Transients Pipeline
-===========================
+############################
 .. |last_updated| last_updated::
 :Last updated: |last_updated|
 
@@ -27,7 +27,7 @@ The rest of this page gives a quick overview of the current functionality provid
 A separate page details :ref:`the exact logic flow <logic>`.
 
 Features overview
-------------------
+=======================
 
 The TraP has several steps; most steps are optional, but leaving out
 some will make little sense. The steps are:

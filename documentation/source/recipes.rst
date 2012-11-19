@@ -1,19 +1,22 @@
 .. _recipes-section:
 
-TRAP recipes
-============
+##############################
+Script and recipe parameters
+##############################
 .. |last_updated| last_updated::
 :Last updated: |last_updated|
 
-The various recipes used in the TRAP are listed below. 
-All recipes can be found in the recipes subdirectory.
+This page gives a very brief description of each script / recipe used in the 
+TraP workflow, and details the parameters supplied  
+either via command line arguments (in the case of top-level scripts) or via 
+parameter sets (for the recipes).
 
-An example Python file showing how to connect all the recipes is shown
-at the end of this section.
 
+Recipes
+================
 
 persistence
------------------
+---------------
 Checks for accessibility of each listed image file, inserts it into the database,
 and stores in the MongoDB image store if configured to do so.
 

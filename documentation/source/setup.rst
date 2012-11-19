@@ -1,5 +1,6 @@
+#################
 Setup
-=====
+#################
 .. |last_updated| last_updated::
 :Last updated: |last_updated|
 

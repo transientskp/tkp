@@ -10,13 +10,11 @@ Contents:
 
    caveat
    introduction
-   installation
-   cookbook
-   troubleshooting
-   setup
    logic
+   installation
+   setup
    recipes
-   monitoringlist
+   troubleshooting
 
 
 Indices and tables

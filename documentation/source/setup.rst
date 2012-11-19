@@ -5,7 +5,8 @@ Setup
 
 .. warning::
 
-   At the last revision this document was not fully checked for correctness.
+   The workflow described here has been largely superseded by the trap-manage 
+   script - documentation for which is coming soon.
 
 Preamble
 --------

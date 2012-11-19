@@ -14,7 +14,6 @@ Contents:
    cookbook
    troubleshooting
    setup
-   trap_py
    logic
    recipes
    monitoringlist

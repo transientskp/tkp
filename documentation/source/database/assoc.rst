@@ -188,7 +188,7 @@ Intra-Band One-to-Many Association
 
 .. graphviz:: assoc/one2many.multiband.dot
 
-Initially, we proceed as above. However, at :math:`t_1`, a one-to-many
+Initially, we proceed as above. However, at :math:`t_3`, a one-to-many
 association takes place in Band 1. That band therefore bifurcates, and we are
 left with two lightcurves: :math:`L_1` and :math:`L_2`.
 
@@ -212,9 +212,9 @@ Intra-Band Many-to-One Association
 .. graphviz:: assoc/many2one.multiband.dot
 
 At first, :math:`L_1` and :math:`L_2` are completely independent. However, at
-:math:`t_3`, :math:`f_5` is undergoes a one-to-many association with both of
+:math:`t_3`, :math:`f_5` undergoes a many-to-one association with both of
 them. The same applies to :math:`f_6`. In Band 2, the lightcurves remain
-indpendent.  :math:`L_1` therefore has average fluxes
+independent.  :math:`L_1` therefore has average fluxes
 :math:`\overline{f_{1,3,5,6}}` in Band 1 and :math:`\overline{f_{7,9,11,13}}`
 in Band 2, and :math:`L_2` has average fluxes :math:`\overline{f_{2,4,5,6}}`
 in Band 1 and :math:`\overline{f_{8,10,12,14}}` in Band 2.
@@ -230,7 +230,7 @@ while :math:`f_{14}` is associated with neither. Three lightcurves result, as
 shown.
 
 It is worth considering the ordering of database insertion at this point. In
-particular, consider that either one of :math:`f_6` and :math:`f_{14}` must be
+particular, consider that either one of :math:`f_6` and :math:`f_{14}` may be
 inserted before the other. After each insertion, the average position of the
 ``runningcatalog`` entry is recalculated, and this may affect future
 associations.
@@ -242,7 +242,7 @@ would be compared for association with the average position of
 :math:`f_{2,4,10,12}`. This may well produce a different result!
 
 For obvious reasons, it is desirable for the database contents to be
-independent of the order of inswertion (otherwise, it's ultimate contents
+independent of the order of inswertion (otherwise, its ultimate contents
 become non-deterministic given the input data). For this reason, every
 insertion at a given timestep causes the associations for *all* datapoints at
 that timestep to be revaluated, rather than simply the inserted measurement
@@ -271,7 +271,7 @@ There are two potential areas of improvement which should be investigated.
 
 In a one-to-many or many-to-one association, rather than simply allocating the
 full flux of the "one" measurement to each of the "many" lightcurves, it
-could be split such that each was only alloted a portion of the total. In this
+could be split such that each was only allotted a portion of the total. In this
 way, the total brightness of the sky could be maintained.
 
 The most appropriate division is not obvious. A simple model could allocate
@@ -325,7 +325,7 @@ To that end, we suggest the following:
    other measurement. The figures which accompany this document are easy to
    programmatically generate using `GraphViz <http://www.graphviz.org/>`_, and
    show clearly the heritage of a given lightcurve; we suggest, therefore,
-   that they or a derivative of them shoudl be shown on the website.
+   that they or a derivative of them should be shown on the website.
 
 #. As more source measurements are collected, statistics can be collected to
    demonstrate to what extent the problems anticipated are observed in

@@ -11,10 +11,16 @@ from lofarpipe.support.control import control
 
 from images_to_process import images
 
-#TODO: KeyError: 'dataset_id'
+import lofarpipe.support.lofaringredient as ingredient
 
 class TrapLocal(control):
-    inputs = {}
+    inputs = {
+        'dataset_id': ingredient.IntField(
+            '--dataset-id',
+            help='Specify a previous dataset id to append the results to.',
+            default=-1
+        ),
+    }
 
     def pipeline_logic(self):
         quality_parset_file = self.task_definitions.get("quality_check", "parset")

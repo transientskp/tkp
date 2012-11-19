@@ -2,6 +2,8 @@
 
 TRAP recipes
 ============
+.. |last_updated| last_updated::
+:Last updated: |last_updated|
 
 The various recipes used in the TRAP are listed below. Some are SIP
 recipes which have been included for completeness, some are adapted

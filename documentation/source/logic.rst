@@ -4,7 +4,8 @@
 Trap logic flow overview
 ****************************
 
-`Last updated: 26/09/12`
+.. |last_updated| last_updated::
+:Last updated: |last_updated|
 
 
 This page gives a step-by-step breakdown of what the trap scripts actually do,

@@ -1,8 +1,8 @@
 ===========================
 The Transients Pipeline
 ===========================
-
-`Last updated: 26/09/12`
+.. |last_updated| last_updated::
+:Last updated: |last_updated|
 
 This document describes the transients pipeline, its :ref:`installation <installation>`,
 configuration, and usage.

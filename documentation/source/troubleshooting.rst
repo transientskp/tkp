@@ -2,6 +2,8 @@
 
 Troubleshooting the pipeline
 ============================
+.. |last_updated| last_updated::
+:Last updated: |last_updated|
 
 This section deals with errors that may occur when running the
 pipeline, either caused by incorrect use of recipes (eg, incorrect

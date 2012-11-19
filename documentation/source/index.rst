@@ -17,9 +17,7 @@ Contents:
    trap_py
    logic
    recipes
-   classification
    monitoringlist
-   alerts
 
 
 Indices and tables

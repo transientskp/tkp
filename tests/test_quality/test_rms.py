@@ -73,8 +73,8 @@ class TestRms(unittest.TestCase):
         rms_good = statistics.rms_with_clipped_subregion(good_image.data)
         rms_bad = statistics.rms_with_clipped_subregion(bad_image.data)
 
-        self.assertTrue(tkp.quality.rms_valid(rms_good, noise))
-        self.assertFalse(tkp.quality.rms_valid(rms_bad, noise))
+        self.assertFalse(tkp.quality.rms_invalid(rms_good, noise))
+        self.assertTrue(tkp.quality.rms_invalid(rms_bad, noise))
 
     def test_rms_fits(self):
         accessors.FitsFile(good_file, plane=0)

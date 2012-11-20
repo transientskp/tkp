@@ -5,9 +5,6 @@ This module contains the routines dealing with analysis of transients,
 mostly involving the 'transient' table.
 
 """
-import os
-import sys
-import math
 import logging
 import monetdb.sql as db
 from tkp.config import config
@@ -15,15 +12,12 @@ from . import generic
 import numpy
 from scipy.stats import chisqprob
 from . import monitoringlist
-
 from tkp.classification.transient import Transient
 from tkp.classification.transient import Position
-from tkp.classification.transient import DateTime
+
+logger = logging.getLogger(__name__)
 
 AUTOCOMMIT = config['database']['autocommit']
-DERUITER_R = config['source_association']['deruiter_radius']
-BG_DENSITY = config['source_association']['bg-density']
-
 
 
 def insert_transient(conn, transient, dataset_id):
@@ -108,7 +102,7 @@ def insert_transient(conn, transient, dataset_id):
             conn.commit()
         cursor.close()
     except db.Error:
-        logging.warn("Query %s failed", query)
+        logger.warn("Query %s failed", query)
         raise
 
     monitoringlist.add_runcat_sources_to_monitoringlist(conn,
@@ -224,7 +218,7 @@ SELECT t1.runcat
             conn.commit()
     except db.Error:
         query = query % (dsid, freq_band, V_lim, eta_lim)
-        logging.warn("Query failed:\n%s", query)
+        logger.warn("Query failed:\n%s", query)
         raise
     finally:
         cursor.close()

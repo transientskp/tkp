@@ -28,6 +28,7 @@ from . import stats
 from . import extract
 
 logger = logging.getLogger(__name__)
+#logging.basicConfig()
 
 CONFIG = config['source_extraction']
 
@@ -698,7 +699,7 @@ class ImageData(object):
         measurement.sig = (fitme / self.rmsmap[chunk]).max()
 
         if not measurement.moments and not measurement.gaussian:
-            logger.warn("Moments & Gaussian fit failed at %f, %f", x, y)
+            logger.error("Moments & Gaussian fit failed at %f, %f", x, y)
             return None
         return extract.Detection(
             measurement, self)

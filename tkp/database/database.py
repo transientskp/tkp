@@ -17,6 +17,8 @@ from tkp.config import config
 from ..utility.exceptions import TKPDataBaseError
 
 
+logger = logging.getLogger(__name__)
+
 
 # Set up the Python DB API.
 # Record which module was imported as the engine via the ENGINE global.
@@ -170,7 +172,7 @@ class DataBase(object):
         except engine.Error:
             if q_args:
                 query = query % q_args
-            logging.warn("Failed for query %s", query)
+            logger.warn("Failed for query %s", query)
             raise
 
     def fetchall(self):

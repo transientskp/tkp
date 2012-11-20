@@ -12,6 +12,8 @@ import pytz
 import ctypes
 import sys
 
+logger = logging.getLogger(__name__)
+
 # Note that wcstools takes a +ve longitude as WEST.
 CORE_LAT = 52.9088
 CORE_LON = -6.8689
@@ -91,7 +93,7 @@ def old_mjds2lst(MJDs, lon=6.8689):
     date in seconds, as is the time column from a measurement set.  Default
     logitude is that of LOFAR core."""
 
-    logging.debug("old_mjds2lst() is deprecated: try mjds2lst() instead")
+    logger.debug("old_mjds2lst() is deprecated: try mjds2lst() instead")
 
     # MJD of midnight (am) on 2000 Jan 1 (which I think is where the
     # MS times in seconds date from) - this is some kind of reference
@@ -538,7 +540,7 @@ class WCS(wcslib.wcs):
                 ra, dec = convert_coordsystem(ra, dec,
                     self.coordsys, self.outputsys)
         except AttributeError:
-            logging.debug("Equinox conversion undefined.")
+            logger.debug("Equinox conversion undefined.")
         return [ra, dec]
 
     def s2p(self, spatialpos):
@@ -548,6 +550,6 @@ class WCS(wcslib.wcs):
                 ra, dec = convert_coordsystem(ra, dec,
                     self.outputsys, self.coordsys)
         except AttributeError:
-            logging.debug("Equinox conversion undefined.")
+            logger.debug("Equinox conversion undefined.")
         x, y = wcslib.wcs.s2p(self, [ra, dec])
         return [x, y]

@@ -10,16 +10,15 @@ import monetdb.sql as db
 from tkp.config import config
 from . import generic
 import tkp.database
-
 from collections import namedtuple
+
+logger = logging.getLogger(__name__)
 
 MonitorTuple = namedtuple('MonitorTuple', 
                           ('ra', 'decl', 'runcat','monitorid')
                           )
 
 AUTOCOMMIT = config['database']['autocommit']
-DERUITER_R = config['source_association']['deruiter_radius']
-BG_DENSITY = config['source_association']['bg-density']
 
 
 def is_monitored(conn, runcatid):
@@ -39,7 +38,7 @@ def is_monitored(conn, runcatid):
         result = bool(cursor.fetchone()[0])
     except db.Error, e:
         query = query % runcatid
-        logging.warn("Query failed: %s", query)
+        logger.warn("Query failed: %s", query)
         raise
     finally:
         cursor.close()
@@ -168,7 +167,7 @@ def get_monitoringlist_not_observed_blind_entries(conn, image_id, dataset_id):
         results = cursor.fetchall()
     except db.Error, e:
         query = query % (image_id, image_id)
-        logging.warn("Query failed: %s", query)
+        logger.warn("Query failed: %s", query)
         raise
     finally:
         cursor.close()
@@ -217,7 +216,7 @@ def get_monitoringlist_not_observed_manual_entries(conn, image_id, dataset_id):
         results = cursor.fetchall()
     except db.Error, e:
         query = query % (image_id, image_id)
-        logging.warn("Query failed: %s", query)
+        logger.warn("Query failed: %s", query)
         raise
     finally:
         cursor.close()
@@ -352,7 +351,7 @@ def _insert_user_monitored_source_into_extractedsource(cursor, image_id, result)
             image_id, int(math.floor(dec)), ra, dec, ra_err, dec_err,
             x, y, z, sigma, peak, peak_err, flux, flux_err,
             semimajor, semiminor, pa)
-        logging.warn("Query failed: %s", query)
+        logger.warn("Query failed: %s", query)
         cursor.close()
         raise
         
@@ -415,11 +414,11 @@ def _insert_user_monitored_source_into_runcat(cursor, xtrsrcid, image_id):
         WHERE xtrsrc = %s"""
         cursor.execute(query, (xtrsrcid,))
         rc_id = cursor.fetchone()[0]
-        print "***RCID***:", rc_id
+        logger.info("RCID: %s" % rc_id)
         return rc_id
     except db.Error, e:
         query = query % (image_id, xtrsrcid)
-        logging.warn("query failed: %s", query)
+        logger.warn("query failed: %s", query)
         cursor.close()
         raise
             
@@ -434,7 +433,7 @@ def _update_monitoringlist_entry_rcid(cursor, monitorid, runcatid ):
         cursor.execute(query, (runcatid, monitorid))
     except db.Error, e:
 #                query = query % (xtrsrcid, xtrsrc_id)
-        logging.warn("query failed: %s", query % (runcatid, monitorid))
+        logger.warn("query failed: %s", query % (runcatid, monitorid))
         cursor.close()
         raise                    
             
@@ -460,7 +459,7 @@ def _insert_monitored_source_into_assocxtrsource(cursor,runcatid,xtrsrcid):
         cursor.execute(query, (runcatid, xtrsrcid))
     except db.Error, e:
         query = query % (runcatid, xtrsrcid)
-        logging.warn("query failed: %s", query)
+        logger.warn("query failed: %s", query)
         cursor.close()
         raise
 
@@ -520,7 +519,7 @@ def add_runcat_sources_to_monitoringlist(conn, dataset_id,
                 conn.commit()
         except db.Error:
             query = query 
-            logging.warn("Query %s failed", query)
+            logger.warn("Query %s failed", query)
             cursor.close()
             raise
         finally:
@@ -550,7 +549,7 @@ SELECT %s ,%s ,%s, true
             conn.commit()
     except db.Error:
         query = query 
-        logging.warn("Query %s failed", query)
+        logger.warn("Query %s failed", query)
         cursor.close()
         raise
     finally:
@@ -622,7 +621,7 @@ SELECT ax.runcat
         if not AUTOCOMMIT:
             conn.commit()
     except db.Error:
-        logging.warn("Failed on query %s", query)
+        logger.warn("Failed on query %s", query)
         raise
     finally:
         cursor.close()

@@ -332,7 +332,7 @@ try:
 except NameError, exc:
     config = read_config(set_default_config())
     config = parse_config(config)
-    configure_logger(config['logging'])
+    #configure_logger(config['logging'])
     HAS_READ = True
 else:
     pass

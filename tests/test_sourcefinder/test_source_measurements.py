@@ -78,7 +78,8 @@ class SourceParameters(unittest.TestCase):
         self.deconv_bpas = np.array(deconv_bpas)
 
     @requires_data(os.path.join(DATAPATH, 'TEST_DECONV.FITS'))
-    def testAllDeconvolved(self):
+    def testAllParameters(self):
+        # Test all deconvolved
         self.assertEqual(
             np.where(np.isnan(self.deconv_smajaxes), 1, 0).sum(), 0)
         self.assertEqual(
@@ -86,12 +87,10 @@ class SourceParameters(unittest.TestCase):
         self.assertEqual(
             np.where(np.isnan(self.deconv_bpas), 1, 0).sum(), 0)
 
-    @requires_data(os.path.join(DATAPATH, 'TEST_DECONV.FITS'))
-    def testNumSources(self):
+        # Test number of sources
         self.assertEqual(self.number_sources, NUMBER_INSERTED)
 
-    @requires_data(os.path.join(DATAPATH, 'TEST_DECONV.FITS'))
-    def testPeakFluxes(self):
+        # Test peak fluxes
         peak_weights = 1./self.peak_fluxes[:,1]**2
         sum_peak_weights = np.sum(peak_weights)
         av_peak = np.sum(self.peak_fluxes[:,0] * peak_weights /
@@ -101,8 +100,7 @@ class SourceParameters(unittest.TestCase):
                            np.sqrt(self.number_sources) / av_peak_err)
         self.assertTrue(np.abs(signif_dev_peak) < MAX_BIAS)
 
-    @requires_data(os.path.join(DATAPATH, 'TEST_DECONV.FITS'))
-    def testMajorAxes(self):
+        # Test major axes
         smaj_weights = 1./self.deconv_smajaxes[:,1]**2
         sum_smaj_weights = np.sum(smaj_weights)
         av_smaj = np.sum(self.deconv_smajaxes[:,0]*smaj_weights /
@@ -112,8 +110,7 @@ class SourceParameters(unittest.TestCase):
                            np.sqrt(self.number_sources) / av_smaj_err)
         self.assertTrue(np.abs(signif_dev_smaj) < MAX_BIAS)
 
-    @requires_data(os.path.join(DATAPATH, 'TEST_DECONV.FITS'))
-    def testMinorAxes(self):
+        # Test minor axes
         smin_weights = 1./self.deconv_sminaxes[:,1]**2
         sum_smin_weights = np.sum(smin_weights)
         av_smin = np.sum(self.deconv_sminaxes[:,0] * smin_weights /
@@ -123,8 +120,7 @@ class SourceParameters(unittest.TestCase):
                            np.sqrt(self.number_sources) / av_smin_err)
         self.assertTrue(np.abs(signif_dev_smin) < MAX_BIAS)
 
-    @requires_data(os.path.join(DATAPATH, 'TEST_DECONV.FITS'))
-    def testPositionAngles(self):
+        # Test position angles
         bpa_weights = 1./self.deconv_bpas[:,1]**2
         sum_bpa_weights = np.sum(bpa_weights)
         av_bpa = np.sum(self.deconv_bpas[:,0]*bpa_weights/sum_bpa_weights)

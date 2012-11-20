@@ -207,10 +207,13 @@ def fitgaussian(data, params, fixed=None, maxfev=0):
     # parametrs in the solution.
     # Convergence tolerances xtol and ftol established by experiment on images
     # from Paul Hancock's simulations.
-    solution, icov_x, infodict, mesg, success = scipy.optimize.leastsq(
-        errorfunction, my_pars, fixed, full_output=True, maxfev=maxfev,
+    solution, success = scipy.optimize.leastsq(
+        errorfunction, my_pars, fixed, maxfev=maxfev,
         xtol=1e-4, ftol=1e-4
     )
+
+    if success > 4:
+        raise ValueError("leastsq returned %d; bailing out" % (success,))
 
     # solution contains only the variable parameters; we need to merge the
     # contents of fixed into the solution list.
@@ -224,9 +227,6 @@ def fitgaussian(data, params, fixed=None, maxfev=0):
             solution.append(fixed[param])
         else:
             solution.append(tmp_solution.pop(0))
-
-    if success in [5, 6, 7, 8]:
-        raise ValueError("leastsq returned %d (%s)" % (success, mesg))
 
     if solution[4] > solution[3]:
         # Swapped axis order is a perfectly valid fit, but inconvenient for

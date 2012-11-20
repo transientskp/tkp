@@ -11,7 +11,7 @@ lightcurves, detections, sources, etc -- that the pipeline must handle.
 """
 
 import logging
-
+logger = logging.getLogger(__name__)
 
 class ObjectContainer(list):
     """A container class for objects.
@@ -27,13 +27,13 @@ class ObjectContainer(list):
     """
     def closest_to(self, pix_x, pix_y):
         distance, target = False, False
-        logging.debug("Beginning a search for objects near %.1f, %.1f: ",
+        logger.debug("Beginning a search for objects near %.1f, %.1f: ",
                       pix_x, pix_y)
-        logging.debug("%s contains %d objects", str(self), len(self))
+        logger.debug("%s contains %d objects", str(self), len(self))
         for obj in self:
             tmpdist = (pix_x - obj.x)**2 + (pix_y - obj.y)**2
-            logging.debug("Object at %f, %f", obj.x, obj.y)
-            logging.debug("Has distance %f", tmpdist)
+            logger.debug("Object at %f, %f", obj.x, obj.y)
+            logger.debug("Has distance %f", tmpdist)
             if not distance:
                 distance = tmpdist
                 target = obj
@@ -41,8 +41,8 @@ class ObjectContainer(list):
                 if tmpdist < distance:
                     target = obj
                     distance = tmpdist
-            logging.debug("Best distance is now %f", distance)
-            logging.debug("From object %s", str(target))
+            logger.debug("Best distance is now %f", distance)
+            logger.debug("From object %s", str(target))
         if not distance:
             return (target, distance)
         else:

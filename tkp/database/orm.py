@@ -142,6 +142,7 @@ import monetdb.sql as db
 from ..config import config
 from .database import ENGINE
 
+logger = logging.getLogger(__name__)
 
 DERUITER_R = config['source_association']['deruiter_radius']
 
@@ -235,7 +236,7 @@ class DBObject(object):
                 if ENGINE == 'postgresql':
                     self._id = cursor.fetchone()[0]
             except self.database.Error:
-                logging.warn("insertion into database failed: %s",
+                logger.warn("insertion into database failed: %s",
                              (query % values))
                 raise
         return self._id
@@ -323,7 +324,7 @@ class DataSet(DBObject):
                 self._id = dbu.insert_dataset(self.database.connection,
                                               self._data['description'])
             except self.database.Error, e:
-                logging.warn("insertion of DataSet() into the database failed")
+                logger.warn("insertion of DataSet() into the database failed")
                 raise
         return self._id
 
@@ -339,7 +340,7 @@ class DataSet(DBObject):
             results = self.database.cursor.fetchall()
         except db.Error, e:
             query = query % self._id
-            logging.warn("database failed on query: %s", query)
+            logger.warn("database failed on query: %s", query)
             raise
         images = set()
         for result in results:
@@ -477,7 +478,7 @@ class Image(DBObject):
                     self._data['url']
                 )
             except self.database.Error, e:
-                logging.warn("insertion of Image() into the database failed")
+                logger.warn("insertion of Image() into the database failed")
                 raise
         return self._id
 
@@ -498,7 +499,7 @@ class Image(DBObject):
             results = self.database.cursor.fetchall()
         except db.Error, e:
             query = query % self._id
-            logging.warn("database failed on query: %s", query)
+            logger.warn("database failed on query: %s", query)
             raise
         sources = set()
         for result in results:

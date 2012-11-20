@@ -8,6 +8,8 @@ from .orm import ExtractedSource
 from tkp.config import config
 autocommit = config['database']['autocommit']
 
+logger = logging.getLogger(__name__)
+
 def query(conn, query, commit=False):
     """A generic wrapper for doing any query to the database
     Args:
@@ -23,6 +25,6 @@ def query(conn, query, commit=False):
         if not autocommit and commit:
             conn.commit()
     except monetdb.sql.Error as e:
-        logging.error("Query failed: %s. Query: %s." % (e, query))
+        logger.error("Query failed: %s. Query: %s." % (e, query))
         raise
     return cursor

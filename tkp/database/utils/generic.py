@@ -10,18 +10,13 @@
 A collection of generic functions used to generate SQL queries
 and return data in an easy to use format such as dictionaries.
 """
-
-import os
-import sys
-import math
 import logging
 import monetdb.sql as db
 from tkp.config import config
 
+logger = logging.getLogger(__name__)
 
 AUTOCOMMIT = config['database']['autocommit']
-DERUITER_R = config['source_association']['deruiter_radius']
-BG_DENSITY = config['source_association']['bg-density']
 
 
 def columns_from_table(conn, table,
@@ -100,7 +95,7 @@ def columns_from_table(conn, table,
         results = convert_db_rows_to_dicts(results, keywords, alias)
     except db.Error:
         query = query % where_args
-        logging.warn("Query failed: %s" % query)
+        logger.warn("Query failed: %s" % query)
         raise
     finally:
         conn.cursor().close()
@@ -156,7 +151,7 @@ def set_columns_for_table(conn, table, data=None, where=None):
             conn.commit()
     except db.Error, e:
         query = query % (values + where_args)
-        logging.warn("Query failed: %s", query)
+        logger.warn("Query failed: %s", query)
         raise
     finally:
         cursor.close()

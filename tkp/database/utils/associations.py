@@ -16,6 +16,7 @@ import logging
 import monetdb.sql as db
 from tkp.config import config
 
+logger = logging.getLogger(__name__)
 
 AUTOCOMMIT = config['database']['autocommit']
 DERUITER_R = config['source_association']['deruiter_radius']
@@ -124,7 +125,7 @@ def _empty_temprunningcatalog(conn):
         if not AUTOCOMMIT:
             conn.commit()
     except db.Error, e:
-        logging.warn("Failed on query nr %s." % query)
+        logger.warn("Failed on query nr %s." % query)
         raise
     finally:
         cursor.close()
@@ -368,15 +369,15 @@ INSERT INTO temprunningcatalog
         q = query % (image_id, image_id,
                         radius, radius, radius, radius, 
                         radius, radius, deRuiter_r/3600.)
-        logging.warn("Failed on query\n%s." % q)
+        logger.warn("Failed on query\n%s." % q)
         raise
     finally:
         cursor.close()
 
 def _flag_many_to_many_tempruncat(conn):
-    """Select the many-to-many association pairs in temprunningcatalog. 
+    """Select the many-to-many association pairs in temprunningcatalog.
 
-    By flagging the many-to-many associations, we reduce the 
+    By flagging the many-to-many associations, we reduce the
     processing to one-to-many and many-to-one (identical to one-to-one)
     relationships
     """
@@ -389,20 +390,20 @@ SELECT t1.runcat
       ,t1.xtrsrc
   FROM (SELECT xtrsrc
               ,MIN(r) as min_r
-          FROM temprunningcatalog 
-         WHERE runcat IN (SELECT runcat 
-                            FROM temprunningcatalog 
-                           WHERE runcat IN (SELECT runcat 
-                                              FROM temprunningcatalog 
+          FROM temprunningcatalog
+         WHERE runcat IN (SELECT runcat
+                            FROM temprunningcatalog
+                           WHERE runcat IN (SELECT runcat
+                                              FROM temprunningcatalog
                                              WHERE xtrsrc IN (SELECT xtrsrc
                                                                 FROM temprunningcatalog
                                                               GROUP BY xtrsrc
                                                               HAVING COUNT(*) > 1
                                                              )
-                                           ) 
-                          GROUP BY runcat 
+                                           )
+                          GROUP BY runcat
                           HAVING COUNT(*) > 1
-                         ) 
+                         )
            AND xtrsrc IN (SELECT xtrsrc
                             FROM temprunningcatalog
                           GROUP BY xtrsrc
@@ -412,21 +413,21 @@ SELECT t1.runcat
        ) t0
       ,(SELECT runcat
               ,xtrsrc
-              ,r 
-          FROM temprunningcatalog 
-         WHERE runcat IN (SELECT runcat 
-                            FROM temprunningcatalog 
-                           WHERE runcat IN (SELECT runcat 
-                                              FROM temprunningcatalog 
+              ,r
+          FROM temprunningcatalog
+         WHERE runcat IN (SELECT runcat
+                            FROM temprunningcatalog
+                           WHERE runcat IN (SELECT runcat
+                                              FROM temprunningcatalog
                                              WHERE xtrsrc IN (SELECT xtrsrc
                                                                 FROM temprunningcatalog
                                                               GROUP BY xtrsrc
                                                               HAVING COUNT(*) > 1
                                                              )
-                                           ) 
-                          GROUP BY runcat 
+                                           )
+                          GROUP BY runcat
                           HAVING COUNT(*) > 1
-                         ) 
+                         )
            AND xtrsrc IN (SELECT xtrsrc
                             FROM temprunningcatalog
                           GROUP BY xtrsrc
@@ -448,31 +449,32 @@ SELECT t1.runcat
                AND xtrsrc = %s
             """
             for j in range(len(runcat)):
-                print "Many-to-many in tempruncat set to inactive:", runcat[j], xtrsrc[j]
+                logger.info("Many-to-many in tempruncat set to inactive: "
+                            "%s %s " % (runcat[j], xtrsrc[j]))
                 cursor.execute(query, (runcat[j], xtrsrc[j]))
                 if not AUTOCOMMIT:
                     conn.commit()
             #sys.exit()
         cursor.close()
     except db.Error, e:
-        logging.warn("Failed on query nr %s." % query)
+        logger.warn("Failed on query nr %s." % query)
         raise
 
 def _insert_1_to_many_runcat(conn):
-    """Insert the extracted sources that belong to one-to-many 
+    """Insert the extracted sources that belong to one-to-many
     associations in the runningcatalog.
-    
-    Since for the one-to-many associations (i.e. one runcat source 
-    associated with multiple extracted sources) we cannot a priori 
-    decide which counterpart pair is the correct one, or whether all 
-    are correct (in the case of a higher-resolution image), 
-    all extracted sources are added as a new source to 
-    the runningcatalog, and they will replace the (old; lower resolution) 
-    runcat source of the association. 
-    
+
+    Since for the one-to-many associations (i.e. one runcat source
+    associated with multiple extracted sources) we cannot a priori
+    decide which counterpart pair is the correct one, or whether all
+    are correct (in the case of a higher-resolution image),
+    all extracted sources are added as a new source to
+    the runningcatalog, and they will replace the (old; lower resolution)
+    runcat source of the association.
+
     As a consequence of this, the resolution of the runningcatalog
     is increasing over time.
-    
+
     """
 
     try:
@@ -523,15 +525,15 @@ def _insert_1_to_many_runcat(conn):
         if not AUTOCOMMIT:
             conn.commit()
     except db.Error, e:
-        logging.warn("Failed on query:\n%s" % query)
+        logger.warn("Failed on query:\n%s" % query)
         raise
     finally:
         cursor.close()
 
 def _insert_1_to_many_runcat_flux(conn):
-    """Insert the fluxes of the extracted sources that belong 
+    """Insert the fluxes of the extracted sources that belong
     to a one-to-many association in the runningcatalog.
-    
+
     Analogous to the runningcatalog, extracted source properties
     are added to the runningcatalog_flux table.
     """
@@ -543,30 +545,30 @@ def _insert_1_to_many_runcat_flux(conn):
           (runcat
           ,band
           ,stokes
-          ,f_datapoints 
-          ,avg_f_peak 
-          ,avg_f_peak_sq 
-          ,avg_f_peak_weight 
-          ,avg_weighted_f_peak 
-          ,avg_weighted_f_peak_sq 
-          ,avg_f_int 
-          ,avg_f_int_sq 
-          ,avg_f_int_weight 
+          ,f_datapoints
+          ,avg_f_peak
+          ,avg_f_peak_sq
+          ,avg_f_peak_weight
+          ,avg_weighted_f_peak
+          ,avg_weighted_f_peak_sq
+          ,avg_f_int
+          ,avg_f_int_sq
+          ,avg_f_int_weight
           ,avg_weighted_f_int
           ,avg_weighted_f_int_sq
           )
           SELECT rc0.id
                 ,trc0.band
                 ,trc0.stokes
-                ,trc0.f_datapoints 
-                ,avg_f_peak 
-                ,avg_f_peak_sq 
-                ,avg_f_peak_weight 
-                ,avg_weighted_f_peak 
-                ,avg_weighted_f_peak_sq 
-                ,avg_f_int 
-                ,avg_f_int_sq 
-                ,avg_f_int_weight 
+                ,trc0.f_datapoints
+                ,avg_f_peak
+                ,avg_f_peak_sq
+                ,avg_f_peak_weight
+                ,avg_weighted_f_peak
+                ,avg_weighted_f_peak_sq
+                ,avg_f_int
+                ,avg_f_int_sq
+                ,avg_f_int_weight
                 ,avg_weighted_f_int
                 ,avg_weighted_f_int_sq
             FROM temprunningcatalog trc0
@@ -584,7 +586,7 @@ def _insert_1_to_many_runcat_flux(conn):
         if not AUTOCOMMIT:
             conn.commit()
     except db.Error, e:
-        logging.warn("Failed on query nr %s." % query)
+        logger.warn("Failed on query nr %s." % query)
         raise
     finally:
         cursor.close()
@@ -625,7 +627,7 @@ def _insert_1_to_many_basepoint_assoc(conn):
         if not AUTOCOMMIT:
             conn.commit()
     except db.Error, e:
-        logging.warn("Failed on query:\n%s" % query)
+        logger.warn("Failed on query:\n%s" % query)
         raise
     finally:
         cursor.close()
@@ -636,17 +638,17 @@ def _insert_1_to_many_assoc(conn):
     (the new ones have been added earlier).
 
     In this case, new entries in the runningcatalog and runningcatalog_flux
-    were already added (for every extractedsource one), which will replace 
-    the existing ones in the runningcatalog. 
+    were already added (for every extractedsource one), which will replace
+    the existing ones in the runningcatalog.
     Therefore, we have to update the references to these new ids as well.
     So, we will append to assocxtrsource and delete the entries from
     runningcatalog_flux.
 
     NOTE:
-    1. We do not update the distance_arcsec and r values of the pairs. 
+    1. We do not update the distance_arcsec and r values of the pairs.
 
     """
-    
+
     try:
         cursor = conn.cursor()
         query = """\
@@ -679,22 +681,22 @@ def _insert_1_to_many_assoc(conn):
         if not AUTOCOMMIT:
             conn.commit()
     except db.Error, e:
-        logging.warn("Failed on query:\n%s." % query)
+        logger.warn("Failed on query:\n%s." % query)
         raise
     finally:
         cursor.close()
 
 def _insert_1_to_many_userentry_monitoringlist(conn):
     """Insert one-to-many in monitoringlist
-    
+
     In case where we have a source in the monitoringlist that goes
     one-to-many in the associations, we have to "split" it up into
     the new runcat ids and delete the old runcat.
-    
+
     TODO: See discussion in issue #3564 how to proceed
 
     """
-    
+
     try:
         cursor = conn.cursor()
         query = """\
@@ -702,7 +704,7 @@ def _insert_1_to_many_userentry_monitoringlist(conn):
           (runcat
           ,dataset
           )
-          
+
           /* the new runcat ids: */
           SELECT r.id
             FROM temprunningcatalog t
@@ -715,7 +717,7 @@ def _insert_1_to_many_userentry_monitoringlist(conn):
                               GROUP BY runcat
                               HAVING COUNT(*) > 1
                              )
-          
+
           /* the old runcat's in monlist that need to be replaced (with the above r.id's : */
           select m.runcat
             from monitoringlist m
@@ -733,7 +735,7 @@ def _insert_1_to_many_userentry_monitoringlist(conn):
         if not AUTOCOMMIT:
             conn.commit()
     except db.Error, e:
-        logging.warn("Failed on query:\n%s" % query)
+        logger.warn("Failed on query:\n%s" % query)
         raise
     finally:
         cursor.close()
@@ -744,13 +746,13 @@ def _insert_1_to_many_transient(conn):
     (the new ones have been added earlier).
 
     In this case, new entries in the runningcatalog and runningcatalog_flux
-    were already added (for every extractedsource one), which will replace 
-    the existing ones in the runningcatalog. 
+    were already added (for every extractedsource one), which will replace
+    the existing ones in the runningcatalog.
     Therefore, we have to update the references to these new ids as well.
-    So, we will append these to monitoringlist and delete the entries referring 
+    So, we will append these to monitoringlist and delete the entries referring
     to the old runncat.
     """
-    
+
     try:
         cursor = conn.cursor()
         query = """\
@@ -789,23 +791,23 @@ def _insert_1_to_many_transient(conn):
         if not AUTOCOMMIT:
             conn.commit()
     except db.Error, e:
-        logging.warn("Failed on query:\n%s" % query)
+        logger.warn("Failed on query:\n%s" % query)
         raise
     finally:
         cursor.close()
 
 def _delete_1_to_many_inactive_monitoringlist(conn):
-    """Delete the monitoringlist sources of the old runcat 
+    """Delete the monitoringlist sources of the old runcat
 
     Since we replaced this runcat.id with multiple new ones, we now
-    delete the old one. 
-    
+    delete the old one.
+
     """
 
     try:
         cursor = conn.cursor()
         query = """\
-        DELETE 
+        DELETE
           FROM monitoringlist
          WHERE id IN (SELECT m.id
                         FROM monitoringlist m
@@ -818,23 +820,23 @@ def _delete_1_to_many_inactive_monitoringlist(conn):
         if not AUTOCOMMIT:
             conn.commit()
     except db.Error, e:
-        logging.warn("Failed on query:\n%s" % query)
+        logger.warn("Failed on query:\n%s" % query)
         raise
     finally:
         cursor.close()
 
 def _delete_1_to_many_inactive_transient(conn):
-    """Delete the transient sources of the old runcat 
+    """Delete the transient sources of the old runcat
 
     Since we replaced this runcat.id with multiple new ones, we now
-    delete the old one. 
-    
+    delete the old one.
+
     """
 
     try:
         cursor = conn.cursor()
         query = """\
-        DELETE 
+        DELETE
           FROM transient
          WHERE id IN (SELECT tr.id
                         FROM transient tr
@@ -847,7 +849,7 @@ def _delete_1_to_many_inactive_transient(conn):
         if not AUTOCOMMIT:
             conn.commit()
     except db.Error, e:
-        logging.warn("Failed on query:\n%s" % query)
+        logger.warn("Failed on query:\n%s" % query)
         raise
     finally:
         cursor.close()
@@ -855,11 +857,11 @@ def _delete_1_to_many_inactive_transient(conn):
 def _delete_1_to_many_inactive_assoc(conn):
     """Delete the association pairs of the old runcat from assocxtrsource
 
-    NOTE: It might sound confusing, but those are not qualified 
+    NOTE: It might sound confusing, but those are not qualified
     as inactive in tempruncat (read below).
     Since we replaced this runcat.id with multiple new one, we first
     flag it as inactive, after which we delete it from the runningcatalog
-    
+
     The subselect selects those valid "old" runcat ids (i.e.,
     the ones that were not set to inactive for the many-to-many associations).
 
@@ -870,7 +872,7 @@ def _delete_1_to_many_inactive_assoc(conn):
     try:
         cursor = conn.cursor()
         query = """\
-        DELETE 
+        DELETE
           FROM assocxtrsource
          WHERE runcat IN (SELECT runcat
                             FROM temprunningcatalog
@@ -883,23 +885,23 @@ def _delete_1_to_many_inactive_assoc(conn):
         if not AUTOCOMMIT:
             conn.commit()
     except db.Error, e:
-        logging.warn("Failed on query nr %s." % query)
+        logger.warn("Failed on query nr %s." % query)
         raise
     finally:
         cursor.close()
 
 def _delete_1_to_many_inactive_runcat_flux(conn):
     """Flag the old runcat ids in the runningcatalog to inactive
-    
+
     Since we replaced this runcat.id with multiple new one, we first
     flag it as inactive, after which we delete it from the runningcatalog
-    
+
     """
 
     try:
         cursor = conn.cursor()
         query = """\
-        DELETE 
+        DELETE
           FROM runningcatalog_flux
          WHERE runcat IN (SELECT runcat
                             FROM temprunningcatalog
@@ -912,14 +914,14 @@ def _delete_1_to_many_inactive_runcat_flux(conn):
         if not AUTOCOMMIT:
             conn.commit()
     except db.Error, e:
-        logging.warn("Failed on query nr %s." % query)
+        logger.warn("Failed on query nr %s." % query)
         raise
     finally:
         cursor.close()
 
 def _flag_1_to_many_inactive_runcat(conn):
     """Flag the old runcat ids in the runningcatalog to inactive
-    
+
     We do noy delete them yet, because we need them later on.
     Since we replaced this runcat.id with multiple new one, we first
     flag it as inactive, after which we delete it from the runningcatalog
@@ -941,7 +943,7 @@ def _flag_1_to_many_inactive_runcat(conn):
         if not AUTOCOMMIT:
             conn.commit()
     except db.Error, e:
-        logging.warn("Failed on query:\n%s." % query)
+        logger.warn("Failed on query:\n%s." % query)
         raise
     finally:
         cursor.close()
@@ -949,12 +951,12 @@ def _flag_1_to_many_inactive_runcat(conn):
 def _flag_1_to_many_inactive_tempruncat(conn):
     """Delete the one-to-many associations from temprunningcatalog,
     and delete the inactive rows from runningcatalog.
-    
+
     We do noy delete them yet, because we need them later on.
     After the one-to-many associations have been processed,
     they can be deleted from the temporary table and
     the runningcatalog.
-    
+
     """
 
     try:
@@ -978,25 +980,25 @@ def _flag_1_to_many_inactive_tempruncat(conn):
         if not AUTOCOMMIT:
             conn.commit()
     except db.Error, e:
-        logging.warn("Failed on query:\n%s" % query)
+        logger.warn("Failed on query:\n%s" % query)
         raise
     finally:
         cursor.close()
 
 def _insert_1_to_1_assoc(conn):
     """Insert remaining one-to-one associations into assocxtrsource table
-    
+
     This handles the case where a single extractedsource is associated
     with a single runningcatalog source.
     The extractedsource.id is appended to the assocxtrsource table
     (i.e. its light-curve datapoints).
 
-    Since tempruncat contains the new (updated)  position average 
-    (including the latest extractedsource), 
-    the calculations of the distance and r should be done 
+    Since tempruncat contains the new (updated)  position average
+    (including the latest extractedsource),
+    the calculations of the distance and r should be done
     with the runningcatalog values
     """
-    
+
     try:
         cursor = conn.cursor()
         query = """\
@@ -1023,7 +1025,7 @@ def _insert_1_to_1_assoc(conn):
         if not AUTOCOMMIT:
             conn.commit()
     except db.Error, e:
-        logging.warn("Failed on query:\n%s." % query)
+        logger.warn("Failed on query:\n%s." % query)
         raise
     finally:
         cursor.close()
@@ -1031,7 +1033,7 @@ def _insert_1_to_1_assoc(conn):
 
 def _update_1_to_1_runcat(conn):
     """Update the running catalog with the values in temprunningcatalog"""
-    
+
     # TODO : Check for clause inactive
     try:
         cursor = conn.cursor()
@@ -1112,18 +1114,18 @@ def _update_1_to_1_runcat(conn):
         if not AUTOCOMMIT:
             conn.commit()
     except db.Error, e:
-        logging.warn("Failed on query:\n%s" % query)
+        logger.warn("Failed on query:\n%s" % query)
         raise
     finally:
         cursor.close()
 
 def _select_for_update_1_to_1_runcat_flux(conn):
     """Update the runningcatalog_flux
-    
+
     Based on the runcat ids in tempruncat, the fluxes of the corresponding
     entries in runcat_flux should be updated.
     If they do not exist yet, they will be inserted
-    
+
     """
 
     # TODO: Change this to a single bulk update query
@@ -1131,7 +1133,7 @@ def _select_for_update_1_to_1_runcat_flux(conn):
         cursor = conn.cursor()
         query = """\
         SELECT f_datapoints
-              ,avg_f_peak 
+              ,avg_f_peak
               ,avg_f_peak_sq
               ,avg_f_peak_weight
               ,avg_weighted_f_peak
@@ -1154,15 +1156,15 @@ def _select_for_update_1_to_1_runcat_flux(conn):
             for result in results:
                 _insert_or_update_1_to_1_runcat_flux(conn, tuple(result))
     except db.Error, e:
-        logging.warn("Failed on query:\n%s" % query)
+        logger.warn("Failed on query:\n%s" % query)
         raise
 
 def _insert_or_update_1_to_1_runcat_flux(conn, result):
     """Insert or update the runningcatalog_flux, depending on existing entries
-    
+
     If the runcat,band,stokes entry does not exist in runcat_flux,
     we need to do an insert, otherwise an update
-    
+
     NOTE: Together with previous query this should be optimised,
           in order to reduce data I/O
     """
@@ -1176,27 +1178,27 @@ def _insert_or_update_1_to_1_runcat_flux(conn, result):
            AND band = %s
            AND stokes = %s
         """
-        # Be aware that the last items must correspond to the query  
+        # Be aware that the last items must correspond to the query
         # in _select_for_update_1_to_1_runcat_flux()
         cursor.execute(query, (result[-3], result[-2], result[-1]))
         cnt = cursor.fetchone()[0]
         if cnt == 0:
             query = """\
             INSERT INTO runningcatalog_flux
-              (f_datapoints 
-              ,avg_f_peak 
-              ,avg_f_peak_sq 
-              ,avg_f_peak_weight 
-              ,avg_weighted_f_peak 
-              ,avg_weighted_f_peak_sq 
-              ,avg_f_int 
-              ,avg_f_int_sq 
-              ,avg_f_int_weight 
-              ,avg_weighted_f_int 
-              ,avg_weighted_f_int_sq 
-              ,runcat 
-              ,band 
-              ,stokes 
+              (f_datapoints
+              ,avg_f_peak
+              ,avg_f_peak_sq
+              ,avg_f_peak_weight
+              ,avg_weighted_f_peak
+              ,avg_weighted_f_peak_sq
+              ,avg_f_int
+              ,avg_f_int_sq
+              ,avg_f_int_weight
+              ,avg_weighted_f_int
+              ,avg_weighted_f_int_sq
+              ,runcat
+              ,band
+              ,stokes
               )
             VALUES
               (%s
@@ -1237,7 +1239,7 @@ def _insert_or_update_1_to_1_runcat_flux(conn, result):
         if not AUTOCOMMIT:
             conn.commit()
     except db.Error, e:
-        logging.warn("Failed on query:\n%s" % query)
+        logger.warn("Failed on query:\n%s" % query)
         raise
     finally:
         cursor.close()
@@ -1245,8 +1247,8 @@ def _insert_or_update_1_to_1_runcat_flux(conn, result):
 #def _insert_new_runcat(conn, image_id, deRuiter_r, radius=0.03):
 def _insert_new_runcat(conn, image_id):
     """Insert new sources into the running catalog
-    
-    Extractedsources for which no counterpart was found in the 
+
+    Extractedsources for which no counterpart was found in the
     runningcatalog (i.e. no pair exists in tempruncat),
     will be added as a new source to the assocxtrsource,
     runningcatalog and runningcatalog_flux tables.
@@ -1258,11 +1260,11 @@ def _insert_new_runcat(conn, image_id):
     try:
         cursor = conn.cursor()
         # Unfortunately, this does not work,
-        # since we previous deleted the extractedsources from the 
-        # tempruncat table that had the same runcat counterpart 
+        # since we previous deleted the extractedsources from the
+        # tempruncat table that had the same runcat counterpart
         # (1-to-many assocs).
         # To get it working we need to not to delete the tempruncat entries,
-        # but set them to inactive and empty the table (and the inactive 
+        # but set them to inactive and empty the table (and the inactive
         # runningcatalog sources) at the end of image processing
         #
         # NOTE: Here we include all (inactive TRUE&FALSE) tempruncat
@@ -1334,7 +1336,7 @@ def _insert_new_runcat(conn, image_id):
             conn.commit()
     except db.Error, e:
         q = query % (image_id,)
-        logging.warn("Failed on query:\n%s." % q)
+        logger.warn("Failed on query:\n%s." % q)
         raise
     finally:
         cursor.close()
@@ -1342,7 +1344,7 @@ def _insert_new_runcat(conn, image_id):
 #def _insert_new_runcat_flux(conn, image_id, deRuiter_r, radius=0.03):
 def _insert_new_runcat_flux(conn, image_id):
     """Insert new sources into the runningicatalog_flux
-    
+
     Extractedsources for which not a counterpart was found in the
     runningcatalog, will be added as a new source to the assocxtrsource,
     runningcatalog and runningcatalog_flux tables.
@@ -1411,7 +1413,7 @@ def _insert_new_runcat_flux(conn, image_id):
             conn.commit()
     except db.Error, e:
         q = query % (image_id,)
-        logging.warn("Failed on query:\n%s" % q)
+        logger.warn("Failed on query:\n%s" % q)
         raise
     finally:
         cursor.close()
@@ -1424,13 +1426,13 @@ def _insert_new_assoc(conn, image_id):
     runningcatalog, will be added as a new source to the assocxtrsource,
     runningcatalog and runningcatalog_flux tables.
     This function inserts the new source in the assocxtrsource table,
-    where the runcat and xtrsrc ids are identical to each other 
+    where the runcat and xtrsrc ids are identical to each other
     in order to have this data point included in the light curve.
-    
+
     The left outer join in combination with the trc0.xtrsrc is null,
-    selects the extracted sources that were not present in 
+    selects the extracted sources that were not present in
     temprunningcatalog, i.e. did not have a counterpart in the runningcatalog.
-    These were just inserted as new sources in the runningcatalog 
+    These were just inserted as new sources in the runningcatalog
     of which we want to use the ids to have them
     in the assocxtrsource as well.
     """
@@ -1473,7 +1475,7 @@ def _insert_new_assoc(conn, image_id):
             conn.commit()
     except db.Error, e:
         q = query % (image_id,)
-        logging.warn("Failed on query:\n%s" % q)
+        logger.warn("Failed on query:\n%s" % q)
         raise
     finally:
         cursor.close()
@@ -1481,11 +1483,11 @@ def _insert_new_assoc(conn, image_id):
 def _delete_inactive_runcat(conn):
     """Delete the one-to-many associations from temprunningcatalog,
     and delete the inactive rows from runningcatalog.
-    
+
     After the one-to-many associations have been processed,
     they can be deleted from the temporary table and
     the runningcatalog.
-    
+
     """
 
     try:
@@ -1499,7 +1501,7 @@ def _delete_inactive_runcat(conn):
         if not AUTOCOMMIT:
             conn.commit()
     except db.Error, e:
-        logging.warn("Failed on query:\n%s" % query)
+        logger.warn("Failed on query:\n%s" % query)
         raise
     finally:
         cursor.close()
@@ -1508,11 +1510,11 @@ def _insert_cat_assocs(conn, image_id, radius, deRuiter_r):
     """Insert found xtrsrc--catsrc associations into assoccatsource table.
 
     The search for cataloged counterpart sources is done in the catalogedsource
-    table, which should have been preloaded with a selection of 
+    table, which should have been preloaded with a selection of
     the catalogedsources, depending on the expected field of view.
-    
+
     """
-    
+
     try:
         cursor = conn.cursor()
         query = """\
@@ -1531,17 +1533,17 @@ def _insert_cat_assocs(conn, image_id, radius, deRuiter_r):
                                           + (x0.z - c0.z) * (x0.z - c0.z)
                                           ) / 2) ) AS distance_arcsec
                 ,3
-                ,3600 * sqrt( ((x0.ra * cos(RADIANS(x0.decl)) - c0.ra * cos(RADIANS(c0.decl))) 
-                             * (x0.ra * cos(RADIANS(x0.decl)) - c0.ra * cos(RADIANS(c0.decl)))) 
+                ,3600 * sqrt( ((x0.ra * cos(RADIANS(x0.decl)) - c0.ra * cos(RADIANS(c0.decl)))
+                             * (x0.ra * cos(RADIANS(x0.decl)) - c0.ra * cos(RADIANS(c0.decl))))
                              / (x0.ra_err * x0.ra_err + c0.ra_err*c0.ra_err)
                             +
-                              ((x0.decl - c0.decl) * (x0.decl - c0.decl)) 
+                              ((x0.decl - c0.decl) * (x0.decl - c0.decl))
                              / (x0.decl_err * x0.decl_err + c0.decl_err*c0.decl_err)
                             ) as r
                 ,LOG10(EXP((   (x0.ra * COS(RADIANS(x0.decl)) - c0.ra * COS(RADIANS(c0.decl)))
                              * (x0.ra * COS(RADIANS(x0.decl)) - c0.ra * COS(RADIANS(x0.decl)))
                              / (x0.ra_err * x0.ra_err + c0.ra_err * c0.ra_err)
-                            +  (x0.decl - c0.decl) * (x0.decl - c0.decl) 
+                            +  (x0.decl - c0.decl) * (x0.decl - c0.decl)
                              / (x0.decl_err * x0.decl_err + c0.decl_err * c0.decl_err)
                            ) / 2
                           )
@@ -1554,7 +1556,7 @@ def _insert_cat_assocs(conn, image_id, radius, deRuiter_r):
            WHERE x0.image = %s
              AND c0.zone BETWEEN CAST(FLOOR(x0.decl - %s) AS INTEGER)
                              AND CAST(FLOOR(x0.decl + %s) AS INTEGER)
-             AND c0.decl BETWEEN x0.decl - %s 
+             AND c0.decl BETWEEN x0.decl - %s
                              AND x0.decl + %s
              AND c0.ra BETWEEN x0.ra - alpha(%s, x0.decl)
                            AND x0.ra + alpha(%s, x0.decl)
@@ -1565,14 +1567,14 @@ def _insert_cat_assocs(conn, image_id, radius, deRuiter_r):
                       / (x0.decl_err * x0.decl_err + c0.decl_err * c0.decl_err)
                      ) < %s
         """
-        cursor.execute(query, (BG_DENSITY, 
-                               image_id, 
-                               radius, radius, radius, radius, radius, radius, 
+        cursor.execute(query, (BG_DENSITY,
+                               image_id,
+                               radius, radius, radius, radius, radius, radius,
                                deRuiter_r/3600.))
         if not AUTOCOMMIT:
             conn.commit()
     except db.Error, e:
-        logging.warn("Query failed:\n%s" % query)
+        logger.warn("Query failed:\n%s" % query)
         raise
     finally:
         cursor.close()

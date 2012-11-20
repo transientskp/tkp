@@ -3,20 +3,15 @@ SQL subroutines which look like they might come in handy,
 but are not currently in use
 
 """
-
-
-import os
-import sys
-import math
 import logging
 import monetdb.sql as db
 from tkp.config import config
 
+logger = logging.getLogger(__name__)
 
 AUTOCOMMIT = config['database']['autocommit']
 DERUITER_R = config['source_association']['deruiter_radius']
 BG_DENSITY = config['source_association']['bg-density']
-
 
 
 def select_single_epoch_detection(conn, dsid):
@@ -56,7 +51,7 @@ SELECT runcat
         if not AUTOCOMMIT:
             conn.commit()
     except db.Error:
-        logging.warn("Failed on query %s", query)
+        logger.warn("Failed on query %s", query)
         raise
     finally:
         cursor.close()
@@ -82,7 +77,7 @@ def concurrency_test_fixedalpha(conn):
         if not AUTOCOMMIT:
             conn.commit()
     except db.Error, e:
-        logging.warn("Query failed: %s." % query)
+        logger.warn("Query failed: %s." % query)
         raise
     finally:
         conn.cursor().close()
@@ -105,7 +100,7 @@ def concurrency_test_randomalpha(conn):
         cursor.execute(query, (theta, decl))
         alpha = cursor.fetchone()[0]
     except db.Error, e:
-        logging.warn("Query failed: %s." % query)
+        logger.warn("Query failed: %s." % query)
         raise
     finally:
         conn.cursor().close()

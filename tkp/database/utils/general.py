@@ -17,18 +17,18 @@ that don't fit into a more specific collection.
 Most of the basic insertion routines are kept here,
 with exceptions of monitoringlist and transients. 
 """
-
-import os
-import sys
 import math
 import logging
 import monetdb.sql as db
 from tkp.config import config
 
+logger = logging.getLogger(__name__)
 
 AUTOCOMMIT = config['database']['autocommit']
 DERUITER_R = config['source_association']['deruiter_radius']
 BG_DENSITY = config['source_association']['bg-density']
+
+
 
 def insert_dataset(conn, description):
     """Insert dataset with description as given by argument.
@@ -47,7 +47,7 @@ def insert_dataset(conn, description):
             conn.commit()
         newdsid = cursor.fetchone()[0]
     except db.Error, e:
-        logging.warn("Query failed: %s." % query)
+        logger.warn("Query failed: %s." % query)
         raise
     finally:
         cursor.close()
@@ -85,7 +85,7 @@ def insert_image(conn, dataset,
         if not AUTOCOMMIT:
             conn.commit()
     except db.Error, e:
-        logging.warn("Query failed: %s." % query)
+        logger.warn("Query failed: %s." % query)
         raise
     finally:
         cursor.close()
@@ -181,7 +181,7 @@ def _insert_extractedsources(conn, image_id, results):
         if not AUTOCOMMIT:
             conn.commit()
     except db.Error, e:
-        logging.warn("Failed on query nr %s." % query)
+        logger.warn("Failed on query nr %s." % query)
         raise
     finally:
         cursor.close()
@@ -235,8 +235,8 @@ def lightcurve(conn, xtrsrcid):
         results = cursor.fetchall()
     except db.Error:
         query = query % xtrsrcid
-        logging.warn("Failed to obtain light curve")
-        logging.warn("Query failed:\n%s", query)
+        logger.warn("Failed to obtain light curve")
+        logger.warn("Query failed:\n%s", query)
         raise
     finally:
         cursor.close()
@@ -266,7 +266,7 @@ def get_imagefiles_for_ids(conn, image_ids):
         #    conn.commit()
     except db.Error, e:
         query = query % where_tuple
-        logging.warn("Query failed: %s", query)
+        logger.warn("Query failed: %s", query)
         raise
     finally:
         cursor.close()
@@ -455,13 +455,13 @@ def match_nearests_in_catalogs(conn, runcatid, radius=1.0,
         #query = query % (radius, radius, radius, zoneheight,
         #                 radius, zoneheight,
         #                 radius, radius, srcid, radius, assoc_r)
-        #logging.warn("Query failed: %s", query)
+        #logger.warn("Query failed: %s", query)
         query = q_alt % (runcatid,
                          radius, radius, radius, radius,
                          radius, radius,
                          radius,
                          assoc_r)
-        logging.warn("Query failed:\n%s", query)
+        logger.warn("Query failed:\n%s", query)
         raise
     finally:
         cursor.close()

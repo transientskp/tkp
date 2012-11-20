@@ -193,12 +193,14 @@ def fitgaussian(data, params, fixed=None, maxfev=0):
             else:
                 gaussian_args.append(paramlist.pop(0))
 
-        # The .compressed() below is essential so the Gaussian fit
-        # will not take account of the masked values (=below
-        # threshold) at the edges and corners of data (=(masked)
-        # array, so rectangular in shape).
-        return (gaussian(*gaussian_args)(*numpy.indices(data.shape)) -
-                data ).compressed()
+        # gaussian() returns a function which takes arguments x, y and returns
+        # a Gaussian with parameters gaussian_args evaluated at that point.
+        g = gaussian(*gaussian_args)
+
+        # The .compressed() below is essential so the Gaussian fit will not
+        # take account of the masked values (=below threshold) at the edges
+        # and corners of data (=(masked) array, so rectangular in shape).
+        return (numpy.fromfunction(g, data.shape) - data).compressed()
 
     # maxfev=0, the default, corresponds to 200*(N+1) (NB, not 100*(N+1) as
     # the scipy docs state!) function evaluations, where N is the number of

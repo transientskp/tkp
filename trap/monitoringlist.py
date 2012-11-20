@@ -43,7 +43,8 @@ def update_monitoringlist(image_id):
 
     # Run the source finder on these mon_targets
     if len(mon_targets):
-        logger.info("Measuring %d undetected monitoring targets." % (len(mon_targets),))
+        logger.info("Measuring %d undetected monitoring targets in image %s"
+                    % (len(mon_targets), image_id))
         data_image = sourcefinder_image_from_accessor(fitsimage)
         results = data_image.fit_fixed_positions(
             [(m.ra, m.decl) for m in mon_targets],

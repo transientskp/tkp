@@ -162,8 +162,7 @@ def fitgaussian(data, params, fixed=None, maxfev=0):
     axes, angle between x axis and semi-major axis in radians. In a dict, as
     above.
     """
-    if fixed is None:
-        fixed = {}
+    fixed = fixed or {}
     # Collect necessary values from parameter dict; only those which aren't
     # fixed.
     my_pars = []
@@ -202,7 +201,9 @@ def fitgaussian(data, params, fixed=None, maxfev=0):
                 data ).compressed()
 
     solution, icov_x, infodict, mesg, success = scipy.optimize.leastsq(
-        errorfunction, my_pars, fixed, full_output=True, maxfev=maxfev)
+        errorfunction, my_pars, fixed, full_output=True, maxfev=maxfev
+    )
+
     # solution contains only the variable parameters; we need to merge the
     # contents of fixed into the solution list.
     try:
@@ -219,23 +220,16 @@ def fitgaussian(data, params, fixed=None, maxfev=0):
     if success in [5, 6, 7, 8]:
         raise ValueError("leastsq returned %d (%s)" % (success, mesg))
 
-    # Negative semi-major and semi-minor axis are just as good a
-    # solution as positive ones from the least squares Gaussian
-    # fitting, since both of them appear as a square in def gaussian.
-    # Of couse, we only want the positive ones.  In this case it is
-    # safer to stick with moments, because the peak from Gauss fitting
-    # is likely ot be outside the island.
-    semimajor, semiminor = round(solution[3], 5), round(solution[4], 5)
-    if semimajor < 0 or semiminor < 0 or semiminor > semimajor:
-        # Bail out; let outside routine catch error and decide
-        # how to proceed (eg, use moments)
-        raise ValueError("incorrect axis from fitgauss; using moments")
-    else:
-        theta = solution[5]
-        if theta > numpy.pi / 2:
-            theta -= numpy.pi
-        elif theta < -numpy.pi / 2:
-            theta += numpy.pi
+    if solution[4] > solution[3]:
+        # Swapped axis order is a perfectly valid fit, but inconvenient for
+        # the rest of our codebase.
+        solution[3], solution[4] = solution[4], solution[3]
+        solution[5] += numpy.pi/2
+
+    # Negative axes are a valid fit, since they are squared in the definition
+    # of the Gaussian.
+    solution[3] = abs(solution[3])
+    solution[4] = abs(solution[4])
 
     return {
         "peak": solution[0],
@@ -244,4 +238,4 @@ def fitgaussian(data, params, fixed=None, maxfev=0):
         "semimajor": solution[3],
         "semiminor": solution[4],
         "theta": solution[5]
-        }
+    }

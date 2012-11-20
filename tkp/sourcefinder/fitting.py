@@ -155,28 +155,28 @@ def fitgaussian(data, params, fixed=None, maxfev=0):
     fitting process.
     """
     fixed = fixed or {}
+
     # Collect necessary values from parameter dict; only those which aren't
     # fixed.
-    my_pars = []
+    initial = []
     for param in FIT_PARAMS:
         if param not in fixed:
-            if isinstance(params[param], Uncertain):
-                my_pars.append(params[param].value)
+            if hasattr(params[param], "value"):
+                initial.append(params[param].value)
             else:
-                my_pars.append(params[param])
+                initial.append(params[param])
 
-    def errorfunction(paramlist, fixed):
+    def residuals(paramlist):
         """Error function to be used in chi-squared fitting
 
         :argument paramlist: fitting parameters
-        :type paramlist: dict
+        :type paramlist: numpy.ndarray
         :argument fixed: parameters to be held frozen
         :type fixed: dict
 
         :returns: 2d-array of difference between estimated Gaussian function
             and the actual data
         """
-
         paramlist = list(paramlist)
         gaussian_args = []
         for param in FIT_PARAMS:
@@ -199,43 +199,30 @@ def fitgaussian(data, params, fixed=None, maxfev=0):
     # parametrs in the solution.
     # Convergence tolerances xtol and ftol established by experiment on images
     # from Paul Hancock's simulations.
-    solution, success = scipy.optimize.leastsq(
-        errorfunction, my_pars, fixed, maxfev=maxfev,
-        xtol=1e-4, ftol=1e-4
+    soln, success = scipy.optimize.leastsq(
+        residuals, initial, maxfev=maxfev, xtol=1e-4, ftol=1e-4
     )
 
     if success > 4:
         raise ValueError("leastsq returned %d; bailing out" % (success,))
 
-    # solution contains only the variable parameters; we need to merge the
-    # contents of fixed into the solution list.
-    try:
-        tmp_solution = list(solution)
-    except TypeError:
-        tmp_solution = [solution]
-    solution = []
+    # soln contains only the variable parameters; we need to merge the
+    # contents of fixed into the soln list.
+    soln = list(soln)
+    results = fixed.copy()
     for param in FIT_PARAMS:
-        if param in fixed:
-            solution.append(fixed[param])
-        else:
-            solution.append(tmp_solution.pop(0))
+        if param not in results:
+            results[param] = soln.pop(0)
 
-    if solution[4] > solution[3]:
+    if results['semiminor'] > results['semimajor']:
         # Swapped axis order is a perfectly valid fit, but inconvenient for
         # the rest of our codebase.
-        solution[3], solution[4] = solution[4], solution[3]
-        solution[5] += numpy.pi/2
+        results['semimajor'], results['semiminor'] = results['semiminor'], results['semimajor']
+        results['theta'] += numpy.pi/2
 
     # Negative axes are a valid fit, since they are squared in the definition
     # of the Gaussian.
-    solution[3] = abs(solution[3])
-    solution[4] = abs(solution[4])
+    results['semimajor'] = abs(results['semimajor'])
+    results['semiminor'] = abs(results['semiminor'])
 
-    return {
-        "peak": solution[0],
-        "xbar": solution[1],
-        "ybar": solution[2],
-        "semimajor": solution[3],
-        "semiminor": solution[4],
-        "theta": solution[5]
-    }
+    return results

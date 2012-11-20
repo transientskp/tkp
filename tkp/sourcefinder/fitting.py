@@ -182,10 +182,11 @@ def fitgaussian(data, params, fixed=None):
             bounds[index] = (value, value)
 
     def errorfunction(paramlist):
-        # Returns the sum of the squares of the difference between a gaussian
+        # Returns the difference between a gaussian
         # parameterized by paramlist and our data.
-        g = (gaussian(*paramlist)(*numpy.indices(data.shape)) - data).compressed()
-        return numpy.sum(g**2)
+        return (
+            gaussian(*paramlist)(*numpy.indices(data.shape)) - data
+        ).compressed()
 
     solution, value, d = scipy.optimize.fmin_l_bfgs_b(
         errorfunction, initial,

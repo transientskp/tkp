@@ -196,7 +196,7 @@ def fitgaussian(data, params, fixed=None, maxfev=0):
 
     # maxfev=0, the default, corresponds to 200*(N+1) (NB, not 100*(N+1) as
     # the scipy docs state!) function evaluations, where N is the number of
-    # parametrs in the solution.
+    # parameters in the solution.
     # Convergence tolerances xtol and ftol established by experiment on images
     # from Paul Hancock's simulations.
     soln, success = scipy.optimize.leastsq(

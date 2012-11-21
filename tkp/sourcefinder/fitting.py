@@ -200,8 +200,14 @@ def fitgaussian(data, params, fixed=None, maxfev=0):
         return (gaussian(*gaussian_args)(*numpy.indices(data.shape)) -
                 data ).compressed()
 
+    # maxfev=0, the default, corresponds to 200*(N+1) (NB, not 100*(N+1) as
+    # the scipy docs state!) function evaluations, where N is the number of
+    # parametrs in the solution.
+    # Convergence tolerances xtol and ftol established by experiment on images
+    # from Paul Hancock's simulations.
     solution, icov_x, infodict, mesg, success = scipy.optimize.leastsq(
-        errorfunction, my_pars, fixed, full_output=True, maxfev=maxfev
+        errorfunction, my_pars, fixed, full_output=True, maxfev=maxfev,
+        xtol=1e-4, ftol=1e-4
     )
 
     # solution contains only the variable parameters; we need to merge the

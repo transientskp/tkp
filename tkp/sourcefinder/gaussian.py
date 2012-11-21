@@ -11,12 +11,7 @@
 # calculating (specific) variances
 #
 
-
 from numpy import exp, log, cos, sin
-
-
-FIT_PARAMS = ('peak', 'xbar', 'ybar', 'semimajor', 'semiminor', 'theta')
-
 
 def gaussian(height, center_x, center_y, semimajor, semiminor, theta):
     """Return a 2D Gaussian function with the given parameters.

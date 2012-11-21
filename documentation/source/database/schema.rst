@@ -9,9 +9,9 @@ Schema
 assoccatsource
 ==============
 
-This table stores the associations between extracted sources and cataloged sources (i.e. VLSS, WENSSm, WENSSp, and NVSS sources). 
+This table stores the association between an extracted source and one or more cataloged sources (i.e. VLSS, WENSSm, WENSSp, and NVSS sources). 
 
-For every association pair the association parameters, distance_arcsec, r and loglr are calculated as well. Only source pairs that fullfil the criterion of an association (r < r_lim) are accepted and appended to this table. r_lim may be specified in tkp.cfg, or otherwise defaults to 3.717, corresponding to missing 10^{-3} counterparts (see Scheers's thesis, section 3.2.3)
+For every association pair the association parameters, distance_arcsec, r and loglr are calculated as well. Only source pairs that fullfil the criterion of an association (r < r_lim) are accepted and appended to this table. r_lim may be specified in the user parsets or tkp.cfg, otherwise it defaults to 3.717, corresponding to missing 10^{-3} counterparts (see Scheers's thesis, section 3.2.3)
 
 
 **xrtsrc**
@@ -21,45 +21,41 @@ For every association pair the association parameters, distance_arcsec, r and lo
    This is the id of the catalogedsource that could be associated to the extractedsource as its counterpart
 
 **type**
-   Type of the association. See under assocxtrsource for a description
+   Type of the association, determined by the association procedure inside the database. See under assocxtrsource for types and their descriptions
 
 **distance_arcsec**
-   The distance in arcsec between the associated sources
+   The distance in arcsec between the associated sources, calculated by the database using the Cartesian coordinates
 
 **r**
-   The dimensionless distance (De Ruiter radius) between the associated sources. It is determined as the positional differences weighted by the errors (Scheers thesis ch3).
+   The dimensionless distance (De Ruiter radius) between the associated sources. It is determined as the positional differences weighted by the errors, calculated by the association procedure inside the database (Scheers thesis ch3).
 
 **loglr**
-   The logarithm of the likelihood ratio of the associated sources (Scheers thesis ch3).
+   The logarithm of the likelihood ratio of the associated sources, defaults to NULL if not calculated (Scheers thesis ch3).
 
 
 assocxtrsource
 ==============
 
-This table stores the associations between extracted sources and the running catalog.
+This table stores the association between an extracted sources and one or more runningcatalog sources.
 
 **runcat**
-   refers to the runcatid in runningcatalog.  It is the "base" id of a series of polarized spectral lightcurve datapoints.
+   refers to the runcatid in runningcatalog.  It is considered as the "base" id of a lightcurve, whereas the lightcurve consist of multiple frequency bands and Stokes parameters.
 
 **xtrsrc** 
    This is the id of the extracted source that could be associated to runningcatalog source.  Together, the runcat_id and the xtrsrc form a unique pair.
 
 **type**
-    Type of association.  x-y, where x is the number of runningcatalog sources, and y the number of extractedsources
-    1. 1-1
-    2. 1-n
-    3. n-1
-    4. n-m
-    5. 0-1
+    Type of association, and its description.  n-m, where n is the number of runningcatalog sources, and m the number of extractedsources.
+    Type 1: 1-1 association; type 2: 1-n (one-to-many) association; type 3: n-1, many-to-one association; type 4: n-m (many-to-many) association; type 5: 0-1 (zero-to-one) association, a new source.
 
 **distance_arcsec**
-   The distance in arcsec between the associated sources.
+   The distance in arcsec between the associated sources, calculated by the database using the Cartesian coordinates
 
 **r**
-   The dimensionless distance (De Ruiter radius) between the associated sources. It is determined as the positional differences weighted by the errors (Scheers thesis ch3).
+   The dimensionless distance (De Ruiter radius) between the associated sources. It is determined as the positional differences weighted by the errors, calculated by the association procedure inside the database (Scheers thesis ch3).
 
 **loglr**      
-   The logarithm of the likelihood ratio of the associated sources (Scheers thesis ch3).
+   The logarithm of the likelihood ratio of the associated sources, defaults to NULL if not calculated (Scheers thesis ch3).
 
 
 catalogedsource

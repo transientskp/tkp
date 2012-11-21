@@ -228,10 +228,11 @@ def run_job(jobname, debug=False):
 
 def runlocal_job(jobname, debug=False):
     print "running job '%s' (local)" % jobname
+    format = '%(asctime)s\t%(levelname)s\t%(name)s: %(message)s'
     if debug:
-        logging.basicConfig(level=logging.DEBUG)
+        logging.basicConfig(level=logging.DEBUG, format=format)
     else:
-        logging.basicConfig(level=logging.INFO)
+        logging.basicConfig(level=logging.INFO, format=format)
     prepare_job(jobname, debug)
     import trap.run.local
     sys.exit(trap.run.local.TrapLocal().main())

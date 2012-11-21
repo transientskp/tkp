@@ -36,7 +36,8 @@ def extract_sources(image_id, parset, tkpconfigdir=None):
     seconfig = config['source_extraction']
     parset = parameterset(parset)
 
-    logger.info("Detecting sources in image %s at detection threshold %f", image_id, parset.getFloat('detection.threshold'))
+    logger.debug("Detecting sources in image %s at detection threshold %s",
+                    image_id, parset.getFloat('detection.threshold'))
 
     data_image = sourcefinder_image_from_accessor(fitsimage)
 
@@ -54,8 +55,8 @@ def extract_sources(image_id, parset, tkpconfigdir=None):
         seconfig['radius'])
 
 
-    logger.info("Employing margin: %f, extraction radius: %f,\n"
-                 "deblend: %s, deblend_nthresh:%d",
+    logger.debug("Employing margin: %s extraction radius: %s deblend: %s "
+                "deblend_nthresh: %s",
         seconfig['margin'],
         seconfig['radius'],
         seconfig['deblend'],
@@ -70,13 +71,13 @@ def extract_sources(image_id, parset, tkpconfigdir=None):
     ##Finally, do some work!
     results = data_image.extract(det=det, anl=anl)
 
-    logger.info("Detected %d sources", len(results))
-    logger.info("Saving extracted sources to database")
+    logger.info("Detected %d sources in image %s" % (len(results), image_id))
+    logger.debug("Saving extracted sources to database")
     tuple_results = [result.serialize() for result in results]
     db_image.insert_extracted_sources(tuple_results)
     deRuiter_r = (parset.getFloat('association.radius') *
                   config['source_association']['deruiter_radius'])
-    logger.info("Associate newly extracted sources with existing ones")
+    logger.debug("Associate newly extracted sources with existing ones")
     db_image.associate_extracted_sources(deRuiter_r=deRuiter_r)
     #logger.info("Update monitoring list for already found sources")
     #db_image.match_monitoringlist(assoc_r=deRuiter_r, mindistance=30)

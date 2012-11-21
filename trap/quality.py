@@ -53,7 +53,7 @@ def check(image_id, parset_file):
     rms_invalid = tkp.quality.rms_invalid(rms, noise, low_bound=p['low_bound'],
         high_bound=p['high_bound'])
     if not rms_invalid:
-        logger.info("image %i accepted: rms: %s, theoretical noise: %s" % \
+        logger.debug("image %i accepted: rms: %s, theoretical noise: %s" % \
                         (db_image.id, tkp.quality.nice_format(rms),
                          tkp.quality.nice_format(noise)))
     else:
@@ -67,7 +67,8 @@ def check(image_id, parset_file):
                                         p['oversampled_x'], p['elliptical_x'])
 
     if not beam_invalid:
-        logger.info("image %i accepted: semimaj: %s, semimin: %s" % (db_image.id,
+        logger.debug("image %i accepted: semimaj: %s, semimin: %s" % (db_image
+                                                                   .id,
                                              tkp.quality.nice_format(semimaj),
                                              tkp.quality.nice_format(semimin)))
     else:

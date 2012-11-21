@@ -69,7 +69,8 @@ class source_extraction(BaseRecipe, RemoteCommandRecipeMixIn):
                 )
             )
         jobs = self._schedule_jobs(jobs, max_per_node=self.inputs['nproc'])
-        self.outputs['image_ids'] = [job.results['image_id'] for job in jobs.itervalues()]
+        self.outputs['image_ids'] = [job.results['image_id'] for job in jobs
+        .itervalues() if 'image_id' in job.results]
 
         # Check if we recorded a failing process before returning
         if self.error.isSet():

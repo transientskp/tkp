@@ -23,7 +23,6 @@ from tkp.sourcefinder import image
 import tkp.config
 from decorators import requires_data
 
-
 DATAPATH = tkp.config.config['test']['datapath']
 MAX_BIAS = 5.0
 NUMBER_INSERTED = 3969
@@ -32,14 +31,15 @@ TRUE_DECONV_SMAJ = 2.*5.5956/2.
 TRUE_DECONV_SMIN = 0.5*4.6794/2.
 TRUE_DECONV_BPA = -0.5*(-49.8)
 
-
+# These are measured from the file CORRELATED_NOISE.FITS.
+# BG_MEAN = numpy.mean(sourcefinder_image_from_accessor(FitsFile("CORRELATED_NOISE.FITS")).data)
+BG_MEAN = -0.0072340798975137829
+# BG_STD = numpy.std(sourcefinder_image_from_accessor(FitsFile("CORRELATED_NOISE.FITS")).data)
+BG_STD = 5.3480336747739079
 
 class SourceParameters(unittest.TestCase):
 
     def setUp(self):
-        bgfile = FitsFile(os.path.join(DATAPATH, 'CORRELATED_NOISE.FITS'))
-        bgdata = image.ImageData(bgfile.data,
-                                 bgfile.beam, bgfile.wcs).data
         fitsfile = FitsFile(os.path.join(DATAPATH, 'TEST_DECONV.FITS'))
         img = image.ImageData(fitsfile.data, fitsfile.beam,
                               fitsfile.wcs)
@@ -54,8 +54,8 @@ class SourceParameters(unittest.TestCase):
         # here are the true values.
 
         extraction_results = img.extract(
-            anl=6., noisemap=np.std(bgdata)*np.ones((2048, 2048)),
-            bgmap=np.mean(bgdata)*np.ones((2048, 2048)))
+            anl=6., noisemap=BG_STD*np.ones((2048, 2048)),
+            bgmap=BG_MEAN*np.ones((2048, 2048)))
         self.number_sources = len(extraction_results)
 
         peak_fluxes = []
@@ -77,9 +77,9 @@ class SourceParameters(unittest.TestCase):
         self.deconv_sminaxes = np.array(deconv_sminaxes)
         self.deconv_bpas = np.array(deconv_bpas)
 
-    @requires_data(os.path.join(DATAPATH, 'CORRELATED_NOISE.FITS'))
     @requires_data(os.path.join(DATAPATH, 'TEST_DECONV.FITS'))
-    def testAllDeconvolved(self):
+    def testAllParameters(self):
+        # Test all deconvolved
         self.assertEqual(
             np.where(np.isnan(self.deconv_smajaxes), 1, 0).sum(), 0)
         self.assertEqual(
@@ -87,14 +87,10 @@ class SourceParameters(unittest.TestCase):
         self.assertEqual(
             np.where(np.isnan(self.deconv_bpas), 1, 0).sum(), 0)
 
-    @requires_data(os.path.join(DATAPATH, 'CORRELATED_NOISE.FITS'))
-    @requires_data(os.path.join(DATAPATH, 'TEST_DECONV.FITS'))
-    def testNumSources(self):
+        # Test number of sources
         self.assertEqual(self.number_sources, NUMBER_INSERTED)
 
-    @requires_data(os.path.join(DATAPATH, 'CORRELATED_NOISE.FITS'))
-    @requires_data(os.path.join(DATAPATH, 'TEST_DECONV.FITS'))
-    def testPeakFluxes(self):
+        # Test peak fluxes
         peak_weights = 1./self.peak_fluxes[:,1]**2
         sum_peak_weights = np.sum(peak_weights)
         av_peak = np.sum(self.peak_fluxes[:,0] * peak_weights /
@@ -104,9 +100,7 @@ class SourceParameters(unittest.TestCase):
                            np.sqrt(self.number_sources) / av_peak_err)
         self.assertTrue(np.abs(signif_dev_peak) < MAX_BIAS)
 
-    @requires_data(os.path.join(DATAPATH, 'CORRELATED_NOISE.FITS'))
-    @requires_data(os.path.join(DATAPATH, 'TEST_DECONV.FITS'))
-    def testMajorAxes(self):
+        # Test major axes
         smaj_weights = 1./self.deconv_smajaxes[:,1]**2
         sum_smaj_weights = np.sum(smaj_weights)
         av_smaj = np.sum(self.deconv_smajaxes[:,0]*smaj_weights /
@@ -116,9 +110,7 @@ class SourceParameters(unittest.TestCase):
                            np.sqrt(self.number_sources) / av_smaj_err)
         self.assertTrue(np.abs(signif_dev_smaj) < MAX_BIAS)
 
-    @requires_data(os.path.join(DATAPATH, 'CORRELATED_NOISE.FITS'))
-    @requires_data(os.path.join(DATAPATH, 'TEST_DECONV.FITS'))
-    def testMinorAxes(self):
+        # Test minor axes
         smin_weights = 1./self.deconv_sminaxes[:,1]**2
         sum_smin_weights = np.sum(smin_weights)
         av_smin = np.sum(self.deconv_sminaxes[:,0] * smin_weights /
@@ -128,9 +120,7 @@ class SourceParameters(unittest.TestCase):
                            np.sqrt(self.number_sources) / av_smin_err)
         self.assertTrue(np.abs(signif_dev_smin) < MAX_BIAS)
 
-    @requires_data(os.path.join(DATAPATH, 'CORRELATED_NOISE.FITS'))
-    @requires_data(os.path.join(DATAPATH, 'TEST_DECONV.FITS'))
-    def testPositionAngles(self):
+        # Test position angles
         bpa_weights = 1./self.deconv_bpas[:,1]**2
         sum_bpa_weights = np.sum(bpa_weights)
         av_bpa = np.sum(self.deconv_bpas[:,0]*bpa_weights/sum_bpa_weights)

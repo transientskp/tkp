@@ -208,7 +208,14 @@ def fitgaussian(data, params, fixed=None, maxfev=0):
 
     # soln contains only the variable parameters; we need to merge the
     # contents of fixed into the soln list.
-    soln = list(soln)
+    # leastsq() returns either a numpy.float64 (if fitting a single value) or
+    # a numpy.ndarray (if fitting multiple values); we need to turn that into
+    # a list for the merger.
+    try:
+        # If an ndarray (or other iterable)
+        soln = list(soln)
+    except TypeError:
+        soln = [soln]
     results = fixed.copy()
     for param in FIT_PARAMS:
         if param not in results:

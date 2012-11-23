@@ -267,5 +267,9 @@ class TestSimpleImageSourceFind(unittest.TestCase):
         
         results = self.image.extract(det=5, anl=3)
         results = [result.serialize() for result in results]
-        self.assertTupleEqual(known_result, results[0])
+        self.assertEqual(len(results), 1)
+        r = results[0]
+        self.assertEqual(len(r), len(known_result))
+        for i in range(len(r)):
+            self.assertAlmostEqual(r[i], known_result[i], places=5)
         

@@ -7,7 +7,7 @@ import logging
 import tkp.database.database as database
 from tkp.database import ExtractedSource
 import tkp.database.orm as ds
-import tkp.database.qc.region as reg
+import tkp.database.dbregion as reg
 import tkp.database.utils.general as dbg
 import tkp.database.utils.associations as dbu
 import tkp.database.utils.monitoringlist as mon

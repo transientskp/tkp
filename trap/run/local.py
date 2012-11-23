@@ -1,12 +1,12 @@
 from tkp.database import DataBase, DataSet
-import trap.quality
-import trap.source_extraction
-import trap.monitoringlist
-import trap.persistence
-import trap.transient_search
-import trap.feature_extraction
-import trap.classification
-import trap.prettyprint
+import trap.ingredients.quality
+import trap.ingredients.source_extraction
+import trap.ingredients.monitoringlist
+import trap.ingredients.persistence
+import trap.ingredients.transient_search
+import trap.ingredients.feature_extraction
+import trap.ingredients.classification
+import trap.ingredients.prettyprint
 from lofarpipe.support.control import control
 
 from images_to_process import images
@@ -29,7 +29,7 @@ class TrapLocal(control):
         classification_file = self.task_definitions.get("classification", "parset")
 
         self.logger.info("creating dataset in database ...")
-        dataset_id = trap.persistence.store(images, 'trap-local dev run')
+        dataset_id = trap.ingredients.persistence.store(images, 'trap-local dev run')
         self.logger.info("added dataset with ID %s" % dataset_id)
 
         dataset = DataSet(id=dataset_id, database=DataBase())
@@ -37,22 +37,22 @@ class TrapLocal(control):
 
         good_images = []
         for image in dataset.images:
-            if trap.quality.check(image.id, quality_parset_file):
+            if trap.ingredients.quality.check(image.id, quality_parset_file):
                 good_images.append(image)
 
         for image in good_images:
-            trap.source_extraction.extract_sources(image.id, srcxtr_parset_file)
+            trap.ingredients.source_extraction.extract_sources(image.id, srcxtr_parset_file)
 
         # TODO: this should be updated to work on a list of images, not on a dataset ID
-        trap.monitoringlist.mark_sources(dataset_id, srcxtr_parset_file)
+        trap.ingredients.monitoringlist.mark_sources(dataset_id, srcxtr_parset_file)
 
         for image in good_images:
-            trap.monitoringlist.update_monitoringlist(image.id)
+            trap.ingredients.monitoringlist.update_monitoringlist(image.id)
 
         good_ids =[ i.id for i in good_images]
-        transient_results = trap.transient_search.search_transients(good_ids, dataset_id,  transientsearch_file)
+        transient_results = trap.ingredients.transient_search.search_transients(good_ids, dataset_id,  transientsearch_file)
 
         transients = transient_results['transients']
         for transient in transients:
-            trap.feature_extraction.extract_features(transient)
-            trap.classification.classify(transient, classification_file)
+            trap.ingredients.feature_extraction.extract_features(transient)
+            trap.ingredients.classification.classify(transient, classification_file)

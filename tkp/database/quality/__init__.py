@@ -1,10 +1,16 @@
-
+from collections import namedtuple
 import tkp.database
 
+
 # todo: need to think of a way to sync this with tkp/database/tables/rejection.sql
+
+RejectReason = namedtuple('RejectReason', 'id desc')
+
 reason = {
-    'rms': 0,
+    'rms': RejectReason(id=0, desc='RMS too high'),
     }
+
+
 
 
 query_reject = """
@@ -16,7 +22,7 @@ query_unreject = """
 DELETE FROM rejection WHERE image=%(image)s
 """
 
-queyr_isrejected = """
+query_isrejected = """
 SELECT rejectreason.description, rejection.comment
   FROM rejection, rejectreason
  WHERE rejection.rejectreason = rejectreason.id
@@ -55,8 +61,12 @@ def isrejected(connection, imageid):
     returns:
         False if not rejected, a list of reason id's if rejected
     """
-    query = queyr_isrejected % {'imageid': imageid}
+    query = query_isrejected % {'imageid': imageid}
     cursor = tkp.database.query(connection, query)
     results = cursor.fetchall()
     if len(results) > 0:
         return ["%s: %s" % row for row in results]
+    else:
+        return False
+
+

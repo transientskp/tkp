@@ -19,7 +19,8 @@ class TestReject(unittest.TestCase):
     def setUp(self):
         self.database = tkp.database.DataBase()
         self.fake_images = db_subs.example_dbimage_datasets(n_images=1)
-        self.dataset = tkp.database.DataSet(data={'description': "test dataset:"},
+        self.dataset = tkp.database.DataSet(data={'description':
+                                                  "Reject:" + self._testMethodName},
                                             database=self.database)
         self.image = tkp.database.Image(data=self.fake_images[0],
                                         dataset=self.dataset)
@@ -27,7 +28,7 @@ class TestReject(unittest.TestCase):
     def test_rejectrms(self):
         tkp.database.quality.unreject(self.database.connection, self.image.id)
         tkp.database.quality.reject(self.database.connection, self.image.id,
-                                    tkp.database.quality.reason['rms'],
+                                    tkp.database.quality.reason['rms'].id,
                                     "10 times too high")
         self.database.execute("select count(*) from rejection where image=%s" %
                               self.image.id)
@@ -49,11 +50,12 @@ class TestReject(unittest.TestCase):
         self.assertFalse(tkp.database.quality.isrejected(self.database.connection,
                                                          self.image.id))
         tkp.database.quality.reject(self.database.connection, self.image.id,
-                                    tkp.database.quality.reason['rms'],
+                                    tkp.database.quality.reason['rms'].id,
                                     "10 times too high")
         self.assertEqual(tkp.database.quality.isrejected(self.database.connection,
                                                          self.image.id),
-                         [tkp.database.quality.reason['rms'], ])
+                         [tkp.database.quality.reason['rms'].desc +
+                          ': 10 times too high', ])
 
 if __name__ == '__main__':
     unittest.main()

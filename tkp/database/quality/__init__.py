@@ -6,6 +6,24 @@ reason = {
     'rms': 0,
     }
 
+
+query_reject = """
+INSERT INTO rejection (image, rejectreason, comment)
+VALUES (%(imageid)s, %(reason)s, '%(comment)s')
+"""
+
+query_unreject = """
+DELETE FROM rejection WHERE image=%(image)s
+"""
+
+queyr_isrejected = """
+SELECT rejectreason.description, rejection.comment
+  FROM rejection, trap.rejectreason
+ WHERE rejection.rejectreason = rejectreason.id
+   AND rejection.image = %(imageid)s
+"""
+
+
 def reject(connection, imageid, reason, comment):
     """ Add a reject intro to the database for a given image
     Args:
@@ -14,9 +32,8 @@ def reject(connection, imageid, reason, comment):
         reason: why is the image rejected, a defined in tkp.database.quality.reason
         comment: an optional comment with details about the reason
     """
-    q = "INSERT INTO rejection (image, rejectreason, comment) VALUES (%(imageid)s, %(reason)s, '%(comment)s')"
     args = {'imageid': imageid, 'reason': reason, 'comment': comment}
-    query = q % args
+    query = query_reject % args
     tkp.database.query(connection, query, commit=True)
 
 
@@ -26,8 +43,9 @@ def unreject(connection, imageid):
         connection: A database connection object
         image: The image ID of the image to reject
     """
-    query = "DELETE FROM rejection WHERE image=%(image)s" % {'image': imageid}
+    query = query_unreject % {'image': imageid}
     tkp.database.query(connection, query, commit=True)
+
 
 def isrejected(connection, imageid):
     """ Find out if an image is rejected or not
@@ -37,8 +55,8 @@ def isrejected(connection, imageid):
     returns:
         False if not rejected, a list of reason id's if rejected
     """
-    query = "SELECT rejectreason FROM rejection WHERE image=%(image)s" % {'image': imageid}
+    query = queyr_isrejected % {'imageid': imageid}
     cursor = tkp.database.query(connection, query)
-    rejections = cursor.fetchall()
-    if len(rejections) > 0:
-        return [x[0] for x in rejections]
+    results = cursor.fetchall()
+    if len(results) > 0:
+        return ["%s: %s" % row for row in results]

@@ -1006,7 +1006,6 @@ class Detection(object):
         @rtype: tuple
         """
 
-        print "self image:",self
         # The database doesn't recognize numpy.float64 values, so
         # in order to let the database accept the values, we convert them
         # to float

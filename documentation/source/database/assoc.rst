@@ -26,17 +26,17 @@ The structure of the database is discussed in detail :ref:`elsewhere
 presented.
 
 Each measurement (that is, a set of coordinates, a shape, and a flux) taken is
-inserted into the ``extractedsources`` table. Many such measurements may be
+inserted into the ``extractedsource`` table. Many such measurements may be
 taken from a single image, either due to "blind" source finding (that is,
 automatically attempting to locate islands of significant bright pixels), or
 by a user-requested fit to a specific position.
 
 The association procedure knits together ("associates") the measurements in
-``extractedsources`` which are believed to originate from a single
+``extractedsource`` which are believed to originate from a single
 astronomical source. Each such source is given an entry in the
-``runningcatalog`` table which ties together all of the measurements. Thus, an
-entry in ``runningcatalog`` can be thought of as a reference to the lightcurve
-of a particular source.
+``runningcatalog`` table which ties together all of the measurements by means
+of the ``assocxtrsource`` table. Thus, an entry in ``runningcatalog`` can be
+thought of as a reference to the lightcurve of a particular source.
 
 Each lightcurve may be composed of measurements in one or more frequency bands
 (as defined in the ``frequencyband`` table). Within each band flux
@@ -44,7 +44,7 @@ measurements are collated. These include the average flux of the source in
 that band, as well as assorted measures of variability. Each row in the
 ``runningcatalog_flux`` table contains flux statistics of this sort for a
 given band of a given flux. Thus, each row in ``runningcatalog`` may be
-associated with both multiple rows in ``extractedsources`` and in
+associated with both multiple rows in ``extractedsource`` and in
 ``runningcatalog_flux``.  Bear in mind, however, that each lightcurve has a
 *single* average position associated with it, stored in the ``runningcatalog``
 table.
@@ -136,10 +136,10 @@ Many-to-Many Association
 .. graphviz:: assoc/many2many.dot
 
 As shown above, many-to-many association grows quadratically in complexity, as
-every possible combination of sources results involved in the association
-results in a new lightcurve. Further, assuming that neither the sky nor the
-telescope configuration change significantly from observation to observation,
-it's likely that subsequent measurements will also result in many-to-many
+every possible combination of sources involved in the association results in a
+new lightcurve. Further, assuming that neither the sky nor the telescope
+configuration change significantly from observation to observation, it's
+likely that subsequent measurements will also result in many-to-many
 associations, doubling the number of lightcurves at every timestep.
 
 It should be obvious that the scenario described is untenable. Instead, all
@@ -172,7 +172,7 @@ must be taken to ensure that the commutative nature of association is
 preserved.
 
 
-Intra-Band One-to-One Association
+Multi-Band One-to-One Association
 +++++++++++++++++++++++++++++++++
 
 .. graphviz:: assoc/one2one.multiband.dot
@@ -183,7 +183,7 @@ results, which we label :math:`L_1`, but for which two average fluxes are
 calculated: :math:`\overline{f_{1\cdots{}4}}` in band 1 and
 :math:`\overline{f_{5\cdots{}8}}` in band 2.
 
-Intra-Band One-to-Many Association
+Multi-Band One-to-Many Association
 ++++++++++++++++++++++++++++++++++
 
 .. graphviz:: assoc/one2many.multiband.dot
@@ -206,7 +206,7 @@ In the situation shown, the resulting average fluxes for :math:`L_1` are
 respectively. Note that the entire flux in Band 2, as well as :math:`f_1` and
 :math:`f_2`, is now counted twice.
 
-Intra-Band Many-to-One Association
+Multi-Band Many-to-One Association
 ++++++++++++++++++++++++++++++++++
 
 .. graphviz:: assoc/many2one.multiband.dot
@@ -219,8 +219,8 @@ independent.  :math:`L_1` therefore has average fluxes
 in Band 2, and :math:`L_2` has average fluxes :math:`\overline{f_{2,4,5,6}}`
 in Band 1 and :math:`\overline{f_{8,10,12,14}}` in Band 2.
 
-Inter-Band Many-to-One Association
-++++++++++++++++++++++++++++++++++
+Multi-Band Many-to-One Association (2)
+++++++++++++++++++++++++++++++++++++++
 
 .. graphviz:: assoc/many2one.crossband.dot
 
@@ -242,7 +242,7 @@ would be compared for association with the average position of
 :math:`f_{2,4,10,12}`. This may well produce a different result!
 
 For obvious reasons, it is desirable for the database contents to be
-independent of the order of inswertion (otherwise, its ultimate contents
+independent of the order of insertion (otherwise, its ultimate contents
 become non-deterministic given the input data). For this reason, every
 insertion at a given timestep causes the associations for *all* datapoints at
 that timestep to be revaluated, rather than simply the inserted measurement

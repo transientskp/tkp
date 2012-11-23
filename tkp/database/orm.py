@@ -141,6 +141,7 @@ from . import utils as dbu
 import monetdb.sql as db
 from ..config import config
 from .database import ENGINE
+import tkp.database
 
 logger = logging.getLogger(__name__)
 
@@ -328,25 +329,16 @@ class DataSet(DBObject):
                 raise
         return self._id
 
-    # Get all images from database; implemented separately from update(),
-    # since normally this would be too much overhead
     def update_images(self):
         """Renew the set of images by getting the images for this
-        dataset from the database"""
+        dataset from the database. Implemented separately from update(),
+        since normally this would be too much overhead"""
+        query = "SELECT id FROM image WHERE dataset = %s ORDER BY id" % self._id
+        cursor = tkp.database.query(self.database.connection, query)
+        result = cursor.fetchall()
+        image_ids = [row[0] for row in result]
+        self.images = [Image(database=self.database, id=id) for id in image_ids]
 
-        query = "SELECT id FROM image WHERE dataset = %s"
-        try:
-            self.database.cursor.execute(query, (self._id,))
-            results = self.database.cursor.fetchall()
-        except db.Error, e:
-            query = query % self._id
-            logger.warn("database failed on query: %s", query)
-            raise
-        images = set()
-        for result in results:
-            images.add(Image(database=self.database, id=result[0]))
-        self.images = images
-        
     def runcat_entries(self):
         """
         Returns:
@@ -435,10 +427,10 @@ class Image(DBObject):
     
     def __init__(self, data=None, dataset=None, database=None, id=None):
         """If id is supplied, the data and image arguments are ignored."""
-        super(Image, self).__init__(
-            data=data, database=database, id=id)
+        super(Image, self).__init__(data=data, database=database, id=id)
         # Special part to deal when a DataSet() is supplied
         self.dataset = dataset
+        self.rejected = False
         if self.dataset:
             if self.dataset.database and not self.database:
                 self.database = self.dataset.database
@@ -451,6 +443,9 @@ class Image(DBObject):
         self._init_data()
         if not self.dataset:
             self.dataset = DataSet(id=self._data['dataset'], database=self.database)
+
+        self.update_rejected()
+
 
     # Inserting images is handled a little different than normal inserts
     # -- We call an SQL function 'insertImage' which takes care of  
@@ -465,9 +460,9 @@ class Image(DBObject):
         if self._id is None:
             try:
                 if 'bsmaj' not in self._data:
-                    self._data['bsmaj']=None
-                    self._data['bsmin']=None
-                    self._data['bpa']=None
+                    self._data['bsmaj'] = None
+                    self._data['bsmin'] = None
+                    self._data['bpa'] = None
                 # Insert a default image
                 self._id = dbu.insert_image(
                     self.database.connection, self.dataset.id,
@@ -482,8 +477,11 @@ class Image(DBObject):
                 raise
         return self._id
 
-    # Get all sources from database; implemented separately from update(),
-    # since normally this would be too much overhead
+    def update_rejected(self):
+        """Update self.rejected with the rejected status. Will be false
+        if not rejected, will be a list of reject descriptions if rejected"""
+        self.rejected = tkp.database.quality.isrejected(self.database.connection, self.id)
+
     def update_sources(self):
         """Renew the set of sources by getting the sources for this
         image from the database

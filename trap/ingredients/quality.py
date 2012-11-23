@@ -59,7 +59,7 @@ def check(image_id, parset_file):
     else:
         logger.info("image %s REJECTED: %s " % (db_image.id, rms_invalid) )
         tkp.database.quality.reject(database.connection, db_image.id,
-                    tkp.database.quality.reason['rms'], rms_invalid)
+                    tkp.database.quality.reason['rms'].id, rms_invalid)
         return False
 
     (semimaj, semimin, theta) = fitsimage.beam
@@ -74,7 +74,7 @@ def check(image_id, parset_file):
     else:
         logger.info("image %s REJECTED: %s " % (db_image.id, beam_invalid) )
         tkp.database.quality.reject(database.connection, db_image.id,
-                            tkp.database.quality.reason['rms'], beam_invalid)
+                            tkp.database.quality.reason['rms'].id, beam_invalid)
         return False
 
     return True

@@ -480,7 +480,8 @@ class Image(DBObject):
     def update_rejected(self):
         """Update self.rejected with the rejected status. Will be false
         if not rejected, will be a list of reject descriptions if rejected"""
-        self.rejected = tkp.database.quality.isrejected(self.database.connection, self.id)
+        self.rejected = tkp.database.quality.isrejected(self.database.connection,
+                                                         self.id)
 
     def update_sources(self):
         """Renew the set of sources by getting the sources for this

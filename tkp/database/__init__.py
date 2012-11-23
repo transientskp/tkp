@@ -5,6 +5,8 @@ from .orm import DataSet
 from .orm import Image
 from .orm import ExtractedSource
 
+import quality
+
 from tkp.config import config
 autocommit = config['database']['autocommit']
 

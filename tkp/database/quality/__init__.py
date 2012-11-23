@@ -18,7 +18,7 @@ DELETE FROM rejection WHERE image=%(image)s
 
 queyr_isrejected = """
 SELECT rejectreason.description, rejection.comment
-  FROM rejection, trap.rejectreason
+  FROM rejection, rejectreason
  WHERE rejection.rejectreason = rejectreason.id
    AND rejection.image = %(imageid)s
 """

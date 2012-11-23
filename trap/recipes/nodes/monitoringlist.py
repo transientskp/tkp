@@ -1,15 +1,8 @@
-import sys
-from lofarpipe.support.lofarnode import LOFARnodeTCP
-from lofarpipe.support.utilities import log_time
-import trap.monitoringlist
+import trap.ingredients.monitoringlist
+import trap.recipes
 
-class monitoringlist(LOFARnodeTCP):
-    def run(self, image_id):
-        with log_time(self.logger):
-            trap.monitoringlist.logger = self.logger
-            trap.monitoringlist.update_monitoringlist(image_id)
-            return 0
+class monitoringlist(trap.recipes.TrapNode):
+    def trapstep(self, image_id):
+        self.outputs['image_id'] = trap.ingredients.monitoringlist.update_monitoringlist(image_id)
 
-if __name__ == "__main__":
-    jobid, jobhost, jobport = sys.argv[1:4]
-    sys.exit(monitoringlist(jobid, jobhost, jobport).run_with_stored_arguments())
+trap.recipes.node_run(__name__, monitoringlist)

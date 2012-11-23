@@ -1,15 +1,8 @@
-import sys
-from lofarpipe.support.lofarnode import LOFARnodeTCP
-from lofarpipe.support.utilities import log_time
-import trap.feature_extraction
+import trap.ingredients.feature_extraction
+import trap.recipes
 
-class feature_extraction(LOFARnodeTCP):
-    def run(self, transient, tkpconfigdir=None):
-        with log_time(self.logger):
-            trap.feature_extraction.logger = self.logger
-            self.outputs['transient'] = trap.feature_extraction.extract_features(transient)
-        return 0
+class feature_extraction(trap.recipes.TrapNode):
+    def trapstep(self, transient, tkpconfigdir=None):
+        self.outputs['transient'] = trap.ingredients.feature_extraction.extract_features(transient)
 
-if __name__ == "__main__":
-    jobid, jobhost, jobport = sys.argv[1:4]
-    sys.exit(feature_extraction(jobid, jobhost, jobport).run_with_stored_arguments())
+trap.recipes.node_run(__name__, feature_extraction)

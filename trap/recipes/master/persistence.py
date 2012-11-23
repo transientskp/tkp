@@ -4,7 +4,7 @@ import lofarpipe.support.lofaringredient as ingredient
 from lofarpipe.support.baserecipe import BaseRecipe
 from lofarpipe.support.remotecommand import RemoteCommandRecipeMixIn
 from lofarpipe.support.utilities import log_time
-import trap.persistence
+import trap.ingredients.persistence
 
 
 class persistence(BaseRecipe, RemoteCommandRecipeMixIn):
@@ -50,8 +50,8 @@ class persistence(BaseRecipe, RemoteCommandRecipeMixIn):
         super(persistence, self).go()
         with log_time(self.logger):
             images = self.inputs['args']
-            trap.persistence.logger = self.logger
-            self.outputs['dataset_id'] = trap.persistence.store(
+            trap.ingredients.persistence.logger = self.logger
+            self.outputs['dataset_id'] = trap.ingredients.persistence.store(
                 images,
                 dataset_id=self.inputs['dataset_id'],
                 description=self.inputs['description'],

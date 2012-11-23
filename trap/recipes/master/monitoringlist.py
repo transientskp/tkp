@@ -12,18 +12,14 @@ __last_modification__ = '2011-11-09'
 
 
 import sys
-import os
-from contextlib import closing
 import itertools
 import lofarpipe.support.lofaringredient as ingredient
 from lofarpipe.support.baserecipe import BaseRecipe
 from lofarpipe.support.clusterdesc import ClusterDesc, get_compute_nodes
 from lofarpipe.support.remotecommand import ComputeJob
 from lofarpipe.support.remotecommand import RemoteCommandRecipeMixIn
-from lofar.parameterset import parameterset
 import tkp.database as tkpdb
-import tkp.config
-import trap.monitoringlist
+import trap.ingredients.monitoringlist
 
 class monitoringlist(BaseRecipe, RemoteCommandRecipeMixIn):
     """
@@ -54,9 +50,10 @@ class monitoringlist(BaseRecipe, RemoteCommandRecipeMixIn):
         dataset_id = self.inputs['args'][0]
         database = tkpdb.DataBase()
         dataset = tkpdb.DataSet(database=database, id = dataset_id)
+
         dataset.update_images()
         image_ids = [img.id for img in dataset.images]
-        trap.monitoringlist.mark_sources(dataset_id, self.inputs['parset'])
+        trap.ingredients.monitoringlist.mark_sources(dataset_id, self.inputs['parset'])
 
         # Obtain available nodes
         clusterdesc = ClusterDesc(self.config.get('cluster', "clusterdesc"))

@@ -54,8 +54,9 @@ class monitoringlist(BaseRecipe, RemoteCommandRecipeMixIn):
         dataset_id = self.inputs['args'][0]
         database = tkpdb.DataBase()
         dataset = tkpdb.DataSet(database=database, id = dataset_id)
+
         dataset.update_images()
-        image_ids = [img.id for img in dataset.images]
+        image_ids = [img.id for img in dataset.images if not img.rejected]
         trap.monitoringlist.mark_sources(dataset_id, self.inputs['parset'])
 
         # Obtain available nodes

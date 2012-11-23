@@ -1,4 +1,4 @@
-import trap.prettyprint
+import trap.ingredients.prettyprint
 from lofarpipe.support.baserecipe import BaseRecipe
 
 class prettyprint(BaseRecipe):
@@ -8,7 +8,7 @@ class prettyprint(BaseRecipe):
     def go(self):
         super(prettyprint, self).go()
         transients = self.inputs['args']
-        trap.prettyprint.prettyprint(transients)
+        trap.ingredients.prettyprint.prettyprint(transients)
 
 if __name__ == '__main__':
     import sys

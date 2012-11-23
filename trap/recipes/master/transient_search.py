@@ -6,7 +6,7 @@ from lofarpipe.support import lofaringredient
 from lofarpipe.support.utilities import log_time
 
 
-import trap.transient_search
+import trap.ingredients.transient_search
 
 class IntList(lofaringredient.ListField):
     """Input that defines a list of ints"""
@@ -53,8 +53,8 @@ class transient_search(BaseRecipe):
     def go(self):
         super(transient_search, self).go()
         with log_time(self.logger):
-            trap.transient_search.logger = self.logger
-            self.outputs.update(trap.transient_search.search_transients(image_ids=self.inputs['image_ids'],
+            trap.ingredients.transient_search.logger = self.logger
+            self.outputs.update(trap.ingredients.transient_search.search_transients(image_ids=self.inputs['image_ids'],
                                 dataset_id=self.inputs['args'][0], parset=self.inputs['parset']))
         return 0
 

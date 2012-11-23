@@ -86,14 +86,15 @@ class quality_check(BaseRecipe, RemoteCommandRecipeMixIn):
             )
         jobs = self._schedule_jobs(jobs, max_per_node=self.inputs['nproc'])
 
-        # TODO: some jobs don't have a 'pass' in it. For now it is unclear why.
-        self.outputs['good_image_ids'] = [
-                job.results['image_id'] for job in jobs.itervalues() if job.results.get('pass', False)
-        ]
-
+        results = []
+        for job in jobs.itervalues():
+            # TODO: some jobs don't have a 'pass' in it. For now it is unclear why.
+            if job.results.get('pass', False):
+                results.append(job.results['image_id'])
+        self.outputs['good_image_ids'] = sorted(results)
 
         if self.error.isSet():
-            self.logger.warn("Failed quality control process detected")
+            self.logger.error("Failed quality control process detected")
             return 1
         else:
             return 0

@@ -12,30 +12,25 @@ __last_modification__ = '2011-11-09'
 
 
 import sys
-import os
-from contextlib import closing
 import itertools
 import lofarpipe.support.lofaringredient as ingredient
 from lofarpipe.support.baserecipe import BaseRecipe
 from lofarpipe.support.clusterdesc import ClusterDesc, get_compute_nodes
 from lofarpipe.support.remotecommand import ComputeJob
 from lofarpipe.support.remotecommand import RemoteCommandRecipeMixIn
-from lofar.parameterset import parameterset
 import tkp.database as tkpdb
-import tkp.config
-import trap.monitoringlist
+import trap.ingredients.monitoringlist
 
 class monitoringlist(BaseRecipe, RemoteCommandRecipeMixIn):
     """
     Update the monitoring list with newly found transients.
     Transients that are already in the monitoring list will get
     their position updated from the runningcatalog.
-    
+
     Args:
         dataset_id  --- id for the dataset to process.
-    
     """
-    
+
     inputs = {
         'nproc': ingredient.IntField(
             '--nproc',
@@ -48,7 +43,7 @@ class monitoringlist(BaseRecipe, RemoteCommandRecipeMixIn):
             help="Source finder configuration parset (used to pull detection threshold)"
         ),
     }
-    
+
     def go(self):
         super(monitoringlist, self).go()
         dataset_id = self.inputs['args'][0]
@@ -57,7 +52,7 @@ class monitoringlist(BaseRecipe, RemoteCommandRecipeMixIn):
 
         dataset.update_images()
         image_ids = [img.id for img in dataset.images if not img.rejected]
-        trap.monitoringlist.mark_sources(dataset_id, self.inputs['parset'])
+        trap.ingredients.monitoringlist.mark_sources(dataset_id, self.inputs['parset'])
 
         # Obtain available nodes
         clusterdesc = ClusterDesc(self.config.get('cluster', "clusterdesc"))
@@ -86,7 +81,7 @@ class monitoringlist(BaseRecipe, RemoteCommandRecipeMixIn):
                     )
                 )
         jobs = self._schedule_jobs(jobs, max_per_node=self.inputs['nproc'])
-        
+
         # Check if we recorded a failing process before returning
         if self.error.isSet():
             self.logger.warn("Failed monitoringlist process detected")

@@ -640,7 +640,7 @@ def source_profile_and_errors(data, threshold, noise, beam, fixed=None):
         try:
             param.update(fitting.fitgaussian(data, param, fixed=fixed))
             param.gaussian = True
-            logger.info('Gauss fitting was successful.')
+            logger.debug('Gauss fitting was successful.')
         except ValueError:
             logger.warn('Gauss fitting failed.')
 

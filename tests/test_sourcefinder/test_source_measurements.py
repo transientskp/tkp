@@ -16,12 +16,11 @@ if not  hasattr(unittest.TestCase, 'assertIsInstance'):
     import unittest2 as unittest
 import os
 import numpy as np
-
 from tkp.utility.accessors import FitsFile
 from tkp.sourcefinder import image
-
 import tkp.config
-from decorators import requires_data
+from tkp.testutil.decorators import requires_data
+
 
 DATAPATH = tkp.config.config['test']['datapath']
 MAX_BIAS = 5.0

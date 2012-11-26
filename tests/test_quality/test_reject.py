@@ -1,17 +1,12 @@
 import unittest
+from tkp.testutil import db_subs
 if not  hasattr(unittest.TestCase, 'assertIsInstance'):
     import unittest2 as unittest
-import os
-import sys
-
 import monetdb
-
 import tkp.quality
 import tkp.database
 import tkp.database.quality
-sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-import db_subs
-from decorators import requires_database
+from tkp.testutil.decorators import requires_database
 
 
 class TestReject(unittest.TestCase):

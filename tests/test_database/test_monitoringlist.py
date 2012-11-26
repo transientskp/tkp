@@ -3,10 +3,9 @@ if not  hasattr(unittest.TestCase, 'assertIsInstance'):
     import unittest2 as unittest
 import tkp.database as tkpdb
 import tkp.database.utils as dbutils
-import tkp.config
 import tests.db_subs as db_subs
-import tests.db_queries as dbq
-from tests.decorators import requires_database         
+import tkp.testutil.db_queries as dbq
+from tkp.testutil.decorators import requires_database
 
 
 class TestTransientCandidateMonitoring(unittest.TestCase):

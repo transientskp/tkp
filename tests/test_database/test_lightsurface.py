@@ -2,11 +2,7 @@
 import unittest
 if not  hasattr(unittest.TestCase, 'assertIsInstance'):
     import unittest2 as unittest
-import os
-import sys
-sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-import db_subs
-from decorators import requires_database
+from tkp.testutil.decorators import requires_database
 from tkp.database.orm import DataSet
 from tkp.database.orm import Image
 import tkp.database

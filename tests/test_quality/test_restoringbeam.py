@@ -2,10 +2,7 @@ import unittest
 if not  hasattr(unittest.TestCase, 'assertIsInstance'):
     import unittest2 as unittest
 import os
-import sys
-import scipy.constants
-sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from decorators import requires_data
+from tkp.testutil.decorators import requires_data
 from tkp.utility import accessors
 import tkp.quality.restoringbeam
 import tkp.lofar.beam

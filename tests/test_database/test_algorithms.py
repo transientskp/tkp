@@ -1,15 +1,10 @@
 import unittest
 if not  hasattr(unittest.TestCase, 'assertIsInstance'):
     import unittest2 as unittest
-import os
-import sys
-sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 import tkp.database as tkpdb
-import db_subs
-from decorators import requires_database
+from tkp.testutil.decorators import requires_database
+from tkp.testutil import db_subs
 import tkp.database.utils as db_utils
-
-
 
 
 class TestSourceAssociation(unittest.TestCase):

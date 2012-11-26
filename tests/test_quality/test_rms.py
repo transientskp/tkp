@@ -2,20 +2,15 @@ import unittest
 if not  hasattr(unittest.TestCase, 'assertIsInstance'):
     import unittest2 as unittest
 import os
-import sys
-
 import numpy
 from numpy.testing import assert_array_equal, assert_almost_equal
-
 from tkp.utility import accessors
 import tkp.quality
 from tkp.quality import statistics
 import tkp.lofar.noise
 import tkp.config
 import tkp.lofar.antennaarrays
-
-sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from decorators import requires_data
+from tkp.testutil.decorators import requires_data
 
 
 DATAPATH = tkp.config.config['test']['datapath']

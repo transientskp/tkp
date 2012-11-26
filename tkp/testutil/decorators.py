@@ -2,10 +2,10 @@ import os
 import tkp.config
 
 import unittest
+from tkp.testutil import db_subs
+
 if not  hasattr(unittest.TestCase, 'assertIsInstance'):
     import unittest2 as unittest
-    
-import db_subs
 
 def requires_database():
     if tkp.config.config['database']['enabled']:

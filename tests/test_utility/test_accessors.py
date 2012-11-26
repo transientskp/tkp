@@ -4,18 +4,14 @@ import unittest
 if not  hasattr(unittest.TestCase, 'assertIsInstance'):
     import unittest2 as unittest
 import os
-import sys
 import pyfits
-import h5py
 import tkp.config
 from tkp.utility import accessors
-from tkp.utility.accessors.lofarimage import LofarImage
 from tkp.utility.accessors.fitsimage import FITSImage
 from tkp.database import DataSet
 from tkp.database import DataBase
-sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from decorators import requires_data
-from decorators import requires_database
+from tkp.testutil.decorators import requires_data
+from tkp.testutil.decorators import requires_database
 
 DATAPATH = tkp.config.config['test']['datapath']
 
@@ -138,22 +134,6 @@ class FrequencyInformation(unittest.TestCase):
             list(accessors.sourcefinder_image_from_accessor(image).data.shape),
             [2048, 2048])
         database.close()
-
-
-lofar_file = os.path.join(DATAPATH, 'lofar.h5')
-@requires_data(lofar_file)
-@unittest.skip # disable for now since not working :)
-class TestLofarFile(unittest.TestCase):
-
-    def testOpen(self):
-        file_handler = h5py.File(lofar_file,'r')
-        image = LofarImage(file_handler) #, beam=(54./3600, 54./3600, 0.))
-
-
-        file_handler = h5py.File(lofar_file,'r')
-        image = LofarImage(file_handler)
-        sfimage = accessors.sourcefinder_image_from_accessor(image)
-        pass
 
 if __name__ == '__main__':
     unittest.main()

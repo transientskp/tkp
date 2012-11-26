@@ -2,7 +2,7 @@ import unittest
 if not  hasattr(unittest.TestCase, 'assertIsInstance'):
     import unittest2 as unittest
 import datetime
-from decorators import requires_database
+from tkp.testutil.decorators import requires_database
 from tkp.database import DataSet
 from tkp.database import DataBase
 from tkp.database import Image

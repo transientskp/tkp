@@ -2,9 +2,8 @@ import unittest
 if not  hasattr(unittest.TestCase, 'assertIsInstance'):
     import unittest2 as unittest
 import tkp.config
-import db_subs
 import os
-from decorators import requires_database, requires_data, duration
+from tkp.testutil.decorators import requires_database, requires_data, duration
 
 def debug_print(*args):
     return #Comment to switch on debug prints.

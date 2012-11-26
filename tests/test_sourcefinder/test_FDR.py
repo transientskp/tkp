@@ -40,7 +40,7 @@ import os
 from tkp.utility import accessors
 from tkp.sourcefinder import image
 import tkp.config
-from decorators import requires_data, duration
+from tkp.testutil.decorators import requires_data, duration
 
 DATAPATH = tkp.config.config['test']['datapath']
 NUMBER_INSERTED = float(3969)

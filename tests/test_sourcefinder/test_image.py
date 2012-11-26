@@ -1,9 +1,8 @@
 import unittest
 if not  hasattr(unittest.TestCase, 'assertIsInstance'):
     import unittest2 as unittest
-from decorators import requires_data
-from decorators import requires_module
-import tkp.sourcefinder 
+from tkp.testutil.decorators import requires_data
+import tkp.sourcefinder
 from tkp.sourcefinder import image as sfimage
 import tkp.config
 from tkp.utility import accessors

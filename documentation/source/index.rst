@@ -16,6 +16,17 @@ Contents:
    recipes
    troubleshooting
 
+.. The following are not gone for good, but are currently too outdated to be
+   of much use.
+
+.. toctree::
+   :maxdepth: 2
+   :hidden:
+
+   alerts
+   classification
+   monitoringlist
+   recipes_deprecated
 
 Indices and tables
 ==================

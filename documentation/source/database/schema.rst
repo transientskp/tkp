@@ -10,14 +10,14 @@ assoccatsource
 ==============
 
 This table stores the association between an extracted source and one or more
-cataloged sources (i.e. VLSS, WENSSm, WENSSp, and NVSS sources). 
+cataloged sources (i.e. VLSS, WENSSm, WENSSp, and NVSS sources).
 
 For every association pair the association parameters, distance_arcsec, r and
 loglr are calculated as well. Only source pairs that fullfil the criterion of
-an association (r < r_lim) are accepted and appended to this table. r_lim may
-be specified in the user parsets or tkp.cfg, otherwise it defaults to 3.717,
-corresponding to missing 10^{-3} counterparts (see Scheers's `thesis
-<http://dare.uva.nl/en/record/367374>`_, section 3.2.3)
+an association (:math:`r < r_{lim}`) are accepted and appended to this table.
+:math:`r_{lim}` may be specified in the user parsets or tkp.cfg, otherwise it
+defaults to 3.717, corresponding to missing :math:`10^{-3}` counterparts (see
+`Scheers's thesis <http://dare.uva.nl/en/record/367374>`_, section 3.2.3)
 
 
 **xrtsrc**
@@ -58,14 +58,14 @@ or n-1.
    of a lightcurve, whereas the lightcurve consist of multiple frequency bands
    and Stokes parameters.
 
-**xtrsrc** 
+**xtrsrc**
    This is the id of the extracted source that could be associated to
    runningcatalog source.  Together, the runcat_id and the xtrsrc form a unique
    pair.
 
 **type**
     Type of association, and its description.  n-m, where n is the number of
-    runningcatalog sources, and m the number of extractedsources.
+    runningcatalog sources, and m the number oe.g.ractedsources.
     Type 1: 1-1 association; type 2: 1-n (one-to-many) association; type 3:
     n-1, many-to-one association; type 4: n-m (many-to-many) association; type
     5: 0-1 (zero-to-one) association, a new source.
@@ -78,9 +78,9 @@ or n-1.
    The dimensionless distance (De Ruiter radius) between the associated
    sources. It is determined as the positional differences weighted by the
    errors, calculated by the association procedure inside the database (Scheers
-   thesis ch3).
+   thesis chapter 3).
 
-**loglr**      
+**loglr**
    The logarithm of the likelihood ratio of the associated sources, defaults to
    NULL if not calculated (Scheers thesis ch3).
 
@@ -88,13 +88,13 @@ or n-1.
 catalogedsource
 ===============
 
-This table contains the sources from renown surveys/catalogues, VLSS, WENSS and
-NVSS. The original data (all columns) are downloaded from the CDS Vizier
+This table contains the sources from renown surveys/catalogues, VLSS, WENSS
+and NVSS. The original data (all columns) are downloaded from the CDS Vizier
 websites (`VLSS <http://cdsarc.u-strasbg.fr/viz-bin/VizieR?-source=VIII/79>`_,
 `WENSS <http://cdsarc.u-strasbg.fr/viz-bin/VizieR?-source=VIII/62>`_ and `NVSS
 <http://cdsarc.u-strasbg.fr/viz-bin/VizieR?-source=VIII/65>`_) The catalogues
-also contains the exoplanets, of which the entries were provided by Matthias
-Griessmeier. 
+also contains the exoplanets, of which the entries were provided by
+Jean-Mathias Griessmeier.
 
 This table will be pre-loaded in the database, in order to have it available
 all the time. As opposed to the runningcatalog, the catalogedsources table is
@@ -104,21 +104,21 @@ static and fixed and won't change during runs.
 **id**
     Every inserted catalog source gets a unique id, generated sequentially by
     the database.
-    
-**catalog** 
+
+**catalog**
     The reference id to the catalog from which this source originates from.
-     
+
 **orig_catsrcid**
     The original id of the source as reported in the catalog
 
 **catsrcname**
     The original name of the source as reported in the catalog
-    
+
 **tau**
     The integration time. Defaults to NULL.
 
 **band**
-    The reference id to the frequencyband at which this survey was carried out. 
+    The reference id to the frequencyband at which this survey was carried out.
 
 **stokes**
     The Stokes parameter. Four possible values 1 - I, 2 - Q, 3 - U, 4 - V.
@@ -129,14 +129,14 @@ static and fixed and won't change during runs.
 
 **zone**
     The zone id in which the source declination resides, calculated by the
-    database.  The sphere is devided into zones of equal width: currently fixed
-    to 1 degree, and the zone is effectively the truncated declination.
-    (decl=31.3 => zone=31, decl=31.9 => zone=31). This column is primarly for
-    speeding up source look-up queries.
-    
+    database.  The sphere is devided into zones of equal width: currently
+    fixed to 1 degree, and the zone is effectively the truncated declination.
+    (``decl`` = 31.3 → ``zone`` = 31, ``decl`` = 31.9 → ``zone`` = 31). This
+    column is primarly for speeding up source look-up queries.
+
 **ra**
     The right ascension (RA) of the source in J2000 degrees.
-    
+
 **decl**
     The declination (decl) of the source in J2000 degrees.
 
@@ -148,18 +148,18 @@ static and fixed and won't change during runs.
 
 **x**
     The x-Cartesian coordinate of the source, generated by the database from
-    ra, decl: COS(decl) * COS(ra)
-                    .
+    ``ra``, ``decl``: :math:`\cos(decl) * \cos(ra)`.
+
 **y**
     The y-Cartesian coordinate of the source, generated by the database from
-    ra, decl: COS(decl) * SIN(ra)
-    
+    ``ra``, ``decl``: :math:`\cos(decl) * \sin(ra)`.
+
 **z**
     The z-Cartesian coordinate of the source, generated by the database from
-    ra, decl: SIN(decl)
-    
+    ``ra``, ``decl``: :math:`\sin(decl)`.
+
 **margin**
-    Not used, defaults to 0. 
+    Not used, defaults to 0.
 
 **det_sigma**
     The detection level of the source, which none of the current catalogs
@@ -215,17 +215,17 @@ catalog
 =======
 
 This table stores the information about the catalogs that are loaded into the
-pipeline database. 
+pipeline database.
 
 
 **id**
     Every catalog gets a unique id, generated sequentually by the database.
 
 **name**
-    An acronym under which the catalog is well-known, f.ex. 'NVSS'
+    An acronym under which the catalog is well-known, e.g. 'NVSS'
 
 **fullname**
-    The (nearly) full name under which the catalog is known, f.ex. 'NRAO VLA
+    The (nearly) full name under which the catalog is known, e.g. 'NRAO VLA
     Sky Survey'
 
 
@@ -240,7 +240,7 @@ dataset
 
 This table contains the information about a dataset. A dataset is nothing more
 than a collection of images grouped together for processing. When the same
-group is reprocessed, and the dataset.inname is identical (f.ex. when the
+group is reprocessed, and the dataset.inname is identical (e.g. when the
 processing runs with other trap parameters), the rerun is incremented by 1, but
 the id is auto-incremented as well, treating it as an independent dataset.
 
@@ -254,7 +254,7 @@ the id is auto-incremented as well, treating it as an independent dataset.
     even when it was reprocessed.
     At insertion time, by the insertDataset() SQL function, this is incremented
     by 1 when the description of the dataset is already present in the table,
-    otherwise defaults to 0. 
+    otherwise defaults to 0.
 
 **type**
     Not being used.
@@ -266,7 +266,7 @@ the id is auto-incremented as well, treating it as an independent dataset.
 **detection_threshold**
     The detection threshold that was used by source finder to extract sources.
     Value read from either the source finder parset file or the tkp.cfg file.
-    See the :ref:`PySE documentation <pyse>` for more information. 
+    See the :ref:`PySE documentation <pyse>` for more information.
 
 **analysis_threshold**
     The analysis threshold that was used by source finder to extract sources.
@@ -292,7 +292,7 @@ the id is auto-incremented as well, treating it as an independent dataset.
     the source finder parset file or the tkp.cfg file. See the :ref:`PySE
     documentation <pyse>` for more information.
 
-**description** 
+**description**
     A description of the dataset, with a maximum of 100 characters.
 
 **node(s)**
@@ -304,12 +304,12 @@ extractedsource
 
 This table contains all the extracted sources (measurements) of an image.
 Maybe source is not the right description, because measurements may be made
-that were erronous and do not represent a source. 
+that were erronous and do not represent a source.
 
-.. Most values come from the sourcefinder procedures, and some are auxiliary
+Most values come from the sourcefinder procedures, and some are auxiliary
 deduced values generated by the database.
 
-.. This table is empty BEFORE an observation. DURING an observation new sources
+This table is empty BEFORE an observation. DURING an observation new sources
 are inserted into this table AFTER an observation this table is dumped and
 transported to the catalog database.
 
@@ -399,13 +399,12 @@ The TraP may add forced-fit entries to this table as well. Then
 
 **extract_type**
     Reports how the source was extracted by sourcefinder (Hanno's thesis),
-    generated by the sourcefinder procedures:
-    
-    The currently implemented values:
-    NULL: gaussian fit
-    NULL: moments fit
-    1: forced fit to pixel (by the
-    _insert_user_monitored_source_into_extractedsource() method)
+    generated by the sourcefinder procedures. Currently implemented values
+    are:
+
+        * ``NULL``: gaussian fit
+        * ``NULL``: moments fit
+        * ``1``: forced fit to pixel
 
 **node(s)**
     Determine the current and number of nodes in case of a sharded database

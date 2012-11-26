@@ -1,9 +1,11 @@
 .. _installation:
+
 ######################
 Installation
 ######################
 .. |last_updated| last_updated::
-:Last updated: |last_updated|
+
+:last updated: |last_updated|
 
 This page documents only how to install the Trap recipes. In order to run the
 pipeline, you will also need to have installed the relevant dependencies (see

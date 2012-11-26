@@ -2,6 +2,7 @@
 The Transients Pipeline
 ############################
 .. |last_updated| last_updated::
+
 :Last updated: |last_updated|
 
 This document describes the transients pipeline, its :ref:`installation <installation>`,
@@ -47,7 +48,7 @@ some will make little sense. The steps are:
   This step also takes care of sources that were obtained from elsewhere and
   manually added, such as a new X-ray source: the pipeline will now monitor
   this position so the full LOFAR light curve for this source can be measured.
-  
+
 - **Transient detection.** All existing light curves (ie, associated sources from
   the previous step) will be examined to determine if sources are variable.
   (The basic algorithm for this is a chi-squared calculation and check for

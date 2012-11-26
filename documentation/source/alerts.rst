@@ -3,6 +3,7 @@
 Alerts recipe
 =============
 .. |last_updated| last_updated::
+
 :author: Evert Rol
 :date: |last_updated|
 
@@ -10,7 +11,7 @@ Alerts recipe
 Introduction
 ------------
 
-The alerts recipe is simpe recipe ("master" only), that will send an
+The alerts recipe is simple recipe ("master" only), that will send an
 email alert to for new found transients to selected email
 addresses. It is smart enough that it will only sent one alert per
 transient per email address, to not flood people's email inboxes.
@@ -54,12 +55,12 @@ a position of RA, Dec = (52.7, 57.05), with a margin of 10 arcseconds. Person
 Note that in case of the classification, multiple keywords in a list or or-ed
 together. If, however, there are multiple conditions given (such as
 a classification and a position), those are and-ed together. So if Person
-1 would like to receive alerts only for short grbs, the criteria would be:
+1 would like to receive alerts only for short grbs, the criteria would be::
 
     p1.criterion.classification = [short]
     p1.criterion.classification = [grb]
 
-where as 
+where as::
 
     p1.criterion.classification = [short, grb]
 

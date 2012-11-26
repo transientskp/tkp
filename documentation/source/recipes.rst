@@ -4,16 +4,17 @@
 Script and recipe parameters
 ##############################
 .. |last_updated| last_updated::
+
 :Last updated: |last_updated|
 
-This page gives a very brief description of each script / recipe used in the 
-TraP workflow, and details the parameters supplied  
-either via command line arguments (in the case of top-level scripts) or via 
+This page gives a very brief description of each script / recipe used in the
+TraP workflow, and details the parameters supplied
+either via command line arguments (in the case of top-level scripts) or via
 parameter sets (for the recipes).
 
 Scripts
 ====================
-For a reminder on script arguments at the command line, try:: 
+For a reminder on script arguments at the command line, try::
 
     trap-script.py --help
 
@@ -23,9 +24,10 @@ at the command line.
 :py:mod:`trap-images.py`
 --------------------------
 
-.. Warning:: 
-	This recipe is deprecated, we now use ``trap-local.py`` or ``trap-run.py``. 
-	Documentation updates coming soon.
+.. Warning::
+
+    This recipe is deprecated, we now use ``trap-local.py`` or
+    ``trap-run.py``.  Documentation updates coming soon.
 
 
 Runs the distributed trap recipe.
@@ -43,7 +45,6 @@ Command line args
     -m [[RA1,DEC1],[RA2,DEC2]]
     --monitor-coords=[[RA1,DEC1],[RA2,DEC2]]
 
-      
 
 **Monitor list**
 
@@ -54,14 +55,15 @@ Command line args
     -l monitor_list.txt
     --monitor-list=monitor_list.txt
 
-  Where :file:`monitor_list.txt` either contains exactly the same contents as the command line entry, or if you prefer, 
-  the same but with extra whitespace e.g.
-  
+  Where :file:`monitor_list.txt` either contains exactly the same contents as
+  the command line entry, or if you prefer, the same but with extra whitespace
+  e.g.
+
   :file:`monitor_list.txt`::
 
     [
-    [RA1, DEC1], 
-    [RA2, DEC2], 
+    [RA1, DEC1],
+    [RA2, DEC2],
     ]
 
 
@@ -69,8 +71,6 @@ Command line args
   Specifies a previous dataset to add measurements to, e.g.::
 
     --dataset-id=12
-
-
 
 
 Recipes
@@ -152,7 +152,7 @@ looking for deviations in their light curve.
      mean value) above which a source is assumed to be variable.
 
 - outputs:
-  
+
   - transient_ids: list of database IDs of the sources which are found
     to be transient.
 

@@ -2,12 +2,13 @@
 Setup
 #################
 .. |last_updated| last_updated::
+
 :Last updated: |last_updated|
 
 .. warning::
 
-   The workflow described here has been largely superseded by the ``trap-manage`` 
-   script - documentation for which is coming soon.
+   The workflow described here has been largely superseded by the
+   ``trap-manage`` script - documentation for which is coming soon.
 
 Preamble
 --------
@@ -118,7 +119,7 @@ Copy the directory and subdirs from ``~evert/work/trap/jobs/example/`` into this
 And copy the trap configuration file::
 
     cp -r ~evert/work/trap/trap.cfg  $HOME/work/trap/trap.cfg
-    
+
 You should now have the following structure::
 
     $HOME/work/trap/trap.cfg
@@ -128,9 +129,8 @@ You should now have the following structure::
                                   vds/
                                   results/
                                   logs/
-                                    
-The results, logs and vds directories will be empty.
 
+The results, logs and vds directories will be empty.
 
 Now edit trap.cfg. Only a few edits will be necessary. In particular, check:
 
@@ -191,6 +191,6 @@ You also want to disable the host key check that ssh performs every first time
 you log in to a node. You can do that by setting StrictHostKeyChecking to
 'no'::
 
-    $> cat >> ~/.ssh/config 
+    $> cat >> ~/.ssh/config
     StrictHostKeyChecking no
     <ctrl-D>

@@ -65,7 +65,7 @@ or n-1.
 
 **type**
     Type of association, and its description.  n-m, where n is the number of
-    runningcatalog sources, and m the number oe.g.ractedsources.
+    runningcatalog sources, and m the number of extractedsources.
     Type 1: 1-1 association; type 2: 1-n (one-to-many) association; type 3:
     n-1, many-to-one association; type 4: n-m (many-to-many) association; type
     5: 0-1 (zero-to-one) association, a new source.
@@ -724,11 +724,9 @@ weight of the :math:`i`-th measurement of :math:`x`.
     Boolean to define that a source is near the 360-0 meridian. Not being used.
 
 **inactive**
-    Boolean to set an entry to inactive. 
-    This is done during the `source association <database_assoc>` procedure,
-    where e.g. the many-to-many cases are handled and an existing entry is
-    replaced 
-    by two or more entries.
+    Boolean to set an entry to inactive.  This is done during the `source
+    association <database_assoc>` procedure, where e.g. the many-to-many cases
+    are handled and an existing entry is replaced by two or more entries.
 
 
 runningcatalog_flux

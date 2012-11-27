@@ -1,34 +1,32 @@
-
-from tkp.utility.coordinates import WCS
+from pyrap.tables import table as pyrap_table
 from tkp.utility.accessors.dataaccessor import DataAccessor
+import tkp.utility.accessors
+import logging
+import warnings
 
-class CASAImage(DataAccessor):
+logger = logging.getLogger(__name__)
+
+class CasaImage(DataAccessor):
     """
-    Use pyrap to pull image data out of an AIPS++ table.
+    Use pyrap to pull image data out of an Casa table.
 
-    This assumes that all AIPS++ images are structured just like the example
-    James Miller-Jones provided me with. This is probably not a good
-    assumption...
     """
     def __init__(self, filename, plane=0, beam=None):
-        super(CASAImage, self).__init__()  # Set defaults
+        super(CasaImage, self).__init__()  # Set defaults
         self.filename = filename
+        self.table = pyrap_table(self.filename, ack=False)
+        self.beam = beam
+        self.subtables = {}
         self.plane = plane
+        self.data = self.table[0]['map']
+
         self._coordparse()
         self._freqparse()
-        if beam:
-            bmaj, bmin, bpa = beam
-            super(CASAImage, self)._beamsizeparse(bmaj, bmin, bpa)
-        else:
-            self._beamsizeparse()
+        self._beamsizeparse()
 
-    def _get_table(self):
-        from pyrap.tables import table
-        return table(self.filename, ack=False)
 
     def _coordparse(self):
-        self.wcs = WCS()
-        my_coordinates = self._get_table().getkeyword('coords')['direction0']
+        my_coordinates = self.table.getkeyword('coords')['direction0']
         self.wcs.crval = my_coordinates['crval']
         self.wcs.crpix = my_coordinates['crpix']
         self.wcs.cdelt = my_coordinates['cdelt']
@@ -50,38 +48,22 @@ class CASAImage(DataAccessor):
     def _freqparse(self):
         # This is what one gets from the C-imager
         try:
-            spectral_info = self._get_table().getkeyword('coords')['spectral2']
+            spectral_info = self.table.getkeyword('coords')['spectral2']
             self.freqeff = spectral_info['wcs']['crval']
             self.freqbw = spectral_info['wcs']['cdelt']
         except KeyError:
             pass
 
     def _beamsizeparse(self):
-        try:
-            beam_info = self._get_table().getkeyword(
-                'imageinfo')['restoringbeam']
-            bmaj = beam_info['major']['value']
-            bmin = beam_info['minor']['value']
-            bpa = beam_info['positionangle']['value']
-            super(CASAImage, self)._beamsizeparse(bmaj, bmin, bpa)
-        except KeyError:
-            raise ValueError("beam size information not available")
+        if self.beam:
+            bmaj, bmin, bpa = self.beam
+        else:
+            restoringbeam = self.table.getkeyword('imageinfo')['restoringbeam']
+            bmaj = restoringbeam['major']['value']
+            bmin = restoringbeam['minor']['value']
+            bpa = restoringbeam['positionangle']['value']
 
-    @property
-    def data(self):
-        return self._get_table().getcellslice("map", 0,
-            [0, self.plane, 0, 0],
-            [0, self.plane, -1, -1]
-        ).squeeze()
+        deltax = self.wcs.cdelt[0]
+        deltay = self.wcs.cdelt[1]
+        self.beam = tkp.utility.accessors.beam2semibeam(bmaj, bmin, bpa, deltax, deltay)
 
-    def __getstate__(self):
-        return {"filename": self.filename, "plane": self.plane}
-
-    def __setstate__(self, statedict):
-        self.filename = statedict['filename']
-        self.plane = statedict['plane']
-        self._coordparse()
-
-
-class AIPSppImage(CASAImage):
-    pass

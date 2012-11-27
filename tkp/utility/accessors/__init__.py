@@ -1,10 +1,3 @@
-#
-# LOFAR Transients Key Project
-#
-
-# NOTE: use of numpy.squeeze() appears a bad idea, in the case of
-# (unlikely, but not impossible) [1, Y] or [X, 1] shaped images...
-
 """
 Data accessors.
 
@@ -12,31 +5,26 @@ These can be used to populate ImageData objects based on some data source
 (FITS file, array in memory... etc).
 """
 
+# Todo: use of numpy.squeeze() appears a bad idea, in the case of
+# (unlikely, but not impossible) [1, Y] or [X, 1] shaped images...
+
+
 import pyfits
+import numpy
 from tkp.database import Image as DBImage
 from tkp.sourcefinder.image import ImageData
-
-from tkp.utility.accessors.casaimage import *
-from tkp.utility.accessors.fitsimage import *
-from tkp.utility.accessors.dataaccessor import *
 
 
 def dbimage_from_accessor(dataset, image):
     """Create an entry in the database images table from an image 'accessor'
-
     Args:
-
         - dataset (dataset.DataSet): DataSet for the image. Also
           provides the database connection.
-
         - image (DataAccessor): FITS/AIPS/HDF5 image available through
           an accessor
-
     Returns:
-
         (dataset.Image): a dataset.Image instance.
     """
-    #if image.freqeff == 0 or image.freqeff is None or image.freqbw is None:
     if image.freqeff is None or image.freqbw is None:
         raise ValueError("cannot create database image: frequency information missing")
     data = {'tau_time': image.inttime,
@@ -55,14 +43,10 @@ def dbimage_from_accessor(dataset, image):
 
 def sourcefinder_image_from_accessor(image):
     """Create a source finder ImageData object from an image 'accessor'
-
     Args:
-
         - image (DataAccessor): FITS/AIPS/HDF5 image available through
           an accessor.
-
     Returns:
-
         (sourcefinder.ImageData): a source finder image.
     """
     image = ImageData(image.data, image.beam, image.wcs)
@@ -83,3 +67,18 @@ def writefits(data, filename, header = {}):
         for key in header.iterkeys():
             hdu.header.update(key, header[key])
         hdu.writeto(filename)
+
+
+def beam2semibeam(bmaj, bmin, bpa, deltax, deltay):
+    """Calculate beam in pixels and radians"""
+
+    semimaj = (bmaj / 2.) * (numpy.sqrt(
+        (numpy.sin(numpy.pi * bpa / 180.)**2) / (deltax**2) +
+        (numpy.cos(numpy.pi * bpa / 180.)**2) / (deltay**2))
+    )
+    semimin = (bmin / 2.) * (numpy.sqrt(
+        (numpy.cos(numpy.pi * bpa / 180.)**2) / (deltax**2) +
+        (numpy.sin(numpy.pi * bpa / 180.)**2) / (deltay**2))
+    )
+    theta = numpy.pi * bpa / 180
+    return (semimaj, semimin, theta)

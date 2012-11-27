@@ -2,9 +2,9 @@ from tkp.utility.accessors.dataaccessor import DataAccessor
 import numpy
 
 
-class LofarImage(DataAccessor):
+class LofarHdf5Image(DataAccessor):
     def __init__(self, source, plane=False, beam=False):
-        super(LofarImage, self).__init__()  # Set defaults
+        super(LofarHdf5Image, self).__init__()  # Set defaults
 
         self.plane = plane
 
@@ -73,6 +73,6 @@ class LofarImage(DataAccessor):
         """Read and return the beam properties bmaj, bmin and bpa values from
         the fits header
         """
-        # todo: this data is net present in the h5 lofar example file in the data repo
+        # todo: this data is not present in the h5 lofar example file in the data repo
         pass
 

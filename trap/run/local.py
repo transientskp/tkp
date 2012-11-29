@@ -1,4 +1,3 @@
-import sys
 import logging
 from tkp.database import DataBase, DataSet
 import trap.ingredients.quality
@@ -15,6 +14,11 @@ from images_to_process import images
 
 import lofarpipe.support.lofaringredient as ingredient
 
+class MonetFilter(logging.Filter):
+    def filter(self, record):
+        return record.name != 'monetdb'
+
+
 class TrapLocal(control):
     inputs = {
         'dataset_id': ingredient.IntField(
@@ -27,7 +31,8 @@ class TrapLocal(control):
     def pipeline_logic(self):
         logdrain = logging.getLogger()
         logdrain.level = self.logger.level
-        logdrain.handlers += self.logger.handlers
+        logdrain.handlers = self.logger.handlers
+        [h.addFilter(MonetFilter()) for h in logdrain.handlers]
         self.logger = logdrain
 
         quality_parset_file = self.task_definitions.get("quality_check", "parset")

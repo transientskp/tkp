@@ -1,3 +1,5 @@
+import sys
+import logging
 from tkp.database import DataBase, DataSet
 import trap.ingredients.quality
 import trap.ingredients.source_extraction
@@ -23,6 +25,11 @@ class TrapLocal(control):
     }
 
     def pipeline_logic(self):
+        logdrain = logging.getLogger()
+        logdrain.level = self.logger.level
+        logdrain.handlers += self.logger.handlers
+        self.logger = logdrain
+
         quality_parset_file = self.task_definitions.get("quality_check", "parset")
         srcxtr_parset_file = self.task_definitions.get("source_extraction", "parset")
         transientsearch_file = self.task_definitions.get("transient_search", "parset")

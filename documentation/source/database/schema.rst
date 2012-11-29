@@ -664,7 +664,7 @@ weighted mean is
 
 .. math::
 
-   \overline{\chi_N} = \frac{\sum_{i=1}^{N} w_i x_i}{\sum_{i=1}^{N} w_i},
+   \overline{\chi}_N = \frac{\sum_{i=1}^{N} w_i x_i}{\sum_{i=1}^{N} w_i},
 
 where :math:`N` is the number of datapoints and :math:`w_i = 1/{e_i}^2` is the
 weight of the :math:`i`-th measurement of :math:`x`.
@@ -825,19 +825,18 @@ new average as:
 
 .. math::
 
-    \overline{x}_{N=1} = \frac{1}{N=1} \left[ N \overline{x}_N + x_{N+1}
-    \right].
+    \overline{x}_{N+1} = \frac{N \overline{x}_N + x_{N+1}}{N+1} .
 
 This is slightly different for weighted means. If we have a weighted mean,
 :math:`\overline{\xi}_N` defined as:
 
 .. math::
 
-    \overline{\xi_N} = \frac{\sum_{i=1}^{N} w_i x_i}{\sum_{i=1}^{N} w_i},
+    \overline{\xi}_N = \frac{\sum_{i=1}^{N} w_i x_i}{\sum_{i=1}^{N} w_i},
 
 and we add the :math:`N+1`-th measurement of :math:`x_{N+1}` and its error
 :math:`e_{N+1}` 
-(ie :math:`w_{N+1} 1/{e_{N+1}}^2`), we get the new average by:
+(but using again :math:`w_{N+1} = 1/{e_{N+1}}^2`), we get the new average by:
 
 .. math::
 
@@ -855,7 +854,7 @@ and we add the :math:`N+1`-th measurement of :math:`x_{N+1}` and its error
             N\overline{w}_N + w_{N+1} x_N+1
               }.
 
-Storing the averages relaxes the computations and are helpful is calculating
+Storing the averages relaxes the computations and are helpful in calculating
 the variability indices by simply multiplying the necessary columns.
 
 The first variability indicator, the magnitude of the flux variability of a
@@ -878,7 +877,7 @@ reduced :math:`\chi^2` statistics. Written in aggregate form it becomes
 
 .. math::
 
-    \eta_{\nu} = \frac{}{}
+    \eta_{\nu} = \frac{N}{N-1}
                  \left(
                     \overline{w {I_{\nu}}^2}
                     -
@@ -890,17 +889,17 @@ parameter).
 The parameters in the last two equations correspond to columns in the tables as
 follows:
 
-:math:`\overline{I_{\nu}}` to avg_f_peak
+:math:`\overline{I_{\nu}}` to ``avg_f_peak``
 
-:math:`\overline{{I_{\nu}}^2}` to avg_f_peak_sq
+:math:`\overline{{I_{\nu}}^2}` to ``avg_f_peak_sq``
 
-:math:`\overline{w {I_{\nu}}^2}` to avg_weighted_f_peak_sq
+:math:`\overline{w {I_{\nu}}^2}` to ``avg_weighted_f_peak_sq``
 
-:math:`\overline{w I_{\nu}}` to avg_weighted_f_peak
+:math:`\overline{w I_{\nu}}` to ``avg_weighted_f_peak``
 
-:math:`\overline{w}` to avg_f_peak_weight
+:math:`\overline{w}` to ``avg_f_peak_weight``
 
-:math:`N` to f_datapoints
+:math:`N` to ``f_datapoints``, (and not ``datapoints``)
 
 
 **runcat**

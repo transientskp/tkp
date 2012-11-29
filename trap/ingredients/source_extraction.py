@@ -25,14 +25,14 @@ def extract_sources(image_id, parset, tkpconfigdir=None):
     import tkp
     from tkp.config import config
     from tkp.database import DataBase
-    from tkp.utility.accessors import FITSImage
+    import tkp.utility.accessors
     from tkp.utility.accessors import sourcefinder_image_from_accessor
 
     database = DataBase()
     db_image = Image(database=database, id=image_id)
     if not os.path.exists(db_image.url):
         raise PipelineException("Image '%s' not found" % db_image.url)
-    fitsimage = FITSImage(db_image.url)
+    fitsimage = tkp.utility.accessors.open(db_image.url)
     seconfig = config['source_extraction']
     parset = parameterset(parset)
 

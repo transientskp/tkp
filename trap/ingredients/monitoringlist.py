@@ -4,8 +4,7 @@ from contextlib import closing
 from lofarpipe.support.lofarexceptions import PipelineException
 from lofar.parameterset import parameterset
 from tkp.database import DataBase, DataSet
-from tkp.utility.accessors import FITSImage
-from tkp.utility.accessors import sourcefinder_image_from_accessor
+import tkp.utility.accessors
 
 from tkp.database.orm import Image
 
@@ -38,8 +37,8 @@ def update_monitoringlist(image_id):
 
     # Obtain the list of targets to be monitored (and not already
     # detected) for this image
-    fitsimage = FITSImage(db_image.url)
-    mon_targets = db_image.monitoringsources()
+    fitsimage = tkp.utility.accessors.open(db_image.url)
+    mon_targets = tkp.utility.accessors.db_image.monitoringsources()
 
     # Run the source finder on these mon_targets
     if len(mon_targets):

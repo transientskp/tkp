@@ -4,7 +4,7 @@ from lofarpipe.support.parset import parameterset
 from tkp.database import DataBase
 from tkp.quality.statistics import rms_with_clipped_subregion
 from tkp.lofar.noise import noise_level
-from tkp.utility.accessors import FITSImage
+import tkp.utility.accessors
 import tkp.database.quality
 import tkp.quality
 from tkp.database.orm import Image
@@ -42,10 +42,10 @@ def check(image_id, parset_file):
     """
     database = DataBase()
     db_image = Image(database=database, id=image_id)
-    fitsimage = FITSImage(db_image.url)
+    accessor = tkp.utility.accessors.open(db_image.url)
     p = parse_parset(parset_file)
 
-    rms = rms_with_clipped_subregion(fitsimage.data, sigma=p['sigma'], f=p['f'])
+    rms = rms_with_clipped_subregion(accessor.data, sigma=p['sigma'], f=p['f'])
     noise = noise_level(p['frequency'], p['subbandwidth'], p['intgr_time'],
         p['configuration'], p['subbands'], p['channels'],
         p['ncore'], p['nremote'], p['nintl'])
@@ -62,7 +62,7 @@ def check(image_id, parset_file):
                     tkp.database.quality.reason['rms'].id, rms_invalid)
         return False
 
-    (semimaj, semimin, theta) = fitsimage.beam
+    (semimaj, semimin, theta) = accessor.beam
     beam_invalid = tkp.quality.beam_invalid(semimaj, semimin,
                                         p['oversampled_x'], p['elliptical_x'])
 

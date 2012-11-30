@@ -13,6 +13,7 @@ import pyfits
 import numpy
 from tkp.database import Image as DBImage
 from tkp.sourcefinder.image import ImageData
+import tkp.utility.accessors.detection
 
 
 def dbimage_from_accessor(dataset, image):
@@ -82,3 +83,13 @@ def beam2semibeam(bmaj, bmin, bpa, deltax, deltay):
     )
     theta = numpy.pi * bpa / 180
     return (semimaj, semimin, theta)
+
+
+def open(path):
+    """
+    Returns an accessor object (if available) for the file or directory 'path'
+    """
+    Accessor = tkp.utility.accessors.detection.detect(path)
+    if not Accessor:
+        raise IOError("no accessor found for %s" % path)
+    return Accessor(path)

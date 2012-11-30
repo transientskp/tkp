@@ -9,12 +9,14 @@ from tkp.utility.accessors.lofarcasaimage import LofarCasaImage
 from tkp.utility.accessors.casaimage import CasaImage
 from tkp.utility.accessors.lofarhdf5image import LofarHdf5Image
 from tkp.utility.accessors.fitsimage import FitsImage
+import tkp.utility.accessors
 
 DATAPATH = tkp.config.config['test']['datapath']
 lofarcasatable = os.path.join(DATAPATH, 'casatable/L55596_000TO009_skymodellsc_wmax6000_noise_mult10_cell40_npix512_wplanes215.img.restored.corr')
 casatable = os.path.join(DATAPATH, 'L21641_SB098.restored.image')
 fitsfile = os.path.join(DATAPATH, 'lofar15_12hr-corrected-I-mfs.fits')
 hdf5file = os.path.join(DATAPATH, 'lofar.h5')
+antennafile = os.path.join(DATAPATH, 'lofar/CS001-AntennaArrays.conf')
 
 class TestAutodetect(unittest.TestCase):
     def test_islofarcasa(self):
@@ -45,3 +47,8 @@ class TestAutodetect(unittest.TestCase):
         self.assertFalse(islofarcasa(fitsfile))
         self.assertFalse(iscasa(fitsfile))
         self.assertEqual(detect(fitsfile), FitsImage)
+
+    def test_open(self):
+        accessor = tkp.utility.accessors.open(lofarcasatable)
+        self.assertEqual(accessor.__class__, LofarCasaImage)
+        self.assertRaises(IOError, tkp.utility.accessors.open, antennafile)

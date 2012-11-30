@@ -11,24 +11,38 @@ from tkp.database.orm import Image
 
 logger = logging.getLogger(__name__)
 
-def parse_parset(parset_file):
+def parse_parset(parset_file, accessor=None):
+    """parse the quality parset file. uses accessor for default values"""
     parset = parameterset(parset_file)
     result = {}
     result['sigma'] = parset.getInt('sigma', 3)
     result['f'] = parset.getInt('f', 4)
     result['low_bound'] = parset.getFloat('low_bound', 1)
     result['high_bound'] = parset.getInt('high_bound', 50)
-    result['frequency'] = parset.getInt('frequency', 45*10**6)
-    result['subbandwidth'] = parset.getInt('subbandwidth', 200*10**3)
-    result['intgr_time'] = parset.getFloat('intgr_time', 18654)
-    result['configuration'] = parset.getString('configuration', "LBA_INNER")
-    result['subbands'] = parset.getInt('subbands', 10)
-    result['channels'] = parset.getInt('channels', 64)
-    result['ncore'] = parset.getInt('ncore', 24)
-    result['nremote'] = parset.getInt('nremote',16)
-    result['nintl'] = parset.getInt('nintl', 8)
     result['oversampled_x'] = parset.getInt('oversampled_x', 30)
     result['elliptical_x'] = parset.getFloat('elliptical_x', 2.0)
+
+    # LOFAR image properties - first check if set in parset, if not get value
+    # from image, if not set use default
+    result['frequency'] = parset.getInt('frequency',
+                            getattr(accessor,'frequency', 45*10**6))
+    result['subbandwidth'] = parset.getInt('subbandwidth',
+                            getattr(accessor, 'subbandwidth', 200*10**3))
+    result['intgr_time'] = parset.getFloat('intgr_time',
+                            getattr(accessor, 'intgr_time', 18654))
+    result['configuration'] = parset.getString('configuration',
+                            getattr(accessor, 'configuration', "LBA_INNER"))
+    result['subbands'] = parset.getInt('subbands',
+                            getattr(accessor, 'subbands', 10))
+    result['channels'] = parset.getInt('channels',
+                            getattr(accessor, 'channels', 64))
+    result['ncore'] = parset.getInt('ncore',
+                            getattr(accessor, 'ncore', 24))
+    result['nremote'] = parset.getInt('nremote',
+                            getattr(accessor, 'nremote', 16))
+    result['nintl'] = parset.getInt('nintl',
+                            getattr(accessor, 'nintl', 8))
+
     return result
 
 def check(image_id, parset_file):

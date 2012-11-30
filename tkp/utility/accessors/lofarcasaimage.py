@@ -62,8 +62,6 @@ class LofarCasaImage(DataAccessor):
     def _freqparse(self):
         """extract frequency related information from headers"""
         self.freqeff = self.table.getkeywords()['coords']['spectral2']['restfreq']
-
-        #TODO: is this correct?
         self.freqbw = self.table.getkeywords()['coords']['spectral2']['wcs']['cdelt']
 
         # subband
@@ -125,28 +123,18 @@ class LofarCasaImage(DataAccessor):
 
 
     def _otherparse(self):
-        # integration time
         startcol = self.subtables['LOFAR_ORIGIN'].col('START')
         endcol = self.subtables['LOFAR_ORIGIN'].col('END')
         self.intgr_time = endcol[0] - startcol[0]
-
-        # antenna configuration
-        self.configuration = self.subtables['LOFAR_OBSERVATION'].getcol('ANTENNA_SET')[0]
-
-        # number of subbands
+        self.antenna_set = self.subtables['LOFAR_OBSERVATION'].getcol('ANTENNA_SET')[0]
         self.subbands = self.subtables['LOFAR_ORIGIN'].getcol('NUM_CHAN')[0]
-
-        # number of channels
         self.channels = self.subtables['LOFAR_ORIGIN'].getcol('NCHAN_AVG')[0]
-
-        # number of stations
         nvis_used = self.subtables['LOFAR_OBSERVATION'].getcol('NVIS_USED')
         station_ids = self.subtables['LOFAR_ANTENNA'].getcol('STATION_ID')
         names = self.subtables['LOFAR_ANTENNA'].getcol('NAME')
         mask = numpy.sum(nvis_used, axis=2) > 0
         used_ids = station_ids[mask.ravel()]
         used = [names[id] for id in used_ids]
-
         self.ncore = 0
         self.nremote = 0
         self.nintl = 0

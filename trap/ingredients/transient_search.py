@@ -38,10 +38,10 @@ def search_transients(image_ids, dataset_id, parset, tkpconfigdir=None):
                 imageid=img_id,
                 logger=None)
 
-            logger.info("Found %s transients in band %s." % (len(transients), band))
-            all_transient_ids.extend(transient_ids)
-            all_siglevels.extend(siglevels)
-            all_transients.extend(transients)
+        logger.info("Found %s transients in band %s." % (len(transients), band))
+        all_transient_ids.extend(transient_ids)
+        all_siglevels.extend(siglevels)
+        all_transients.extend(transients)
 
     return {
         'transient_ids': map(int, all_transient_ids),

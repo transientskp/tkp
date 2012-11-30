@@ -49,8 +49,8 @@ class TestRms(unittest.TestCase):
         self.assertEqual(rms, statistics.rms_with_clipped_subregion(o))
 
     def test_theoreticalnoise(self):
-        good_image = accessors.FitsFile(good_file, plane=0)
-        bad_image = accessors.FitsFile(bad_file, plane=0)
+        good_image = accessors.open(good_file)
+        bad_image = accessors.open(bad_file)
         frequency = good_image.freqeff
 
         # this stuff should be in the header of a LOFAR image some day
@@ -72,7 +72,7 @@ class TestRms(unittest.TestCase):
         self.assertTrue(tkp.quality.rms_invalid(rms_bad, noise))
 
     def test_rms_fits(self):
-        accessors.FitsFile(good_file, plane=0)
+        accessors.open(good_file)
 
 
 @requires_data(core_antennas)

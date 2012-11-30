@@ -4,7 +4,7 @@ import unittest
 if not  hasattr(unittest.TestCase, 'assertIsInstance'):
     import unittest2 as unittest
 import os
-from tkp.utility import accessors
+import tkp.utility.accessors.fitsimage
 import tkp.sourcefinder.image as image
 import tkp.utility.coordinates as coords
 import tkp.config
@@ -18,27 +18,30 @@ FUDGEFACTOR = 0.5
 # The different sections (observed, corrected, model) of the
 # MeasurementSet contain different simulations.
 
+corrected_fits = os.path.join(DATAPATH, 'L15_12h_const/corrected-all.fits')
+observed_fits = os.path.join(DATAPATH, 'L15_12h_const/observed-all.fits')
+all_fits = os.path.join(DATAPATH, 'L15_12h_const/model-all.fits')
+
 class L15_12hConstObs(unittest.TestCase):
     # Single, constant 1 Jy source at centre of image.
     def setUp(self):
         # Beam here is a random beam, in this case the WENSS beam
         # without the declination dependence.
-        fitsfile = accessors.FitsFile(os.path.join(
-            DATAPATH, 'L15_12h_const/observed-all.fits'),
-                                      beam=(54./3600, 54./3600, 0.))
+        fitsfile = tkp.utility.accessors.fitsimage.FitsImage(observed_fits,
+                                    beam=(54./3600, 54./3600, 0.))
         self.image = image.ImageData(fitsfile.data, fitsfile.beam, fitsfile.wcs)
         self.results = self.image.extract(det=10)
 
-    @requires_data(os.path.join(DATAPATH, 'L15_12h_const/observed-all.fits'))
+    @requires_data(observed_fits)
     def testNumSources(self):
         self.assertEqual(len(self.results), 1)
 
-    @requires_data(os.path.join(DATAPATH, 'L15_12h_const/observed-all.fits'))
+    @requires_data(observed_fits)
     def testSourceProperties(self):
         mysource = self.results.closest_to(1440, 1440)[0]
         self.assertAlmostEqual(mysource.peak, 1.0*FUDGEFACTOR, 1)
 
-    @requires_data(os.path.join(DATAPATH, 'L15_12h_const/observed-all.fits'))
+    @requires_data(observed_fits)
     def tearDown(self):
         del(self.results)
         del(self.image)
@@ -49,17 +52,16 @@ class L15_12hConstCor(unittest.TestCase):
     def setUp(self):
         # Beam here is a random beam, in this case the WENSS beam
         # without the declination dependence.
-        fitsfile = accessors.FitsFile(os.path.join(
-            DATAPATH, 'L15_12h_const/corrected-all.fits'),
-                                      beam=(54./3600, 54./3600, 0.))
+        fitsfile = tkp.utility.accessors.fitsimage.FitsImage(corrected_fits,
+            beam=(54./3600, 54./3600, 0.))
         self.image = image.ImageData(fitsfile.data, fitsfile.beam, fitsfile.wcs)
         self.results  = self.image.extract(det=10)
 
-    @requires_data(os.path.join(DATAPATH, 'L15_12h_const/corrected-all.fits'))
+    @requires_data(corrected_fits)
     def testNumSources(self):
         self.assertEqual(len(self.results), 5)
 
-    @requires_data(os.path.join(DATAPATH, 'L15_12h_const/corrected-all.fits'))
+    @requires_data(corrected_fits)
     def testFluxes(self):
         # All sources in this image are supposed to have the same flux.
         # But they don't, because the simulation is broken, so this test
@@ -68,7 +70,7 @@ class L15_12hConstCor(unittest.TestCase):
             self.assert_(mysource.peak.value > 0.35)
             self.assert_(mysource.peak.value < 0.60)
 
-    @requires_data(os.path.join(DATAPATH, 'L15_12h_const/corrected-all.fits'))
+    @requires_data(corrected_fits)
     def testSeparation(self):
         centre = self.results.closest_to(1440, 1440)[0]
         # How accurate should the '2 degrees' be?
@@ -91,17 +93,16 @@ class L15_12hConstMod(unittest.TestCase):
         # all.
         # Beam here is a random beam, in this case the WENSS beam
         # without the declination dependence.
-        fitsfile = accessors.FitsFile(os.path.join(
-            DATAPATH, 'L15_12h_const/model-all.fits'),
-                                      beam=(54./3600, 54./3600, 0.))
+        fitsfile = tkp.utility.accessors.fitsimage.FitsImage(all_fits,
+            beam=(54./3600, 54./3600, 0.))
         self.image = image.ImageData(fitsfile.data, fitsfile.beam, fitsfile.wcs)
         self.results  = self.image.extract(det=5)
 
-    @requires_data(os.path.join(DATAPATH, 'L15_12h_const/model-all.fits'))
+    @requires_data(all_fits)
     def testNumSources(self):
         self.assertEqual(len(self.results), 1)
 
-    @requires_data(os.path.join(DATAPATH, 'L15_12h_const/model-all.fits'))
+    @requires_data(all_fits)
     def testFluxes(self):
         self.results.sort(lambda x, y: cmp(y.peak, x.peak))
         self.assertAlmostEqual(self.results[0].peak.value, 1.0*FUDGEFACTOR, 1)
@@ -113,21 +114,21 @@ class L15_12hConstMod(unittest.TestCase):
 
 class FitToPointTestCase(unittest.TestCase):
     def setUp(self):
-        filename = os.path.join(DATAPATH, "L15_12h_const/corrected-all.fits")
         # Beam here is a random beam, in this case the WENSS beam
         # without the declination dependence.
-        fitsfile = accessors.FitsFile(filename, beam=(54./3600, 54./3600, 0.))
+        fitsfile = tkp.utility.accessors.fitsimage.FitsImage(corrected_fits,
+            beam=(54./3600, 54./3600, 0.))
         self.my_im = image.ImageData(fitsfile.data, fitsfile.beam,
                                      fitsfile.wcs)
 
-    @requires_data(os.path.join(DATAPATH, 'L15_12h_const/corrected-all.fits'))
+    @requires_data(corrected_fits)
     def testFixed(self):
         d = self.my_im.fit_to_point(1379.00938273, 1438.38801493, 20,
                                     threshold=2, fixed='position')
         self.assertAlmostEqual(d.x.value, 1379.00938273)
         self.assertAlmostEqual(d.y.value, 1438.38801493)
 
-    @requires_data(os.path.join(DATAPATH, 'L15_12h_const/corrected-all.fits'))
+    @requires_data(corrected_fits)
     def testUnFixed(self):
         d = self.my_im.fit_to_point(1379.00938273, 1438.38801493, 20,
                                     threshold=2, fixed=None)

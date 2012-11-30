@@ -16,7 +16,7 @@ if not  hasattr(unittest.TestCase, 'assertIsInstance'):
     import unittest2 as unittest
 import os
 import numpy as np
-from tkp.utility.accessors import FitsFile
+import tkp.utility.accessors
 from tkp.sourcefinder import image
 import tkp.config
 from tkp.testutil.decorators import requires_data
@@ -39,7 +39,7 @@ BG_STD = 5.3480336747739079
 class SourceParameters(unittest.TestCase):
 
     def setUp(self):
-        fitsfile = FitsFile(os.path.join(DATAPATH, 'TEST_DECONV.FITS'))
+        fitsfile = tkp.utility.accessors.open(os.path.join(DATAPATH, 'TEST_DECONV.FITS'))
         img = image.ImageData(fitsfile.data, fitsfile.beam,
                               fitsfile.wcs)
 

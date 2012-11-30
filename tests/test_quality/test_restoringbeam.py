@@ -15,7 +15,7 @@ fits_file = os.path.join(DATAPATH,
 @requires_data(fits_file)
 class TestRestoringBeam(unittest.TestCase):
     def test_header(self):
-        image = accessors.FitsFile(fits_file, plane=0)
+        image = accessors.open(fits_file)
         (semimaj, semimin, theta) = image.beam
         self.assertFalse(tkp.quality.beam_invalid(semimaj, semimin))
 

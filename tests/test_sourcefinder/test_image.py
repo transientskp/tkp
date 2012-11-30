@@ -59,7 +59,7 @@ class TestFitFixedPositions(unittest.TestCase):
             Source positions / background positions were simply picked out by eye in DS9
         """
         self.image = accessors.sourcefinder_image_from_accessor(
-                       accessors.FitsFile(os.path.join(DATAPATH, 'NCP_sample_image_1.fits'))
+                       accessors.open(os.path.join(DATAPATH, 'NCP_sample_image_1.fits'))
                        )
         
         

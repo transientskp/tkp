@@ -51,20 +51,20 @@ class LofarCasaImage(DataAccessor):
 
     def _read_data(self):
         """extract and massage data from table"""
-        self.data = self.table[0]['map']
-
-        planes = len(self.data.shape)
-        if planes != 2:
+        self.data = self.table[0]['map'].squeeze()
+        if len(self.data.shape) != 2:
             logger.warn("received datacube with %s planes, assuming Stokes I and taking plane 0" % planes)
-            self.data = self.data[0,0,:,:]
+            self.data = self.data[0,:,:]
 
             # TODO: is this required?
             #self.data = data.transpose()
 
     def _freqparse(self):
         """extract frequency related information from headers"""
-        # freq
         self.freqeff = self.table.getkeywords()['coords']['spectral2']['restfreq']
+
+        #TODO: is this correct?
+        self.freqbw = self.table.getkeywords()['coords']['spectral2']['wcs']['cdelt']
 
         # subband
         # see http://www.lofar.org/operations/doku.php?id=operator:background_to_observations&s[]=subband&s[]=width&s[]=clock&s[]=frequency

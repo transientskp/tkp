@@ -4,31 +4,45 @@ from lofarpipe.support.parset import parameterset
 from tkp.database import DataBase
 from tkp.quality.statistics import rms_with_clipped_subregion
 from tkp.lofar.noise import noise_level
-from tkp.utility.accessors import FITSImage
+import tkp.utility.accessors
 import tkp.database.quality
 import tkp.quality
 from tkp.database.orm import Image
 
 logger = logging.getLogger(__name__)
 
-def parse_parset(parset_file):
+def parse_parset(parset_file, accessor=None):
+    """parse the quality parset file. uses accessor for default values"""
     parset = parameterset(parset_file)
     result = {}
     result['sigma'] = parset.getInt('sigma', 3)
     result['f'] = parset.getInt('f', 4)
     result['low_bound'] = parset.getFloat('low_bound', 1)
     result['high_bound'] = parset.getInt('high_bound', 50)
-    result['frequency'] = parset.getInt('frequency', 45*10**6)
-    result['subbandwidth'] = parset.getInt('subbandwidth', 200*10**3)
-    result['intgr_time'] = parset.getFloat('intgr_time', 18654)
-    result['configuration'] = parset.getString('configuration', "LBA_INNER")
-    result['subbands'] = parset.getInt('subbands', 10)
-    result['channels'] = parset.getInt('channels', 64)
-    result['ncore'] = parset.getInt('ncore', 24)
-    result['nremote'] = parset.getInt('nremote',16)
-    result['nintl'] = parset.getInt('nintl', 8)
     result['oversampled_x'] = parset.getInt('oversampled_x', 30)
     result['elliptical_x'] = parset.getFloat('elliptical_x', 2.0)
+
+    # LOFAR image properties - first check if set in parset, if not get value
+    # from image, if not set use default
+    result['freqeff'] = parset.getInt('freqeff',
+                            getattr(accessor,'freqeff', 45*10**6))
+    result['subbandwidth'] = parset.getInt('subbandwidth',
+                            getattr(accessor, 'subbandwidth', 200*10**3))
+    result['intgr_time'] = parset.getFloat('intgr_time',
+                            getattr(accessor, 'intgr_time', 18654))
+    result['antenna_set'] = parset.getString('antenna_set',
+                            getattr(accessor, 'antenna_set', "LBA_INNER"))
+    result['subbands'] = parset.getInt('subbands',
+                            getattr(accessor, 'subbands', 10))
+    result['channels'] = parset.getInt('channels',
+                            getattr(accessor, 'channels', 64))
+    result['ncore'] = parset.getInt('ncore',
+                            getattr(accessor, 'ncore', 24))
+    result['nremote'] = parset.getInt('nremote',
+                            getattr(accessor, 'nremote', 16))
+    result['nintl'] = parset.getInt('nintl',
+                            getattr(accessor, 'nintl', 8))
+
     return result
 
 def check(image_id, parset_file):
@@ -42,12 +56,12 @@ def check(image_id, parset_file):
     """
     database = DataBase()
     db_image = Image(database=database, id=image_id)
-    fitsimage = FITSImage(db_image.url)
+    accessor = tkp.utility.accessors.open(db_image.url)
     p = parse_parset(parset_file)
 
-    rms = rms_with_clipped_subregion(fitsimage.data, sigma=p['sigma'], f=p['f'])
-    noise = noise_level(p['frequency'], p['subbandwidth'], p['intgr_time'],
-        p['configuration'], p['subbands'], p['channels'],
+    rms = rms_with_clipped_subregion(accessor.data, sigma=p['sigma'], f=p['f'])
+    noise = noise_level(p['freqeff'], p['subbandwidth'], p['intgr_time'],
+        p['antenna_set'], p['subbands'], p['channels'],
         p['ncore'], p['nremote'], p['nintl'])
 
     rms_invalid = tkp.quality.rms_invalid(rms, noise, low_bound=p['low_bound'],
@@ -62,7 +76,7 @@ def check(image_id, parset_file):
                     tkp.database.quality.reason['rms'].id, rms_invalid)
         return False
 
-    (semimaj, semimin, theta) = fitsimage.beam
+    (semimaj, semimin, theta) = accessor.beam
     beam_invalid = tkp.quality.beam_invalid(semimaj, semimin,
                                         p['oversampled_x'], p['elliptical_x'])
 

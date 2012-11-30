@@ -1,9 +1,8 @@
 import os
-import os.path
 import logging
 from lofarpipe.support.lofarexceptions import PipelineException
 from tkp.database import DataBase, DataSet
-from tkp.utility.accessors import FITSImage
+import tkp.utility.accessors
 from tkp.utility.accessors import dbimage_from_accessor
 from contextlib import closing
 
@@ -50,8 +49,8 @@ def store(images, description, dataset_id=-1, store_images=False, mongo_host="lo
                 logger.error(message)
                 raise PipelineException(message)
 
-            fitsimage = FITSImage(image)
-            db_image = dbimage_from_accessor(dataset=dataset, image=fitsimage)
+            accessor = tkp.utility.accessors.open(image)
+            db_image = dbimage_from_accessor(dataset=dataset, image=accessor)
             logger.info("stored %s with ID %s" % (os.path.basename(image), db_image.id))
 
             if store_images:

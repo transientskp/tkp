@@ -31,7 +31,7 @@ def iscasa(filename):
         if not os.path.isfile(casafile):
             return False
     try:
-        table = pyrap_table(filename)
+        table = pyrap_table(filename.encode(), ack=False)
     except RuntimeError:
         return False
     return True
@@ -40,7 +40,7 @@ def islofarcasa(filename):
     """returns True if filename is a lofar casa directory"""
     if not iscasa(filename):
         return False
-    table = pyrap_table(filename)
+    table = pyrap_table(filename.encode(), ack=False)
     if not 'ATTRGROUPS' in table.getkeywords():
         return False
     attrgroups = table.getkeyword('ATTRGROUPS').keys()

@@ -1,8 +1,9 @@
+import logging
+import warnings
+import numpy
 from pyrap.tables import table as pyrap_table
 from tkp.utility.accessors.dataaccessor import DataAccessor
 import tkp.utility.accessors
-import logging
-import warnings
 
 logger = logging.getLogger(__name__)
 
@@ -35,20 +36,35 @@ class LofarCasaImage(DataAccessor):
     def __init__(self, filename, plane=0, beam=None):
         super(LofarCasaImage, self).__init__()  # Set defaults
         self.filename = filename
-        self.table = pyrap_table(self.filename, ack=False)
+        self.table = pyrap_table(self.filename.encode(), ack=False)
         self.beam = beam
         self.subtables = {}
         self.plane = plane
-        self.data = self.table[0]['map']
 
         self._subtableparse()
         self._coordparse()
         self._freqparse()
         self._beamsizeparse()
+        self._read_data()
+        self._otherparse()
 
-        # BUG3872 stuff below
+
+    def _read_data(self):
+        """extract and massage data from table"""
+        self.data = self.table[0]['map']
+
+        planes = len(self.data.shape)
+        if planes != 2:
+            logger.warn("received datacube with %s planes, assuming Stokes I and taking plane 0" % planes)
+            self.data = self.data[0,0,:,:]
+
+            # TODO: is this required?
+            #self.data = data.transpose()
+
+    def _freqparse(self):
+        """extract frequency related information from headers"""
         # freq
-        self.frequency = self.table.getkeywords()['coords']['spectral2']['restfreq']
+        self.freqeff = self.table.getkeywords()['coords']['spectral2']['restfreq']
 
         # subband
         # see http://www.lofar.org/operations/doku.php?id=operator:background_to_observations&s[]=subband&s[]=width&s[]=clock&s[]=frequency
@@ -58,27 +74,9 @@ class LofarCasaImage(DataAccessor):
         trueclock = freq_units[unit] * clock
         self.subbandwidth = trueclock / 1024
 
-        # integration time
-        startcol = self.subtables['LOFAR_ORIGIN'].col('START')
-        endcol = self.subtables['LOFAR_ORIGIN'].col('END')
-        self.intgr_time = endcol[0] - startcol[0]
-
-        # antenna configuration
-        self.configuration = self.subtables['LOFAR_OBSERVATION'].getcol('ANTENNA_SET')[0]
-
-        # number of subbands
-        self.subbands = self.subtables['LOFAR_ORIGIN'].getcol('NUM_CHAN')[0]
-
-        # number of channels
-        self.channels = self.subtables['LOFAR_ORIGIN'].getcol('NCHAN_AVG')[0]
-
-        # number of stations
-        nvis_used = self.subtables['LOFAR_OBSERVATION'].getcol('NVIS_USED')
-        station_ids = self.subtables['LOFAR_ANTENNA'].getcol('STATION_ID')
-        names = self.subtables['LOFAR_ANTENNA'].getcol('NAME')
-
 
     def _coordparse(self):
+        """extract coordination properties from headers"""
         my_coordinates = self.table.getkeyword('coords')['direction0']
         self.wcs.crval = my_coordinates['crval']
         self.wcs.crpix = my_coordinates['crpix']
@@ -98,16 +96,8 @@ class LofarCasaImage(DataAccessor):
         self.wcs.wcsset()
         self.pix_to_position = self.wcs.p2s
 
-    def _freqparse(self):
-        # This is what one gets from the C-imager
-        try:
-            spectral_info = self.table.getkeyword('coords')['spectral2']
-            self.freqeff = spectral_info['wcs']['crval']
-            self.freqbw = spectral_info['wcs']['cdelt']
-        except KeyError:
-            pass
-
     def _beamsizeparse(self):
+        """extract beam properties from headers"""
         if self.beam:
             bmaj, bmin, bpa = self.beam
         else:
@@ -118,9 +108,11 @@ class LofarCasaImage(DataAccessor):
 
         deltax = self.wcs.cdelt[0]
         deltay = self.wcs.cdelt[1]
-        self.beam = tkp.utility.accessors.beam2semibeam(bmaj, bmin, bpa, deltax, deltay)
+        self.beam = tkp.utility.accessors.beam2semibeam(bmaj, bmin, bpa,
+                                                    deltax, deltay)
 
     def _subtableparse(self):
+        """open all subtables"""
         if not 'ATTRGROUPS' in self.table.getkeywords():
             msg = "LOFAR standard violation: ATTRGROUPS not defined in %s" % self.filename
             logger.warn(msg)
@@ -129,7 +121,40 @@ class LofarCasaImage(DataAccessor):
 
         for subtable in subtable_names:
             subtable_location = self.table.getkeyword("ATTRGROUPS")[subtable]
-            self.subtables[subtable] = pyrap_table(subtable_location)
+            self.subtables[subtable] = pyrap_table(subtable_location, ack=False)
 
 
+    def _otherparse(self):
+        # integration time
+        startcol = self.subtables['LOFAR_ORIGIN'].col('START')
+        endcol = self.subtables['LOFAR_ORIGIN'].col('END')
+        self.intgr_time = endcol[0] - startcol[0]
+
+        # antenna configuration
+        self.configuration = self.subtables['LOFAR_OBSERVATION'].getcol('ANTENNA_SET')[0]
+
+        # number of subbands
+        self.subbands = self.subtables['LOFAR_ORIGIN'].getcol('NUM_CHAN')[0]
+
+        # number of channels
+        self.channels = self.subtables['LOFAR_ORIGIN'].getcol('NCHAN_AVG')[0]
+
+        # number of stations
+        nvis_used = self.subtables['LOFAR_OBSERVATION'].getcol('NVIS_USED')
+        station_ids = self.subtables['LOFAR_ANTENNA'].getcol('STATION_ID')
+        names = self.subtables['LOFAR_ANTENNA'].getcol('NAME')
+        mask = numpy.sum(nvis_used, axis=2) > 0
+        used_ids = station_ids[mask.ravel()]
+        used = [names[id] for id in used_ids]
+
+        self.ncore = 0
+        self.nremote = 0
+        self.nintl = 0
+        for station in used:
+            if station.startswith('CS'):
+                self.ncore += 1
+            elif station.startswith('RS'):
+                self.nremote += 1
+            else:
+                self.nintl += 1
 

@@ -14,7 +14,8 @@ class CasaImage(DataAccessor):
     def __init__(self, filename, plane=0, beam=None):
         super(CasaImage, self).__init__()  # Set defaults
         self.filename = filename
-        self.table = pyrap_table(self.filename, ack=False)
+        #pyrap can't handle unicode
+        self.table = pyrap_table(self.filename.encode(), ack=False)
         self.beam = beam
         self.subtables = {}
         self.plane = plane

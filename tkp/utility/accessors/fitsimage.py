@@ -6,6 +6,7 @@ from tkp.utility.coordinates import WCS
 import pytz
 import dateutil.parser
 import logging
+import warnings
 import re
 import tkp.utility.accessors
 
@@ -223,11 +224,11 @@ class FitsImage(DataAccessor):
                                            key in ('bmaj', 'bmin', 'bpa')]
                         break
         if bmaj is None:
-            # if not provided and not found we are lost and
-            # have to bomb out.
-            raise ValueError("""\
-Basic processing is impossible without adequate information about the \
-resolution element.""")
+            msg = "Can't extract beam information from image %s" % self.filename
+            warnings.warn(msg)
+            logging.error(msg)
+            return
+
         deltax = self.wcs.cdelt[0]
         deltay = self.wcs.cdelt[1]
         self.beam = tkp.utility.accessors.beam2semibeam(bmaj, bmin, bpa, deltax, deltay)

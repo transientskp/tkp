@@ -49,9 +49,9 @@ NUMBER_INSERTED = float(3969)
 
 class test_maps(unittest.TestCase):
     def setUp(self):
-        uncorr_map = accessors.FitsFile(os.path.join(DATAPATH, 'UNCORRELATED_NOISE.FITS'))
-        corr_map = accessors.FitsFile(os.path.join(DATAPATH, 'CORRELATED_NOISE.FITS'))
-        map_with_sources = accessors.FitsFile(os.path.join(DATAPATH, 'TEST_DECONV.FITS'))
+        uncorr_map = accessors.open(os.path.join(DATAPATH, 'UNCORRELATED_NOISE.FITS'))
+        corr_map = accessors.open(os.path.join(DATAPATH, 'CORRELATED_NOISE.FITS'))
+        map_with_sources = accessors.open(os.path.join(DATAPATH, 'TEST_DECONV.FITS'))
 
         uncorr_image = image.ImageData(uncorr_map.data, uncorr_map.beam, uncorr_map.wcs)
         corr_image = image.ImageData(corr_map.data, uncorr_map.beam, uncorr_map.wcs)

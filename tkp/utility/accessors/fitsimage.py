@@ -1,16 +1,34 @@
 import datetime
-from tkp.utility.accessors import DataAccessor
+from tkp.utility.accessors.dataaccessor import DataAccessor
 import pyfits
 import numpy
 from tkp.utility.coordinates import WCS
 import pytz
 import dateutil.parser
 import logging
+import warnings
 import re
+import tkp.utility.accessors
 
 logger = logging.getLogger(__name__)
 
-class FITSImage(DataAccessor):
+
+# AIPS FITS file; stored in the history section
+beam_regex = re.compile(r'''
+    BMAJ
+    \s*=\s*
+    (?P<bmaj>[-\d\.eE]+)
+    \s*
+    BMIN
+    \s*=\s*
+    (?P<bmin>[-\d\.eE]+)
+    \s*
+    BPA
+    \s*=\s*
+    (?P<bpa>[-\d\.eE]+)
+    ''', re.VERBOSE)
+
+class FitsImage(DataAccessor):
     """
     Use PyFITS to pull image data out of a FITS file.
 
@@ -24,7 +42,7 @@ class FITSImage(DataAccessor):
         # NB: pyfits bogs down reading parameters from FITS files with very
         # long headers. This code should run in a fraction of a second on most
         # files, but can take several seconds given a huge header.
-        super(FITSImage, self).__init__()  # Set defaults
+        super(FitsImage, self).__init__()  # Set defaults
 
         self.plane = plane
 
@@ -53,7 +71,11 @@ class FITSImage(DataAccessor):
         if not beam:
             self._beamsizeparse(hdu)
         else:
-            super(FITSImage, self)._beamsizeparse(beam[0], beam[1], beam[2])
+            (bmaj, bmin, bpa) = beam
+            deltax = self.wcs.cdelt[0]
+            deltay = self.wcs.cdelt[1]
+            self.beam = tkp.utility.accessors.beam2semibeam(bmaj, bmin, bpa, deltax, deltay)
+
 
         # Attempt to do something sane with timestamps.
         timezone = pytz.utc
@@ -164,7 +186,7 @@ class FITSImage(DataAccessor):
 
         NOTE: PyFITS reads the data into an array indexed as [y][x]. We
         take the transpose to make this more intuitively reasonable and
-        consistent with (eg) ds9 display of the FITSImage. Transpose back
+        consistent with (eg) ds9 display of the FitsFile. Transpose back
         before viewing the array with RO.DS9, saving to a FITS file,
         etc.
         """
@@ -193,47 +215,20 @@ class FITSImage(DataAccessor):
             bmin = header['BMIN']
             bpa = header['BPA']
         except KeyError:
-            # AIPS FITS file; stored in the history section
-            regex = re.compile(r'''
-                                BMAJ
-                                \s*=\s*
-                                (?P<bmaj>[-\d\.eE]+)
-                                \s*
-                                BMIN
-                                \s*=\s*
-                                (?P<bmin>[-\d\.eE]+)
-                                \s*
-                                BPA
-                                \s*=\s*
-                                (?P<bpa>[-\d\.eE]+)
-                                ''', re.VERBOSE)
+
             for i, key in enumerate(header.ascardlist().keys()):
                 if key == 'HISTORY':
-                    results = regex.search(header[i])
+                    results = beam_regex.search(header[i])
                     if results:
                         bmaj, bmin, bpa = [float(results.group(key)) for
                                            key in ('bmaj', 'bmin', 'bpa')]
                         break
         if bmaj is None:
-            # if not provided and not found we are lost and
-            # have to bomb out.
-            raise ValueError("""\
-Basic processing is impossible without adequate information about the \
-resolution element.""")
-        super(FITSImage, self)._beamsizeparse(bmaj, bmin, bpa)
+            msg = "Can't extract beam information from image %s" % self.filename
+            warnings.warn(msg)
+            logging.error(msg)
+            return
 
-    def __getattr__(self, attrname):
-        """
-        Read FITS header for unknown attributes.
-
-        If they're not found, throw an AttributeError.
-
-        @type attrname: string
-        """
-        if attrname in self.header:
-            return self.header[attrname]
-        raise AttributeError(attrname)
-
-
-class FitsFile(FITSImage):
-    pass
+        deltax = self.wcs.cdelt[0]
+        deltay = self.wcs.cdelt[1]
+        self.beam = tkp.utility.accessors.beam2semibeam(bmaj, bmin, bpa, deltax, deltay)

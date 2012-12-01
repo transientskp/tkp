@@ -12,34 +12,34 @@ import tkp
 import tkp.lofar.antennaarrays
 
 
-def noise_level(frequency, subbandwidth, intgr_time, configuration, subbands=1, channels=64, Ncore=24, Nremote=16, Nintl=8):
-    """ Returns the theoretical noise level given the supplied array configuration
+def noise_level(freqeff, subbandwidth, intgr_time, antenna_set, subbands=1, channels=64, Ncore=24, Nremote=16, Nintl=8):
+    """ Returns the theoretical noise level given the supplied array antenna_set
 
     Args:
         subbandwidth: in Hz (should be 144042.96875 (144 kHz) or 180053.7109375 (180 kHz))
         intgr_time: in seconds
         inner: in case of LBA, inner or outer
-        configuration: LBA_INNER, LBA_OUTER, LBA_SPARSE, LBA or HBA
+        antenna_set: LBA_INNER, LBA_OUTER, LBA_SPARSE, LBA or HBA
     """
     bandwidth = subbandwidth * subbands
 
-    if configuration.startswith("LBA"):
-        ds_core = tkp.lofar.antennaarrays.core_dipole_distances[configuration]
-        Aeff_core = sum([tkp.lofar.noise.Aeff_dipole(frequency, x) for x in ds_core])
-        ds_remote = tkp.lofar.antennaarrays.remote_dipole_distances[configuration]
-        Aeff_remote = sum([tkp.lofar.noise.Aeff_dipole(frequency, x) for x in ds_remote])
-        ds_intl = tkp.lofar.antennaarrays.intl_dipole_distances[configuration]
-        Aeff_intl = sum([tkp.lofar.noise.Aeff_dipole(frequency, x) for x in ds_intl])
+    if antenna_set.startswith("LBA"):
+        ds_core = tkp.lofar.antennaarrays.core_dipole_distances[antenna_set]
+        Aeff_core = sum([tkp.lofar.noise.Aeff_dipole(freqeff, x) for x in ds_core])
+        ds_remote = tkp.lofar.antennaarrays.remote_dipole_distances[antenna_set]
+        Aeff_remote = sum([tkp.lofar.noise.Aeff_dipole(freqeff, x) for x in ds_remote])
+        ds_intl = tkp.lofar.antennaarrays.intl_dipole_distances[antenna_set]
+        Aeff_intl = sum([tkp.lofar.noise.Aeff_dipole(freqeff, x) for x in ds_intl])
     else:
         # todo: check if this is correct. There are 16 antennae per tile. There are 24 tiles per core station
-        Aeff_core = 16 * 24 * tkp.lofar.noise.Aeff_dipole(frequency)
-        Aeff_remote = 16 * 24 * tkp.lofar.noise.Aeff_dipole(frequency)
-        Aeff_intl = 16 * 24 * tkp.lofar.noise.Aeff_dipole(frequency)
+        Aeff_core = 16 * 24 * tkp.lofar.noise.Aeff_dipole(freqeff)
+        Aeff_remote = 16 * 24 * tkp.lofar.noise.Aeff_dipole(freqeff)
+        Aeff_intl = 16 * 24 * tkp.lofar.noise.Aeff_dipole(freqeff)
 
     # c = core, r = remote, i = international. So for example cc is core-core baseline
-    Ssys_cc = system_sensitivity(frequency, Aeff_core)
-    Ssys_rr = system_sensitivity(frequency, Aeff_remote)
-    Ssys_ii = system_sensitivity(frequency, Aeff_intl)
+    Ssys_cc = system_sensitivity(freqeff, Aeff_core)
+    Ssys_rr = system_sensitivity(freqeff, Aeff_remote)
+    Ssys_ii = system_sensitivity(freqeff, Aeff_intl)
 
     SEFD_cc = Ssys_cc
     SEFD_rr = Ssys_rr
@@ -76,21 +76,21 @@ def noise_level(frequency, subbandwidth, intgr_time, configuration, subbands=1, 
     return image_sens
 
 
-def Aeff_dipole(frequency, distance=None):
+def Aeff_dipole(freqeff, distance=None):
     """The effective area of each dipole in the array is determined by its distance to the nearest dipole (d)
     within the full array. Distance is distance to nearest dipole, only required for LBA.
     """
-    wavelength = scipy.constants.c/frequency
+    wavelength = scipy.constants.c/freqeff
     if wavelength > 3: # LBA dipole
         return min(pow(wavelength, 2) / 3, (math.pi * pow(distance, 2)) / 4)
     else: # HBA dipole
         return min(pow(wavelength, 2) / 3, 1.5625)
 
 
-def system_sensitivity(frequency, Aeff):
-    """ Returns the SEFD of a system, given the frequency and effective collecting area. Returns SEFD in Jansky's.
+def system_sensitivity(freqeff, Aeff):
+    """ Returns the SEFD of a system, given the freqeff and effective collecting area. Returns SEFD in Jansky's.
     """
-    wavelength = scipy.constants.c/frequency
+    wavelength = scipy.constants.c/freqeff
 
     # Ts0 = 60 +/- 20 K for Galactic latitudes between 10 and 90 degrees.
     Ts0 = 60

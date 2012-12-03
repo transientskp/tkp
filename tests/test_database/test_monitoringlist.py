@@ -3,7 +3,7 @@ if not  hasattr(unittest.TestCase, 'assertIsInstance'):
     import unittest2 as unittest
 import tkp.database as tkpdb
 import tkp.database.utils as dbutils
-import tests.db_subs as db_subs
+from tkp.testutil import db_subs
 import tkp.testutil.db_queries as dbq
 from tkp.testutil.decorators import requires_database
 

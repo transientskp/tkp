@@ -4,7 +4,7 @@ from contextlib import closing
 from lofarpipe.support.lofarexceptions import PipelineException
 from lofar.parameterset import parameterset
 from tkp.database import DataBase, DataSet
-import tkp.utility.accessors
+import tkp.utility.accessors as accessors
 
 from tkp.database.orm import Image
 
@@ -17,10 +17,13 @@ def mark_sources(dataset_id, parset):
     dataset = DataSet(database=database, id = dataset_id)
     dataset.update_images()
     detection_thresh = parameterset(parset).getFloat('detection.threshold', 5)
-    dataset.mark_transient_candidates(single_epoch_threshold = detection_thresh, combined_threshold = detection_thresh)
+    dataset.mark_transient_candidates(single_epoch_threshold=detection_thresh,
+                                      combined_threshold=detection_thresh)
 
 def update_monitoringlist(image_id):
-    """ Update the monitoring list with newly found transients. Transients that are already in the monitoring
+    """ Update the monitoring list with newly found transients. 
+    
+    Transients that are already in the monitoring
     list will get their position updated from the runningcatalog.
     Args:
         - filename: FITS file
@@ -37,14 +40,14 @@ def update_monitoringlist(image_id):
 
     # Obtain the list of targets to be monitored (and not already
     # detected) for this image
-    fitsimage = tkp.utility.accessors.open(db_image.url)
-    mon_targets = tkp.utility.accessors.db_image.monitoringsources()
+    fitsimage = accessors.open(db_image.url)
+    mon_targets = db_image.monitoringsources()
 
     # Run the source finder on these mon_targets
     if len(mon_targets):
         logger.info("Measuring %d undetected monitoring targets in image %s"
                     % (len(mon_targets), image_id))
-        data_image = sourcefinder_image_from_accessor(fitsimage)
+        data_image = accessors.sourcefinder_image_from_accessor(fitsimage)
         results = data_image.fit_fixed_positions(
             [(m.ra, m.decl) for m in mon_targets],
             boxsize=BOX_IN_BEAMPIX*max(data_image.beam[0], data_image.beam[1]))

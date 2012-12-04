@@ -14,6 +14,9 @@ import numpy
 from tkp.database import Image as DBImage
 from tkp.sourcefinder.image import ImageData
 import tkp.utility.accessors.detection
+from tkp.utility.accessors.dataaccessor import DataAccessor
+from tkp.utility.accessors.fitsimage import FitsImage
+from tkp.utility.accessors.casaimage import CasaImage
 
 
 def dbimage_from_accessor(dataset, image):

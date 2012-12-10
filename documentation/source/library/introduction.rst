@@ -42,10 +42,6 @@ A few "external" modules exists. These are:
   :mod:`wcslib`. The binding is accomplished using the `boost-python`
   library.
 
-- libwcstools: this is the libwcstools, built as a normal system (ELF)
-  library, which is then used used in :mod:`tkp.utility.coordinates`
-  by loading it through the use of :mod:`ctypes`.
-
 
 For practical usage, start with reading through the transient pipeline
 documentation instead. For details on the various TKP modules and

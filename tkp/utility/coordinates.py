@@ -453,14 +453,14 @@ def convert_coordsystem(ra, dec, insys, outsys):
     elif insys == CoordSystem.FK5:
         insys = "J2000"
     else:
-        raise Exception("Unknown Coordinate Sysem")
+        raise Exception("Unknown Coordinate System")
 
     if outsys == CoordSystem.FK4:
         outsys = "B1950"
     elif outsys == CoordSystem.FK5:
         outsys = "J2000"
     else:
-        raise Exception("Unknown Coordinate Sysem")
+        raise Exception("Unknown Coordinate System")
 
     result = dm.measure(
         dm.direction(insys, "%fdeg" % ra, "%fdeg" % dec),

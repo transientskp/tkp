@@ -86,7 +86,7 @@ class hmstoraTest(unittest.TestCase):
         self.assertRaises(ValueError, coordinates.hmstora, -1, 0, -1)
         self.assertRaises(ValueError, coordinates.hmstora, 12, 60, 0)
         self.assertRaises(ValueError, coordinates.hmstora, 12, 0, 60)
-        
+
 class dmstodecTest(unittest.TestCase):
     knownValues = (((0, 0, 0), 0),
         ((45, 0, 0), 45),
@@ -150,15 +150,6 @@ class juliandate(unittest.TestCase):
     def testNow(self):
         now = coordinates.julian_date()
         self.failUnless(now > 2454574)
-
-
-class wcstoolsTest(unittest.TestCase):
-    def testLoad(self):
-        import ctypes
-        try:
-            wcstools = ctypes.cdll.LoadLibrary(coordinates.WCSTOOLS_NAME)
-        except OSError, message:
-            self.fail(message)
 
 
 if __name__ == '__main__':

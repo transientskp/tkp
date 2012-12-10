@@ -12,14 +12,11 @@ These can be used to populate ImageData objects based on some data source
 import pyfits
 import numpy
 from tkp.database import Image as DBImage
-from tkp.utility.accessors.dataaccessor import extract_metadata
 from tkp.sourcefinder.image import ImageData
 import tkp.utility.accessors.detection
 from tkp.utility.accessors.dataaccessor import DataAccessor
 from tkp.utility.accessors.fitsimage import FitsImage
 from tkp.utility.accessors.casaimage import CasaImage
-
-
 
 
 def dbimage_from_accessor(dataset, image):
@@ -32,7 +29,18 @@ def dbimage_from_accessor(dataset, image):
     Returns:
         (dataset.Image): a dataset.Image instance.
     """
-    data = extract_metadata(image)
+    if image.freqeff is None or image.freqbw is None:
+        raise ValueError("cannot create database image: frequency information missing")
+    data = {'tau_time': image.inttime,
+            'freq_eff': image.freqeff,
+            'freq_bw': image.freqbw,
+            'taustart_ts': image.obstime.strftime("%Y-%m-%d %H:%M:%S.%f"),
+            'url': image.filename,
+            'band': 0,    # not yet clearly defined
+            'bsmaj': float(image.beam[0]), ## NB We must cast to a standard python float
+            'bsmin': float(image.beam[1]), ## as Monetdb converter cannot handle numpy.float64
+            'bpa': float(image.beam[2]),
+            }
     image = DBImage(data=data, dataset=dataset)
     return image
 

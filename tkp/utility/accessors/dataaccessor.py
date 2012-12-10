@@ -2,19 +2,6 @@
 from tkp.utility.coordinates import WCS
 import datetime
 
-def extract_metadata(dataaccessor):
-    return { 'tau_time': dataaccessor.inttime,
-            'freq_eff': dataaccessor.freqeff,
-            'freq_bw': dataaccessor.freqbw,
-            'taustart_ts': dataaccessor.obstime.strftime("%Y-%m-%d %H:%M:%S.%f"),
-            'url': dataaccessor.filename,
-            'band': 0,    # not yet clearly defined
-            'bsmaj': float(dataaccessor.beam[0]), ## NB We must cast to a standard python float
-            'bsmin': float(dataaccessor.beam[1]), ## as Monetdb converter cannot handle numpy.float64
-            'bpa': float(dataaccessor.beam[2]),
-            'filename': dataaccessor.filename,
-        }
-
 
 class DataAccessor(object):
     """
@@ -24,6 +11,7 @@ class DataAccessor(object):
     image representation) to access the various ways in which images may be
     stored (FITS files, arrays in memory, potentially HDF5, etc).
     """
+
     def __init__(self):
         self.beam = None
         self.wcs = WCS()

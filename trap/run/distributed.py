@@ -14,11 +14,6 @@ from tkp.database import DataSet
 
 class Trap(control):
     inputs = {
-        'dataset_id': ingredient.IntField(
-            '--dataset-id',
-            help='Specify a previous dataset id to append the results to.',
-            default=-1
-        ),
         'monitor_coords': ingredient.StringField(
             '-m', '--monitor-coords',
             # Unfortunately the ingredient system cannot handle spaces in
@@ -53,7 +48,6 @@ class Trap(control):
         self.outputs.update(self.run_task(
             "persistence",
             images,
-            description=self.inputs['job_name'], dataset_id=self.inputs['dataset_id']
         ))
 
         dataset = DataSet(id=self.outputs['dataset_id'], database=DataBase())
@@ -96,22 +90,6 @@ class Trap(control):
 
         dataset.process_ts = datetime.datetime.utcnow()
 
-
-    def initialise_dataset(self, database):
-        """Either inits a fresh dataset, or grabs the dataset specified
-            at command line"""
-        if self.inputs['dataset_id'] == -1:
-            dataset = DataSet(
-                data={'description': self.inputs['job_name']},
-                database=database
-            )
-        else:
-            dataset = DataSet(
-                id = self.inputs['dataset_id'], database=database
-            )
-            self.logger.info("Appending results to previously entered dataset")
-        self.logger.info("dataset id = %d", dataset.id)
-        return dataset
 
     def add_manual_monitoringlist_entries(self, dataset):
         """Parses co-ords from self.inputs, loads them into the monitoringlist"""

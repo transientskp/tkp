@@ -258,12 +258,11 @@ class TestSimpleImageSourceFind(unittest.TestCase):
                       0.0006067963179204716, 0.00017037685531724465, #Integrated flux, err
                       6.192259965962862, 25.516190123153514, #Significance level, Beam semimajor-axis width (arcsec)
                       10.718798843620489, 178.62899212789304) #Beam semiminor-axis width (arcsec), Beam parallactic angle
-    
-        
+
         self.image = accessors.sourcefinder_image_from_accessor(
-                       accessors.FitsFile(os.path.join(DATAPATH, 'GRB120422A/GRB120422A-120429.fits'))
-                       )
-        
+                       accessors.FitsImage(os.path.join(DATAPATH,
+                                        'GRB120422A/GRB120422A-120429.fits')))
+
         results = self.image.extract(det=5, anl=3)
         results = [result.serialize() for result in results]
         self.assertEqual(len(results), 1)

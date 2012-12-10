@@ -12,17 +12,13 @@ import pytz
 import ctypes
 import sys
 
+from pyrap.measures import measures
+
 logger = logging.getLogger(__name__)
 
-# Note that wcstools takes a +ve longitude as WEST.
+# Note that we take a +ve longitude as WEST.
 CORE_LAT = 52.9088
 CORE_LON = -6.8689
-# We'll need the libwcstools library (available in the TKP repository as
-# external/libwcstools) somewhere on the ctypes library search path.
-if sys.platform == "darwin":
-    WCSTOOLS_NAME = "libwcstools.dylib"
-else:
-    WCSTOOLS_NAME = "libwcstools.so"
 
 def julian_date(time=None, modified=False):
     """Return the Julian Date: the number of days (including fractions) which
@@ -44,24 +40,6 @@ def julian_date(time=None, modified=False):
     return 2400000.5 + mjd_daynumber
 
 
-def jd2lst(jd, lon=CORE_LON):
-    """Return the Local Sidereal Time in seconds.
-
-    Starts with Julian Date. Default logitude is that of LOFAR core:
-    note that wcstools takes a positive longitude as being WEST.
-    """
-    wcstools = ctypes.cdll.LoadLibrary(WCSTOOLS_NAME)
-    wcstools.setlongitude(ctypes.c_double(lon))
-    wcstools.jd2lst.restype = ctypes.c_double
-    c_jd = ctypes.c_double(jd)
-    return wcstools.jd2lst(c_jd)
-
-
-def mjd2lst(mjd, lon=CORE_LON):
-    """Modified Julian Date to Local Sidereal Time; uses jd2lst"""
-    return jd2lst(mjd + 2400000.5, lon=lon)
-
-
 def sec2deg(seconds):
     """Seconds of time to degrees of arc"""
     return 15.0 * seconds / 3600.0
@@ -77,40 +55,6 @@ def sec2hms(seconds):
     hours, seconds = divmod(seconds, 60**2)
     minutes, seconds = divmod(seconds, 60)
     return (int(hours), int(minutes), seconds)
-
-
-def mjds2lst(mjds, lon=CORE_LON):
-    """Return the local sidereal time in degrees.  Starts with mean julian
-    date in seconds, as is the time column from a measurement set.  Default
-    logitude is that of LOFAR core."""
-    # That is, this should be a drop-in replacement for old_mjds2lst(), below.
-    return sec2deg(mjd2lst(sec2days(mjds), lon=lon))
-
-
-def old_mjds2lst(MJDs, lon=6.8689):
-    """DEPRECATED
-    Return the local sidereal time in degrees.  Starts with mean julian
-    date in seconds, as is the time column from a measurement set.  Default
-    logitude is that of LOFAR core."""
-
-    logger.debug("old_mjds2lst() is deprecated: try mjds2lst() instead")
-
-    # MJD of midnight (am) on 2000 Jan 1 (which I think is where the
-    # MS times in seconds date from) - this is some kind of reference
-    # date --editor's note -- MJD starts at Nov 17, 1858
-    t0 = 51544
-    l0 = 99.967794687
-    l1 = 360.98564736628603
-    l2 = 2.907879e-13
-    l3 = -5.302e-22
-    # MJD days from 1 Jan 2000  -- compared this to web and it is ok
-    MJD_2000 = MJDs / (24 * 3600) - t0
-    sidereal_time = (l0 + (l1 * MJD_2000) + (l2 * MJD_2000 * MJD_2000) +
-                     (l3 * MJD_2000 * MJD_2000) + lon)
-    mst = sidereal_time - (360 * math.floor(sidereal_time / 360.0))
-    #print 'LST: %5.3f' % mst
-
-    return mst
 
 
 def altaz(mjds, ra, dec, lat=CORE_LAT):
@@ -502,24 +446,36 @@ def convert_coordsystem(ra, dec, insys, outsys):
     """
     Convert RA & dec (given in decimal degrees) between equinoxes.
     """
-    wcstools = ctypes.cdll.LoadLibrary(WCSTOOLS_NAME)
-    c_ra, c_dec = ctypes.c_double(ra), ctypes.c_double(dec)
-    p_ra, p_dec = ctypes.pointer(c_ra), ctypes.pointer(c_dec)
+    dm = measures()
 
     if insys == CoordSystem.FK4:
-        if outsys == CoordSystem.FK5:
-            wcstools.fk425(p_ra, p_dec)
+        insys = "B1950"
     elif insys == CoordSystem.FK5:
-        if outsys == CoordSystem.FK4:
-            wcstools.fk524(p_ra, p_dec)
+        insys = "J2000"
+    else:
+        raise Exception("Unknown Coordinate Sysem")
 
-    return c_ra.value, c_dec.value
+    if outsys == CoordSystem.FK4:
+        outsys = "B1950"
+    elif outsys == CoordSystem.FK5:
+        outsys = "J2000"
+    else:
+        raise Exception("Unknown Coordinate Sysem")
+
+    result = dm.measure(
+        dm.direction(insys, "%fdeg" % ra, "%fdeg" % dec),
+        outsys
+    )
+
+    ra = math.degrees(result['m0']['value'])
+    dec = math.degrees(result['m1']['value'])
+
+    return ra, dec
 
 
 class WCS(wcslib.wcs):
     """
-    wcslib.wcs, extended to support different coordinate systems using
-    wcstools.
+    wcslib.wcs, extended to support different coordinate systems.
     """
 
     # A signal to use for message passing.

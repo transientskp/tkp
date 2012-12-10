@@ -13,10 +13,11 @@ def requires_database():
         return lambda func: func
     return unittest.skip("Database functionality disabled in configuration")
 
-def requires_data(filename):
-    if os.path.exists(filename):
-        return lambda func: func
-    return unittest.skip("Test data (%s) not available" % filename)
+def requires_data(*args):
+    for filename in args:
+        if not os.path.exists(filename):
+            return unittest.skip("Test data (%s) not available" % filename)
+    return lambda func: func
 
 def requires_module(module_name):
     try:
@@ -29,6 +30,6 @@ def duration(test_duration):
     if tkp.config.config['test']['max_duration']:
         if tkp.config.config['test']['max_duration'] < test_duration:
             return unittest.skip(
-             "Tests of duration > %s disabled in tkp.config['test'] section." % 
+             "Tests of duration > %s disabled in tkp.config['test'] section." %
                 tkp.config.config['test']['max_duration'])
     return lambda func: func

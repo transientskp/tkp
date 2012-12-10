@@ -467,7 +467,7 @@ def convert_coordsystem(ra, dec, insys, outsys):
         outsys
     )
 
-    ra = math.degrees(result['m0']['value'])
+    ra = math.degrees(result['m0']['value']) % 360 # 0 < ra < 360
     dec = math.degrees(result['m1']['value'])
 
     return ra, dec

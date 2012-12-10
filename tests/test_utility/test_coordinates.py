@@ -154,6 +154,7 @@ class juliandate(unittest.TestCase):
 class coordsystemTest(unittest.TestCase):
     knownValues = (
         {"fk4": (10.0, 10.0), "fk5": (10.64962347, 10.273829)},
+
         {"fk4": (9.351192, 9.725562), "fk5": (10.0, 10.0)},
         {"fk4": (179.357791, 45.278329), "fk5": (180, 45)},
         {"fk4": (180, 45), "fk5": (180.63913, 44.721730)},
@@ -162,38 +163,39 @@ class coordsystemTest(unittest.TestCase):
     )
 
     def testKnownValues(self):
+        # Note that RA is always positive in the range 0 < RA < 360
         for coord_pair in self.knownValues:
             ra, dec = coordinates.convert_coordsystem(
                 coord_pair["fk4"][0], coord_pair["fk4"][1],
                 coordinates.CoordSystem.FK4,
                 coordinates.CoordSystem.FK4
             )
-            self.assertAlmostEqual(ra, coord_pair["fk4"][0])
-            self.assertAlmostEqual(dec, coord_pair["fk4"][0])
+            self.assertAlmostEqual(ra, coord_pair["fk4"][0] % 360, 3)
+            self.assertAlmostEqual(dec, coord_pair["fk4"][1], 3)
 
             ra, dec = coordinates.convert_coordsystem(
                 coord_pair["fk5"][0], coord_pair["fk5"][1],
                 coordinates.CoordSystem.FK4,
                 coordinates.CoordSystem.FK4
             )
-            self.assertAlmostEqual(ra, coord_pair["fk5"][0])
-            self.assertAlmostEqual(dec, coord_pair["fk5"][0])
+            self.assertAlmostEqual(ra, coord_pair["fk5"][0] % 360, 3)
+            self.assertAlmostEqual(dec, coord_pair["fk5"][1], 3)
 
             ra, dec = coordinates.convert_coordsystem(
-                coord_pair["fk4"][0], coord_pair["fk4"][0],
+                coord_pair["fk4"][0], coord_pair["fk4"][1],
                 coordinates.CoordSystem.FK4,
                 coordinates.CoordSystem.FK5
             )
-            self.assertAlmostEqual(ra, coord_pair["fk5"][0]
-            self.assertAlmostEqual(dec, coord_pair["fk5"][1]
+            self.assertAlmostEqual(ra, coord_pair["fk5"][0] % 360, 3)
+            self.assertAlmostEqual(dec, coord_pair["fk5"][1], 3)
 
             ra, dec = coordinates.convert_coordsystem(
-                coord_pair["fk5"][0], coord_pair["fk5"][0],
+                coord_pair["fk5"][0], coord_pair["fk5"][1],
                 coordinates.CoordSystem.FK5,
                 coordinates.CoordSystem.FK4
             )
-            self.assertAlmostEqual(ra, coord_pair["fk4"][0]
-            self.assertAlmostEqual(dec, coord_pair["fk4"][1]
+            self.assertAlmostEqual(ra, coord_pair["fk4"][0] % 360, 3)
+            self.assertAlmostEqual(dec, coord_pair["fk4"][1], 3)
 
 
 if __name__ == '__main__':

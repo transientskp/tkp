@@ -26,7 +26,7 @@ from optparse import OptionParser
 import pyfits
 import numpy
 
-from tkp.utility.accessors import FitsFile
+from tkp.utility.accessors import FitsImage
 from tkp.utility.accessors import sourcefinder_image_from_accessor
 from tkp.utility.accessors import writefits as tkp_writefits
 
@@ -180,9 +180,9 @@ def run_sourcefinder(files, options):
             and isinstance(options.bmin, float)
             and isinstance(options.bpa, float)
         ):
-            ff = FitsFile(filename, beam=(options.bmaj, options.bmin, options.bpa), plane=0)
+            ff = FitsImage(filename, beam=(options.bmaj, options.bmin, options.bpa), plane=0)
         else:
-            ff = FitsFile(filename, plane=0)
+            ff = FitsImage(filename, plane=0)
         imagedata = sourcefinder_image_from_accessor(ff)
         if options.fdr:
             print "Using False Detection Rate algorithm with alpha = %f" % (options.alpha,)

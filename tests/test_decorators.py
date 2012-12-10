@@ -13,31 +13,43 @@ def debug_print(*args):
     print "**"
 
 
+testfile1 = os.path.join(tkp.config.config['test']['datapath'],
+                         'CORRELATED_NOISE.FITS')
+testfile2 = os.path.join(tkp.config.config['test']['datapath'],
+                         'UNCORRELATED_NOISE.FITS')
+
 class TestDatabaseDecorators(unittest.TestCase):
     @requires_database()
     def test_requires_database(self):
         debug_print( "Database testing enabled.")
-        
-        
+
+
 class TestDataDecorators(unittest.TestCase):
     def test_datapath_defined(self):
         self.assertNotEqual(tkp.config.config['test']['datapath'], None )
         debug_print( "Test data path:", 
                      tkp.config.config['test']['datapath'])
-        
-    @requires_data(os.path.join(tkp.config.config['test']['datapath'], 
-                                'CORRELATED_NOISE.FITS'))
+
+    @requires_data(testfile1, testfile2)
     def test_requires_data_decorator(self):
         f = open(os.path.join(tkp.config.config['test']['datapath'], 
                               'CORRELATED_NOISE.FITS'))
-        
-    
+
+    @requires_data('/dummypath/dummypath')
+    def test_requires_data_decorator_skips(self):
+        print "Should be skipped"
+
+    @requires_data('/dummypath/dummypath', testfile1)
+    def test_requires_data_decorator_skips_for_partial_miss(self):
+        print "Should be skipped"
+
+
 class TestDurationDecorator(unittest.TestCase):
     def test_max_duration_defined(self):
         debug_print("Max_duration:", tkp.config.config['test']['max_duration'])
         debug_print("Max_duration type:", 
                     type(tkp.config.config['test']['max_duration']))
-        
+
     @duration(5)
     def test_short(self):
         debug_print("Will run test duration = 5") 
@@ -47,6 +59,6 @@ class TestDurationDecorator(unittest.TestCase):
     @duration(300)
     def test_long(self):
         debug_print("Will run test duration = 300")
-        
-            
-            
+
+
+

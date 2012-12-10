@@ -107,7 +107,7 @@ def ratohms(radegs):
 
 
 def dectodms(decdegs):
-    """Convert Declination in decimal degrees format to hours, minutes,
+    """Convert Declination in decimal degrees format to degrees, minutes,
     seconds format.
 
     Keyword arguments:
@@ -190,6 +190,13 @@ def dmstodec(decd, decm, decs):
         raise ValueError("coordinates out of range")
 
     return sign * decdegs
+
+def sexagesimal_to_string(hms):
+    """Works for hms or dms tuples"""
+    h = str(hms[0]).zfill(2)
+    m = str(hms[1]).zfill(2)
+    s = ('%.2f' % hms[2]).zfill(5)
+    return ':'.join((h, m, s))
 
 
 def angsep(ra1, dec1, ra2, dec2):

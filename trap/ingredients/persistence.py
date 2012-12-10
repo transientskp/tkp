@@ -5,6 +5,8 @@ from tkp.database import DataBase, DataSet
 import tkp.utility.accessors
 from tkp.utility.accessors import dbimage_from_accessor
 from contextlib import closing
+from tempfile import NamedTemporaryFile
+from pyrap.images import image as pyrap_image
 
 logger = logging.getLogger(__name__)
 
@@ -18,15 +20,28 @@ def store_to_mongodb(filename, hostname, port, db):
         return
 
     try:
+        # This conversion should work whether the input file
+        # is in FITS or CASA format.
+        temp_fits_file = NamedTemporaryFile()
+        i = pyrap_image(filename)
+        i.tofits(temp_fits_file.name)
+    except Exception, e:
+        logger.error("Could not convert image to FITS: %s" % (str(e)))
+        temp_fits_file.close()
+        return
+
+    try:
         connection = pymongo.Connection(host=hostname, port=port)
         gfs = gridfs.GridFS(connection[db])
         new_file = gfs.new_file(filename=filename)
-        with open(filename, "r") as f:
+        with open(temp_fits_file.name, "r") as f:
             new_file.write(f)
         new_file.close()
         connection.close()
     except Exception, e:
         logger.error("Could not store image to MongoDB: %s" % (str(e)))
+    finally:
+        temp_fits_file.close()
 
 
 def store(images, description, dataset_id=-1, store_images=False, mongo_host="localhost", mongo_port=27017, mongo_db="trap"):

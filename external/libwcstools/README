@@ -1,6 +1,0 @@
-
-this is libwcstools 3.7.4, built as a normal system (ELF) library, which is
-then used used in tkp.utility.coordinates by loading it through the use of ctypes.
-
-    http://tdc-www.harvard.edu/software/wcstools/
-

@@ -86,7 +86,7 @@ class hmstoraTest(unittest.TestCase):
         self.assertRaises(ValueError, coordinates.hmstora, -1, 0, -1)
         self.assertRaises(ValueError, coordinates.hmstora, 12, 60, 0)
         self.assertRaises(ValueError, coordinates.hmstora, 12, 0, 60)
-        
+
 class dmstodecTest(unittest.TestCase):
     knownValues = (((0, 0, 0), 0),
         ((45, 0, 0), 45),
@@ -151,14 +151,51 @@ class juliandate(unittest.TestCase):
         now = coordinates.julian_date()
         self.failUnless(now > 2454574)
 
+class coordsystemTest(unittest.TestCase):
+    knownValues = (
+        {"fk4": (10.0, 10.0), "fk5": (10.64962347, 10.273829)},
 
-class wcstoolsTest(unittest.TestCase):
-    def testLoad(self):
-        import ctypes
-        try:
-            wcstools = ctypes.cdll.LoadLibrary(coordinates.WCSTOOLS_NAME)
-        except OSError, message:
-            self.fail(message)
+        {"fk4": (9.351192, 9.725562), "fk5": (10.0, 10.0)},
+        {"fk4": (179.357791, 45.278329), "fk5": (180, 45)},
+        {"fk4": (180, 45), "fk5": (180.63913, 44.721730)},
+        {"fk4": (349.35037, -10.27392), "fk5": (-10, -10)},
+        {"fk4": (-10, -10), "fk5": (350.648870, -9.725590)}
+    )
+
+    def testKnownValues(self):
+        # Note that RA is always positive in the range 0 < RA < 360
+        for coord_pair in self.knownValues:
+            ra, dec = coordinates.convert_coordsystem(
+                coord_pair["fk4"][0], coord_pair["fk4"][1],
+                coordinates.CoordSystem.FK4,
+                coordinates.CoordSystem.FK4
+            )
+            self.assertAlmostEqual(ra, coord_pair["fk4"][0] % 360, 3)
+            self.assertAlmostEqual(dec, coord_pair["fk4"][1], 3)
+
+            ra, dec = coordinates.convert_coordsystem(
+                coord_pair["fk5"][0], coord_pair["fk5"][1],
+                coordinates.CoordSystem.FK4,
+                coordinates.CoordSystem.FK4
+            )
+            self.assertAlmostEqual(ra, coord_pair["fk5"][0] % 360, 3)
+            self.assertAlmostEqual(dec, coord_pair["fk5"][1], 3)
+
+            ra, dec = coordinates.convert_coordsystem(
+                coord_pair["fk4"][0], coord_pair["fk4"][1],
+                coordinates.CoordSystem.FK4,
+                coordinates.CoordSystem.FK5
+            )
+            self.assertAlmostEqual(ra, coord_pair["fk5"][0] % 360, 3)
+            self.assertAlmostEqual(dec, coord_pair["fk5"][1], 3)
+
+            ra, dec = coordinates.convert_coordsystem(
+                coord_pair["fk5"][0], coord_pair["fk5"][1],
+                coordinates.CoordSystem.FK5,
+                coordinates.CoordSystem.FK4
+            )
+            self.assertAlmostEqual(ra, coord_pair["fk4"][0] % 360, 3)
+            self.assertAlmostEqual(dec, coord_pair["fk4"][1], 3)
 
 
 if __name__ == '__main__':

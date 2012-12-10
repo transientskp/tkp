@@ -3,4 +3,4 @@ scipy>=0.7.0
 pyfits>=2.3.1
 python-dateutil>=1.4.1
 python-monetdb>=11.11.11
-
+pyrap>=1.1.0

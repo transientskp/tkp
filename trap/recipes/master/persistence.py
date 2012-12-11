@@ -6,7 +6,7 @@ from lofarpipe.support.baserecipe import BaseRecipe
 from lofarpipe.support.remotecommand import RemoteCommandRecipeMixIn
 from lofarpipe.support.clusterdesc import ClusterDesc, get_compute_nodes
 from lofarpipe.support.remotecommand import ComputeJob
-from trap.ingredients.persistence import master_code
+from trap.ingredients.persistence import master_steps
 
 
 class persistence(BaseRecipe, RemoteCommandRecipeMixIn):
@@ -27,7 +27,7 @@ class persistence(BaseRecipe, RemoteCommandRecipeMixIn):
         super(persistence, self).go()
         images = self.inputs['args']
         metadatas = self.distributed(images)
-        dataset_id, image_ids = master_code(metadatas, self.inputs['parset'])
+        dataset_id, image_ids = master_steps(metadatas, self.inputs['parset'])
         self.outputs['dataset_id'] = dataset_id
 
         if self.error.isSet():

@@ -32,7 +32,7 @@ class TrapLocal(control):
         classification_file = self.task_definitions.get("classification", "parset")
 
         persistence_parset_file = self.task_definitions.get("persistence", "parset")
-        dataset_id, image_ids = trap.ingredients.persistence.doit(images, persistence_parset_file)
+        dataset_id, image_ids = trap.ingredients.persistence.all(images, persistence_parset_file)
 
         good_image_ids = []
         for image_id in image_ids:

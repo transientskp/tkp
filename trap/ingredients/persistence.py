@@ -113,7 +113,7 @@ def store_images(images_metadata, dataset_id):
     return image_ids
 
 
-def node_code(images, parset_file):
+def node_steps(images, parset_file):
     """
     this function executes all persistence steps that should be executed on a node.
     """
@@ -129,7 +129,7 @@ def node_code(images, parset_file):
     return metadatas
 
 
-def master_code(metadatas, parset_file):
+def master_steps(metadatas, parset_file):
     """this function executes all persistence steps that should be executed on
         a master.
     Args:
@@ -149,9 +149,9 @@ def master_code(metadatas, parset_file):
     return dataset_id, image_ids
 
 
-def doit(images, parset_file):
+def all(images, parset_file):
     """
     execute node and then master code, should be used in local run only!
     """
-    metadatas = node_code(images, parset_file)
-    return master_code(metadatas, parset_file)
+    metadatas = node_steps(images, parset_file)
+    return master_steps(metadatas, parset_file)

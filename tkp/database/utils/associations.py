@@ -135,19 +135,22 @@ def _insert_temprunningcatalog(conn, image_id, deRuiter_r, radius=0.03):
     """Select matched sources
 
     Here we select the extractedsource that have a positional match
-    with the sources in the running catalogue table (runningcatalog)
-    and those who have will be inserted into the temporary running
-    catalogue table (temprunningcatalog).
+    with the sources in the running catalogue table (runningcatalog).
+    Those sources which *do* have a potential match, will be inserted into the
+    temporary running catalogue table (temprunningcatalog).
 
-    Explanation of some columns used in the SQL query:
+    See also:
+    http://docs.transientskp.org/tkp/database/schema.html#temprunningcatalog
 
-    - avg_I_peak := average of I_peak
-    - avg_I_peak_sq := average of I_peak^2
-    - avg_weight_I_peak := average of weight of I_peak, i.e. 1/error^2
-    - avg_weighted_I_peak := average of weighted i_peak,
-         i.e. average of I_peak/error^2
-    - avg_weighted_I_peak_sq := average of weighted i_peak^2,
-         i.e. average of I_peak^2/error^2
+    Explanation of some column name prefixes/suffixes used in the SQL query:
+
+    - avg_X := average of X
+    - avg_X_sq := average of X^2
+    - avg_weight_X := average of weight of X, i.e. mean( 1/error^2 )
+    - avg_weighted_X := average of weighted X,
+         i.e. mean(X/error^2)
+    - avg_weighted_X_sq := average of weighted X^2,
+         i.e. mean(X^2/error^2)
 
     This result set might contain multiple associations (1-n,n-1)
     for a single known source in runningcatalog.
@@ -595,7 +598,9 @@ def _insert_1_to_many_runcat_flux(conn):
 def _insert_1_to_many_basepoint_assoc(conn):
     """Insert base points for one-to-many associations
 
-    And, we have to insert the base point of the associations.
+    Before continuing, we have to insert the 'base points' of the associations, 
+    i.e. the links between the new runningcatalog entries
+    and their associated (new) extractedsources.
     """
 
     try:
@@ -634,9 +639,9 @@ def _insert_1_to_many_basepoint_assoc(conn):
         cursor.close()
 
 def _insert_1_to_many_assoc(conn):
-    """Update the runcat id for the one-to-many associations,
-    and delete the assocxtrsource entries of the old runcat id
-    (the new ones have been added earlier).
+    """Insert links into the association table between the new runcat 
+    entries and the old extractedsources.
+    (New to New ('basepoint') links have been added earlier).
 
     In this case, new entries in the runningcatalog and runningcatalog_flux
     were already added (for every extractedsource one), which will replace
@@ -923,7 +928,7 @@ def _delete_1_to_many_inactive_runcat_flux(conn):
 def _flag_1_to_many_inactive_runcat(conn):
     """Flag the old runcat ids in the runningcatalog to inactive
 
-    We do noy delete them yet, because we need them later on.
+    We do not delete them yet, because we need them later on.
     Since we replaced this runcat.id with multiple new one, we first
     flag it as inactive, after which we delete it from the runningcatalog
     """
@@ -953,7 +958,7 @@ def _flag_1_to_many_inactive_tempruncat(conn):
     """Delete the one-to-many associations from temprunningcatalog,
     and delete the inactive rows from runningcatalog.
 
-    We do noy delete them yet, because we need them later on.
+    We do not delete them yet, because we need them later on.
     After the one-to-many associations have been processed,
     they can be deleted from the temporary table and
     the runningcatalog.
@@ -987,17 +992,8 @@ def _flag_1_to_many_inactive_tempruncat(conn):
         cursor.close()
 
 def _insert_1_to_1_assoc(conn):
-    """Insert remaining one-to-one associations into assocxtrsource table
-
-    This handles the case where a single extractedsource is associated
-    with a single runningcatalog source.
-    The extractedsource.id is appended to the assocxtrsource table
-    (i.e. its light-curve datapoints).
-
-    Since tempruncat contains the new (updated)  position average
-    (including the latest extractedsource),
-    the calculations of the distance and r should be done
-    with the runningcatalog values
+    """
+    Insert remaining associations from temprunningcatalog into assocxtrsource.
     """
 
     try:

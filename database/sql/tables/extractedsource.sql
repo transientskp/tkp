@@ -6,6 +6,10 @@ CREATE TABLE extractedsource
   ,decl DOUBLE NOT NULL
   ,ra_err DOUBLE NOT NULL
   ,decl_err DOUBLE NOT NULL
+  ,ra_fit_err DOUBLE NOT NULL
+  ,decl_fit_err DOUBLE NOT NULL
+  ,ra_sys_err DOUBLE NOT NULL
+  ,decl_sys_err DOUBLE NOT NULL
   ,x DOUBLE NOT NULL
   ,y DOUBLE NOT NULL
   ,z DOUBLE NOT NULL

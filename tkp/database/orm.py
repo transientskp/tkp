@@ -516,12 +516,13 @@ class Image(DBObject):
                 sourcefinder.image.ImageData().extract()), or a list
                 of data tuples with the source information as follows:
                 (ra, dec,
-                ra_err, dec_err, 
+                ra_fit_err, dec_fit_err, 
                 peak, peak_err, 
                 flux, flux_err,
                 significance level,
                 beam major width (as), beam minor width(as),
-                beam parallactic angle).
+                beam parallactic angle
+                ra_sys_err,dec_sys_err).
        """
        #To do: Figure out a saner method of passing the results around
        # (Namedtuple, for starters?)
@@ -568,8 +569,11 @@ class ExtractedSource(DBObject):
 
     TABLE = 'extractedsource'
     ID = 'id'
-    REQUIRED = ('image', 'zone', 'ra', 'decl', 'ra_err', 'decl_err',
-                'x', 'y', 'z', 'racosdecl', 'det_sigma')
+    REQUIRED = ('image', 'zone',
+                'ra', 'decl', 'ra_err', 'decl_err',
+                'ra_fit_err', 'decl_fit_err', 'ra_sys_err', 'decl_sys_err',
+                'x', 'y', 'z',
+                'racosdecl', 'det_sigma')
 
     def __init__(self, data=None, image=None, database=None, id=None):
         """If id is supplied, the data and image arguments are ignored."""

@@ -290,8 +290,13 @@ def _insert_user_monitored_source_into_extractedsource(cursor, image_id, result)
        TO DO: Could use general purpose extractedsource insertion routine,
                if only it returned the xtrsrc ids.
     """
-    ra, dec, ra_err, dec_err, peak, peak_err, flux, flux_err, sigma, \
-    semimajor, semiminor, pa = result
+    # Note: ra/decl_fit_err in degrees
+    # Note: ra/decl_sys_err in arcsec
+    # Note: ra/decl_err, to be calculated, in arcsec
+    ra, dec, ra_fit_err, decl_fit_err, peak, peak_err, flux, flux_err, sigma, \
+    semimajor, semiminor, pa, ra_sys_err, decl_sys_err = result
+    ra_err = math.sqrt(ra_sys_err**2 + (ra_fit_err * 3600.)**2)
+    decl_err = math.sqrt(decl_sys_err**2 + (decl_fit_err * 3600.)**2)
     x = math.cos(math.radians(dec)) * math.cos(math.radians(ra))
     y = math.cos(math.radians(dec)) * math.sin(math.radians(ra))
     z = math.sin(math.radians(dec))
@@ -316,10 +321,18 @@ def _insert_user_monitored_source_into_extractedsource(cursor, image_id, result)
       ,semimajor
       ,semiminor
       ,pa
+      ,ra_fit_err
+      ,decl_fit_err
+      ,ra_sys_err
+      ,decl_sys_err
       ,extract_type
       )
     VALUES
       (%s
+      ,%s
+      ,%s
+      ,%s
+      ,%s
       ,%s
       ,%s
       ,%s
@@ -342,15 +355,17 @@ def _insert_user_monitored_source_into_extractedsource(cursor, image_id, result)
     """
     try:
         cursor.execute(
-            query, (image_id, int(math.floor(dec)), ra, dec, ra_err, dec_err,
+            query, (image_id, int(math.floor(dec)), ra, dec, ra_err, decl_err,
                     x, y, z, racosdecl, sigma, peak, peak_err, flux, flux_err,
-                    semimajor, semiminor, pa))
+                    semimajor, semiminor, pa, 
+                    ra_fit_err*3600., decl_fit_err*3600., ra_sys_err, decl_sys_err))
         return cursor.lastrowid
     except db.Error, e:
         query = query % (
-            image_id, int(math.floor(dec)), ra, dec, ra_err, dec_err,
+            image_id, int(math.floor(dec)), ra, dec, ra_err, decl_err,
             x, y, z, sigma, peak, peak_err, flux, flux_err,
-            semimajor, semiminor, pa)
+            semimajor, semiminor, pa,
+            ra_fit_err*3600., decl_fit_err*3600., ra_sys_err, decl_sys_err)
         logger.warn("Query failed: %s", query)
         cursor.close()
         raise

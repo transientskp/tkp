@@ -45,7 +45,7 @@ def match_catalogs(transient):
     #        results[value] = {}
     results = match_nearests_in_catalogs(
                         database.connection, transient.runcatid,
-                        radius=0.5, assoc_r=3.717/3600.)
+                        radius=0.5, deRuiter_r=3.717)
     database.close()
     if len(results) > 0:
         results = results[0]

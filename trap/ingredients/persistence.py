@@ -106,7 +106,7 @@ def store_images(images_metadata, dataset_id):
     dataset = DataSet(id=dataset_id, database=database)
     image_ids = []
     for metadata in images_metadata:
-        filename = metadata['filename']
+        filename = metadata['url']
         db_image = Image(data=metadata, dataset=dataset)
         image_ids.append(db_image.id)
         logger.info("stored %s with ID %s" % (os.path.basename(filename), db_image.id))

@@ -10,7 +10,6 @@ These can be used to populate ImageData objects based on some data source
 
 
 import pyfits
-import numpy
 from tkp.database import Image as DBImage
 from tkp.utility.accessors.dataaccessor import extract_metadata
 from tkp.sourcefinder.image import ImageData
@@ -63,21 +62,6 @@ def writefits(data, filename, header = {}):
         for key in header.iterkeys():
             hdu.header.update(key, header[key])
         hdu.writeto(filename)
-
-
-def beam2semibeam(bmaj, bmin, bpa, deltax, deltay):
-    """Calculate beam in pixels and radians"""
-
-    semimaj = (bmaj / 2.) * (numpy.sqrt(
-        (numpy.sin(numpy.pi * bpa / 180.)**2) / (deltax**2) +
-        (numpy.cos(numpy.pi * bpa / 180.)**2) / (deltay**2))
-    )
-    semimin = (bmin / 2.) * (numpy.sqrt(
-        (numpy.cos(numpy.pi * bpa / 180.)**2) / (deltax**2) +
-        (numpy.sin(numpy.pi * bpa / 180.)**2) / (deltay**2))
-    )
-    theta = numpy.pi * bpa / 180
-    return (semimaj, semimin, theta)
 
 
 def open(path):

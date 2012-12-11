@@ -40,7 +40,7 @@ def beam_invalid(semibmaj, semibmin, oversampled_x=30, elliptical_x=2.0):
         semibmaj, semibmin: size of the beam in pixels
     """
 
-    formatted = "semibmaj=%s and semibmin=%s" % (nice_format(semibmaj),
+    formatted = "bmaj=%s and bmin=%s (pixels)" % (nice_format(semibmaj),
                                                  nice_format(semibmin))
 
     if tkp.quality.restoringbeam.undersampled(semibmaj, semibmin):

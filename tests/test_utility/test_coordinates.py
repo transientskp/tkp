@@ -47,6 +47,29 @@ class jd2lsttest(unittest.TestCase):
             last
         )
 
+
+class gal_to_eq_and_eq_to_gal_Test(unittest.TestCase):
+    knownValues = (
+        [(10, 10), (262.89288972929216, -15.207965232900214)],
+        [(350, -10), (271.0071629114459, -42.544903877104645)],
+        [(1, 1), (266.0298496879791, -27.561144848129747)],
+        [(118.27441982715264, -52.7682822322771), (10, 10)],
+        [(67.05481764677926, -62.47515197465108), (350, -10)],
+        [(98.9410284460564, -59.6437963999095), (1, 1)]
+    )
+
+    def testKnownValues(self):
+        for coord_pair in self.knownValues:
+            gal_l, gal_b = coord_pair[0]
+            ra, dec = coord_pair[1]
+
+            self.assertAlmostEqual(coordinates.gal_to_eq(gal_l, gal_b)[0], ra, 3)
+            self.assertAlmostEqual(coordinates.gal_to_eq(gal_l, gal_b)[1], dec, 3)
+
+            self.assertAlmostEqual(coordinates.eq_to_gal(ra, dec)[0], gal_l, 3)
+            self.assertAlmostEqual(coordinates.eq_to_gal(ra, dec)[1], gal_b, 3)
+
+
 class ratohmsTest(unittest.TestCase):
     knownValues = ((0, (0, 0, 0)),
         (90, (6, 0, 0)),
@@ -194,7 +217,6 @@ class juliandate(unittest.TestCase):
 class coordsystemTest(unittest.TestCase):
     knownValues = (
         {"fk4": (10.0, 10.0), "fk5": (10.64962347, 10.273829)},
-
         {"fk4": (9.351192, 9.725562), "fk5": (10.0, 10.0)},
         {"fk4": (179.357791, 45.278329), "fk5": (180, 45)},
         {"fk4": (180, 45), "fk5": (180.63913, 44.721730)},

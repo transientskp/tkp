@@ -391,9 +391,6 @@ def radec_to_lmn(ra0, dec0, ra, dec):
     return (l, m, n)
 
 
-# Calculate l, m, n from RA,Dec and phase center.
-# Note: As done in Meqtrees, which seems to differ slightly from
-# l, m functions above.
 def eq_to_gal(ra, dec):
     """Find the Galactic co-ordinates of a source given the equatorial
     co-ordinates
@@ -405,28 +402,19 @@ def eq_to_gal(ra, dec):
     (l,b) -- Galactic longitude and latitude, in decimal degrees
 
     """
+    dm = measures()
 
-    R = [[-0.054875539726, -0.873437108010, -0.483834985808],
-         [0.494109453312, -0.444829589425, +0.746982251810],
-         [-0.867666135858, -0.198076386122, +0.455983795705]]
-    s = [math.cos(math.radians(ra)) * math.cos(math.radians(dec)),
-         math.sin(math.radians(ra)) * math.cos(math.radians(dec)),
-         math.sin(math.radians(dec))]
-    sg = []
-    sg.append(s[0] * R[0][0] + s[1] * R[0][1] + s[2] * R[0][2])
-    sg.append(s[0] * R[1][0] + s[1] * R[1][1] + s[2] * R[1][2])
-    sg.append(s[0] * R[2][0] + s[1] * R[2][1] + s[2] * R[2][2])
-    b = math.degrees(math.asin(sg[2]))
-    l = math.degrees(math.atan2(sg[1], sg[0]))
+    result = dm.measure(
+        dm.direction("J200", "%fdeg" % ra, "%fdeg" % dec),
+        "GALACTIC"
+    )
+    lon_l = math.degrees(result['m0']['value']) % 360 # 0 < ra < 360
+    lat_b = math.degrees(result['m1']['value'])
 
-    if l < 0:
-        l += 360
-
-    return (l, b)
+    return lon_l, lat_b
 
 
-# Return the Galactic co-ordinates of a point given in equatorial co-ordinates
-def gal_to_eq(l, b):
+def gal_to_eq(lon_l, lat_b):
     """Find the Galactic co-ordinates of a source given the equatorial
     co-ordinates
 
@@ -437,23 +425,16 @@ def gal_to_eq(l, b):
     (alpha, delta) -- RA, Dec in decimal degrees
 
     """
+    dm = measures()
 
-    Rinv = [[-0.054875539692115144, 0.49410945328828509, -0.86766613584223429],
-            [-0.87343710799750596, -0.44482958942460415, -0.19807638609701342],
-            [-0.4838349858324969, 0.74698225182667777, 0.45598379574707293]]
-    sg = [math.cos(math.radians(l)) * math.cos(math.radians(b)),
-          math.sin(math.radians(l)) * math.cos(math.radians(b)),
-          math.sin(math.radians(b))]
-    s = []
-    s.append(sg[0] * Rinv[0][0] + sg[1] * Rinv[0][1] + sg[2] * Rinv[0][2])
-    s.append(sg[0] * Rinv[1][0] + sg[1] * Rinv[1][1] + sg[2] * Rinv[1][2])
-    s.append(sg[0] * Rinv[2][0] + sg[1] * Rinv[2][1] + sg[2] * Rinv[2][2])
-    dec = math.degrees(math.asin(s[2]))
-    ra = math.degrees(math.atan2(s[1], s[0]))
-    if ra < 0:
-        ra = ra + 360
+    result = dm.measure(
+        dm.direction("GALACTIC", "%fdeg" % lon_l, "%fdeg" % lat_b),
+        "J2000"
+    )
+    ra = math.degrees(result['m0']['value']) % 360 # 0 < ra < 360
+    dec = math.degrees(result['m1']['value'])
 
-    return (ra, dec)
+    return ra, dec
 
 
 class CoordSystem(object):

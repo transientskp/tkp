@@ -3,7 +3,7 @@ if not  hasattr(unittest.TestCase, 'assertIsInstance'):
     import unittest2 as unittest
 import os
 import numpy
-from numpy.testing import assert_array_equal, assert_almost_equal
+from numpy.testing import assert_array_equal, assert_array_almost_equal
 from tkp.utility import accessors
 import tkp.quality
 from tkp.quality import statistics
@@ -82,17 +82,17 @@ class testDistances(unittest.TestCase):
         parsed = tkp.lofar.antennaarrays.parse_antennafile(core_antennas)
         for conf in "LBA", "LBA_INNER", "LBA_OUTER", "LBA_SPARSE0", "LBA_SPARSE1":
             ds = tkp.lofar.antennaarrays.shortest_distances(parsed[conf], parsed["LBA"])
-            assert_almost_equal(ds, tkp.lofar.antennaarrays.core_dipole_distances[conf], decimal=2)
+            assert_array_almost_equal(ds, tkp.lofar.antennaarrays.core_dipole_distances[conf], decimal=2)
 
         parsed = tkp.lofar.antennaarrays.parse_antennafile(intl_antennas)
         for conf in "LBA", "LBA_INNER", "LBA_OUTER":
             ds = tkp.lofar.antennaarrays.shortest_distances(parsed[conf], parsed["LBA"])
-            assert_almost_equal(ds, tkp.lofar.antennaarrays.intl_dipole_distances[conf], decimal=2)
+            assert_array_almost_equal(ds, tkp.lofar.antennaarrays.intl_dipole_distances[conf], decimal=2)
 
         parsed = tkp.lofar.antennaarrays.parse_antennafile(remote_antennas)
         for conf in "LBA", "LBA_INNER", "LBA_OUTER", "LBA_SPARSE0", "LBA_SPARSE1", "LBA_X", "LBA_X":
             ds = tkp.lofar.antennaarrays.shortest_distances(parsed[conf], parsed["LBA"])
-            assert_almost_equal(ds, tkp.lofar.antennaarrays.remote_dipole_distances[conf], decimal=2)
+            assert_array_almost_equal(ds, tkp.lofar.antennaarrays.remote_dipole_distances[conf], decimal=2)
 
 
 if __name__ == '__main__':

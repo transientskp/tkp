@@ -1,8 +1,8 @@
 .. _database_assoc:
 
-++++++++++++++++++
+******************
 Source Association
-++++++++++++++++++
+******************
 .. |last_updated| last_updated::
 
 Source association—the process by which individual measurements recorded from
@@ -18,6 +18,7 @@ highlighting potential issues. For a full discussion of the algorithms
 involved, the user is referred to the thesis by `Scheers
 <http://dare.uva.nl/en/record/367374>`_.
 
+==========================================
 Database Structure & Association Procedure
 ==========================================
 
@@ -67,7 +68,7 @@ commutative if all measurements made at time :math:`t_n` are inserted and
 associated before any measurements made at time :math:`t_{n+1}`.
 
 Case Studies
-============
+-------------------
 
 Here we will discuss the various outcomes which are possible from the source
 association process under different conditions. In the following, individual
@@ -78,12 +79,12 @@ constitute a particular lightcurve are linked to the :math:`L_k` symbol by means
 coloured line.
 
 Single Frequency Band
----------------------
+^^^^^^^^^^^^^^^^^^^^^^
 
 We start by considering observations with only a single frequency band.
 
 One-to-One Association
-++++++++++++++++++++++
+"""""""""""""""""""""""
 
 .. graphviz:: assoc/one2one.dot
 
@@ -92,7 +93,7 @@ in order. A single lightcurve is generated. The calculated average flux of the
 lightcurve :math:`L_1` is :math:`\overline{f_{1\cdots{}4}}`.
 
 One-to-Many Association
-+++++++++++++++++++++++
+"""""""""""""""""""""""
 
 .. graphviz:: assoc/one2many.dot
 
@@ -110,7 +111,7 @@ Note that :math:`f_1` and :math:`f_2`: are now being counted *twice*. Even if
 of the telescope causes the sky to get brighter!
 
 Many-to-One Association
-+++++++++++++++++++++++
+"""""""""""""""""""""""
 
 .. graphviz:: assoc/many2one.dot
 
@@ -125,7 +126,7 @@ flux :math:`\overline{f_{1,3,5,6}}` and :math:`L_2` having average flux
 are counted twice.
 
 Many-to-Many Association
-++++++++++++++++++++++++
+""""""""""""""""""""""""""
 
 .. note::
 
@@ -159,7 +160,7 @@ truncating this lightcurve.
 
 
 Multiple Frequency Bands
-------------------------
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 We now introduce the added complexity of multiple bands: the same part of the
 sky being observed at the same time, but at different frequencies. Here, we
@@ -173,7 +174,7 @@ preserved.
 
 
 Multi-Band One-to-One Association
-+++++++++++++++++++++++++++++++++
+""""""""""""""""""""""""""""""""""""""""""""""""""""
 
 .. graphviz:: assoc/one2one.multiband.dot
 
@@ -184,7 +185,7 @@ calculated: :math:`\overline{f_{1\cdots{}4}}` in band 1 and
 :math:`\overline{f_{5\cdots{}8}}` in band 2.
 
 Multi-Band One-to-Many Association
-++++++++++++++++++++++++++++++++++
+""""""""""""""""""""""""""""""""""""""""""""""""""""
 
 .. graphviz:: assoc/one2many.multiband.dot
 
@@ -207,7 +208,7 @@ respectively. Note that the entire flux in Band 2, as well as :math:`f_1` and
 :math:`f_2`, is now counted twice.
 
 Multi-Band Many-to-One Association
-++++++++++++++++++++++++++++++++++
+""""""""""""""""""""""""""""""""""""""""""""""""""""
 
 .. graphviz:: assoc/many2one.multiband.dot
 
@@ -220,7 +221,7 @@ in Band 2, and :math:`L_2` has average fluxes :math:`\overline{f_{2,4,5,6}}`
 in Band 1 and :math:`\overline{f_{8,10,12,14}}` in Band 2.
 
 Multi-Band Many-to-One Association (2)
-++++++++++++++++++++++++++++++++++++++
+""""""""""""""""""""""""""""""""""""""""""""""""""""
 
 .. graphviz:: assoc/many2one.crossband.dot
 
@@ -248,6 +249,7 @@ insertion at a given timestep causes the associations for *all* datapoints at
 that timestep to be revaluated, rather than simply the inserted measurement
 simply being associated with the already extant lightcurves.
 
+==========
 Discussion
 ==========
 
@@ -306,6 +308,7 @@ assumes the sky is unchanging. Further, again the issue of database
 complexity should be considered: incorporating more logic of this sort is
 expensive, in terms of both compute and developer time.
 
+===============
 Recommendations
 ===============
 
@@ -335,3 +338,4 @@ To that end, we suggest the following:
    bigger, since measurements may be counted twice. Observing the
    "overcounting fraction" as the database grows will help understand the
    nature and severity of the problem.
+   

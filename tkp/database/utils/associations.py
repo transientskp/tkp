@@ -361,14 +361,14 @@ INSERT INTO temprunningcatalog
         #                        radius, radius, radius, radius, 
         #                        radius, radius, deRuiter_r/3600.)
         cursor.execute(query, (image_id, image_id,
-                                radius, radius, radius, radius, 
-                                radius, radius, deRuiter_r/3600.))
+                                radius, radius, radius, radius,
+                                radius, radius, deRuiter_r / 3600.))
         if not AUTOCOMMIT:
             conn.commit()
     except db.Error, e:
         q = query % (image_id, image_id,
-                        radius, radius, radius, radius, 
-                        radius, radius, deRuiter_r/3600.)
+                        radius, radius, radius, radius,
+                        radius, radius, deRuiter_r / 3600.)
         logger.warn("Failed on query\n%s." % q)
         raise
     finally:
@@ -404,11 +404,6 @@ SELECT t1.runcat
                           GROUP BY runcat
                           HAVING COUNT(*) > 1
                          )
-           AND xtrsrc IN (SELECT xtrsrc
-                            FROM temprunningcatalog
-                          GROUP BY xtrsrc
-                          HAVING COUNT(*) > 1
-                         )
         GROUP BY xtrsrc
        ) t0
       ,(SELECT runcat
@@ -426,11 +421,6 @@ SELECT t1.runcat
                                                              )
                                            )
                           GROUP BY runcat
-                          HAVING COUNT(*) > 1
-                         )
-           AND xtrsrc IN (SELECT xtrsrc
-                            FROM temprunningcatalog
-                          GROUP BY xtrsrc
                           HAVING COUNT(*) > 1
                          )
        ) t1
@@ -1405,7 +1395,7 @@ def _insert_new_runcat_flux(conn, image_id):
         #q = query % (image_id,))
         #print "Q:\n%s" % q
         #sys.exit()
-        cursor.execute(query, (image_id, ))
+        cursor.execute(query, (image_id,))
         #image_id,
         #                        radius, radius, radius, radius, radius, radius,
         #                        deRuiter_r/3600.))
@@ -1570,7 +1560,7 @@ def _insert_cat_assocs(conn, image_id, radius, deRuiter_r):
         cursor.execute(query, (BG_DENSITY,
                                image_id,
                                radius, radius, radius, radius, radius, radius,
-                               deRuiter_r/3600.))
+                               deRuiter_r / 3600.))
         if not AUTOCOMMIT:
             conn.commit()
     except db.Error, e:

@@ -4,6 +4,7 @@ import numpy
 from pyrap.tables import table as pyrap_table
 from tkp.utility.accessors.beam import degrees2pixels, arcsec2degrees
 from tkp.utility.accessors.dataaccessor import DataAccessor
+from math import pi
 
 logger = logging.getLogger(__name__)
 
@@ -104,8 +105,8 @@ class LofarCasaImage(DataAccessor):
             bmin = restoringbeam['minor']['value']
             bpa = restoringbeam['positionangle']['value']
 
-        deltax = self.wcs.cdelt[0]
-        deltay = self.wcs.cdelt[1]
+        deltax = self.wcs.cdelt[0] * (180/pi)
+        deltay = self.wcs.cdelt[1] * (180/pi)
 
         (degbmaj, degbmin, debbpa) = arcsec2degrees(bmaj, bmin, bpa)
         self.beam = degrees2pixels(degbmaj, degbmin, debbpa, deltax, deltay)

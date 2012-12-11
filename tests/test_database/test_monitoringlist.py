@@ -203,12 +203,13 @@ class TestTransientCandidateMonitoring(unittest.TestCase):
             mon_extractions = []
             for src in srcs_to_monitor:
                 mon_extractions.append(db_subs.ExtractedSourceTuple(ra=src[0], dec=src[1],
-                                      ra_err=0.1, dec_err=0.1,
+                                      ra_fit_err=0.1, dec_fit_err=0.1,
                                       peak = 0, peak_err = 5e-5,
                                       flux = 0, flux_err = 5e-5,
                                       sigma = 0,
                                       beam_maj = 100, beam_min = 100,
-                                      beam_angle = 45
+                                      beam_angle = 45,
+                                      ra_sys_err=20,dec_sys_err=20
                                       )
                                 )
             mon_results = [ (s[2],s[3],m) for  s,m in zip(srcs_to_monitor, mon_extractions)] 

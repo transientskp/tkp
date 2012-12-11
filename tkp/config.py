@@ -111,9 +111,7 @@ def set_default_config():
     config.set('database', 'engine', 'monetdb')
 
     config.add_section('source_association')
-    config.set('source_association', 'deruiter_radius', '3.7')
-    #config.set('source_association', 'deruiter_radius', '0.00112')
-    #config.set('source_association', 'deruiter_radius', '0.065')
+    config.set('source_association', 'deRuiter_radius', '3.717')
     config.set('source_association', 'bg-density', '4.02439375e-06')  # NVSS density
 
     config.add_section('source_extraction')
@@ -145,6 +143,8 @@ def set_default_config():
     config.set('source_extraction', 'frac_flux_cal_error', '0.0')
     config.set('source_extraction', 'eps_ra', '0.')
     config.set('source_extraction', 'eps_dec', '0.')
+    config.set('source_extraction', 'ra_sys_err', '20.') # unit arcsec
+    config.set('source_extraction', 'dec_sys_err', '20.') # unit arcsec
 
     config.add_section('transient_search')
     config.set('transient_search', 'probability', '0.99')
@@ -242,7 +242,7 @@ def parse_config(config):
                 ('alerts', 'port'),
                 ('test', 'max_duration')
                 )
-    floats = (('source_association', 'deruiter_radius'),
+    floats = (('source_association', 'deRuiter_radius'),
               ('source_extraction', 'mf_threshold'),
               ('source_extraction', 'margin'),
               ('source_extraction', 'radius'),
@@ -262,6 +262,8 @@ def parse_config(config):
               ('source_extraction', 'frac_flux_cal_error'),
               ('source_extraction', 'eps_ra'),
               ('source_extraction', 'eps_dec'),
+              ('source_extraction', 'ra_sys_err'),
+              ('source_extraction', 'dec_sys_err'),
               ('transient_search', 'probability'),
               ('transient_search', 'eta_lim'),
               ('transient_search', 'V_lim'),

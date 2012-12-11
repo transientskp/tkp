@@ -22,7 +22,7 @@ class TestSourceAssociation(unittest.TestCase):
 
     def tearDown(self):
         """remove all stuff after the test has been run"""
-        self.database.connection.rollback()
+        #self.database.connection.rollback()
         #db_subs.delete_test_database(self.database) ##Run this if needed?
         self.database.close()
 

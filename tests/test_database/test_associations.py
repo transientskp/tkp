@@ -73,10 +73,10 @@ class TestOne2One(unittest.TestCase):
         self.assertAlmostEqual(wm_ra[0], steady_srcs[0].ra)
         self.assertAlmostEqual(wm_decl[0], steady_srcs[0].dec)
         self.assertAlmostEqual(wm_ra_err[0], math.sqrt( 
-                           1./ (n_images / ((steady_srcs[0].ra_err*3600.)**2)) 
+                           1./ (n_images / ( (steady_srcs[0].ra_fit_err*3600.)**2 + (steady_srcs[0].ra_sys_err)**2)) 
                                ))
         self.assertAlmostEqual(wm_decl_err[0], math.sqrt( 
-                           1./ (n_images / ((steady_srcs[0].dec_err*3600.)**2)) 
+                           1./ (n_images / ((steady_srcs[0].dec_fit_err*3600.)**2 + (steady_srcs[0].dec_sys_err)**2 )) 
                                )) 
 
         self.assertAlmostEqual(x[0], 
@@ -179,11 +179,12 @@ class TestOne2Many(unittest.TestCase):
         src = []
         # 1 source
         src.append(db_subs.example_extractedsource_tuple(ra=123.1235, dec=10.55,
-                                                     ra_err=5./3600, dec_err=6./3600, 
+                                                     ra_fit_err=5./3600, dec_fit_err=6./3600, 
                                                      peak = 15e-3, peak_err = 5e-4,
                                                      flux = 15e-3, flux_err = 5e-4,
                                                      sigma = 15,
-                                                     beam_maj = 100, beam_min = 100, beam_angle = 45
+                                                     beam_maj = 100, beam_min = 100, beam_angle = 45,
+                                                     ra_sys_err=20, dec_sys_err=20
                                                         ))
         results = []
         results.append(src[-1])
@@ -242,18 +243,20 @@ class TestOne2Many(unittest.TestCase):
         src = []
         # 2 sources (located close to source 1, catching the 1-to-many case
         src.append(db_subs.example_extractedsource_tuple(ra=123.12349, dec=10.549,
-                                                     ra_err=5./3600, dec_err=6./3600, 
+                                                     ra_fit_err=5./3600, dec_fit_err=6./3600, 
                                                      peak = 15e-3, peak_err = 5e-4,
                                                      flux = 15e-3, flux_err = 5e-4,
                                                      sigma = 15,
-                                                     beam_maj = 100, beam_min = 100, beam_angle = 45
+                                                     beam_maj = 100, beam_min = 100, beam_angle = 45,
+                                                     ra_sys_err=20, dec_sys_err=20
                                                         ))
         src.append(db_subs.example_extractedsource_tuple(ra=123.12351, dec=10.551,
-                                                     ra_err=5./3600, dec_err=6./3600, 
+                                                     ra_fit_err=5./3600, dec_fit_err=6./3600, 
                                                      peak = 15e-3, peak_err = 5e-4,
                                                      flux = 15e-3, flux_err = 5e-4,
                                                      sigma = 15,
-                                                     beam_maj = 100, beam_min = 100, beam_angle = 45
+                                                     beam_maj = 100, beam_min = 100, beam_angle = 45,
+                                                     ra_sys_err=20, dec_sys_err=20
                                                         ))
         results = []
         results.append(src[0])
@@ -378,18 +381,20 @@ class TestMany2One(unittest.TestCase):
         src = []
         # 2 sources (located close together, so the catching the many-to-1 case in next image
         src.append(db_subs.example_extractedsource_tuple(ra=123.12349, dec=10.549,
-                                                     ra_err=5./3600, dec_err=6./3600, 
+                                                     ra_fit_err=5./3600, dec_fit_err=6./3600, 
                                                      peak = 15e-3, peak_err = 5e-4,
                                                      flux = 15e-3, flux_err = 5e-4,
                                                      sigma = 15,
-                                                     beam_maj = 100, beam_min = 100, beam_angle = 45
+                                                     beam_maj = 100, beam_min = 100, beam_angle = 45,
+                                                     ra_sys_err=20, dec_sys_err=20
                                                         ))
         src.append(db_subs.example_extractedsource_tuple(ra=123.12351, dec=10.551,
-                                                     ra_err=5./3600, dec_err=6./3600, 
+                                                     ra_fit_err=5./3600, dec_fit_err=6./3600, 
                                                      peak = 15e-3, peak_err = 5e-4,
                                                      flux = 15e-3, flux_err = 5e-4,
                                                      sigma = 15,
-                                                     beam_maj = 100, beam_min = 100, beam_angle = 45
+                                                     beam_maj = 100, beam_min = 100, beam_angle = 45,
+                                                     ra_sys_err=20, dec_sys_err=20
                                                         ))
         results = []
         results.append(src[0])
@@ -415,11 +420,12 @@ class TestMany2One(unittest.TestCase):
         src = []
         # 1 source
         src.append(db_subs.example_extractedsource_tuple(ra=123.1235, dec=10.55,
-                                                     ra_err=5./3600, dec_err=6./3600, 
+                                                     ra_fit_err=5./3600, dec_fit_err=6./3600, 
                                                      peak = 15e-3, peak_err = 5e-4,
                                                      flux = 15e-3, flux_err = 5e-4,
                                                      sigma = 15,
-                                                     beam_maj = 100, beam_min = 100, beam_angle = 45
+                                                     beam_maj = 100, beam_min = 100, beam_angle = 45,
+                                                     ra_sys_err=20, dec_sys_err=20
                                                         ))
         results = []
         results.append(src[-1])
@@ -525,18 +531,20 @@ class TestMany2Many(unittest.TestCase):
         src1 = []
         # 2 sources (located close together, so the catching the many-to-1 case in next image
         src1.append(db_subs.example_extractedsource_tuple(ra=123.12349, dec=10.549,
-                                                     ra_err=5./3600, dec_err=6./3600, 
+                                                     ra_fit_err=5./3600, dec_fit_err=6./3600, 
                                                      peak = 15e-3, peak_err = 5e-4,
                                                      flux = 15e-3, flux_err = 5e-4,
                                                      sigma = 15,
-                                                     beam_maj = 100, beam_min = 100, beam_angle = 45
+                                                     beam_maj = 100, beam_min = 100, beam_angle = 45,
+                                                     ra_sys_err=20, dec_sys_err=20
                                                         ))
         src1.append(db_subs.example_extractedsource_tuple(ra=123.12351, dec=10.551,
-                                                     ra_err=5./3600, dec_err=6./3600, 
+                                                     ra_fit_err=5./3600, dec_fit_err=6./3600, 
                                                      peak = 15e-3, peak_err = 5e-4,
                                                      flux = 15e-3, flux_err = 5e-4,
                                                      sigma = 15,
-                                                     beam_maj = 100, beam_min = 100, beam_angle = 45
+                                                     beam_maj = 100, beam_min = 100, beam_angle = 45,
+                                                     ra_sys_err=20, dec_sys_err=20
                                                         ))
         results = []
         results.append(src1[0])
@@ -562,18 +570,20 @@ class TestMany2Many(unittest.TestCase):
         src2 = []
         # 2 sources as well
         src2.append(db_subs.example_extractedsource_tuple(ra=123.12348, dec=10.548,
-                                                     ra_err=5./3600, dec_err=6./3600, 
+                                                     ra_fit_err=5./3600, dec_fit_err=6./3600, 
                                                      peak = 15e-3, peak_err = 5e-4,
                                                      flux = 15e-3, flux_err = 5e-4,
                                                      sigma = 15,
-                                                     beam_maj = 100, beam_min = 100, beam_angle = 45
+                                                     beam_maj = 100, beam_min = 100, beam_angle = 45,
+                                                     ra_sys_err=20, dec_sys_err=20
                                                         ))
         src2.append(db_subs.example_extractedsource_tuple(ra=123.12352, dec=10.552,
-                                                     ra_err=5./3600, dec_err=6./3600, 
+                                                     ra_fit_err=5./3600, dec_fit_err=6./3600, 
                                                      peak = 15e-3, peak_err = 5e-4,
                                                      flux = 15e-3, flux_err = 5e-4,
                                                      sigma = 15,
-                                                     beam_maj = 100, beam_min = 100, beam_angle = 45
+                                                     beam_maj = 100, beam_min = 100, beam_angle = 45,
+                                                     ra_sys_err=20, dec_sys_err=20
                                                         ))
         results = []
         results.append(src2[0])

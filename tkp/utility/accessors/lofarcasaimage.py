@@ -2,8 +2,8 @@ import logging
 import warnings
 import numpy
 from pyrap.tables import table as pyrap_table
+from tkp.utility.accessors.beam import degrees2pixels, arcsec2degrees
 from tkp.utility.accessors.dataaccessor import DataAccessor
-import tkp.utility.accessors
 
 logger = logging.getLogger(__name__)
 
@@ -106,8 +106,9 @@ class LofarCasaImage(DataAccessor):
 
         deltax = self.wcs.cdelt[0]
         deltay = self.wcs.cdelt[1]
-        self.beam = tkp.utility.accessors.beam2semibeam(bmaj, bmin, bpa,
-                                                    deltax, deltay)
+
+        (degbmaj, degbmin, debbpa) = arcsec2degrees(bmaj, bmin, bpa)
+        self.beam = degrees2pixels(degbmaj, degbmin, debbpa, deltax, deltay)
 
     def _subtableparse(self):
         """open all subtables"""

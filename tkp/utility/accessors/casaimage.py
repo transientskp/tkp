@@ -1,8 +1,7 @@
 from pyrap.tables import table as pyrap_table
+from tkp.utility.accessors.beam import degrees2pixels
 from tkp.utility.accessors.dataaccessor import DataAccessor
-import tkp.utility.accessors
 import logging
-import warnings
 
 logger = logging.getLogger(__name__)
 
@@ -66,5 +65,5 @@ class CasaImage(DataAccessor):
 
         deltax = self.wcs.cdelt[0]
         deltay = self.wcs.cdelt[1]
-        self.beam = tkp.utility.accessors.beam2semibeam(bmaj, bmin, bpa, deltax, deltay)
+        self.beam = degrees2pixels(bmaj, bmin, bpa, deltax, deltay)
 

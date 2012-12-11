@@ -50,6 +50,12 @@ class dectodmsTest(unittest.TestCase):
     def testRange(self):
         self.assertRaises(ValueError, coordinates.dectodms, 91)
 
+class sexagesimal_to_stringTest(unittest.TestCase):
+    def test_prettyprint(self):
+        self.assertEqual(coordinates.sexagesimal_to_string((5, 3, 12.5713412321)),
+                         '05:03:12.57')
+        self.assertEqual(coordinates.sexagesimal_to_string((-55, 3, 12.5713412321)),
+                         '-55:03:12.57')
 
 class hmstoraTest(unittest.TestCase):
     knownValues = (((0, 0, 0), 0),

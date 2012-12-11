@@ -9,8 +9,6 @@ import wcslib
 import logging
 import datetime
 import pytz
-import ctypes
-import sys
 
 from pyrap.measures import measures
 
@@ -275,9 +273,8 @@ def delta(l, m, delta0):
                                    math.sin(math.radians(delta0)))))
 
 
-# Find the declination of a point in a radio image, given l,m and field centre
 def l(ra, dec, cra, incr):
-    """Convert a coordinate in RA,Dec into a direction cosine m
+    """Convert a coordinate in RA,Dec into a direction cosine l
 
     Keyword arguments:
     ra,dec -- Source location
@@ -292,8 +289,6 @@ def l(ra, dec, cra, incr):
             (math.radians(incr)))
 
 
-# Find the l direction cosine in a radio image, given an RA and Dec and the
-# field centre
 def m(ra, dec, cra, cdec, incr):
     """Convert a coordinate in RA,Dec into a direction cosine m
 

@@ -165,8 +165,12 @@ class TestExtractedSource(unittest.TestCase):
                       'url': '/',
                       'freq_eff': 80e6,
                       'freq_bw': 1e6})
-        data = dict(zone=1, ra=12.12, decl=13.13, ra_err=1.12, decl_err=1.23,
-                    x=0.11, y=0.22, z=0.33, racosdecl=0.44, det_sigma=10.)
+        data = dict(zone=13, 
+                    ra=12.12, decl=13.13, ra_err=21.1, decl_err=21.09,
+                    ra_fit_err=1.12, decl_fit_err=1.23,
+                    ra_sys_err=20, decl_sys_err=20,
+                    x=0.11, y=0.22, z=0.33,
+                    racosdecl=0.44, det_sigma=10.)
         src1 = ExtractedSource(data=data, image=image)
         src2 = ExtractedSource(data=data, image=image, database=self.database)
         data['image'] = image.id
@@ -196,10 +200,12 @@ class TestExtractedSource(unittest.TestCase):
         image2 = Image(dataset=dataset1, data=data)
 
         data = {'ra': 123.123, 'decl': 23.23,
-                'ra_err': 0.1, 'decl_err': 0.1,
+                'ra_err': 21.1, 'decl_err': 21.09,
+                'ra_fit_err': 0.1, 'decl_fit_err': 0.1,
                 'zone': 1, 'x': 0.11, 'y': 0.22, 'z': 0.33,
                 'racosdecl': 0.44,
-                'det_sigma': 10.0}
+                'det_sigma': 10.0,
+                'ra_sys_err': 20, 'decl_sys_err': 20}
         source1 = ExtractedSource(image=image1, data=data)
         data['ra'] = 45.45
         data['decl'] = 55.55
@@ -244,10 +250,12 @@ class TestExtractedSource(unittest.TestCase):
         image1 = Image(dataset=dataset1, data=data)
         image2 = Image(dataset=dataset1, data=data)
         data = {'ra': 123.123, 'decl': 23.23,
-                'ra_err': 0.1, 'decl_err': 0.1,
+                'ra_err': 21.1, 'decl_err': 21.09,
+                'ra_fit_err': 0.1, 'decl_fit_err': 0.1,
                 'zone': 1, 'x': 0.11, 'y': 0.22, 'z': 0.33,
                 'racosdecl': 0.44,
-                'det_sigma': 11.1}
+                'det_sigma': 11.1,
+                'ra_sys_err': 20, 'decl_sys_err': 20}
         source1 = ExtractedSource(image=image1, data=data)
         data['ra'] = 45.45
         data['decl'] = 55.55

@@ -25,8 +25,8 @@ from tkp.config import config
 logger = logging.getLogger(__name__)
 
 AUTOCOMMIT = config['database']['autocommit']
-DERUITER_R = config['source_association']['deruiter_radius']
-BG_DENSITY = config['source_association']['bg-density']
+#DERUITER_R = config['source_association']['deruiter_radius']
+#BG_DENSITY = config['source_association']['bg-density']
 
 
 
@@ -121,9 +121,17 @@ def _insert_extractedsources(conn, image_id, results):
     """Insert all extracted sources with their properties
 
     The content of results is in the following sequence:
-    (ra, dec, ra_err, dec_err, peak_flux, peak_flux_err, 
+    (ra, dec, ra_fit_err, dec_fit_err, peak_flux, peak_flux_err, 
     int_flux, int_flux_err, significance level,
-    beam major width (as), beam minor width(as), beam parallactic angle).
+    beam major width (as), beam minor width(as), beam parallactic angle,
+    ra_sys_err, dec_sys_err).
+    
+    ra_fit_err & dec_fit_err are the 1-sigma errors from the gaussian fit,
+    in degrees.
+    ra_sys_err and dec_sys_err represent the systematic errors in ra and declination, 
+    and are in arcsec!
+    ra_err^2 = ra_sys_err^2 + ra_fit_err^2, idem for decl_err.
+    
     
     For all extracted sources additional parameters are calculated,
     and appended to the sourcefinder data. Appended and converted are:
@@ -140,8 +148,12 @@ def _insert_extractedsources(conn, image_id, results):
     xtrsrc = []
     for src in results:
         r = list(src)
-        r[2] = r[2] * 3600. # ra_err converted to arcsec
-        r[3] = r[3] * 3600. # decl_err is converted to arcsec
+        r[2] = r[2] * 3600. # ra_fit_err converted to arcsec
+        r[3] = r[3] * 3600. # decl_fit_err converted to arcsec
+        # ra_err: sqrt of quadratic sum of sys and fit errors, in arcsec
+        r.append(math.sqrt(r[12]**2 + r[2]**2)) 
+        # decl_err: sqrt of quadratic sum of sys and fit errors, in arcsec
+        r.append(math.sqrt(r[13]**2 + r[3]**2))
         r.append(image_id) # id of the image
         r.append(int(math.floor(r[1]))) # zone
         r.append(math.cos(math.radians(r[1])) * math.cos(math.radians(r[0]))) # Cartesian x
@@ -157,8 +169,8 @@ def _insert_extractedsources(conn, image_id, results):
         INSERT INTO extractedsource
           (ra
           ,decl
-          ,ra_err
-          ,decl_err
+          ,ra_fit_err
+          ,decl_fit_err
           ,f_peak
           ,f_peak_err
           ,f_int
@@ -167,6 +179,10 @@ def _insert_extractedsources(conn, image_id, results):
           ,semimajor
           ,semiminor
           ,pa
+          ,ra_sys_err
+          ,decl_sys_err
+          ,ra_err
+          ,decl_err
           ,image
           ,zone
           ,x
@@ -273,8 +289,8 @@ def get_imagefiles_for_ids(conn, image_ids):
     return results
 
 
-def match_nearests_in_catalogs(conn, runcatid, radius=1.0,
-                              catalogid=None, assoc_r=DERUITER_R/3600.):
+def match_nearests_in_catalogs(conn, runcatid, radius, deRuiter_r,
+                              catalogid=None):
     """Match a source with position ra, decl with catalogedsources
     within radius
 
@@ -298,10 +314,9 @@ def match_nearests_in_catalogs(conn, runcatid, radius=1.0,
         specifies one catalog, while a list of integers specifies
         multiple catalogs.
 
-        assoc_r (float): dimensionless search radius, in units of the
-        De Ruiter radius. 3.7/3600. is a good value, though the
-        default is 180 (which will match all sources). Assoc_r sets a
-        cut off for the found sources.
+        deRuiter_r (float): the De Ruiter radius, a dimensionless search radius.
+        Source pairs with a De Ruiter radius that falls outside the cut-off
+        are discarded as genuine association.
         
     The return values are ordered first by catalog, then by
     assoc_r. So the first source in the list is the closest match for
@@ -442,7 +457,7 @@ def match_nearests_in_catalogs(conn, runcatid, radius=1.0,
                                 radius, radius, radius, radius,
                                 radius, radius, 
                                 radius,
-                                assoc_r))
+                                deRuiter_r/3600.))
         results = cursor.fetchall()
         results = [
             {'catsrcid': result[0], 'catsrcname': result[1],

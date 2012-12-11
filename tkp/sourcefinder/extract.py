@@ -1020,5 +1020,7 @@ class Detection(object):
             float(self.sig),
             float(self.smaj_asec.value),
             float(self.smin_asec.value),
-            float(self.theta_celes.value)
+            float(self.theta_celes.value),
+            float(CONFIG['ra_sys_err']),
+            float(CONFIG['dec_sys_err'])
         )

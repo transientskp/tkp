@@ -9,7 +9,6 @@ import wcslib
 import logging
 import datetime
 import pytz
-
 from pyrap.measures import measures
 
 logger = logging.getLogger(__name__)
@@ -17,6 +16,15 @@ logger = logging.getLogger(__name__)
 # Note that we take a +ve longitude as WEST.
 CORE_LAT = 52.9088
 CORE_LON = -6.8689
+
+# ITRF position of CS002
+# Should be a good approximation for anything refering to the LOFAR core.
+ITRF_X = 3826577.066110000
+ITRF_Y = 461022.947639000
+ITRF_Z = 5064892.786
+
+# Useful constants
+SECONDS_IN_HOUR = 60**2
 
 def julian_date(time=None, modified=False):
     """Return the Julian Date: the number of days (including fractions) which
@@ -36,6 +44,37 @@ def julian_date(time=None, modified=False):
     if modified:
         return mjd_daynumber
     return 2400000.5 + mjd_daynumber
+
+
+def mjd2lst(mjd, position=None):
+    """
+    Converts a Modified Julian Date into Local Apparent Sidereal Time in
+    seconds at a given position. If position is None, we default to the
+    reference position of CS002.
+
+    mjd -- Modified Julian Date (float)
+    position -- Position (pyrap measure)
+    """
+    dm = measures()
+    position = position or dm.position(
+        "ITRF", "%fm" % ITRF_X, "%fm" % ITRF_Y, "%fm" % ITRF_Z
+    )
+    dm.do_frame(position)
+    last = dm.measure(dm.epoch("UTC", "%fd" % mjd), "LAST")
+    fractional_day = last['m0']['value'] % 1
+    return fractional_day * 24 * SECONDS_IN_HOUR
+
+
+def jd2lst(jd, position=None):
+    """
+    Converts a Julian Date into Local Apparent Sidereal Time in seconds at a
+    given position. If position is None, we default to the reference position
+    of CS002.
+
+    jd -- Julian Date (float)
+    position -- Position (pyrap measure)
+    """
+    return mjd2lst(jd - 2400000.5, position)
 
 
 def sec2deg(seconds):

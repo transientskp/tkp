@@ -6,6 +6,46 @@ if not  hasattr(unittest.TestCase, 'assertIsInstance'):
 import datetime
 import pytz
 from tkp.utility import coordinates
+from pyrap.measures import measures
+
+class mjd2lstTest(unittest.TestCase):
+    MJD = 56272.503491875
+
+    def testDefaultLocation(self):
+        last = 64496.73666805029
+        self.assertAlmostEqual(
+            coordinates.mjd2lst(self.MJD),
+            last
+        )
+
+    def testSpecificLocation(self):
+        last = 73647.97547170892
+        dm = measures()
+        position = dm.position("itrf", "1m", "1m", "1m")
+        self.assertAlmostEqual(
+            coordinates.mjd2lst(self.MJD, position),
+            last
+        )
+
+
+class jd2lsttest(unittest.TestCase):
+    JD = 56272.503491875 + 2400000.5
+
+    def testdefaultlocation(self):
+        last = 64496.73666805029
+        self.assertAlmostEqual(
+            coordinates.jd2lst(self.JD),
+            last
+        )
+
+    def testspecificlocation(self):
+        last = 73647.97547170892
+        dm = measures()
+        position = dm.position("itrf", "1m", "1m", "1m")
+        self.assertAlmostEqual(
+            coordinates.jd2lst(self.JD, position),
+            last
+        )
 
 class ratohmsTest(unittest.TestCase):
     knownValues = ((0, (0, 0, 0)),

@@ -65,7 +65,7 @@ def store(images, description, dataset_id=-1, store_images=False, mongo_host="lo
                 raise PipelineException(message)
 
             accessor = tkp.utility.accessors.open(image)
-            db_image = dbimage_from_accessor(dataset=dataset, image=accessor)
+            db_image = dbimage_from_accessor(dataset=dataset, dataccessor=accessor)
             logger.info("stored %s with ID %s" % (os.path.basename(image), db_image.id))
 
             if store_images:

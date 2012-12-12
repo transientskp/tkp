@@ -187,10 +187,21 @@ echo " username: " ${USERNAME}
 echo " Password: " ${PASSWORD}
 echo " Hostname: " ${HOSTNAME}
 echo " Port: " ${PORT}
-echo 
+echo
 echo "use $0 -h to see how to set all options"
 echo
 
+# Argument list for monetdb command
+PARAMS=""
+if [ ${HOSTNAME} ]; then
+    PARAMS+=" -h ${HOSTNAME}"
+fi
+if [ ${PORT} ]; then
+    PARAMS+=" -p ${PORT}"
+fi
+if [ ${PASSWORD} ] ; then
+    PARAMS+=" -P ${PASSWORD}"
+fi
 
 if "${CONFIRM}"; then
     echo 

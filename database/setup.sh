@@ -86,6 +86,7 @@ parse_arguments() {
 				 ;;
 			 H)
 				 HOSTNAME=${OPTARG}
+				 REMOTEHOST=1
 				 ;;
 			 P)
 				 PORT=${OPTARG}
@@ -191,16 +192,19 @@ echo
 echo "use $0 -h to see how to set all options"
 echo
 
-# Argument list for monetdb command
-PARAMS=""
-if [ ${HOSTNAME} ]; then
-    PARAMS+=" -h ${HOSTNAME}"
-fi
-if [ ${PORT} ]; then
-    PARAMS+=" -p ${PORT}"
-fi
-if [ ${PASSWORD} ] ; then
-    PARAMS+=" -P ${PASSWORD}"
+if [ ${REMOTEHOST} ]; then
+    # Hostname specified on the command line -> we are connecting over TCP
+    # Build an appropriate argument list for monetdb
+    PARAMS=""
+    if [ ${HOSTNAME} ]; then
+        PARAMS+=" -h ${HOSTNAME}"
+    fi
+    if [ ${PORT} ]; then
+        PARAMS+=" -p ${PORT}"
+    fi
+    if [ ${PASSWORD} ] ; then
+        PARAMS+=" -P ${PASSWORD}"
+    fi
 fi
 
 if "${CONFIRM}"; then

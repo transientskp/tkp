@@ -111,7 +111,10 @@ class TestImage(unittest.TestCase):
         data = dict(tau_time=1000, freq_eff=80e6,
                     url='/',
                     taustart_ts=datetime.datetime(2001, 1, 1),
-                    freq_bw=1e6)
+                    freq_bw=1e6,
+                    centre_ra=0,
+                    centre_decl=0,
+        )
         image1 = Image(dataset=dataset1, data=data)
         self.assertAlmostEqual(image1.tau_time, 1000.)
         self.assertAlmostEqual(image1.freq_eff, 80e6)
@@ -166,7 +169,7 @@ class TestExtractedSource(unittest.TestCase):
                       'tau_time': 3600,
                       'url': '/',
                       'freq_eff': 80e6,
-                      'freq_bw': 1e6
+                      'freq_bw': 1e6,
                       'centre_ra': 0,
                       'centre_decl': 0,
 				})

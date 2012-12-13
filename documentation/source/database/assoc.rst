@@ -1,8 +1,8 @@
 .. _database_assoc:
 
-++++++++++++++++++
+******************
 Source Association
-++++++++++++++++++
+******************
 .. |last_updated| last_updated::
 
 Source association—the process by which individual measurements recorded from
@@ -18,6 +18,7 @@ highlighting potential issues. For a full discussion of the algorithms
 involved, the user is referred to the thesis by `Scheers
 <http://dare.uva.nl/en/record/367374>`_.
 
+==========================================
 Database Structure & Association Procedure
 ==========================================
 
@@ -67,7 +68,7 @@ commutative if all measurements made at time :math:`t_n` are inserted and
 associated before any measurements made at time :math:`t_{n+1}`.
 
 Case Studies
-============
+-------------------
 
 Here we will discuss the various outcomes which are possible from the source
 association process under different conditions. In the following, individual
@@ -78,12 +79,12 @@ constitute a particular lightcurve are linked to the :math:`L_k` symbol by means
 coloured line.
 
 Single Frequency Band
----------------------
+^^^^^^^^^^^^^^^^^^^^^^
 
 We start by considering observations with only a single frequency band.
 
 One-to-One Association
-++++++++++++++++++++++
+"""""""""""""""""""""""
 
 .. graphviz:: assoc/one2one.dot
 
@@ -92,7 +93,7 @@ in order. A single lightcurve is generated. The calculated average flux of the
 lightcurve :math:`L_1` is :math:`\overline{f_{1\cdots{}4}}`.
 
 One-to-Many Association
-+++++++++++++++++++++++
+"""""""""""""""""""""""
 
 .. graphviz:: assoc/one2many.dot
 
@@ -110,7 +111,7 @@ Note that :math:`f_1` and :math:`f_2`: are now being counted *twice*. Even if
 of the telescope causes the sky to get brighter!
 
 Many-to-One Association
-+++++++++++++++++++++++
+"""""""""""""""""""""""
 
 .. graphviz:: assoc/many2one.dot
 
@@ -125,7 +126,7 @@ flux :math:`\overline{f_{1,3,5,6}}` and :math:`L_2` having average flux
 are counted twice.
 
 Many-to-Many Association
-++++++++++++++++++++++++
+""""""""""""""""""""""""""
 
 .. note::
 
@@ -159,7 +160,7 @@ truncating this lightcurve.
 
 
 Multiple Frequency Bands
-------------------------
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 We now introduce the added complexity of multiple bands: the same part of the
 sky being observed at the same time, but at different frequencies. Here, we
@@ -173,7 +174,7 @@ preserved.
 
 
 Multi-Band One-to-One Association
-+++++++++++++++++++++++++++++++++
+""""""""""""""""""""""""""""""""""""""""""""""""""""
 
 .. graphviz:: assoc/one2one.multiband.dot
 
@@ -184,7 +185,7 @@ calculated: :math:`\overline{f_{1\cdots{}4}}` in band 1 and
 :math:`\overline{f_{5\cdots{}8}}` in band 2.
 
 Multi-Band One-to-Many Association
-++++++++++++++++++++++++++++++++++
+""""""""""""""""""""""""""""""""""""""""""""""""""""
 
 .. graphviz:: assoc/one2many.multiband.dot
 
@@ -207,7 +208,7 @@ respectively. Note that the entire flux in Band 2, as well as :math:`f_1` and
 :math:`f_2`, is now counted twice.
 
 Multi-Band Many-to-One Association
-++++++++++++++++++++++++++++++++++
+""""""""""""""""""""""""""""""""""""""""""""""""""""
 
 .. graphviz:: assoc/many2one.multiband.dot
 
@@ -220,7 +221,7 @@ in Band 2, and :math:`L_2` has average fluxes :math:`\overline{f_{2,4,5,6}}`
 in Band 1 and :math:`\overline{f_{8,10,12,14}}` in Band 2.
 
 Multi-Band Many-to-One Association (2)
-++++++++++++++++++++++++++++++++++++++
+""""""""""""""""""""""""""""""""""""""""""""""""""""
 
 .. graphviz:: assoc/many2one.crossband.dot
 
@@ -248,6 +249,7 @@ insertion at a given timestep causes the associations for *all* datapoints at
 that timestep to be revaluated, rather than simply the inserted measurement
 simply being associated with the already extant lightcurves.
 
+==========
 Discussion
 ==========
 
@@ -306,6 +308,7 @@ assumes the sky is unchanging. Further, again the issue of database
 complexity should be considered: incorporating more logic of this sort is
 expensive, in terms of both compute and developer time.
 
+===============
 Recommendations
 ===============
 
@@ -335,3 +338,277 @@ To that end, we suggest the following:
    bigger, since measurements may be counted twice. Observing the
    "overcounting fraction" as the database grows will help understand the
    nature and severity of the problem.
+   
+===============================
+Detailed logic flow
+===============================
+Herein we give an algorithmic description of how the source association routines
+work.
+
+.. warning::
+
+   The following detail is really aimed at devs or particularly 
+   interested users only, and can certainly be skipped on first reading.
+
+We assume that source extraction has been run on input images,
+and new measurements have been inserted into the ``extractedsource`` table.
+
+
+Clean any previously created temporary listings.
+--------------------------------------------------
+To ensure a clean start, we first run ``_empty_temprunningcatalog``, 
+which does what it says on the tin.
+
+
+Generate a list of candidate runningcatalog-extractedsource associations
+-------------------------------------------------------------------------
+
+::
+
+ _insert_temprunningcatalog(image_id, deRuiter_r, radius=0.03)
+ Select matched sources
+
+ Here we select the extractedsource that have a positional match
+ with the sources in the running catalogue table (runningcatalog).
+ Those sources which *do* have a potential match, will be inserted into the
+ temporary running catalogue table (temprunningcatalog).
+
+(See also: :ref:`database_temprunningcatalog`. )
+
+This function generates a temporary table listing possible associations with
+previously catalogued sources. 
+
+For a given image_id,
+ - Select all the relevant extractedsource entries, and
+ - For each extractedsource, create a bunch of table entries detailing
+   candidate associations with runningcatalog entries which are:
+   
+   - In the same declination zone as the extractedsource
+   - Have a weighted mean position for which the RA and DEC are within a box
+     of half-width ``radius`` degrees from the extractedsource. 
+     (This places a hard limit on the maximum association radius).
+   - Have a weighted mean position within a user-specified DeRuiter radius of 
+     the extractedsource.
+ - Each of these rows representing a candidate association is populated with all
+   the values which would represent an update to the corresponding 
+   runningcatalog and runningcatalog_flux entries, if the association is later
+   determined to be definitive. 
+   
+   
+Trim the 'many-to-many' links to prevent exponentional database growth
+------------------------------------------------------------------------
+Especially if we employ a large DeRuiter radius limit, we may generate
+a large number of candidate associations which result in a complex 
+web of possible lightcurves. We reduce this to a more manageable situation
+by trimming some of the 'weaker' candidate associations:
+
+::
+
+ _flag_many_to_many_tempruncat()
+ Select the many-to-many association pairs in temprunningcatalog.
+
+ By flagging the many-to-many associations, we reduce the
+ processing to one-to-many and many-to-one (identical to one-to-one)
+ relationships
+ 
+First, inspect the temprunningcatalog table: 
+ - Select entries for which the extractedsource is listed more than once.
+ - Of these entries, select those for which the runcat id is listed more than 
+   once in temprunningcatalog.
+ - Use this selection to determine the runningcatalog id of minimum 
+   DeRuiter radius, for each extracted source which is part of a many-to-many
+   set.
+ - Then, using this per-extractedsource minimum DR radius, reapply the above 
+   filters to select multiply-associated entries, and select all entries 
+   for which the runcat id  has a larger than  minimum DR radius to the 
+   extractedsource.
+ - Return the runcat-extractedsource identifying pair values for all 
+   non-optimal entries in many-to-many sets.
+ 
+Finally, use these identifiers to set all these entries as ``inactive = TRUE``.
+
+Or, in pseudo-mathematical terms, tempruncat describes the edges of a graph, 
+linking nodes (sources) from two spaces 
+(previous runcat entries, newly extracted entries). 
+(There are no intra-space links).
+``_flag_many_to_many_tempruncat()`` trims this graph using 
+the DeRuiter radius as a weeding tool, to ensure that any connected sub-graph 
+has multiple nodes in *at most* one of the two spaces.
+
+Deal with the  'one-to-many' runcat-to-extractedsource link sub-graphs
+-----------------------------------------------------------------------
+When we observe two new sources in the region of a previous known source,
+it is unclear if this is due to increased resolution, or a new source.
+To resolve this, we hedge our bets and replace the old single runcat entry
+with two new entries - these are identical up to the current 'fork'.
+
+::
+
+	_insert_1_to_many_runcat
+
+    Insert new entries for the extracted sources that belong to one-to-many
+    associations in the runningcatalog. 
+    
+    (These entries will be assigned new runcat ids).
+    
+
+    Since for the one-to-many associations (i.e. one runcat source
+    associated with multiple extracted sources) we cannot a priori
+    decide which counterpart pair is the correct one, or whether all
+    are correct (in the case of a higher-resolution image),
+    all extracted sources are added as a new source to
+    the runningcatalog, and they will replace the (old; lower resolution)
+    runcat source of the association.
+
+    As a consequence of this, the resolution of the runningcatalog
+    is increasing over time.
+
+
+::
+
+	_insert_1_to_many_runcat_flux(conn):
+    Insert the fluxes of the extracted sources that belong
+    to a one-to-many association in the runningcatalog.
+
+    Analogous to the runningcatalog, extracted source properties
+    are added to the runningcatalog_flux table.
+
+
+These insert the candidate runningcatalog entries which are in one-to-many sets
+as multiple new entries in the runningcatalog (and runningcatalog_flux). 
+We will come back later and delete those old entries we have superceded.
+Note that each new runcat entry links one (new) runcat id, and one 
+extractedsource id, so the database constraints are satisfied. 
+
+
+``_insert_1_to_many_basepoint_assoc`` and ``_insert_1_to_many_assoc``
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+We now start updating the assocxtrsource table to account for our 1-to-many 
+associations.
+
+``_insert_1_to_many_basepoint_assoc`` adds entries linking the newly inserted 
+entries in the runningcatalog, with the newly associated extractedsources. 
+These are ``type=2``, i.e. marked as part of 1-to-many sets. 
+
+``_insert_1_to_many_assoc`` then inserts new entries into the 
+assocxtrsource table, which link the *new* runcat ids with all the 
+old extractedsource ids, which (from previous association runs) 
+are associated with the (now superceded) runningcatalog 
+entries. These association links are marked as ``type=6``. 
+
+Clean up database entries superceded by one-to-many forks
+------------------------------------------------------------------------------------
+Now we clean up all references to runcat entries superceded during our 
+processing of 1-to-many sets.
+
+``delete_1_to_many_inactive_assoc`` now deletes the assocxtrsource entries
+referring to superceded runnincatalog ids. We do this by filtering 
+temprunningcatalog for the old runcat ids in 1-to-many sets,
+which we have since processed.
+
+``delete_1_to_many_inactive_runcat_flux`` does the same thing, acting on 
+the runningcatalog_flux table.
+
+``_flag_1_to_many_inactive_runcat`` now uses the same information to set the 
+superceded runcat entries as ``inactive = TRUE``.
+
+Next, ``_flag_1_to_many_inactive_tempruncat`` sets the remaining
+'active' temprunningcatalog entries in 1-to-many sets to ``inactive = TRUE``,
+as we've now finished processing them.
+
+``_delete_1_to_many_inactive_monitoringlist`` using the fact that we have 
+set the superceded runningcatalog entries as ``inactive = TRUE``,
+we now delete any corresponding entries in the monitoringlist.  
+
+.. warning::
+
+	NB. This does not discriminate between automatic and manual entries. 
+	Possibly we might end up deleting user entries as a result?
+
+``_delete_1_to_many_inactive_transient``: same as above, for old transients.
+We don't attempt any update / re-insertion here, instead relying on the 
+next ``transient_search`` execution to re-identify any valid transients.
+ 
+.. warning::
+
+	As a result, we may end up mis-identifying the ``trigger_xtrsrc`` of 
+	transients which are deleted and then re-identified.
+ 
+
+Process all remaining associations
+-----------------------------------
+We now process all the remaining active associations listed in temprunningcatalog.
+:: 
+
+	_insert_1_to_1_assoc:
+	Insert remaining associations from temprunningcatalog into assocxtrsource.
+
+``_insert_1_to_1_assoc`` Inserts all the remaining active links listed in tempruncat, into 
+assocxtrsource. These links all refer to a still-valid runningcatalog entry
+from a previous source association run.
+(This actually includes those candidate links in 'many-to-one'
+sets, e.g. sources merged due to a lower-resolution image - hence we set 
+``type = 3``).
+
+``_update_1_to_1_runcat`` then performs the corresponding update on the
+runningcatalog table, copying across the values calculated during the generation
+of temprunningcatalog.
+
+``_select_for_update_1_to_1_runcat_flux`` grabs all the columns relevant to 
+the runnincatalog_flux entries, from the still active entries in temprunningcatalog.
+Each of these entries is then fed, one-by-one, (room for optimization here) to 
+``_insert_or_update_1_to_1_runcat_flux``. This checks for a pre-existing 
+entry in runningcatalog_flux with the same runcat_band_stokes identifying triple,
+and then either updates it or inserts a new one, accordingly.
+
+Process remaining extractedsources (those without associations)
+----------------------------------------------------------------
+We still need to insert the 'new' sources, i.e. those extractions without 
+an identified association.
+
+``_insert_new_runcat(image_id)`` is run first, since the database constraints 
+are already satisfied (pre-existent xtrsrc and dataset-id). 
+First, we pre-select those extractedsources which were discovered in the 
+current image. 
+Then we filter to just those which do not have any associations, 
+by selecting those extractedsources listed in the image but not in the 
+temprunningcatalog  
+(A left outer join on xtrsrc where temprunningcatalog.xtrsrc is NULL). 
+  
+We initialise the averages (position, flux, etc) by pulling in the relevant values from 
+extractedsource, and the dataset id from the image table.
+
+``_insert_new_runcat_flux(image_id)`` performs a similar trick to select the 
+'new-source' extractsources, then cross-matches against the xtrsrc id to select
+the new runcat entries. 
+With these in hand it's easy to insert new runcat_flux entries, pulling in the
+relevant id from runningcatalog, band and stokes from image table, and flux
+values from extractedsource.
+ 
+``_insert_new_assoc(image_id)``
+Performs the same routine of grab 'new-source' entries, match new runcat entries,
+as  ``_insert_new_runcat_flux`` - it's then trival to insert the relevant entries
+in assocxtrsource. 
+
+.. warning::
+
+ Currently we set ``type = 4``, (i.e. many-to-many ???) in _insert_new_assoc.
+
+Cleanup
+-----------
+Now that all the new extractions have been dealt with, we take care of some 
+loose ends. 
+We ``_empty_temprunningcatalog``, and finally ``_delete_inactive_runcat``
+deletes those runningcatalog entries which we have now superceded, via a simple
+``inactive = TRUE`` filter.
+
+.. warning:: 
+
+	It's unclear to me why we leave this until last - I don't see where we need
+	the inactive runcat entries after ``_delete_1_to_many_inactive_transient``.
+	(Though there's no real harm in leaving it till last).
+
+
+
+
+     

@@ -123,7 +123,7 @@ def main():
     msg = "continue with upgrade?"
     answer = True if raw_input("%s (y/N) " % msg).lower() == 'y' else False
     if answer:
-        for statement in query.split(";"):
+        for statement in query.split("%SPLIT%"):
             cursor.execute(statement)
         connection.commit()
     else:

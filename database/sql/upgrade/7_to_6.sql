@@ -1,17 +1,11 @@
---DROP FUNCTION insertImage;
+UPDATE version
+   SET value = 6
+ WHERE name = 'revision'
+   AND value = 7
+; %SPLIT%
 
-/**
- * This function inserts a row in the image table,
- * and returns the value of the id under which it is known.
- *
- * Note I: To be able to create a function that modifies data 
- * (by insertion) we have to set the global bin log var:
- * mysql> SET GLOBAL log_bin_trust_function_creators = 1;
- *
- * Note II: The params in comment should be specified soon.
- * This means this function inserts deafult values so long.
- *
- */
+DROP FUNCTION insertImage; %SPLIT%
+
 CREATE FUNCTION insertImage(idataset INT
                            ,itau_time DOUBLE
                            ,ifreq_eff DOUBLE
@@ -21,8 +15,6 @@ CREATE FUNCTION insertImage(idataset INT
                            ,ibeam_min DOUBLE
                            ,ibeam_pa DOUBLE
                            ,iurl VARCHAR(1024)
-                           ,icentre_ra DOUBLE
-                           ,icentre_decl DOUBLE
                            ) RETURNS INT
 BEGIN
 
@@ -32,7 +24,7 @@ BEGIN
   DECLARE itau INT;
 
   SET iband = getBand(ifreq_eff, ifreq_bw);
-  
+
   SELECT NEXT VALUE FOR seq_image INTO iimageid;
 
   INSERT INTO image
@@ -47,9 +39,7 @@ BEGIN
     ,bmin_syn
     ,bpa_syn
     ,url
-    ,centre_ra
-    ,centre_decl
-    ) 
+    )
   VALUES
     (iimageid
     ,idataset
@@ -58,16 +48,14 @@ BEGIN
     ,ifreq_eff
     ,ifreq_bw
     ,itaustart_ts
-    ,ibeam_maj 
-    ,ibeam_min 
-    ,ibeam_pa 
+    ,ibeam_maj
+    ,ibeam_min
+    ,ibeam_pa
     ,iurl
-    ,icentre_ra
-    ,icentre_decl
     )
   ;
 
   SET oimageid = iimageid;
   RETURN oimageid;
 
-END;
+END; %SPLIT%

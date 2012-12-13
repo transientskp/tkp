@@ -12,9 +12,9 @@ class CasaImage(DataAccessor):
     """
     def __init__(self, filename, plane=0, beam=None):
         super(CasaImage, self).__init__()  # Set defaults
-        self.filename = filename
+        self.url = filename
         #pyrap can't handle unicode
-        self.table = pyrap_table(self.filename.encode(), ack=False)
+        self.table = pyrap_table(self.url.encode(), ack=False)
         self.beam = beam
         self.subtables = {}
         self.plane = plane
@@ -49,8 +49,8 @@ class CasaImage(DataAccessor):
         # This is what one gets from the C-imager
         try:
             spectral_info = self.table.getkeyword('coords')['spectral2']
-            self.freqeff = spectral_info['wcs']['crval']
-            self.freqbw = spectral_info['wcs']['cdelt']
+            self.freq_eff = spectral_info['wcs']['crval']
+            self.freq_bw = spectral_info['wcs']['cdelt']
         except KeyError:
             pass
 

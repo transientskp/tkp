@@ -22,7 +22,7 @@ class LofarHdf5Image(DataAccessor):
         lofar_source = attrgroups['LOFAR_SOURCE']
         lofar_station = attrgroups['LOFAR_STATION']
 
-        self.filename = source.attrs['FILENAME']
+        self.url = source.attrs['FILENAME']
         filedate = source.attrs['FILEDATE']
         filetype = source.attrs['FILETYPE']
         self.telescope = source.attrs['TELESCOPE']
@@ -41,7 +41,7 @@ class LofarHdf5Image(DataAccessor):
         observation_stations_list = source.attrs['OBSERVATION_STATIONS_LIST']
         observation_frequency_max = source.attrs['OBSERVATION_FREQUENCY_MAX']
         observation_frequency_min = source.attrs['OBSERVATION_FREQUENCY_MIN']
-        self.freqeff = source.attrs['OBSERVATION_FREQUENCY_CENTER']
+        self.freq_eff = source.attrs['OBSERVATION_FREQUENCY_CENTER']
         observation_frequency_unit = source.attrs['OBSERVATION_FREQUENCY_UNIT']
         observation_nof_bits_per_sample = source.attrs['OBSERVATION_NOF_BITS_PER_SAMPLE']
         clock_frequency = source.attrs['CLOCK_FREQUENCY']

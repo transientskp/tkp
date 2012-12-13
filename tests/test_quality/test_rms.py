@@ -51,11 +51,11 @@ class TestRms(unittest.TestCase):
     def test_theoreticalnoise(self):
         good_image = accessors.open(good_file)
         bad_image = accessors.open(bad_file)
-        frequency = good_image.freqeff
+        frequency = good_image.freq_eff
 
         # this stuff should be in the header of a LOFAR image some day
-        integration_time = 18654.3 # s, should be self.good_image.inttime some day
-        subbandwidth = 200 * 10**3 # Hz, shoud probably be self.good_image.freqbw some day
+        integration_time = 18654.3 # s, should be self.good_image.tau_time some day
+        subbandwidth = 200 * 10**3 # Hz, shoud probably be self.good_image.freq_bw some day
         ncore = 23 # ~
         nremote = 8 # ~
         nintl = 0

@@ -73,7 +73,11 @@ def example_dbimage_datasets(n_images):
                       'freq_eff':140e6,
                       'freq_bw':2e6,
                       'taustart_ts':starttime,
-                      'url':"someurl"}
+                      'url':"someurl",
+                      'centre_ra': 0,
+                      'centre_decl': 0,
+
+                    }
 
     im_params = []
     for i in range(n_images):

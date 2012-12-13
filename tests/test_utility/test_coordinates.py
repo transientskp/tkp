@@ -9,43 +9,37 @@ from tkp.utility import coordinates
 from pyrap.measures import measures
 
 class mjd2lstTest(unittest.TestCase):
+    # Note that the precise conversion can vary slightly depending on the
+    # casacore measures database, so we allow for a 1s uncertainty in the
+    # results
     MJD = 56272.503491875
 
     def testDefaultLocation(self):
         last = 64496.73666805029
-        self.assertAlmostEqual(
-            coordinates.mjd2lst(self.MJD),
-            last
-        )
+        self.assertTrue(abs(coordinates.mjd2lst(self.MJD) - last) < 1.0)
 
     def testSpecificLocation(self):
         last = 73647.97547170892
         dm = measures()
         position = dm.position("itrf", "1m", "1m", "1m")
-        self.assertAlmostEqual(
-            coordinates.mjd2lst(self.MJD, position),
-            last
-        )
+        self.assertTrue(abs(coordinates.mjd2lst(self.MJD, position) - last) < 1.0)
 
 
 class jd2lsttest(unittest.TestCase):
+    # Note that the precise conversion can vary slightly depending on the
+    # casacore measures database, so we allow for a 1s uncertainty in the
+    # results
     JD = 56272.503491875 + 2400000.5
 
     def testdefaultlocation(self):
         last = 64496.73666805029
-        self.assertAlmostEqual(
-            coordinates.jd2lst(self.JD),
-            last
-        )
+        self.assertTrue(abs(coordinates.jd2lst(self.JD) - last) < 1.0)
 
     def testspecificlocation(self):
         last = 73647.97547170892
         dm = measures()
         position = dm.position("itrf", "1m", "1m", "1m")
-        self.assertAlmostEqual(
-            coordinates.jd2lst(self.JD, position),
-            last
-        )
+        self.assertTrue(abs(coordinates.jd2lst(self.JD, position) - last) < 1.0)
 
 
 class gal_to_eq_and_eq_to_gal_Test(unittest.TestCase):

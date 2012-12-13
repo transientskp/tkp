@@ -6,6 +6,63 @@ if not  hasattr(unittest.TestCase, 'assertIsInstance'):
 import datetime
 import pytz
 from tkp.utility import coordinates
+from pyrap.measures import measures
+
+class mjd2lstTest(unittest.TestCase):
+    # Note that the precise conversion can vary slightly depending on the
+    # casacore measures database, so we allow for a 1s uncertainty in the
+    # results
+    MJD = 56272.503491875
+
+    def testDefaultLocation(self):
+        last = 64496.73666805029
+        self.assertTrue(abs(coordinates.mjd2lst(self.MJD) - last) < 1.0)
+
+    def testSpecificLocation(self):
+        last = 73647.97547170892
+        dm = measures()
+        position = dm.position("itrf", "1m", "1m", "1m")
+        self.assertTrue(abs(coordinates.mjd2lst(self.MJD, position) - last) < 1.0)
+
+
+class jd2lsttest(unittest.TestCase):
+    # Note that the precise conversion can vary slightly depending on the
+    # casacore measures database, so we allow for a 1s uncertainty in the
+    # results
+    JD = 56272.503491875 + 2400000.5
+
+    def testdefaultlocation(self):
+        last = 64496.73666805029
+        self.assertTrue(abs(coordinates.jd2lst(self.JD) - last) < 1.0)
+
+    def testspecificlocation(self):
+        last = 73647.97547170892
+        dm = measures()
+        position = dm.position("itrf", "1m", "1m", "1m")
+        self.assertTrue(abs(coordinates.jd2lst(self.JD, position) - last) < 1.0)
+
+
+class gal_to_eq_and_eq_to_gal_Test(unittest.TestCase):
+    knownValues = (
+        [(10, 10), (262.89288972929216, -15.207965232900214)],
+        [(350, -10), (271.0071629114459, -42.544903877104645)],
+        [(1, 1), (266.0298496879791, -27.561144848129747)],
+        [(118.27441982715264, -52.7682822322771), (10, 10)],
+        [(67.05481764677926, -62.47515197465108), (350, -10)],
+        [(98.9410284460564, -59.6437963999095), (1, 1)]
+    )
+
+    def testKnownValues(self):
+        for coord_pair in self.knownValues:
+            gal_l, gal_b = coord_pair[0]
+            ra, dec = coord_pair[1]
+
+            self.assertAlmostEqual(coordinates.gal_to_eq(gal_l, gal_b)[0], ra, 3)
+            self.assertAlmostEqual(coordinates.gal_to_eq(gal_l, gal_b)[1], dec, 3)
+
+            self.assertAlmostEqual(coordinates.eq_to_gal(ra, dec)[0], gal_l, 3)
+            self.assertAlmostEqual(coordinates.eq_to_gal(ra, dec)[1], gal_b, 3)
+
 
 class ratohmsTest(unittest.TestCase):
     knownValues = ((0, (0, 0, 0)),
@@ -154,7 +211,6 @@ class juliandate(unittest.TestCase):
 class coordsystemTest(unittest.TestCase):
     knownValues = (
         {"fk4": (10.0, 10.0), "fk5": (10.64962347, 10.273829)},
-
         {"fk4": (9.351192, 9.725562), "fk5": (10.0, 10.0)},
         {"fk4": (179.357791, 45.278329), "fk5": (180, 45)},
         {"fk4": (180, 45), "fk5": (180.63913, 44.721730)},

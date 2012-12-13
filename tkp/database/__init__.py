@@ -12,7 +12,7 @@ autocommit = config['database']['autocommit']
 
 logger = logging.getLogger(__name__)
 
-def query(conn, query, commit=False):
+def query(conn, query, parameters=None, commit=False):
     """A generic wrapper for doing any query to the database
     Args:
         conn: the database connection object
@@ -23,7 +23,7 @@ def query(conn, query, commit=False):
     """
     try:
         cursor = conn.cursor()
-        cursor.execute(query)
+        cursor.execute(query, parameters)
         if not autocommit and commit:
             conn.commit()
     except monetdb.sql.Error as e:

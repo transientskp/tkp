@@ -21,6 +21,7 @@ import math
 import logging
 import monetdb.sql as db
 from tkp.config import config
+import tkp.database
 
 logger = logging.getLogger(__name__)
 
@@ -35,61 +36,24 @@ def insert_dataset(conn, description):
 
     DB function insertDataset() sets the necessary default values.
     """
-
-    newdsid = None
-    try:
-        cursor = conn.cursor()
-        query = """\
-        SELECT insertDataset(%s)
-        """
-        cursor.execute(query, (description,))
-        if not AUTOCOMMIT:
-            conn.commit()
-        newdsid = cursor.fetchone()[0]
-    except db.Error, e:
-        logger.warn("Query failed: %s." % query)
-        raise
-    finally:
-        cursor.close()
-    return newdsid
+    query = "SELECT insertDataset(%s)"
+    arguments = description
+    cursor = tkp.database.query(conn, query, arguments, commit=True)
+    dataset_id = cursor.fetchone()[0]
+    return dataset_id
 
 
-
-def insert_image(conn, dataset,
-                 freq_eff, freq_bw, 
-                 taustart_ts, tau_time,
-                 beam_maj, beam_min, beam_pa,  
-                 url):
+def insert_image(conn, dataset, freq_eff, freq_bw, taustart_ts, tau_time,
+                 beam_maj, beam_min, beam_pa, url, centre_ra, centre_decl):
     """Insert an image for a given dataset with the column values
     given in the argument list.
     """
-    #tau_mode = 0 ###Placeholder, this variable is not well defined currently.
-
-    newimgid = None
-    try:
-        cursor = conn.cursor()
-        query = """\
-        SELECT insertImage(%s, %s, %s, %s, %s, %s, %s, %s, %s)
-        """
-        cursor.execute(query, (dataset
-                              ,tau_time
-                              ,freq_eff
-                              ,freq_bw
-                              ,taustart_ts
-                              ,beam_maj
-                              ,beam_min
-                              ,beam_pa
-                              ,url
-                              ))
-        newimgid = cursor.fetchone()[0]
-        if not AUTOCOMMIT:
-            conn.commit()
-    except db.Error, e:
-        logger.warn("Query failed: %s." % query)
-        raise
-    finally:
-        cursor.close()
-    return newimgid
+    query = """SELECT insertImage(%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"""
+    arguments = (dataset, tau_time, freq_eff, freq_bw, taustart_ts, beam_maj,
+                        beam_min, beam_pa, url, centre_ra, centre_decl)
+    cursor = tkp.database.query(conn, query, arguments, commit=True)
+    image_id = cursor.fetchone()[0]
+    return image_id
 
 
 def insert_extracted_sources(conn, image_id, results):

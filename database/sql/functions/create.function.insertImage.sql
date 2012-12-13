@@ -21,6 +21,8 @@ CREATE FUNCTION insertImage(idataset INT
                            ,ibeam_min DOUBLE
                            ,ibeam_pa DOUBLE
                            ,iurl VARCHAR(1024)
+                           ,icentre_ra DOUBLE
+                           ,icentre_decl DOUBLE
                            ) RETURNS INT
 BEGIN
 
@@ -45,6 +47,8 @@ BEGIN
     ,bmin_syn
     ,bpa_syn
     ,url
+    ,centre_ra
+    ,centre_decl
     ) 
   VALUES
     (iimageid
@@ -58,6 +62,8 @@ BEGIN
     ,ibeam_min 
     ,ibeam_pa 
     ,iurl
+    ,icentre_ra
+    ,icentre_decl
     )
   ;
 

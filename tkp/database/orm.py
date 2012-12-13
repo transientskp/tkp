@@ -423,8 +423,10 @@ class Image(DBObject):
 
     TABLE = 'image'
     ID = 'id'
-    REQUIRED = ('dataset', 'tau_time', 'freq_eff', 'freq_bw', 'taustart_ts', 'url')
-    
+    REQUIRED = ('dataset', 'tau_time', 'freq_eff', 'freq_bw', 'taustart_ts', 'url', 'centre_ra', 'centre_decl')
+
+
+
     def __init__(self, data=None, dataset=None, database=None, id=None):
         """If id is supplied, the data and image arguments are ignored."""
         super(Image, self).__init__(data=data, database=database, id=id)
@@ -470,7 +472,9 @@ class Image(DBObject):
                     self._data['taustart_ts'],self._data['tau_time'],
                     self._data['bsmaj'],self._data['bsmin'],  
                     self._data['bpa'],
-                    self._data['url']
+                    self._data['url'],
+                    self._data['centre_ra'],
+                    self._data['centre_decl']
                 )
             except self.database.Error, e:
                 logger.warn("insertion of Image() into the database failed")

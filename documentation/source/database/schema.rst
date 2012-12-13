@@ -805,6 +805,8 @@ indices, V and eta.
 **avg_weighted_f_int_sq**
     average of ratio of (int flux squared) and (int flux errors squared)
 
+.. _database_temprunningcatalog:
+
 temprunningcatalog
 ==================
 

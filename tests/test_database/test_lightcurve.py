@@ -35,10 +35,12 @@ class TestLightCurve(unittest.TestCase):
             data_list.append({
                 'ra': 111.111*i,
                 'decl': 11.11*i,
-                'ra_err': 0.01,
-                'decl_err': 0.01,
+                'ra_fit_err': 0.01,
+                'decl_fit_err': 0.01,
+                'ra_sys_err': 20,
+                'decl_sys_err': 20,
                 'i_peak': 10*i,
-                'i_peak_err': 0.1,
+                'i_peak_err': 0.1
             #  x=0.11, y=0.22, z=0.33, det_sigma=11.1, zone=i
             })
 
@@ -49,11 +51,12 @@ class TestLightCurve(unittest.TestCase):
             sources = []
             for data in data_list:
                 source = (data['ra'], data['decl'],
-                     data['ra_err'], data['decl_err'],
+                     data['ra_fit_err'], data['decl_fit_err'], # Gaussian fit errors
                      data['i_peak']*(1+i), data['i_peak_err'], # Peak
                      data['i_peak']*(1+i), data['i_peak_err'], # Integrated
                      10., # Significance level
-                     1, 1, 0) # Beam params (width arcsec major, width arcsec minor, parallactic angle)
+                     1, 1, 0, # Beam params (width arcsec major, width arcsec minor, parallactic angle)
+                     data['ra_sys_err'], data['decl_sys_err']) # Systematic errors
                 sources.append(source)
 
             # Insert the sources

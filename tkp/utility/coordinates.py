@@ -9,6 +9,7 @@ import wcslib
 import logging
 import datetime
 import pytz
+
 from pyrap.measures import measures
 
 logger = logging.getLogger(__name__)
@@ -75,6 +76,20 @@ def jd2lst(jd, position=None):
     position -- Position (pyrap measure)
     """
     return mjd2lst(jd - 2400000.5, position)
+
+
+def julian2unix(timestamp):
+    """converts a julian timestamp (number of seconds since 17 November 1858)
+    to unix timestamp (number of seconds since  1 January 1970)
+    """
+    #julian_epoch = datetime.datetime(1858, 11, 17)
+    #unix_epoch = datetime.datetime(1970, 1, 1, 0, 0)
+    #delta = unix_epoch - julian_epoch
+    #deltaseconds = delta.total_seconds()
+
+    deltaseconds = 3506716800
+    return timestamp - deltaseconds
+
 
 
 def sec2deg(seconds):

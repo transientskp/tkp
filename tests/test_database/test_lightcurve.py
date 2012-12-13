@@ -25,7 +25,10 @@ class TestLightCurve(unittest.TestCase):
                     'tau_time': 3600,
                     'url': '/',
                     'freq_eff': 80e6,
-                    'freq_bw': 1e6}
+                    'freq_bw': 1e6,
+                    'centre_ra': 0,
+                    'centre_decl': 0,
+            }
             image = Image(dataset=self.dataset, data=data)
             images.append(image)
 

@@ -6,16 +6,25 @@ import datetime
 	
 def extract_metadata(dataaccessor):
     return {
-        'tau_time': dataaccessor.inttime,
-        'freq_eff': dataaccessor.freqeff,
-        'freq_bw': dataaccessor.freqbw,
-        'taustart_ts': dataaccessor.obstime.strftime("%Y-%m-%d %H:%M:%S.%f"),
-        'url': dataaccessor.filename,
+        'tau_time': dataaccessor.tau_time,
+        'freq_eff': dataaccessor.freq_eff,
+        'freq_bw': dataaccessor.freq_bw,
+        'taustart_ts': dataaccessor.taustart_ts.strftime("%Y-%m-%d %H:%M:%S.%f"),
+        'url': dataaccessor.url,
         'band': 0,    # not yet clearly defined
         'bsmaj': float(dataaccessor.beam[0]), ## NB We must cast to a standard python float
         'bsmin': float(dataaccessor.beam[1]), ## as Monetdb converter cannot handle numpy.float64
         'bpa': float(dataaccessor.beam[2]),
-        }
+        'centre_ra': dataaccessor.centre_ra,
+        'centre_decl': dataaccessor.centre_decl,
+        'subbandwidth': dataaccessor.subbandwidth,
+        'antenna_set': dataaccessor.antenna_set,
+        'subbands': dataaccessor.subbands,
+        'channels': dataaccessor.channels,
+        'ncore': dataaccessor.ncore,
+        'nremote': dataaccessor.nremote,
+        'nintl': dataaccessor.nintl,
+    }
 
 
 
@@ -31,10 +40,19 @@ class DataAccessor(object):
     def __init__(self):
         self.beam = (None, None, None)
         self.wcs = WCS()
-        self.inttime = 0.  # seconds
-        self.obstime = datetime.datetime(1970, 1, 1, 0, 0, 0)
-        self.freqbw = None
-        self.freqeff = None  # Hertz (? MHz?)
-        self.filename = "not set"
+        self.tau_time = 0.  # integration seconds
+        self.taustart_ts = datetime.datetime(1970, 1, 1, 0, 0, 0)
+        self.freq_bw = None
+        self.freq_eff = None  # Hertz (? MHz?)
+        self.subbandwidth = None
+        self.url = "not set"
         self.data = None
-        self.plane = 0
+        self.centre_ra = 0
+        self.centre_decl = 0
+        self.antenna_set = None
+        self.subbands = 0
+        self.channels = 0
+        self.ncore = 0
+        self.nremote = 0
+        self.nintl = 0
+

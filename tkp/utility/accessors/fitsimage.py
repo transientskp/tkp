@@ -48,14 +48,14 @@ class FitsImage(DataAccessor):
 
         # filename attribute is required by db_image_from_accessor(), below.
         if isinstance(source, basestring):
-            self.filename = source
+            self.url = source
             hdulist = pyfits.open(source)
             hdu = hdulist[hdu]
         elif isinstance(source, pyfits.core.HDUList):
-            self.filename = source.filename()
+            self.url = source.filename()
             hdu = source[hdu]
         elif isinstance(source, pyfits.PrimaryHDU) or isinstance(source, pyfits.ImageHDU):
-            self.filename = source.fileinfo()['file'].name
+            self.url = source.fileinfo()['file'].name
             hdu = source
 
         self.header = hdu.header.copy()
@@ -102,18 +102,18 @@ class FitsImage(DataAccessor):
         except KeyError:
             logger.warn("Timestamp not specified in FITS file; using now")
             self.utc = datetime.datetime.now().replace(tzinfo=pytz.utc)
-        self.obstime = self.utc
+        self.taustart_ts = self.utc
         try:
             endtime = dateutil.parser.parse(hdu.header['end_utc'])
             endtime = endtime.replace(tzinfo=timezone)
             self.utc_end = pytz.utc.normalize(endtime.astimezone(pytz.utc))
             delta = self.utc_end - self.utc
             # In Python 2.7, we can use delta.total_seconds instead
-            self.inttime = (delta.days*86400 + delta.seconds +
+            self.tau_time = (delta.days*86400 + delta.seconds +
                             delta.microseconds/1e6)
         except KeyError:
             logger.warn("End time not specified or unreadable")
-            self.inttime = 0.
+            self.tau_time = 0.
 
         if isinstance(source, basestring):
             # If we opened the FITS file ourselves, we'd better ensure it's
@@ -161,18 +161,18 @@ class FitsImage(DataAccessor):
         """
         try:
             if hdu.header['TELESCOP'] == 'LOFAR':
-                self.freqeff = hdu.header['RESTFRQ']
-                self.freqbw = 0.0 # TODO: We need this in the header as well...
+                self.freq_eff = hdu.header['RESTFRQ']
+                self.freq_bw = 0.0 # TODO: We need this in the header as well...
             else:
                 if hdu.header['ctype3'] in ('FREQ', 'VOPT'):
-                    self.freqeff = hdu.header['crval3']
-                    self.freqbw = hdu.header['cdelt3']
+                    self.freq_eff = hdu.header['crval3']
+                    self.freq_bw = hdu.header['cdelt3']
                 elif hdu.header['ctype4'] in ('FREQ', 'VOPT'):
-                    self.freqeff = hdu.header['crval4']
-                    self.freqbw = hdu.header['cdelt4']
+                    self.freq_eff = hdu.header['crval4']
+                    self.freq_bw = hdu.header['cdelt4']
                 else:
-                    self.freqeff = hdu.header['restfreq']
-                    self.freqbw = 0.0
+                    self.freq_eff = hdu.header['restfreq']
+                    self.freq_bw = 0.0
         except KeyError:
             logger.warn("Frequency not specified in FITS")
 
@@ -224,7 +224,7 @@ class FitsImage(DataAccessor):
                                            key in ('bmaj', 'bmin', 'bpa')]
                         break
         if bmaj is None:
-            msg = "Can't extract beam information from image %s" % self.filename
+            msg = "Can't extract beam information from image %s" % self.url
             warnings.warn(msg)
             logging.error(msg)
             return

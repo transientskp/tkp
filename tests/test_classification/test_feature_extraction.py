@@ -32,9 +32,9 @@ class TestLightcurve(unittest.TestCase):
         # create test data
         self.timezero = datetime(2010, 10, 1, 12, 0, 0)
         self.lightcurve = lcmod.LightCurve(
-            obstimes=numpy.array([self.timezero + timedelta(0, s) for s in
+            taustart_tss=numpy.array([self.timezero + timedelta(0, s) for s in
                       numpy.arange(0, 30*60, 60, dtype=numpy.float)]),
-            inttimes=numpy.ones(30, dtype=numpy.float) * 60,
+            tau_times=numpy.ones(30, dtype=numpy.float) * 60,
             fluxes=numpy.ones(30, dtype=numpy.float) * 1e-6,
             errors=numpy.ones(30, dtype=numpy.float) * 1e-8,
             srcids=numpy.arange(0, 30)
@@ -407,9 +407,9 @@ class TestLightcurve(unittest.TestCase):
         # when at the end of the background calculation, the indices were not
         # recalculated using the actual estimated background.
         lc = lcmod.LightCurve(
-            obstimes=numpy.array([self.timezero + timedelta(0, s) for s in
+            taustart_tss=numpy.array([self.timezero + timedelta(0, s) for s in
                       numpy.arange(0, 7*60, 60, dtype=numpy.float)]),
-            inttimes=numpy.ones(7, dtype=numpy.float) * 60,
+            tau_times=numpy.ones(7, dtype=numpy.float) * 60,
             fluxes=numpy.array([90., 50., 40., 90., 70., 50., 70.]),
             errors=numpy.array([6., 6., 7., 5., 6., 3., 5.]),
             srcids=numpy.arange(0, 7)
@@ -436,12 +436,12 @@ class TestLightcurves(unittest.TestCase):
         """Constant light curve"""
 
         npoints = 60  # number of datapoints
-        inttime = 60  # seconds
+        tau_time = 60  # seconds
         timezero = datetime(2010, 10, 1, 12, 0, 0)
         lightcurve = lcmod.LightCurve(
-            obstimes=numpy.array([timezero + timedelta(0, s) for s in
-                      numpy.arange(0, npoints*inttime, inttime, dtype=numpy.float)]),
-            inttimes=numpy.ones(npoints, dtype=numpy.float) * inttime,
+            taustart_tss=numpy.array([timezero + timedelta(0, s) for s in
+                      numpy.arange(0, npoints*tau_time, tau_time, dtype=numpy.float)]),
+            tau_times=numpy.ones(npoints, dtype=numpy.float) * tau_time,
             fluxes=numpy.ones(npoints, dtype=numpy.float) * 1e-6,
             errors=numpy.ones(npoints, dtype=numpy.float) * 1e-8,
             srcids=numpy.arange(0, npoints)
@@ -461,12 +461,12 @@ class TestLightcurves(unittest.TestCase):
         """
 
         npoints = 60  # number of datapoints
-        inttime = 60  # seconds
+        tau_time = 60  # seconds
         timezero = datetime(2010, 10, 1, 12, 0, 0)
         lightcurve = lcmod.LightCurve(
-            obstimes=numpy.array([timezero + timedelta(0, s) for s in
-                      numpy.arange(0, npoints*inttime, inttime, dtype=numpy.float)]),
-            inttimes=numpy.ones(npoints, dtype=numpy.float) * inttime,
+            taustart_tss=numpy.array([timezero + timedelta(0, s) for s in
+                      numpy.arange(0, npoints*tau_time, tau_time, dtype=numpy.float)]),
+            tau_times=numpy.ones(npoints, dtype=numpy.float) * tau_time,
             fluxes=numpy.ones(npoints, dtype=numpy.float) * 1e-6,
             errors=numpy.ones(npoints, dtype=numpy.float) * 1e-8,
             srcids=numpy.arange(0, npoints)
@@ -509,12 +509,12 @@ class TestLightcurves(unittest.TestCase):
         """
 
         npoints = 60  # number of datapoints
-        inttime = 60  # seconds
+        tau_time = 60  # seconds
         timezero = datetime(2010, 10, 1, 12, 0, 0)
         lightcurve = lcmod.LightCurve(
-            obstimes=numpy.array([timezero + timedelta(0, s) for s in
-                      numpy.arange(0, npoints*inttime, inttime, dtype=numpy.float)]),
-            inttimes=numpy.ones(npoints, dtype=numpy.float) * inttime,
+            taustart_tss=numpy.array([timezero + timedelta(0, s) for s in
+                      numpy.arange(0, npoints*tau_time, tau_time, dtype=numpy.float)]),
+            tau_times=numpy.ones(npoints, dtype=numpy.float) * tau_time,
             fluxes=numpy.ones(npoints, dtype=numpy.float) * 1e-6,
             errors=numpy.ones(npoints, dtype=numpy.float) * 1e-8,
             srcids=numpy.arange(0, npoints)
@@ -640,12 +640,12 @@ class TestLightcurves(unittest.TestCase):
         """Light curves with an unchanging derivate"""
 
         npoints = 60  # number of datapoints
-        inttime = 60  # seconds
+        tau_time = 60  # seconds
         timezero = datetime(2010, 10, 1, 12, 0, 0)
         lightcurve = lcmod.LightCurve(
-            obstimes=numpy.array([timezero + timedelta(0, s) for s in
-                      numpy.arange(0, npoints*inttime, inttime, dtype=numpy.float)]),
-            inttimes=numpy.ones(npoints, dtype=numpy.float) * inttime,
+            taustart_tss=numpy.array([timezero + timedelta(0, s) for s in
+                      numpy.arange(0, npoints*tau_time, tau_time, dtype=numpy.float)]),
+            tau_times=numpy.ones(npoints, dtype=numpy.float) * tau_time,
             fluxes=numpy.ones(npoints, dtype=numpy.float) * 1e-6,
             errors=numpy.ones(npoints, dtype=numpy.float) * 1e-8,
             srcids=numpy.arange(0, npoints)
@@ -722,12 +722,12 @@ class TestLightcurves(unittest.TestCase):
         """Light curves dropping below background"""
 
         npoints = 60  # number of datapoints
-        inttime = 60  # seconds
+        tau_time = 60  # seconds
         timezero = datetime(2010, 10, 1, 12, 0, 0)
         lightcurve = lcmod.LightCurve(
-            obstimes=numpy.array([timezero + timedelta(0, s) for s in
-                      numpy.arange(0, npoints*inttime, inttime, dtype=numpy.float)]),
-            inttimes=numpy.ones(npoints, dtype=numpy.float) * inttime,
+            taustart_tss=numpy.array([timezero + timedelta(0, s) for s in
+                      numpy.arange(0, npoints*tau_time, tau_time, dtype=numpy.float)]),
+            tau_times=numpy.ones(npoints, dtype=numpy.float) * tau_time,
             fluxes=numpy.ones(npoints, dtype=numpy.float) * 1e-6,
             errors=numpy.ones(npoints, dtype=numpy.float) * 1e-8,
             srcids=numpy.arange(0, npoints)
@@ -753,13 +753,13 @@ class TestLightcurves(unittest.TestCase):
 
         # Increasing the number of points gives a better background estimate,
         npoints = 180  # number of datapoints
-        inttime = 60  # seconds
+        tau_time = 60  # seconds
         timezero = datetime(2010, 10, 1, 12, 0, 0)
         lightcurve = lcmod.LightCurve(
-            obstimes=numpy.array([timezero + timedelta(0, s) for s in
-                      numpy.arange(0, npoints*inttime, inttime,
+            taustart_tss=numpy.array([timezero + timedelta(0, s) for s in
+                      numpy.arange(0, npoints*tau_time, tau_time,
                                    dtype=numpy.float)]),
-            inttimes=numpy.ones(npoints, dtype=numpy.float) * inttime,
+            tau_times=numpy.ones(npoints, dtype=numpy.float) * tau_time,
             fluxes=numpy.ones(npoints, dtype=numpy.float) * 1e-6,
             errors=numpy.ones(npoints, dtype=numpy.float) * 1e-8,
             srcids=numpy.arange(0, npoints)

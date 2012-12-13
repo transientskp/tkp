@@ -1,1 +1,1 @@
-UPDATE version SET value=1 WHERE name='revision';
+UPDATE version SET value=1 WHERE name='revision'; %SPLIT%

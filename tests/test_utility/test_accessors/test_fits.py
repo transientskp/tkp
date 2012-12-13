@@ -119,8 +119,8 @@ class FrequencyInformation(unittest.TestCase):
         dataset = DataSet(data={'description': 'dataset'}, database=database)
         image = CasaImage(
             os.path.join(DATAPATH, 'L21641_SB098.restored.image'))
-        self.assertAlmostEqual(image.freqeff/1e6, 156.4453125)
-        self.assertAlmostEqual(image.freqbw, 1.0)
+        self.assertAlmostEqual(image.freq_eff/1e6, 156.4453125)
+        self.assertAlmostEqual(image.freq_bw, 1.0)
         self.assertAlmostEqual(image.beam[0], 0.9)
         self.assertAlmostEqual(image.beam[1], 0.9)
         self.assertAlmostEqual(image.beam[2], 0.0)

@@ -48,7 +48,7 @@ def insert_image(conn, dataset, freq_eff, freq_bw, taustart_ts, tau_time,
     """Insert an image for a given dataset with the column values
     given in the argument list.
     """
-    query = """SELECT insertImage(%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"""
+    query = "SELECT insertImage(%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
     arguments = (dataset, tau_time, freq_eff, freq_bw, taustart_ts, beam_maj,
                         beam_min, beam_pa, url, centre_ra, centre_decl)
     cursor = tkp.database.query(conn, query, arguments, commit=True)

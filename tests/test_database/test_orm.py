@@ -76,6 +76,8 @@ class TestImage(unittest.TestCase):
             'taustart_ts': datetime.datetime(1999, 9, 9),
             'url': '/path/to/image',
             'tau_time': 0,
+            'centre_ra': 0,
+            'centre_decl': 0,
             }
         dataset1 = DataSet(data={'description': 'dataset with images'},
                            database=self.database)
@@ -164,7 +166,10 @@ class TestExtractedSource(unittest.TestCase):
                       'tau_time': 3600,
                       'url': '/',
                       'freq_eff': 80e6,
-                      'freq_bw': 1e6})
+                      'freq_bw': 1e6
+                      'centre_ra': 0,
+                      'centre_decl': 0,
+				})
         data = dict(zone=13, 
                     ra=12.12, decl=13.13, ra_err=21.1, decl_err=21.09,
                     ra_fit_err=1.12, decl_fit_err=1.23,
@@ -192,7 +197,9 @@ class TestExtractedSource(unittest.TestCase):
             'taustart_ts': datetime.datetime(1999, 9, 9),
             'url': '/path/to/image',
             'tau_time': 0,
-                }
+            'centre_ra': 0,
+            'centre_decl': 0,
+        }
         dataset1 = DataSet(data={'description': 'dataset with images'},
                                  database=self.database)
         self.assertEqual(dataset1.images, set())
@@ -243,6 +250,8 @@ class TestExtractedSource(unittest.TestCase):
             'taustart_ts': datetime.datetime(1999, 9, 9),
             'url': '/path/to/image',
             'tau_time': 0,
+            'centre_ra': 0,
+            'centre_decl': 0,
                 }
         dataset1 = DataSet(data={'description': 'dataset with images'},
                            database=self.database)

@@ -158,6 +158,7 @@ def _insert_temprunningcatalog(conn, image_id, deRuiter_r, radius=0.03):
     preventing the query to grow exponentially in response time
     """
 
+    deRuiter_red = float(deRuiter_r) / 3600.
     try:
         cursor = conn.cursor()
         query = """\
@@ -362,13 +363,13 @@ INSERT INTO temprunningcatalog
         #                        radius, radius, deRuiter_r/3600.)
         cursor.execute(query, (image_id, image_id,
                                 radius, radius, radius, radius, 
-                                radius, radius, deRuiter_r/3600.))
+                                radius, radius, deRuiter_red))
         if not AUTOCOMMIT:
             conn.commit()
     except db.Error, e:
         q = query % (image_id, image_id,
                         radius, radius, radius, radius, 
-                        radius, radius, deRuiter_r/3600.)
+                        radius, radius, deRuiter_red)
         logger.warn("Failed on query\n%s." % q)
         raise
     finally:

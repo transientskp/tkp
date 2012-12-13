@@ -53,7 +53,7 @@ This table stores the association between an extracted source and its
 runningcatalog counterpart source, where the relation might be of type 1-1, 1-n
 or n-1.
 
-**runcat**
+*runcat**
    refers to the runcatid in runningcatalog.  It is considered as the "base" id
    of a lightcurve, whereas the lightcurve consist of multiple frequency bands
    and Stokes parameters.
@@ -342,14 +342,34 @@ The TraP may add forced-fit entries to this table as well. Then
     sourcefinder procedures.
 
 **ra_err**
-    The 1-sigma error of the ra measurement [in arcsec], calculated by the
-    sourcefinder procedures. NOTE: the unit is in arcsec, while the
-    sourcefinder produces degrees, so be careful with convertions.
+    The 1-sigma error on ra, the square root of the quadratic sum of the 
+    gaussian fit and systematic errors, calculated by the database at insertion time.
 
 **decl_err**
-    The 1-sigma error of the declination measurement [in arcsec], calculated by
-    the sourcefinder procedures. NOTE: the unit is in arcsec, while the
+    The 1-sigma error on declination, the square root of the quadratic sum of the 
+    gaussian fit and systematic errors, calculated by the database at insertion time.
+
+**ra_fit_err**
+    The 1-sigma error from the source fitting for ra [in arcsec], calculated by the
+    sourcefinder procedures. NOTE: the db unit is in arcsec, while the
     sourcefinder produces degrees, so be careful with convertions.
+
+**decl_fit_err**
+    The 1-sigma error from the source fitting for declination [in arcsec], 
+    calculated by the sourcefinder procedures. NOTE: the db unit is in arcsec, 
+    while the sourcefinder produces degrees, so be careful with convertions.
+
+**ra_sys_err**
+    The systematic error on ra, as determined after source finder testing 
+    by Dario Carbone and reported at 2012-12-04 `TKP Meeting 
+    <https://speakerdeck.com/transientskp/source-finder-testing-overview-and-status`_,
+    to be set at 20 arcsec.
+
+**decl_sys_err**
+    The systematic error on decl, as determined after source finder testing 
+    by Dario Carbone and reported at 2012-12-04 `TKP Meeting 
+    <https://speakerdeck.com/transientskp/source-finder-testing-overview-and-status`_,
+    to be set at 20 arcsec.
 
 **x, y, z**
     Cartesian coordinate representation of (ra,decl), calculated by the

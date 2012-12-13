@@ -18,6 +18,15 @@ logger = logging.getLogger(__name__)
 CORE_LAT = 52.9088
 CORE_LON = -6.8689
 
+# ITRF position of CS002
+# Should be a good approximation for anything refering to the LOFAR core.
+ITRF_X = 3826577.066110000
+ITRF_Y = 461022.947639000
+ITRF_Z = 5064892.786
+
+# Useful constants
+SECONDS_IN_HOUR = 60**2
+
 def julian_date(time=None, modified=False):
     """Return the Julian Date: the number of days (including fractions) which
     have elapsed between noon, UT on 1 January 4713 BC and the specified time.
@@ -38,6 +47,37 @@ def julian_date(time=None, modified=False):
     return 2400000.5 + mjd_daynumber
 
 
+def mjd2lst(mjd, position=None):
+    """
+    Converts a Modified Julian Date into Local Apparent Sidereal Time in
+    seconds at a given position. If position is None, we default to the
+    reference position of CS002.
+
+    mjd -- Modified Julian Date (float)
+    position -- Position (pyrap measure)
+    """
+    dm = measures()
+    position = position or dm.position(
+        "ITRF", "%fm" % ITRF_X, "%fm" % ITRF_Y, "%fm" % ITRF_Z
+    )
+    dm.do_frame(position)
+    last = dm.measure(dm.epoch("UTC", "%fd" % mjd), "LAST")
+    fractional_day = last['m0']['value'] % 1
+    return fractional_day * 24 * SECONDS_IN_HOUR
+
+
+def jd2lst(jd, position=None):
+    """
+    Converts a Julian Date into Local Apparent Sidereal Time in seconds at a
+    given position. If position is None, we default to the reference position
+    of CS002.
+
+    jd -- Julian Date (float)
+    position -- Position (pyrap measure)
+    """
+    return mjd2lst(jd - 2400000.5, position)
+
+
 def julian2unix(timestamp):
     """converts a julian timestamp (number of seconds since 17 November 1858)
     to unix timestamp (number of seconds since  1 January 1970)
@@ -49,6 +89,7 @@ def julian2unix(timestamp):
 
     deltaseconds = 3506716800
     return timestamp - deltaseconds
+
 
 
 def sec2deg(seconds):
@@ -365,9 +406,6 @@ def radec_to_lmn(ra0, dec0, ra, dec):
     return (l, m, n)
 
 
-# Calculate l, m, n from RA,Dec and phase center.
-# Note: As done in Meqtrees, which seems to differ slightly from
-# l, m functions above.
 def eq_to_gal(ra, dec):
     """Find the Galactic co-ordinates of a source given the equatorial
     co-ordinates
@@ -379,28 +417,19 @@ def eq_to_gal(ra, dec):
     (l,b) -- Galactic longitude and latitude, in decimal degrees
 
     """
+    dm = measures()
 
-    R = [[-0.054875539726, -0.873437108010, -0.483834985808],
-         [0.494109453312, -0.444829589425, +0.746982251810],
-         [-0.867666135858, -0.198076386122, +0.455983795705]]
-    s = [math.cos(math.radians(ra)) * math.cos(math.radians(dec)),
-         math.sin(math.radians(ra)) * math.cos(math.radians(dec)),
-         math.sin(math.radians(dec))]
-    sg = []
-    sg.append(s[0] * R[0][0] + s[1] * R[0][1] + s[2] * R[0][2])
-    sg.append(s[0] * R[1][0] + s[1] * R[1][1] + s[2] * R[1][2])
-    sg.append(s[0] * R[2][0] + s[1] * R[2][1] + s[2] * R[2][2])
-    b = math.degrees(math.asin(sg[2]))
-    l = math.degrees(math.atan2(sg[1], sg[0]))
+    result = dm.measure(
+        dm.direction("J200", "%fdeg" % ra, "%fdeg" % dec),
+        "GALACTIC"
+    )
+    lon_l = math.degrees(result['m0']['value']) % 360 # 0 < ra < 360
+    lat_b = math.degrees(result['m1']['value'])
 
-    if l < 0:
-        l += 360
-
-    return (l, b)
+    return lon_l, lat_b
 
 
-# Return the Galactic co-ordinates of a point given in equatorial co-ordinates
-def gal_to_eq(l, b):
+def gal_to_eq(lon_l, lat_b):
     """Find the Galactic co-ordinates of a source given the equatorial
     co-ordinates
 
@@ -411,23 +440,16 @@ def gal_to_eq(l, b):
     (alpha, delta) -- RA, Dec in decimal degrees
 
     """
+    dm = measures()
 
-    Rinv = [[-0.054875539692115144, 0.49410945328828509, -0.86766613584223429],
-            [-0.87343710799750596, -0.44482958942460415, -0.19807638609701342],
-            [-0.4838349858324969, 0.74698225182667777, 0.45598379574707293]]
-    sg = [math.cos(math.radians(l)) * math.cos(math.radians(b)),
-          math.sin(math.radians(l)) * math.cos(math.radians(b)),
-          math.sin(math.radians(b))]
-    s = []
-    s.append(sg[0] * Rinv[0][0] + sg[1] * Rinv[0][1] + sg[2] * Rinv[0][2])
-    s.append(sg[0] * Rinv[1][0] + sg[1] * Rinv[1][1] + sg[2] * Rinv[1][2])
-    s.append(sg[0] * Rinv[2][0] + sg[1] * Rinv[2][1] + sg[2] * Rinv[2][2])
-    dec = math.degrees(math.asin(s[2]))
-    ra = math.degrees(math.atan2(s[1], s[0]))
-    if ra < 0:
-        ra = ra + 360
+    result = dm.measure(
+        dm.direction("GALACTIC", "%fdeg" % lon_l, "%fdeg" % lat_b),
+        "J2000"
+    )
+    ra = math.degrees(result['m0']['value']) % 360 # 0 < ra < 360
+    dec = math.degrees(result['m1']['value'])
 
-    return (ra, dec)
+    return ra, dec
 
 
 class CoordSystem(object):

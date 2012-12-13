@@ -24,8 +24,8 @@ def parse_parset(parset_file, accessor=None):
 
     # LOFAR image properties - first check if set in parset, if not get value
     # from image, if not set use default
-    result['freqeff'] = parset.getInt('freqeff',
-                            getattr(accessor,'freqeff', 45*10**6))
+    result['freq_eff'] = parset.getInt('freq_eff',
+                            getattr(accessor,'freq_eff', 45*10**6))
     result['subbandwidth'] = parset.getInt('subbandwidth',
                             getattr(accessor, 'subbandwidth', 200*10**3))
     result['intgr_time'] = parset.getFloat('intgr_time',
@@ -60,7 +60,7 @@ def check(image_id, parset_file):
     p = parse_parset(parset_file)
 
     rms = rms_with_clipped_subregion(accessor.data, sigma=p['sigma'], f=p['f'])
-    noise = noise_level(p['freqeff'], p['subbandwidth'], p['intgr_time'],
+    noise = noise_level(p['freq_eff'], p['subbandwidth'], p['intgr_time'],
         p['antenna_set'], p['subbands'], p['channels'],
         p['ncore'], p['nremote'], p['nintl'])
 

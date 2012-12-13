@@ -6,7 +6,7 @@ oversampled_x = 30      # threshold for oversampled check
 elliptical_x = 2.0      # threshold for elliptical check
 
 # here you can overwrite LOFAR casa table header info:
-#freqeff = 45000000
+#freq_eff = 45000000
 #subbandwidth = 200000   # in Hz
 #intgr_time = 18654      # integration time in seconds
 #antenna_set = LBA_INNER

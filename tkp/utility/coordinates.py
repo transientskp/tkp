@@ -38,6 +38,19 @@ def julian_date(time=None, modified=False):
     return 2400000.5 + mjd_daynumber
 
 
+def julian2unix(timestamp):
+    """converts a julian timestamp (number of seconds since 17 November 1858)
+    to unix timestamp (number of seconds since  1 January 1970)
+    """
+    #julian_epoch = datetime.datetime(1858, 11, 17)
+    #unix_epoch = datetime.datetime(1970, 1, 1, 0, 0)
+    #delta = unix_epoch - julian_epoch
+    #deltaseconds = delta.total_seconds()
+
+    deltaseconds = 3506716800
+    return timestamp - deltaseconds
+
+
 def sec2deg(seconds):
     """Seconds of time to degrees of arc"""
     return 15.0 * seconds / 3600.0

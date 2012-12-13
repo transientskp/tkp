@@ -5,6 +5,7 @@ import numpy
 from pyrap.tables import table as pyrap_table
 from tkp.utility.accessors.beam import degrees2pixels, arcsec2degrees
 from tkp.utility.accessors.dataaccessor import DataAccessor
+from tkp.utility.coordinates import julian2unix
 from math import pi
 
 logger = logging.getLogger(__name__)
@@ -163,11 +164,13 @@ def parse_phasecentre(table):
     centre_ra, centre_decl = phasecentre
     return float(centre_ra), float(centre_decl)
 
+
 def parse_taustartts(observation_table):
     """ extract observation time from CASA table header
     """
-    start = observation_table.getcol('OBSERVATION_START')[0]
-    taustart_ts = datetime.datetime.fromtimestamp(start)
+    julianstart = observation_table.getcol('OBSERVATION_START')[0]
+    unixstart = julian2unix(julianstart)
+    taustart_ts = datetime.datetime.fromtimestamp(unixstart)
     return taustart_ts
 
 

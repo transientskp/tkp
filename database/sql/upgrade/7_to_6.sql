@@ -1,15 +1,9 @@
-<<<<<<< HEAD
-UPDATE version 
-   SET value = 5
+UPDATE version
+   SET value = 6
  WHERE name = 'revision'
-   AND value = 6
-;
+   AND value = 7
+; %SPLIT%
 
-ALTER TABLE extractedsource DROP COLUMN ra_fit_err;
-ALTER TABLE extractedsource DROP COLUMN decl_fit_err;
-ALTER TABLE extractedsource DROP COLUMN ra_sys_err;
-ALTER TABLE extractedsource DROP COLUMN decl_sys_err;
-=======
 DROP FUNCTION insertImage; %SPLIT%
 
 CREATE FUNCTION insertImage(idataset INT
@@ -65,5 +59,3 @@ BEGIN
   RETURN oimageid;
 
 END; %SPLIT%
-
->>>>>>> 0b0be59... adjusted insertImage function to support phasecentre

@@ -1,3 +1,9 @@
+UPDATE version
+   SET value = 7
+ WHERE name = 'revision'
+   AND value = 6
+; %SPLIT%
+
 DROP FUNCTION insertImage; %SPLIT%
 
 CREATE FUNCTION insertImage(idataset INT

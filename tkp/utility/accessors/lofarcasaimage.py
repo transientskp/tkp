@@ -159,7 +159,6 @@ def parse_stations(observation_table, antenna_table):
 
 
 def parse_phasecentre(table):
-    # TODO: this is not used anywhere but manually extracted in tkp-web!
     phasecentre = table.getkeyword('coords')['pointingcenter']['value']
     centre_ra, centre_decl = phasecentre
     return float(centre_ra), float(centre_decl)
@@ -199,8 +198,6 @@ class LofarCasaImage(DataAccessor):
         self.ncore, self.nremote, self.nintl = parse_stations(self.subtables['LOFAR_OBSERVATION'],
                                             self.subtables['LOFAR_ANTENNA'])
         self.taustart_ts = parse_taustartts(self.subtables['LOFAR_OBSERVATION'])
-
-        # TODO: this is not used anywhere but manually extracted in tkp-web!
         self.centre_ra, self.centre_decl = parse_phasecentre(self.table)
 
 

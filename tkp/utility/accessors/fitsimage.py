@@ -1,4 +1,5 @@
 import datetime
+from tkp.utility.accessors.beam import degrees2pixels
 from tkp.utility.accessors.dataaccessor import DataAccessor
 import pyfits
 import numpy
@@ -8,7 +9,6 @@ import dateutil.parser
 import logging
 import warnings
 import re
-import tkp.utility.accessors
 
 logger = logging.getLogger(__name__)
 
@@ -74,7 +74,7 @@ class FitsImage(DataAccessor):
             (bmaj, bmin, bpa) = beam
             deltax = self.wcs.cdelt[0]
             deltay = self.wcs.cdelt[1]
-            self.beam = tkp.utility.accessors.beam2semibeam(bmaj, bmin, bpa, deltax, deltay)
+            self.beam = degrees2pixels(bmaj, bmin, bpa, deltax, deltay)
 
 
         # Attempt to do something sane with timestamps.
@@ -231,4 +231,4 @@ class FitsImage(DataAccessor):
 
         deltax = self.wcs.cdelt[0]
         deltay = self.wcs.cdelt[1]
-        self.beam = tkp.utility.accessors.beam2semibeam(bmaj, bmin, bpa, deltax, deltay)
+        self.beam = degrees2pixels(bmaj, bmin, bpa, deltax, deltay)

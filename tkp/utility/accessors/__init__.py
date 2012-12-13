@@ -20,7 +20,7 @@ from tkp.utility.accessors.casaimage import CasaImage
 
 
 def dbimage_from_accessor(dataset, dataccessor):
-    """Create an entry in the database images table from an image 'accessor'
+    """Create an entry in the database image table from an image 'accessor'
     Args:
         - dataset (dataset.DataSet): DataSet for the image. Also
           provides the database connection.

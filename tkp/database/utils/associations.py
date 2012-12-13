@@ -59,7 +59,7 @@ def associate_extracted_sources(conn, image_id, deRuiter_r=DERUITER_R):
     _insert_1_to_many_runcat_flux(conn)
     _insert_1_to_many_basepoint_assoc(conn)
     _insert_1_to_many_assoc(conn)
-    #_insert_1_to_many_userentry_monitoringlist(conn)
+    _insert_1_to_many_monitoringlist(conn)
     #_insert_1_to_many_transient(conn)
     _delete_1_to_many_inactive_assoc(conn)
     _delete_1_to_many_inactive_runcat_flux(conn)
@@ -653,6 +653,9 @@ def _insert_1_to_many_assoc(conn):
     NOTE:
     1. We do not update the distance_arcsec and r values of the pairs.
 
+    TODO:
+    1. Why not?
+
     """
 
     try:
@@ -687,19 +690,19 @@ def _insert_1_to_many_assoc(conn):
         if not AUTOCOMMIT:
             conn.commit()
     except db.Error, e:
-        logger.warn("Failed on query:\n%s." % query)
+        logger.warn("Failed on query:\n%s" % query)
         raise
     finally:
         cursor.close()
 
-def _insert_1_to_many_userentry_monitoringlist(conn):
+def _insert_1_to_many_monitoringlist(conn):
     """Insert one-to-many in monitoringlist
 
-    In case where we have a source in the monitoringlist that goes
-    one-to-many in the associations, we have to "split" it up into
-    the new runcat ids and delete the old runcat.
+    In case where we have a non-user-entry source in the monitoringlist 
+    that goes one-to-many in the associations, we have to "split" it up 
+    into the new runcat ids and delete the old runcat.
 
-    TODO: See discussion in issue #3564 how to proceed
+    TODO: See discussion in issues #3564 & #3919 how to proceed
 
     """
 
@@ -708,15 +711,18 @@ def _insert_1_to_many_userentry_monitoringlist(conn):
         query = """\
         INSERT INTO monitoringlist
           (runcat
+          ,ra
+          ,decl
           ,dataset
           )
-
-          /* the new runcat ids: */
-          SELECT r.id
+          SELECT r.id AS runcat
+                ,r.wm_ra AS ra
+                ,r.wm_decl AS decl
+                ,r.dataset
             FROM temprunningcatalog t
                 ,runningcatalog r
-           WHERE t.xtrsrc = r.xtrsrc
-             AND t.inactive = FALSE
+           WHERE t.inactive = FALSE
+             AND t.xtrsrc = r.xtrsrc
              AND t.runcat IN (SELECT runcat
                                 FROM temprunningcatalog
                                WHERE inactive = FALSE
@@ -724,19 +730,19 @@ def _insert_1_to_many_userentry_monitoringlist(conn):
                               HAVING COUNT(*) > 1
                              )
 
-          /* the old runcat's in monlist that need to be replaced (with the above r.id's : */
-          select m.runcat
-            from monitoringlist m
-                ,runningcatalog r
-           where m.runcat = r.id
-             and m.userentry = true
-             and m.runcat in (select runcat
-                                from temprunningcatalog
-                               where inactive = false
-                              group by runcat
-                              having count(*) > 1
-                             )
         """
+        #  /* the old runcat's in monlist that need to be replaced (with the above r.id's : */
+        #  select m.runcat
+        #    from monitoringlist m
+        #        ,runningcatalog r
+        #   where m.runcat = r.id
+        #     and m.userentry = true
+        #     and m.runcat in (select runcat
+        #                        from temprunningcatalog
+        #                       where inactive = false
+        #                      group by runcat
+        #                      having count(*) > 1
+        #                     )
         cursor.execute(query)
         if not AUTOCOMMIT:
             conn.commit()
@@ -815,7 +821,8 @@ def _delete_1_to_many_inactive_monitoringlist(conn):
         query = """\
         DELETE
           FROM monitoringlist
-         WHERE id IN (SELECT m.id
+         WHERE userentry = FALSE
+           AND id IN (SELECT m.id
                         FROM monitoringlist m
                             ,runningcatalog r
                        WHERE m.runcat = r.id

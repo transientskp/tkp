@@ -20,6 +20,91 @@ MonitorTuple = namedtuple('MonitorTuple',
 
 AUTOCOMMIT = config['database']['autocommit']
 
+def forced_fit_monsources(conn, image_id, radius=0.03, deRuiter_r=3.717):
+    """Returns the user-entry sources and no-counterpart sources from 
+    monitoringlist
+    
+    Sources in monitoringlist that originate from a user entry and
+    those that do not have a counterpart in extractedsource need to be 
+    passed on to sourcefinder for a forced fit.
+    
+    Output: id, ra, decl
+    """
+    deRuiter_red = deRuiter_r / 3600.
+    try:
+        cursor = conn.cursor()
+        # Check whether we need an extra clause on x.image = %s: YES!
+        query = """\
+        SELECT m.id AS id
+              ,m.ra AS ra
+              ,m.decl AS decl
+              ,i.bmaj_syn AS bmaj_syn
+              ,i.bmin_syn AS bmin_syn
+          FROM monitoringlist m
+              ,image i
+         WHERE i.id = %s
+           AND m.dataset = i.dataset
+           AND m.userentry = TRUE
+        UNION
+        SELECT m1.id AS id
+              ,r1.wm_ra AS ra
+              ,r1.wm_decl AS decl
+              ,i1.bmaj_syn AS bmaj_syn
+              ,i1.bmin_syn AS bmin_syn
+          FROM monitoringlist m1
+              ,runningcatalog r1
+              ,image i1
+         WHERE i1.id = %s
+           AND i1.dataset = m1.dataset
+           AND m1.dataset = r1.dataset 
+           AND m1.runcat = r1.id
+           AND m1.id NOT IN (
+                            SELECT m.id
+                              FROM monitoringlist m
+                                  ,extractedsource x
+                                  ,runningcatalog r
+                                  ,image i
+                             WHERE i.id = %s
+                               AND i.id = x.image
+                               AND x.image = %s
+                               AND i.dataset = m.dataset
+                               AND m.runcat = r.id
+                               AND m.userentry = FALSE
+                               AND r.zone BETWEEN CAST(FLOOR(x.decl - %s) as INTEGER)
+                                              AND CAST(FLOOR(x.decl + %s) as INTEGER)
+                               AND r.wm_decl BETWEEN x.decl - %s
+                                                 AND x.decl + %s
+                               AND r.wm_ra BETWEEN x.ra - alpha(%s, x.decl)
+                                               AND x.ra + alpha(%s, x.decl)
+                               AND SQRT(  (x.racosdecl - r.wm_ra * COS(RADIANS(r.wm_decl)))
+                                        * (x.racosdecl - r.wm_ra * COS(RADIANS(r.wm_decl)))
+                                        / (x.ra_err * x.ra_err + r.wm_ra_err * r.wm_ra_err)
+                                       + (x.decl - r.wm_decl) * (x.decl - r.wm_decl)
+                                        / (x.decl_err * x.decl_err + r.wm_decl_err * r.wm_decl_err)                            
+                                       ) < %s
+                            )
+        """
+        cursor.execute(query, (image_id,image_id,image_id,image_id, radius, radius,radius,radius,radius,radius,deRuiter_r / 3600.))
+        results = zip(*cursor.fetchall())
+        q = query % (image_id,image_id,image_id,image_id, radius, radius,radius,radius,radius,radius,deRuiter_r / 3600.)
+        #print q
+        r = ()
+        if len(results) != 0:
+            print "\nHOORAY, We have results!\n", results
+            p = zip(list(results[1]), list(results[2]))
+            maxbeam = max(results[3][0],results[4][0]) # all bmaj & bmin are the same
+            r = (p, maxbeam)
+            #print "p:",p
+            #print "maxbeam:",maxbeam
+            #data_image.fit_fixed_positions()
+    except db.Error, e:
+        query = query % (image_id,image_id,image_id,image_id, radius, radius,radius,radius,radius,radius,deRuiter_r / 3600.)
+        logger.warn("Query failed:\n%s", query)
+        raise
+    finally:
+        cursor.close()
+    return r
+
 
 def is_monitored(conn, runcatid):
     """Check whether a source is in the monitoring list.

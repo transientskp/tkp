@@ -53,6 +53,10 @@ def extract_sources(image_id, parset, tkpconfigdir=None):
         seconfig['deblend_nthresh'])
     seconfig['radius'] = parset.getFloat('radius',
         seconfig['radius'])
+    seconfig['ra_sys_err'] = parset.getFloat('ra.sys.err',
+        seconfig['ra_sys_err'])
+    seconfig['dec_sys_err'] = parset.getFloat('dec.sys.err',
+        seconfig['dec_sys_err'])
 
 
     logger.debug("Employing margin: %s extraction radius: %s deblend: %s "
@@ -76,7 +80,7 @@ def extract_sources(image_id, parset, tkpconfigdir=None):
     tuple_results = [result.serialize() for result in results]
     db_image.insert_extracted_sources(tuple_results)
     deRuiter_r = (parset.getFloat('association.radius') *
-                  config['source_association']['deruiter_radius'])
+                  config['source_association']['deRuiter_radius'])
     logger.debug("Associate newly extracted sources with existing ones")
     db_image.associate_extracted_sources(deRuiter_r=deRuiter_r)
     #logger.info("Update monitoring list for already found sources")

@@ -107,7 +107,7 @@ def copy_template(job_or_project, name, target=None, **options):
     this is taken from django/core/management/templates.py and modified to fit our needs
     """
     # If it's not a valid directory name.
-    if not re.search(r'^[_a-zA-Z]\w*$', name):
+    if not re.search(r'^[_a-zA-Z][\w\-]*$', name):
         # Provide a smart error message, depending on the error.
         if not re.search(r'^[_a-zA-Z]', name):
             message = ('make sure the name begins '

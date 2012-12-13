@@ -21,7 +21,7 @@ class TestRestoringBeam(unittest.TestCase):
 
         # TODO: this is for FOV calculation and checking
         #data = tkp.quality.restoringbeam.parse_fits(image)
-        #frequency = image.freqeff
+        #frequency = image.freq_eff
         #wavelength = scipy.constants.c/frequency
         #d = 32.25
         #fwhm = tkp.lofar.beam.fwhm(wavelength, d)

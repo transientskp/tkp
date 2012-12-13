@@ -55,7 +55,7 @@ class TestRms(unittest.TestCase):
 
         # this stuff should be in the header of a LOFAR image some day
         integration_time = 18654.3 # s, should be self.good_image.inttime some day
-        subbandwidth = 200 * 10**3 # Hz, shoud probably be self.good_image.freqbw some day
+        subbandwidth = 200 * 10**3 # Hz, shoud probably be self.good_image.freq_bw some day
         ncore = 23 # ~
         nremote = 8 # ~
         nintl = 0

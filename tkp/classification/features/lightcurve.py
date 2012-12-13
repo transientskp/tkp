@@ -13,10 +13,7 @@ from datetime import timedelta
 import logging
 import numpy
 import pygsl.statistics
-import tkp.config
-from tkp.utility.sigmaclip import sigmaclip
 from tkp.utility.sigmaclip import calcsigma
-from tkp.utility.sigmaclip import calcmean
 from tkp.classification.transient import DateTime
 from .sql import lightcurve as sql_lightcurve
 
@@ -56,23 +53,23 @@ class LightCurve(object):
         cursor.execute(sql_lightcurve, srcid)
         results = zip(*cursor.fetchall())
         return LightCurve(
-            obstimes=numpy.array(results[0]),
-            inttimes=numpy.array(results[1]),
+            taustart_tss=numpy.array(results[0]),
+            tau_times=numpy.array(results[1]),
             fluxes=numpy.array(results[2]),
             errors=numpy.array(results[3]),
             srcids=numpy.array(results[4])
             )
 
 
-    def __init__(self, obstimes, inttimes, fluxes, errors, srcids=None):
+    def __init__(self, taustart_tss, tau_times, fluxes, errors, srcids=None):
         """
 
         Args:
 
-            obstimes (list or array of datetime.datetime() instances):
+            taustart_tss (list or array of datetime.datetime() instances):
                 (mid) observing times
 
-            inttimes (list or array of floats): integration times in
+            tau_times (list or array of floats): integration times in
                 seconds
 
             fluxes (list or array of floats): flux levels in Janskys
@@ -88,15 +85,15 @@ class LightCurve(object):
             ValueError: when input arguments are not equal length.
         """
 
-        self.obstimes = numpy.array(obstimes)
-        self.inttimes = numpy.array(inttimes)
+        self.taustart_tss = numpy.array(taustart_tss)
+        self.tau_times = numpy.array(tau_times)
         self.fluxes = numpy.array(fluxes)
         self.errors = numpy.array(errors)
         if srcids is None:
-            self.srcids = numpy.zeros(self.obstimes.shape)
+            self.srcids = numpy.zeros(self.taustart_tss.shape)
         else:
             self.srcids = numpy.array(srcids)
-        if not (len(self.obstimes) == len(self.inttimes) == len(self.fluxes) ==
+        if not (len(self.taustart_tss) == len(self.tau_times) == len(self.fluxes) ==
                 len(self.errors) == len(self.srcids)):
             raise ValueError("light curve data arrays are not of equal length")
         self.reset()
@@ -224,21 +221,21 @@ class LightCurve(object):
                 self.calc_background()
             indices = -self.background['indices']
         try:
-            start = self.obstimes[indices][0]
-            error = self.inttimes[indices][0]
+            start = self.taustart_tss[indices][0]
+            error = self.tau_times[indices][0]
             start = DateTime(year=start.year, month=start.month, day=start.day,
                              hour=start.hour, minute=start.minute,
                              second=start.second, error=error/2.)
-            end = self.obstimes[indices][-1]
-            error = self.inttimes[indices][-1]
+            end = self.taustart_tss[indices][-1]
+            error = self.tau_times[indices][-1]
             end = DateTime(year=end.year, month=end.month, day=end.day,
                            hour=end.hour, minute=end.minute,
                            second=end.second, error=error/2.)
             duration = end - start
             duration = duration.days * 86400. + duration.seconds
             if len(numpy.where(indices)[0]) == 1:
-                duration = self.inttimes[indices][0]
-            active = sum(self.inttimes[indices])
+                duration = self.tau_times[indices][0]
+            active = sum(self.tau_times[indices])
         except IndexError:  # only background
             start = end = numpy.nan
             duration = active = 0.
@@ -370,10 +367,10 @@ class LightCurve(object):
         else:
             # find first index when returned background for outburst around ipeak
             iback = ibackground[numpy.where(ibackground > ipeak)[0]][0]
-            delta_tfall = ((self.obstimes[iback] +
-                            timedelta(0, self.inttimes[iback] / 2., 0)) -
-                           (self.obstimes[ipeak] +
-                            timedelta(0, self.inttimes[ipeak] / 2., 0)))
+            delta_tfall = ((self.taustart_tss[iback] +
+                            timedelta(0, self.tau_times[iback] / 2., 0)) -
+                           (self.taustart_tss[ipeak] +
+                            timedelta(0, self.tau_times[ipeak] / 2., 0)))
             delta_tfall = delta_tfall.days * SECONDS_IN_DAY + delta_tfall.seconds
             fall = {'time': delta_tfall, 'flux': deltaflux}
 
@@ -384,10 +381,10 @@ class LightCurve(object):
         else:
             # find last index before rise for outburst around ipeak
             iback = ibackground[numpy.where(ibackground<ipeak)[0]][-1]
-            delta_trise = ((self.obstimes[ipeak] +
-                            timedelta(0, self.inttimes[ipeak] / 2., 0)) -
-                           (self.obstimes[iback] +
-                            timedelta(0, self.inttimes[iback] / 2., 0)))
+            delta_trise = ((self.taustart_tss[ipeak] +
+                            timedelta(0, self.tau_times[ipeak] / 2., 0)) -
+                           (self.taustart_tss[iback] +
+                            timedelta(0, self.tau_times[iback] / 2., 0)))
             delta_trise = delta_trise.days * SECONDS_IN_DAY + delta_trise.seconds
             rise = {'time': delta_trise, 'flux': deltaflux}
         if rise['time'] != 0 and fall['time'] != 0:

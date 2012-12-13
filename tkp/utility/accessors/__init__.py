@@ -29,7 +29,7 @@ def dbimage_from_accessor(dataset, dataccessor):
     Returns:
         (dataset.Image): a dataset.Image instance.
     """
-    if dataccessor.freqeff is None or dataccessor.freqbw is None:
+    if dataccessor.freq_eff is None or dataccessor.freq_bw is None:
         raise ValueError("cannot create database image: frequency information missing")
     data = extract_metadata(dataccessor)
     image = DBImage(data=data, dataset=dataset)

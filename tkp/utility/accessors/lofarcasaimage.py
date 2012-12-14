@@ -6,7 +6,7 @@ from pyrap.tables import table as pyrap_table
 from tkp.utility.accessors.beam import degrees2pixels, arcsec2degrees
 from tkp.utility.accessors.dataaccessor import DataAccessor
 from tkp.utility.coordinates import julian2unix
-from math import pi
+from math import pi, degrees
 
 logger = logging.getLogger(__name__)
 
@@ -161,7 +161,7 @@ def parse_stations(observation_table, antenna_table):
 def parse_phasecentre(table):
     phasecentre = table.getkeyword('coords')['pointingcenter']['value']
     centre_ra, centre_decl = phasecentre
-    return float(centre_ra), float(centre_decl)
+    return degrees(centre_ra), degrees(centre_decl)
 
 
 def parse_taustartts(observation_table):

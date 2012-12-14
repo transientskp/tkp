@@ -126,6 +126,11 @@ def select_variability_indices(conn, dsid, freq_band, V_lim, eta_lim):
     We also perform a left outer join with the monitoringlist and the
     transient tables, to determine if the source has been inserted into those
     tables yet.
+    
+    NB Variability index  = std.dev(flux) / mean(flux).
+    In the pathological case where mean(flux)==0.0, we simply substitute
+    variability index =  std.dev(flux) / 1e-6 (1 microJansky)
+    to avoid division by zero errors.
 
     (TO DO: Return indices based on
     peak fluxes as well.)
@@ -167,7 +172,10 @@ SELECT t1.runcat
               ,wm_decl
               ,wm_ra_err
               ,wm_decl_err
-              ,avg_f_int
+              ,CASE WHEN avg_f_int = 0.0
+                    THEN 0.000001
+                    ELSE avg_f_int
+               END AS avg_f_int
               ,avg_f_int_weight
               ,CASE WHEN rf0.f_datapoints = 1
                     THEN 0

@@ -58,6 +58,7 @@ def forced_fit_monsources(conn, image_id, radius=0.03, deRuiter_r=3.717):
            AND i1.dataset = m1.dataset
            AND m1.dataset = r1.dataset 
            AND m1.runcat = r1.id
+           AND m1.userentry = FALSE
            AND m1.id NOT IN (
                             SELECT m.id
                               FROM monitoringlist m
@@ -84,9 +85,14 @@ def forced_fit_monsources(conn, image_id, radius=0.03, deRuiter_r=3.717):
                                        ) < %s
                             )
         """
-        cursor.execute(query, (image_id,image_id,image_id,image_id, radius, radius,radius,radius,radius,radius,deRuiter_r / 3600.))
+        cursor.execute(query, (image_id, image_id, image_id, image_id, 
+                                radius, radius, radius,
+                                radius, radius, radius, deRuiter_r / 3600.))
         results = zip(*cursor.fetchall())
-        q = query % (image_id,image_id,image_id,image_id, radius, radius,radius,radius,radius,radius,deRuiter_r / 3600.)
+        cursor.close()
+        q = query % (image_id, image_id, image_id, image_id, 
+                        radius, radius, radius, radius, radius, radius,
+                        deRuiter_r / 3600.)
         #print q
         r = ()
         if len(results) != 0:
@@ -101,8 +107,6 @@ def forced_fit_monsources(conn, image_id, radius=0.03, deRuiter_r=3.717):
         query = query % (image_id,image_id,image_id,image_id, radius, radius,radius,radius,radius,radius,deRuiter_r / 3600.)
         logger.warn("Query failed:\n%s", query)
         raise
-    finally:
-        cursor.close()
     return r
 
 

@@ -36,7 +36,7 @@ class FitsImage(DataAccessor):
     passed a request for an unknown attribute, we try to pull it out of the
     FITS header.
     If beam info is not present in the header, it HAS to be provided as a
-    tuple: (bmaj, bmin, bpa).
+    tuple: (bmaj, bmin, bpa) in degrees.
     """
     def __init__(self, source, plane=False, beam=False, hdu=0):
         # NB: pyfits bogs down reading parameters from FITS files with very

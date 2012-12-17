@@ -193,7 +193,12 @@ class LofarCasaImage(DataAccessor):
     Use pyrap to pull image data out of an Casa table.
 
     This accessor assumes the casatable contains the values described in the
-    CASA Image description for LOFAR. 0.03.00
+    CASA Image description for LOFAR. 0.03.00.
+
+    args:
+        url: location of CASA table
+        plane: if datacube, what plane to use
+        beam: beam parameters in pixels, in the form (bmaj, bmin, bpa)
     """
     def __init__(self, url, plane=0, beam=None):
         super(LofarCasaImage, self).__init__()  # Set defaults

@@ -63,7 +63,7 @@ def parse_coordinates(table, wcs):
     wcs.ctype = tuple(ctype)
     # Rotation, units? We better set a default
     wcs.crota = (0., 0.)
-    wcs.cunits = ('unknown', 'unknown')
+    wcs.cunits = t.getkeyword('coords')['direction0']['units']
     # Update WCS
     wcs.wcsset()
 
@@ -159,6 +159,8 @@ def parse_stations(observation_table, antenna_table):
 
 
 def parse_phasecentre(table):
+    # The units for the pointing centre are not given in either the image cube
+    # itself or in the ICD. Assume radians.
     phasecentre = table.getkeyword('coords')['pointingcenter']['value']
     centre_ra, centre_decl = phasecentre
     return degrees(centre_ra), degrees(centre_decl)

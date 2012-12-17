@@ -3,10 +3,10 @@ import warnings
 import datetime
 import numpy
 from pyrap.tables import table as pyrap_table
-from tkp.utility.accessors.beam import degrees2pixels, arcsec2degrees
+from tkp.utility.accessors.beam import degrees2pixels
 from tkp.utility.accessors.dataaccessor import DataAccessor
 from tkp.utility.coordinates import julian2unix
-from math import pi, degrees
+from math import degrees
 
 logger = logging.getLogger(__name__)
 
@@ -47,7 +47,7 @@ def open_subtables(table):
 def parse_coordinates(table, wcs):
     """extract coordination properties from headers
     TODO: it would be better if this returns a new WCS object and not to modify
-          an the wcs arguments
+          the wcs argument
     """
     my_coordinates = table.getkeyword('coords')['direction0']
     wcs.crval = my_coordinates['crval']
@@ -63,7 +63,7 @@ def parse_coordinates(table, wcs):
     wcs.ctype = tuple(ctype)
     # Rotation, units? We better set a default
     wcs.crota = (0., 0.)
-    wcs.cunits = t.getkeyword('coords')['direction0']['units']
+    wcs.cunits = table.getkeyword('coords')['direction0']['units']
     # Update WCS
     wcs.wcsset()
 
@@ -96,17 +96,10 @@ def parse_data(table, plane=0):
     return data
 
 
-def parse_beam(beam, table, wcs):
+def parse_beam(table, wcs):
     """
     Return beam parameters in pixels.
-
-    If beam is supplied it should be a tuple of (major, minor, pa), all in
-    degrees.
-
-    If beam is None, we extract the values from the table headers.
     """
-    # TODO: this is used to be able to set beam parms manually, but this
-    # should be done in a different way
     def ensure_degrees(quantity):
         if quantity['unit'] == 'deg':
             return quantity['value']
@@ -117,14 +110,10 @@ def parse_beam(beam, table, wcs):
         else:
             raise Exception("Beam units (%s) unknown" % quantity['unit'])
 
-    if beam:
-        # We assume the user has provided values in degrees.
-        bmaj, bmin, bpa = beam
-    else:
-        restoringbeam = table.getkeyword('imageinfo')['restoringbeam']
-        bmaj = ensure_degrees(restoringbeam['major'])
-        bmin = ensure_degrees(restoringbeam['minor'])
-        bpa = ensure_degrees(restoringbeam['positionangle'])
+    restoringbeam = table.getkeyword('imageinfo')['restoringbeam']
+    bmaj = ensure_degrees(restoringbeam['major'])
+    bmin = ensure_degrees(restoringbeam['minor'])
+    bpa = ensure_degrees(restoringbeam['positionangle'])
 
     if wcs.cunit[0] == "deg":
         deltax = wcs.cdelt[0]
@@ -215,7 +204,8 @@ class LofarCasaImage(DataAccessor):
         parse_coordinates(self.table, self.wcs)
         self.freq_eff, self.freq_bw, self.subbandwidth = parse_frequency(self.table,
                                         self.subtables['LOFAR_OBSERVATION'])
-        self.beam = parse_beam(self.beam, self.table, self.wcs)
+        if not self.beam:
+            self.beam = parse_beam(self.table, self.wcs)
         self.data = parse_data(self.table, plane)
         self.tau_time = parse_tautime(self.subtables['LOFAR_ORIGIN'])
         self.antenna_set = parse_antennaset(self.subtables['LOFAR_OBSERVATION'])

@@ -97,22 +97,46 @@ def parse_data(table, plane=0):
 
 
 def parse_beam(beam, table, wcs):
-    """extract beam properties from headers"""
+    """
+    Return beam parameters in pixels.
+
+    If beam is supplied it should be a tuple of (major, minor, pa), all in
+    degrees.
+
+    If beam is None, we extract the values from the table headers.
+    """
     # TODO: this is used to be able to set beam parms manually, but this
     # should be done in a different way
+    def ensure_degrees(quantity):
+        if quantity['unit'] == 'deg':
+            return quantity['value']
+        elif quantity['unit'] == 'arcsec':
+            return quantity['value'] / 3600
+        elif quantity['unit'] == 'rad':
+            return degrees(quantity['value'])
+        else:
+            raise Exception("Beam units (%s) unknown" % quantity['unit'])
+
     if beam:
+        # We assume the user has provided values in degrees.
         bmaj, bmin, bpa = beam
     else:
         restoringbeam = table.getkeyword('imageinfo')['restoringbeam']
-        bmaj = restoringbeam['major']['value']
-        bmin = restoringbeam['minor']['value']
-        bpa = restoringbeam['positionangle']['value']
+        bmaj = ensure_degrees(restoringbeam['major'])
+        bmin = ensure_degrees(restoringbeam['minor'])
+        bpa = ensure_degrees(restoringbeam['positionangle'])
 
-    deltax = wcs.cdelt[0] * (180/pi)
-    deltay = wcs.cdelt[1] * (180/pi)
+    if wcs.cunit[0] == "deg":
+        deltax = wcs.cdelt[0]
+    elif wcs.cunit[0] == "rad":
+        deltax = degrees(wcs.cdelt[0])
 
-    (degbmaj, degbmin, debbpa) = arcsec2degrees(bmaj, bmin, bpa)
-    return degrees2pixels(degbmaj, degbmin, debbpa, deltax, deltay)
+    if wcs.cunit[1] == "deg":
+        deltay = wcs.cdelt[1]
+    elif wcs.cunit[1] == "rad":
+        deltay = degrees(wcs.cdelt[1])
+
+    return degrees2pixels(bmaj, bmin, bpa, deltax, deltay)
 
 
 def parse_tautime(origin_table):

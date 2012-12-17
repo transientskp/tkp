@@ -3,10 +3,10 @@ import warnings
 import datetime
 import numpy
 from pyrap.tables import table as pyrap_table
-from tkp.utility.accessors.beam import degrees2pixels, arcsec2degrees
+from tkp.utility.accessors.beam import degrees2pixels
 from tkp.utility.accessors.dataaccessor import DataAccessor
 from tkp.utility.coordinates import julian2unix
-from math import pi
+from math import degrees
 
 logger = logging.getLogger(__name__)
 
@@ -47,7 +47,7 @@ def open_subtables(table):
 def parse_coordinates(table, wcs):
     """extract coordination properties from headers
     TODO: it would be better if this returns a new WCS object and not to modify
-          an the wcs arguments
+          the wcs argument
     """
     my_coordinates = table.getkeyword('coords')['direction0']
     wcs.crval = my_coordinates['crval']
@@ -63,7 +63,7 @@ def parse_coordinates(table, wcs):
     wcs.ctype = tuple(ctype)
     # Rotation, units? We better set a default
     wcs.crota = (0., 0.)
-    wcs.cunits = ('unknown', 'unknown')
+    wcs.cunits = table.getkeyword('coords')['direction0']['units']
     # Update WCS
     wcs.wcsset()
 
@@ -96,23 +96,36 @@ def parse_data(table, plane=0):
     return data
 
 
-def parse_beam(beam, table, wcs):
-    """extract beam properties from headers"""
-    # TODO: this is used to be able to set beam parms manually, but this
-    # should be done in a different way
-    if beam:
-        bmaj, bmin, bpa = beam
-    else:
-        restoringbeam = table.getkeyword('imageinfo')['restoringbeam']
-        bmaj = restoringbeam['major']['value']
-        bmin = restoringbeam['minor']['value']
-        bpa = restoringbeam['positionangle']['value']
+def parse_beam(table, wcs):
+    """
+    Return beam parameters in pixels.
+    """
+    def ensure_degrees(quantity):
+        if quantity['unit'] == 'deg':
+            return quantity['value']
+        elif quantity['unit'] == 'arcsec':
+            return quantity['value'] / 3600
+        elif quantity['unit'] == 'rad':
+            return degrees(quantity['value'])
+        else:
+            raise Exception("Beam units (%s) unknown" % quantity['unit'])
 
-    deltax = wcs.cdelt[0] * (180/pi)
-    deltay = wcs.cdelt[1] * (180/pi)
+    restoringbeam = table.getkeyword('imageinfo')['restoringbeam']
+    bmaj = ensure_degrees(restoringbeam['major'])
+    bmin = ensure_degrees(restoringbeam['minor'])
+    bpa = ensure_degrees(restoringbeam['positionangle'])
 
-    (degbmaj, degbmin, debbpa) = arcsec2degrees(bmaj, bmin, bpa)
-    return degrees2pixels(degbmaj, degbmin, debbpa, deltax, deltay)
+    if wcs.cunit[0] == "deg":
+        deltax = wcs.cdelt[0]
+    elif wcs.cunit[0] == "rad":
+        deltax = degrees(wcs.cdelt[0])
+
+    if wcs.cunit[1] == "deg":
+        deltay = wcs.cdelt[1]
+    elif wcs.cunit[1] == "rad":
+        deltay = degrees(wcs.cdelt[1])
+
+    return degrees2pixels(bmaj, bmin, bpa, deltax, deltay)
 
 
 def parse_tautime(origin_table):
@@ -159,9 +172,11 @@ def parse_stations(observation_table, antenna_table):
 
 
 def parse_phasecentre(table):
+    # The units for the pointing centre are not given in either the image cube
+    # itself or in the ICD. Assume radians.
     phasecentre = table.getkeyword('coords')['pointingcenter']['value']
     centre_ra, centre_decl = phasecentre
-    return float(centre_ra), float(centre_decl)
+    return degrees(centre_ra), degrees(centre_decl)
 
 
 def parse_taustartts(observation_table):
@@ -189,7 +204,8 @@ class LofarCasaImage(DataAccessor):
         parse_coordinates(self.table, self.wcs)
         self.freq_eff, self.freq_bw, self.subbandwidth = parse_frequency(self.table,
                                         self.subtables['LOFAR_OBSERVATION'])
-        self.beam = parse_beam(self.beam, self.table, self.wcs)
+        if not self.beam:
+            self.beam = parse_beam(self.table, self.wcs)
         self.data = parse_data(self.table, plane)
         self.tau_time = parse_tautime(self.subtables['LOFAR_ORIGIN'])
         self.antenna_set = parse_antennaset(self.subtables['LOFAR_OBSERVATION'])

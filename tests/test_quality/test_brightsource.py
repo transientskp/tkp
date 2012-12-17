@@ -11,6 +11,22 @@ testimage = os.path.join(DATAPATH,
     'casatable/L55614_020TO029_skymodellsc_wmax6000_noise_mult10_cell40_npix512_wplanes215.img.restored.corr')
 
 class TestBrightsource(unittest.TestCase):
-    def test_check(self):
+    def test_brightsource(self):
         image = tkp.utility.accessors.open(testimage)
-        tkp.quality.brightsource.check(image)
+
+        # this image is to close to CasA
+        result = tkp.quality.brightsource.is_bright_source_near(image)
+        self.assertTrue(result)
+
+
+        # there is nothing bright here
+        image.centre_ra = 2
+        image.centre_decl = 2
+        result = tkp.quality.brightsource.is_bright_source_near(image)
+        self.assertFalse(result)
+
+        # setting the centre position to CasA should give 0
+        image.centre_ra = 6.123487680622104
+        image.centre_decl = 1.0265153995604648
+        result = tkp.quality.brightsource.is_bright_source_near(image)
+        self.assertTrue(result)

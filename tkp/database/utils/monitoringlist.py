@@ -21,6 +21,95 @@ MonitorTuple = namedtuple('MonitorTuple',
 
 AUTOCOMMIT = config['database']['autocommit']
 
+def add_ff_nd(conn, image_id):
+    """Adds the null detections to runningcatalog, runningcatalog_flux and
+    assocxtrsource.
+    
+    The null detections have already been appended to extractedsource, 
+    after a forced fit
+    
+    Output: id, ra, decl
+    """
+    try:
+        cursor = conn.cursor()
+        query = """\
+        INSERT INTO 
+        """
+        cursor.execute(query, (image_id,))
+    except db.Error, e:
+        query = query % (image_id,)
+        logger.warn("Query failed:\n%s", query)
+        raise
+
+def forced_fit_null_detections(conn, image_id, radius=0.03, deRuiter_r=3.717):
+    """Returns the runcat sources that did not have a counterpart in the 
+    extractedsources of the current image
+    
+    We do not have to take into account associations with monitoringlist 
+    sources, since they have been added to extractedsources at the beginning 
+    of the association procedures (marked as extract_type=2 sources), and so
+    they must have a occurence in extractedsource and runcat.
+    
+    Output: id, ra, decl
+    """
+    deRuiter_red = deRuiter_r / 3600.
+    try:
+        cursor = conn.cursor()
+        query = """\
+        SELECT r1.id
+              ,r1.wm_ra
+              ,r1.wm_decl
+          FROM runningcatalog r1
+              ,image i1
+         WHERE i1.id = %s
+           AND i1.dataset = r1.dataset
+           AND r1.id NOT IN (SELECT r.id
+                               FROM runningcatalog r
+                                   ,extractedsource x
+                                   ,image i
+                              WHERE i.id = %s
+                                AND x.image = i.id
+                                AND x.image = %s
+                                AND i.dataset = r.dataset
+                                AND r.zone BETWEEN CAST(FLOOR(x.decl - %s) as INTEGER)
+                                               AND CAST(FLOOR(x.decl + %s) as INTEGER)
+                                AND r.wm_decl BETWEEN x.decl - %s
+                                                  AND x.decl + %s
+                                AND r.wm_ra BETWEEN x.ra - alpha(%s, x.decl)
+                                                AND x.ra + alpha(%s, x.decl)
+                                AND SQRT(  (x.ra * COS(RADIANS(x.decl)) - r.wm_ra * COS(RADIANS(r.wm_decl)))
+                                         * (x.ra * COS(RADIANS(x.decl)) - r.wm_ra * COS(RADIANS(r.wm_decl)))
+                                         / (x.ra_err * x.ra_err + r.wm_ra_err * r.wm_ra_err) 
+                                        + (x.decl - r.wm_decl) * (x.decl - r.wm_decl)
+                                         / (x.decl_err * x.decl_err + r.wm_decl_err * r.wm_decl_err)
+                                        ) < %s
+                            )
+        ;
+        """
+        cursor.execute(query, (image_id, image_id, image_id, 
+                                radius, radius, radius,
+                                radius, radius, radius, deRuiter_red))
+        results = zip(*cursor.fetchall())
+        cursor.close()
+        q = query % (image_id, image_id, image_id,
+                       radius, radius, radius, 
+                       radius, radius, radius, deRuiter_red)
+        #print q
+        r = ()
+        if len(results) != 0:
+            #print "\nHOORAY, We have null-detections:\n", results
+            p = zip(list(results[1]), list(results[2]))
+            #maxbeam = max(results[3][0],results[4][0]) # all bmaj & bmin are the same
+            r = (p,)
+            #print "p:",p
+            #print "maxbeam:",maxbeam
+            #data_image.fit_fixed_positions()
+    except db.Error, e:
+        query = query % (image_id,image_id,image_id,image_id, radius, radius,radius,radius,radius,radius,deRuiter_r / 3600.)
+        logger.warn("Query failed:\n%s", query)
+        raise
+    return r
+
 def forced_fit_monsources(conn, image_id, radius=0.03, deRuiter_r=3.717):
     """Returns the user-entry sources and no-counterpart sources from 
     monitoringlist
@@ -97,7 +186,7 @@ def forced_fit_monsources(conn, image_id, radius=0.03, deRuiter_r=3.717):
         #print q
         r = ()
         if len(results) != 0:
-            print "\nHOORAY, We have results!\n", results
+            #print "\nHOORAY, We have results!\n", results
             p = zip(list(results[1]), list(results[2]))
             maxbeam = max(results[3][0],results[4][0]) # all bmaj & bmin are the same
             r = (p, maxbeam)
@@ -110,8 +199,8 @@ def forced_fit_monsources(conn, image_id, radius=0.03, deRuiter_r=3.717):
         raise
     return r
 
-def insert_forcedfits_into_extractedsource(conn, image_id, results):
-    general.insert_extracted_sources(conn, image_id, results, mon=True)
+def insert_forcedfits_into_extractedsource(conn, image_id, results, extract):
+    general.insert_extracted_sources(conn, image_id, results, extract)
     #logger.info("Added %s forced-fit sources to extractedsource" % (len(results)))
 
 def is_monitored(conn, runcatid):

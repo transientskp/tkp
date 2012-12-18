@@ -12,6 +12,7 @@ In this module we deal with source association.
 
 """
 
+import sys, os
 import logging
 import monetdb.sql as db
 from tkp.config import config
@@ -82,9 +83,10 @@ def associate_extracted_sources(conn, image_id, deRuiter_r=DERUITER_R):
     _insert_new_runcat_flux(conn, image_id)
     _insert_new_assoc(conn, image_id)
     _insert_new_monitoringlist(conn, image_id)
-    #_add_null_detection_to_extractedsource/runcat/etc()
-    #_go_back_to_other_images_and_do_a_forcedfit(conn, image_id)
-    #_then_add_results_to_assocxtrsource(conn, image_id)
+    if image_id == 2:
+        sys.exit()
+    _go_back_to_other_images_and_do_a_forcedfit_in_non_rejected_images(conn, image_id)
+    #_then_we_need_to_merge_results_from_ff_into_extr/assoc/runcat/runcat_flux/monlist()
     _empty_temprunningcatalog(conn)
     _delete_inactive_runcat(conn)
 
@@ -1433,10 +1435,10 @@ def _insert_new_runcat(conn, image_id):
         #cursor.execute(query, (image_id, image_id,
         #                        radius, radius, radius, radius, radius, radius,
         #                        deRuiter_r/3600.))
-#        if ins > 0:
-#            print "new runcats:",ins
         if not AUTOCOMMIT:
             conn.commit()
+        if ins > 0:
+            logger.info("Added %s new sources to the runningcatalog" % (ins,))
     except db.Error, e:
         q = query % (image_id,)
         logger.warn("Failed on query:\n%s." % q)
@@ -1627,9 +1629,6 @@ def _insert_new_monitoringlist(conn, image_id):
         """
         #q = query % (image_id,image_id)
         #print "QUERY:\n",q
-        #import sys
-        #if image_id == 1:
-        #    sys.exit()
         cursor.execute(query, (image_id,image_id))
         if not AUTOCOMMIT:
             conn.commit()
@@ -1639,6 +1638,58 @@ def _insert_new_monitoringlist(conn, image_id):
         raise
     finally:
         cursor.close()
+
+def _go_back_to_other_images_and_do_a_forcedfit_in_non_rejected_images(conn, image_id):
+    """Return a list of previous image ids and urls in which
+    the new sources were not detected
+    
+    """
+
+    try:
+        cursor = conn.cursor()
+        query = """\
+        SELECT id
+              ,url
+          FROM image
+         WHERE id <> %s 
+           AND NOT rejected 
+           AND dataset = (SELECT dataset 
+                            FROM image i 
+                           WHERE i.id = %s
+                         )
+           AND EXISTS (SELECT t0.xtrsrc
+                         FROM (SELECT x1.id AS xtrsrc
+                                 FROM extractedsource x1
+                                     ,image i1
+                                WHERE x1.image = i1.id
+                                  AND i1.id = %s
+                              ) t0
+                              LEFT OUTER JOIN temprunningcatalog trc1
+                              ON t0.xtrsrc = trc1.xtrsrc
+                        WHERE trc1.xtrsrc IS NULL
+                      )
+        """
+        cursor.execute(query, (image_id, image_id, image_id))
+        results = zip(*cursor.fetchall())
+        if not AUTOCOMMIT:
+            conn.commit()
+        
+        if len(results) != 0:
+            imageids = results[0]
+            urls = results[1]
+            # Check if the urls are still available
+            validurls = []
+            for url in urls:
+                if os.path.exists(url):
+                    validurls.append(url)
+                    logger.info("Previous image available for new-source forced fit: %s" % (url,))
+    except db.Error, e:
+        q = query % (image_id,image_id,image_id)
+        logger.warn("Failed on query:\n%s" % q)
+        raise
+    finally:
+        cursor.close()
+
 
 def _delete_inactive_runcat(conn):
     """Delete the one-to-many associations from temprunningcatalog,

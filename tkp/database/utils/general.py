@@ -19,6 +19,9 @@ with exceptions of monitoringlist and transients.
 """
 import math
 import logging
+
+from lofarpipe.support.lofarexceptions import PipelineException
+
 import monetdb.sql as db
 from tkp.config import config
 import tkp.database
@@ -56,7 +59,7 @@ def insert_image(conn, dataset, freq_eff, freq_bw, taustart_ts, tau_time,
     return image_id
 
 
-def insert_extracted_sources(conn, image_id, results, mon=False):
+def insert_extracted_sources(conn, image_id, results, extract):
     """Insert all extracted sources
 
     Insert the sources that were detected by the Source Extraction
@@ -72,16 +75,21 @@ def insert_extracted_sources(conn, image_id, results, mon=False):
     significance level,
     beam major width , beam minor width, [as]
     beam parallactic angle).  [deg]
+    extract tells whether the source results are originating from 
+    0: blind source extraction 
+    2: from forced fits for monitoringlist sources
+    3: from forced fits at null detection locations
+    sources (True).
     """
     
     #To do: Figure out a saner method of passing the results around
     # (Namedtuple for starters?) 
     if len(results):
-        _insert_extractedsources(conn, image_id, results, mon)
+        _insert_extractedsources(conn, image_id, results, extract)
 
 #TO DO(?): merge the private function below into the public function above?
 
-def _insert_extractedsources(conn, image_id, results, mon):
+def _insert_extractedsources(conn, image_id, results, extract):
     """Insert all extracted sources with their properties
 
     The content of results is in the following sequence:
@@ -89,9 +97,7 @@ def _insert_extractedsources(conn, image_id, results, mon):
     int_flux, int_flux_err, significance level,
     beam major width (as), beam minor width(as), beam parallactic angle,
     ra_sys_err, dec_sys_err).
-    mon (True or False) says whether the source results are inserted from blind
-    source extraction (False) or from forced fits based on the monitoringlist
-    sources (True).
+    See insert_extracted_sources() for a description of extract.
     
     ra_fit_err & dec_fit_err are the 1-sigma errors from the gaussian fit,
     in degrees.
@@ -127,10 +133,15 @@ def _insert_extractedsources(conn, image_id, results, mon):
         r.append(math.cos(math.radians(r[1])) * math.sin(math.radians(r[0]))) # Cartesian y
         r.append(math.sin(math.radians(r[1]))) # Cartesian z
         r.append(r[0] * math.cos(math.radians(r[1]))) # ra * cos(radias(decl))
-        if mon == True:
+        if extract == 'ff_mon':
             r.append(2)
-        else:
+        elif extract == 'ff_nd':
+            r.append(3)
+        elif extract == 'blind':
             r.append(0)
+        else:
+            #raise PipelineException("Not a valid extractedsource insert type: '%s'" % extract)
+            raise ValueError("Not a valid extractedsource insert type: '%s'" % extract)
         xtrsrc.append(r)
     values = [str(tuple(xsrc)) for xsrc in xtrsrc]
 
@@ -168,6 +179,12 @@ def _insert_extractedsources(conn, image_id, results, mon):
         cursor.execute(query)
         if not AUTOCOMMIT:
             conn.commit()
+        if extract == 'ff_mon':
+            logger.info("Inserted %d forced-fit monitoringsources in extractedsource" % (len(values)))
+        elif extract == 'ff_nd':
+            logger.info("Inserted %d forced-fit null detections in extractedsource" % (len(values)))
+        elif extract == 'blind':
+            logger.info("Inserted %d sources in extractedsource" % (len(values)))
     except db.Error, e:
         logger.warn("Failed on query nr %s." % query)
         raise

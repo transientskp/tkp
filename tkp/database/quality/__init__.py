@@ -13,18 +13,36 @@ reason = {
 
 
 
-query_reject = """
-INSERT INTO rejection (image, rejectreason, comment)
-VALUES (%(imageid)s, %(reason)s, '%(comment)s')
+query_reject = """\
+INSERT INTO rejection 
+  (image
+  ,rejectreason
+  ,comment
+  )
+VALUES 
+  (%(imageid)s
+  ,%(reason)s
+  ,'%(comment)s'
+  )
 """
 
-query_unreject = """
-DELETE FROM rejection WHERE image=%(image)s
+query_update_image_rejected = """\
+UPDATE image
+   SET rejected = TRUE
+ WHERE id = %(imageid)s
 """
 
-query_isrejected = """
-SELECT rejectreason.description, rejection.comment
-  FROM rejection, rejectreason
+query_unreject = """\
+DELETE 
+  FROM rejection 
+ WHERE image=%(image)s
+"""
+
+query_isrejected = """\
+SELECT rejectreason.description
+      ,rejection.comment
+  FROM rejection
+      ,rejectreason
  WHERE rejection.rejectreason = rejectreason.id
    AND rejection.image = %(imageid)s
 """
@@ -38,8 +56,14 @@ def reject(connection, imageid, reason, comment):
         reason: why is the image rejected, a defined in tkp.database.quality.reason
         comment: an optional comment with details about the reason
     """
+    # Enter the entry in reject
     args = {'imageid': imageid, 'reason': reason, 'comment': comment}
     query = query_reject % args
+    tkp.database.query(connection, query, commit=True)
+    
+    # Update the image record
+    args = {'imageid': imageid}
+    query = query_update_image_rejected % args
     tkp.database.query(connection, query, commit=True)
 
 

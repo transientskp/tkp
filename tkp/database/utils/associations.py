@@ -81,6 +81,10 @@ def associate_extracted_sources(conn, image_id, deRuiter_r=DERUITER_R):
     _insert_new_runcat(conn, image_id)
     _insert_new_runcat_flux(conn, image_id)
     _insert_new_assoc(conn, image_id)
+    _insert_new_monitoringlist(conn, image_id)
+    #_add_null_detection_to_extractedsource/runcat/etc()
+    #_go_back_to_other_images_and_do_a_forcedfit(conn, image_id)
+    #_then_add_results_to_assocxtrsource(conn, image_id)
     _empty_temprunningcatalog(conn)
     _delete_inactive_runcat(conn)
 
@@ -1570,6 +1574,63 @@ def _insert_new_assoc(conn, image_id):
         #cursor.execute(query, (image_id, image_id,
         #                        radius, radius, radius, radius, radius, radius,
         #                        deRuiter_r/3600.))
+        if not AUTOCOMMIT:
+            conn.commit()
+    except db.Error, e:
+        q = query % (image_id,)
+        logger.warn("Failed on query:\n%s" % q)
+        raise
+    finally:
+        cursor.close()
+
+def _insert_new_monitoringlist(conn, image_id):
+    """A new source needs to be added to the monitoringlist.
+    
+    Except for sources that were detected in the initial image.
+    """
+
+    try:
+        cursor = conn.cursor()
+        query = """\
+        INSERT INTO monitoringlist
+          (runcat
+          ,ra
+          ,decl
+          ,dataset
+          )
+          SELECT r0.id AS runcat
+                ,r0.wm_ra AS ra
+                ,r0.wm_decl AS decl
+                ,r0.dataset AS dataset
+            FROM runningcatalog r0
+                ,extractedsource x0
+           WHERE r0.xtrsrc = x0.id
+             AND r0.xtrsrc IN (SELECT t0.xtrsrc
+                                 FROM (SELECT x1.id AS xtrsrc
+                                         FROM extractedsource x1
+                                             ,image i1
+                                        WHERE x1.image = i1.id
+                                          AND i1.id = %s
+                                      ) t0
+                                      LEFT OUTER JOIN temprunningcatalog trc1
+                                      ON t0.xtrsrc = trc1.xtrsrc
+                                 WHERE trc1.xtrsrc IS NULL
+                              )
+             AND EXISTS (SELECT COUNT(*) 
+                           FROM image 
+                          WHERE dataset = (SELECT dataset 
+                                             FROM image 
+                                            WHERE id = %s
+                                          )
+                         HAVING COUNT(*) <> 1
+                        )
+        """
+        #q = query % (image_id,image_id)
+        #print "QUERY:\n",q
+        #import sys
+        #if image_id == 1:
+        #    sys.exit()
+        cursor.execute(query, (image_id,image_id))
         if not AUTOCOMMIT:
             conn.commit()
     except db.Error, e:

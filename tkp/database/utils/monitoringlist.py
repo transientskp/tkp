@@ -9,6 +9,7 @@ import logging
 import monetdb.sql as db
 from tkp.config import config
 from . import generic
+from . import general
 import tkp.database
 from collections import namedtuple
 
@@ -109,6 +110,9 @@ def forced_fit_monsources(conn, image_id, radius=0.03, deRuiter_r=3.717):
         raise
     return r
 
+def insert_forcedfits_into_extractedsource(conn, image_id, results):
+    general.insert_extracted_sources(conn, image_id, results, mon=True)
+    #logger.info("Added %s forced-fit sources to extractedsource" % (len(results)))
 
 def is_monitored(conn, runcatid):
     """Check whether a source is in the monitoring list.

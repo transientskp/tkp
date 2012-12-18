@@ -56,7 +56,7 @@ def insert_image(conn, dataset, freq_eff, freq_bw, taustart_ts, tau_time,
     return image_id
 
 
-def insert_extracted_sources(conn, image_id, results):
+def insert_extracted_sources(conn, image_id, results, mon=False):
     """Insert all extracted sources
 
     Insert the sources that were detected by the Source Extraction
@@ -77,11 +77,11 @@ def insert_extracted_sources(conn, image_id, results):
     #To do: Figure out a saner method of passing the results around
     # (Namedtuple for starters?) 
     if len(results):
-        _insert_extractedsources(conn, image_id, results)
+        _insert_extractedsources(conn, image_id, results, mon)
 
 #TO DO(?): merge the private function below into the public function above?
 
-def _insert_extractedsources(conn, image_id, results):
+def _insert_extractedsources(conn, image_id, results, mon):
     """Insert all extracted sources with their properties
 
     The content of results is in the following sequence:
@@ -89,6 +89,9 @@ def _insert_extractedsources(conn, image_id, results):
     int_flux, int_flux_err, significance level,
     beam major width (as), beam minor width(as), beam parallactic angle,
     ra_sys_err, dec_sys_err).
+    mon (True or False) says whether the source results are inserted from blind
+    source extraction (False) or from forced fits based on the monitoringlist
+    sources (True).
     
     ra_fit_err & dec_fit_err are the 1-sigma errors from the gaussian fit,
     in degrees.
@@ -124,6 +127,10 @@ def _insert_extractedsources(conn, image_id, results):
         r.append(math.cos(math.radians(r[1])) * math.sin(math.radians(r[0]))) # Cartesian y
         r.append(math.sin(math.radians(r[1]))) # Cartesian z
         r.append(r[0] * math.cos(math.radians(r[1]))) # ra * cos(radias(decl))
+        if mon == True:
+            r.append(2)
+        else:
+            r.append(0)
         xtrsrc.append(r)
     values = [str(tuple(xsrc)) for xsrc in xtrsrc]
 
@@ -153,6 +160,7 @@ def _insert_extractedsources(conn, image_id, results):
           ,y
           ,z
           ,racosdecl
+          ,extract_type
           )
         VALUES
         """\

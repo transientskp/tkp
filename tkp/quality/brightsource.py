@@ -23,6 +23,9 @@ def is_bright_source_near(accessor, distance=20):
         False if not bright source is near, description of source if a bright
          source is near
     """
+    
+    #TODO: this function should be split up and tested more atomically
+    
     # The measures object is our interface to pyrap
     m = measures()
 

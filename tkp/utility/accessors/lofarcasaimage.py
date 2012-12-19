@@ -63,7 +63,7 @@ def parse_coordinates(table, wcs):
     wcs.ctype = tuple(ctype)
     # Rotation, units? We better set a default
     wcs.crota = (0., 0.)
-    wcs.cunits = table.getkeyword('coords')['direction0']['units']
+    wcs.cunit = table.getkeyword('coords')['direction0']['units']
     # Update WCS
     wcs.wcsset()
 

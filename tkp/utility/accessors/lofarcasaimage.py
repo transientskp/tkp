@@ -91,8 +91,7 @@ def parse_data(table, plane=0):
         logger.warn(msg)
         warnings.warn(msg)
         data = data[plane,:,:]
-    # TODO: is this required?
-    #data = data.transpose()
+    data = data.transpose()
     return data
 
 

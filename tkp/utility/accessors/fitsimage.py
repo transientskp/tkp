@@ -146,7 +146,9 @@ class FitsImage(DataAccessor):
         try:
             self.wcs.cunit = header['cunit1'], header['cunit2']
         except KeyError:
-            self.wcs.cunit = 'unknown', 'unknown'
+            # Blank values default to degrees.
+            logger.warning("WCS units unknown; using defaults")
+            self.wcs.cunit = '', ''
 
         self.wcs.wcsset()
         self.pix_to_position = self.wcs.p2s

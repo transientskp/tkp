@@ -55,6 +55,7 @@ OPTIONS:
    -p      Set database password to this value
    -H      Database hostname
    -P      Database port
+   -f      monetdbd passphrase
    -b      Set batch file to use
 EOF
 }
@@ -83,6 +84,9 @@ parse_arguments() {
 				 ;;
 			 p)
 				 PASSWORD=${OPTARG}
+				 ;;
+			 f)
+				 PASSPHRASE=${OPTARG}
 				 ;;
 			 H)
 				 HOSTNAME=${OPTARG}
@@ -202,8 +206,8 @@ if [ ${REMOTEHOST} ]; then
     if [ ${PORT} ]; then
         PARAMS+=" -p ${PORT}"
     fi
-    if [ ${PASSWORD} ] ; then
-        PARAMS+=" -P ${PASSWORD}"
+    if [ ${PASSPHRASE} ] ; then
+        PARAMS+=" -P ${PASSPHRASE}"
     fi
 fi
 

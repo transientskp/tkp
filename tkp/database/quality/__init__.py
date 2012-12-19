@@ -8,10 +8,9 @@ RejectReason = namedtuple('RejectReason', 'id desc')
 
 reason = {
     'rms': RejectReason(id=0, desc='RMS too high'),
+    'beam': RejectReason(id=1, desc='beam invalid'),
+    'bright_source': RejectReason(id=2, desc='bright source near'),
     }
-
-
-
 
 query_reject = """
 INSERT INTO rejection (image, rejectreason, comment)

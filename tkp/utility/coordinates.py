@@ -78,18 +78,26 @@ def jd2lst(jd, position=None):
     return mjd2lst(jd - 2400000.5, position)
 
 
+
+#julian_epoch = datetime.datetime(1858, 11, 17)
+#unix_epoch = datetime.datetime(1970, 1, 1, 0, 0)
+#delta = unix_epoch - julian_epoch
+#deltaseconds = delta.total_seconds()
+seconds_between_julian_and_unix_epoc = 3506716800
+
+
 def julian2unix(timestamp):
     """converts a julian timestamp (number of seconds since 17 November 1858)
     to unix timestamp (number of seconds since  1 January 1970)
     """
-    #julian_epoch = datetime.datetime(1858, 11, 17)
-    #unix_epoch = datetime.datetime(1970, 1, 1, 0, 0)
-    #delta = unix_epoch - julian_epoch
-    #deltaseconds = delta.total_seconds()
+    return timestamp - seconds_between_julian_and_unix_epoc
 
-    deltaseconds = 3506716800
-    return timestamp - deltaseconds
 
+def unix2julian(timestamp):
+    """converts a julian timestamp (number of seconds since 17 November 1858)
+    to unix timestamp (number of seconds since  1 January 1970)
+    """
+    return timestamp + seconds_between_julian_and_unix_epoc
 
 
 def sec2deg(seconds):

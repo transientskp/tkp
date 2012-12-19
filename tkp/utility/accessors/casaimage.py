@@ -11,6 +11,7 @@ class CasaImage(DataAccessor):
 
     """
     def __init__(self, filename, plane=0, beam=None):
+        raise NotImplementedError("Non-LOFAR CASA images not supported")
         super(CasaImage, self).__init__()  # Set defaults
         self.url = filename
         #pyrap can't handle unicode

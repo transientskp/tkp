@@ -1,9 +1,6 @@
-
 from tkp.utility.coordinates import WCS
 import datetime
 
-
-	
 def extract_metadata(dataaccessor):
     return {
         'tau_time': dataaccessor.tau_time,
@@ -26,8 +23,6 @@ def extract_metadata(dataaccessor):
         'nintl': dataaccessor.nintl,
     }
 
-
-
 class DataAccessor(object):
     """
     Base class for accessors used with :class:`..sourcefinder.image.ImageData`.
@@ -38,7 +33,7 @@ class DataAccessor(object):
     """
 
     def __init__(self):
-        self.beam = (None, None, None)
+        self.beam = (None, None, None) # bmaj (px), bmin (px), bpa (rad)
         self.wcs = WCS()
         self.tau_time = 0.  # integration seconds
         self.taustart_ts = datetime.datetime(1970, 1, 1, 0, 0, 0)
@@ -55,4 +50,3 @@ class DataAccessor(object):
         self.ncore = 0
         self.nremote = 0
         self.nintl = 0
-

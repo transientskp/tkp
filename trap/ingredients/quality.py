@@ -6,6 +6,7 @@ from tkp.quality.statistics import rms_with_clipped_subregion
 from tkp.lofar.noise import noise_level
 import tkp.utility.accessors
 import tkp.database.quality
+import tkp.quality.brightsource
 import tkp.quality
 from tkp.database.orm import Image
 
@@ -21,6 +22,7 @@ def parse_parset(parset_file, accessor=None):
     result['high_bound'] = parset.getInt('high_bound', 50)
     result['oversampled_x'] = parset.getInt('oversampled_x', 30)
     result['elliptical_x'] = parset.getFloat('elliptical_x', 2.0)
+    result['min_separation'] = parset.getFloat('min_separation', 20)
 
     # LOFAR image properties - first check if set in parset, if not get value
     # from image, if not set use default
@@ -45,6 +47,7 @@ def parse_parset(parset_file, accessor=None):
 
     return result
 
+
 def check(image_id, parset_file):
     """ checks if an image passes the quality check. If not, a rejection
         entry is added to the database.
@@ -58,6 +61,8 @@ def check(image_id, parset_file):
     db_image = Image(database=database, id=image_id)
     accessor = tkp.utility.accessors.open(db_image.url)
     p = parse_parset(parset_file)
+
+    # TODO: this is getting messy and can use a cleanup
 
     rms = rms_with_clipped_subregion(accessor.data, sigma=p['sigma'], f=p['f'])
     noise = noise_level(p['freq_eff'], p['subbandwidth'], p['intgr_time'],
@@ -88,7 +93,16 @@ def check(image_id, parset_file):
     else:
         logger.info("image %s REJECTED: %s " % (db_image.id, beam_invalid) )
         tkp.database.quality.reject(database.connection, db_image.id,
-                            tkp.database.quality.reason['rms'].id, beam_invalid)
+                            tkp.database.quality.reason['beam'].id, beam_invalid)
+        return False
+
+    bright_source_near = tkp.quality.brightsource.is_bright_source_near(accessor,
+                                            p['min_separation'])
+
+    if bright_source_near:
+        logger.info("image %s REJECTED: %s " % (db_image.id, bright_source_near) )
+        tkp.database.quality.reject(database.connection, db_image.id,
+            tkp.database.quality.reason['bright_source'].id, bright_source_near)
         return False
 
     return True

@@ -26,6 +26,7 @@ SELECT im.taustart_ts
       ,ex.f_int_err
       ,ex.id
       ,im.band
+      ,im.stokes
   FROM extractedsource ex
       ,assocxtrsource ax
       ,image im

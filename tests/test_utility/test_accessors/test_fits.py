@@ -102,7 +102,7 @@ class DataBaseImage(unittest.TestCase):
 
         image = FitsImage(os.path.join(DATAPATH, 'L15_12h_const/observed-all.fits'),
                                       beam=(54./3600, 54./3600, 0.))
-        
+
         database = tkp.database.database.DataBase()
         dataset = DataSet(data={'description': 'Accessor test'}, database=database)
         dbimage = accessors.dbimage_from_accessor(dataset, image)
@@ -112,18 +112,10 @@ class FrequencyInformation(unittest.TestCase):
     """TO DO: split this into an accessor test and a database test.
                 Move the database part to the database unit-tests"""
     @requires_database()
-    @requires_data(os.path.join(DATAPATH, 'L21641_SB098.restored.image'))
     @requires_data(os.path.join(DATAPATH, 'VLSS.fits'))
     def testFreqinfo(self):
         database = DataBase()
         dataset = DataSet(data={'description': 'dataset'}, database=database)
-        image = CasaImage(
-            os.path.join(DATAPATH, 'L21641_SB098.restored.image'))
-        self.assertAlmostEqual(image.freq_eff/1e6, 156.4453125)
-        self.assertAlmostEqual(image.freq_bw, 1.0)
-        self.assertAlmostEqual(image.beam[0], 0.9)
-        self.assertAlmostEqual(image.beam[1], 0.9)
-        self.assertAlmostEqual(image.beam[2], 0.0)
 
         # image without frequency information
         image = FitsImage(os.path.join(DATAPATH, 'VLSS.fits'))

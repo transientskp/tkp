@@ -1,8 +1,8 @@
 .. _utility-uncertain:
 
-+++++++++++++++++++++++++++++++++++++++++++++
-:mod:`tkp.utility.image` -- Uncertainty class
-+++++++++++++++++++++++++++++++++++++++++++++
++++++++++++++++++++++++++++++++++++++++++++++++++
+:mod:`tkp.utility.uncertain` -- Uncertainty class
++++++++++++++++++++++++++++++++++++++++++++++++++
 
 
 .. automodule:: tkp.utility.uncertain

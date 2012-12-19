@@ -15,5 +15,4 @@ casatable =  os.path.join(DATAPATH, 'L21641_SB098.restored.image')
 @requires_data(casatable)
 class TestLofarCasaImage(unittest.TestCase):
     def test_casaimage(self):
-        accessor = CasaImage(casatable)
-        sfimage = accessors.sourcefinder_image_from_accessor(accessor)
+        self.assertRaises(NotImplementedError, CasaImage, (casatable,))

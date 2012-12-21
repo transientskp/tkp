@@ -62,16 +62,6 @@ def image_to_mongodb(filename, hostname, port, db):
         temp_fits_file.close()
 
 
-def images_to_mongodb(filenames, copy_images, hostname, port, db):
-    """if copy_images is true, call image_to_mongdb with filenames
-    """
-    if copy_images:
-        logger.info("copying %s images to mongodb" % len(filenames))
-        for filename in filenames:
-            logger.info("saving local copy of %s" % os.path.basename(filename))
-            image_to_mongodb(filename, hostname, port, db)
-
-
 def create_dataset(dataset_id, description):
     """ Creates a dataset if it doesn't exists
     Returns:
@@ -122,7 +112,11 @@ def node_steps(images, parset_file):
     mongoport = persistence_parset['mongo_port']
     mongodb = persistence_parset['mongo_db']
     copy_images = persistence_parset['copy_images']
-    images_to_mongodb(images, copy_images, mongohost, mongoport, mongodb)
+    if copy_images:
+        logger.info("copying %s images to mongodb" % len(images))
+        for image in images:
+            logger.info("saving local copy of %s" % os.path.basename(image))
+            image_to_mongodb(image, mongohost, mongoport, mongodb)
 
     logger.info("extracting metadata from images")
     metadatas = extract_metadatas(images)

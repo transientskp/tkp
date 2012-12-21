@@ -1,13 +1,3 @@
-# -*- coding: utf-8 -*-
-
-#
-# LOFAR Transients Key Project
-#
-# Bart Scheers, Evert Rol, Tim Staley
-#
-# discovery@transientskp.org
-#
-
 """
 A collection of back end subroutines (mostly SQL queries).
 
@@ -17,6 +7,7 @@ that don't fit into a more specific collection.
 Most of the basic insertion routines are kept here,
 with exceptions of monitoringlist and transients. 
 """
+
 import math
 import logging
 import monetdb.sql as db
@@ -26,9 +17,27 @@ import tkp.database
 logger = logging.getLogger(__name__)
 
 AUTOCOMMIT = config['database']['autocommit']
-#DERUITER_R = config['source_association']['deruiter_radius']
-#BG_DENSITY = config['source_association']['bg-density']
 
+
+lightcurve_query = """
+SELECT im.taustart_ts
+      ,im.tau_time
+      ,ex.f_int
+      ,ex.f_int_err
+      ,ex.id
+      ,im.band
+      ,im.stokes
+  FROM extractedsource ex
+      ,assocxtrsource ax
+      ,image im
+ WHERE ax.runcat IN (SELECT runcat
+                       FROM assocxtrsource
+                      WHERE xtrsrc = %(xtrsrc)s
+                    )
+   AND ax.xtrsrc = ex.id
+   AND ex.image = im.id
+ORDER BY im.taustart_ts
+"""
 
 
 def insert_dataset(conn, description):
@@ -169,61 +178,23 @@ def _insert_extractedsources(conn, image_id, results):
 
 def lightcurve(conn, xtrsrcid):
     """Obtain a light curve for a specific extractedsource
-
     Args:
-
         xtrsrcid (int): the source identifier that corresponds to a
         point on the light curve. Note that the point does not have to
         be the start (first) point of the light curve.
-
     Returns:
-
-        A list of 5-tuples, each tuple containing (in order):
-
+        A list of tuples, each tuple containing (in order):
             - observation start time as a datetime.datetime object
-
             - integration time (float)
-
             - integrated flux (float)
-
             - integrated flux error (float)
-
             - database ID of this particular source
+            - frequency band ID
+            - stokes
     """
-    #TODO: This lightcurve returns fluxes for every band and stokes if available.
-
-    cursor = conn.cursor()
-    try:
-        query = """\
-        SELECT im.taustart_ts
-              ,im.tau_time
-              ,ex.f_int
-              ,ex.f_int_err
-              ,ex.id
-          FROM extractedsource ex
-              ,assocxtrsource ax
-              ,image im
-         WHERE ax.runcat IN (SELECT runcat
-                               FROM assocxtrsource
-                              WHERE xtrsrc = %s
-                            )
-           AND ax.xtrsrc = ex.id
-           AND ex.image = im.id
-        ORDER BY im.taustart_ts
-        """
-        cursor.execute(query, (xtrsrcid,))
-        results = cursor.fetchall()
-    except db.Error:
-        query = query % xtrsrcid
-        logger.warn("Failed to obtain light curve")
-        logger.warn("Query failed:\n%s", query)
-        raise
-    finally:
-        cursor.close()
-    return results
-
-
-
+    args = {'xtrsrc': xtrsrcid}
+    cursor = tkp.database.query(conn, lightcurve_query, args)
+    return cursor.fetchall()
 
 
 def get_imagefiles_for_ids(conn, image_ids):

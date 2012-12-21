@@ -600,17 +600,11 @@ class ExtractedSource(DBObject):
         for this source.
 
         Returns:
-
             (list) list of 5-tuples, each tuple being:
-
                 - observation start time as a datetime.datetime object
-
                 - integration time (float)
-
                 - integrated flux (float)
-
                 - integrated flux error (float)
-
                 - database ID of this particular source
         """
 

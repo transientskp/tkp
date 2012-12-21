@@ -39,6 +39,7 @@ class CommandError(Exception):
 def check_if_exists(filename):
     if not os.access(filename, os.R_OK):
         raise CommandError("can't read %s" % filename)
+    return True
 
 
 def parse_arguments():

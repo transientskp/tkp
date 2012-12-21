@@ -32,11 +32,8 @@ class LightCurve(object):
         """Extract the complete light curve from the database
 
         Args:
-
             - cursor: database cursor
-
             - srcid (int): id of the source in the database
-
 
         Fills the attributes with data obtained from the
         database. Attributes of the class are the same as those for
@@ -44,12 +41,10 @@ class LightCurve(object):
         filled, and reflects the individual extracted sources.
         
         Example::
-
             >>> with closing(DataBase()) as database:
             ...     lightcurve = LightCurve.from_database(database.cursor, 1)
             
         """
-
         cursor.execute(sql_lightcurve, srcid)
         results = zip(*cursor.fetchall())
         return LightCurve(
@@ -60,31 +55,23 @@ class LightCurve(object):
             srcids=numpy.array(results[4])
             )
 
-
-    def __init__(self, taustart_tss, tau_times, fluxes, errors, srcids=None):
+    def __init__(self, taustart_tss, tau_times, fluxes, errors, srcids=None, bands=None, stokes=None):
         """
-
         Args:
-
             taustart_tss (list or array of datetime.datetime() instances):
                 (mid) observing times
-
             tau_times (list or array of floats): integration times in
                 seconds
-
             fluxes (list or array of floats): flux levels in Janskys
-
             errors (list or array of floats): flux errors in Janskys
-
             srcids (list or array of ints, None): database id of
                 'extracted source' for each data point. If left to the
                 default of None, this is ignored.
-
+            bands (list or array of ints, None): frequency band ID's
+            stokes (list or array of ints, None): stokes
         Raises:
-
             ValueError: when input arguments are not equal length.
         """
-
         self.taustart_tss = numpy.array(taustart_tss)
         self.tau_times = numpy.array(tau_times)
         self.fluxes = numpy.array(fluxes)

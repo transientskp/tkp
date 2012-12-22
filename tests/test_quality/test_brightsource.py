@@ -2,6 +2,7 @@ import unittest
 if not  hasattr(unittest.TestCase, 'assertIsInstance'):
     import unittest2 as unittest
 import os
+from math import degrees
 from tkp.testutil.decorators import requires_data
 import tkp.quality.brightsource
 import tkp.utility.accessors
@@ -27,7 +28,7 @@ class TestBrightsource(unittest.TestCase):
         self.assertFalse(result)
 
         # setting the centre position to CasA should give 0
-        image.centre_ra = 6.123487680622104
-        image.centre_decl = 1.0265153995604648
+        image.centre_ra = degrees(6.123487680622104)
+        image.centre_decl = degrees(1.0265153995604648)
         result = tkp.quality.brightsource.is_bright_source_near(image)
         self.assertTrue(result)

@@ -34,7 +34,7 @@ def image_to_mongodb(filename, hostname, port, db):
         msg = "Could not import MongoDB modules"
         logger.error(msg)
         warnings.warn(msg)
-        return
+        return False
     try:
         # This conversion should work whether the input file
         # is in FITS or CASA format.
@@ -46,7 +46,7 @@ def image_to_mongodb(filename, hostname, port, db):
         logger.error(msg)
         warnings.warn(msg)
         temp_fits_file.close()
-        return
+        return False
     try:
         connection = pymongo.Connection(host=hostname, port=port)
         gfs = gridfs.GridFS(connection[db])
@@ -57,9 +57,12 @@ def image_to_mongodb(filename, hostname, port, db):
         connection.close()
     except Exception, e:
         msg = "Could not store image to MongoDB: %s" % (str(e))
+        warnings.warn(msg)
         logger.error(msg)
+        return False
     finally:
         temp_fits_file.close()
+    return True
 
 
 def create_dataset(dataset_id, description):

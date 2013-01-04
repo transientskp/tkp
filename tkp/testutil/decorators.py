@@ -13,6 +13,11 @@ def requires_database():
         return lambda func: func
     return unittest.skip("Database functionality disabled in configuration")
 
+def requires_mongodb():
+    if tkp.config.config['mongodb']['enabled']:
+        return lambda func: func
+    return unittest.skip("mongodb functionality disabled in configuration")
+
 def requires_data(*args):
     for filename in args:
         if not os.path.exists(filename):

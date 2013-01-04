@@ -1,18 +1,17 @@
-
-
 import unittest
 import trap.management
 import os
+import sys
 import os.path
 import shutil
 import tempfile
 
 project_name = 'test_project'
 job_name = 'test_job'
-parent = '/tmp'
+parent = tempfile.mkdtemp()
 target = os.path.join(parent, project_name)
 
-@unittest.skip("not finished yet")
+
 class TestManagement(unittest.TestCase):
     def test_init_project(self):
         """
@@ -59,28 +58,19 @@ class TestManagement(unittest.TestCase):
         self.assertRaises(trap.management.CommandError, trap.management.init_job,
                                                 job_name, "DOESNOTEXISTS")
 
-
+    @unittest.skip("dont work yet somehow")
     def test_run_job(self):
-        """
-        test the creation of a TRAP job
-        """
         # cleanup
         if os.access(target, os.X_OK):
             shutil.rmtree(target)
-
         os.chdir(parent)
         trap.management.init_project(project_name)
-
         os.chdir(target)
-
-        # test called from current working dir
         trap.management.init_job(job_name)
-
+        # we don't want no images!
+        images_file = open(os.path.join(target, job_name, 'images_to_process.py'), 'w')
+        images_file.write("images=[]\n")
         trap.management.run_job(job_name)
-
-        trap.management.run_job(job_name, False)
-
-
 
     def test_check_if_exists(self):
         file = tempfile.NamedTemporaryFile()
@@ -90,48 +80,61 @@ class TestManagement(unittest.TestCase):
                                     trap.management.check_if_exists, file.name)
 
     def test_parse_arguments(self):
-        trap.management.parse_arguments()
+        # should raise error if no arguments
+        self.assertRaises(SystemExit, trap.management.parse_arguments)
 
     def test_get_template_dir(self):
         trap.management.get_template_dir()
 
     def test_make_writeable(self):
-        filename = "TODO"
-        trap.management.make_writeable(filename)
+        t = tempfile.NamedTemporaryFile()
+        trap.management.make_writeable(t.name)
 
     def test_line_replace(self):
-        substitutes = "TODO"
-        line = "TODO"
-        trap.management.line_replace(substitutes, line)
+        substitutes = [('gijs', 'bart'), ('john', 'tim')]
+        line = "gijs john"
+        result = trap.management.line_replace(substitutes, line)
+
 
     def test_copy_template(self):
-        name = "TODO"
-        trap.management.copy_template(project_name, name)
-        trap.management.copy_template(job_name, name)
-        trap.management.copy_template(project_name, name, "DOESNOTEXISTS")
+        target = tempfile.mkdtemp()
+        trap.management.copy_template("project", project_name, target)
+        trap.management.copy_template("job", job_name, target)
 
     def test_prepare_job(self):
-        job_name = "TODO"
-        debug = "TODO"
         trap.management.prepare_job(job_name)
-        trap.management.prepare_job(job_name, debug)
+        trap.management.prepare_job(job_name, debug=True)
 
+    @unittest.skip("dont work yet somehow")
     def test_runlocal_job(self):
-        job_name = "TODO"
-        debug = "TODO"
+        # cleanup
+        if os.access(target, os.X_OK):
+            shutil.rmtree(target)
+        os.chdir(parent)
+        trap.management.init_project(project_name)
+        os.chdir(target)
+        trap.management.init_job(job_name)
+
+        images_file = open(os.path.join(target, job_name, 'images_to_process.py'), 'w')
+        images_file.write("images=[]\n")
+        sys.path.append(os.path.join(target, job_name))
+        import logging
+        logging.debug(sys.path)
         trap.management.runlocal_job(job_name)
-        trap.management.runlocal_job(job_name, debug)
+        #trap.management.runlocal_job(job_name, debug=True)
 
     def test_clean_job(self):
-        job_name = "TODO"
         trap.management.clean_job(job_name)
 
     def test_info_job(self):
-        job_name = "TODO"
+        t = tempfile.mkdtemp()
+        os.chdir(t)
+        trap.management.init_job(job_name)
         trap.management.info_job(job_name)
 
     def test_main(self):
-        trap.management.main()
+        # should raise exception when no arguments
+        self.assertRaises(SystemExit, trap.management.main)
 
 
 if __name__ == '__main__':

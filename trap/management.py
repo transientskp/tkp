@@ -97,6 +97,7 @@ def line_replace(substitutes, line):
     every occurance of the first item in the tuple in line will be replaces
     with the second. The to be replaced thingy should be in Django
     template format e.g. {% user_name %}
+    template format e.g. {% user_name %}
     """
     for pattern, repl in substitutes:
         line = re.sub("{%\s*" + pattern + "\s*%}", repl, line)

@@ -35,31 +35,34 @@ def image_to_mongodb(filename, hostname, port, db):
         logger.error(msg)
         warnings.warn(msg)
         return
-    try:
-        # This conversion should work whether the input file
-        # is in FITS or CASA format.
-        temp_fits_file = NamedTemporaryFile()
-        i = pyrap_image(filename)
-        i.tofits(temp_fits_file.name)
-    except Exception, e:
-        msg ="Could not convert image to FITS: %s" % (str(e))
-        logger.error(msg)
-        warnings.warn(msg)
-        temp_fits_file.close()
-        return
-    try:
-        connection = pymongo.Connection(host=hostname, port=port)
+
+    with pymongo.Connection(host=hostname, port=port) as connection:
         gfs = gridfs.GridFS(connection[db])
-        new_file = gfs.new_file(filename=filename)
-        with open(temp_fits_file.name, "r") as f:
-            new_file.write(f)
-        new_file.close()
-        connection.close()
-    except Exception, e:
-        msg = "Could not store image to MongoDB: %s" % (str(e))
-        logger.error(msg)
-    finally:
-        temp_fits_file.close()
+        if gfs.exists(filename=filename):
+            logger.debug("File already in database")
+            return
+        try:
+            # This conversion should work whether the input file
+            # is in FITS or CASA format.
+            temp_fits_file = NamedTemporaryFile()
+            i = pyrap_image(filename)
+            i.tofits(temp_fits_file.name)
+        except Exception, e:
+            msg ="Could not convert image to FITS: %s" % (str(e))
+            logger.error(msg)
+            warnings.warn(msg)
+            temp_fits_file.close()
+            return
+        try:
+            new_file = gfs.new_file(filename=filename)
+            with open(temp_fits_file.name, "r") as f:
+                new_file.write(f)
+            new_file.close()
+        except Exception, e:
+            msg = "Could not store image to MongoDB: %s" % (str(e))
+            logger.error(msg)
+        finally:
+            temp_fits_file.close()
 
 
 def images_to_mongodb(filenames, copy_images, hostname, port, db):
@@ -68,7 +71,7 @@ def images_to_mongodb(filenames, copy_images, hostname, port, db):
     if copy_images:
         logger.info("copying %s images to mongodb" % len(filenames))
         for filename in filenames:
-            logger.info("saving local copy of %s" % os.path.basename(filename))
+            logger.info("saving %s to MongoDB on %s" % (os.path.basename(filename), hostname))
             image_to_mongodb(filename, hostname, port, db)
 
 

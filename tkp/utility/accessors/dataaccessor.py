@@ -38,9 +38,9 @@ class DataAccessor(object):
         self.wcs = WCS()
         self.tau_time = 0.  # integration seconds
         self.taustart_ts = datetime.datetime(1970, 1, 1, 0, 0, 0)
-        self.freq_bw = None
-        self.freq_eff = None  # Hertz (? MHz?)
-        self.subbandwidth = None
+        self.freq_bw = 0.
+        self.freq_eff = 0.  # Hertz (? MHz?)
+        self.subbandwidth = 0.
         self.url = "not set"
         self.data = None
         self.centre_ra = 0

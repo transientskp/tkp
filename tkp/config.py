@@ -102,13 +102,19 @@ def set_default_config():
 
     config.add_section('database')
     config.set('database', 'enabled', 'True')
-    config.set('database', 'host', 'ldb001')
+    config.set('database', 'host', 'localhost')
     config.set('database', 'name', 'tkp')
     config.set('database', 'user', 'tkp')
     config.set('database', 'password', 'tkp')
     config.set('database', 'port', '0')
     config.set('database', 'autocommit', 'False')
     config.set('database', 'engine', 'monetdb')
+
+    config.add_section('mongodb')
+    config.set('mongodb', 'enabled', 'False')
+    config.set('mongodb', 'hostname', 'localhost')
+    config.set('mongodb', 'port', '28017')
+    config.set('mongodb', 'database', 'tkp')
 
     config.add_section('source_association')
     config.set('source_association', 'deRuiter_radius', '3.717')
@@ -232,7 +238,8 @@ def parse_config(config):
                          source_extraction={})
     booleans = (('database', 'enabled'), ('database', 'autocommit'),
                 ('source_extraction', 'deblend'),
-                ('source_extraction', 'residuals'))
+                ('source_extraction', 'residuals'),
+                ('mongodb', 'enabled'))
     integers = (('database', 'port'), ('source_extraction', 'back_sizex'),
                 ('source_extraction', 'back_sizey'),
                 ('source_extraction', 'median_filter'),
@@ -240,7 +247,8 @@ def parse_config(config):
                 ('source_extraction', 'deblend_nthresh'),
                 ('transient_search', 'minpoints'),
                 ('alerts', 'port'),
-                ('test', 'max_duration')
+                ('test', 'max_duration'),
+                ('mongodb', 'port')
                 )
     floats = (('source_association', 'deRuiter_radius'),
               ('source_extraction', 'mf_threshold'),

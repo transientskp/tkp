@@ -1,8 +1,11 @@
 import os
-from tkp.config import config as tkp_conf
 import datetime
 import logging
 from collections import namedtuple
+from tkp.config import config as tkp_conf
+from tkp.database.database import DataBase
+from tkp.database.orm import DataSet, Image
+import tkp.testutil.data as testdata
 
 ExtractedSourceTuple = namedtuple("ExtractedSourceTuple",
                                 ['ra', 'dec' ,
@@ -73,7 +76,7 @@ def example_dbimage_datasets(n_images):
                       'freq_eff':140e6,
                       'freq_bw':2e6,
                       'taustart_ts':starttime,
-                      'url':"someurl",
+                      'url':testdata.fits_file, # just an arbitrary existing fits file
                       'centre_ra': 0,
                       'centre_decl': 0,
 
@@ -266,3 +269,22 @@ def example_source_lists(n_images, include_non_detections,
                 img_source_lists[index].append(m)
     return img_source_lists
 
+
+def create_dataset_8images(database=False, extract_sources=False):
+    """
+    creates a fake dataset with 8 images
+    returns: dataset database id
+    """
+    if not database:
+        database = DataBase()
+    dataset = DataSet(data={'description': 'testdataset'}, database=database)
+    n_images = 8
+    db_imgs = []
+    im_params = example_dbimage_datasets(n_images)
+    source_lists = example_source_lists(n_images=8, include_non_detections=True)
+    for i in xrange(n_images):
+        db_imgs.append(Image(data=im_params[i], dataset=dataset))
+        if extract_sources:
+            db_imgs[i].insert_extracted_sources(source_lists[i])
+            db_imgs[i].associate_extracted_sources(deRuiter_r=3.7)
+    return dataset.id

@@ -13,6 +13,8 @@ A collection of back end db query subroutines used for unittesting
 import logging
 import monetdb.sql as db
 from tkp.config import config
+from tkp.database.database import DataBase
+from tkp.database import query
 
 def count_runcat_entries(conn, dataset):
     """Count the number of runningcatalog sources
@@ -69,3 +71,10 @@ def count_associated_sources(conn, dataset):
         raise
     return id_counts
 
+
+def dataset_images(dataset_id, database=None):
+    database = database or DataBase()
+    q = "SELECT id FROM image WHERE dataset=%(dataset)s LIMIT 1"
+    cursor = query(database.connection, q, {'dataset': dataset_id})
+    image_ids = [x[0] for x in cursor.fetchall()]
+    return image_ids

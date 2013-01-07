@@ -188,6 +188,13 @@ def parse_taustartts(observation_table):
     return taustart_ts
 
 
+def parse_position(antenna_table):
+    """extract the position in ITRF (ie, Earth-centred Cartesian) coordinates.
+    """
+    position = antenna_table.getcol('POSITION')
+    return position
+
+
 class LofarCasaImage(DataAccessor):
     """
     Use pyrap to pull image data out of an Casa table.
@@ -204,6 +211,8 @@ class LofarCasaImage(DataAccessor):
         super(LofarCasaImage, self).__init__()  # Set defaults
         self.url = url
         self.table = pyrap_table(self.url.encode(), ack=False)
+        self.data = parse_data(self.table, plane)
+
         self.beam = beam
         self.subtables = open_subtables(self.table)
         parse_coordinates(self.table, self.wcs)
@@ -211,7 +220,6 @@ class LofarCasaImage(DataAccessor):
                                         self.subtables['LOFAR_OBSERVATION'])
         if not self.beam:
             self.beam = parse_beam(self.table, self.wcs)
-        self.data = parse_data(self.table, plane)
         self.tau_time = parse_tautime(self.subtables['LOFAR_ORIGIN'])
         self.antenna_set = parse_antennaset(self.subtables['LOFAR_OBSERVATION'])
         self.subbands = parse_subbands(self.subtables['LOFAR_ORIGIN'])
@@ -220,6 +228,4 @@ class LofarCasaImage(DataAccessor):
                                             self.subtables['LOFAR_ANTENNA'])
         self.taustart_ts = parse_taustartts(self.subtables['LOFAR_OBSERVATION'])
         self.centre_ra, self.centre_decl = parse_phasecentre(self.table)
-
-
-
+        self.position = parse_position(self.subtables['LOFAR_ANTENNA'])

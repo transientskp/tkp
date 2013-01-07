@@ -1,6 +1,10 @@
+import logging
+import warnings
 import pyrap.quanta as qa
 from pyrap.measures import measures
 from tkp.utility.coordinates import unix2julian
+
+logger = logging.getLogger(__name__)
 
 targets = { 'CasA': {'ra' : 6.123487680622104,  'dec' : 1.0265153995604648},
             'CygA': {'ra' : 5.233686575770755,  'dec' : 0.7109409582180791},
@@ -10,7 +14,6 @@ targets = { 'CasA': {'ra' : 6.123487680622104,  'dec' : 1.0265153995604648},
             'SUN': None,
             'JUPITER': None,
         }
-
 
 def is_bright_source_near(accessor, distance=20):
     """ Checks if there is any of the bright radio sources defined in targets
@@ -25,6 +28,13 @@ def is_bright_source_near(accessor, distance=20):
 
     #TODO: this function should be split up and tested more atomically
 
+    if accessor.position == None:
+        msg = "image doesn't have position metadata. " \
+                "can't check if bright source is near"
+        logger.warning(msg)
+        warnings.warn(msg)
+        return False
+
     # The measures object is our interface to pyrap
     m = measures()
 
@@ -34,15 +44,10 @@ def is_bright_source_near(accessor, distance=20):
     starttime_mjd = unix2julian(starttime)
     m.do_frame(m.epoch("UTC", "%ss" % starttime_mjd))
 
-    # Specify the position in ITRF (ie, Earth-centred Cartesian) coordinates.
-    # You can read this from the telescopeposition entry in the image's coords
-    # record:
-    ant_table = accessor.subtables['LOFAR_ANTENNA']
     ant_no = 0
-    pos = ant_table.getcol('POSITION')
-    x = qa.quantity(pos[ant_no,0], 'm')
-    y = qa.quantity(pos[ant_no,1], 'm')
-    z = qa.quantity(pos[ant_no,2], 'm')
+    x = qa.quantity(accessor.position[ant_no,0], 'm')
+    y = qa.quantity(accessor.position[ant_no,1], 'm')
+    z = qa.quantity(accessor.position[ant_no,2], 'm')
     position = m.position('ITRF', x, y, z)
     m.doframe(position)
 

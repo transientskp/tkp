@@ -239,8 +239,7 @@ def transient_search(conn,
                      eta_lim, V_lim,
                      probability_threshold,
                      minpoints,
-                     imageid=None,
-                     logger=None):
+                     imageid=None):
 
     results = select_variability_indices(conn, dsid, freq_band, V_lim, eta_lim)
 

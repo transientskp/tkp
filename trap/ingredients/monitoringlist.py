@@ -1,6 +1,5 @@
 import os
 import logging
-from contextlib import closing
 from lofarpipe.support.lofarexceptions import PipelineException
 from lofar.parameterset import parameterset
 from tkp.database import DataBase, DataSet
@@ -30,13 +29,10 @@ def update_monitoringlist(image_id):
         - image_id: database image id
         - dataset_id: dataset to which the image belongs
     """
-
-
     database = DataBase()
     db_image = Image(database=database, id=image_id)
     if not os.path.exists(db_image.url):
         raise PipelineException("Image '%s' not found" % db_image.url)
-
 
     # Obtain the list of targets to be monitored (and not already
     # detected) for this image

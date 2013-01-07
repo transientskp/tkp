@@ -26,24 +26,32 @@ def parse_parset(parset_file, accessor=None):
 
     # LOFAR image properties - first check if set in parset, if not get value
     # from image, if not set use default
-    result['freq_eff'] = parset.getInt('freq_eff',
-                            getattr(accessor,'freq_eff', 45*10**6))
-    result['subbandwidth'] = parset.getInt('subbandwidth',
-                            getattr(accessor, 'subbandwidth', 200*10**3))
-    result['intgr_time'] = parset.getFloat('intgr_time',
-                            getattr(accessor, 'intgr_time', 18654))
-    result['antenna_set'] = parset.getString('antenna_set',
-                            getattr(accessor, 'antenna_set', "LBA_INNER"))
-    result['subbands'] = parset.getInt('subbands',
-                            getattr(accessor, 'subbands', 10))
-    result['channels'] = parset.getInt('channels',
-                            getattr(accessor, 'channels', 64))
-    result['ncore'] = parset.getInt('ncore',
-                            getattr(accessor, 'ncore', 24))
-    result['nremote'] = parset.getInt('nremote',
-                            getattr(accessor, 'nremote', 16))
-    result['nintl'] = parset.getInt('nintl',
-                            getattr(accessor, 'nintl', 8))
+    freq_eff = getattr(accessor,'freq_eff', None) or 45*10**6
+    result['freq_eff'] = parset.getFloat('freq_eff', freq_eff)
+
+    subbandwidth = getattr(accessor, 'subbandwidth', None) or 200*10**3
+    result['subbandwidth'] = parset.getFloat('subbandwidth', subbandwidth)
+
+    intgr_time = getattr(accessor, 'intgr_time', None) or 18654
+    result['intgr_time'] = parset.getFloat('intgr_time', intgr_time)
+
+    antenna_set = getattr(accessor, 'antenna_set', "LBA_INNER") or "LBA_INNER"
+    result['antenna_set'] = parset.getString('antenna_set', antenna_set)
+
+    subbands = getattr(accessor, 'subbands', None) or 10
+    result['subbands'] = parset.getInt('subbands', subbands)
+
+    channels = getattr(accessor, 'channels', None) or 64
+    result['channels'] = parset.getInt('channels', channels)
+
+    ncore = getattr(accessor, 'ncore', None) or 24
+    result['ncore'] = parset.getInt('ncore', ncore)
+
+    nremote = getattr(accessor, 'nremote', None) or 16
+    result['nremote'] = parset.getInt('nremote', nremote)
+
+    nintl =  getattr(accessor, 'nintl', None) or 8
+    result['nintl'] = parset.getInt('nintl', nintl)
 
     return result
 

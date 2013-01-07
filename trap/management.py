@@ -39,6 +39,7 @@ class CommandError(Exception):
 def check_if_exists(filename):
     if not os.access(filename, os.R_OK):
         raise CommandError("can't read %s" % filename)
+    return True
 
 
 def parse_arguments():
@@ -95,6 +96,7 @@ def line_replace(substitutes, line):
     """substitutions - list of 2 item tuples.
     every occurance of the first item in the tuple in line will be replaces
     with the second. The to be replaced thingy should be in Django
+    template format e.g. {% user_name %}
     template format e.g. {% user_name %}
     """
     for pattern, repl in substitutes:

@@ -35,8 +35,7 @@ def search_transients(image_ids, dataset_id, parset, tkpconfigdir=None):
                 V_lim=V_lim,
                 probability_threshold=prob_threshold,
                 minpoints=minpoints,
-                imageid=img_id,
-                logger=None)
+                imageid=img_id)
 
         logger.info("Found %s transients in band %s." % (len(transients), band))
         all_transient_ids.extend(transient_ids)

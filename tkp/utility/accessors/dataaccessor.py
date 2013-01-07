@@ -21,6 +21,7 @@ def extract_metadata(dataaccessor):
         'ncore': dataaccessor.ncore,
         'nremote': dataaccessor.nremote,
         'nintl': dataaccessor.nintl,
+        'position': dataaccessor.position,
     }
 
 class DataAccessor(object):
@@ -50,3 +51,4 @@ class DataAccessor(object):
         self.ncore = 0
         self.nremote = 0
         self.nintl = 0
+        self.position = None

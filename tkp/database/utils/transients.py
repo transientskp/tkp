@@ -293,6 +293,7 @@ def transient_search(conn,
                             ,assocxtrsource ax
                         WHERE ax.runcat = %s
                           AND ex.image = %s
+                          AND ax.xtrsrc = ex.id
                     """
                     cursor.execute(query, (transient.runcatid, imageid))
                     trigger_xtrsrc = cursor.fetchall()[0][0]

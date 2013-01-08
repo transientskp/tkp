@@ -126,12 +126,14 @@ def _empty_temprunningcatalog(conn):
 
     try:
         cursor = conn.cursor()
-        query = """DELETE FROM temprunningcatalog"""
+        query = """\
+        DELETE FROM temprunningcatalog;
+        """
         cursor.execute(query)
         if not AUTOCOMMIT:
             conn.commit()
     except db.Error, e:
-        logger.warn("Failed on query nr %s." % query)
+        logger.warn("Failed on query\n%s" % query)
         raise
     finally:
         cursor.close()
@@ -457,6 +459,8 @@ UPDATE temprunningcatalog
 ;
 """
         cursor.execute(query)
+        if not AUTOCOMMIT:
+            conn.commit()
         #results = zip(*cursor.fetchall())
         #if len(results) != 0:
         #    runcat = results[0]
@@ -479,91 +483,91 @@ UPDATE temprunningcatalog
         logger.warn("Failed on query nr %s." % query)
         raise
 
-def _flag_many_to_many_tempruncat2(conn):
-    """Select the many-to-many association pairs in temprunningcatalog.
-
-    By flagging the many-to-many associations, we reduce the
-    processing to one-to-many and many-to-one (identical to one-to-one)
-    relationships
-    """
-
-    try:
-        cursor = conn.cursor()
-        # This one selects the farthest out of the many-to-many assocs
-        query = """\
-SELECT t1.runcat
-      ,t1.xtrsrc
-  FROM (SELECT xtrsrc
-              ,MIN(r) as min_r
-          FROM temprunningcatalog
-         WHERE runcat IN (SELECT runcat
-                            FROM temprunningcatalog
-                           WHERE runcat IN (SELECT runcat
-                                              FROM temprunningcatalog
-                                             WHERE xtrsrc IN (SELECT xtrsrc
-                                                                FROM temprunningcatalog
-                                                              GROUP BY xtrsrc
-                                                              HAVING COUNT(*) > 1
-                                                             )
-                                           )
-                          GROUP BY runcat
-                          HAVING COUNT(*) > 1
-                         )
-           AND xtrsrc IN (SELECT xtrsrc
-                            FROM temprunningcatalog
-                          GROUP BY xtrsrc
-                          HAVING COUNT(*) > 1
-                         )
-        GROUP BY xtrsrc
-       ) t0
-      ,(SELECT runcat
-              ,xtrsrc
-              ,r
-          FROM temprunningcatalog
-         WHERE runcat IN (SELECT runcat
-                            FROM temprunningcatalog
-                           WHERE runcat IN (SELECT runcat
-                                              FROM temprunningcatalog
-                                             WHERE xtrsrc IN (SELECT xtrsrc
-                                                                FROM temprunningcatalog
-                                                              GROUP BY xtrsrc
-                                                              HAVING COUNT(*) > 1
-                                                             )
-                                           )
-                          GROUP BY runcat
-                          HAVING COUNT(*) > 1
-                         )
-           AND xtrsrc IN (SELECT xtrsrc
-                            FROM temprunningcatalog
-                          GROUP BY xtrsrc
-                          HAVING COUNT(*) > 1
-                         )
-       ) t1
- WHERE t0.xtrsrc = t1.xtrsrc
-   AND t0.min_r < t1.r
-        """
-        cursor.execute(query)
-        results = zip(*cursor.fetchall())
-        if len(results) != 0:
-            runcat = results[0]
-            xtrsrc = results[1]
-            query = """\
-            UPDATE temprunningcatalog
-               SET inactive = TRUE
-             WHERE runcat = %s
-               AND xtrsrc = %s
-            """
-            for j in range(len(runcat)):
-                logger.info("Many-to-many in tempruncat set to inactive: "
-                            "%s %s " % (runcat[j], xtrsrc[j]))
-                cursor.execute(query, (runcat[j], xtrsrc[j]))
-                if not AUTOCOMMIT:
-                    conn.commit()
-            #sys.exit()
-        cursor.close()
-    except db.Error, e:
-        logger.warn("Failed on query nr %s." % query)
-        raise
+#def _flag_many_to_many_tempruncat2(conn):
+#    """Select the many-to-many association pairs in temprunningcatalog.
+#
+#    By flagging the many-to-many associations, we reduce the
+#    processing to one-to-many and many-to-one (identical to one-to-one)
+#    relationships
+#    """
+#
+#    try:
+#        cursor = conn.cursor()
+#        # This one selects the farthest out of the many-to-many assocs
+#        query = """\
+#SELECT t1.runcat
+#      ,t1.xtrsrc
+#  FROM (SELECT xtrsrc
+#              ,MIN(r) as min_r
+#          FROM temprunningcatalog
+#         WHERE runcat IN (SELECT runcat
+#                            FROM temprunningcatalog
+#                           WHERE runcat IN (SELECT runcat
+#                                              FROM temprunningcatalog
+#                                             WHERE xtrsrc IN (SELECT xtrsrc
+#                                                                FROM temprunningcatalog
+#                                                              GROUP BY xtrsrc
+#                                                              HAVING COUNT(*) > 1
+#                                                             )
+#                                           )
+#                          GROUP BY runcat
+#                          HAVING COUNT(*) > 1
+#                         )
+#           AND xtrsrc IN (SELECT xtrsrc
+#                            FROM temprunningcatalog
+#                          GROUP BY xtrsrc
+#                          HAVING COUNT(*) > 1
+#                         )
+#        GROUP BY xtrsrc
+#       ) t0
+#      ,(SELECT runcat
+#              ,xtrsrc
+#              ,r
+#          FROM temprunningcatalog
+#         WHERE runcat IN (SELECT runcat
+#                            FROM temprunningcatalog
+#                           WHERE runcat IN (SELECT runcat
+#                                              FROM temprunningcatalog
+#                                             WHERE xtrsrc IN (SELECT xtrsrc
+#                                                                FROM temprunningcatalog
+#                                                              GROUP BY xtrsrc
+#                                                              HAVING COUNT(*) > 1
+#                                                             )
+#                                           )
+#                          GROUP BY runcat
+#                          HAVING COUNT(*) > 1
+#                         )
+#           AND xtrsrc IN (SELECT xtrsrc
+#                            FROM temprunningcatalog
+#                          GROUP BY xtrsrc
+#                          HAVING COUNT(*) > 1
+#                         )
+#       ) t1
+# WHERE t0.xtrsrc = t1.xtrsrc
+#   AND t0.min_r < t1.r
+#        """
+#        cursor.execute(query)
+#        results = zip(*cursor.fetchall())
+#        if len(results) != 0:
+#            runcat = results[0]
+#            xtrsrc = results[1]
+#            query = """\
+#            UPDATE temprunningcatalog
+#               SET inactive = TRUE
+#             WHERE runcat = %s
+#               AND xtrsrc = %s
+#            """
+#            for j in range(len(runcat)):
+#                logger.info("Many-to-many in tempruncat set to inactive: "
+#                            "%s %s " % (runcat[j], xtrsrc[j]))
+#                cursor.execute(query, (runcat[j], xtrsrc[j]))
+#                if not AUTOCOMMIT:
+#                    conn.commit()
+#            #sys.exit()
+#        cursor.close()
+#    except db.Error, e:
+#        logger.warn("Failed on query nr %s." % query)
+#        raise
 
 def _insert_1_to_many_runcat(conn):
     """Insert the extracted sources that belong to one-to-many
@@ -1652,7 +1656,7 @@ def _go_back_to_other_images_and_do_a_forcedfit_in_non_rejected_images(conn, ima
               ,url
           FROM image
          WHERE id <> %s 
-           AND NOT rejected 
+           AND rejected = FALSE
            AND dataset = (SELECT dataset 
                             FROM image i 
                            WHERE i.id = %s

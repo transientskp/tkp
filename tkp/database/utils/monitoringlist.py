@@ -21,25 +21,60 @@ MonitorTuple = namedtuple('MonitorTuple',
 
 AUTOCOMMIT = config['database']['autocommit']
 
-def add_ff_nd(conn, image_id):
-    """Adds the null detections to runningcatalog, runningcatalog_flux and
-    assocxtrsource.
-    
-    The null detections have already been appended to extractedsource, 
-    after a forced fit
-    
-    Output: id, ra, decl
-    """
-    try:
-        cursor = conn.cursor()
-        query = """\
-        INSERT INTO 
-        """
-        cursor.execute(query, (image_id,))
-    except db.Error, e:
-        query = query % (image_id,)
-        logger.warn("Query failed:\n%s", query)
-        raise
+#def add_ff_nd(conn, image_id):
+#    """Add the null detections to the monitoringlist
+#    
+#    The null detections have already been appended to extractedsource, 
+#    after a forced fit
+#    
+#    Output: id, ra, decl
+#    """
+#    try:
+#        cursor = conn.cursor()
+#        query = """\
+#        INSERT INTO monitoringlist
+#          (runcat
+#          ,ra
+#          ,decl
+#          ,dataset
+#          )
+#          SELECT r1.id AS runcat
+#                ,r1.wm_ra AS ra
+#                ,r1.wm_decl AS decl
+#                ,r1.dataset AS dataset
+#            FROM runningcatalog r1
+#                ,image i1
+#           WHERE i1.id = %s
+#             AND i1.dataset = r1.dataset
+#             AND r1.id NOT IN (SELECT r.id
+#                                 FROM runningcatalog r
+#                                     ,extractedsource x
+#                                     ,image i
+#                                WHERE i.id = %s
+#                                  AND x.image = i.id
+#                                  AND x.image = %s
+#                                  AND i.dataset = r.dataset
+#                                  AND r.zone BETWEEN CAST(FLOOR(x.decl - %s) as INTEGER)
+#                                                 AND CAST(FLOOR(x.decl + %s) as INTEGER)
+#                                  AND r.wm_decl BETWEEN x.decl - %s
+#                                                    AND x.decl + %s
+#                                  AND r.wm_ra BETWEEN x.ra - alpha(%s, x.decl)
+#                                                  AND x.ra + alpha(%s, x.decl)
+#                                  AND SQRT(  (x.ra * COS(RADIANS(x.decl)) - r.wm_ra * COS(RADIANS(r.wm_decl)))
+#                                           * (x.ra * COS(RADIANS(x.decl)) - r.wm_ra * COS(RADIANS(r.wm_decl)))
+#                                           / (x.ra_err * x.ra_err + r.wm_ra_err * r.wm_ra_err) 
+#                                          + (x.decl - r.wm_decl) * (x.decl - r.wm_decl)
+#                                           / (x.decl_err * x.decl_err + r.wm_decl_err * r.wm_decl_err)
+#                                          ) < %s
+#                              )
+#        """
+#        cursor.execute(query, (image_id, image_id, image_id, 
+#                                radius, radius, radius,
+#                                radius, radius, radius, deRuiter_red))
+#    except db.Error, e:
+#        query = query % (image_id,)
+#        logger.warn("Query failed:\n%s", query)
+#        raise
 
 def forced_fit_null_detections(conn, image_id, radius=0.03, deRuiter_r=3.717):
     """Returns the runcat sources that did not have a counterpart in the 
@@ -90,6 +125,8 @@ def forced_fit_null_detections(conn, image_id, radius=0.03, deRuiter_r=3.717):
                                 radius, radius, radius,
                                 radius, radius, radius, deRuiter_red))
         results = zip(*cursor.fetchall())
+        if not AUTOCOMMIT:
+            conn.commit()                        
         cursor.close()
         q = query % (image_id, image_id, image_id,
                        radius, radius, radius, 
@@ -179,6 +216,8 @@ def forced_fit_monsources(conn, image_id, radius=0.03, deRuiter_r=3.717):
                                 radius, radius, radius,
                                 radius, radius, radius, deRuiter_r / 3600.))
         results = zip(*cursor.fetchall())
+        if not AUTOCOMMIT:
+            conn.commit()                        
         cursor.close()
         q = query % (image_id, image_id, image_id, image_id, 
                         radius, radius, radius, radius, radius, radius,
@@ -737,9 +776,16 @@ def add_manual_entry_to_monitoringlist(conn, dataset_id,
     cursor = conn.cursor()
     try:
         query = """\
-INSERT INTO monitoringlist
-(ra, decl, dataset, userentry)
-SELECT %s ,%s ,%s, true
+        INSERT INTO monitoringlist
+          (ra
+          ,decl
+          ,dataset
+          ,userentry
+          )
+          SELECT %s 
+                ,%s 
+                ,%s
+                ,TRUE
 """
         cursor.execute(query, (ra, dec, dataset_id))
         if not AUTOCOMMIT:

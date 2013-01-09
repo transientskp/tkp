@@ -715,51 +715,74 @@ def add_runcat_sources_to_monitoringlist(conn, dataset_id,
     
     ##NB Should be able to check for pre-existing runcats, 
     ## and insert, all in one go with something like:
-    
-#    INSERT INTO monitoringlist
-#    (runcat, dataset)
-#    SELECT id, dataset
-#    FROM runningcatalog
-#    WHERE id in ()
-#      AND
-#    id NOT IN
-#    (SELECT runcat FROM monitoringlist)
+    try:
+        cursor = conn.cursor()
+        q = """\
+        INSERT INTO monitoringlist
+          (runcat
+          ,ra
+          ,decl
+          ,dataset
+          )
+          SELECT id AS runcat
+                ,wm_ra AS ra
+                ,wm_decl AS decl
+                ,dataset
+            FROM runningcatalog
+           WHERE id = %s
+             AND dataset = %s
+             AND NOT EXISTS (SELECT runcat 
+                               FROM monitoringlist
+                              WHERE runcat = %s
+                                AND dataset = %s
+                            )
+        """
+        print "QUERY:\n%s" + q % (runcat_ids[0],dataset_id,runcat_ids[0],dataset_id)
+        #sys.exit()
+        cursor.execute(q, (runcat_ids[0],dataset_id,runcat_ids[0],dataset_id))
+        if not AUTOCOMMIT:
+            conn.commit()
+        cursor.close()
+    except db.Error, e:
+        query = q % (runcat_ids[0],dataset_id,runcat_ids[0],dataset_id)
+        logger.warn("query failed:\n%s", query)
+        raise
 
 ## But I can't get it to work, so I'll do it the simple way.
                
-    prior_runcat_entries = generic.columns_from_table(conn, 
-                              'monitoringlist', 
-                              ['runcat'], 
-                              where={'dataset':dataset_id})
-    
+    #prior_runcat_entries = generic.columns_from_table(conn, 
+    #                          'monitoringlist', 
+    #                          ['runcat'], 
+    #                          where={'dataset':dataset_id})
+    #
 
-    runcat_ids = set(runcat_ids).difference(
-                           set(e['runcat'] for e in prior_runcat_entries)
-                           )
-    
-    if len(runcat_ids):
-        cursor = conn.cursor()
-        try:
-            values_placeholder = ", ".join(["( %s, %s )"] * len(runcat_ids))
-            values_list = []
-            for rcid in runcat_ids:
-                values_list.extend([ rcid, dataset_id])
-            query = """\
-    INSERT INTO monitoringlist
-    (runcat, dataset)
-    VALUES
-    {placeholder}
-    """.format(placeholder = values_placeholder)
-            cursor.execute(query, tuple(values_list))
-            if not AUTOCOMMIT:
-                conn.commit()
-        except db.Error:
-            query = query 
-            logger.warn("Query %s failed", query)
-            cursor.close()
-            raise
-        finally:
-            cursor.close()
+    #runcat_ids = set(runcat_ids).difference(
+    #                       set(e['runcat'] for e in prior_runcat_entries)
+    #                       )
+    #
+    #if len(runcat_ids):
+    #    cursor = conn.cursor()
+    #    try:
+    #        values_placeholder = ", ".join(["( %s, %s )"] * len(runcat_ids))
+    #        values_list = []
+    #        for rcid in runcat_ids:
+    #            values_list.extend([ rcid, dataset_id])
+    #        query = """\
+    #INSERT INTO monitoringlist
+    #(runcat, dataset)
+    #VALUES
+    #{placeholder}
+    #""".format(placeholder = values_placeholder)
+    #        cursor.execute(query, tuple(values_list))
+    #        if not AUTOCOMMIT:
+    #            conn.commit()
+    #    except db.Error:
+    #        query = query 
+    #        logger.warn("Query %s failed", query)
+    #        cursor.close()
+    #        raise
+    #    finally:
+    #        cursor.close()
     
 
 def add_manual_entry_to_monitoringlist(conn, dataset_id, 

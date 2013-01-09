@@ -104,11 +104,124 @@ def insert_transient(conn, transient, dataset_id):
     except db.Error:
         logger.warn("Query %s failed", query)
         raise
-
+    #print "Adding to monlist:", dataset_id, [transient.runcatid]
     monitoringlist.add_runcat_sources_to_monitoringlist(conn,
                                                         dataset_id,
                                                         [transient.runcatid])
 
+
+
+def select_variability_indices_per_band(conn, image_id, V_lim, eta_lim):
+    """
+    Select sources and integrated flux variability indices from the running
+    catalog, for a given frequency band (i.e. image_id)
+
+    This comes relatively easily, since we have kept track of the
+    average fluxes and the variance measures, and thus can quickly
+    obtain any sources that exceed a constant flux by a certain amount.
+
+    We select those sources that have integrated-flux V-indexes (variability) and
+    eta-indexes (reduced-chi-sq values) larger than the specified limits.
+
+    We also perform a left outer join with the monitoringlist and the
+    transient tables, to determine if the source has been inserted into those
+    tables yet. TODO: Why?
+    
+    NB Variability index  = std.dev(flux) / mean(flux).
+    In the pathological case where mean(flux)==0.0, we simply substitute
+    variability index =  std.dev(flux) / 1e-6 (1 microJansky)
+    to avoid division by zero errors.
+
+    (TO DO: Return indices based on
+    peak fluxes as well.)
+
+    Args:
+
+        dsid (int): dataset of interest
+
+        image_id: the image and thus frequency band being searched for variability
+
+        V_lim (): 
+
+        eta_lim ():
+    """
+
+    results = []
+    cursor = conn.cursor()
+    try:
+        query = """\
+SELECT t1.runcat
+      ,t1.f_datapoints
+      ,t1.wm_ra
+      ,t1.wm_decl
+      ,t1.wm_ra_err
+      ,t1.wm_decl_err
+      ,t1.V_int_inter / t1.avg_f_int AS V_int
+      ,t1.eta_int_inter / t1.avg_f_int_weight AS eta_int
+  FROM (SELECT rf0.runcat
+              ,rf0.band
+              ,f_datapoints
+              ,wm_ra
+              ,wm_decl
+              ,wm_ra_err
+              ,wm_decl_err
+              ,CASE WHEN avg_f_int = 0.0
+                    THEN 0.000001
+                    ELSE avg_f_int
+               END AS avg_f_int
+              ,avg_f_int_weight
+              ,CASE WHEN rf0.f_datapoints = 1
+                    THEN 0
+                    ELSE SQRT(CAST(rf0.f_datapoints AS DOUBLE) * (avg_f_int_sq - avg_f_int * avg_f_int)
+                             / (CAST(rf0.f_datapoints AS DOUBLE) - 1.0)
+                             )
+               END AS V_int_inter
+              ,CASE WHEN rf0.f_datapoints = 1
+                    THEN 0
+                    ELSE (CAST(rf0.f_datapoints AS DOUBLE) / (CAST(rf0.f_datapoints AS DOUBLE) - 1.0))
+                         * (avg_f_int_weight * avg_weighted_f_int_sq - avg_weighted_f_int * avg_weighted_f_int)
+               END AS eta_int_inter
+          FROM runningcatalog rc0
+              ,runningcatalog_flux rf0
+              ,image i0
+         WHERE i0.id = %s
+           AND rc0.dataset = i0.dataset
+           AND rc0.id = rf0.runcat
+           AND rf0.band = i0.band
+       ) t1
+ WHERE t1.V_int_inter / t1.avg_f_int > %s
+   AND t1.eta_int_inter / t1.avg_f_int_weight > %s
+"""
+        cursor.execute(query, (image_id, V_lim, eta_lim))
+
+        results = cursor.fetchall()
+        alias_map = {'runcat':'runcatid',
+                     'f_datapoints':'npoints',
+                     'wm_ra':'ra',
+                     'wm_ra_err':'ra_err',
+                     'wm_decl':'dec',
+                     'wm_decl_err':'dec_err',
+                     }
+        result_dicts = generic.convert_db_rows_to_dicts(
+                                            results,
+                                            [d[0] for d in cursor.description],
+                                            alias_map)
+
+#        results = [dict(() for index, col_desc in col_index
+#            runcatid=x[0], npoints=x[3], V_int=x[8], eta_int=x[9], dataset=x[1],
+#            band=x[2], ra=x[4], dec=x[5], ra_err=x[6], dec_err=x[7],
+#            trigger_xtrsrc=x[10], monitored=x[11], trid=x[12])
+#                   for x in results]
+        print "result_dicts =", result_dicts
+        if not AUTOCOMMIT:
+            conn.commit()
+    except db.Error:
+        query = query % (dsid, freq_band, V_lim, eta_lim)
+        logger.warn("Query failed:\n%s", query)
+        raise
+    finally:
+        cursor.close()
+    return result_dicts
 
 
 def select_variability_indices(conn, dsid, freq_band, V_lim, eta_lim):
@@ -216,6 +329,7 @@ SELECT t1.runcat
                                             results,
                                             [d[0] for d in cursor.description],
                                             alias_map)
+        #print "result_dicts =", result_dicts
 
 #        results = [dict(() for index, col_desc in col_index
 #            runcatid=x[0], npoints=x[3], V_int=x[8], eta_int=x[9], dataset=x[1],
@@ -295,8 +409,12 @@ def transient_search(conn,
                           AND ax.xtrsrc = ex.id
                     """
                     cursor.execute(query, (transient.runcatid, imageid))
+                    results = cursor.fetchall()
+                    print "Q Results:",results
                     trigger_xtrsrc = cursor.fetchall()[0][0]
                 except db.Error:
+                    query = query % (transient.runcatid, imageid)
+                    logger.warn("Query failed:\n%s", query)
                     raise
                 finally:
                     cursor.close()
@@ -311,4 +429,5 @@ def transient_search(conn,
         selected_rcids = numpy.array([], dtype=numpy.int)
         siglevels = numpy.array([], dtype=numpy.float)
 
+    print "Try to add to monlist:",selected_rcids,siglevels,transients
     return selected_rcids, siglevels, transients

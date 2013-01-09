@@ -1633,9 +1633,11 @@ def _insert_new_monitoringlist(conn, image_id):
         """
         #q = query % (image_id,image_id)
         #print "QUERY:\n",q
-        cursor.execute(query, (image_id,image_id))
+        ins = cursor.execute(query, (image_id,image_id))
         if not AUTOCOMMIT:
             conn.commit()
+        if ins > 0:
+            logger.info("Added %s new sources to the monitoringlist" % (ins,))
     except db.Error, e:
         q = query % (image_id,)
         logger.warn("Failed on query:\n%s" % q)
@@ -1686,7 +1688,7 @@ def _go_back_to_other_images_and_do_a_forcedfit_in_non_rejected_images(conn, ima
             for url in urls:
                 if os.path.exists(url):
                     validurls.append(url)
-                    logger.info("Previous image available for new-source forced fit: %s" % (url,))
+                    logger.info("Previous image for new-source forced fit still available at %s" % (url,))
     except db.Error, e:
         q = query % (image_id,image_id,image_id)
         logger.warn("Failed on query:\n%s" % q)

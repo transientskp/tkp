@@ -380,7 +380,7 @@ class TestMany2One(unittest.TestCase):
         imageid1 = image.id
         src = []
         # 2 sources (located close together, so the catching the many-to-1 case in next image
-        src.append(db_subs.example_extractedsource_tuple(ra=123.12349, dec=10.549,
+        src.append(db_subs.example_extractedsource_tuple(ra=122.985, dec=10.5,
                                                      ra_fit_err=5./3600, dec_fit_err=6./3600, 
                                                      peak = 15e-3, peak_err = 5e-4,
                                                      flux = 15e-3, flux_err = 5e-4,
@@ -388,7 +388,7 @@ class TestMany2One(unittest.TestCase):
                                                      beam_maj = 100, beam_min = 100, beam_angle = 45,
                                                      ra_sys_err=20, dec_sys_err=20
                                                         ))
-        src.append(db_subs.example_extractedsource_tuple(ra=123.12351, dec=10.551,
+        src.append(db_subs.example_extractedsource_tuple(ra=123.015, dec=10.5,
                                                      ra_fit_err=5./3600, dec_fit_err=6./3600, 
                                                      peak = 15e-3, peak_err = 5e-4,
                                                      flux = 15e-3, flux_err = 5e-4,
@@ -419,7 +419,7 @@ class TestMany2One(unittest.TestCase):
         imageid2 = image.id
         src = []
         # 1 source
-        src.append(db_subs.example_extractedsource_tuple(ra=123.1235, dec=10.55,
+        src.append(db_subs.example_extractedsource_tuple(ra=123.0, dec=10.5,
                                                      ra_fit_err=5./3600, dec_fit_err=6./3600, 
                                                      peak = 15e-3, peak_err = 5e-4,
                                                      flux = 15e-3, flux_err = 5e-4,
@@ -465,7 +465,8 @@ class TestMany2One(unittest.TestCase):
         
         query = """\
         SELECT a.runcat
-              ,a.xtrsrc
+              ,r.xtrsrc as rxtrsrc
+              ,a.xtrsrc as axtrsrc
               ,a.type
               ,x.image 
           FROM assocxtrsource a
@@ -474,30 +475,39 @@ class TestMany2One(unittest.TestCase):
          WHERE a.runcat = r.id 
            AND a.xtrsrc = x.id 
            AND r.dataset = %s 
-        ORDER BY xtrsrc
-                ,runcat
+        ORDER BY r.xtrsrc
+                ,a.xtrsrc
         """
         self.database.cursor.execute(query, (dataset.id,))
         assoc2 = zip(*self.database.cursor.fetchall())
         self.assertNotEqual(len(assoc2), 0)
         aruncat2 = assoc2[0]
-        axtrsrc2 = assoc2[1]
-        atype2 = assoc2[2]
-        aimage2 = assoc2[3]
+        rxtrsrc2 = assoc2[1]
+        axtrsrc2 = assoc2[2]
+        atype2 = assoc2[3]
+        aimage2 = assoc2[4]
         self.assertEqual(len(aruncat2), 4)
-        self.assertEqual(aruncat2[0], aruncat2[2])
-        self.assertEqual(aruncat2[1], aruncat2[3])
+        # We can't tell/predict the order of insertion of the runcat entries,
+        # but we can for the xtrsrc of the runcat-xtrsrc pair.
+        #self.assertEqual(aruncat2[0], aruncat2[2])
+        #self.assertEqual(aruncat2[1], aruncat2[3])
+        self.assertEqual(rxtrsrc2[0], rxtrsrc2[1])
+        self.assertEqual(rxtrsrc2[2], rxtrsrc2[3])
+        self.assertEqual(rxtrsrc2[0], axtrsrc2[0])
+        self.assertEqual(rxtrsrc2[1], axtrsrc2[1] - 2)
+        self.assertEqual(rxtrsrc2[2], axtrsrc2[2])
+        self.assertEqual(rxtrsrc2[3], axtrsrc2[3] - 1)
         self.assertEqual(axtrsrc2[0], im1src[0])
-        self.assertEqual(axtrsrc2[1], im1src[1])
-        self.assertEqual(axtrsrc2[2], im2src[0])
+        self.assertEqual(axtrsrc2[1], im2src[0])
+        self.assertEqual(axtrsrc2[2], im1src[1])
         self.assertEqual(axtrsrc2[3], im2src[0])
         self.assertEqual(atype2[0], 4)
-        self.assertEqual(atype2[1], 4)
-        self.assertEqual(atype2[2], 3)
+        self.assertEqual(atype2[1], 3)
+        self.assertEqual(atype2[2], 4)
         self.assertEqual(atype2[3], 3)
         self.assertEqual(aimage2[0], imageid1)
-        self.assertEqual(aimage2[1], imageid1)
-        self.assertEqual(aimage2[2], imageid2)
+        self.assertEqual(aimage2[1], imageid2)
+        self.assertEqual(aimage2[2], imageid1)
         self.assertEqual(aimage2[3], imageid2)
         #TODO: Add runcat_flux test
 
@@ -529,8 +539,8 @@ class TestMany2Many(unittest.TestCase):
         image = tkpdb.Image(database=self.database, dataset=dataset, data=im_params[1])
         imageid1 = image.id
         src1 = []
-        # 2 sources (located close together, so the catching the many-to-1 case in next image
-        src1.append(db_subs.example_extractedsource_tuple(ra=123.12349, dec=10.549,
+        # 2 sources (located relatively close together, so the catching the many-to-1 case in next image
+        src1.append(db_subs.example_extractedsource_tuple(ra=122.985, dec=10.5,
                                                      ra_fit_err=5./3600, dec_fit_err=6./3600, 
                                                      peak = 15e-3, peak_err = 5e-4,
                                                      flux = 15e-3, flux_err = 5e-4,
@@ -538,7 +548,7 @@ class TestMany2Many(unittest.TestCase):
                                                      beam_maj = 100, beam_min = 100, beam_angle = 45,
                                                      ra_sys_err=20, dec_sys_err=20
                                                         ))
-        src1.append(db_subs.example_extractedsource_tuple(ra=123.12351, dec=10.551,
+        src1.append(db_subs.example_extractedsource_tuple(ra=123.015, dec=10.5,
                                                      ra_fit_err=5./3600, dec_fit_err=6./3600, 
                                                      peak = 15e-3, peak_err = 5e-4,
                                                      flux = 15e-3, flux_err = 5e-4,
@@ -568,8 +578,8 @@ class TestMany2Many(unittest.TestCase):
         image = tkpdb.Image(database=self.database, dataset=dataset, data=im_params[0])
         imageid2 = image.id
         src2 = []
-        # 2 sources as well
-        src2.append(db_subs.example_extractedsource_tuple(ra=123.12348, dec=10.548,
+        # 2 sources, where both can be associated with both from image 1
+        src2.append(db_subs.example_extractedsource_tuple(ra=123.0, dec=10.485,
                                                      ra_fit_err=5./3600, dec_fit_err=6./3600, 
                                                      peak = 15e-3, peak_err = 5e-4,
                                                      flux = 15e-3, flux_err = 5e-4,
@@ -577,7 +587,7 @@ class TestMany2Many(unittest.TestCase):
                                                      beam_maj = 100, beam_min = 100, beam_angle = 45,
                                                      ra_sys_err=20, dec_sys_err=20
                                                         ))
-        src2.append(db_subs.example_extractedsource_tuple(ra=123.12352, dec=10.552,
+        src2.append(db_subs.example_extractedsource_tuple(ra=123.0, dec=10.515,
                                                      ra_fit_err=5./3600, dec_fit_err=6./3600, 
                                                      peak = 15e-3, peak_err = 5e-4,
                                                      flux = 15e-3, flux_err = 5e-4,
@@ -595,6 +605,7 @@ class TestMany2Many(unittest.TestCase):
         SELECT id
           FROM extractedsource 
          WHERE image = %s
+        ORDER BY id
         """
         self.database.cursor.execute(query, (imageid2,))
         im2 = zip(*self.database.cursor.fetchall())
@@ -624,7 +635,8 @@ class TestMany2Many(unittest.TestCase):
         
         query = """\
         SELECT a.runcat
-              ,a.xtrsrc
+              ,r.xtrsrc as rxtrsrc
+              ,a.xtrsrc as axtrsrc
               ,a.type
               ,x.image 
           FROM assocxtrsource a
@@ -632,31 +644,39 @@ class TestMany2Many(unittest.TestCase):
               ,extractedsource x 
          WHERE a.runcat = r.id 
            AND a.xtrsrc = x.id 
-           AND r.dataset = %s
-        ORDER BY xtrsrc
-                ,runcat
+           AND r.dataset = %s 
+        ORDER BY r.xtrsrc
+                ,a.xtrsrc
         """
         self.database.cursor.execute(query, (dataset.id,))
         assoc2 = zip(*self.database.cursor.fetchall())
         self.assertNotEqual(len(assoc2), 0)
         aruncat2 = assoc2[0]
-        axtrsrc2 = assoc2[1]
-        atype2 = assoc2[2]
-        aimage2 = assoc2[3]
+        rxtrsrc2 = assoc2[1]
+        axtrsrc2 = assoc2[2]
+        atype2 = assoc2[3]
+        aimage2 = assoc2[4]
         self.assertEqual(len(aruncat2), 4)
-        self.assertEqual(aruncat2[0], aruncat2[2])
-        self.assertEqual(aruncat2[1], aruncat2[3])
+        # Idem as many-to-one case
+        #self.assertEqual(aruncat2[0], aruncat2[3])
+        #self.assertEqual(aruncat2[1], aruncat2[2])
+        self.assertEqual(rxtrsrc2[0], rxtrsrc2[1])
+        self.assertEqual(rxtrsrc2[2], rxtrsrc2[3])
+        self.assertEqual(rxtrsrc2[0], axtrsrc2[0])
+        self.assertEqual(rxtrsrc2[1], axtrsrc2[1] - 3)
+        self.assertEqual(rxtrsrc2[2], axtrsrc2[2])
+        self.assertEqual(rxtrsrc2[3], axtrsrc2[3] - 1)
         self.assertEqual(axtrsrc2[0], im1src[0])
-        self.assertEqual(axtrsrc2[1], im1src[1])
-        self.assertEqual(axtrsrc2[2], im2src[0])
-        self.assertEqual(axtrsrc2[3], im2src[1])
+        self.assertEqual(axtrsrc2[1], im2src[1])
+        self.assertEqual(axtrsrc2[2], im1src[1])
+        self.assertEqual(axtrsrc2[3], im2src[0])
         self.assertEqual(atype2[0], 4)
-        self.assertEqual(atype2[1], 4)
-        self.assertEqual(atype2[2], 3)
+        self.assertEqual(atype2[1], 3)
+        self.assertEqual(atype2[2], 4)
         self.assertEqual(atype2[3], 3)
         self.assertEqual(aimage2[0], imageid1)
-        self.assertEqual(aimage2[1], imageid1)
-        self.assertEqual(aimage2[2], imageid2)
+        self.assertEqual(aimage2[1], imageid2)
+        self.assertEqual(aimage2[2], imageid1)
         self.assertEqual(aimage2[3], imageid2)
         #TODO: Add runcat_flux test
 

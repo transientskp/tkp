@@ -1,4 +1,4 @@
-UPDATE version
+UPDATE version 
    SET value = 7
  WHERE name = 'revision'
    AND value = 8

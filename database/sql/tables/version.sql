@@ -5,4 +5,3 @@ CREATE TABLE version
 );
 
 INSERT INTO version (name, value) VALUES ('revision', 9);
-

@@ -66,6 +66,13 @@ class DataBase(object):
     # Assign this class variable for convenience
     Error = engine.Error
 
+    # this makes this class a singleton
+    _instance = None
+    def __new__(cls, *args, **kwargs):
+        if not cls._instance:
+            cls._instance = super(DataBase, cls).__new__(cls, *args, **kwargs)
+        return cls._instance
+
     def __init__(self, host=None, name=None, user=None,
                  password=None, port=None,
                  autocommit=None):

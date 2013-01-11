@@ -88,7 +88,12 @@ def extract_metadatas(images):
 
 
 def store_images(images_metadata, dataset_id):
-    """ Add images to database
+    """ Add images to database.
+    Note that all images in one dataset should be inserted in one go, since the
+    order is very important here. If you don't add them all in once, you should
+    make sure they are added in the correct order e.g. sorted by observation
+    time.
+    
     Args:
         images_metadata: list of dicts containing image metadata
         dataset_id: dataset id to be used. don't use value from parset file

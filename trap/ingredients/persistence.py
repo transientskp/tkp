@@ -62,10 +62,10 @@ def image_to_mongodb(filename, hostname, port, db):
         except Exception, e:
             msg = "Could not store image to MongoDB: %s" % (str(e))
             logger.error(msg)
-			return False
+            return False
         finally:
             temp_fits_file.close()
-		return True
+        return True
 
 
 

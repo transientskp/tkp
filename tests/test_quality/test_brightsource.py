@@ -17,17 +17,23 @@ class TestBrightsource(unittest.TestCase):
     def test_brightsource(self):
         image = tkp.utility.accessors.open(testimage)
 
-        # this image is to close to CasA
-        result = tkp.quality.brightsource.is_bright_source_near(image)
-        self.assertTrue(result)
-
-        # there is nothing bright here
-        image.centre_ra = 2
-        image.centre_decl = 2
+        # this image is not near any bright sources
         result = tkp.quality.brightsource.is_bright_source_near(image)
         self.assertFalse(result)
 
-        # setting the centre position to CasA should give 0
+        # there is nothing bright here
+        image.centre_ra = 90
+        image.centre_decl = 0
+        result = tkp.quality.brightsource.is_bright_source_near(image)
+        self.assertFalse(result)
+
+        # this is near the sun
+        image.centre_ra = 0
+        image.centre_decl = 0
+        result = tkp.quality.brightsource.is_bright_source_near(image)
+        self.assertTrue(result)
+
+        # this is near CasA
         image.centre_ra = degrees(6.123487680622104)
         image.centre_decl = degrees(1.0265153995604648)
         result = tkp.quality.brightsource.is_bright_source_near(image)

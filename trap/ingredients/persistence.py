@@ -36,34 +36,37 @@ def image_to_mongodb(filename, hostname, port, db):
         logger.error(msg)
         warnings.warn(msg)
         return False
-    try:
-        # This conversion should work whether the input file
-        # is in FITS or CASA format.
-        temp_fits_file = NamedTemporaryFile()
-        i = pyrap_image(filename)
-        i.tofits(temp_fits_file.name)
-    except Exception, e:
-        msg ="Could not convert image to FITS: %s" % (str(e))
-        logger.error(msg)
-        warnings.warn(msg)
-        temp_fits_file.close()
-        return False
-    try:
-        connection = pymongo.Connection(host=hostname, port=port)
+
+    with pymongo.Connection(host=hostname, port=port) as connection:
         gfs = gridfs.GridFS(connection[db])
-        new_file = gfs.new_file(filename=filename)
-        with open(temp_fits_file.name, "r") as f:
-            new_file.write(f)
-        new_file.close()
-        connection.close()
-    except Exception, e:
-        msg = "Could not store image to MongoDB: %s" % (str(e))
-        warnings.warn(msg)
-        logger.error(msg)
-        return False
-    finally:
-        temp_fits_file.close()
-    return True
+        if gfs.exists(filename=filename):
+            logger.debug("File already in database")
+            return True
+        try:
+            # This conversion should work whether the input file
+            # is in FITS or CASA format.
+            temp_fits_file = NamedTemporaryFile()
+            i = pyrap_image(filename)
+            i.tofits(temp_fits_file.name)
+        except Exception, e:
+            msg ="Could not convert image to FITS: %s" % (str(e))
+            logger.error(msg)
+            warnings.warn(msg)
+            temp_fits_file.close()
+            return False
+        try:
+            new_file = gfs.new_file(filename=filename)
+            with open(temp_fits_file.name, "r") as f:
+                new_file.write(f)
+            new_file.close()
+        except Exception, e:
+            msg = "Could not store image to MongoDB: %s" % (str(e))
+            logger.error(msg)
+			return False
+        finally:
+            temp_fits_file.close()
+		return True
+
 
 
 def create_dataset(dataset_id, description):

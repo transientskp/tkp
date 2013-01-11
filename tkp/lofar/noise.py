@@ -6,11 +6,13 @@ http://www.astron.nl/radio-observatory/astronomers/lofar-imaging-capabilities-se
 """
 import os
 import math
+import logging
 import scipy.constants
 import scipy.interpolate
 import tkp
 import tkp.lofar.antennaarrays
 
+logger = logging.getLogger(__name__)
 
 def noise_level(freq_eff, subbandwidth, tau_time, antenna_set, subbands=1, channels=64, Ncore=24, Nremote=16, Nintl=8):
     """ Returns the theoretical noise level given the supplied array antenna_set
@@ -82,6 +84,9 @@ def Aeff_dipole(freq_eff, distance=None):
     """
     wavelength = scipy.constants.c/freq_eff
     if wavelength > 3: # LBA dipole
+        if not distance:
+            logger.error("Distance to nearest dipole required for LBA noise calculation")
+            distance = 1
         return min(pow(wavelength, 2) / 3, (math.pi * pow(distance, 2)) / 4)
     else: # HBA dipole
         return min(pow(wavelength, 2) / 3, 1.5625)

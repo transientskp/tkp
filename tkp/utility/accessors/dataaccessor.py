@@ -1,12 +1,14 @@
 from tkp.utility.coordinates import WCS
 import datetime
 
+time_format = "%Y-%m-%d %H:%M:%S.%f"
+
 def extract_metadata(dataaccessor):
     return {
         'tau_time': dataaccessor.tau_time,
         'freq_eff': dataaccessor.freq_eff,
         'freq_bw': dataaccessor.freq_bw,
-        'taustart_ts': dataaccessor.taustart_ts.strftime("%Y-%m-%d %H:%M:%S.%f"),
+        'taustart_ts': dataaccessor.taustart_ts.strftime(time_format),
         'url': dataaccessor.url,
         'band': 0,    # not yet clearly defined
         'bsmaj': float(dataaccessor.beam[0]), ## NB We must cast to a standard python float

@@ -16,7 +16,7 @@ try:
 except ImportError:
     import_failed = True
 
-def match_catalogs(transient):
+def match_catalogs(database, transient):
     """Match transient source with nearest catalog source
 
     Iterate through available catalogs, and return the nearest source
@@ -33,7 +33,7 @@ def match_catalogs(transient):
     # Hardcode the catalogs for now
     #catalogs = {3: 'NVSS', 4: 'VLSS', 5: 'WENSS', 6: 'WENSS'} 
     # We check for all catalogs in the db (VLSS, WENSSm, WENSSp, NVSS, EXO)
-    database = DataBase()
+    #database = DataBase()
     results = {}
     #for key, value in catalogs.iteritems():
     #    results[value] = match_nearests_in_catalogs(
@@ -44,9 +44,9 @@ def match_catalogs(transient):
     #    else:
     #        results[value] = {}
     results = match_nearests_in_catalogs(
-                        database.connection, transient.runcatid,
+                        database.connection, transient.runcat,
                         radius=0.5, deRuiter_r=3.717)
-    database.close()
+    #database.close()
     if len(results) > 0:
         results = results[0]
     else:

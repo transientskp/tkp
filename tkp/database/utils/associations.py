@@ -87,6 +87,10 @@ def associate_extracted_sources(conn, image_id, deRuiter_r=DERUITER_R):
         sys.exit()
     _go_back_to_other_images_and_do_a_forcedfit_in_non_rejected_images(conn, image_id)
     #_then_we_need_to_merge_results_from_ff_into_extr/assoc/runcat/runcat_flux/monlist()
+    #+-------------------------------------------------------+
+    #| New sources are added to transient table as well, but |
+    #| that is done in the transient_search recipe.          |
+    #+-------------------------------------------------------+
     _empty_temprunningcatalog(conn)
     _delete_inactive_runcat(conn)
 
@@ -1679,6 +1683,7 @@ def _go_back_to_other_images_and_do_a_forcedfit_in_non_rejected_images(conn, ima
         results = zip(*cursor.fetchall())
         if not AUTOCOMMIT:
             conn.commit()
+        cursor.close()
         
         if len(results) != 0:
             imageids = results[0]
@@ -1688,14 +1693,11 @@ def _go_back_to_other_images_and_do_a_forcedfit_in_non_rejected_images(conn, ima
             for url in urls:
                 if os.path.exists(url):
                     validurls.append(url)
-                    logger.info("Previous image for new-source forced fit still available at %s" % (url,))
+                    logger.info("Image %s still available for forced fit" % (os.path.basename(url),))
     except db.Error, e:
         q = query % (image_id,image_id,image_id)
         logger.warn("Failed on query:\n%s" % q)
         raise
-    finally:
-        cursor.close()
-
 
 def _delete_inactive_runcat(conn):
     """Delete the one-to-many associations from temprunningcatalog,

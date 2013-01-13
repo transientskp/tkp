@@ -435,7 +435,7 @@ def match_nearests_in_catalogs(conn, runcatid, radius, deRuiter_r,
                          radius, radius, radius, radius,
                          radius, radius,
                          radius,
-                         assoc_r)
+                         deRuiter_r/3600.)
         logger.warn("Query failed:\n%s", query)
         raise
     finally:

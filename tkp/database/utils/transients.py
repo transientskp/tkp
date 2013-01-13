@@ -19,8 +19,112 @@ logger = logging.getLogger(__name__)
 
 AUTOCOMMIT = config['database']['autocommit']
 
+def _update_known_transients(conn, transients): 
+    """Update transient sources in the database,
+    if the runcat ids in the transient table are already known.
+    If there are not known, they have been inserted by association procedure.
+    Transients are stored in the transient table,
+    as well as in the monitoringlist (done by the association recipe),
+    to ensure it is measured even when it drops below the threshold.
+    Transient behaviour is checked per frequency band,
+    because we assume that fluxes are not comparable across bands.
+    """
 
-def insert_transient(conn, transient, dataset_id):
+    try:
+        cursor = conn.cursor()
+        query = """\
+        UPDATE transient
+           SET siglevel = %s
+              ,V_int = %s
+              ,eta_int = %s
+         WHERE runcat = %s
+           AND band = %s
+        """
+        upd = 0
+        for i in range(len(transients)):
+            upd += cursor.execute(query, (float(transients[i].siglevel),
+                                          float(transients[i].V_int),
+                                          float(transients[i].eta_int),
+                                          transients[i].runcat,
+                                          transients[i].band))
+        if not AUTOCOMMIT:
+            conn.commit()
+        cursor.close()
+        if upd > 0:
+            logger.info("Updated %s known transients" % (upd,))
+    except db.Error:
+        query = query % (float(transients[i].siglevel),
+                         float(transients[i].V_int),
+                         float(transients[i].eta_int),
+                         transients[i].runcat,
+                         transients[i].band)
+        logger.warn("Failed on query:\n%s", query)
+        raise
+
+def _insert_new_transients(conn, image_id, transients): 
+    """Insert new transient sources in the database,
+    if the runcat ids in the transient table are not known yet.
+    If there are known, they will be updated by _update_known_transients().
+    Transients are stored in the transient table,
+    as well as in the monitoringlist (done by the association recipe),
+    to ensure it is measured even when it drops below the threshold.
+    Transient behaviour is checked per frequency band,
+    Transient behaviour is checked per frequency band,
+    because we assume that fluxes are not comparable across bands.
+    """
+
+    try:
+        cursor = conn.cursor()
+        # TODO: This goes wrong, since both runcat and xtrsrc should not exist
+        # NOTE: trigger_xtrsrc is None, but retrieved from light curve
+        query = """\
+        INSERT INTO transient
+          (runcat
+          ,band
+          ,siglevel
+          ,V_int
+          ,eta_int
+          ,trigger_xtrsrc
+          )
+        VALUES
+          (%s
+          ,%s
+          ,%s
+          ,%s
+          ,%s
+          ,%s
+          )
+        """
+        ins = 0
+        for i in range(len(transients)):
+            if not transients[i].monitored:
+                ins += cursor.execute(query, (transients[i].runcat,
+                                              transients[i].band,
+                                              float(transients[i].siglevel),
+                                              float(transients[i].V_int),
+                                              float(transients[i].eta_int),
+                                              transients[i].trigger_xtrsrc))
+        if not AUTOCOMMIT:
+            conn.commit()
+        cursor.close()
+        if ins > 0:
+            logger.info("Inserted %s new transients" % (ins,))
+    except db.Error:
+        query = query % (transients[i].runcat,
+                         transients[i].band,
+                         float(transients[i].siglevel),
+                         float(transients[i].V_int),
+                         float(transients[i].eta_int),
+                         transients[i].trigger_xtrsrc,
+                         transients[i].runcat)
+        logger.warn("Failed on query:\n%s", query)
+        raise
+    #print "Adding to monlist:", dataset_id, [transient.runcatid]
+    #monitoringlist.add_runcat_sources_to_monitoringlist(conn,
+    #                                                    dataset_id,
+    #                                                    [transient.runcatid])
+
+def insert_transient_per_dataset(conn, transient, dataset_id):
     """Insert a transient source in the database.
     Transients are stored in the transient table,
     as well as in the monitoringlist.
@@ -111,7 +215,7 @@ def insert_transient(conn, transient, dataset_id):
 
 
 
-def select_variability_indices_per_band(conn, image_id, V_lim, eta_lim):
+def select_variability_indices(conn, image_id, V_lim, eta_lim):
     """
     Select sources and integrated flux variability indices from the running
     catalog, for a given frequency band (i.e. image_id)
@@ -151,6 +255,7 @@ def select_variability_indices_per_band(conn, image_id, V_lim, eta_lim):
     try:
         query = """\
 SELECT t1.runcat
+      ,t1.band
       ,t1.f_datapoints
       ,t1.wm_ra
       ,t1.wm_decl
@@ -158,6 +263,14 @@ SELECT t1.runcat
       ,t1.wm_decl_err
       ,t1.V_int_inter / t1.avg_f_int AS V_int
       ,t1.eta_int_inter / t1.avg_f_int_weight AS eta_int
+      ,CASE WHEN tr0.trigger_xtrsrc IS NULL
+            THEN t1.xtrsrc 
+            ELSE tr0.trigger_xtrsrc 
+       END AS trigger_xtrsrc
+      ,CASE WHEN tr0.trigger_xtrsrc IS NULL
+            THEN FALSE 
+            ELSE TRUE
+       END AS monitored
   FROM (SELECT rf0.runcat
               ,rf0.band
               ,f_datapoints
@@ -181,50 +294,41 @@ SELECT t1.runcat
                     ELSE (CAST(rf0.f_datapoints AS DOUBLE) / (CAST(rf0.f_datapoints AS DOUBLE) - 1.0))
                          * (avg_f_int_weight * avg_weighted_f_int_sq - avg_weighted_f_int * avg_weighted_f_int)
                END AS eta_int_inter
+              ,a0.xtrsrc
           FROM runningcatalog rc0
               ,runningcatalog_flux rf0
               ,image i0
+              ,assocxtrsource a0
+              ,extractedsource x0
          WHERE i0.id = %s
            AND rc0.dataset = i0.dataset
            AND rc0.id = rf0.runcat
            AND rf0.band = i0.band
+           AND rc0.id = a0.runcat
+           AND a0.xtrsrc = x0.id
+           AND x0.image = %s
        ) t1
+       LEFT OUTER JOIN transient tr0
+       ON t1.runcat = tr0.runcat
+       AND t1.band = tr0.band
  WHERE t1.V_int_inter / t1.avg_f_int > %s
    AND t1.eta_int_inter / t1.avg_f_int_weight > %s
 """
-        cursor.execute(query, (image_id, V_lim, eta_lim))
+        cursor.execute(query, (image_id, image_id, V_lim, eta_lim))
 
-        results = cursor.fetchall()
-        alias_map = {'runcat':'runcatid',
-                     'f_datapoints':'npoints',
-                     'wm_ra':'ra',
-                     'wm_ra_err':'ra_err',
-                     'wm_decl':'dec',
-                     'wm_decl_err':'dec_err',
-                     }
-        result_dicts = generic.convert_db_rows_to_dicts(
-                                            results,
-                                            [d[0] for d in cursor.description],
-                                            alias_map)
-
-#        results = [dict(() for index, col_desc in col_index
-#            runcatid=x[0], npoints=x[3], V_int=x[8], eta_int=x[9], dataset=x[1],
-#            band=x[2], ra=x[4], dec=x[5], ra_err=x[6], dec_err=x[7],
-#            trigger_xtrsrc=x[10], monitored=x[11], trid=x[12])
-#                   for x in results]
-        print "result_dicts =", result_dicts
+        results = zip(*cursor.fetchall())
         if not AUTOCOMMIT:
             conn.commit()
+        cursor.close()
     except db.Error:
-        query = query % (dsid, freq_band, V_lim, eta_lim)
+        query = query % (image_id, image_id, V_lim, eta_lim)
         logger.warn("Query failed:\n%s", query)
         raise
-    finally:
-        cursor.close()
-    return result_dicts
+    
+    return results
 
 
-def select_variability_indices(conn, dsid, freq_band, V_lim, eta_lim):
+def select_variability_indices_per_dataset(conn, dsid, freq_band, V_lim, eta_lim):
     """
     Select sources and integrated flux variability indices from the running
     catalog, for a given frequency band.
@@ -347,7 +451,7 @@ SELECT t1.runcat
     return result_dicts
 
 
-def transient_search(conn,
+def transient_search_per_dataset(conn,
                      dsid,
                      freq_band,
                      eta_lim, V_lim,
@@ -406,11 +510,11 @@ def transient_search(conn,
                             ,assocxtrsource ax
                         WHERE ax.runcat = %s
                           AND ex.image = %s
-                          AND ax.xtrsrc = ex.id
+                          /*AND ax.xtrsrc = ex.id*/
                     """
                     cursor.execute(query, (transient.runcatid, imageid))
-                    results = cursor.fetchall()
-                    print "Q Results:",results
+                    #results = cursor.fetchall()
+                    #print "Q Results:",results
                     trigger_xtrsrc = cursor.fetchall()[0][0]
                 except db.Error:
                     query = query % (transient.runcatid, imageid)
@@ -423,7 +527,7 @@ def transient_search(conn,
                 #Trigger results from analysis of multiple ingested images
                 transient.trigger_xtrsrc = None
 
-            insert_transient(conn, transient, dsid)
+            insert_transient_per_dataset(conn, transient, dsid)
             transients.append(transient)
     else:
         selected_rcids = numpy.array([], dtype=numpy.int)
@@ -431,3 +535,62 @@ def transient_search(conn,
 
     print "Try to add to monlist:",selected_rcids,siglevels,transients
     return selected_rcids, siglevels, transients
+
+def transient_search(conn,
+                     image_id,
+                     eta_lim,
+                     V_lim,
+                     probability_threshold,
+                     minpoints):
+
+    # TODO: We want the trigger_xtrsrc here as well
+    results = select_variability_indices(conn, image_id, V_lim, eta_lim)
+    
+    transients = []
+    if len(results) > 0:
+        runcat = results[0]
+        band = results[1][0] # all from same band, one (eg the first) is enough
+        f_datapoints = results[2]
+        #wm_ra = results[3]
+        #wm_decl = results[4]
+        #wm_ra_err = results[5]
+        #wm_decl_err = results[6]
+        V_int = results[7]
+        eta_int = results[8]
+        trigger_xtrsrc = results[9]
+        monitored = results[10]
+        #print "\nTS:\nruncat =", runcat, "; band =", band, "; f_datapoints =", f_datapoints, \
+        #      "; V_int =", V_int, ";eta_int =", eta_int
+
+        for i in range(len(runcat)):
+            prob = 1 - chisqprob(eta_int[i] * (f_datapoints[i] - 1), (f_datapoints[i] - 1))
+            #print "runcat[",i,"] =",runcat[i], " -> prob = ", prob 
+            if prob > probability_threshold:
+                transient = Transient()
+                transient.runcat = runcat[i]
+                transient.band = band
+                transient.f_datapoints = f_datapoints[i]
+                #sel_wm_ra.append(wm_ra[i])
+                #sel_wm_decl.append(wm_decl[i])
+                #sel_wm_ra_err.append(wm_ra_err[i])
+                #sel_wm_decl_err.append(wm_decl_err[i])
+                transient.V_int = V_int[i]
+                transient.eta_int = eta_int[i]
+                transient.trigger_xtrsrc = trigger_xtrsrc[i]
+                transient.monitored = monitored[i]
+                # TODO: Why is this called siglevel, while it is a probability?
+                transient.siglevel = prob
+                transients.append(transient)
+
+        #print "sel_runcat =", sel_runcat, "; band =", band, "; sel_prob =", sel_prob
+        for i in range(len(transients)):
+            print "transients[",i,"].runcat =", transients[i].runcat, \
+                  "; band =", transients[i].band, \
+                  "; trigger_xtrsrc =", transients[i].trigger_xtrsrc, \
+                  "; monitored =", transients[i].monitored, \
+                  "; siglevel (prob) =", transients[i].siglevel
+
+        _update_known_transients(conn, transients)
+        _insert_new_transients(conn, image_id, transients)
+        #print "\nNow we need to add the transient sources (by runcat id) to monlist...\n"
+    return transients

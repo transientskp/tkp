@@ -4,9 +4,7 @@ import sys
 from lofarpipe.support.baserecipe import BaseRecipe
 from lofarpipe.support import lofaringredient
 from lofarpipe.support.utilities import log_time
-
-
-import trap.ingredients.transient_search
+import trap.ingredients as ingred
 
 class IntList(lofaringredient.ListField):
     """Input that defines a list of ints"""
@@ -30,7 +28,7 @@ class transient_search(BaseRecipe):
     """
     Search for transients in the database, for a specific dataset
     """
-    
+
     inputs = {
         'parset': lofaringredient.FileField(
             '-p', '--parset',
@@ -43,7 +41,7 @@ class transient_search(BaseRecipe):
             help='List of current images'
         ),
         }
-    
+
     outputs = {
         'transient_ids': IntList(),
         'siglevels': FloatList(),
@@ -53,9 +51,11 @@ class transient_search(BaseRecipe):
     def go(self):
         super(transient_search, self).go()
         with log_time(self.logger):
-            trap.ingredients.transient_search.logger = self.logger
-            self.outputs.update(trap.ingredients.transient_search.search_transients(image_ids=self.inputs['image_ids'],
-                                dataset_id=self.inputs['args'][0], parset=self.inputs['parset']))
+            ingred.transient_search.logger = self.logger
+            self.outputs.update(ingred.transient_search.search_transients(
+                                          image_ids=self.inputs['image_ids'],
+                                          dataset_id=self.inputs['args'][0],
+                                          parset=self.inputs['parset']))
         return 0
 
 

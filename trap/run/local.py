@@ -1,12 +1,5 @@
 import logging
-import trap.ingredients.quality
-import trap.ingredients.source_extraction
-import trap.ingredients.monitoringlist
-import trap.ingredients.persistence
-import trap.ingredients.transient_search
-import trap.ingredients.feature_extraction
-import trap.ingredients.classification
-import trap.ingredients.prettyprint
+from trap import ingredients as ingred
 from lofarpipe.support.control import control
 
 from images_to_process import images
@@ -32,25 +25,27 @@ class TrapLocal(control):
         classification_file = self.task_definitions.get("classification", "parset")
 
         persistence_parset_file = self.task_definitions.get("persistence", "parset")
-        dataset_id, image_ids = trap.ingredients.persistence.all(images, persistence_parset_file)
+        dataset_id, image_ids = ingred.persistence.all(images, persistence_parset_file)
 
         good_image_ids = []
         for image_id in image_ids:
-            if trap.ingredients.quality.check(image_id, quality_parset_file):
+            if ingred.quality.check(image_id, quality_parset_file):
                 good_image_ids.append(image_id)
 
         for image_id in good_image_ids:
-            trap.ingredients.source_extraction.extract_sources(image_id, srcxtr_parset_file)
+            ingred.source_extraction.extract_sources(image_id,
+                                                       srcxtr_parset_file)
 
         # TODO: this should be updated to work on a list of images, not on a dataset ID
-        trap.ingredients.monitoringlist.mark_sources(dataset_id, srcxtr_parset_file)
+        ingred.monitoringlist.mark_sources(dataset_id, srcxtr_parset_file)
 
         for image_id in good_image_ids:
-            trap.ingredients.monitoringlist.update_monitoringlist(image_id)
+            ingred.monitoringlist.update_monitoringlist(image_id)
 
-        transient_results = trap.ingredients.transient_search.search_transients(good_image_ids, dataset_id,  transientsearch_file)
+        transient_results = ingred.transient_search.search_transients(
+                              good_image_ids, dataset_id, transientsearch_file)
 
         transients = transient_results['transients']
         for transient in transients:
-            trap.ingredients.feature_extraction.extract_features(transient)
-            trap.ingredients.classification.classify(transient, classification_file)
+            ingred.feature_extraction.extract_features(transient)
+            ingred.classification.classify(transient, classification_file)

@@ -18,7 +18,6 @@ from lofarpipe.support.baserecipe import BaseRecipe
 from lofarpipe.support.remotecommand import ComputeJob
 from lofarpipe.support.remotecommand import RemoteCommandRecipeMixIn
 import tkp.database as tkpdb
-import trap.ingredients.monitoringlist
 import trap.ingredients as ingred
 
 class monitoringlist(BaseRecipe, RemoteCommandRecipeMixIn):
@@ -52,7 +51,7 @@ class monitoringlist(BaseRecipe, RemoteCommandRecipeMixIn):
 
         dataset.update_images()
         image_ids = [img.id for img in dataset.images if not img.rejected]
-        trap.ingredients.monitoringlist.mark_sources(dataset_id, self.inputs['parset'])
+        ingred.monitoringlist.mark_sources(dataset_id, self.inputs['parset'])
 
         nodes = ingred.common.nodes_available(self.config)
         command = "python %s" % self.__file__.replace('master', 'nodes')

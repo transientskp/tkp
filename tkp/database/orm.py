@@ -266,7 +266,7 @@ class DBObject(object):
 
         self._sync_with_database()
         self._set_data(**kwargs)
-            
+
     def _sync_with_database(self):
         """Update object attributes from the database"""
         results = dbu.columns_from_table(
@@ -274,7 +274,10 @@ class DBObject(object):
             where={self.ID: self._id})
         # Shallow copy, but that's ok: all database values are
         # immutable (including datetime objects)
-        self._data = results[0].copy()
+        if results:
+            self._data = results[0].copy()
+        else:
+            self._data = {}
 
     def _set_data(self, **kwargs):
         """Update the database with the supplied **kwargs.

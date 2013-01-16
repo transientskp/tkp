@@ -84,11 +84,10 @@ def insert_extracted_sources(conn, image_id, results, extract):
     significance level,
     beam major width , beam minor width, [as]
     beam parallactic angle).  [deg]
-    extract tells whether the source results are originating from 
+    extract tells whether the source results are originating from:
     0: blind source extraction 
+    1: from forced fits at null detection locations
     2: from forced fits for monitoringlist sources
-    3: from forced fits at null detection locations
-    sources (True).
     """
     
     #To do: Figure out a saner method of passing the results around
@@ -142,14 +141,13 @@ def _insert_extractedsources(conn, image_id, results, extract):
         r.append(math.cos(math.radians(r[1])) * math.sin(math.radians(r[0]))) # Cartesian y
         r.append(math.sin(math.radians(r[1]))) # Cartesian z
         r.append(r[0] * math.cos(math.radians(r[1]))) # ra * cos(radias(decl))
-        if extract == 'ff_mon':
-            r.append(2)
-        elif extract == 'ff_nd':
-            r.append(3)
-        elif extract == 'blind':
+        if extract == 'blind':
             r.append(0)
+        elif extract == 'ff_nd':
+            r.append(1)
+        elif extract == 'ff_mon':
+            r.append(2)
         else:
-            #raise PipelineException("Not a valid extractedsource insert type: '%s'" % extract)
             raise ValueError("Not a valid extractedsource insert type: '%s'" % extract)
         xtrsrc.append(r)
     values = [str(tuple(xsrc)) for xsrc in xtrsrc]
@@ -188,12 +186,19 @@ def _insert_extractedsources(conn, image_id, results, extract):
         cursor.execute(query)
         if not AUTOCOMMIT:
             conn.commit()
-        if extract == 'ff_mon':
-            logger.info("Inserted %d forced-fit monitoringsources in extractedsource" % (len(values)))
-        elif extract == 'ff_nd':
-            logger.info("Inserted %d forced-fit null detections in extractedsource" % (len(values)))
-        elif extract == 'blind':
-            logger.info("Inserted %d sources in extractedsource" % (len(values)))
+        if len(values) == 0:
+                logger.info("No forced-fit sources added to extractedsource for image %s" \
+                            % (image_id,))
+        else:
+            if extract == 'ff_mon':
+                logger.info("Inserted %d forced-fit monitoringsources in extractedsource for image %s" \
+                            % (len(values), image_id))
+            elif extract == 'ff_nd':
+                logger.info("Inserted %d forced-fit null detections in extractedsource for image %s" \
+                            % (len(values), image_id))
+            elif extract == 'blind':
+                logger.info("Inserted %d sources in extractedsource for image %s" \
+                            % (len(values), image_id))
     except db.Error, e:
         logger.warn("Failed on query nr %s." % query)
         raise

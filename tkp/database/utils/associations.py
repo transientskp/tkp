@@ -83,8 +83,8 @@ def associate_extracted_sources(conn, image_id, deRuiter_r=DERUITER_R):
     _insert_new_runcat_flux(conn, image_id)
     _insert_new_assoc(conn, image_id)
     _insert_new_monitoringlist(conn, image_id)
-    if image_id == 2:
-        sys.exit()
+    #if image_id == 2:
+    #    sys.exit()
     _go_back_to_other_images_and_do_a_forcedfit_in_non_rejected_images(conn, image_id)
     #_then_we_need_to_merge_results_from_ff_into_extr/assoc/runcat/runcat_flux/monlist()
     #+-------------------------------------------------------+
@@ -814,7 +814,7 @@ def _insert_1_to_many_monitoringlist(conn):
     TODO: See discussion in issues #3564 & #3919 how to proceed
 
     """
-
+    #TODO: Discriminate between the user and non-user entries.
     try:
         cursor = conn.cursor()
         query = """\

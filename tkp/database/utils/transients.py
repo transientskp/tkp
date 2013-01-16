@@ -20,9 +20,16 @@ logger = logging.getLogger(__name__)
 AUTOCOMMIT = config['database']['autocommit']
 
 def _update_known_transients(conn, transients): 
-    """Update transient sources in the database,
-    if the runcat ids in the transient table are already known.
-    If there are not known, they have been inserted by association procedure.
+    """Update the known transient sources in the database,
+    ie. for which the runcatid is known.
+    
+    New measurements were made, changing positions and variability indices.
+    
+    If they are not known, ie, a new source was detected, 
+    they have been picked up by the association procedure, and
+    inserted in all the corresponding tables:
+    runcat, runcat_flux, assocxtrsource, monlist, transient.
+    
     Transients are stored in the transient table,
     as well as in the monitoringlist (done by the association recipe),
     to ensure it is measured even when it drops below the threshold.
@@ -61,10 +68,19 @@ def _update_known_transients(conn, transients):
         logger.warn("Failed on query:\n%s", query)
         raise
 
-def _insert_new_transients(conn, image_id, transients): 
+def _insert_new_transients(conn, image_id, transients, prob_threshold): 
     """Insert new transient sources in the database,
-    if the runcat ids in the transient table are not known yet.
-    If there are known, they will be updated by _update_known_transients().
+    ie those for which no runcat id exists yet.
+    
+    If there are known, picked up at an earlier epoch, 
+    they will be updated by _update_known_transients().
+    
+    Be aware of the difference between a newly detected source at 
+    some epoch and a source turning into a variable/transient due
+    to significant flux changes. The former is picked up by the
+    association procedure, while the latter is picked up by
+    the transient search procedure.
+
     Transients are stored in the transient table,
     as well as in the monitoringlist (done by the association recipe),
     to ensure it is measured even when it drops below the threshold.
@@ -75,8 +91,6 @@ def _insert_new_transients(conn, image_id, transients):
 
     try:
         cursor = conn.cursor()
-        # TODO: This goes wrong, since both runcat and xtrsrc should not exist
-        # NOTE: trigger_xtrsrc is None, but retrieved from light curve
         query = """\
         INSERT INTO transient
           (runcat
@@ -98,7 +112,8 @@ def _insert_new_transients(conn, image_id, transients):
         ins = 0
         for i in range(len(transients)):
             if not transients[i].monitored:
-                ins += cursor.execute(query, (transients[i].runcat,
+                if transients[i].siglevel > prob_threshold:
+                    ins += cursor.execute(query, (transients[i].runcat,
                                               transients[i].band,
                                               float(transients[i].siglevel),
                                               float(transients[i].V_int),
@@ -107,7 +122,9 @@ def _insert_new_transients(conn, image_id, transients):
         if not AUTOCOMMIT:
             conn.commit()
         cursor.close()
-        if ins > 0:
+        if ins == 0:
+            logger.info("No new transients found in image %s" % (image_id))
+        else:
             logger.info("Inserted %s new transients" % (ins,))
     except db.Error:
         query = query % (transients[i].runcat,
@@ -215,7 +232,7 @@ def insert_transient_per_dataset(conn, transient, dataset_id):
 
 
 
-def select_variability_indices(conn, image_id, V_lim, eta_lim):
+def select_variability_indices(conn, image_id, V_lim, eta_lim, prob_threshold):
     """
     Select sources and integrated flux variability indices from the running
     catalog, for a given frequency band (i.e. image_id)
@@ -251,8 +268,8 @@ def select_variability_indices(conn, image_id, V_lim, eta_lim):
     """
 
     results = []
-    cursor = conn.cursor()
     try:
+        cursor = conn.cursor()
         query = """\
 SELECT t1.runcat
       ,t1.band
@@ -313,15 +330,24 @@ SELECT t1.runcat
        AND t1.band = tr0.band
  WHERE t1.V_int_inter / t1.avg_f_int > %s
    AND t1.eta_int_inter / t1.avg_f_int_weight > %s
+   AND (tr0.siglevel > %s
+        OR tr0.siglevel IS NULL)
+ORDER BY t1.runcat
+        ,t1.band
 """
-        cursor.execute(query, (image_id, image_id, V_lim, eta_lim))
+        # TODO: Do we need to add the siglevel as an extra t1 clause as well?
+        # No, since the outer join wouldn't select the first transients
+        # since the siglevels are NULL
+        #print "TRquery:\n", query % (image_id, image_id, V_lim, eta_lim, prob_threshold)
+        cursor.execute(query, (image_id, image_id, V_lim, eta_lim, prob_threshold))
+        #cursor.execute(query, (image_id, image_id, V_lim, eta_lim))
 
         results = zip(*cursor.fetchall())
         if not AUTOCOMMIT:
             conn.commit()
         cursor.close()
     except db.Error:
-        query = query % (image_id, image_id, V_lim, eta_lim)
+        query = query % (image_id, image_id, V_lim, eta_lim, prob_threshold)
         logger.warn("Query failed:\n%s", query)
         raise
     
@@ -544,17 +570,17 @@ def transient_search(conn,
                      minpoints):
 
     # TODO: We want the trigger_xtrsrc here as well
-    results = select_variability_indices(conn, image_id, V_lim, eta_lim)
+    results = select_variability_indices(conn, image_id, V_lim, eta_lim, probability_threshold)
     
     transients = []
     if len(results) > 0:
         runcat = results[0]
         band = results[1][0] # all from same band, one (eg the first) is enough
         f_datapoints = results[2]
-        #wm_ra = results[3]
-        #wm_decl = results[4]
-        #wm_ra_err = results[5]
-        #wm_decl_err = results[6]
+        wm_ra = results[3]
+        wm_decl = results[4]
+        wm_ra_err = results[5]
+        wm_decl_err = results[6]
         V_int = results[7]
         eta_int = results[8]
         trigger_xtrsrc = results[9]
@@ -564,23 +590,23 @@ def transient_search(conn,
 
         for i in range(len(runcat)):
             prob = 1 - chisqprob(eta_int[i] * (f_datapoints[i] - 1), (f_datapoints[i] - 1))
-            #print "runcat[",i,"] =",runcat[i], " -> prob = ", prob 
-            if prob > probability_threshold:
-                transient = Transient()
-                transient.runcat = runcat[i]
-                transient.band = band
-                transient.f_datapoints = f_datapoints[i]
-                #sel_wm_ra.append(wm_ra[i])
-                #sel_wm_decl.append(wm_decl[i])
-                #sel_wm_ra_err.append(wm_ra_err[i])
-                #sel_wm_decl_err.append(wm_decl_err[i])
-                transient.V_int = V_int[i]
-                transient.eta_int = eta_int[i]
-                transient.trigger_xtrsrc = trigger_xtrsrc[i]
-                transient.monitored = monitored[i]
-                # TODO: Why is this called siglevel, while it is a probability?
-                transient.siglevel = prob
-                transients.append(transient)
+            #print "runcat[",i,"] =",runcat[i], " -> prob = ", prob, \
+            #      "trigger_xtrsrc =", trigger_xtrsrc[i]
+            transient = Transient()
+            transient.runcat = runcat[i]
+            transient.band = band
+            transient.f_datapoints = f_datapoints[i]
+            transient.ra = wm_ra[i]
+            transient.decl = wm_decl[i]
+            transient.V_int = V_int[i]
+            transient.eta_int = eta_int[i]
+            transient.trigger_xtrsrc = trigger_xtrsrc[i]
+            transient.monitored = monitored[i]
+            # TODO: Why is this called siglevel, while it is a probability?
+            transient.siglevel = prob
+            transients.append(transient)
+            #if prob > probability_threshold:
+            #else:
 
         #print "sel_runcat =", sel_runcat, "; band =", band, "; sel_prob =", sel_prob
         for i in range(len(transients)):
@@ -590,7 +616,14 @@ def transient_search(conn,
                   "; monitored =", transients[i].monitored, \
                   "; siglevel (prob) =", transients[i].siglevel
 
+        # TODO: 
+        # What do we do with transients that start as transient, but as
+        # more data is collected the siglevel decreases below the threshold?
+        # Do we remove it from the transient table?
         _update_known_transients(conn, transients)
-        _insert_new_transients(conn, image_id, transients)
+        _insert_new_transients(conn, image_id, transients, probability_threshold)
+        #TODO:
         #print "\nNow we need to add the transient sources (by runcat id) to monlist...\n"
+        
+
     return transients

@@ -15,11 +15,11 @@ import sys
 import itertools
 import lofarpipe.support.lofaringredient as ingredient
 from lofarpipe.support.baserecipe import BaseRecipe
-from lofarpipe.support.clusterdesc import ClusterDesc, get_compute_nodes
 from lofarpipe.support.remotecommand import ComputeJob
 from lofarpipe.support.remotecommand import RemoteCommandRecipeMixIn
 import tkp.database as tkpdb
 import trap.ingredients.monitoringlist
+import trap.ingredients as ingred
 
 class monitoringlist(BaseRecipe, RemoteCommandRecipeMixIn):
     """
@@ -48,25 +48,13 @@ class monitoringlist(BaseRecipe, RemoteCommandRecipeMixIn):
         super(monitoringlist, self).go()
         dataset_id = self.inputs['args'][0]
         database = tkpdb.DataBase()
-        dataset = tkpdb.DataSet(database=database, id = dataset_id)
+        dataset = tkpdb.DataSet(database=database, id=dataset_id)
 
         dataset.update_images()
         image_ids = [img.id for img in dataset.images if not img.rejected]
         trap.ingredients.monitoringlist.mark_sources(dataset_id, self.inputs['parset'])
 
-        # Obtain available nodes
-        clusterdesc = ClusterDesc(self.config.get('cluster', "clusterdesc"))
-        if clusterdesc.subclusters:
-            available_nodes = dict(
-                (cl.name, itertools.cycle(get_compute_nodes(cl)))
-                for cl in clusterdesc.subclusters
-                )
-        else:
-            available_nodes = {
-                clusterdesc.name: get_compute_nodes(clusterdesc)
-                }
-        nodes = list(itertools.chain(*available_nodes.values()))
-
+        nodes = ingred.common.nodes_available(self.config)
         command = "python %s" % self.__file__.replace('master', 'nodes')
         jobs = []
         hosts = itertools.cycle(nodes)

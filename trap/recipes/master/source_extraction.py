@@ -3,10 +3,10 @@ import sys
 import itertools
 import lofarpipe.support.lofaringredient as ingredient
 from lofarpipe.support.baserecipe import BaseRecipe
-from lofarpipe.support.clusterdesc import ClusterDesc, get_compute_nodes
 from lofarpipe.support.remotecommand import ComputeJob
 from lofarpipe.support.remotecommand import RemoteCommandRecipeMixIn
 import tkp.config
+import trap.ingredients as ingred
 
 
 class source_extraction(BaseRecipe, RemoteCommandRecipeMixIn):
@@ -35,19 +35,7 @@ class source_extraction(BaseRecipe, RemoteCommandRecipeMixIn):
         self.logger.info("Extracting sources")
         super(source_extraction, self).go()
         images = self.inputs['args']
-
-        # Obtain available nodes
-        clusterdesc = ClusterDesc(self.config.get('cluster', "clusterdesc"))
-        if clusterdesc.subclusters:
-            available_nodes = dict(
-                (cl.name, itertools.cycle(get_compute_nodes(cl)))
-                for cl in clusterdesc.subclusters
-                )
-        else:
-            available_nodes = {
-                clusterdesc.name: get_compute_nodes(clusterdesc)
-                }
-        nodes = list(itertools.chain(*available_nodes.values()))
+        nodes = ingred.common.nodes_available(self.config)
 
         # Running this on nodes, in case we want to perform source extraction
         # on individual images that are still stored on the compute nodes

@@ -12,6 +12,7 @@ In this module we deal with source association.
 
 """
 
+import sys, os
 import logging
 import monetdb.sql as db
 from tkp.config import config
@@ -59,7 +60,7 @@ def associate_extracted_sources(conn, image_id, deRuiter_r=DERUITER_R):
     _insert_1_to_many_runcat_flux(conn)
     _insert_1_to_many_basepoint_assoc(conn)
     _insert_1_to_many_assoc(conn)
-    #_insert_1_to_many_userentry_monitoringlist(conn)
+    _insert_1_to_many_monitoringlist(conn)
     #_insert_1_to_many_transient(conn)
     _delete_1_to_many_inactive_assoc(conn)
     _delete_1_to_many_inactive_runcat_flux(conn)
@@ -81,6 +82,15 @@ def associate_extracted_sources(conn, image_id, deRuiter_r=DERUITER_R):
     _insert_new_runcat(conn, image_id)
     _insert_new_runcat_flux(conn, image_id)
     _insert_new_assoc(conn, image_id)
+    _insert_new_monitoringlist(conn, image_id)
+    #if image_id == 2:
+    #    sys.exit()
+    _go_back_to_other_images_and_do_a_forcedfit_in_non_rejected_images(conn, image_id)
+    #_then_we_need_to_merge_results_from_ff_into_extr/assoc/runcat/runcat_flux/monlist()
+    #+-------------------------------------------------------+
+    #| New sources are added to transient table as well, but |
+    #| that is done in the transient_search recipe.          |
+    #+-------------------------------------------------------+
     _empty_temprunningcatalog(conn)
     _delete_inactive_runcat(conn)
 
@@ -120,12 +130,14 @@ def _empty_temprunningcatalog(conn):
 
     try:
         cursor = conn.cursor()
-        query = """DELETE FROM temprunningcatalog"""
+        query = """\
+        DELETE FROM temprunningcatalog;
+        """
         cursor.execute(query)
         if not AUTOCOMMIT:
             conn.commit()
     except db.Error, e:
-        logger.warn("Failed on query nr %s." % query)
+        logger.warn("Failed on query\n%s" % query)
         raise
     finally:
         cursor.close()
@@ -390,79 +402,176 @@ def _flag_many_to_many_tempruncat(conn):
         cursor = conn.cursor()
         # This one selects the farthest out of the many-to-many assocs
         query = """\
-SELECT t1.runcat
-      ,t1.xtrsrc
-  FROM (SELECT xtrsrc
-              ,MIN(r) as min_r
-          FROM temprunningcatalog
-         WHERE runcat IN (SELECT runcat
-                            FROM temprunningcatalog
-                           WHERE runcat IN (SELECT runcat
-                                              FROM temprunningcatalog
-                                             WHERE xtrsrc IN (SELECT xtrsrc
-                                                                FROM temprunningcatalog
-                                                              GROUP BY xtrsrc
-                                                              HAVING COUNT(*) > 1
-                                                             )
-                                           )
-                          GROUP BY runcat
-                          HAVING COUNT(*) > 1
-                         )
-           AND xtrsrc IN (SELECT xtrsrc
-                            FROM temprunningcatalog
-                          GROUP BY xtrsrc
-                          HAVING COUNT(*) > 1
-                         )
-        GROUP BY xtrsrc
-       ) t0
-      ,(SELECT runcat
-              ,xtrsrc
-              ,r
-          FROM temprunningcatalog
-         WHERE runcat IN (SELECT runcat
-                            FROM temprunningcatalog
-                           WHERE runcat IN (SELECT runcat
-                                              FROM temprunningcatalog
-                                             WHERE xtrsrc IN (SELECT xtrsrc
-                                                                FROM temprunningcatalog
-                                                              GROUP BY xtrsrc
-                                                              HAVING COUNT(*) > 1
-                                                             )
-                                           )
-                          GROUP BY runcat
-                          HAVING COUNT(*) > 1
-                         )
-           AND xtrsrc IN (SELECT xtrsrc
-                            FROM temprunningcatalog
-                          GROUP BY xtrsrc
-                          HAVING COUNT(*) > 1
-                         )
-       ) t1
- WHERE t0.xtrsrc = t1.xtrsrc
-   AND t0.min_r < t1.r
-        """
+UPDATE temprunningcatalog
+   SET inactive = TRUE
+ WHERE EXISTS (SELECT runcat
+                     ,xtrsrc
+                 FROM (SELECT t1.runcat
+                             ,t1.xtrsrc
+                         FROM (SELECT xtrsrc
+                                     ,MIN(r) as min_r
+                                 FROM temprunningcatalog
+                                WHERE runcat IN (SELECT runcat
+                                                   FROM temprunningcatalog
+                                                  WHERE runcat IN (SELECT runcat
+                                                                     FROM temprunningcatalog
+                                                                    WHERE xtrsrc IN (SELECT xtrsrc
+                                                                                       FROM temprunningcatalog
+                                                                                     GROUP BY xtrsrc
+                                                                                     HAVING COUNT(*) > 1
+                                                                                    )
+                                                                  )
+                                                 GROUP BY runcat
+                                                 HAVING COUNT(*) > 1
+                                                )
+                                  AND xtrsrc IN (SELECT xtrsrc
+                                                   FROM temprunningcatalog
+                                                 GROUP BY xtrsrc
+                                                 HAVING COUNT(*) > 1
+                                                )
+                               GROUP BY xtrsrc
+                              ) t0
+                             ,(SELECT runcat
+                                     ,xtrsrc
+                                     ,r
+                                 FROM temprunningcatalog
+                                WHERE runcat IN (SELECT runcat
+                                                   FROM temprunningcatalog
+                                                  WHERE runcat IN (SELECT runcat
+                                                                     FROM temprunningcatalog
+                                                                    WHERE xtrsrc IN (SELECT xtrsrc
+                                                                                       FROM temprunningcatalog
+                                                                                     GROUP BY xtrsrc
+                                                                                     HAVING COUNT(*) > 1
+                                                                                    )
+                                                                  )
+                                                 GROUP BY runcat
+                                                 HAVING COUNT(*) > 1
+                                                )
+                                  AND xtrsrc IN (SELECT xtrsrc
+                                                   FROM temprunningcatalog
+                                                 GROUP BY xtrsrc
+                                                 HAVING COUNT(*) > 1
+                                                )
+                              ) t1
+                        WHERE t0.xtrsrc = t1.xtrsrc
+                          AND t0.min_r < t1.r
+                      ) t2
+                WHERE t2.runcat = temprunningcatalog.runcat
+                  AND t2.xtrsrc = temprunningcatalog.xtrsrc
+              )
+;
+"""
         cursor.execute(query)
-        results = zip(*cursor.fetchall())
-        if len(results) != 0:
-            runcat = results[0]
-            xtrsrc = results[1]
-            query = """\
-            UPDATE temprunningcatalog
-               SET inactive = TRUE
-             WHERE runcat = %s
-               AND xtrsrc = %s
-            """
-            for j in range(len(runcat)):
-                logger.info("Many-to-many in tempruncat set to inactive: "
-                            "%s %s " % (runcat[j], xtrsrc[j]))
-                cursor.execute(query, (runcat[j], xtrsrc[j]))
-                if not AUTOCOMMIT:
-                    conn.commit()
-            #sys.exit()
+        if not AUTOCOMMIT:
+            conn.commit()
+        #results = zip(*cursor.fetchall())
+        #if len(results) != 0:
+        #    runcat = results[0]
+        #    xtrsrc = results[1]
+        #    query = """\
+        #    UPDATE temprunningcatalog
+        #       SET inactive = TRUE
+        #     WHERE runcat = %s
+        #       AND xtrsrc = %s
+        #    """
+        #    for j in range(len(runcat)):
+        #        logger.info("Many-to-many in tempruncat set to inactive: "
+        #                    "%s %s " % (runcat[j], xtrsrc[j]))
+        #        cursor.execute(query, (runcat[j], xtrsrc[j]))
+        #        if not AUTOCOMMIT:
+        #            conn.commit()
+        #    #sys.exit()
         cursor.close()
     except db.Error, e:
         logger.warn("Failed on query nr %s." % query)
         raise
+
+#def _flag_many_to_many_tempruncat2(conn):
+#    """Select the many-to-many association pairs in temprunningcatalog.
+#
+#    By flagging the many-to-many associations, we reduce the
+#    processing to one-to-many and many-to-one (identical to one-to-one)
+#    relationships
+#    """
+#
+#    try:
+#        cursor = conn.cursor()
+#        # This one selects the farthest out of the many-to-many assocs
+#        query = """\
+#SELECT t1.runcat
+#      ,t1.xtrsrc
+#  FROM (SELECT xtrsrc
+#              ,MIN(r) as min_r
+#          FROM temprunningcatalog
+#         WHERE runcat IN (SELECT runcat
+#                            FROM temprunningcatalog
+#                           WHERE runcat IN (SELECT runcat
+#                                              FROM temprunningcatalog
+#                                             WHERE xtrsrc IN (SELECT xtrsrc
+#                                                                FROM temprunningcatalog
+#                                                              GROUP BY xtrsrc
+#                                                              HAVING COUNT(*) > 1
+#                                                             )
+#                                           )
+#                          GROUP BY runcat
+#                          HAVING COUNT(*) > 1
+#                         )
+#           AND xtrsrc IN (SELECT xtrsrc
+#                            FROM temprunningcatalog
+#                          GROUP BY xtrsrc
+#                          HAVING COUNT(*) > 1
+#                         )
+#        GROUP BY xtrsrc
+#       ) t0
+#      ,(SELECT runcat
+#              ,xtrsrc
+#              ,r
+#          FROM temprunningcatalog
+#         WHERE runcat IN (SELECT runcat
+#                            FROM temprunningcatalog
+#                           WHERE runcat IN (SELECT runcat
+#                                              FROM temprunningcatalog
+#                                             WHERE xtrsrc IN (SELECT xtrsrc
+#                                                                FROM temprunningcatalog
+#                                                              GROUP BY xtrsrc
+#                                                              HAVING COUNT(*) > 1
+#                                                             )
+#                                           )
+#                          GROUP BY runcat
+#                          HAVING COUNT(*) > 1
+#                         )
+#           AND xtrsrc IN (SELECT xtrsrc
+#                            FROM temprunningcatalog
+#                          GROUP BY xtrsrc
+#                          HAVING COUNT(*) > 1
+#                         )
+#       ) t1
+# WHERE t0.xtrsrc = t1.xtrsrc
+#   AND t0.min_r < t1.r
+#        """
+#        cursor.execute(query)
+#        results = zip(*cursor.fetchall())
+#        if len(results) != 0:
+#            runcat = results[0]
+#            xtrsrc = results[1]
+#            query = """\
+#            UPDATE temprunningcatalog
+#               SET inactive = TRUE
+#             WHERE runcat = %s
+#               AND xtrsrc = %s
+#            """
+#            for j in range(len(runcat)):
+#                logger.info("Many-to-many in tempruncat set to inactive: "
+#                            "%s %s " % (runcat[j], xtrsrc[j]))
+#                cursor.execute(query, (runcat[j], xtrsrc[j]))
+#                if not AUTOCOMMIT:
+#                    conn.commit()
+#            #sys.exit()
+#        cursor.close()
+#    except db.Error, e:
+#        logger.warn("Failed on query nr %s." % query)
+#        raise
 
 def _insert_1_to_many_runcat(conn):
     """Insert the extracted sources that belong to one-to-many
@@ -653,6 +762,9 @@ def _insert_1_to_many_assoc(conn):
     NOTE:
     1. We do not update the distance_arcsec and r values of the pairs.
 
+    TODO:
+    1. Why not?
+
     """
 
     try:
@@ -687,36 +799,39 @@ def _insert_1_to_many_assoc(conn):
         if not AUTOCOMMIT:
             conn.commit()
     except db.Error, e:
-        logger.warn("Failed on query:\n%s." % query)
+        logger.warn("Failed on query:\n%s" % query)
         raise
     finally:
         cursor.close()
 
-def _insert_1_to_many_userentry_monitoringlist(conn):
+def _insert_1_to_many_monitoringlist(conn):
     """Insert one-to-many in monitoringlist
 
-    In case where we have a source in the monitoringlist that goes
-    one-to-many in the associations, we have to "split" it up into
-    the new runcat ids and delete the old runcat.
+    In case where we have a non-user-entry source in the monitoringlist 
+    that goes one-to-many in the associations, we have to "split" it up 
+    into the new runcat ids and delete the old runcat.
 
-    TODO: See discussion in issue #3564 how to proceed
+    TODO: See discussion in issues #3564 & #3919 how to proceed
 
     """
-
+    #TODO: Discriminate between the user and non-user entries.
     try:
         cursor = conn.cursor()
         query = """\
         INSERT INTO monitoringlist
           (runcat
+          ,ra
+          ,decl
           ,dataset
           )
-
-          /* the new runcat ids: */
-          SELECT r.id
+          SELECT r.id AS runcat
+                ,r.wm_ra AS ra
+                ,r.wm_decl AS decl
+                ,r.dataset
             FROM temprunningcatalog t
                 ,runningcatalog r
-           WHERE t.xtrsrc = r.xtrsrc
-             AND t.inactive = FALSE
+           WHERE t.inactive = FALSE
+             AND t.xtrsrc = r.xtrsrc
              AND t.runcat IN (SELECT runcat
                                 FROM temprunningcatalog
                                WHERE inactive = FALSE
@@ -724,19 +839,19 @@ def _insert_1_to_many_userentry_monitoringlist(conn):
                               HAVING COUNT(*) > 1
                              )
 
-          /* the old runcat's in monlist that need to be replaced (with the above r.id's : */
-          select m.runcat
-            from monitoringlist m
-                ,runningcatalog r
-           where m.runcat = r.id
-             and m.userentry = true
-             and m.runcat in (select runcat
-                                from temprunningcatalog
-                               where inactive = false
-                              group by runcat
-                              having count(*) > 1
-                             )
         """
+        #  /* the old runcat's in monlist that need to be replaced (with the above r.id's : */
+        #  select m.runcat
+        #    from monitoringlist m
+        #        ,runningcatalog r
+        #   where m.runcat = r.id
+        #     and m.userentry = true
+        #     and m.runcat in (select runcat
+        #                        from temprunningcatalog
+        #                       where inactive = false
+        #                      group by runcat
+        #                      having count(*) > 1
+        #                     )
         cursor.execute(query)
         if not AUTOCOMMIT:
             conn.commit()
@@ -815,7 +930,8 @@ def _delete_1_to_many_inactive_monitoringlist(conn):
         query = """\
         DELETE
           FROM monitoringlist
-         WHERE id IN (SELECT m.id
+         WHERE userentry = FALSE
+           AND id IN (SELECT m.id
                         FROM monitoringlist m
                             ,runningcatalog r
                        WHERE m.runcat = r.id
@@ -1327,10 +1443,10 @@ def _insert_new_runcat(conn, image_id):
         #cursor.execute(query, (image_id, image_id,
         #                        radius, radius, radius, radius, radius, radius,
         #                        deRuiter_r/3600.))
-#        if ins > 0:
-#            print "new runcats:",ins
         if not AUTOCOMMIT:
             conn.commit()
+        if ins > 0:
+            logger.info("Added %s new sources to the runningcatalog" % (ins,))
     except db.Error, e:
         q = query % (image_id,)
         logger.warn("Failed on query:\n%s." % q)
@@ -1476,6 +1592,112 @@ def _insert_new_assoc(conn, image_id):
         raise
     finally:
         cursor.close()
+
+def _insert_new_monitoringlist(conn, image_id):
+    """A new source needs to be added to the monitoringlist.
+    
+    Except for sources that were detected in the initial image.
+    """
+
+    try:
+        cursor = conn.cursor()
+        query = """\
+        INSERT INTO monitoringlist
+          (runcat
+          ,ra
+          ,decl
+          ,dataset
+          )
+          SELECT r0.id AS runcat
+                ,r0.wm_ra AS ra
+                ,r0.wm_decl AS decl
+                ,r0.dataset AS dataset
+            FROM runningcatalog r0
+                ,extractedsource x0
+           WHERE r0.xtrsrc = x0.id
+             AND r0.xtrsrc IN (SELECT t0.xtrsrc
+                                 FROM (SELECT x1.id AS xtrsrc
+                                         FROM extractedsource x1
+                                             ,image i1
+                                        WHERE x1.image = i1.id
+                                          AND i1.id = %s
+                                      ) t0
+                                      LEFT OUTER JOIN temprunningcatalog trc1
+                                      ON t0.xtrsrc = trc1.xtrsrc
+                                 WHERE trc1.xtrsrc IS NULL
+                              )
+             AND EXISTS (SELECT COUNT(*) 
+                           FROM image 
+                          WHERE dataset = (SELECT dataset 
+                                             FROM image 
+                                            WHERE id = %s
+                                          )
+                         HAVING COUNT(*) <> 1
+                        )
+        """
+        #q = query % (image_id,image_id)
+        #print "QUERY:\n",q
+        ins = cursor.execute(query, (image_id,image_id))
+        if not AUTOCOMMIT:
+            conn.commit()
+        if ins > 0:
+            logger.info("Added %s new sources to the monitoringlist" % (ins,))
+    except db.Error, e:
+        q = query % (image_id,)
+        logger.warn("Failed on query:\n%s" % q)
+        raise
+    finally:
+        cursor.close()
+
+def _go_back_to_other_images_and_do_a_forcedfit_in_non_rejected_images(conn, image_id):
+    """Return a list of previous image ids and urls in which
+    the new sources were not detected
+    
+    """
+
+    try:
+        cursor = conn.cursor()
+        query = """\
+        SELECT id
+              ,url
+          FROM image
+         WHERE id <> %s 
+           AND rejected = FALSE
+           AND dataset = (SELECT dataset 
+                            FROM image i 
+                           WHERE i.id = %s
+                         )
+           AND EXISTS (SELECT t0.xtrsrc
+                         FROM (SELECT x1.id AS xtrsrc
+                                 FROM extractedsource x1
+                                     ,image i1
+                                WHERE x1.image = i1.id
+                                  AND i1.id = %s
+                              ) t0
+                              LEFT OUTER JOIN temprunningcatalog trc1
+                              ON t0.xtrsrc = trc1.xtrsrc
+                        WHERE trc1.xtrsrc IS NULL
+                      )
+        """
+        cursor.execute(query, (image_id, image_id, image_id))
+        results = zip(*cursor.fetchall())
+        if not AUTOCOMMIT:
+            conn.commit()
+        cursor.close()
+        
+        if len(results) != 0:
+            imageids = results[0]
+            urls = results[1]
+            # Check if the urls are still available
+            validurls = []
+            for url in urls:
+                if os.path.exists(url):
+                    validurls.append(url)
+                    logger.info("Image %s still available for forced fit" % (os.path.basename(url),))
+    except db.Error, e:
+        q = query % (image_id,image_id,image_id)
+        logger.warn("Failed on query:\n%s" % q)
+        raise
 
 def _delete_inactive_runcat(conn):
     """Delete the one-to-many associations from temprunningcatalog,

@@ -10,6 +10,9 @@ with exceptions of monitoringlist and transients.
 
 import math
 import logging
+
+from lofarpipe.support.lofarexceptions import PipelineException
+
 import monetdb.sql as db
 from tkp.config import config
 import tkp.database
@@ -65,7 +68,7 @@ def insert_image(conn, dataset, freq_eff, freq_bw, taustart_ts, tau_time,
     return image_id
 
 
-def insert_extracted_sources(conn, image_id, results):
+def insert_extracted_sources(conn, image_id, results, extract):
     """Insert all extracted sources
 
     Insert the sources that were detected by the Source Extraction
@@ -81,16 +84,20 @@ def insert_extracted_sources(conn, image_id, results):
     significance level,
     beam major width , beam minor width, [as]
     beam parallactic angle).  [deg]
+    extract tells whether the source results are originating from:
+    0: blind source extraction 
+    1: from forced fits at null detection locations
+    2: from forced fits for monitoringlist sources
     """
     
     #To do: Figure out a saner method of passing the results around
     # (Namedtuple for starters?) 
     if len(results):
-        _insert_extractedsources(conn, image_id, results)
+        _insert_extractedsources(conn, image_id, results, extract)
 
 #TO DO(?): merge the private function below into the public function above?
 
-def _insert_extractedsources(conn, image_id, results):
+def _insert_extractedsources(conn, image_id, results, extract):
     """Insert all extracted sources with their properties
 
     The content of results is in the following sequence:
@@ -98,6 +105,7 @@ def _insert_extractedsources(conn, image_id, results):
     int_flux, int_flux_err, significance level,
     beam major width (as), beam minor width(as), beam parallactic angle,
     ra_sys_err, dec_sys_err).
+    See insert_extracted_sources() for a description of extract.
     
     ra_fit_err & dec_fit_err are the 1-sigma errors from the gaussian fit,
     in degrees.
@@ -133,6 +141,14 @@ def _insert_extractedsources(conn, image_id, results):
         r.append(math.cos(math.radians(r[1])) * math.sin(math.radians(r[0]))) # Cartesian y
         r.append(math.sin(math.radians(r[1]))) # Cartesian z
         r.append(r[0] * math.cos(math.radians(r[1]))) # ra * cos(radias(decl))
+        if extract == 'blind':
+            r.append(0)
+        elif extract == 'ff_nd':
+            r.append(1)
+        elif extract == 'ff_mon':
+            r.append(2)
+        else:
+            raise ValueError("Not a valid extractedsource insert type: '%s'" % extract)
         xtrsrc.append(r)
     values = [str(tuple(xsrc)) for xsrc in xtrsrc]
 
@@ -162,6 +178,7 @@ def _insert_extractedsources(conn, image_id, results):
           ,y
           ,z
           ,racosdecl
+          ,extract_type
           )
         VALUES
         """\
@@ -169,6 +186,19 @@ def _insert_extractedsources(conn, image_id, results):
         cursor.execute(query)
         if not AUTOCOMMIT:
             conn.commit()
+        if len(values) == 0:
+                logger.info("No forced-fit sources added to extractedsource for image %s" \
+                            % (image_id,))
+        else:
+            if extract == 'ff_mon':
+                logger.info("Inserted %d forced-fit monitoringsources in extractedsource for image %s" \
+                            % (len(values), image_id))
+            elif extract == 'ff_nd':
+                logger.info("Inserted %d forced-fit null detections in extractedsource for image %s" \
+                            % (len(values), image_id))
+            elif extract == 'blind':
+                logger.info("Inserted %d sources in extractedsource for image %s" \
+                            % (len(values), image_id))
     except db.Error, e:
         logger.warn("Failed on query nr %s." % query)
         raise
@@ -410,7 +440,7 @@ def match_nearests_in_catalogs(conn, runcatid, radius, deRuiter_r,
                          radius, radius, radius, radius,
                          radius, radius,
                          radius,
-                         assoc_r)
+                         deRuiter_r/3600.)
         logger.warn("Query failed:\n%s", query)
         raise
     finally:

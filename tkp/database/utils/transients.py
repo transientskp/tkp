@@ -125,7 +125,7 @@ def _insert_new_transients(conn, image_id, transients, prob_threshold):
         if ins == 0:
             logger.info("No new transients found in image %s" % (image_id))
         else:
-            logger.info("Inserted %s new transients" % (ins,))
+            logger.info("Inserted %s new transients in transients table" % (ins,))
     except db.Error:
         query = query % (transients[i].runcat,
                          transients[i].band,
@@ -136,10 +136,6 @@ def _insert_new_transients(conn, image_id, transients, prob_threshold):
                          transients[i].runcat)
         logger.warn("Failed on query:\n%s", query)
         raise
-    #print "Adding to monlist:", dataset_id, [transient.runcatid]
-    #monitoringlist.add_runcat_sources_to_monitoringlist(conn,
-    #                                                    dataset_id,
-    #                                                    [transient.runcatid])
 
 def insert_transient_per_dataset(conn, transient, dataset_id):
     """Insert a transient source in the database.
@@ -335,12 +331,7 @@ SELECT t1.runcat
 ORDER BY t1.runcat
         ,t1.band
 """
-        # TODO: Do we need to add the siglevel as an extra t1 clause as well?
-        # No, since the outer join wouldn't select the first transients
-        # since the siglevels are NULL
-        #print "TRquery:\n", query % (image_id, image_id, V_lim, eta_lim, prob_threshold)
         cursor.execute(query, (image_id, image_id, V_lim, eta_lim, prob_threshold))
-        #cursor.execute(query, (image_id, image_id, V_lim, eta_lim))
 
         results = zip(*cursor.fetchall())
         if not AUTOCOMMIT:
@@ -585,13 +576,9 @@ def transient_search(conn,
         eta_int = results[8]
         trigger_xtrsrc = results[9]
         monitored = results[10]
-        #print "\nTS:\nruncat =", runcat, "; band =", band, "; f_datapoints =", f_datapoints, \
-        #      "; V_int =", V_int, ";eta_int =", eta_int
 
         for i in range(len(runcat)):
             prob = 1 - chisqprob(eta_int[i] * (f_datapoints[i] - 1), (f_datapoints[i] - 1))
-            #print "runcat[",i,"] =",runcat[i], " -> prob = ", prob, \
-            #      "trigger_xtrsrc =", trigger_xtrsrc[i]
             transient = Transient()
             transient.runcat = runcat[i]
             transient.band = band
@@ -605,25 +592,19 @@ def transient_search(conn,
             # TODO: Why is this called siglevel, while it is a probability?
             transient.siglevel = prob
             transients.append(transient)
-            #if prob > probability_threshold:
-            #else:
 
-        #print "sel_runcat =", sel_runcat, "; band =", band, "; sel_prob =", sel_prob
-        for i in range(len(transients)):
-            print "transients[",i,"].runcat =", transients[i].runcat, \
-                  "; band =", transients[i].band, \
-                  "; trigger_xtrsrc =", transients[i].trigger_xtrsrc, \
-                  "; monitored =", transients[i].monitored, \
-                  "; siglevel (prob) =", transients[i].siglevel
+        #for i in range(len(transients)):
+        #    print "transients[",i,"].runcat =", transients[i].runcat, \
+        #          "; band =", transients[i].band, \
+        #          "; trigger_xtrsrc =", transients[i].trigger_xtrsrc, \
+        #          "; monitored =", transients[i].monitored, \
+        #          "; siglevel (prob) =", transients[i].siglevel
 
         # TODO: 
         # What do we do with transients that start as transient, but as
         # more data is collected the siglevel decreases below the threshold?
-        # Do we remove it from the transient table?
+        # Should they get removed from the transient table?
         _update_known_transients(conn, transients)
         _insert_new_transients(conn, image_id, transients, probability_threshold)
-        #TODO:
-        #print "\nNow we need to add the transient sources (by runcat id) to monlist...\n"
-        
 
     return transients

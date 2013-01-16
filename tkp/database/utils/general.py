@@ -288,90 +288,8 @@ def match_nearests_in_catalogs(conn, runcatid, radius, deRuiter_r,
     a catalog.
     """
     
-    #zoneheight = 1.0
-    #catalog_filter = ""
-    #if catalogid is None:
-    #    catalog_filter = ""
-    #else:
-    #    try:
-    #        iter(catalogid)
-    #        # Note: cast to int, to ensure proper type
-    #        catalog_filter = (
-    #            "c.catid in (%s) AND " % ", ".join(
-    #            [str(int(catid)) for catid in catalogid]))
-    #    except TypeError:
-    #        catalog_filter = "c.catid = %d AND " % catalogid
-    #
-    #subquery = """\
-    #SELECT cs.catsrcid
-    #      ,c.catid
-    #      ,c.catname
-    #      ,cs.catsrcname
-    #      ,cs.ra
-    #      ,cs.decl
-    #      ,cs.ra_err
-    #      ,cs.decl_err
-    #      ,3600 * DEGREES(2 * ASIN(SQRT( (rc.x - cs.x) * (rc.x - cs.x)
-    #                                   + (rc.y - cs.y) * (rc.y - cs.y)
-    #                                   + (rc.z - cs.z) * (rc.z - cs.z)
-    #                                   ) / 2)
-    #                     ) AS assoc_distance_arcsec
-    #      ,3600 * SQRT(  (rc.wm_ra - cs.ra) * COS(RADIANS(rc.wm_decl)) 
-    #                   * (rc.wm_ra - cs.ra) * COS(RADIANS(rc.wm_decl))
-    #                     / (rc.wm_ra_err * rc.wm_ra_err + cs.ra_err * cs.ra_err)
-    #                  + (rc.wm_decl - cs.decl) * (rc.wm_decl - cs.decl)
-    #                    / (rc.wm_decl_err * rc.wm_decl_err + cs.decl_err * cs.decl_err)
-    #                  ) AS assoc_r
-    #  FROM (SELECT wm_ra - alpha(%%s, wm_decl) as ra_min
-    #              ,wm_ra + alpha(%%s, wm_decl) as ra_max
-    #              ,CAST(FLOOR((wm_decl - %%s) / %%s) AS INTEGER) as zone_min
-    #              ,CAST(FLOOR((wm_decl + %%s) / %%s) AS INTEGER) as zone_max
-    #              ,wm_decl - %%s as decl_min
-    #              ,wm_decl + %%s as decl_max
-    #              ,x
-    #              ,y
-    #              ,z
-    #              ,wm_ra
-    #              ,wm_decl
-    #              ,wm_ra_err
-    #              ,wm_decl_err
-    #          FROM runningcatalog
-    #         WHERE xtrsrc = %%s
-    #       ) rc
-    #      ,catalogedsources cs
-    #      ,catalogs c
-    # WHERE %(catalog_filter)s
-    #      cs.cat_id = c.catid
-    #  AND cs.zone BETWEEN rc.zone_min 
-    #                  AND rc.zone_max
-    #  AND cs.ra BETWEEN rc.ra_min 
-    #                and rc.ra_max
-    #  AND cs.decl BETWEEN rc.decl_min 
-    #                  and rc.decl_max
-    #  AND cs.x * rc.x + cs.y * rc.y + cs.z * rc.z > COS(RADIANS(%%s))
-    #""" % {'catalog_filter': catalog_filter}
-    ##  AND cs.ra BETWEEN rc.wm_ra - alpha(%%s, rc.wm_decl)
-    ##                AND rc.wm_ra + alpha(%%s, rc.wm_decl)
-    #query = """\
-    #SELECT 
-    #    t.catsrcid
-    #   ,t.catsrcname
-    #   ,t.catid
-    #   ,t.catname
-    #   ,t.ra
-    #   ,t.decl
-    #   ,t.ra_err
-    #   ,t.decl_err
-    #   ,t.assoc_distance_arcsec
-    #   ,t.assoc_r
-    #FROM (%(subquery)s) as t
-    #WHERE t.assoc_r < %%s
-    #ORDER BY t.catid ASC, t.assoc_r ASC
-    #""" % {'subquery': subquery}
-    
     results = []
-    # TODO: I would suggest this:
-    q_alt = """\
+    query = """\
     SELECT c.id
           ,c.catsrcname
           ,c.catalog
@@ -415,10 +333,7 @@ def match_nearests_in_catalogs(conn, runcatid, radius, deRuiter_r,
 
     try:
         cursor = conn.cursor()
-        #cursor.execute(query,  (radius, radius, radius, zoneheight,
-        #                        radius, zoneheight, radius, radius,
-        #                        srcid, radius, assoc_r))
-        cursor.execute(q_alt,  (runcatid,
+        cursor.execute(query,  (runcatid,
                                 radius, radius, radius, radius,
                                 radius, radius, 
                                 radius,
@@ -432,11 +347,7 @@ def match_nearests_in_catalogs(conn, runcatid, radius, deRuiter_r,
              'dist_arcsec': result[8], 'assoc_r': result[9]}
             for result in results]
     except db.Error, e:
-        #query = query % (radius, radius, radius, zoneheight,
-        #                 radius, zoneheight,
-        #                 radius, radius, srcid, radius, assoc_r)
-        #logger.warn("Query failed: %s", query)
-        query = q_alt % (runcatid,
+        query = query % (runcatid,
                          radius, radius, radius, radius,
                          radius, radius,
                          radius,

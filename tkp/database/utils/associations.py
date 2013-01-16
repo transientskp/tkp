@@ -83,14 +83,13 @@ def associate_extracted_sources(conn, image_id, deRuiter_r=DERUITER_R):
     _insert_new_runcat_flux(conn, image_id)
     _insert_new_assoc(conn, image_id)
     _insert_new_monitoringlist(conn, image_id)
-    #if image_id == 2:
-    #    sys.exit()
+    _insert_new_transient(conn, image_id)
     _go_back_to_other_images_and_do_a_forcedfit_in_non_rejected_images(conn, image_id)
-    #_then_we_need_to_merge_results_from_ff_into_extr/assoc/runcat/runcat_flux/monlist()
     #+-------------------------------------------------------+
     #| New sources are added to transient table as well, but |
     #| that is done in the transient_search recipe.          |
     #+-------------------------------------------------------+
+    # TODO: Is it? -> Check
     _empty_temprunningcatalog(conn)
     _delete_inactive_runcat(conn)
 
@@ -111,9 +110,6 @@ def associate_with_catalogedsources(conn, image_id, radius=0.03, deRuiter_r=DERU
     """
 
     _insert_cat_assocs(conn, image_id, radius, deRuiter_r)
-
-#def associate_catalogued_sources_in_area(conn, ra, dec, radius, deRuiter_r=DERUITER_R/3600.):
-#    pass
 
 
 ###############################################################################################
@@ -173,6 +169,7 @@ def _insert_temprunningcatalog(conn, image_id, deRuiter_r, radius=0.03):
     preventing the query to grow exponentially in response time
     """
 
+    #TODO: This query can be reduced for the (weighted) average calculations
     deRuiter_red = float(deRuiter_r) / 3600.
     try:
         cursor = conn.cursor()
@@ -373,9 +370,6 @@ INSERT INTO temprunningcatalog
          AND t0.band = rf0.band
          AND t0.stokes = rf0.stokes
 """
-        #print "Q:\n",query % (image_id, 
-        #                        radius, radius, radius, radius, 
-        #                        radius, radius, deRuiter_r/3600.)
         cursor.execute(query, (image_id, image_id,
                                 radius, radius, radius, radius, 
                                 radius, radius, deRuiter_red))
@@ -465,113 +459,10 @@ UPDATE temprunningcatalog
         cursor.execute(query)
         if not AUTOCOMMIT:
             conn.commit()
-        #results = zip(*cursor.fetchall())
-        #if len(results) != 0:
-        #    runcat = results[0]
-        #    xtrsrc = results[1]
-        #    query = """\
-        #    UPDATE temprunningcatalog
-        #       SET inactive = TRUE
-        #     WHERE runcat = %s
-        #       AND xtrsrc = %s
-        #    """
-        #    for j in range(len(runcat)):
-        #        logger.info("Many-to-many in tempruncat set to inactive: "
-        #                    "%s %s " % (runcat[j], xtrsrc[j]))
-        #        cursor.execute(query, (runcat[j], xtrsrc[j]))
-        #        if not AUTOCOMMIT:
-        #            conn.commit()
-        #    #sys.exit()
         cursor.close()
     except db.Error, e:
         logger.warn("Failed on query nr %s." % query)
         raise
-
-#def _flag_many_to_many_tempruncat2(conn):
-#    """Select the many-to-many association pairs in temprunningcatalog.
-#
-#    By flagging the many-to-many associations, we reduce the
-#    processing to one-to-many and many-to-one (identical to one-to-one)
-#    relationships
-#    """
-#
-#    try:
-#        cursor = conn.cursor()
-#        # This one selects the farthest out of the many-to-many assocs
-#        query = """\
-#SELECT t1.runcat
-#      ,t1.xtrsrc
-#  FROM (SELECT xtrsrc
-#              ,MIN(r) as min_r
-#          FROM temprunningcatalog
-#         WHERE runcat IN (SELECT runcat
-#                            FROM temprunningcatalog
-#                           WHERE runcat IN (SELECT runcat
-#                                              FROM temprunningcatalog
-#                                             WHERE xtrsrc IN (SELECT xtrsrc
-#                                                                FROM temprunningcatalog
-#                                                              GROUP BY xtrsrc
-#                                                              HAVING COUNT(*) > 1
-#                                                             )
-#                                           )
-#                          GROUP BY runcat
-#                          HAVING COUNT(*) > 1
-#                         )
-#           AND xtrsrc IN (SELECT xtrsrc
-#                            FROM temprunningcatalog
-#                          GROUP BY xtrsrc
-#                          HAVING COUNT(*) > 1
-#                         )
-#        GROUP BY xtrsrc
-#       ) t0
-#      ,(SELECT runcat
-#              ,xtrsrc
-#              ,r
-#          FROM temprunningcatalog
-#         WHERE runcat IN (SELECT runcat
-#                            FROM temprunningcatalog
-#                           WHERE runcat IN (SELECT runcat
-#                                              FROM temprunningcatalog
-#                                             WHERE xtrsrc IN (SELECT xtrsrc
-#                                                                FROM temprunningcatalog
-#                                                              GROUP BY xtrsrc
-#                                                              HAVING COUNT(*) > 1
-#                                                             )
-#                                           )
-#                          GROUP BY runcat
-#                          HAVING COUNT(*) > 1
-#                         )
-#           AND xtrsrc IN (SELECT xtrsrc
-#                            FROM temprunningcatalog
-#                          GROUP BY xtrsrc
-#                          HAVING COUNT(*) > 1
-#                         )
-#       ) t1
-# WHERE t0.xtrsrc = t1.xtrsrc
-#   AND t0.min_r < t1.r
-#        """
-#        cursor.execute(query)
-#        results = zip(*cursor.fetchall())
-#        if len(results) != 0:
-#            runcat = results[0]
-#            xtrsrc = results[1]
-#            query = """\
-#            UPDATE temprunningcatalog
-#               SET inactive = TRUE
-#             WHERE runcat = %s
-#               AND xtrsrc = %s
-#            """
-#            for j in range(len(runcat)):
-#                logger.info("Many-to-many in tempruncat set to inactive: "
-#                            "%s %s " % (runcat[j], xtrsrc[j]))
-#                cursor.execute(query, (runcat[j], xtrsrc[j]))
-#                if not AUTOCOMMIT:
-#                    conn.commit()
-#            #sys.exit()
-#        cursor.close()
-#    except db.Error, e:
-#        logger.warn("Failed on query nr %s." % query)
-#        raise
 
 def _insert_1_to_many_runcat(conn):
     """Insert the extracted sources that belong to one-to-many
@@ -840,18 +731,6 @@ def _insert_1_to_many_monitoringlist(conn):
                              )
 
         """
-        #  /* the old runcat's in monlist that need to be replaced (with the above r.id's : */
-        #  select m.runcat
-        #    from monitoringlist m
-        #        ,runningcatalog r
-        #   where m.runcat = r.id
-        #     and m.userentry = true
-        #     and m.runcat in (select runcat
-        #                        from temprunningcatalog
-        #                       where inactive = false
-        #                      group by runcat
-        #                      having count(*) > 1
-        #                     )
         cursor.execute(query)
         if not AUTOCOMMIT:
             conn.commit()
@@ -1147,7 +1026,6 @@ def _insert_1_to_1_assoc(conn):
 def _update_1_to_1_runcat(conn):
     """Update the running catalog with the values in temprunningcatalog"""
 
-    # TODO : Check for clause inactive
     try:
         cursor = conn.cursor()
         query = """\
@@ -1357,7 +1235,6 @@ def _insert_or_update_1_to_1_runcat_flux(conn, result):
     finally:
         cursor.close()
 
-#def _insert_new_runcat(conn, image_id, deRuiter_r, radius=0.03):
 def _insert_new_runcat(conn, image_id):
     """Insert new sources into the running catalog
 
@@ -1440,13 +1317,10 @@ def _insert_new_runcat(conn, image_id):
            WHERE trc0.xtrsrc IS NULL
         """
         ins = cursor.execute(query, (image_id,))
-        #cursor.execute(query, (image_id, image_id,
-        #                        radius, radius, radius, radius, radius, radius,
-        #                        deRuiter_r/3600.))
         if not AUTOCOMMIT:
             conn.commit()
         if ins > 0:
-            logger.info("Added %s new sources to the runningcatalog" % (ins,))
+            logger.info("Added %s new sources to runningcatalog" % (ins,))
     except db.Error, e:
         q = query % (image_id,)
         logger.warn("Failed on query:\n%s." % q)
@@ -1454,7 +1328,6 @@ def _insert_new_runcat(conn, image_id):
     finally:
         cursor.close()
 
-#def _insert_new_runcat_flux(conn, image_id, deRuiter_r, radius=0.03):
 def _insert_new_runcat_flux(conn, image_id):
     """Insert new sources into the runningicatalog_flux
 
@@ -1515,13 +1388,7 @@ def _insert_new_runcat_flux(conn, image_id):
                                  WHERE trc1.xtrsrc IS NULL
                               )
         """
-        #q = query % (image_id,))
-        #print "Q:\n%s" % q
-        #sys.exit()
         cursor.execute(query, (image_id, ))
-        #image_id,
-        #                        radius, radius, radius, radius, radius, radius,
-        #                        deRuiter_r/3600.))
         if not AUTOCOMMIT:
             conn.commit()
     except db.Error, e:
@@ -1531,7 +1398,6 @@ def _insert_new_runcat_flux(conn, image_id):
     finally:
         cursor.close()
 
-#def _insert_new_assoc(conn, image_id, deRuiter_r, radius=0.03):
 def _insert_new_assoc(conn, image_id):
     """Insert new associations for unknown sources
 
@@ -1581,9 +1447,6 @@ def _insert_new_assoc(conn, image_id):
                               )
         """
         cursor.execute(query, (image_id,))
-        #cursor.execute(query, (image_id, image_id,
-        #                        radius, radius, radius, radius, radius, radius,
-        #                        deRuiter_r/3600.))
         if not AUTOCOMMIT:
             conn.commit()
     except db.Error, e:
@@ -1635,13 +1498,76 @@ def _insert_new_monitoringlist(conn, image_id):
                          HAVING COUNT(*) <> 1
                         )
         """
-        #q = query % (image_id,image_id)
-        #print "QUERY:\n",q
         ins = cursor.execute(query, (image_id,image_id))
         if not AUTOCOMMIT:
             conn.commit()
         if ins > 0:
-            logger.info("Added %s new sources to the monitoringlist" % (ins,))
+            logger.info("Added %s new sources to monitoringlist table" % (ins,))
+    except db.Error, e:
+        q = query % (image_id,)
+        logger.warn("Failed on query:\n%s" % q)
+        raise
+    finally:
+        cursor.close()
+
+def _insert_new_transient(conn, image_id):
+    """A new source needs to be added to the transient table
+    
+    Except for sources that were detected in the initial image.
+
+    We set the siglevel to 1 for a new source and the
+    the variability indices 0.
+    """
+
+    # TODO: Is the image i0 enough or do we 
+    # need to specify i0.id = %s
+    try:
+        cursor = conn.cursor()
+        query = """\
+        INSERT INTO transient
+          (runcat
+          ,band
+          ,siglevel
+          ,V_int
+          ,eta_int
+          ,trigger_xtrsrc
+          )
+          SELECT r0.id AS runcat
+                ,i0.band AS band
+                ,1
+                ,0
+                ,0
+                ,x0.id AS trigger_xtrsrc
+            FROM runningcatalog r0
+                ,extractedsource x0
+                ,image i0
+           WHERE r0.xtrsrc = x0.id
+             AND x0.image = i0.id
+             AND r0.xtrsrc IN (SELECT t0.xtrsrc
+                                 FROM (SELECT x1.id AS xtrsrc
+                                         FROM extractedsource x1
+                                             ,image i1
+                                        WHERE x1.image = i1.id
+                                          AND i1.id = %s
+                                      ) t0
+                                      LEFT OUTER JOIN temprunningcatalog trc1
+                                      ON t0.xtrsrc = trc1.xtrsrc
+                                 WHERE trc1.xtrsrc IS NULL
+                              )
+             AND EXISTS (SELECT COUNT(*) 
+                           FROM image 
+                          WHERE dataset = (SELECT dataset 
+                                             FROM image 
+                                            WHERE id = %s
+                                          )
+                         HAVING COUNT(*) <> 1
+                        )
+        """
+        ins = cursor.execute(query, (image_id,image_id))
+        if not AUTOCOMMIT:
+            conn.commit()
+        if ins > 0:
+            logger.info("Added %s new sources to transient table" % (ins,))
     except db.Error, e:
         q = query % (image_id,)
         logger.warn("Failed on query:\n%s" % q)

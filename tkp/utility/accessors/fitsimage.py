@@ -62,6 +62,8 @@ class FitsImage(DataAccessor):
         self._read_data(hdu)
 
         self._coordparse(hdu)
+        self._others(hdu)
+
         try:
             self._freqparse(hdu)
         except KeyError:
@@ -237,3 +239,16 @@ class FitsImage(DataAccessor):
         deltax = self.wcs.cdelt[0]
         deltay = self.wcs.cdelt[1]
         self.beam = degrees2pixels(bmaj, bmin, bpa, deltax, deltay)
+
+    def _others(self, hdu):
+        """ Parse missing stuff from headers that should be injected by trap-inject
+        """
+        header = hdu.header
+        self.antenna_set = header.get('ANTENNA', None)
+        self.subbands = header.get('SUBBANDS', None)
+        self.channels = header.get('CHANNELS', None)
+        self.ncore = header.get('NCORE', None)
+        self.nremote = header.get('NREMOTE', None)
+        self.nintl = header.get('NINTL', None)
+        self.position = header.get('POSITION', None)
+        self.subbandwidth = header.get('SUBBANDW', None)

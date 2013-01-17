@@ -14,6 +14,11 @@ import tkp.lofar.antennaarrays
 
 logger = logging.getLogger(__name__)
 
+ANTENNAE_PER_TILE = 16
+TILES_PER_CORE_STATION = 24
+TILES_PER_REMOTE_STATION = 48
+TILES_PER_INTL_STATION = 96
+
 def noise_level(freq_eff, subbandwidth, tau_time, antenna_set, subbands=1, channels=64, Ncore=24, Nremote=16, Nintl=8):
     """ Returns the theoretical noise level given the supplied array antenna_set
 
@@ -33,10 +38,9 @@ def noise_level(freq_eff, subbandwidth, tau_time, antenna_set, subbands=1, chann
         ds_intl = tkp.lofar.antennaarrays.intl_dipole_distances[antenna_set]
         Aeff_intl = sum([tkp.lofar.noise.Aeff_dipole(freq_eff, x) for x in ds_intl])
     else:
-        # todo: check if this is correct. There are 16 antennae per tile. There are 24 tiles per core station
-        Aeff_core = 16 * 24 * tkp.lofar.noise.Aeff_dipole(freq_eff)
-        Aeff_remote = 16 * 24 * tkp.lofar.noise.Aeff_dipole(freq_eff)
-        Aeff_intl = 16 * 24 * tkp.lofar.noise.Aeff_dipole(freq_eff)
+        Aeff_core = ANTENNAE_PER_TILE * TILES_PER_CORE_STATON * tkp.lofar.noise.Aeff_dipole(freq_eff)
+        Aeff_remote = ANTENNAE_PER_TILE * TILES_PER_REMOTE_STATION * tkp.lofar.noise.Aeff_dipole(freq_eff)
+        Aeff_intl = ANTENNAE_PER_TILE * TILES_PER_INTL_STATION * tkp.lofar.noise.Aeff_dipole(freq_eff)
 
     # c = core, r = remote, i = international. So for example cc is core-core baseline
     Ssys_cc = system_sensitivity(freq_eff, Aeff_core)

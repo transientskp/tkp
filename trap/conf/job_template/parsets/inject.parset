@@ -6,7 +6,7 @@ antenna_set = HBA_DUAL                   # which antenna set is used
 subbands = 10
 channels = 60
 ncore = 41                               # number of core stations
-nremote 0                                # number of remote stations
+nremote = 0                                # number of remote stations
 nintl = 0                                # number of international stations
 position = 0                             # 3d coordinate of antenna (TODO)
 subbandwidth = 128613281.25

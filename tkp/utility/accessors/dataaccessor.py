@@ -1,5 +1,9 @@
 from tkp.utility.coordinates import WCS
-import datetime
+import logging
+import warnings
+
+
+logger = logging.getLogger(__name__)
 
 time_format = "%Y-%m-%d %H:%M:%S.%f"
 
@@ -54,3 +58,20 @@ class DataAccessor(object):
         self.nremote = None
         self.nintl = None
         self.position = None
+
+    def not_set(self):
+        """returns list of all params that are not set"""
+        return [x for x in dir(self) if  not x.startswith('_') and getattr(self, x) == None]
+
+    def ready(self):
+        """checks if this accessor if ready for everything, if not give warning
+        """
+        not_set = self.not_set()
+        if not_set:
+            msg = "%s not set for image %s" % (", ".join(not_set), self.url)
+            logging.error(msg)
+            warnings.warn(msg)
+            return False
+        return True
+
+

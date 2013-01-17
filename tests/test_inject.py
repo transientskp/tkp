@@ -41,11 +41,8 @@ class TestInject(unittest.TestCase):
             'bmaj': 0.4,
             'bmin': 0.4,
             'bpa': 0.4,
-            #'endtime': '2007-07-20T14:18:09.909001',
-            'centre_decl': 0.1,
-            'centre_ra': 0.1,
         }
-        
+
         trap.inject.modify_headers(parset, self.fixed_file)
         fixed_fits = tkp.utility.accessors.open(self.fixed_file)
         self.assertTrue(fixed_fits.not_set() == [])

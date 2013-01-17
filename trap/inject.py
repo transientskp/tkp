@@ -18,7 +18,7 @@ parset_fields = {
     'taustart_ts': (str, 'DATE-OBS'),
     'freq_eff': (float, 'RESTFRQ'),
     'freq_bw': (float, 'RESTBW'),
-    'endtime': (str, 'END_UTC'),
+    'tau_time': (float, 'TAU_TIME'),
     'antenna_set': (str, 'ANTENNA'),
     'subbands': (int, 'SUBBANDS'),
     'channels': (int, 'CHANNELS'),
@@ -30,12 +30,9 @@ parset_fields = {
     'bmaj': (float, 'BMAJ'),
     'bmin': (float, 'BMIN'),
     'bpa': (float, 'BPA'),
-    #'tau_time': (float, '??'
-    #'centre_decl': (float,
-    #'centre_ra': (float,
 }
 
-extra_doc = " Properties which can be overwritten in the parset file are: " +\
+extra_doc = " Properties which can be overwritten or set  in the parset file are: " +\
     ", ".join(parset_fields.keys())
 
 def parse_arguments():

@@ -18,7 +18,6 @@ parset_fields = {
     'taustart_ts': (str, 'DATE-OBS'),
     'freq_eff': (float, 'RESTFRQ'),
     'freq_bw': (float, 'RESTBW'),
-    #'tau_time': (float, '??'
     'endtime': (str, 'END_UTC'),
     'antenna_set': (str, 'ANTENNA'),
     'subbands': (int, 'SUBBANDS'),
@@ -26,13 +25,14 @@ parset_fields = {
     'ncore': (int, 'NCORE'),
     'nremote': (int, 'NREMOTE'),
     'nintl': (int, 'NINTL'),
-    #'centre_decl': (float,
-    #'centre_ra': (float,
     'position': (int, 'POSITION'),
     'subbandwidth': (float, 'SUBBANDW'),
     'bmaj': (float, 'BMAJ'),
     'bmin': (float, 'BMIN'),
     'bpa': (float, 'BPA'),
+    #'tau_time': (float, '??'
+    #'centre_decl': (float,
+    #'centre_ra': (float,
 }
 
 extra_doc = " Properties which can be overwritten in the parset file are: " +\
@@ -59,12 +59,6 @@ def parse_parset(path):
             pass # value not defined in parset file, continue
     return parsed
 
-def main():
-    parset_file, fits_file = parse_arguments()
-    parset = parse_parset(parset_file)
-    modify_headers(parset, fits_file)
-
-
 
 def modify_headers(parset, fits_file):
     hdu = 0 # Header Data Unit, usually 0
@@ -74,66 +68,15 @@ def modify_headers(parset, fits_file):
     for parset_field, (type_, fits_field) in parset_fields.items():
         if parset.has_key(parset_field):
             value = parset[parset_field]
-            print "setting %s to %s" % (parset_field, value)
+            print "setting %s (%s) to %s" % (parset_field, fits_field, value)
             header[fits_field] = value
 
+    fits_file.flush()
     fits_file.close()
 
-def set_lofar(header):
-    """set this field which is used by the FITS header parser"""
-    header['TELESCOP'] = 'LOFAR'
 
-def set_taustart_ts(header, value):
-    header['DATE-OBS'] = value
+def main():
+    parset_file, fits_file = parse_arguments()
+    parset = parse_parset(parset_file)
+    modify_headers(parset, fits_file)
 
-def set_freq_eff(header, value):
-    header['RESTFRQ'] = value
-
-def set_freq_bw(header, value):
-    header['RESTBW'] = value
-
-#def set_tau_time(header, value):
-#    pass
-
-def set_endtime(header, value):
-    # tau_time is determined by the difference between start and end
-    header['END_UTC'] = value
-
-def set_antenna_set(header, value):
-    header['ANTENNA'] = value
-
-def set_subbands(header, value):
-    header['SUBBANDS'] = value
-
-def set_channels(header, value):
-    header['CHANNELS'] = value
-
-def set_ncore(header, value):
-    header['NCORE'] = value
-
-def set_nremote(header, value):
-    header['NREMOTE'] = value
-
-def set_nintl(header, value):
-    header['NINTL'] = value
-
-def set_centre_decl(header, value):
-    pass
-
-def set_centre_ra(header, value):
-    pass
-
-def set_position(header, value):
-    header['POSITION'] = value
-
-def set_subbandwidth(header, value):
-    header['SUBBANDW'] = value
-
-def set_bmaj(header, value):
-    header['BMAJ'] = value
-
-def set_bmin(header, value):
-    header['BMIN'] = value
-
-def set_bpa(header, value):
-    header['BPA'] = value

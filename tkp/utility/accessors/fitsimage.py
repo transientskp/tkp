@@ -28,6 +28,7 @@ beam_regex = re.compile(r'''
     (?P<bpa>[-\d\.eE]+)
     ''', re.VERBOSE)
 
+
 class FitsImage(DataAccessor):
     """
     Use PyFITS to pull image data out of a FITS file.
@@ -46,30 +47,16 @@ class FitsImage(DataAccessor):
 
         self.plane = plane
 
-        # filename attribute is required by db_image_from_accessor(), below.
-        if isinstance(source, basestring):
-            self.url = source
-            hdulist = pyfits.open(source)
-            hdu = hdulist[hdu]
-        elif isinstance(source, pyfits.core.HDUList):
-            self.url = source.filename()
-            hdu = source[hdu]
-        elif isinstance(source, pyfits.PrimaryHDU) or isinstance(source, pyfits.ImageHDU):
-            self.url = source.fileinfo()['file'].name
-            hdu = source
+        self.url = source
+        hdulist = pyfits.open(source)
+        hdu = hdulist[hdu]
 
         self.header = hdu.header.copy()
         self._read_data(hdu)
-
         self._coordparse(hdu)
-        self._others(hdu)
+        self._othersparse(hdu)
+        self._freqparse(hdu)
 
-        try:
-            self._freqparse(hdu)
-        except KeyError:
-            # Never mind frequency information then
-            # But be aware when storing this in the database
-            pass
         if not beam:
             self._beamsizeparse(hdu)
         else:
@@ -78,8 +65,17 @@ class FitsImage(DataAccessor):
             deltay = self.wcs.cdelt[1]
             self.beam = degrees2pixels(bmaj, bmin, bpa, deltax, deltay)
 
+        self._timeparse(hdu)
 
+        hdulist.close()
+
+        # check if everything is okay!
+        self.ready()
+
+
+    def _timeparse(self, hdu):
         # Attempt to do something sane with timestamps.
+
         timezone = pytz.utc
         try:
             try:
@@ -117,13 +113,6 @@ class FitsImage(DataAccessor):
             logger.warn("End time not specified or unreadable")
             self.tau_time = 0.
 
-        if isinstance(source, basestring):
-            # If we opened the FITS file ourselves, we'd better ensure it's
-            # closed
-            hdulist.close()
-
-        # check if everything is okay!
-        self.ready()
 
     def _coordparse(self, hdu):
         """Set some 'shortcut' variables for access to the coordinate
@@ -156,7 +145,11 @@ class FitsImage(DataAccessor):
             self.wcs.cunit = '', ''
 
         self.wcs.wcsset()
-        self.pix_to_position = self.wcs.p2s
+
+        x, y = self.data.shape
+        self.centre_ra, self.centre_decl = self.wcs.p2s((x/2, y/2))
+
+
 
     def _freqparse(self, hdu):
         """
@@ -183,9 +176,7 @@ class FitsImage(DataAccessor):
         except KeyError:
             logger.warn("Frequency not specified in FITS")
 
-    def get_header(self):
-        # Preserved for API compatibility.
-        return self.header
+
 
     def _read_data(self, hdu):
         """
@@ -205,6 +196,7 @@ class FitsImage(DataAccessor):
             logger.warn("received datacube with %s planes, assuming Stokes I and taking plane 0" % planes)
             data=data[0,:,:]
         self.data = data.transpose()
+
 
     def _beamsizeparse(self, hdu):
         """Read and return the beam properties bmaj, bmin and bpa values from
@@ -240,10 +232,17 @@ class FitsImage(DataAccessor):
         deltay = self.wcs.cdelt[1]
         self.beam = degrees2pixels(bmaj, bmin, bpa, deltax, deltay)
 
-    def _others(self, hdu):
+
+    def _othersparse(self, hdu):
         """ Parse missing stuff from headers that should be injected by trap-inject
         """
         header = hdu.header
+
+        # this may have been set already by _timeparse, but if defined here
+        # it is set by our inject script and should be used
+        if hdu.header.has_key('TAU_TIME'):
+            self.tau_time = header['TAU_TIME']
+
         self.antenna_set = header.get('ANTENNA', None)
         self.subbands = header.get('SUBBANDS', None)
         self.channels = header.get('CHANNELS', None)

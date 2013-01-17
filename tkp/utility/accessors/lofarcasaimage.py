@@ -229,3 +229,6 @@ class LofarCasaImage(DataAccessor):
         self.taustart_ts = parse_taustartts(self.subtables['LOFAR_OBSERVATION'])
         self.centre_ra, self.centre_decl = parse_phasecentre(self.table)
         self.position = parse_position(self.subtables['LOFAR_ANTENNA'])
+
+        # check if everything is okay!
+        self.ready()

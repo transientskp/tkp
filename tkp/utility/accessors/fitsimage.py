@@ -120,6 +120,9 @@ class FitsImage(DataAccessor):
             # closed
             hdulist.close()
 
+        # check if everything is okay!
+        self.ready()
+
     def _coordparse(self, hdu):
         """Set some 'shortcut' variables for access to the coordinate
         parameters in the FITS file header.

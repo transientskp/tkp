@@ -112,7 +112,7 @@ def store_images(images_metadata, dataset_id):
     image_ids = []
 
     # sort images by timestamp
-    images_metadata.sort(key=lambda m: time.strptime(m['taustart_ts'], time_format))
+    images_metadata.sort(key=lambda m: m['taustart_ts'])
 
     for metadata in images_metadata:
         filename = metadata['url']

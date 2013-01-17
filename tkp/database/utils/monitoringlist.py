@@ -11,6 +11,7 @@ from tkp.config import config
 from . import generic
 from . import general
 import tkp.database
+from tkp.database import DataBase
 from collections import namedtuple
 
 logger = logging.getLogger(__name__)
@@ -76,7 +77,7 @@ AUTOCOMMIT = config['database']['autocommit']
 #        logger.warn("Query failed:\n%s", query)
 #        raise
 
-def forced_fit_null_detections(conn, image_id, radius=0.03, deRuiter_r=3.717):
+def forced_fit_null_detections(image_id, radius=0.03, deRuiter_r=3.717):
     """Returns the runcat sources that do not have a counterpart in the 
     extractedsources of the current image
     
@@ -89,6 +90,7 @@ def forced_fit_null_detections(conn, image_id, radius=0.03, deRuiter_r=3.717):
     """
     deRuiter_red = deRuiter_r / 3600.
     try:
+        conn = DataBase().connection
         cursor = conn.cursor()
         query = """\
         SELECT r1.id
@@ -145,7 +147,7 @@ def forced_fit_null_detections(conn, image_id, radius=0.03, deRuiter_r=3.717):
         raise
     return r
 
-def forced_fit_monsources(conn, image_id, radius=0.03, deRuiter_r=3.717):
+def forced_fit_monsources(image_id, radius=0.03, deRuiter_r=3.717):
     """Returns the user-entry sources and no-counterpart sources from 
     monitoringlist
     
@@ -157,6 +159,7 @@ def forced_fit_monsources(conn, image_id, radius=0.03, deRuiter_r=3.717):
     """
     deRuiter_red = deRuiter_r / 3600.
     try:
+        conn = DataBase().connection 
         cursor = conn.cursor()
         query = """\
         SELECT m.id AS id
@@ -230,14 +233,16 @@ def forced_fit_monsources(conn, image_id, radius=0.03, deRuiter_r=3.717):
         raise
     return r
 
-def insert_forcedfits_into_extractedsource(conn, image_id, results, extract):
+def insert_forcedfits_into_extractedsource(image_id, results, extract):
+    conn = DataBase().connection
     general.insert_extracted_sources(conn, image_id, results, extract)
 
-def adjust_transients_in_monitoringlist(conn, image_id, transients):
+def adjust_transients_in_monitoringlist(image_id, transients):
     """Adjust transients in monitoringlist, by either adding or
     updating them
     
     """
+    conn = DataBase().connection
     _update_known_transients_in_monitoringlist(conn, image_id, transients)
     _insert_new_transients_in_monitoringlist(conn, image_id, transients)
     
@@ -776,7 +781,7 @@ def _insert_monitored_source_into_assocxtrsource(cursor,runcatid,xtrsrcid):
         raise
 
 
-def add_nulldetections(conn, image_id):
+def add_nulldetections(image_id):
     """
     Add null detections (intermittent) sources to monitoringlist.
      
@@ -796,6 +801,7 @@ def add_nulldetections(conn, image_id):
     # Optimise by using image_id for image and extractedsource
     # extract_type = 1 -> the null detections (forced fit) in extractedsource
     try:
+        conn = DataBase().connection
         cursor = conn.cursor()
         query = """\
         INSERT INTO monitoringlist

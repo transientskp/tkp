@@ -535,7 +535,7 @@ class Image(DBObject):
        # (Namedtuple, for starters?)
        
         dbu.insert_extracted_sources(
-            self.database.connection, self._id, results=results)
+            self.database.connection, self._id, results=results, extract='blind')
         
     def associate_extracted_sources(self, deRuiter_r=DERUITER_R):
         """Associate sources from the last images with previously

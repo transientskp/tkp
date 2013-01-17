@@ -25,7 +25,27 @@ class TestInject(unittest.TestCase):
         self.assertTrue(missing_fits.not_set() != [])
 
     def test_injection(self):
-        parset = {} # TODO: set overwrite vars here
+        parset = {
+            'taustart_ts': '2007-07-20T14:18:09.909001',
+            'freq_eff': 1000000.0,
+            'freq_bw': 50.0,
+            'tau_time': 1000.0,
+            'antenna_set': 'HBA',
+            'subbands': 40,
+            'channels': 40,
+            'ncore': 1000,
+            'nremote': 10000,
+            'nintl': 3,
+            'position': 10,
+            'subbandwidth': 10,
+            'bmaj': 0.4,
+            'bmin': 0.4,
+            'bpa': 0.4,
+            #'endtime': '2007-07-20T14:18:09.909001',
+            'centre_decl': 0.1,
+            'centre_ra': 0.1,
+        }
+        
         trap.inject.modify_headers(parset, self.fixed_file)
-        fixed_fits = tkp.utility.accessors.open(fits_file)
+        fixed_fits = tkp.utility.accessors.open(self.fixed_file)
         self.assertTrue(fixed_fits.not_set() == [])

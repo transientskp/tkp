@@ -9,16 +9,15 @@ class TestQuality(unittest.TestCase):
     def __init__(self, *args):
         super(TestQuality, self).__init__(*args)
         self.dataset_id = db_subs.create_dataset_8images()
-        self.parset = tempfile.NamedTemporaryFile()
-        self.parset.flush()
         self.accessor = tkp.utility.accessors.open(testdata.fits_file)
 
     def test_parse_parset(self):
-        trap.ingredients.quality.parse_parset(self.parset.name)
-
-    def test_parse_parset_with_accessor(self):
-        trap.ingredients.quality.parse_parset(self.parset.name, self.accessor)
+        parset = tempfile.NamedTemporaryFile()
+        parset.flush()
+        trap.ingredients.quality.parse_parset(parset.name)
 
     def test_check(self):
+        parset = tempfile.NamedTemporaryFile()
+        parset.flush()
         image_ids = db_queries.dataset_images(self.dataset_id)
-        trap.ingredients.quality.check(image_ids[0], self.parset.name)
+        trap.ingredients.quality.check(image_ids[0], parset.name)

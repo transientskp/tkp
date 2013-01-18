@@ -53,6 +53,8 @@ class Trap(control):
         dataset = DataSet(id=self.outputs['dataset_id'], database=DataBase())
         dataset.update_images()
 
+        self.add_manual_monitoringlist_entries(dataset)
+
         self.outputs.update(self.run_task(
             "quality_check",
             [i.id for i in dataset.images],

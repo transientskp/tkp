@@ -58,10 +58,17 @@ def parse_arguments():
     run_parser = parser_subparsers.add_parser('run')
     run_parser.add_argument('runjobname', help='Name of job to run')
     run_parser.add_argument('-d', '--debug', help='enable debug logging', action='store_true')
+    run_parser.add_argument('-m', '--monitor-coords',
+        help='Specify a list of RA,DEC co-ordinate pairs to monitor (decimal degrees, no spaces)')
+    run_parser.add_argument('-l', '--monitor-list',
+        help='SSpecify a file containing a list of RA,DEC')
 
     runlocal_parser = parser_subparsers.add_parser('runlocal')
-    runlocal_parser.add_argument('runlocaljobname', help='Name of job to run'
-                                                         ' (local run)')
+    runlocal_parser.add_argument('runlocaljobname', help='Name of job to run (local run)')
+    runlocal_parser.add_argument('-m', '--monitor-coords',
+        help='Specify a list of RA,DEC co-ordinate pairs to monitor (decimal degrees, no spaces)')
+    runlocal_parser.add_argument('-l', '--monitor-list',
+        help='SSpecify a file containing a list of RA,DEC')
     runlocal_parser.add_argument('-d', '--debug', help='enable debug logging', action='store_true')
 
     clean_parser = parser_subparsers.add_parser('clean')

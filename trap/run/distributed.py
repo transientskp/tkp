@@ -3,12 +3,10 @@ from __future__ import with_statement
 
 import sys
 import datetime
-import json
-
 from lofarpipe.support.control import control
 from lofarpipe.support.utilities import log_time
 import lofarpipe.support.lofaringredient as ingredient
-
+from trap.ingredients.monitoringlist import add_manual_monitoringlist_entries
 from tkp.database import DataBase
 from tkp.database import DataSet
 
@@ -53,6 +51,8 @@ class Trap(control):
         dataset = DataSet(id=self.outputs['dataset_id'], database=DataBase())
         dataset.update_images()
 
+        add_manual_monitoringlist_entries(dataset.id, self.inputs)
+
         self.outputs.update(self.run_task(
             "quality_check",
             [i.id for i in dataset.images],
@@ -89,30 +89,3 @@ class Trap(control):
         self.run_task("prettyprint", self.outputs['transients'])
 
         dataset.process_ts = datetime.datetime.utcnow()
-
-
-    def add_manual_monitoringlist_entries(self, dataset):
-        """Parses co-ords from self.inputs, loads them into the monitoringlist"""
-        monitor_coords=[]
-        if 'monitor_coords' in self.inputs:
-            try:
-                monitor_coords.extend(json.loads(self.inputs['monitor_coords']))
-            except ValueError:
-                self.logger.error("Could not parse monitor-coords from command line")
-                sys.exit(1)
-
-        if 'monitor_list' in self.inputs:
-            try:
-                mon_list = json.load(open(self.inputs['monitor_list']))
-                monitor_coords.extend(mon_list)
-            except ValueError:
-                self.logger.error("Could not parse monitor-coords from file: "
-                                  +self.inputs['monitor_list'])
-                sys.exit(1)
-
-        if len(monitor_coords):
-            self.logger.info( "You specified monitoring at coords:")
-            for i in monitor_coords:
-                self.logger.info( "RA, %f ; Dec, %f " % (i[0],i[1]))
-        for c in monitor_coords:
-            dataset.add_manual_entry_to_monitoringlist(c[0],c[1])

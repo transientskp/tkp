@@ -1,9 +1,14 @@
 import os
 import logging
+import json
+import sys
 from lofarpipe.support.lofarexceptions import PipelineException
 from lofar.parameterset import parameterset
 from tkp.database import DataBase, DataSet
 import tkp.utility.accessors as accessors
+from tkp.database import DataBase
+from tkp.database import DataSet
+
 
 from tkp.database.orm import Image
 
@@ -51,3 +56,31 @@ def update_monitoringlist(image_id):
         results = [(tgt.runcat, tgt.monitorid, result.serialize()) for tgt, result in
                    zip(mon_targets, results) if result is not None]
         db_image.insert_monitored_sources(results)
+
+
+def add_manual_monitoringlist_entries(dataset_id, inputs):
+    """Parses co-ords from self.inputs, loads them into the monitoringlist"""
+    monitor_coords=[]
+    if 'monitor_coords' in inputs:
+        try:
+            monitor_coords.extend(json.loads(inputs['monitor_coords']))
+        except ValueError:
+            logger.error("Could not parse monitor-coords from command line")
+            sys.exit(1)
+
+    if 'monitor_list' in inputs:
+        try:
+            mon_list = json.load(open(inputs['monitor_list']))
+            monitor_coords.extend(mon_list)
+        except ValueError:
+            logger.error("Could not parse monitor-coords from file: "
+                              +inputs['monitor_list'])
+            sys.exit(1)
+
+    if len(monitor_coords):
+        logger.info( "You specified monitoring at coords:")
+        for i in monitor_coords:
+            logger.info( "RA, %f ; Dec, %f " % (i[0],i[1]))
+    for c in monitor_coords:
+        dataset = DataSet(id=dataset_id, database=DataBase())
+        dataset.add_manual_entry_to_monitoringlist(c[0],c[1])

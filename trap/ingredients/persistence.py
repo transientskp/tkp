@@ -37,36 +37,38 @@ def image_to_mongodb(filename, hostname, port, db):
         warnings.warn(msg)
         return False
 
-    with pymongo.Connection(host=hostname, port=port) as connection:
+    try:
+        connection = pymongo.Connection(host=hostname, port=port)
         gfs = gridfs.GridFS(connection[db])
         if gfs.exists(filename=filename):
             logger.debug("File already in database")
-            return True
-        try:
+
+        else:
             # This conversion should work whether the input file
             # is in FITS or CASA format.
+            # temp_fits_file is removed automatically when closed.
             temp_fits_file = NamedTemporaryFile()
             i = pyrap_image(filename)
             i.tofits(temp_fits_file.name)
-        except Exception, e:
-            msg ="Could not convert image to FITS: %s" % (str(e))
-            logger.error(msg)
-            warnings.warn(msg)
-            temp_fits_file.close()
-            return False
-        try:
             new_file = gfs.new_file(filename=filename)
             with open(temp_fits_file.name, "r") as f:
                 new_file.write(f)
             new_file.close()
-        except Exception, e:
-            msg = "Could not store image to MongoDB: %s" % (str(e))
-            logger.error(msg)
-            return False
-        finally:
-            temp_fits_file.close()
-        return True
 
+    except Exception, e:
+        msg = "Failed to save image to MongoDB: %s" % (str(e),)
+        logger.error(msg)
+        warnings.warn(msg)
+        return False
+
+    finally:
+        connection.close()
+
+        # Only close this if it has been created.
+        if "temp_fits_file" in locals():
+            temp_files_file.close()
+
+    return True
 
 
 def create_dataset(dataset_id, description):
@@ -96,7 +98,7 @@ def store_images(images_metadata, dataset_id):
     order is very important here. If you don't add them all in once, you should
     make sure they are added in the correct order e.g. sorted by observation
     time.
-    
+
     Args:
         images_metadata: list of dicts containing image metadata
         dataset_id: dataset id to be used. don't use value from parset file

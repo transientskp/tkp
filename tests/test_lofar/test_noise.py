@@ -12,14 +12,15 @@ class TestHBAStationEffectiveArea(unittest.TestCase):
     Values taken from table 2 of
     http://www.astron.nl/radio-observatory/astronomers/lofar-imaging-capabilities-sensitivity/sensitivity-lofar-array/sensiti"
     """
-    known_values = {
+    known_values = (
         (120, 600, 1200, 2400),
         (150, 512, 1024, 2048),
         (180, 356, 711, 1422),
         (200, 288, 576, 1152),
         (210, 261, 522, 1045),
         (240, 200, 400, 800)
-    }
+    )
+
     def test_known_values(self):
         for freq_eff, core, remote, intl in self.known_values:
             freq_eff *= 1e6 # MHz to Hz

@@ -5,7 +5,7 @@ import time
 from lofarpipe.support.parset import parameterset
 import tkp.utility.accessors
 from tkp.database import DataBase, DataSet, Image
-from tkp.utility.accessors.dataaccessor import extract_metadata, time_format
+from tkp.utility.accessors.dataaccessor import extract_metadata
 from tempfile import NamedTemporaryFile
 from pyrap.images import image as pyrap_image
 
@@ -111,7 +111,7 @@ def store_images(images_metadata, dataset_id):
     image_ids = []
 
     # sort images by timestamp
-    images_metadata.sort(key=lambda m: time.strptime(m['taustart_ts'], time_format))
+    images_metadata.sort(key=lambda m: m['taustart_ts'])
 
     for metadata in images_metadata:
         filename = metadata['url']

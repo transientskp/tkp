@@ -94,10 +94,6 @@ class quality_check(BaseRecipe, RemoteCommandRecipeMixIn):
                 results.append(job.results['image_id'])
         self.outputs['good_image_ids'] = sorted(results)
 
-        # TODO: temporary hack to store overwrite parset values in DB. should be changed after cycle-0!!
-        for image in images:
-            trap.ingredients.quality.overwrite_metadata(image, self.inputs['parset'])
-
         if self.error.isSet():
             self.logger.error("Failed quality control process detected")
             return 1

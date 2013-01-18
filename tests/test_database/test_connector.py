@@ -9,14 +9,10 @@ class TestDatabaseConnection(unittest.TestCase):
         import tkp.database.database
         self.database = tkp.database.database.DataBase()
 
-    def tearDown(self):
-        self.database.close()
-
     @requires_database()
     def test_using_testdb(self):
         import tkp.database.database
         import tkp.config
-        import monetdb
         self.assertEquals(self.database.name,
                           tkp.config.config['test']['test_database_name'])
         

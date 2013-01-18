@@ -26,7 +26,7 @@ def search_transients(image_ids, dataset_id, parset, tkpconfigdir=None):
     all_siglevels = []
     all_transients = []
     for band in dataset.frequency_bands():
-        for img_id in image_ids:
+        if image_ids:
             transient_ids, siglevels, transients = dbu.transient_search(
                 conn=database.connection,
                 dsid=dataset.id,
@@ -35,7 +35,7 @@ def search_transients(image_ids, dataset_id, parset, tkpconfigdir=None):
                 V_lim=V_lim,
                 probability_threshold=prob_threshold,
                 minpoints=minpoints,
-                imageid=img_id)
+                imageid=image_ids[0])
 
         logger.info("Found %s transients in band %s." % (len(transients), band))
         all_transient_ids.extend(transient_ids)

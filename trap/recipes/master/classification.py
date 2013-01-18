@@ -27,7 +27,6 @@ import itertools
 import datetime
 from contextlib import closing
 from tkp.database import DataBase
-from lofarpipe.support.clusterdesc import ClusterDesc, get_compute_nodes
 from lofarpipe.support.baserecipe import BaseRecipe
 from lofarpipe.support.remotecommand import RemoteCommandRecipeMixIn
 from lofarpipe.support.remotecommand import ComputeJob
@@ -36,7 +35,7 @@ import tkp.config
 import tkp.classification
 import tkp.classification.manual
 from tkp.classification.transient import DateTime
-
+import trap.ingredients as ingred
 
 class classification(BaseRecipe, RemoteCommandRecipeMixIn):
 
@@ -58,20 +57,7 @@ class classification(BaseRecipe, RemoteCommandRecipeMixIn):
     def go(self):
         super(classification, self).go()
         transients = self.inputs['args']
-
-        clusterdesc = ClusterDesc(self.config.get('cluster', "clusterdesc"))
-        if clusterdesc.subclusters:
-            available_nodes = dict(
-                (cl.name, itertools.cycle(get_compute_nodes(cl)))
-                for cl in clusterdesc.subclusters
-                )
-        else:
-            available_nodes = {
-                clusterdesc.name: get_compute_nodes(clusterdesc)
-                }
-        nodes = list(itertools.chain(*available_nodes.values()))
-        self.logger.info("available nodes = %s" % str(available_nodes))    
-
+        nodes = ingred.common.nodes_available(self.config)
         command = "python %s" % self.__file__.replace('master', 'nodes')
         jobs = []
         nodes = itertools.cycle(nodes)

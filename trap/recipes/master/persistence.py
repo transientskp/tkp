@@ -4,9 +4,9 @@ import itertools
 import lofarpipe.support.lofaringredient as ingredient
 from lofarpipe.support.baserecipe import BaseRecipe
 from lofarpipe.support.remotecommand import RemoteCommandRecipeMixIn
-from lofarpipe.support.clusterdesc import ClusterDesc, get_compute_nodes
 from lofarpipe.support.remotecommand import ComputeJob
 from trap.ingredients.persistence import master_steps
+import trap.ingredients as ingred
 
 
 class persistence(BaseRecipe, RemoteCommandRecipeMixIn):
@@ -37,15 +37,7 @@ class persistence(BaseRecipe, RemoteCommandRecipeMixIn):
             return 0
 
     def distributed(self, images):
-        clusterdesc = ClusterDesc(self.config.get('cluster', "clusterdesc"))
-        if clusterdesc.subclusters:
-            available_nodes = dict(
-                (cl.name, itertools.cycle(get_compute_nodes(cl)))
-                    for cl in clusterdesc.subclusters
-            )
-        else:
-            available_nodes = {clusterdesc.name: get_compute_nodes(clusterdesc)}
-        nodes = list(itertools.chain(*available_nodes.values()))
+        nodes = ingred.common.nodes_available(self.config)
 
         command = "python %s" % self.__file__.replace('master', 'nodes')
         jobs = []

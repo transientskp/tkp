@@ -5,7 +5,7 @@ import time
 from lofarpipe.support.parset import parameterset
 import tkp.utility.accessors
 from tkp.database import DataBase, DataSet, Image
-from tkp.utility.accessors.dataaccessor import extract_metadata, time_format
+from tkp.utility.accessors.dataaccessor import extract_metadata
 from tempfile import NamedTemporaryFile
 from pyrap.images import image as pyrap_image
 
@@ -37,14 +37,16 @@ def image_to_mongodb(filename, hostname, port, db):
         warnings.warn(msg)
         return False
 
-    with pymongo.Connection(host=hostname, port=port) as connection:
+    try:
+        connection = pymongo.Connection(host=hostname, port=port)
         gfs = gridfs.GridFS(connection[db])
         if gfs.exists(filename=filename):
             logger.debug("File already in database")
-            return True
-        try:
+
+        else:
             # This conversion should work whether the input file
             # is in FITS or CASA format.
+            # temp_fits_file is removed automatically when closed.
             temp_fits_file = NamedTemporaryFile()
             i = pyrap_image(filename)
             i.tofits(temp_fits_file.name)
@@ -67,6 +69,20 @@ def image_to_mongodb(filename, hostname, port, db):
             temp_fits_file.close()
         return True
 
+    except Exception, e:
+        msg = "Failed to save image to MongoDB: %s" % (str(e),)
+        logger.error(msg)
+        warnings.warn(msg)
+        return False
+
+    finally:
+        connection.close()
+
+        # Only close this if it has been created.
+        if "temp_fits_file" in locals():
+            temp_files_file.close()
+
+    return True
 
 
 def create_dataset(dataset_id, description):

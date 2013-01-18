@@ -1,5 +1,7 @@
 import logging
 from trap import ingredients as ingred
+import lofarpipe.support.lofaringredient as ingredient
+from trap.ingredients.monitoringlist import add_manual_monitoringlist_entries
 from lofarpipe.support.control import control
 
 from images_to_process import images
@@ -10,7 +12,28 @@ class MonetFilter(logging.Filter):
 
 
 class TrapLocal(control):
-    inputs = {}
+    inputs = {
+        'monitor_coords': ingredient.StringField(
+            '-m', '--monitor-coords',
+            # Unfortunately the ingredient system cannot handle spaces in
+            # parameter fields. I have tried enclosing with quotes, switching
+            # to StringField, still no good.
+            help='Specify a list of RA,DEC co-ordinate pairs to monitor\n'
+                 '(decimal degrees, no spaces), e.g.:\n'
+                 '--monitor-coords=[[137.01,14.02],[137.05,15.01]]',
+            optional=True
+        ),
+        'monitor_list': ingredient.FileField(
+            '-l', '--monitor-list',
+            help='Specify a file containing a list of RA,DEC'
+                 'co-ordinates to monitor, e.g.\n'
+                 '--monitor-list=my_coords.txt\n'
+                 'File should contain a list of RA,DEC pairs (each in list form), e.g.\n'
+                 '[ [137.01,14.02], [137.05,15.01]] \n'
+            ,
+            optional=True
+        ),
+        }
 
     def pipeline_logic(self):
         logdrain = logging.getLogger()
@@ -26,6 +49,8 @@ class TrapLocal(control):
 
         persistence_parset_file = self.task_definitions.get("persistence", "parset")
         dataset_id, image_ids = ingred.persistence.all(images, persistence_parset_file)
+
+        add_manual_monitoringlist_entries(dataset_id, self.inputs)
 
         good_image_ids = []
         for image_id in image_ids:
@@ -49,3 +74,4 @@ class TrapLocal(control):
         for transient in transients:
             ingred.feature_extraction.extract_features(transient)
             ingred.classification.classify(transient, classification_file)
+

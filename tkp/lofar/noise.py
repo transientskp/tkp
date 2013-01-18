@@ -38,7 +38,7 @@ def noise_level(freq_eff, subbandwidth, tau_time, antenna_set, subbands=1, chann
         ds_intl = tkp.lofar.antennaarrays.intl_dipole_distances[antenna_set]
         Aeff_intl = sum([tkp.lofar.noise.Aeff_dipole(freq_eff, x) for x in ds_intl])
     else:
-        Aeff_core = ANTENNAE_PER_TILE * TILES_PER_CORE_STATON * tkp.lofar.noise.Aeff_dipole(freq_eff)
+        Aeff_core = ANTENNAE_PER_TILE * TILES_PER_CORE_STATION * tkp.lofar.noise.Aeff_dipole(freq_eff)
         Aeff_remote = ANTENNAE_PER_TILE * TILES_PER_REMOTE_STATION * tkp.lofar.noise.Aeff_dipole(freq_eff)
         Aeff_intl = ANTENNAE_PER_TILE * TILES_PER_INTL_STATION * tkp.lofar.noise.Aeff_dipole(freq_eff)
 

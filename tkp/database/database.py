@@ -37,7 +37,7 @@ elif ENGINE == 'postgresql':
 else:
     raise TypeError("unknown engine %s" % config['database']['engine'])
 
-    
+
 
 class DataBase(object):
     """An object representing a database connection
@@ -70,7 +70,7 @@ class DataBase(object):
     _instance = None
     def __new__(cls, *args, **kwargs):
         if not cls._instance:
-            cls._instance = super(DataBase, cls).__new__(cls, *args, **kwargs)
+            cls._instance = object.__new__(cls)
         return cls._instance
 
     def __init__(self, host=None, name=None, user=None,

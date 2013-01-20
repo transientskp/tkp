@@ -16,6 +16,7 @@ from lofarpipe.support.lofarexceptions import PipelineException
 import monetdb.sql as db
 from tkp.config import config
 import tkp.database
+from tkp.database import DataBase
 
 logger = logging.getLogger(__name__)
 
@@ -68,7 +69,7 @@ def insert_image(conn, dataset, freq_eff, freq_bw, taustart_ts, tau_time,
     return image_id
 
 
-def insert_extracted_sources(conn, image_id, results, extract):
+def insert_extracted_sources(image_id, results, extract):
     """Insert all extracted sources
 
     Insert the sources that were detected by the Source Extraction
@@ -93,11 +94,11 @@ def insert_extracted_sources(conn, image_id, results, extract):
     #To do: Figure out a saner method of passing the results around
     # (Namedtuple for starters?) 
     if len(results):
-        _insert_extractedsources(conn, image_id, results, extract)
+        _insert_extractedsources(image_id, results, extract)
 
 #TO DO(?): merge the private function below into the public function above?
 
-def _insert_extractedsources(conn, image_id, results, extract):
+def _insert_extractedsources(image_id, results, extract):
     """Insert all extracted sources with their properties
 
     The content of results is in the following sequence:
@@ -126,6 +127,7 @@ def _insert_extractedsources(conn, image_id, results, extract):
       source-distance calculations
 
     """
+    conn = DataBase().connection
     xtrsrc = []
     for src in results:
         r = list(src)

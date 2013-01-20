@@ -12,6 +12,7 @@ from . import generic
 import numpy
 from scipy.stats import chisqprob
 from . import monitoringlist
+from tkp.database import DataBase
 from tkp.classification.transient import Transient
 from tkp.classification.transient import Position
 
@@ -19,7 +20,7 @@ logger = logging.getLogger(__name__)
 
 AUTOCOMMIT = config['database']['autocommit']
 
-def _update_known_transients(conn, transients): 
+def _update_known_transients(transients): 
     """Update the known transient sources in the database,
     ie. for which the runcatid is known.
     
@@ -38,6 +39,7 @@ def _update_known_transients(conn, transients):
     """
 
     try:
+        conn = DataBase().connection
         cursor = conn.cursor()
         query = """\
         UPDATE transient
@@ -68,7 +70,7 @@ def _update_known_transients(conn, transients):
         logger.warn("Failed on query:\n%s", query)
         raise
 
-def _insert_new_transients(conn, image_id, transients, prob_threshold): 
+def _insert_new_transients(image_id, transients, prob_threshold): 
     """Insert new transient sources in the database,
     ie those for which no runcat id exists yet.
     
@@ -90,6 +92,7 @@ def _insert_new_transients(conn, image_id, transients, prob_threshold):
     """
 
     try:
+        conn = DataBase().connection
         cursor = conn.cursor()
         query = """\
         INSERT INTO transient
@@ -228,7 +231,7 @@ def insert_transient_per_dataset(conn, transient, dataset_id):
 
 
 
-def select_variability_indices(conn, image_id, V_lim, eta_lim, prob_threshold):
+def select_variability_indices(image_id, V_lim, eta_lim, prob_threshold):
     """
     Select sources and integrated flux variability indices from the running
     catalog, for a given frequency band (i.e. image_id)
@@ -265,6 +268,7 @@ def select_variability_indices(conn, image_id, V_lim, eta_lim, prob_threshold):
 
     results = []
     try:
+        conn = DataBase().connection
         cursor = conn.cursor()
         query = """\
 SELECT t1.runcat
@@ -553,15 +557,14 @@ def transient_search_per_dataset(conn,
     print "Try to add to monlist:",selected_rcids,siglevels,transients
     return selected_rcids, siglevels, transients
 
-def transient_search(conn,
-                     image_id,
+def transient_search(image_id,
                      eta_lim,
                      V_lim,
                      probability_threshold,
                      minpoints):
 
     # TODO: We want the trigger_xtrsrc here as well
-    results = select_variability_indices(conn, image_id, V_lim, eta_lim, probability_threshold)
+    results = select_variability_indices(image_id, V_lim, eta_lim, probability_threshold)
     
     transients = []
     if len(results) > 0:
@@ -604,7 +607,7 @@ def transient_search(conn,
         # What do we do with transients that start as transient, but as
         # more data is collected the siglevel decreases below the threshold?
         # Should they get removed from the transient table?
-        _update_known_transients(conn, transients)
-        _insert_new_transients(conn, image_id, transients, probability_threshold)
+        _update_known_transients(transients)
+        _insert_new_transients(image_id, transients, probability_threshold)
 
     return transients

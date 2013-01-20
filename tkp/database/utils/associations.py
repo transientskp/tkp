@@ -16,6 +16,7 @@ import sys, os
 import logging
 import monetdb.sql as db
 from tkp.config import config
+from tkp.database import DataBase
 
 logger = logging.getLogger(__name__)
 
@@ -23,7 +24,7 @@ AUTOCOMMIT = config['database']['autocommit']
 DERUITER_R = config['source_association']['deruiter_radius']
 BG_DENSITY = config['source_association']['bg-density']
 
-def associate_extracted_sources(conn, image_id, deRuiter_r=DERUITER_R):
+def associate_extracted_sources(image_id, deRuiter_r=DERUITER_R):
     """Associate extracted sources with sources detected in the running
     catalog
 
@@ -33,7 +34,8 @@ def associate_extracted_sources(conn, image_id, deRuiter_r=DERUITER_R):
     Here we use a default value of deRuiter_r = 3.717/3600. for a
     reliable association.
     """
-
+    
+    conn = DataBase().connection
     _empty_temprunningcatalog(conn)
     #+------------------------------------------------------+
     #| Here we select all extracted sources that have one or|

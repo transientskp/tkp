@@ -1,5 +1,6 @@
 from collections import namedtuple
 import tkp.database
+from tkp.database import DataBase
 
 
 # todo: need to think of a way to sync this with tkp/database/tables/rejection.sql
@@ -47,7 +48,7 @@ SELECT rejectreason.description
 """
 
 
-def reject(connection, imageid, reason, comment):
+def reject(imageid, reason, comment):
     """ Add a reject intro to the database for a given image
     Args:
         connection: A database connection object
@@ -58,25 +59,25 @@ def reject(connection, imageid, reason, comment):
     # Enter the entry in reject
     args = {'imageid': imageid, 'reason': reason, 'comment': comment}
     query = query_reject % args
-    tkp.database.query(connection, query, commit=True)
+    tkp.database.query(DataBase().connection, query, commit=True)
     
     # Update the image record
     args = {'imageid': imageid}
     query = query_update_image_rejected % args
-    tkp.database.query(connection, query, commit=True)
+    tkp.database.query(DataBase().connection, query, commit=True)
 
 
-def unreject(connection, imageid):
+def unreject(imageid):
     """ Remove all rejection of a given imageid
     Args:
         connection: A database connection object
         image: The image ID of the image to reject
     """
     query = query_unreject % {'image': imageid}
-    tkp.database.query(connection, query, commit=True)
+    tkp.database.query(DataBase().connection, query, commit=True)
 
 
-def isrejected(connection, imageid):
+def isrejected(imageid):
     """ Find out if an image is rejected or not
     Args:
         connection: A database connection object
@@ -85,7 +86,7 @@ def isrejected(connection, imageid):
         False if not rejected, a list of reason id's if rejected
     """
     query = query_isrejected % {'imageid': imageid}
-    cursor = tkp.database.query(connection, query)
+    cursor = tkp.database.query(DataBase().connection, query)
     results = cursor.fetchall()
     if len(results) > 0:
         return ["%s: %s" % row for row in results]

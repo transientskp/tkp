@@ -77,7 +77,7 @@ AUTOCOMMIT = config['database']['autocommit']
 #        logger.warn("Query failed:\n%s", query)
 #        raise
 
-def forced_fit_null_detections(image_id, radius=0.03, deRuiter_r=3.717):
+def get_nulldetections(image_id, radius=0.03, deRuiter_r=3.717):
     """Returns the runcat sources that do not have a counterpart in the 
     extractedsources of the current image
     
@@ -90,6 +90,7 @@ def forced_fit_null_detections(image_id, radius=0.03, deRuiter_r=3.717):
     """
     deRuiter_red = deRuiter_r / 3600.
     try:
+        #print "\nTrying to find null detections for image_id:", image_id, "\n"
         conn = DataBase().connection
         cursor = conn.cursor()
         query = """\
@@ -123,6 +124,9 @@ def forced_fit_null_detections(image_id, radius=0.03, deRuiter_r=3.717):
                             )
         ;
         """
+        #q = query % (image_id, image_id, image_id,
+        #               radius, radius, radius, 
+        #               radius, radius, radius, deRuiter_red)
         cursor.execute(query, (image_id, image_id, image_id, 
                                 radius, radius, radius,
                                 radius, radius, radius, deRuiter_red))
@@ -130,9 +134,6 @@ def forced_fit_null_detections(image_id, radius=0.03, deRuiter_r=3.717):
         if not AUTOCOMMIT:
             conn.commit()                        
         cursor.close()
-        q = query % (image_id, image_id, image_id,
-                       radius, radius, radius, 
-                       radius, radius, radius, deRuiter_red)
         r = ()
         if len(results) != 0:
             p = zip(list(results[1]), list(results[2]))
@@ -147,7 +148,7 @@ def forced_fit_null_detections(image_id, radius=0.03, deRuiter_r=3.717):
         raise
     return r
 
-def forced_fit_monsources(image_id, radius=0.03, deRuiter_r=3.717):
+def get_monsources(image_id, radius=0.03, deRuiter_r=3.717):
     """Returns the user-entry sources and no-counterpart sources from 
     monitoringlist
     

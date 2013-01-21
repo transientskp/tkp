@@ -93,11 +93,11 @@ def insert_extracted_sources(image_id, results, extract):
     
     #To do: Figure out a saner method of passing the results around
     # (Namedtuple for starters?) 
-    if len(results):
-        _insert_extractedsources(image_id, results, extract)
-    else:
+    if len(results) == 0:
         logger.info("No extract_type=%s sources added to extractedsource for image %s" \
                             % (extract, image_id))
+    else:
+        _insert_extractedsources(image_id, results, extract)
 
 #TO DO(?): merge the private function below into the public function above?
 

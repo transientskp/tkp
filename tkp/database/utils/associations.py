@@ -35,6 +35,7 @@ def associate_extracted_sources(image_id, deRuiter_r=DERUITER_R):
     reliable association.
     """
     
+    logger.info("Using a De Ruiter radius of %s" % (deRuiter_r,))
     conn = DataBase().connection
     _empty_temprunningcatalog(conn)
     #+------------------------------------------------------+

@@ -21,8 +21,8 @@ class PyfitsFitsImage(unittest.TestCase):
     @requires_data(os.path.join(DATAPATH, 'L15_12h_const/observed-all.fits'))
     @requires_data(os.path.join(DATAPATH, 'CORRELATED_NOISE.FITS'))
     def testOpen(self):
-        hdu = pyfits.open(os.path.join(DATAPATH, 'L15_12h_const/observed-all.fits'), mode="readonly")
-        image = FitsImage(hdu, beam=(54./3600, 54./3600, 0.))
+        fits_file = os.path.join(DATAPATH, 'L15_12h_const/observed-all.fits')
+        image = FitsImage(fits_file, beam=(54./3600, 54./3600, 0.))
         self.assertAlmostEqual(image.beam[0], 0.225)
         self.assertAlmostEqual(image.beam[1], 0.225)
         self.assertAlmostEqual(image.beam[2], 0.)
@@ -34,8 +34,8 @@ class PyfitsFitsImage(unittest.TestCase):
         self.assertAlmostEqual(image.wcs.cdelt[1], 0.03333333)
         self.assertTupleEqual(image.wcs.ctype, ('RA---SIN', 'DEC--SIN'))
         # Beam included in image
-        hdu = pyfits.open(os.path.join(DATAPATH, 'CORRELATED_NOISE.FITS'), mode="readonly")
-        image = FitsImage(hdu)
+        fits_file = os.path.join(DATAPATH, 'CORRELATED_NOISE.FITS')
+        image = FitsImage(fits_file)
         self.assertAlmostEqual(image.beam[0], 2.7977999)
         self.assertAlmostEqual(image.beam[1], 2.3396999)
         self.assertAlmostEqual(image.beam[2], -0.869173967)
@@ -49,8 +49,8 @@ class PyfitsFitsImage(unittest.TestCase):
 
     @requires_data(os.path.join(DATAPATH, 'L15_12h_const/observed-all.fits'))
     def testSFImageFromFITS(self):
-        hdu = pyfits.open(os.path.join(DATAPATH, 'L15_12h_const/observed-all.fits'))
-        image = FitsImage(hdu, beam=(54./3600, 54./3600, 0.))
+        fits_file = os.path.join(DATAPATH, 'L15_12h_const/observed-all.fits')
+        image = FitsImage(fits_file, beam=(54./3600, 54./3600, 0.))
         sfimage = accessors.sourcefinder_image_from_accessor(image)
 
 
@@ -61,7 +61,8 @@ class TestFitsImage(unittest.TestCase):
     @requires_data(os.path.join(DATAPATH, 'CORRELATED_NOISE.FITS'))
     def testOpen(self):
         # Beam specified by user
-        image = FitsImage(os.path.join(DATAPATH, 'L15_12h_const/observed-all.fits'), beam=(54./3600, 54./3600, 0.))
+        fits_file = os.path.join(DATAPATH, 'L15_12h_const/observed-all.fits')
+        image = FitsImage(fits_file, beam=(54./3600, 54./3600, 0.))
         self.assertAlmostEqual(image.beam[0], 0.225)
         self.assertAlmostEqual(image.beam[1], 0.225)
         self.assertAlmostEqual(image.beam[2], 0.)

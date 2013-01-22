@@ -66,7 +66,7 @@ def add_manual_monitoringlist_entries(dataset_id, inputs):
             monitor_coords.extend(json.loads(inputs['monitor_coords']))
         except ValueError:
             logger.error("Could not parse monitor-coords from command line")
-            sys.exit(1)
+            return False
 
     if 'monitor_list' in inputs:
         try:
@@ -75,7 +75,7 @@ def add_manual_monitoringlist_entries(dataset_id, inputs):
         except ValueError:
             logger.error("Could not parse monitor-coords from file: "
                               +inputs['monitor_list'])
-            sys.exit(1)
+            return False
 
     if len(monitor_coords):
         logger.info( "You specified monitoring at coords:")
@@ -84,3 +84,4 @@ def add_manual_monitoringlist_entries(dataset_id, inputs):
     for c in monitor_coords:
         dataset = DataSet(id=dataset_id, database=DataBase())
         dataset.add_manual_entry_to_monitoringlist(c[0],c[1])
+    return True

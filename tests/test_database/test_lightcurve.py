@@ -100,7 +100,7 @@ class TestLightCurve(unittest.TestCase):
         results = sorted(results, key=itemgetter('eta_int'))
         for result, eta_nu in zip(results, (16666.66666667, 66666.666666667,
                                             150000.0)):
-            self.assertEqual(result['npoints'], 4)
+            self.assertEqual(result['f_datapoints'], 4)
             self.assertAlmostEqual(result['eta_int'], eta_nu)
             self.assertAlmostEqual(result['v_int'], 0.516397779494)
 

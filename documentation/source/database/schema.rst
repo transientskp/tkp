@@ -836,6 +836,11 @@ the ``runningcatalog`` is updated with the new "averages".
 The 0-to-1 and 1-to-0 relations are processed separatedly and do not touch this
 table.
 
+On iteratively updated weighted means
+-------------------------------------
+We now take a diversion to note the mechanics of 
+storing and updating weighted means - this happens a lot in the database. 
+
 If we define the average of :math:`x` as 
 
 .. math::
@@ -850,47 +855,91 @@ new average as:
     \overline{x}_{N+1} = \frac{N \overline{x}_N + x_{N+1}}{N+1} .
 
 This is slightly different for weighted means. If we have a weighted mean,
-:math:`\overline{\xi}_N` defined as:
+:math:`\xi_N` defined as:
 
 .. math::
 
-    \overline{\xi}_N = \frac{\sum_{i=1}^{N} w_i x_i}{\sum_{i=1}^{N} w_i},
+    \xi_N = \frac{\sum_{i=1}^{N} w_i x_i}{\sum_{i=1}^{N} w_i},
 
 and we add the :math:`N+1`-th measurement of :math:`x_{N+1}` and its error
 :math:`e_{N+1}` 
-(but using again :math:`w_{N+1} = 1/{e_{N+1}}^2`), we get the new average by:
+(but using again :math:`w_{N+1} = 1/{e_{N+1}}^2`), 
+then, defining the sum of the weights 1 to n as
 
 .. math::
 
-    \frac{
-            \frac{N\overline{\xi}_N + w_{N+1} x_{N+1}}{N+1}
-         }
-         {
-            \frac{N\overline{w}_N + w_{N+1} x_{N+1}}{N+1}
-         }
-         = 
-         \frac{
-            N\overline{\xi}_N + w_{N+1} x_{N+1}
-              }
-              {
-            N\overline{w}_N + w_{N+1} x_{N+1}
-              }.
+    W_N = \sum_{i=1}^{N} w_i
+    
+we get the new average by:
 
-Storing the averages relaxes the computations and are helpful in calculating
-the variability indices by simply multiplying the necessary columns.
+.. math::
 
-The first variability indicator, the magnitude of the flux variability of a
-source, is expressed as the ratio of the sample flux standard deviation.
+    \xi_{N+1} = 
+    \frac{ W_N \xi_{N} + w_{n+1}x_{n+1}}
+         { W_N + w_{n+1} }
+
+Note, if we define:
+
+.. math::
+
+   \overline{w}_N = \frac{W_N}{N} = \frac{\sum_{i=1}^{N} w_i}{N}
+   
+we may use the formula:
+
+.. math::
+
+    \xi_{N+1} =
+    \frac{ N \overline{w}_N \xi_{N} + w_{n+1}x_{n+1}}
+         { N \overline{w}_N + w_{n+1} }
+
+(Note how this simplifies if :math:`w_i = 1 \quad \forall i`)
+
+In general, we perform similar tricks 
+(storing :math:`\overline{avg}` values, where the overbar signifies summation
+over all values and division by :math:`N`)
+throughout the database code. This has pros and cons - it makes the 
+equations below a little prettier (and possibly simpler to compute),
+but requires many multiplications and divisions by the factor :math:`N` 
+(hence, also possibly harder to compute - 
+this may be worth careful consideration during the next big code review).  
+
+On 'aggregated' variability indexes
+-----------------------------------
+
+We now explain how running averages are used to compute the 'variability indices'
+we use in identifying sources which may be intrinsically transient or variable.
+(Adopted from the Bart Scheers' PhD thesis.)
+
+The first variability indicator, the proportional flux variability of a
+source, is expressed as the ratio of the sample standard deviation, and mean, 
+of the flux; that is to say:
+
+.. math::
+
+   V = \frac{ s}{ \overline{I} }
+
+where :math:`s` is the unbiased sample standard deviation:
+
+.. math::
+
+   s = \sqrt{ \frac{1}{N-1} \sum_{i=1}^N \left( I_i - \overline{I}  \right)^2 }
+
+.. note::
+
+   In general, we may consider calculating all these values per frequency-band
+   and subscript them by band central frequency :math:`\nu`, but we neglect such 
+   details here.
+   
 Written in aggregate form, it is now easy to handle bulk data, and is defined
 as 
 
 .. math::
 
-    V_{\nu} = \frac{1}{\overline{I_{\nu}}} 
+    V = \frac{1}{\overline{I}} 
               \sqrt{ \frac{N}{N-1}
-                     \left( \overline{{I_{\nu}}^2}
+                     \left( \overline{{I}^2}
                             -
-                            \overline{I_{\nu}}^2
+                            \overline{I}^2
                      \right)
                    }
 

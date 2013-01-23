@@ -1,7 +1,9 @@
+import logging
 from collections import namedtuple
 import tkp.database
 from tkp.database import DataBase
 
+logger = logging.getLogger(__name__)
 
 # todo: need to think of a way to sync this with tkp/database/tables/rejection.sql
 
@@ -65,7 +67,7 @@ def reject(imageid, reason, comment):
     args = {'imageid': imageid}
     query = query_update_image_rejected % args
     tkp.database.query(DataBase().connection, query, commit=True)
-
+    logger.info("Image ID %d rejected" % (imageid,))
 
 def unreject(imageid):
     """ Remove all rejection of a given imageid

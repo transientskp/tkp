@@ -77,7 +77,7 @@ AUTOCOMMIT = config['database']['autocommit']
 #        logger.warn("Query failed:\n%s", query)
 #        raise
 
-def get_nulldetections(image_id, radius=0.03, deRuiter_r=3.717):
+def get_nulldetections(image_id, deRuiter_r, radius=0.03):
     """Returns the runcat sources that do not have a counterpart in the 
     extractedsources of the current image
     
@@ -148,7 +148,7 @@ def get_nulldetections(image_id, radius=0.03, deRuiter_r=3.717):
         raise
     return r
 
-def get_monsources(image_id, radius=0.03, deRuiter_r=3.717):
+def get_monsources(image_id, deRuiter_r, radius=0.03):
     """Returns the user-entry sources and no-counterpart sources from 
     monitoringlist
     

@@ -64,7 +64,7 @@ def associate_extracted_sources(image_id, deRuiter_r=DERUITER_R):
     _insert_1_to_many_basepoint_assoc(conn)
     _insert_1_to_many_assoc(conn)
     _insert_1_to_many_monitoringlist(conn)
-    #_insert_1_to_many_transient(conn)
+    _insert_1_to_many_transient(conn)
     _delete_1_to_many_inactive_assoc(conn)
     _delete_1_to_many_inactive_runcat_flux(conn)
     _flag_1_to_many_inactive_runcat(conn)
@@ -761,18 +761,20 @@ def _insert_1_to_many_transient(conn):
         query = """\
         INSERT INTO transient
           (runcat
+          ,band
           ,siglevel
-          ,v
-          ,eta
+          ,v_int
+          ,eta_int
           ,detection_level
           ,trigger_xtrsrc
           ,status
           ,t_start
           )
           SELECT r.id
+                ,tr.band
                 ,tr.siglevel
-                ,tr.v
-                ,tr.eta
+                ,tr.v_int
+                ,tr.eta_int
                 ,tr.detection_level
                 ,tr.trigger_xtrsrc
                 ,tr.status

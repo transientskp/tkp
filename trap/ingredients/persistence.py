@@ -50,24 +50,10 @@ def image_to_mongodb(filename, hostname, port, db):
             temp_fits_file = NamedTemporaryFile()
             i = pyrap_image(filename)
             i.tofits(temp_fits_file.name)
-        except Exception, e:
-            msg ="Could not convert image to FITS: %s" % (str(e))
-            logger.error(msg)
-            warnings.warn(msg)
-            temp_fits_file.close()
-            return False
-        try:
             new_file = gfs.new_file(filename=filename)
             with open(temp_fits_file.name, "r") as f:
                 new_file.write(f)
             new_file.close()
-        except Exception, e:
-            msg = "Could not store image to MongoDB: %s" % (str(e))
-            logger.error(msg)
-            return False
-        finally:
-            temp_fits_file.close()
-        return True
 
     except Exception, e:
         msg = "Failed to save image to MongoDB: %s" % (str(e),)

@@ -43,6 +43,23 @@ SELECT im.taustart_ts
 ORDER BY im.taustart_ts
 """
 
+update_dataset_process_ts_query = """
+UPDATE dataset
+   SET process_ts = %(process_ts)s
+ WHERE id = %(dataset_id)s
+"""
+
+
+def update_dataset_process_ts(dataset_id, process_ts):
+    """Update dataset with description as given by argument.
+
+    DB function insertDataset() sets the necessary default values.
+    """
+    conn = DataBase().connection
+    arguments = (dataset_id, process_ts)
+    args = {'dataset_id': dataset_id, 'process_ts': process_ts}
+    cursor = tkp.database.query(conn, update_dataset_process_ts_query, args, commit=True)
+    return dataset_id
 
 def insert_dataset(conn, description):
     """Insert dataset with description as given by argument.

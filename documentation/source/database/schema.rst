@@ -863,17 +863,17 @@ and we add the :math:`N+1`-th measurement of :math:`x_{N+1}` and its error
 .. math::
 
     \frac{
-            \frac{N\overline{\xi}_N + w_{N+1} x_N+1}{N+1}
+            \frac{N\overline{\xi}_N + w_{N+1} x_{N+1}}{N+1}
          }
          {
-            \frac{N\overline{w}_N + w_{N+1} x_N+1}{N+1}
+            \frac{N\overline{w}_N + w_{N+1} x_{N+1}}{N+1}
          }
          = 
          \frac{
-            N\overline{\xi}_N + w_{N+1} x_N+1
+            N\overline{\xi}_N + w_{N+1} x_{N+1}
               }
               {
-            N\overline{w}_N + w_{N+1} x_N+1
+            N\overline{w}_N + w_{N+1} x_{N+1}
               }.
 
 Storing the averages relaxes the computations and are helpful in calculating

@@ -33,6 +33,7 @@ from lofarpipe.support.remotecommand import RemoteCommandRecipeMixIn
 import lofarpipe.support.lofaringredient as ingredient
 from lofarpipe.support.clusterdesc import ClusterDesc, get_compute_nodes
 from lofarpipe.support.remotecommand import ComputeJob
+import trap.ingredients.quality
 
 class quality_check(BaseRecipe, RemoteCommandRecipeMixIn):
     inputs = {

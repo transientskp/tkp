@@ -50,10 +50,24 @@ def image_to_mongodb(filename, hostname, port, db):
             temp_fits_file = NamedTemporaryFile()
             i = pyrap_image(filename)
             i.tofits(temp_fits_file.name)
+        except Exception, e:
+            msg ="Could not convert image to FITS: %s" % (str(e))
+            logger.error(msg)
+            warnings.warn(msg)
+            temp_fits_file.close()
+            return False
+        try:
             new_file = gfs.new_file(filename=filename)
             with open(temp_fits_file.name, "r") as f:
                 new_file.write(f)
             new_file.close()
+        except Exception, e:
+            msg = "Could not store image to MongoDB: %s" % (str(e))
+            logger.error(msg)
+            return False
+        finally:
+            temp_fits_file.close()
+        return True
 
     except Exception, e:
         msg = "Failed to save image to MongoDB: %s" % (str(e),)
@@ -73,6 +87,7 @@ def image_to_mongodb(filename, hostname, port, db):
 
 def create_dataset(dataset_id, description):
     """ Creates a dataset if it doesn't exists
+    Note: Should only be used in a master recipe
     Returns:
       the database ID of this dataset
     """
@@ -99,6 +114,8 @@ def store_images(images_metadata, dataset_id):
     make sure they are added in the correct order e.g. sorted by observation
     time.
 
+    Note: Should only be used in a master recipe
+
     Args:
         images_metadata: list of dicts containing image metadata
         dataset_id: dataset id to be used. don't use value from parset file
@@ -124,6 +141,7 @@ def store_images(images_metadata, dataset_id):
 def node_steps(images, parset_file):
     """
     this function executes all persistence steps that should be executed on a node.
+    Note: Should only be used in a node recipe
     """
     persistence_parset = parse_parset(parset_file)
     mongohost = persistence_parset['mongo_host']

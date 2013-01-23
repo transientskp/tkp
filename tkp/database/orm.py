@@ -487,8 +487,7 @@ class Image(DBObject):
     def update_rejected(self):
         """Update self.rejected with the rejected status. Will be false
         if not rejected, will be a list of reject descriptions if rejected"""
-        self.rejected = tkp.database.quality.isrejected(self.database.connection,
-                                                         self.id)
+        self.rejected = tkp.database.quality.isrejected(self.id)
 
     def update_sources(self):
         """Renew the set of sources by getting the sources for this
@@ -534,8 +533,7 @@ class Image(DBObject):
        #To do: Figure out a saner method of passing the results around
        # (Namedtuple, for starters?)
        
-        dbu.insert_extracted_sources(
-            self.database.connection, self._id, results=results)
+        dbu.insert_extracted_sources(self._id, results=results, extract='blind')
         
     def associate_extracted_sources(self, deRuiter_r=DERUITER_R):
         """Associate sources from the last images with previously

@@ -235,8 +235,7 @@ def get_monsources(image_id, deRuiter_r, radius=0.03):
     return r
 
 def insert_forcedfits_into_extractedsource(image_id, results, extract):
-    conn = DataBase().connection
-    general.insert_extracted_sources(conn, image_id, results, extract)
+    general.insert_extracted_sources(image_id, results, extract)
 
 def adjust_transients_in_monitoringlist(image_id, transients):
     """Adjust transients in monitoringlist, by either adding or

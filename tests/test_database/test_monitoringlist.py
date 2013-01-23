@@ -7,6 +7,7 @@ from tkp.testutil import db_subs
 #import tkp.testutil.db_queries as dbq
 from tkp.testutil.decorators import requires_database
 from tkp.database.utils import monitoringlist
+from tkp.database.utils import associations as dbass
 from tkp.database.utils import transients as tr_search
 
 
@@ -333,39 +334,37 @@ class TestIntermittentToMonitorlist(unittest.TestCase):
                 image.insert_extracted_sources(steady_srcs)
             
             # First, we check for null detections
-            ff_nd = monitoringlist.forced_fit_null_detections(self.database.connection, image.id)
-            #print "len(ff_nd) =", len(ff_nd)
+            nd = monitoringlist.get_nulldetections(image.id, deRuiter_r = 3.717)
+            print "nd =", nd
+            print "len(nd) =", len(nd)
             
             if im_nr == 1:
-                self.assertEqual(len(ff_nd), 0)
+                self.assertEqual(len(nd), 0)
             elif im_nr == 2:
-                self.assertEqual(len(ff_nd), 1)
+                self.assertEqual(len(nd), 1)
                 # The null detection is found,
                 # We simulate the forced fit result back into extractedsource
                 # Check that the null-detection ra is the ra of source two
-                self.assertEqual(ff_nd[0][0][0], steady_srcs[1].ra)
-                #print "ff_nd=",ff_nd
-                #print "ff_nd[0]=",ff_nd[0]
+                self.assertEqual(nd[0][0][0], steady_srcs[1].ra)
+                #print "nd=",nd
                 tuple_ff_nd = steady_srcs[1:2]
-                monitoringlist.insert_forcedfits_into_extractedsource(self.database.connection, image.id, tuple_ff_nd, extract='ff_nd')
+                monitoringlist.insert_forcedfits_into_extractedsource(image.id, tuple_ff_nd, 'ff_nd')
             elif im_nr == 3:
-                self.assertEqual(len(ff_nd), 0)
+                self.assertEqual(len(nd), 0)
             
             # Secondly, we do the source association
-            image.associate_extracted_sources()
-            monitoringlist.add_nulldetections(self.database.connection, image.id)
+            dbass.associate_extracted_sources(image.id, deRuiter_r = 3.717)
+            monitoringlist.add_nulldetections(image.id)
             # We also need to run the transient search in order to pick up the variable
             # eta_lim, V_lim, prob_threshold, minpoints, resp.
-            transients = tr_search.transient_search(self.database.connection, \
-                                                     image.id, \
+            transients = tr_search.transient_search(image.id, \
                                                      0.0, \
                                                      0.0, \
                                                      0.5, \
                                                      1)
             
             # Adjust (insert/update/remove) transients in monlist as well
-            monitoringlist.adjust_transients_in_monitoringlist(self.database.connection, \
-                                                               image.id, \
+            monitoringlist.adjust_transients_in_monitoringlist(image.id, \
                                                                transients)
             im_nr += 1
            
@@ -473,8 +472,8 @@ class TestVariableToMonitorlist(unittest.TestCase):
             
             image.insert_extracted_sources(steady_srcs)
 
-            ff_nd = monitoringlist.forced_fit_null_detections(self.database.connection, image.id)
-            ff_mon = monitoringlist.forced_fit_monsources(self.database.connection, image.id)
+            ff_nd = monitoringlist.get_nulldetections(image.id, deRuiter_r = 3.717)
+            ff_mon = monitoringlist.get_monsources(image.id, deRuiter_r = 3.717)
             print "len(ff_nd)=",len(ff_nd)
             print "ff_nd=",ff_nd
             print "len(ff_mon)=",len(ff_mon)
@@ -485,20 +484,18 @@ class TestVariableToMonitorlist(unittest.TestCase):
             self.assertEqual(len(ff_mon), 0)
             
             # Then we do the source association
-            image.associate_extracted_sources()
-            monitoringlist.add_nulldetections(self.database.connection, image.id)     
+            dbass.associate_extracted_sources(image.id, deRuiter_r = 3.717)
+            monitoringlist.add_nulldetections(image.id)     
             # We also need to run the transient search in order to pick up the variable
             # eta_lim, V_lim, prob_threshold, minpoints, resp.
-            transients = tr_search.transient_search(self.database.connection, \
-                                                     image.id, \
+            transients = tr_search.transient_search(image.id, \
                                                      0.0, \
                                                      0.0, \
                                                      0.5, \
                                                      1)
             
             # Adjust (insert/update/remove) transients in monlist as well
-            monitoringlist.adjust_transients_in_monitoringlist(self.database.connection, \
-                                                               image.id, \
+            monitoringlist.adjust_transients_in_monitoringlist(image.id, \
                                                                transients)
             im_nr += 1
            

@@ -41,7 +41,7 @@ class TestOne2One(unittest.TestCase):
         for im in im_params:
             image = tkpdb.Image(database=self.database, dataset=dataset, data=im)
             image.insert_extracted_sources(steady_srcs)
-            image.associate_extracted_sources()
+            tkpdb.utils.associate_extracted_sources(image.id, deRuiter_r = 3.717)
 
         # Check runningcatalog, runningcatalog_flux, assocxtrsource
         query = """\
@@ -188,8 +188,8 @@ class TestOne2Many(unittest.TestCase):
                                                         ))
         results = []
         results.append(src[-1])
-        dbgen.insert_extracted_sources(self.database.connection, image.id, results, 'blind')
-        tkpdb.utils.associate_extracted_sources(self.database.connection, image.id)
+        dbgen.insert_extracted_sources(image.id, results, 'blind')
+        tkpdb.utils.associate_extracted_sources(image.id, deRuiter_r = 3.717)
         
         query = """\
         SELECT id
@@ -261,8 +261,8 @@ class TestOne2Many(unittest.TestCase):
         results = []
         results.append(src[0])
         results.append(src[1])
-        dbgen.insert_extracted_sources(self.database.connection, image.id, results, 'blind')
-        tkpdb.utils.associate_extracted_sources(self.database.connection, image.id)
+        dbgen.insert_extracted_sources(image.id, results, 'blind')
+        tkpdb.utils.associate_extracted_sources(image.id, deRuiter_r = 3.717)
 
         query = """\
         SELECT id
@@ -399,8 +399,8 @@ class TestMany2One(unittest.TestCase):
         results = []
         results.append(src[0])
         results.append(src[1])
-        dbgen.insert_extracted_sources(self.database.connection, imageid1, results, 'blind')
-        tkpdb.utils.associate_extracted_sources(self.database.connection, imageid1)
+        dbgen.insert_extracted_sources(imageid1, results, 'blind')
+        tkpdb.utils.associate_extracted_sources(imageid1, deRuiter_r = 3.717)
 
         query = """\
         SELECT id
@@ -429,8 +429,8 @@ class TestMany2One(unittest.TestCase):
                                                         ))
         results = []
         results.append(src[-1])
-        dbgen.insert_extracted_sources(self.database.connection, imageid2, results, 'blind')
-        tkpdb.utils.associate_extracted_sources(self.database.connection, imageid2)
+        dbgen.insert_extracted_sources(imageid2, results, 'blind')
+        tkpdb.utils.associate_extracted_sources(imageid2, deRuiter_r = 3.717)
         
         query = """\
         SELECT id
@@ -559,8 +559,9 @@ class TestMany2Many(unittest.TestCase):
         results = []
         results.append(src1[0])
         results.append(src1[1])
-        dbgen.insert_extracted_sources(self.database.connection, imageid1, results, 'blind')
-        tkpdb.utils.associate_extracted_sources(self.database.connection, imageid1)
+        dbgen.insert_extracted_sources(imageid1, results, 'blind')
+        # We use a default value of 3.717
+        tkpdb.utils.associate_extracted_sources(imageid1, deRuiter_r = 3.717)
 
         query = """\
         SELECT id
@@ -598,8 +599,8 @@ class TestMany2Many(unittest.TestCase):
         results = []
         results.append(src2[0])
         results.append(src2[1])
-        dbgen.insert_extracted_sources(self.database.connection, imageid2, results, 'blind')
-        tkpdb.utils.associate_extracted_sources(self.database.connection, imageid2)
+        dbgen.insert_extracted_sources(imageid2, results, 'blind')
+        tkpdb.utils.associate_extracted_sources(imageid2, deRuiter_r = 3.717)
         
         query = """\
         SELECT id

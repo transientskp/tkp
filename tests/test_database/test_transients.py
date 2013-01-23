@@ -69,13 +69,12 @@ class TestTransientBasics(unittest.TestCase):
         freq_bands = dataset.frequency_bands()
         self.assertEqual(len(freq_bands), 1)
         for tr in transients:
-            self.assertEqual(freq_bands[0], tr.band)
+            self.assertEqual(freq_bands[0], tr['band'])
 
         runcats = dataset.runcat_entries()
         self.assertEqual(len(runcats), 1)
         for tr in transients:
-            print "tr.siglevel:", tr.siglevel
-            self.assertEqual(runcats[0]['runcat'], tr.runcatid)
+            self.assertEqual(runcats[0]['runcat'], tr['runcat'])
 
         # Check that the trigger xtrsrc happened in the third image
         query = """\
@@ -151,7 +150,8 @@ class TestTransientRoutines(unittest.TestCase):
     def test_full_transient_search_routine(self):
         bands = self.dataset.frequency_bands()
         self.assertEqual(len(bands), 1)
-        transient_ids, siglevels, transients = dbutils.transient_search(
+        #First run with lax limits:
+        transient_ids, siglevels, all_transients = dbutils.transient_search(
                  conn=self.database.connection,
                  dsid=self.dataset.id,
                  freq_band=bands[0],
@@ -160,4 +160,35 @@ class TestTransientRoutines(unittest.TestCase):
                  probability_threshold=0.01,
                  imageid=self.db_imgs[-1].id,
                  minpoints=1)
-        self.assertEqual(len(transients), 3)
+        self.assertEqual(len(all_transients), 3)
+
+#        for t in all_transients:
+#            print "V_int:", t['v_int'], "  eta_int:", t['eta_int']
+        #Now test thresholding:
+        more_highly_variable = sum(t['v_int'] > 2.0 for t in all_transients)
+        very_non_flat = sum(t['eta_int'] > 100.0 for t in all_transients)
+
+        transient_ids, siglevels, transients = dbutils.transient_search(
+                 conn=self.database.connection,
+                 dsid=self.dataset.id,
+                 freq_band=bands[0],
+                 eta_lim=1.1,
+                 V_lim=2.0,
+                 probability_threshold=0.01,
+                 imageid=self.db_imgs[-1].id,
+                 minpoints=1)
+        self.assertEqual(len(transients), more_highly_variable)
+
+        transient_ids, siglevels, transients = dbutils.transient_search(
+                 conn=self.database.connection,
+                 dsid=self.dataset.id,
+                 freq_band=bands[0],
+                 eta_lim=100,
+                 V_lim=0.01,
+                 probability_threshold=0.01,
+                 imageid=self.db_imgs[-1].id,
+                 minpoints=1)
+        self.assertEqual(len(transients), very_non_flat)
+
+
+

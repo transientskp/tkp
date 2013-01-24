@@ -42,5 +42,5 @@ setup(
     author="TKP Discovery WG",
     author_email="discovery@transientskp.org",
     url="http://www.transientskp.org/",
-    scripts=["trap/bin/trap-manage.py", "trap/bin/trap-local.py", "trap/bin/trap-run.py"]
+    scripts=["trap/bin/trap-manage.py", "trap/bin/trap-local.py", "trap/bin/trap-run.py", "trap/bin/trap-inject.py"]
 )

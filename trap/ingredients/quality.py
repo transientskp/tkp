@@ -1,7 +1,8 @@
 
 import logging
+import datetime
 from lofarpipe.support.parset import parameterset
-from tkp.database import DataBase
+from tkp.database import DataBase, query
 from tkp.quality.statistics import rms_with_clipped_subregion
 from tkp.lofar.noise import noise_level
 import tkp.utility.accessors
@@ -12,8 +13,9 @@ from tkp.database.orm import Image
 
 logger = logging.getLogger(__name__)
 
-def parse_parset(parset_file, accessor=None):
-    """parse the quality parset file. uses accessor for default values"""
+
+def parse_parset(parset_file):
+    """parse the quality parset file."""
     parset = parameterset(parset_file)
     result = {}
     result['sigma'] = parset.getInt('sigma', 3)
@@ -23,36 +25,6 @@ def parse_parset(parset_file, accessor=None):
     result['oversampled_x'] = parset.getInt('oversampled_x', 30)
     result['elliptical_x'] = parset.getFloat('elliptical_x', 2.0)
     result['min_separation'] = parset.getFloat('min_separation', 20)
-
-    # LOFAR image properties - first check if set in parset, if not get value
-    # from image, if not set use default
-    freq_eff = getattr(accessor,'freq_eff', None) or 45*10**6
-    result['freq_eff'] = parset.getFloat('freq_eff', freq_eff)
-
-    subbandwidth = getattr(accessor, 'subbandwidth', None) or 200*10**3
-    result['subbandwidth'] = parset.getFloat('subbandwidth', subbandwidth)
-
-    intgr_time = getattr(accessor, 'intgr_time', None) or 18654
-    result['intgr_time'] = parset.getFloat('intgr_time', intgr_time)
-
-    antenna_set = getattr(accessor, 'antenna_set', "LBA_INNER") or "LBA_INNER"
-    result['antenna_set'] = parset.getString('antenna_set', antenna_set)
-
-    subbands = getattr(accessor, 'subbands', None) or 10
-    result['subbands'] = parset.getInt('subbands', subbands)
-
-    channels = getattr(accessor, 'channels', None) or 64
-    result['channels'] = parset.getInt('channels', channels)
-
-    ncore = getattr(accessor, 'ncore', None) or 24
-    result['ncore'] = parset.getInt('ncore', ncore)
-
-    nremote = getattr(accessor, 'nremote', None) or 16
-    result['nremote'] = parset.getInt('nremote', nremote)
-
-    nintl =  getattr(accessor, 'nintl', None) or 8
-    result['nintl'] = parset.getInt('nintl', nintl)
-
     return result
 
 
@@ -73,9 +45,9 @@ def check(image_id, parset_file):
     # TODO: this is getting messy and can use a cleanup
 
     rms = rms_with_clipped_subregion(accessor.data, sigma=p['sigma'], f=p['f'])
-    noise = noise_level(p['freq_eff'], p['subbandwidth'], p['intgr_time'],
-        p['antenna_set'], p['subbands'], p['channels'],
-        p['ncore'], p['nremote'], p['nintl'])
+    noise = noise_level(accessor.freq_eff, accessor.freq_bw, accessor.tau_time,
+        accessor.antenna_set, accessor.subbands, accessor.channels,
+        accessor.ncore, accessor.nremote, accessor.nintl)
 
     rms_invalid = tkp.quality.rms_invalid(rms, noise, low_bound=p['low_bound'],
         high_bound=p['high_bound'])

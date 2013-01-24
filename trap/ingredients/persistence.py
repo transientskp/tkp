@@ -73,6 +73,7 @@ def image_to_mongodb(filename, hostname, port, db):
 
 def create_dataset(dataset_id, description):
     """ Creates a dataset if it doesn't exists
+    Note: Should only be used in a master recipe
     Returns:
       the database ID of this dataset
     """
@@ -99,6 +100,8 @@ def store_images(images_metadata, dataset_id):
     make sure they are added in the correct order e.g. sorted by observation
     time.
 
+    Note: Should only be used in a master recipe
+
     Args:
         images_metadata: list of dicts containing image metadata
         dataset_id: dataset id to be used. don't use value from parset file
@@ -124,6 +127,7 @@ def store_images(images_metadata, dataset_id):
 def node_steps(images, parset_file):
     """
     this function executes all persistence steps that should be executed on a node.
+    Note: Should only be used in a node recipe
     """
     persistence_parset = parse_parset(parset_file)
     mongohost = persistence_parset['mongo_host']

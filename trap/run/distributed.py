@@ -55,7 +55,8 @@ class Trap(control):
         dataset = DataSet(id=self.outputs['dataset_id'], database=DataBase())
         dataset.update_images()
 
-        add_manual_monitoringlist_entries(dataset.id, self.inputs)
+        if not add_manual_monitoringlist_entries(dataset.id, self.inputs):
+            return 1
 
         self.outputs.update(self.run_task(
             "quality_check",

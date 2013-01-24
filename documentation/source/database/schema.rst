@@ -912,7 +912,7 @@ we use in identifying sources which may be intrinsically transient or variable.
 
 The first variability indicator, the proportional flux variability of a
 source, is expressed as the ratio of the sample standard deviation, and mean, 
-of the flux; that is to say:
+of the flux :math:`I`; that is to say:
 
 .. math::
 
@@ -928,45 +928,87 @@ where :math:`s` is the unbiased sample standard deviation:
 
    In general, we may consider calculating all these values per frequency-band
    and subscript them by band central frequency :math:`\nu`, but we neglect such 
-   details here.
+   details here for simplicity.
    
-Written in aggregate form, it is now easy to handle bulk data, and is defined
-as 
+Written in its well known 'aggregate' form, 
+it is now easy to handle bulk data, and is defined as 
 
 .. math::
 
     V = \frac{1}{\overline{I}} 
-              \sqrt{ \frac{N}{N-1}
-                     \left( \overline{{I}^2}
-                            -
-                            \overline{I}^2
-                     \right)
+              \sqrt{ \frac{N}{N-1} 
+                        \left( \overline{{I}^2} - \overline{I}^2  \right)
                    }
 
 The second indicator, the significance of the flux variability, is based on
-reduced :math:`\chi^2` statistics. Written in aggregate form it becomes
+reduced :math:`\chi^2` statistics. We derive the aggregate form here.
+
+We begin with the familiar reduced-:math:`\chi^2` formula, except with the 
+regular arithmetic mean :math:`\overline{I}` replaced by the 
+weighted mean :math:`\xi_N`, 
 
 .. math::
 
-    \eta_{\nu} = \frac{N}{N-1}
+   \xi_N = \frac{\sum_{i=1}^{N} w_i I_i}{\sum_{i=1}^{N} w_i}
+         = \frac{\overline{w_i I_i} }{ \overline{w_i}},
+
+resulting in:
+
+.. math::  
+
+   \eta = \frac{1}{N-1}
+                 \sum_{i=1}^N
+                    \frac{\left(I_i - \xi_N \right)^2}
+                        {e_i^2}
+   
+where :math:`e_i` is the estimated uncertainty, or standard deviation, 
+in :math:`I_i`.  We may rewrite this using :math:`\frac{1}{e_i^2} = w_i`:
+
+.. math::
+
+   \eta = \frac{N}{N-1}\lgroup \frac{1}{N}
+                 \sum_{i=1}^N w_i \left(I_i - \xi_N \right)^2 \rgroup 
+
+Expanding inside the brackets gives:
+
+.. math::
+   \frac{1}{N}\sum_{i=1}^N 
+      w_i \left( I_i^2 - 2\xi_N I_i + \xi_N^2 \right) 
+
+    = \frac{1}{N} \sum_{i=1}^N w_i I_i^2 
+      - 2\xi_N \frac{1}{N}\sum_{i=1}^N +w_i I_i 
+      + \xi_N^2 \frac{1}{N}\sum_{i=1}^N w_i 
+   
+   = \overline{w_i I_i^2} - 2\xi_N \overline{w_i I_i} +\xi_N^2 \overline{w_i} 
+      \qquad . 
+
+Expanding for :math:`\xi_n` results in the final aggregate form of 
+the reduced-:math:`\chi^2`:
+
+.. math::
+
+    \eta = \frac{N}{N-1}
                  \left(
-                    \overline{w {I_{\nu}}^2}
+                    \overline{w {I}^2}
                     -
-                    \frac{\overline{w I_{\nu}}^2}{\overline{w}}
+                    \frac{\overline{w I}^2}{\overline{w}}
                  \right)
+
+Relation to database variables
+------------------------------
 
 Note that the indices are calculated per frequency band (and per Stokes
 parameter).
-The parameters in the last two equations correspond to columns in the tables as
-follows:
+The parameters in the last aggregate equations correspond to columns 
+in the tables as follows:
 
-:math:`\overline{I_{\nu}}` to ``avg_f_peak``
+:math:`\overline{I}` to ``avg_f_peak``
 
-:math:`\overline{{I_{\nu}}^2}` to ``avg_f_peak_sq``
+:math:`\overline{{I}^2}` to ``avg_f_peak_sq``
 
-:math:`\overline{w {I_{\nu}}^2}` to ``avg_weighted_f_peak_sq``
+:math:`\overline{w {I}^2}` to ``avg_weighted_f_peak_sq``
 
-:math:`\overline{w I_{\nu}}` to ``avg_weighted_f_peak``
+:math:`\overline{w I}` to ``avg_weighted_f_peak``
 
 :math:`\overline{w}` to ``avg_f_peak_weight``
 

@@ -66,7 +66,7 @@ def image_to_mongodb(filename, hostname, port, db):
 
         # Only close this if it has been created.
         if "temp_fits_file" in locals():
-            temp_files_file.close()
+            temp_fits_file.close()
 
     return True
 

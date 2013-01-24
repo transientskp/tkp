@@ -11,5 +11,4 @@ Modules from the ``tkp.database`` package.
 
    introduction
    database
-   dataset
    utils

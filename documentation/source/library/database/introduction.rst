@@ -11,8 +11,6 @@ main three modules are:
 
 * database
 
-* dataset
-
 * utils
 
 
@@ -56,7 +54,7 @@ The mapped tables and their classes are:
 
 Each of these classes inherits from the DBOject class. This class provides
 a few general methods to interface with the underlying database. Details are
-provided in the corresponding :ref:`dataset <database-dataset>` documentation;
+provided in the corresponding :ref:`database <database-database>` documentation;
 a typical usage example could look like this::
 
     db_image = DBImage(id=image_id, database=database)
@@ -67,8 +65,8 @@ existing row in the images table. `results` is obtained from the source finder,
 and are stored in the database per image into extractedsource. In case of
 a new image, one would leave out the `id` keyword in the first line, and
 instead supply a `data` keyword argument that is a dictionary with the
-necessary information (again, see the :ref:`dataset documentation
-<database-dataset>`).
+necessary information (again, see the :ref:`database documentation
+<database-database>`).
 
 
 Utils

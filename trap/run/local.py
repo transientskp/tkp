@@ -50,7 +50,8 @@ class TrapLocal(control):
         persistence_parset_file = self.task_definitions.get("persistence", "parset")
         dataset_id, image_ids = ingred.persistence.all(images, persistence_parset_file)
 
-        add_manual_monitoringlist_entries(dataset_id, self.inputs)
+        if not add_manual_monitoringlist_entries(dataset_id, self.inputs):
+            return 1
 
         good_image_ids = []
         for image_id in image_ids:

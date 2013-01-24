@@ -1,14 +1,13 @@
-
 from __future__ import with_statement
-
-import sys
 import datetime
+import logging
 from lofarpipe.support.control import control
 from lofarpipe.support.utilities import log_time
 import lofarpipe.support.lofaringredient as ingredient
 from trap.ingredients.monitoringlist import add_manual_monitoringlist_entries
 from tkp.database import DataBase
 from tkp.database import DataSet
+
 
 class Trap(control):
     inputs = {
@@ -37,6 +36,11 @@ class Trap(control):
     def pipeline_logic(self):
         from images_to_process import images
 
+        logdrain = logging.getLogger()
+        logdrain.level = self.logger.level
+        logdrain.handlers = self.logger.handlers
+        self.logger = logdrain
+
         log_time(self.logger)
         if not images:
             self.logger.warn("No images found, check parameter files.")
@@ -51,7 +55,8 @@ class Trap(control):
         dataset = DataSet(id=self.outputs['dataset_id'], database=DataBase())
         dataset.update_images()
 
-        add_manual_monitoringlist_entries(dataset.id, self.inputs)
+        if not add_manual_monitoringlist_entries(dataset.id, self.inputs):
+            return 1
 
         self.outputs.update(self.run_task(
             "quality_check",

@@ -8,11 +8,15 @@ Most of the basic insertion routines are kept here,
 with exceptions of monitoringlist and transients. 
 """
 
-import math
+import math, sys
 import logging
+
+from lofarpipe.support.lofarexceptions import PipelineException
+
 import monetdb.sql as db
 from tkp.config import config
 import tkp.database
+from tkp.database import DataBase
 
 logger = logging.getLogger(__name__)
 
@@ -39,6 +43,87 @@ SELECT im.taustart_ts
 ORDER BY im.taustart_ts
 """
 
+update_dataset_process_ts_query = """
+UPDATE dataset
+   SET process_ts = %(process_ts)s
+ WHERE id = %(dataset_id)s
+"""
+
+filter_ud_xtrsrcs_query = """
+DELETE 
+  FROM extractedsource
+ WHERE id IN (SELECT x0.id
+                FROM extractedsource x0
+                    ,extractedsource x1
+               WHERE x0.image = %(image_id)s
+                 AND x0.extract_type = 3
+                 AND x1.image = %(image_id)s
+                 AND x1.extract_type IN (0, 1, 2)
+                 AND x1.zone BETWEEN CAST(FLOOR(x0.decl - %(assoc_theta)s) as INTEGER)
+                                 AND CAST(FLOOR(x0.decl + %(assoc_theta)s) as INTEGER)
+                 AND x1.decl BETWEEN x0.decl - %(assoc_theta)s
+                                 AND x0.decl + %(assoc_theta)s
+                 AND x1.ra BETWEEN x0.ra - alpha(%(assoc_theta)s, x0.decl)
+                               AND x0.ra + alpha(%(assoc_theta)s, x0.decl)
+                 AND SQRT(  (x0.ra * COS(RADIANS(x0.decl)) - x1.ra * COS(RADIANS(x1.decl)))
+                          * (x0.ra * COS(RADIANS(x0.decl)) - x1.ra * COS(RADIANS(x1.decl)))
+                          / (x0.ra_err * x0.ra_err + x1.ra_err * x1.ra_err)
+                         +  (x0.decl - x1.decl) * (x0.decl - x1.decl)
+                          / (x0.decl_err * x0.decl_err + x1.decl_err * x1.decl_err)
+                         ) < %(deRuiter_red)s
+             )
+"""
+
+def filter_userdetections_extracted_sources(image_id, deRuiter_r, assoc_theta=0.03):
+    """Remove the forced-fit user-entry sources, that have a counterpart
+    with another extractedsource
+
+    """
+    try:
+        conn = DataBase().connection
+        args = {'image_id': image_id,
+                'image_id': image_id,
+                'assoc_theta': assoc_theta,
+                'assoc_theta': assoc_theta,
+                'assoc_theta': assoc_theta,
+                'assoc_theta': assoc_theta,
+                'assoc_theta': assoc_theta,
+                'assoc_theta': assoc_theta,
+                'deRuiter_red': deRuiter_r/3600.
+                }
+        cursor = conn.cursor()
+        q = filter_ud_xtrsrcs_query % (args)
+        #print "FILTER Q:\n", q
+        #answer=str(raw_input('Continue (y/n)? '))
+        #if answer != 'y':
+        #    sys.exit()
+        filtered = cursor.execute(filter_ud_xtrsrcs_query, args)
+        if not AUTOCOMMIT:
+            conn.commit()
+        if filtered == 0:
+            logger.info("No user-entry sources removed from extractedsource for image %s" \
+                            % (image_id,))
+        else:
+            logger.info("Removed %d sources from extractedsource for image %s" \
+                            % (filtered, image_id))
+        #answer=str(raw_input('Continue (y/n)? '))
+        #if answer != 'y':
+        #    sys.exit()
+    except db.Error, e:
+        logger.warn("Failed on query nr %s." % q)
+        raise
+    finally:
+        cursor.close()
+
+
+def update_dataset_process_ts(dataset_id, process_ts):
+    """Update dataset with description as given by argument.
+
+    """
+    conn = DataBase().connection
+    args = {'dataset_id': dataset_id, 'process_ts': process_ts}
+    cursor = tkp.database.query(conn, update_dataset_process_ts_query, args, commit=True)
+    return dataset_id
 
 def insert_dataset(conn, description):
     """Insert dataset with description as given by argument.
@@ -65,7 +150,7 @@ def insert_image(conn, dataset, freq_eff, freq_bw, taustart_ts, tau_time,
     return image_id
 
 
-def insert_extracted_sources(conn, image_id, results):
+def insert_extracted_sources(image_id, results, extract):
     """Insert all extracted sources
 
     Insert the sources that were detected by the Source Extraction
@@ -81,16 +166,23 @@ def insert_extracted_sources(conn, image_id, results):
     significance level,
     beam major width , beam minor width, [as]
     beam parallactic angle).  [deg]
+    extract tells whether the source results are originating from:
+    0: blind source extraction 
+    1: from forced fits at null detection locations
+    2: from forced fits for monitoringlist sources
     """
     
     #To do: Figure out a saner method of passing the results around
     # (Namedtuple for starters?) 
-    if len(results):
-        _insert_extractedsources(conn, image_id, results)
+    if len(results) == 0:
+        logger.info("No extract_type=%s sources added to extractedsource for image %s" \
+                            % (extract, image_id))
+    else:
+        _insert_extractedsources(image_id, results, extract)
 
 #TO DO(?): merge the private function below into the public function above?
 
-def _insert_extractedsources(conn, image_id, results):
+def _insert_extractedsources(image_id, results, extract):
     """Insert all extracted sources with their properties
 
     The content of results is in the following sequence:
@@ -98,6 +190,7 @@ def _insert_extractedsources(conn, image_id, results):
     int_flux, int_flux_err, significance level,
     beam major width (as), beam minor width(as), beam parallactic angle,
     ra_sys_err, dec_sys_err).
+    See insert_extracted_sources() for a description of extract.
     
     ra_fit_err & dec_fit_err are the 1-sigma errors from the gaussian fit,
     in degrees.
@@ -118,6 +211,7 @@ def _insert_extractedsources(conn, image_id, results):
       source-distance calculations
 
     """
+    conn = DataBase().connection
     xtrsrc = []
     for src in results:
         r = list(src)
@@ -133,6 +227,16 @@ def _insert_extractedsources(conn, image_id, results):
         r.append(math.cos(math.radians(r[1])) * math.sin(math.radians(r[0]))) # Cartesian y
         r.append(math.sin(math.radians(r[1]))) # Cartesian z
         r.append(r[0] * math.cos(math.radians(r[1]))) # ra * cos(radias(decl))
+        if extract == 'blind':
+            r.append(0)
+        elif extract == 'ff_nd':
+            r.append(1)
+        elif extract == 'ff_mon':
+            r.append(2)
+        elif extract == 'ff_ud':
+            r.append(3)
+        else:
+            raise ValueError("Not a valid extractedsource insert type: '%s'" % extract)
         xtrsrc.append(r)
     values = [str(tuple(xsrc)) for xsrc in xtrsrc]
 
@@ -162,6 +266,7 @@ def _insert_extractedsources(conn, image_id, results):
           ,y
           ,z
           ,racosdecl
+          ,extract_type
           )
         VALUES
         """\
@@ -169,6 +274,22 @@ def _insert_extractedsources(conn, image_id, results):
         cursor.execute(query)
         if not AUTOCOMMIT:
             conn.commit()
+        if len(values) == 0:
+                logger.info("No forced-fit sources added to extractedsource for image %s" \
+                            % (image_id,))
+        else:
+            if extract == 'blind':
+                logger.info("Inserted %d sources in extractedsource for image %s" \
+                            % (len(values), image_id))
+            elif extract == 'ff_nd':
+                logger.info("Inserted %d forced-fit null detections in extractedsource for image %s" \
+                            % (len(values), image_id))
+            elif extract == 'ff_mon':
+                logger.info("Inserted %d forced-fit monitoringsources in extractedsource for image %s" \
+                            % (len(values), image_id))
+            elif extract == 'ff_ud':
+                logger.info("Inserted %d forced-fit user entries in extractedsource for image %s" \
+                            % (len(values), image_id))
     except db.Error, e:
         logger.warn("Failed on query nr %s." % query)
         raise
@@ -258,90 +379,8 @@ def match_nearests_in_catalogs(conn, runcatid, radius, deRuiter_r,
     a catalog.
     """
     
-    #zoneheight = 1.0
-    #catalog_filter = ""
-    #if catalogid is None:
-    #    catalog_filter = ""
-    #else:
-    #    try:
-    #        iter(catalogid)
-    #        # Note: cast to int, to ensure proper type
-    #        catalog_filter = (
-    #            "c.catid in (%s) AND " % ", ".join(
-    #            [str(int(catid)) for catid in catalogid]))
-    #    except TypeError:
-    #        catalog_filter = "c.catid = %d AND " % catalogid
-    #
-    #subquery = """\
-    #SELECT cs.catsrcid
-    #      ,c.catid
-    #      ,c.catname
-    #      ,cs.catsrcname
-    #      ,cs.ra
-    #      ,cs.decl
-    #      ,cs.ra_err
-    #      ,cs.decl_err
-    #      ,3600 * DEGREES(2 * ASIN(SQRT( (rc.x - cs.x) * (rc.x - cs.x)
-    #                                   + (rc.y - cs.y) * (rc.y - cs.y)
-    #                                   + (rc.z - cs.z) * (rc.z - cs.z)
-    #                                   ) / 2)
-    #                     ) AS assoc_distance_arcsec
-    #      ,3600 * SQRT(  (rc.wm_ra - cs.ra) * COS(RADIANS(rc.wm_decl)) 
-    #                   * (rc.wm_ra - cs.ra) * COS(RADIANS(rc.wm_decl))
-    #                     / (rc.wm_ra_err * rc.wm_ra_err + cs.ra_err * cs.ra_err)
-    #                  + (rc.wm_decl - cs.decl) * (rc.wm_decl - cs.decl)
-    #                    / (rc.wm_decl_err * rc.wm_decl_err + cs.decl_err * cs.decl_err)
-    #                  ) AS assoc_r
-    #  FROM (SELECT wm_ra - alpha(%%s, wm_decl) as ra_min
-    #              ,wm_ra + alpha(%%s, wm_decl) as ra_max
-    #              ,CAST(FLOOR((wm_decl - %%s) / %%s) AS INTEGER) as zone_min
-    #              ,CAST(FLOOR((wm_decl + %%s) / %%s) AS INTEGER) as zone_max
-    #              ,wm_decl - %%s as decl_min
-    #              ,wm_decl + %%s as decl_max
-    #              ,x
-    #              ,y
-    #              ,z
-    #              ,wm_ra
-    #              ,wm_decl
-    #              ,wm_ra_err
-    #              ,wm_decl_err
-    #          FROM runningcatalog
-    #         WHERE xtrsrc = %%s
-    #       ) rc
-    #      ,catalogedsources cs
-    #      ,catalogs c
-    # WHERE %(catalog_filter)s
-    #      cs.cat_id = c.catid
-    #  AND cs.zone BETWEEN rc.zone_min 
-    #                  AND rc.zone_max
-    #  AND cs.ra BETWEEN rc.ra_min 
-    #                and rc.ra_max
-    #  AND cs.decl BETWEEN rc.decl_min 
-    #                  and rc.decl_max
-    #  AND cs.x * rc.x + cs.y * rc.y + cs.z * rc.z > COS(RADIANS(%%s))
-    #""" % {'catalog_filter': catalog_filter}
-    ##  AND cs.ra BETWEEN rc.wm_ra - alpha(%%s, rc.wm_decl)
-    ##                AND rc.wm_ra + alpha(%%s, rc.wm_decl)
-    #query = """\
-    #SELECT 
-    #    t.catsrcid
-    #   ,t.catsrcname
-    #   ,t.catid
-    #   ,t.catname
-    #   ,t.ra
-    #   ,t.decl
-    #   ,t.ra_err
-    #   ,t.decl_err
-    #   ,t.assoc_distance_arcsec
-    #   ,t.assoc_r
-    #FROM (%(subquery)s) as t
-    #WHERE t.assoc_r < %%s
-    #ORDER BY t.catid ASC, t.assoc_r ASC
-    #""" % {'subquery': subquery}
-    
     results = []
-    # TODO: I would suggest this:
-    q_alt = """\
+    query = """\
     SELECT c.id
           ,c.catsrcname
           ,c.catalog
@@ -385,10 +424,7 @@ def match_nearests_in_catalogs(conn, runcatid, radius, deRuiter_r,
 
     try:
         cursor = conn.cursor()
-        #cursor.execute(query,  (radius, radius, radius, zoneheight,
-        #                        radius, zoneheight, radius, radius,
-        #                        srcid, radius, assoc_r))
-        cursor.execute(q_alt,  (runcatid,
+        cursor.execute(query,  (runcatid,
                                 radius, radius, radius, radius,
                                 radius, radius, 
                                 radius,
@@ -402,15 +438,11 @@ def match_nearests_in_catalogs(conn, runcatid, radius, deRuiter_r,
              'dist_arcsec': result[8], 'assoc_r': result[9]}
             for result in results]
     except db.Error, e:
-        #query = query % (radius, radius, radius, zoneheight,
-        #                 radius, zoneheight,
-        #                 radius, radius, srcid, radius, assoc_r)
-        #logger.warn("Query failed: %s", query)
-        query = q_alt % (runcatid,
+        query = query % (runcatid,
                          radius, radius, radius, radius,
                          radius, radius,
                          radius,
-                         assoc_r)
+                         deRuiter_r/3600.)
         logger.warn("Query failed:\n%s", query)
         raise
     finally:

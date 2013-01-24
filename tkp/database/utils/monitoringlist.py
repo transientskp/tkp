@@ -22,60 +22,43 @@ MonitorTuple = namedtuple('MonitorTuple',
 
 AUTOCOMMIT = config['database']['autocommit']
 
-#def add_ff_nd(conn, image_id):
-#    """Add the null detections to the monitoringlist
-#    
-#    The null detections have already been appended to extractedsource, 
-#    after a forced fit
-#    
-#    Output: id, ra, decl
-#    """
-#    try:
-#        cursor = conn.cursor()
-#        query = """\
-#        INSERT INTO monitoringlist
-#          (runcat
-#          ,ra
-#          ,decl
-#          ,dataset
-#          )
-#          SELECT r1.id AS runcat
-#                ,r1.wm_ra AS ra
-#                ,r1.wm_decl AS decl
-#                ,r1.dataset AS dataset
-#            FROM runningcatalog r1
-#                ,image i1
-#           WHERE i1.id = %s
-#             AND i1.dataset = r1.dataset
-#             AND r1.id NOT IN (SELECT r.id
-#                                 FROM runningcatalog r
-#                                     ,extractedsource x
-#                                     ,image i
-#                                WHERE i.id = %s
-#                                  AND x.image = i.id
-#                                  AND x.image = %s
-#                                  AND i.dataset = r.dataset
-#                                  AND r.zone BETWEEN CAST(FLOOR(x.decl - %s) as INTEGER)
-#                                                 AND CAST(FLOOR(x.decl + %s) as INTEGER)
-#                                  AND r.wm_decl BETWEEN x.decl - %s
-#                                                    AND x.decl + %s
-#                                  AND r.wm_ra BETWEEN x.ra - alpha(%s, x.decl)
-#                                                  AND x.ra + alpha(%s, x.decl)
-#                                  AND SQRT(  (x.ra * COS(RADIANS(x.decl)) - r.wm_ra * COS(RADIANS(r.wm_decl)))
-#                                           * (x.ra * COS(RADIANS(x.decl)) - r.wm_ra * COS(RADIANS(r.wm_decl)))
-#                                           / (x.ra_err * x.ra_err + r.wm_ra_err * r.wm_ra_err) 
-#                                          + (x.decl - r.wm_decl) * (x.decl - r.wm_decl)
-#                                           / (x.decl_err * x.decl_err + r.wm_decl_err * r.wm_decl_err)
-#                                          ) < %s
-#                              )
-#        """
-#        cursor.execute(query, (image_id, image_id, image_id, 
-#                                radius, radius, radius,
-#                                radius, radius, radius, deRuiter_red))
-#    except db.Error, e:
-#        query = query % (image_id,)
-#        logger.warn("Query failed:\n%s", query)
-#        raise
+def get_userdetections(image_id, deRuiter_r, radius=0.03):
+    """Returns the monitoringlist user-entry sources for a forced fit
+    in the current image
+    
+    Output: monlist.id, ra, decl
+    """
+    deRuiter_red = deRuiter_r / 3600.
+    try:
+        conn = DataBase().connection
+        cursor = conn.cursor()
+        query = """\
+        SELECT m.id
+              ,m.ra
+              ,m.decl
+          FROM monitoringlist m
+              ,(SELECT dataset
+                  FROM image
+                 WHERE id = %s
+               ) t
+         WHERE m.dataset = t.dataset
+           AND m.userentry = TRUE
+        """
+        cursor.execute(query, (image_id,))
+        results = zip(*cursor.fetchall())
+        if not AUTOCOMMIT:
+            conn.commit()
+        cursor.close()
+        r = ()
+        if len(results) != 0:
+            p = zip(list(results[1]), list(results[2]))
+            #maxbeam = max(results[3][0],results[4][0]) # all bmaj & bmin are the same
+            r = (p,)
+    except db.Error, e:
+        query = query % (image_id,)
+        logger.warn("Query failed:\n%s", query)
+        raise
+    return r
 
 def get_nulldetections(image_id, deRuiter_r, radius=0.03):
     """Returns the runcat sources that do not have a counterpart in the 
@@ -162,18 +145,19 @@ def get_monsources(image_id, deRuiter_r, radius=0.03):
     try:
         conn = DataBase().connection 
         cursor = conn.cursor()
+        # Taken out, because it is done by get_userdetections()
+        #SELECT m.id AS id
+        #      ,m.ra AS ra
+        #      ,m.decl AS decl
+        #      ,i.bmaj_syn AS bmaj_syn
+        #      ,i.bmin_syn AS bmin_syn
+        #  FROM monitoringlist m
+        #      ,image i
+        # WHERE i.id = %s
+        #   AND m.dataset = i.dataset
+        #   AND m.userentry = TRUE
+        #UNION
         query = """\
-        SELECT m.id AS id
-              ,m.ra AS ra
-              ,m.decl AS decl
-              ,i.bmaj_syn AS bmaj_syn
-              ,i.bmin_syn AS bmin_syn
-          FROM monitoringlist m
-              ,image i
-         WHERE i.id = %s
-           AND m.dataset = i.dataset
-           AND m.userentry = TRUE
-        UNION
         SELECT m1.id AS id
               ,r1.wm_ra AS ra
               ,r1.wm_decl AS decl
@@ -213,14 +197,14 @@ def get_monsources(image_id, deRuiter_r, radius=0.03):
                                        ) < %s
                             )
         """
-        cursor.execute(query, (image_id, image_id, image_id, image_id, 
+        cursor.execute(query, (image_id, image_id, image_id, 
                                 radius, radius, radius,
                                 radius, radius, radius, deRuiter_r / 3600.))
         results = zip(*cursor.fetchall())
         if not AUTOCOMMIT:
             conn.commit()                        
         cursor.close()
-        q = query % (image_id, image_id, image_id, image_id, 
+        q = query % (image_id, image_id, image_id, 
                         radius, radius, radius, radius, radius, radius,
                         deRuiter_r / 3600.)
         r = ()
@@ -229,7 +213,7 @@ def get_monsources(image_id, deRuiter_r, radius=0.03):
             maxbeam = max(results[3][0],results[4][0]) # all bmaj & bmin are the same
             r = (p, maxbeam)
     except db.Error, e:
-        query = query % (image_id,image_id,image_id,image_id, radius, radius,radius,radius,radius,radius,deRuiter_r / 3600.)
+        query = query % (image_id,image_id,image_id, radius, radius,radius,radius,radius,radius,deRuiter_r / 3600.)
         logger.warn("Query failed:\n%s", query)
         raise
     return r

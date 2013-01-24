@@ -56,8 +56,8 @@ def _update_known_transients(transients):
                                           float(transients[i].eta_int),
                                           transients[i].runcat,
                                           transients[i].band))
-        if not AUTOCOMMIT:
-            conn.commit()
+            if not AUTOCOMMIT:
+                conn.commit()
         cursor.close()
         if upd > 0:
             logger.info("Updated %s known transients" % (upd,))
@@ -122,8 +122,8 @@ def _insert_new_transients(image_id, transients, prob_threshold):
                                               float(transients[i].V_int),
                                               float(transients[i].eta_int),
                                               transients[i].trigger_xtrsrc))
-        if not AUTOCOMMIT:
-            conn.commit()
+                    if not AUTOCOMMIT:
+                        conn.commit()
         cursor.close()
         if ins == 0:
             logger.info("No new transients found in image %s" % (image_id))

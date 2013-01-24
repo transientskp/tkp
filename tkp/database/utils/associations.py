@@ -819,6 +819,7 @@ def _delete_1_to_many_inactive_monitoringlist(conn):
                         FROM monitoringlist m
                             ,runningcatalog r
                        WHERE m.runcat = r.id
+                         AND m.userentry = FALSE
                          AND r.inactive = TRUE
                      )
         """

@@ -8,7 +8,7 @@ Most of the basic insertion routines are kept here,
 with exceptions of monitoringlist and transients. 
 """
 
-import math
+import math, sys
 import logging
 
 from lofarpipe.support.lofarexceptions import PipelineException
@@ -49,14 +49,78 @@ UPDATE dataset
  WHERE id = %(dataset_id)s
 """
 
+filter_ud_xtrsrcs_query = """
+DELETE 
+  FROM extractedsource
+ WHERE id IN (SELECT x0.id
+                FROM extractedsource x0
+                    ,extractedsource x1
+               WHERE x0.image = %(image_id)s
+                 AND x0.extract_type = 3
+                 AND x1.image = %(image_id)s
+                 AND x1.extract_type IN (0, 1, 2)
+                 AND x1.zone BETWEEN CAST(FLOOR(x0.decl - %(assoc_theta)s) as INTEGER)
+                                 AND CAST(FLOOR(x0.decl + %(assoc_theta)s) as INTEGER)
+                 AND x1.decl BETWEEN x0.decl - %(assoc_theta)s
+                                 AND x0.decl + %(assoc_theta)s
+                 AND x1.ra BETWEEN x0.ra - alpha(%(assoc_theta)s, x0.decl)
+                               AND x0.ra + alpha(%(assoc_theta)s, x0.decl)
+                 AND SQRT(  (x0.ra * COS(RADIANS(x0.decl)) - x1.ra * COS(RADIANS(x1.decl)))
+                          * (x0.ra * COS(RADIANS(x0.decl)) - x1.ra * COS(RADIANS(x1.decl)))
+                          / (x0.ra_err * x0.ra_err + x1.ra_err * x1.ra_err)
+                         +  (x0.decl - x1.decl) * (x0.decl - x1.decl)
+                          / (x0.decl_err * x0.decl_err + x1.decl_err * x1.decl_err)
+                         ) < %(deRuiter_red)s
+             )
+"""
+
+def filter_userdetections_extracted_sources(image_id, deRuiter_r, assoc_theta=0.03):
+    """Remove the forced-fit user-entry sources, that have a counterpart
+    with another extractedsource
+
+    """
+    try:
+        conn = DataBase().connection
+        args = {'image_id': image_id,
+                'image_id': image_id,
+                'assoc_theta': assoc_theta,
+                'assoc_theta': assoc_theta,
+                'assoc_theta': assoc_theta,
+                'assoc_theta': assoc_theta,
+                'assoc_theta': assoc_theta,
+                'assoc_theta': assoc_theta,
+                'deRuiter_red': deRuiter_r/3600.
+                }
+        cursor = conn.cursor()
+        q = filter_ud_xtrsrcs_query % (args)
+        #print "FILTER Q:\n", q
+        #answer=str(raw_input('Continue (y/n)? '))
+        #if answer != 'y':
+        #    sys.exit()
+        filtered = cursor.execute(filter_ud_xtrsrcs_query, args)
+        if not AUTOCOMMIT:
+            conn.commit()
+        if filtered == 0:
+            logger.info("No user-entry sources removed from extractedsource for image %s" \
+                            % (image_id,))
+        else:
+            logger.info("Removed %d sources from extractedsource for image %s" \
+                            % (filtered, image_id))
+        #answer=str(raw_input('Continue (y/n)? '))
+        #if answer != 'y':
+        #    sys.exit()
+    except db.Error, e:
+        logger.warn("Failed on query nr %s." % q)
+        raise
+    finally:
+        cursor.close()
+
 
 def update_dataset_process_ts(dataset_id, process_ts):
     """Update dataset with description as given by argument.
 
-    DB function insertDataset() sets the necessary default values.
     """
     conn = DataBase().connection
-    arguments = (dataset_id, process_ts)
     args = {'dataset_id': dataset_id, 'process_ts': process_ts}
     cursor = tkp.database.query(conn, update_dataset_process_ts_query, args, commit=True)
     return dataset_id
@@ -169,6 +233,8 @@ def _insert_extractedsources(image_id, results, extract):
             r.append(1)
         elif extract == 'ff_mon':
             r.append(2)
+        elif extract == 'ff_ud':
+            r.append(3)
         else:
             raise ValueError("Not a valid extractedsource insert type: '%s'" % extract)
         xtrsrc.append(r)
@@ -212,14 +278,17 @@ def _insert_extractedsources(image_id, results, extract):
                 logger.info("No forced-fit sources added to extractedsource for image %s" \
                             % (image_id,))
         else:
-            if extract == 'ff_mon':
-                logger.info("Inserted %d forced-fit monitoringsources in extractedsource for image %s" \
+            if extract == 'blind':
+                logger.info("Inserted %d sources in extractedsource for image %s" \
                             % (len(values), image_id))
             elif extract == 'ff_nd':
                 logger.info("Inserted %d forced-fit null detections in extractedsource for image %s" \
                             % (len(values), image_id))
-            elif extract == 'blind':
-                logger.info("Inserted %d sources in extractedsource for image %s" \
+            elif extract == 'ff_mon':
+                logger.info("Inserted %d forced-fit monitoringsources in extractedsource for image %s" \
+                            % (len(values), image_id))
+            elif extract == 'ff_ud':
+                logger.info("Inserted %d forced-fit user entries in extractedsource for image %s" \
                             % (len(values), image_id))
     except db.Error, e:
         logger.warn("Failed on query nr %s." % query)

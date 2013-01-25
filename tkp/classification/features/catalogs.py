@@ -7,14 +7,9 @@ If the database is not available or the database module cannot be
 imported, functions will silently return None.
 """
 
+from tkp.database.database import DataBase
+from tkp.database.utils import match_nearests_in_catalogs
 
-import_failed = False
-try:
-    from tkp.database.database import DataBase
-    from tkp.database.utils import match_nearests_in_catalogs
-    
-except ImportError:
-    import_failed = True
 
 def match_catalogs(transient):
     """Match transient source with nearest catalog source
@@ -44,9 +39,8 @@ def match_catalogs(transient):
     #    else:
     #        results[value] = {}
     results = match_nearests_in_catalogs(
-                        database.connection, transient.runcatid,
+                        database.connection, transient.runcat,
                         radius=0.5, deRuiter_r=3.717)
-    database.close()
     if len(results) > 0:
         results = results[0]
     else:

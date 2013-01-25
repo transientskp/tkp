@@ -21,8 +21,8 @@ class TestReject(unittest.TestCase):
                                         dataset=self.dataset)
 
     def test_rejectrms(self):
-        tkp.database.quality.unreject(self.database.connection, self.image.id)
-        tkp.database.quality.reject(self.database.connection, self.image.id,
+        tkp.database.quality.unreject(self.image.id)
+        tkp.database.quality.reject(self.image.id,
                                     tkp.database.quality.reason['rms'].id,
                                     "10 times too high")
         self.database.execute("select count(*) from rejection where image=%s" %
@@ -30,25 +30,22 @@ class TestReject(unittest.TestCase):
         self.assertEqual(self.database.fetchone()[0], 1)
 
     def test_unreject(self):
-        tkp.database.quality.unreject(self.database.connection, self.image.id)
+        tkp.database.quality.unreject(self.image.id)
         self.database.execute("select count(*) from rejection where image=%s" %
                               self.image.id)
         self.assertEqual(self.database.fetchone()[0], 0)
 
     def test_unknownreason(self):
         self.assertRaises(monetdb.exceptions.OperationalError,
-                          tkp.database.quality.reject, self.database.connection,
-                          self.image.id, 666666, "bad reason")
+              tkp.database.quality.reject,self.image.id, 666666, "bad reason")
 
     def test_isrejected(self):
-        tkp.database.quality.unreject(self.database.connection, self.image.id)
-        self.assertFalse(tkp.database.quality.isrejected(self.database.connection,
-                                                         self.image.id))
-        tkp.database.quality.reject(self.database.connection, self.image.id,
+        tkp.database.quality.unreject(self.image.id)
+        self.assertFalse(tkp.database.quality.isrejected(self.image.id))
+        tkp.database.quality.reject(self.image.id,
                                     tkp.database.quality.reason['rms'].id,
                                     "10 times too high")
-        self.assertEqual(tkp.database.quality.isrejected(self.database.connection,
-                                                         self.image.id),
+        self.assertEqual(tkp.database.quality.isrejected(self.image.id),
                          [tkp.database.quality.reason['rms'].desc +
                           ': 10 times too high', ])
 

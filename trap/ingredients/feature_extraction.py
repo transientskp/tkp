@@ -10,8 +10,6 @@ To do:
 """
 import logging
 import numpy
-from contextlib import closing
-from lofarpipe.support.utilities import log_time
 from tkp.database import DataBase
 from tkp.classification.features import lightcurve as lcmod
 from tkp.classification.features import catalogs as catmod
@@ -21,7 +19,9 @@ logger = logging.getLogger(__name__)
 
 def extract_features(transient):
     database = DataBase()
-    source = ExtractedSource(id=transient.runcatid, database=database)
+    source = ExtractedSource(id=transient.trigger_xtrsrc, database=database)
+    # NOTE: The light curve is based on peak fluxes, while
+    #       transients were found using the integrated fluxes (and errors).
     lightcurve = lcmod.LightCurve(*zip(*source.lightcurve()))
     lightcurve.calc_background()
     lightcurve.calc_stats()
@@ -46,10 +46,12 @@ def extract_features(transient):
         'relpeakflux': lightcurve.fluxincrease['increase']['relative'],
         'risefallratio': lightcurve.risefall['ratio'],
         }
+
+    # TODO: (gijs) a function should not modify an argument
     transient.duration = lightcurve.duration['total']
     transient.timezero = lightcurve.duration['start']
     transient.variability = variability
     transient.features = features
-    transient.catalogs = catmod.match_catalogs(transient)
+    transient.catalogs = catmod.match_catalogs(database, transient)
 
     return transient

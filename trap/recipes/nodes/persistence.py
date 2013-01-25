@@ -6,4 +6,3 @@ class persistence(trap.recipes.TrapNode):
         self.outputs['metadatas'] = trap.ingredients.persistence.node_steps([image], parset_file)
 
 trap.recipes.node_run(__name__, persistence)
-

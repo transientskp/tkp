@@ -1,20 +1,49 @@
 import os
 import logging
 import json
-import sys
 from lofarpipe.support.lofarexceptions import PipelineException
 from lofar.parameterset import parameterset
 from tkp.database import DataBase, DataSet
+from tkp.database.utils import monitoringlist as dbmon
 import tkp.utility.accessors as accessors
-from tkp.database import DataBase
-from tkp.database import DataSet
-
-
 from tkp.database.orm import Image
 
 logger = logging.getLogger(__name__)
 
 BOX_IN_BEAMPIX = 10 # TODO:  FIXME! (see also 'image' unit test)
+
+
+def adjust_transients_in_monitoringlist(image_id, transients):
+    dbmon.adjust_transients_in_monitoringlist(image_id, transients)
+
+
+def forced_fits(null_detections, image):
+    """
+    Store the forced fits of the null detections 
+    from the current image in extractedsources
+    """
+    forced_fits = []
+    if len(null_detections) != 0:
+        fitsimage = tkp.utility.accessors.open(image)
+        # TODO ... parset ...
+        data_image = sourcefinder_image_from_accessor(fitsimage)
+        # TODO ... parset ...
+        forced_fits = data_image.fit_fixed_positions(ff_nd[0], 
+                            boxsize = BOX_IN_BEAMPIX * max(data_image.beam[0], data_image.beam[1]))
+        # Remove the None items, results from sourcefinder for coordinates that couldn't be fit
+        try:
+            forced_fits.remove(None)
+        except ValueError:
+            pass
+        #tuple_ff_nd = [forced_fit.serialize() for forced_fit in forced_fits]
+        #dbmon.insert_forcedfits_into_extractedsource(db_image.id, tuple_ff_nd, extract='ff_nd')
+    
+    return forced_fits
+
+
+def add_nulldetections(image_id):
+    monitoringlist.add_nulldetections(image_id)
+
 
 def mark_sources(dataset_id, parset):
     database = DataBase()
@@ -23,6 +52,7 @@ def mark_sources(dataset_id, parset):
     detection_thresh = parameterset(parset).getFloat('detection.threshold', 5)
     dataset.mark_transient_candidates(single_epoch_threshold=detection_thresh,
                                       combined_threshold=detection_thresh)
+
 
 def update_monitoringlist(image_id):
     """ Update the monitoring list with newly found transients. 
@@ -49,6 +79,8 @@ def update_monitoringlist(image_id):
         logger.info("Measuring %d undetected monitoring targets in image %s"
                     % (len(mon_targets), image_id))
         data_image = accessors.sourcefinder_image_from_accessor(fitsimage)
+        print "UPDATE_MONITORINGLIST():", [(m.ra, m.decl) for m in mon_targets]
+        print "UPDATE_MONITORINGLIST():", max(data_image.beam[0], data_image.beam[1])
         results = data_image.fit_fixed_positions(
             [(m.ra, m.decl) for m in mon_targets],
             boxsize=BOX_IN_BEAMPIX*max(data_image.beam[0], data_image.beam[1]))

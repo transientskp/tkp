@@ -4,8 +4,8 @@ import warnings
 import time
 from lofarpipe.support.parset import parameterset
 import tkp.utility.accessors
-from tkp.database import DataBase, DataSet, Image
-from tkp.utility.accessors.dataaccessor import extract_metadata
+from tkp.database import DataBase, DataSet, Image, quality
+from tkp.utility.accessors.dataaccessor import extract_metadata, time_format
 from tempfile import NamedTemporaryFile
 from pyrap.images import image as pyrap_image
 
@@ -54,7 +54,6 @@ def image_to_mongodb(filename, hostname, port, db):
             with open(temp_fits_file.name, "r") as f:
                 new_file.write(f)
             new_file.close()
-
     except Exception, e:
         msg = "Failed to save image to MongoDB: %s" % (str(e),)
         logger.error(msg)
@@ -124,6 +123,23 @@ def store_images(images_metadata, dataset_id):
     return image_ids
 
 
+def copy_image(image, parset_file):
+    """
+    This function stores the images themselves in mongodb, depending
+    on the parset copy_images value
+    """
+    persistence_parset = parse_parset(parset_file)
+    mongohost = persistence_parset['mongo_host']
+    mongoport = persistence_parset['mongo_port']
+    mongodb = persistence_parset['mongo_db']
+    copy_images = persistence_parset['copy_images']
+    if copy_images:
+        logger.info("Copying %s to mongodb" % os.path.basename(image))
+        image_to_mongodb(image, mongohost, mongoport, mongodb)
+    else:
+        logger.info("Image %s not copied to mongodb" % (image,))
+
+
 def node_steps(images, parset_file):
     """
     this function executes all persistence steps that should be executed on a node.
@@ -135,12 +151,15 @@ def node_steps(images, parset_file):
     mongodb = persistence_parset['mongo_db']
     copy_images = persistence_parset['copy_images']
     if copy_images:
-        logger.info("copying %s images to mongodb" % len(images))
+        logger.info("Copying %s images to mongodb" % len(images))
         for image in images:
-            logger.info("saving local copy of %s" % os.path.basename(image))
             image_to_mongodb(image, mongohost, mongoport, mongodb)
+            logger.info("Saved local copy of %s on %s" \
+                        % (os.path.basename(image), mongohost))
+    else:
+        logger.info("Not copying the %s images to mongodb" % len(images))
 
-    logger.info("extracting metadata from images")
+    logger.info("Extracting metadata from images")
     metadatas = extract_metadatas(images)
     return metadatas
 
@@ -171,3 +190,39 @@ def all(images, parset_file):
     """
     metadatas = node_steps(images, parset_file)
     return master_steps(metadatas, parset_file)
+
+
+def store_dataset(description):
+    """ Add dataset to database
+    Args:
+        description: describes this dataset
+    Returns:
+        the database ID of this dataset
+    """
+    db = DataBase()
+    logger.info("Creating dataset in database ...")
+    dataset = DataSet({'description': description}, db)
+    logger.info("Added dataset with ID %s" % dataset.id)
+    return dataset.id
+
+
+def store_image(image, dataset_id):
+    """ Add images to database
+    Args:
+        database: the database in which the image is added
+        images_metadata: list of dicts containing image metadata
+        dataset_id: dataset id to be used. don't use value from parset file
+                    since this can be -1 (trap way of setting auto increment)
+    Returns:
+        the database ID of this dataset
+    """
+    database = DataBase()
+    dataset = DataSet(id=dataset_id, database=database)
+    accessor = tkp.utility.accessors.open(image)
+    metadata = extract_metadata(accessor)
+    logger.debug("Image %s has metadata: %s" % (image, metadata))
+    filename = metadata['url']
+    db_image = Image(data=metadata, dataset=dataset)
+    logger.info("Stored %s with ID %s" % (os.path.basename(filename), db_image.id))
+    return db_image.id
+

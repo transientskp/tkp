@@ -53,7 +53,6 @@ class persistence(BaseRecipe, RemoteCommandRecipeMixIn):
                     ]
                 )
             )
-        # TODO: need to find a good way to set the max_per_node
         jobs = self._schedule_jobs(jobs, max_per_node=4)
         metadatas = []
         for job in jobs.itervalues():

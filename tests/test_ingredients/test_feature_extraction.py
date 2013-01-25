@@ -3,7 +3,8 @@ import trap.ingredients.feature_extraction
 from tkp.database.orm import DataSet, Image
 from tkp.database.database import DataBase
 from tkp.database import query
-from tkp.classification.transient import Transient
+#from tkp.classification.transient import Transient
+from tkp.database.utils.transients import Transient
 from tkp.testutil import db_subs
 
 class TestFeatureExtraction(unittest.TestCase):

@@ -1593,25 +1593,28 @@ def _go_back_to_other_images_and_do_a_forcedfit_in_non_rejected_images(conn, ima
         SELECT id
               ,url
           FROM image
-         WHERE id <> %s 
-           AND rejected = FALSE
+         WHERE id <> %(image_id)s
+           AND id not in (SELECT image
+                            FROM rejection
+                           WHERE image=%(image_id)s
+                         )
            AND dataset = (SELECT dataset 
                             FROM image i 
-                           WHERE i.id = %s
+                           WHERE i.id = %(image_id)s
                          )
            AND EXISTS (SELECT t0.xtrsrc
                          FROM (SELECT x1.id AS xtrsrc
                                  FROM extractedsource x1
                                      ,image i1
                                 WHERE x1.image = i1.id
-                                  AND i1.id = %s
+                                  AND i1.id = %(image_id)s
                               ) t0
                               LEFT OUTER JOIN temprunningcatalog trc1
                               ON t0.xtrsrc = trc1.xtrsrc
                         WHERE trc1.xtrsrc IS NULL
                       )
         """
-        cursor.execute(query, (image_id, image_id, image_id))
+        cursor.execute(query, {'image_id': image_id})
         results = zip(*cursor.fetchall())
         if not AUTOCOMMIT:
             conn.commit()
@@ -1627,7 +1630,7 @@ def _go_back_to_other_images_and_do_a_forcedfit_in_non_rejected_images(conn, ima
                     validurls.append(url)
                     logger.info("Image %s still available for forced fit" % (os.path.basename(url),))
     except db.Error, e:
-        q = query % (image_id,image_id,image_id)
+        q = query % {'image_id': image_id}
         logger.warn("Failed on query:\n%s" % q)
         raise
 

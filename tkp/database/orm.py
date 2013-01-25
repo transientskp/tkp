@@ -142,6 +142,7 @@ import monetdb.sql as db
 from ..config import config
 from .database import ENGINE
 import tkp.database
+from tkp.database.database import DataBase
 
 logger = logging.getLogger(__name__)
 
@@ -306,8 +307,7 @@ class DataSet(DBObject):
             data=data, database=database, id=id)
         self.images = set()
         if not self.database:
-            raise ValueError(
-                "can't create DataSet object without a DataBase() object")
+            self.database = DataBase()
         self._init_data()
 
     def __str__(self):
@@ -442,8 +442,7 @@ class Image(DBObject):
             self._data.setdefault('dataset', self.dataset.id)
         self.sources = set()
         if not self.database:
-            raise ValueError(
-                "can't create Image object without a DataBase() object")
+            self.database = DataBase()
         self._init_data()
         if not self.dataset:
             self.dataset = DataSet(id=self._data['dataset'], database=self.database)

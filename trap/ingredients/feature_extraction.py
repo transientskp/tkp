@@ -52,6 +52,6 @@ def extract_features(transient):
     transient.timezero = lightcurve.duration['start']
     transient.variability = variability
     transient.features = features
-    transient.catalogs = catmod.match_catalogs(database, transient)
+    transient.catalogs = catmod.match_catalogs(transient)
 
     return transient

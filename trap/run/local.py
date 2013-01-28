@@ -68,7 +68,7 @@ class TrapLocal(control):
         good_image_ids = []
         for image_id in image_ids:
             image = Image(id=image_id)
-            rejected = ingred.quality.reject_check(image.id, image.url, q_parset_file)
+            rejected = ingred.quality.reject_check(image.url, q_parset_file)
             if rejected:
                 reason, comment = rejected
                 ingred.quality.reject_image(image_id, reason, comment)

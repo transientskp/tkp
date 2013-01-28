@@ -44,7 +44,8 @@ class quality_check(BaseRecipe, RemoteCommandRecipeMixIn):
                 (image_id, reason, comment) = rejected_image
                 ingred.quality.reject_image(image_id, reason, comment)
 
-        good_image_ids = set(ids_urls).difference(set([i[0] for i in rejected_images if i]))
+        rejected_ids = [i[0] for i in rejected_images]
+        good_image_ids = [i for i in image_ids if i not in rejected_ids]
         self.outputs['good_image_ids'] = good_image_ids
 
         if self.error.isSet():

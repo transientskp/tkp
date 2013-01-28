@@ -8,6 +8,7 @@ from lofarpipe.support.remotecommand import RemoteCommandRecipeMixIn
 from lofarpipe.support.remotecommand import ComputeJob
 from tkp.database.utils import monitoringlist as dbmon
 from tkp.database.utils import general as dbgen
+from tkp.database.orm import Image
 import trap.ingredients as ingred
 
 
@@ -21,31 +22,24 @@ class user_detections(BaseRecipe, RemoteCommandRecipeMixIn):
             dest='parset',
             help="user_detection configuration parset"
         ),
-        'nproc': ingredient.IntField(
-            '--nproc',
-            help="Maximum number of simultaneous processes per compute node",
-            default=8
-        ),
     }
 
     def go(self):
         super(user_detections, self).go()
-        ud_parset_file = self.inputs['parset']
-        image_detections = self.inputs['args'][0]
-        image_id = self.inputs['args'][1]
-        
-        image = image_detections['image_qualified']['image']
-        good_image = image_detections['image_qualified']['good_image']
-        
-        if good_image:
-            # We need to specify de ruiter radius
-            parset = parameterset(ud_parset_file)
-            deRuiter_radius = parset.getFloat('deRuiter_radius', 3.717)
-            ud = dbmon.get_userdetections(image_id, deRuiter_radius)
-        
-            ff_ud = self.distributed(image, ud, ud_parset_file)
-            forced_fits = ff_ud[0]['forced_fits']
-            dbgen.insert_extracted_sources(image_id, forced_fits, 'ff_ud')
+        parset_file = self.inputs['parset']
+        parset = parameterset(parset_file)
+        deRuiter_radius = parset.getFloat('deRuiter_radius', 3.717)
+
+        image_ids = self.inputs['args']
+        image_paths = [Image(id=id).url for id in image_ids]
+
+        self.logger.info("starting user_detections for images %s" % image_ids)
+
+        image_uds = [dbmon.get_userdetections(image_id, deRuiter_radius) for image_id in image_ids]
+        ff_uds = self.distributed(image_ids, image_paths, image_uds)
+
+        for (image_id, ff_ud) in ff_uds:
+            dbgen.insert_extracted_sources(image_id, ff_ud, 'ff_ud')
             dbgen.filter_userdetections_extracted_sources(image_id, deRuiter_radius)
 
         if self.error.isSet():
@@ -54,30 +48,34 @@ class user_detections(BaseRecipe, RemoteCommandRecipeMixIn):
         else:
             return 0
 
-    def distributed(self, image, ud, ud_parset_file):
+    def distributed(self, image_ids, image_paths, image_nds):
         nodes = ingred.common.nodes_available(self.config)
 
         command = "python %s" % self.__file__.replace('master', 'nodes')
         jobs = []
         hosts = itertools.cycle(nodes)
         host = hosts.next()
-        jobs.append(
-            ComputeJob(
-                host, command,
-                arguments=[
-                    image,
-                    ud,
-                    ud_parset_file,
-                ]
+        for image_id, image_path, image_nd in zip(image_ids, image_paths, image_nds):
+            jobs.append(
+                ComputeJob(
+                    host, command,
+                    arguments=[
+                        image_id,
+                        image_path,
+                        image_nds
+                    ]
+                )
             )
-        )
 
-        jobs = self._schedule_jobs(jobs, max_per_node=self.inputs['nproc'])
-        ff_ud = []
+        jobs = self._schedule_jobs(jobs)
+        results = []
         for job in jobs.itervalues():
-                if 'ff_ud' in job.results:
-                    ff_ud.append(job.results['ff_ud'])
-        return ff_ud
+            if 'ff_ud' in job.results:
+                ff_ud = job.results['ff_ud']
+                image_id = job.results['image_id']
+                results.append((image_id, ff_ud))
+        return results
+
 
 if __name__ == '__main__':
     sys.exit(user_detections().main())

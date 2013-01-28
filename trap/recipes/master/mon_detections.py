@@ -9,6 +9,8 @@ from lofarpipe.support.remotecommand import ComputeJob
 from tkp.database.utils import monitoringlist as dbmon
 from tkp.database.utils import general as dbgen
 import trap.ingredients as ingred
+from tkp.database.orm import Image
+
 
 class mon_detections(BaseRecipe, RemoteCommandRecipeMixIn):
     """Get the monitoring sources that weren't found by the sourcefinder nor 
@@ -20,34 +22,24 @@ class mon_detections(BaseRecipe, RemoteCommandRecipeMixIn):
             dest='parset',
             help="persistence configuration parset"
         ),
-        'nproc': ingredient.IntField(
-            '--nproc',
-            help="Maximum number of simultaneous processes per compute node",
-            default=8
-        ),
     }
 
     def go(self):
         super(mon_detections, self).go()
         parset_file = self.inputs['parset']
-        
-        image_detections = self.inputs['args'][0]
-        image = image_detections['image_qualified']['image']
-        good_image = image_detections['image_qualified']['good_image']
-        image_id = self.inputs['args'][1]
-        
-        if good_image:
-            parset = parameterset(parset_file)
-            deRuiter_radius = parset.getFloat('deRuiter_radius', 3.717)
-            md = dbmon.get_nulldetections(image_id, deRuiter_radius)
-        
-            # TODO: How to be sure that the correct node executes the forced fits
-            # on the correct image.
-            ff_md = self.distributed(image, md, parset_file)
-            #ff_mon = ingred.source_extraction.forced_fits(image, mon_detections)
-            
-            forced_fits = ff_md[0]['forced_fits']
-            dbgen.insert_extracted_sources(image_id, forced_fits, 'ff_mon')
+        parset = parameterset(parset_file)
+        deRuiter_radius = parset.getFloat('deRuiter_radius', 3.717)
+
+        image_ids = self.inputs['args']
+        image_paths = [Image(id=id).url for id in image_ids]
+
+        self.logger.info("starting mon_detections for images %s" % image_ids)
+
+        image_nds = [dbmon.get_nulldetections(image_id, deRuiter_radius) for image_id in image_ids]
+        ff_mds = self.distributed(image_ids, image_paths, image_nds)
+
+        for image_id, ff_md in ff_mds:
+            dbgen.insert_extracted_sources(image_id, ff_md, 'ff_mon')
 
         if self.error.isSet():
             self.logger.warn("Failed mon_detections process detected")
@@ -55,30 +47,33 @@ class mon_detections(BaseRecipe, RemoteCommandRecipeMixIn):
         else:
             return 0
 
-    def distributed(self, image, md, parset_file):
+    def distributed(self, image_ids, image_paths, image_nds):
         nodes = ingred.common.nodes_available(self.config)
 
         command = "python %s" % self.__file__.replace('master', 'nodes')
         jobs = []
         hosts = itertools.cycle(nodes)
         host = hosts.next()
-        jobs.append(
-            ComputeJob(
-                host, command,
-                arguments=[
-                    image,
-                    md,
-                    parset_file,
-                ]
+        for image_id, image_path, image_nd in zip(image_ids, image_paths, image_nds):
+            jobs.append(
+                ComputeJob(
+                    host, command,
+                    arguments=[
+                        image_id,
+                        image_path,
+                        image_nd,
+                    ]
+                )
             )
-        )
 
-        jobs = self._schedule_jobs(jobs, max_per_node=self.inputs['nproc'])
-        ff_mon = []
+        jobs = self._schedule_jobs(jobs)
+        results = []
         for job in jobs.itervalues():
                 if 'ff_mon' in job.results:
-                    ff_mon.append(job.results['ff_mon'])
-        return ff_mon
+                    ff_mon = job.results['ff_mon']
+                    image_id = job.results['image_id']
+                    results.append((image_id, ff_mon))
+        return results
 
 if __name__ == '__main__':
     sys.exit(mon_detections().main())

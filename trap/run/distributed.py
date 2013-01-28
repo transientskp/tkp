@@ -57,56 +57,46 @@ class Trap(control):
 
         if not add_manual_monitoringlist_entries(dataset.id, self.inputs):
             return 1
-        
+
+        # sets good_image_ids
+        image_ids = [i.id for i in dataset.images]
         self.outputs.update(self.run_task(
             "quality_check",
-            [i.id for i in dataset.images]
+            image_ids
         ))
 
-        self.outputs.update(self.run_task(
+        # sets sources_sets
+        good_image_ids = self.outputs['good_image_ids']
+        self.run_task(
             "source_extraction",
-            self.outputs['good_image_ids'],
-        ))
+            good_image_ids,
+        )
 
-        for image_detections in self.outputs['images_detections']:
-            
-            image_qualified = image_detections['image_qualified']
-            good_image = image_qualified['good_image']
+        for image_id in good_image_ids:
             self.outputs.update(self.run_task(
-                "image_detections",
-                [image_detections, self.outputs['dataset_id']],
+                "null_detections",
+                [image_id],
             ))
 
-            image_id = self.outputs['image_id']
+            self.outputs.update(self.run_task(
+                "mon_detections",
+                [image_id],
+            ))
 
-            if good_image:
-                self.outputs.update(self.run_task(
-                    "null_detections", 
-                    [image_detections, self.outputs['image_id']],
-                    nproc=1 # Issue #3357
-                ))
+            self.outputs.update(self.run_task(
+                "user_detections",
+                [image_id],
+            ))
 
-                self.outputs.update(self.run_task(
-                    "mon_detections", 
-                    [image_detections, self.outputs['image_id']],
-                    nproc=1 # Issue #3357
-                ))
-                
-                self.outputs.update(self.run_task(
-                    "user_detections", 
-                    [image_detections, self.outputs['image_id']],
-                    nproc=1 # Issue #3357
-                ))
+            self.outputs.update(self.run_task(
+                "source_association",
+                [image_id],
+            ))
 
-                self.outputs.update(self.run_task(
-                    "source_association", 
-                    [self.outputs['image_id']],
-                ))
-
-                self.outputs.update(self.run_task(
-                    "transient_search", 
-                    [self.outputs['image_id']],
-                ))
+            self.outputs.update(self.run_task(
+                "transient_search",
+                [image_id],
+            ))
 
         self.outputs.update(self.run_task(
             "feature_extraction",
@@ -120,5 +110,6 @@ class Trap(control):
 
         #self.run_task("prettyprint", self.outputs['transients'])
 
-        dbgen.update_dataset_process_ts(self.outputs['dataset_id'], datetime.datetime.utcnow())
+        now = datetime.datetime.utcnow()
+        dbgen.update_dataset_process_ts(dataset.id, now)
 

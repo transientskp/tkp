@@ -28,16 +28,19 @@ class source_association(BaseRecipe, RemoteCommandRecipeMixIn):
     def go(self):
         self.logger.info("Associating sources")
         super(source_association, self).go()
-        image_id = self.inputs['args'][0]
+        image_ids = self.inputs['args']
+
+        self.logger.info("starting source association for images %s" % image_ids)
+
         parset = self.inputs['parset']
         sa_parset = parameterset(parset)
         deRuiter_radius = sa_parset.getFloat('deRuiter_radius', 3.717)
-        self.logger.debug("SA De Ruiter radius = %s" % (deRuiter_radius,))
         self.logger.info("SA De Ruiter radius = %s" % (deRuiter_radius,))
-        dbass.associate_extracted_sources(image_id, deRuiter_r = deRuiter_radius)
-        dbmon.add_nulldetections(image_id)
-        # similarly, add user_enries here
-        
+
+        for image_id in image_ids:
+            dbass.associate_extracted_sources(image_id, deRuiter_r=deRuiter_radius)
+            dbmon.add_nulldetections(image_id)
+
         if self.error.isSet():
             self.logger.warn("Failed source association process detected")
             return 1

@@ -4,7 +4,6 @@ from lofarpipe.support.parset import parameterset
 from trap import ingredients as ingred
 import lofarpipe.support.lofaringredient as ingredient
 from trap.ingredients.monitoringlist import add_manual_monitoringlist_entries
-from tkp.database import quality
 from tkp.database.orm import Image
 from tkp.database.utils import general as dbgen
 from tkp.database.utils import monitoringlist as dbmon
@@ -69,7 +68,7 @@ class TrapLocal(control):
         good_image_ids = []
         for image_id in image_ids:
             image = Image(id=image_id)
-            rejected = ingred.quality.reject_check(image.url, q_parset_file)
+            rejected = ingred.quality.reject_check(image.id, image.url, q_parset_file)
             if rejected:
                 reason, comment = rejected
                 ingred.quality.reject_image(image_id, reason, comment)
@@ -77,50 +76,41 @@ class TrapLocal(control):
                 good_image_ids.append(image_id)
 
         # Sourcefinding
-        images_detections = []
+        good_images = []
         for image_id in good_image_ids:
             image = Image(id=image_id)
+            good_images.append(image)
             extracted_sources = ingred.source_extraction.extract_sources(image.url, se_parset_file)
-            images_detections.append((image, extracted_sources))
-        
+            dbgen.insert_extracted_sources(image_id, extracted_sources, 'blind')
+
+        # null_detections
+        nd_parset = parameterset(nd_parset_file)
+        deRuiter_radius = nd_parset.getFloat('deRuiter_radius', 3.717)
+
         transients = []
-        for (image, xtrsrcs) in images_detections:
-
+        for image in good_images:
             image_id = image.id
-            image = image.url
+            image_path = image.url
 
-            # we have to run the recipes on the image
-            dbgen.insert_extracted_sources(image_id, xtrsrcs, 'blind')
-
-            # null_detections
-            nd_parset = parameterset(nd_parset_file)
-            deRuiter_radius = nd_parset.getFloat('deRuiter_radius', 3.717)
             null_detections = dbmon.get_nulldetections(image_id, deRuiter_radius)
-            ffs = ingred.source_extraction.forced_fits(image, null_detections, nd_parset_file)
-            forced_fits_nd = ffs['forced_fits']
-            dbgen.insert_extracted_sources(image_id, forced_fits_nd, 'ff_nd')
+            ff_nds = ingred.source_extraction.forced_fits(image_path, null_detections)
+            for ff_nd in ff_nds:
+                dbgen.insert_extracted_sources(image_id, ff_nd, 'ff_nd')
 
             # mon_detections
-            # Forced fitsd for sources in Monitoringlist (that are not yet in extractedsources)
-            mon_parset = parameterset(mon_parset_file)
-            deRuiter_radius = mon_parset.getFloat('deRuiter_radius', 3.717)
             monsources = dbmon.get_monsources(image_id, deRuiter_radius)
-            ffs = ingred.source_extraction.forced_fits(image, monsources, mon_parset_file)
-            forced_fits_mon = ffs['forced_fits']
-            dbgen.insert_extracted_sources(image_id, forced_fits_mon, 'ff_mon')
+            ff_mons = ingred.source_extraction.forced_fits(image_path, monsources)
+            for ff_mon in ff_mons:
+                dbgen.insert_extracted_sources(image_id, ff_mon, 'ff_mon')
 
             # user_detections
-            ud_parset = parameterset(ud_parset_file)
-            deRuiter_radius = ud_parset.getFloat('deRuiter_radius', 3.717)
             user_detections = dbmon.get_userdetections(image_id, deRuiter_radius)
-            ffs = ingred.source_extraction.forced_fits(image, user_detections, ud_parset_file)
-            forced_fits_ud = ffs['forced_fits']
-            dbgen.insert_extracted_sources(image_id, forced_fits_ud, 'ff_ud')
-            dbgen.filter_userdetections_extracted_sources(image_id, deRuiter_radius)
+            ff_uds = ingred.source_extraction.forced_fits(image_path, user_detections)
+            for ff_ud in ff_uds:
+                dbgen.insert_extracted_sources(image_id, ff_ud, 'ff_ud')
+                dbgen.filter_userdetections_extracted_sources(image_id, deRuiter_radius)
 
             # Source_association
-            sa_parset = parameterset(sa_parset_file)
-            deRuiter_radius = sa_parset.getFloat('deRuiter_radius', 3.717)
             dbass.associate_extracted_sources(image_id, deRuiter_r = deRuiter_radius)
             dbmon.add_nulldetections(image_id)
 

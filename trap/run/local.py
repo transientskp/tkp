@@ -93,22 +93,19 @@ class TrapLocal(control):
             image_path = image.url
 
             null_detections = dbmon.get_nulldetections(image_id, deRuiter_radius)
-            ff_nds = ingred.source_extraction.forced_fits(image_path, null_detections)
-            for ff_nd in ff_nds:
-                dbgen.insert_extracted_sources(image_id, ff_nd, 'ff_nd')
+            ff_nd = ingred.source_extraction.forced_fits(image_path, null_detections)
+            dbgen.insert_extracted_sources(image_id, ff_nd, 'ff_nd')
 
             # mon_detections
             monsources = dbmon.get_monsources(image_id, deRuiter_radius)
-            ff_mons = ingred.source_extraction.forced_fits(image_path, monsources)
-            for ff_mon in ff_mons:
-                dbgen.insert_extracted_sources(image_id, ff_mon, 'ff_mon')
+            ff_mon = ingred.source_extraction.forced_fits(image_path, monsources)
+            dbgen.insert_extracted_sources(image_id, ff_mon, 'ff_mon')
 
             # user_detections
             user_detections = dbmon.get_userdetections(image_id, deRuiter_radius)
-            ff_uds = ingred.source_extraction.forced_fits(image_path, user_detections)
-            for ff_ud in ff_uds:
-                dbgen.insert_extracted_sources(image_id, ff_ud, 'ff_ud')
-                dbgen.filter_userdetections_extracted_sources(image_id, deRuiter_radius)
+            ff_ud = ingred.source_extraction.forced_fits(image_path, user_detections)
+            dbgen.insert_extracted_sources(image_id, ff_ud, 'ff_ud')
+            dbgen.filter_userdetections_extracted_sources(image_id, deRuiter_radius)
 
             # Source_association
             dbass.associate_extracted_sources(image_id, deRuiter_r = deRuiter_radius)

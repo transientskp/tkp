@@ -1,7 +1,8 @@
 import trap.ingredients as ingred
+from trap.ingredients.common import TrapNode, node_run
 import trap.recipes
 
-class source_extraction(trap.recipes.TrapNode):
+class source_extraction(TrapNode):
     def trapstep(self, image_id, url,  parset, tkpconfigdir=None):
         self.outputs['sources'] = ingred.source_extraction.extract_sources(url, parset, tkpconfigdir)
 
@@ -9,5 +10,5 @@ class source_extraction(trap.recipes.TrapNode):
         # other way to identify the image otherwise
         self.outputs['image_id'] = image_id
 
-trap.recipes.node_run(__name__, source_extraction)
+node_run(__name__, source_extraction)
 

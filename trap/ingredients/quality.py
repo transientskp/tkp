@@ -27,7 +27,7 @@ def parse_parset(parset_file):
     return result
 
 
-def reject_check(id, image_path, parset_file):
+def reject_check(image_path, parset_file):
     """ checks if an image passes the quality check. If not, a rejection
         tuple is returned.
 
@@ -78,7 +78,7 @@ def reject_check(id, image_path, parset_file):
 
     if bright_source_near:
         logger.info("image %s REJECTED: %s " % (image_path, bright_source_near) )
-        return (id, tkp.database.quality.reason['bright_source'].id, bright_source_near)
+        return (tkp.database.quality.reason['bright_source'].id, bright_source_near)
 
 
 def reject_image(image_id, reason, comment):

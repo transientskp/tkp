@@ -40,8 +40,7 @@ class quality_check(BaseRecipe, RemoteCommandRecipeMixIn):
         image_ids = self.inputs['args']
         ids_urls = [(id, Image(id=id).url) for id in image_ids]
         rejected_images = self.distributed(ids_urls)
-        for rejected_image in rejected_images:
-                (image_id, reason, comment) = rejected_image
+        for image_id, (reason, comment) in rejected_images:
                 ingred.quality.reject_image(image_id, reason, comment)
 
         rejected_ids = [i[0] for i in rejected_images]
@@ -74,11 +73,12 @@ class quality_check(BaseRecipe, RemoteCommandRecipeMixIn):
                 )
             )
         
-        jobs = self._schedule_jobs(jobs)
+        jobs = self._schedule_jobs(jobs, max_per_node=1)
         images_qualified = []
         for job in jobs.itervalues():
                 rejected = job.results.get('rejected', None)
                 if rejected:
-                    images_qualified.append(job.results['rejected'])
+                    image_id = job.results['image_id']
+                    images_qualified.append((image_id, rejected))
         return images_qualified
 

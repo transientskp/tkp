@@ -173,17 +173,3 @@ def all(images, parset_file):
     """
     metadatas = node_steps(images, parset_file)
     return master_steps(metadatas, parset_file)
-
-
-def store_dataset(description):
-    """ Add dataset to database
-    Args:
-        description: describes this dataset
-    Returns:
-        the database ID of this dataset
-    """
-    db = DataBase()
-    logger.info("Creating dataset in database ...")
-    dataset = DataSet({'description': description}, db)
-    logger.info("Added dataset with ID %s" % dataset.id)
-    return dataset.id

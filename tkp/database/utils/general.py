@@ -49,7 +49,14 @@ UPDATE dataset
  WHERE id = %(dataset_id)s
 """
 
-filter_ud_xtrsrcs_query = """
+
+
+def filter_userdetections_extracted_sources(image_id, deRuiter_r, assoc_theta=0.03):
+    """Remove the forced-fit user-entry sources, that have a counterpart
+    with another extractedsource
+
+    """
+    filter_ud_xtrsrcs_query = """\
 DELETE 
   FROM extractedsource
  WHERE id IN (SELECT x0.id
@@ -72,24 +79,12 @@ DELETE
                           / (x0.decl_err * x0.decl_err + x1.decl_err * x1.decl_err)
                          ) < %(deRuiter_red)s
              )
-"""
-
-def filter_userdetections_extracted_sources(image_id, deRuiter_r, assoc_theta=0.03):
-    """Remove the forced-fit user-entry sources, that have a counterpart
-    with another extractedsource
-
     """
     try:
         conn = DataBase().connection
         args = {'image_id': image_id,
-                'image_id': image_id,
                 'assoc_theta': assoc_theta,
-                'assoc_theta': assoc_theta,
-                'assoc_theta': assoc_theta,
-                'assoc_theta': assoc_theta,
-                'assoc_theta': assoc_theta,
-                'assoc_theta': assoc_theta,
-                'deRuiter_red': deRuiter_r/3600.
+                'deRuiter_red': deRuiter_r / 3600.
                 }
         cursor = conn.cursor()
         q = filter_ud_xtrsrcs_query % (args)
@@ -117,7 +112,7 @@ def filter_userdetections_extracted_sources(image_id, deRuiter_r, assoc_theta=0.
 
 
 def update_dataset_process_ts(dataset_id, process_ts):
-    """Update dataset with description as given by argument.
+    """Update dataset start-of-processing timestamp.
 
     """
     conn = DataBase().connection

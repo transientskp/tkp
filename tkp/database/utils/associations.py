@@ -1463,9 +1463,14 @@ def _insert_new_assoc(conn, image_id):
         cursor.close()
 
 def _insert_new_monitoringlist(conn, image_id):
-    """A new source needs to be added to the monitoringlist.
+    """This query looks for sources extracted from the latest image,
+    which have no candidate associations. If there is already more than 
+    one image in this dataset, then *ALL* of these un-associated sources
+    are added to the monitoringlist.
     
-    Except for sources that were detected in the initial image.
+    NB (TS) To me this seems very fragile - as soon as we have offset images,
+    this will result in us duplicating all new sources from an offset image
+    in the monitoringlist. I don't think this is desirable.
     """
 
     try:
@@ -1523,6 +1528,8 @@ def _insert_new_transient(conn, image_id):
 
     We set the siglevel to 1 for a new source and the
     the variability indices 0.
+    
+    NB (TS) See note on ``_insert_new_monitoringlist``.
     """
 
     # TODO: Is the image i0 enough or do we 
@@ -1619,16 +1626,17 @@ def _go_back_to_other_images_and_do_a_forcedfit_in_non_rejected_images(conn, ima
         if not AUTOCOMMIT:
             conn.commit()
         cursor.close()
-        
+
+        validurls = []
         if len(results) != 0:
             imageids = results[0]
             urls = results[1]
             # Check if the urls are still available
-            validurls = []
             for url in urls:
                 if os.path.exists(url):
                     validurls.append(url)
                     logger.info("Image %s still available for forced fit" % (os.path.basename(url),))
+        return validurls
     except db.Error, e:
         q = query % {'image_id': image_id}
         logger.warn("Failed on query:\n%s" % q)

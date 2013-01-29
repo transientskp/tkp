@@ -23,8 +23,6 @@ def match_catalogs(transient):
     The returned dictionary contains the catalog name as its key, and
     a source as the corresponding value.
     """
-    if import_failed:
-        return None
     # Hardcode the catalogs for now
     #catalogs = {3: 'NVSS', 4: 'VLSS', 5: 'WENSS', 6: 'WENSS'} 
     # We check for all catalogs in the db (VLSS, WENSSm, WENSSp, NVSS, EXO)

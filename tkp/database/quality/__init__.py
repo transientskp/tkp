@@ -1,6 +1,9 @@
+import logging
 from collections import namedtuple
 import tkp.database
+from tkp.database import DataBase
 
+logger = logging.getLogger(__name__)
 
 # todo: need to think of a way to sync this with tkp/database/tables/rejection.sql
 
@@ -12,16 +15,26 @@ reason = {
     'bright_source': RejectReason(id=2, desc='bright source near'),
     }
 
-query_reject = """
-INSERT INTO rejection (image, rejectreason, comment)
-VALUES (%(imageid)s, %(reason)s, '%(comment)s')
+query_reject = """\
+INSERT INTO rejection
+  (image
+  ,rejectreason
+  ,comment
+  )
+VALUES
+  (%(imageid)s
+  ,%(reason)s
+  ,'%(comment)s'
+  )
 """
 
-query_unreject = """
-DELETE FROM rejection WHERE image=%(image)s
+query_unreject = """\
+DELETE
+  FROM rejection
+ WHERE image=%(image)s
 """
 
-query_isrejected = """
+query_isrejected = """\
 SELECT rejectreason.description, rejection.comment
   FROM rejection, rejectreason
  WHERE rejection.rejectreason = rejectreason.id
@@ -29,7 +42,7 @@ SELECT rejectreason.description, rejection.comment
 """
 
 
-def reject(connection, imageid, reason, comment):
+def reject(imageid, reason, comment):
     """ Add a reject intro to the database for a given image
     Args:
         connection: A database connection object
@@ -37,22 +50,24 @@ def reject(connection, imageid, reason, comment):
         reason: why is the image rejected, a defined in tkp.database.quality.reason
         comment: an optional comment with details about the reason
     """
+    database = DataBase()
     args = {'imageid': imageid, 'reason': reason, 'comment': comment}
     query = query_reject % args
-    tkp.database.query(connection, query, commit=True)
+    tkp.database.query(database.connection, query, commit=True)
 
 
-def unreject(connection, imageid):
+def unreject(imageid):
     """ Remove all rejection of a given imageid
     Args:
         connection: A database connection object
         image: The image ID of the image to reject
     """
+    database = DataBase()
     query = query_unreject % {'image': imageid}
-    tkp.database.query(connection, query, commit=True)
+    tkp.database.query(database.connection, query, commit=True)
 
 
-def isrejected(connection, imageid):
+def isrejected(imageid):
     """ Find out if an image is rejected or not
     Args:
         connection: A database connection object
@@ -60,12 +75,12 @@ def isrejected(connection, imageid):
     returns:
         False if not rejected, a list of reason id's if rejected
     """
+    database = DataBase()
     query = query_isrejected % {'imageid': imageid}
-    cursor = tkp.database.query(connection, query)
+    cursor = tkp.database.query(database.connection, query)
     results = cursor.fetchall()
     if len(results) > 0:
         return ["%s: %s" % row for row in results]
     else:
         return False
-
 

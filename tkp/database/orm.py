@@ -423,7 +423,8 @@ class Image(DBObject):
 
     TABLE = 'image'
     ID = 'id'
-    REQUIRED = ('dataset', 'tau_time', 'freq_eff', 'freq_bw', 'taustart_ts', 'url', 'centre_ra', 'centre_decl')
+    REQUIRED = ('dataset', 'tau_time', 'freq_eff', 'freq_bw', 'taustart_ts',
+                'url', 'centre_ra', 'centre_decl', 'xtr_radius')
 
 
 
@@ -473,7 +474,8 @@ class Image(DBObject):
                     self._data['bpa'],
                     self._data['url'],
                     self._data['centre_ra'],
-                    self._data['centre_decl']
+                    self._data['centre_decl'],
+                    self._data['xtr_radius'],
                 )
             except self.database.Error, e:
                 logger.warn("insertion of Image() into the database failed")

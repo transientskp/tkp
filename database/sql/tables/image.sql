@@ -10,8 +10,7 @@ CREATE TABLE image
   ,freq_eff DOUBLE NOT NULL
   ,freq_bw DOUBLE NULL
   ,taustart_ts TIMESTAMP NOT NULL
-  ,centre_ra DOUBLE NULL
-  ,centre_decl DOUBLE NULL
+  ,skyrgn INT NOT NULL
   ,x DOUBLE NULL
   ,y DOUBLE NULL
   ,z DOUBLE NULL
@@ -26,5 +25,6 @@ CREATE TABLE image
   ,PRIMARY KEY (id)
   ,FOREIGN KEY (dataset) REFERENCES dataset (id)
   ,FOREIGN KEY (band) REFERENCES frequencyband (id)
+  ,FOREIGN KEY (skyrgn) REFERENCES skyregion (id)
   );
 

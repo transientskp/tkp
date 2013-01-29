@@ -131,14 +131,27 @@ def insert_dataset(conn, description):
     return dataset_id
 
 
-def insert_image(conn, dataset, freq_eff, freq_bw, taustart_ts, tau_time,
-                 beam_maj, beam_min, beam_pa, url, centre_ra, centre_decl):
+def insert_image(conn,
+                 dataset, freq_eff, freq_bw, taustart_ts, tau_time,
+                 beam_maj, beam_min, beam_pa, url,
+                 centre_ra, centre_decl, xtr_radius
+                 ):
     """Insert an image for a given dataset with the column values
     given in the argument list.
+
+    Args:
+     - centre_ra, centre_decl, xtr_radius:
+       These define the region within ``xtr_radius`` degrees of the
+       field centre, that will be used for source extraction.
+       (This obviously implies a promised on behalf of the pipeline not to do
+       anything else!)
+       Note centre_ra, centre_decl, extracion_radius should all be in degrees.
+
     """
-    query = "SELECT insertImage(%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
-    arguments = (dataset, tau_time, freq_eff, freq_bw, taustart_ts, beam_maj,
-                        beam_min, beam_pa, url, centre_ra, centre_decl)
+    query = "SELECT insertImage(%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
+    arguments = (dataset, tau_time, freq_eff, freq_bw, taustart_ts,
+                 beam_maj, beam_min, beam_pa, url,
+                 centre_ra, centre_decl, xtr_radius)
     cursor = tkp.database.query(conn, query, arguments, commit=True)
     image_id = cursor.fetchone()[0]
     return image_id

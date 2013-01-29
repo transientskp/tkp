@@ -23,6 +23,7 @@ CREATE FUNCTION insertImage(idataset INT
                            ,iurl VARCHAR(1024)
                            ,icentre_ra DOUBLE
                            ,icentre_decl DOUBLE
+                           ,ixtr_radius DOUBLE
                            ) RETURNS INT
 BEGIN
 
@@ -30,8 +31,10 @@ BEGIN
   DECLARE oimageid INT;
   DECLARE iband SMALLINT;
   DECLARE itau INT;
+  DECLARE iskyrgn INT;
 
   SET iband = getBand(ifreq_eff, ifreq_bw);
+  SET iskyrgn = getSkyRgn(idataset, icentre_ra, icentre_decl, ixtr_radius);
   
   SELECT NEXT VALUE FOR seq_image INTO iimageid;
 
@@ -43,12 +46,11 @@ BEGIN
     ,freq_eff
     ,freq_bw
     ,taustart_ts
+    ,skyrgn
     ,bmaj_syn
     ,bmin_syn
     ,bpa_syn
     ,url
-    ,centre_ra
-    ,centre_decl
     ) 
   VALUES
     (iimageid
@@ -58,12 +60,11 @@ BEGIN
     ,ifreq_eff
     ,ifreq_bw
     ,itaustart_ts
+    ,iskyrgn
     ,ibeam_maj 
     ,ibeam_min 
     ,ibeam_pa 
     ,iurl
-    ,icentre_ra
-    ,icentre_decl
     )
   ;
 

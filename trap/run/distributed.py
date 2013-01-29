@@ -40,6 +40,7 @@ class Trap(control):
         logdrain = logging.getLogger()
         logdrain.level = self.logger.level
         logdrain.handlers = self.logger.handlers
+        [self.logger.removeHandler(h) for h in self.logger.handlers]
         self.logger = logdrain
 
         log_time(self.logger)

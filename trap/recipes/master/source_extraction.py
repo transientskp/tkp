@@ -1,20 +1,16 @@
 from __future__ import with_statement
-import sys
 import itertools
 import lofarpipe.support.lofaringredient as ingredient
-from lofarpipe.support.baserecipe import BaseRecipe
 from tkp.database.orm import Image
 from lofarpipe.support.remotecommand import ComputeJob
-from lofarpipe.support.remotecommand import RemoteCommandRecipeMixIn
 import tkp.config
+import tkp.database.utils.general as dbgen
 import trap.ingredients as ingred
-from tkp.database.utils import general as dbgen
+from trap.ingredients.common import TrapMaster
 
 
-class source_extraction(BaseRecipe, RemoteCommandRecipeMixIn):
-    """
-    Extract sources from a FITS image
-    """
+class source_extraction(TrapMaster):
+    """Extract sources from a FITS image"""
 
     inputs = {
         'parset': ingredient.FileField(
@@ -22,24 +18,22 @@ class source_extraction(BaseRecipe, RemoteCommandRecipeMixIn):
             dest='parset',
             help="Source finder configuration parset"
         ),
+        'nproc': ingredient.IntField(
+            '--nproc',
+            help="Maximum number of simultaneous processes per compute node",
+            default=8
+        ),
     }
+    outputs = {}
 
-    def go(self):
+    def trapstep(self):
         self.logger.info("Extracting sources...")
-        super(source_extraction, self).go()
-
         image_ids = self.inputs['args']
         image_paths = [Image(id=id).url for id in image_ids]
 
         sources_sets = self.distributed(image_ids, image_paths)
         for (image_id, sources) in sources_sets:
             dbgen.insert_extracted_sources(image_id, sources, 'blind')
-
-        if self.error.isSet():
-            self.logger.warn("Failed source extraction process detected")
-            return 1
-        else:
-            return 0
 
     def distributed(self, image_ids, image_paths):
         nodes = ingred.common.nodes_available(self.config)
@@ -60,14 +54,14 @@ class source_extraction(BaseRecipe, RemoteCommandRecipeMixIn):
                     ]
                 )
             )
-        jobs = self._schedule_jobs(jobs)
+        jobs = self._schedule_jobs(jobs, max_per_node=self.inputs['nproc'])
         results = []
         for job in jobs.itervalues():
             if 'sources' in job.results:
                 image_id = job.results['image_id']
                 sources = job.results['sources']
                 results.append((image_id, sources))
+            else:
+                self.error.set()
         return results
 
-if __name__ == '__main__':
-    sys.exit(source_extraction().main())

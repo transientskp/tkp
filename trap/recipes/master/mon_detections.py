@@ -3,16 +3,15 @@ import sys
 import itertools
 import lofarpipe.support.lofaringredient as ingredient
 from lofarpipe.support.parset import parameterset
-from lofarpipe.support.baserecipe import BaseRecipe
-from lofarpipe.support.remotecommand import RemoteCommandRecipeMixIn
 from lofarpipe.support.remotecommand import ComputeJob
 from tkp.database.utils import monitoringlist as dbmon
 from tkp.database.utils import general as dbgen
-import trap.ingredients as ingred
 from tkp.database.orm import Image
+import trap.ingredients as ingred
+from trap.ingredients.common import TrapMaster
 
 
-class mon_detections(BaseRecipe, RemoteCommandRecipeMixIn):
+class mon_detections(TrapMaster):
     """Get the monitoring sources that weren't found by the sourcefinder nor 
     were added as null detections to extractedsource. Do a forced fit
     at the positions and append the results to extractedsources into the database"""
@@ -22,10 +21,14 @@ class mon_detections(BaseRecipe, RemoteCommandRecipeMixIn):
             dest='parset',
             help="persistence configuration parset"
         ),
+        'nproc': ingredient.IntField(
+            '--nproc',
+            help="Maximum number of simultaneous processes per compute node",
+            default=8
+        ),
     }
 
-    def go(self):
-        super(mon_detections, self).go()
+    def trapstep(self):
         parset_file = self.inputs['parset']
         parset = parameterset(parset_file)
         deRuiter_radius = parset.getFloat('deRuiter_radius', 3.717)
@@ -41,11 +44,6 @@ class mon_detections(BaseRecipe, RemoteCommandRecipeMixIn):
         for image_id, ff_md in ff_mds:
             dbgen.insert_extracted_sources(image_id, ff_md, 'ff_mon')
 
-        if self.error.isSet():
-            self.logger.warn("Failed mon_detections process detected")
-            return 1
-        else:
-            return 0
 
     def distributed(self, image_ids, image_paths, image_nds):
         nodes = ingred.common.nodes_available(self.config)
@@ -66,14 +64,14 @@ class mon_detections(BaseRecipe, RemoteCommandRecipeMixIn):
                 )
             )
 
-        jobs = self._schedule_jobs(jobs)
+        jobs = self._schedule_jobs(jobs, max_per_node=self.inputs['nproc'])
         results = []
         for job in jobs.itervalues():
-                if 'ff_mon' in job.results:
-                    ff_mon = job.results['ff_mon']
-                    image_id = job.results['image_id']
-                    results.append((image_id, ff_mon))
+            if 'ff_mon' in job.results:
+                ff_mon = job.results['ff_mon']
+                image_id = job.results['image_id']
+                results.append((image_id, ff_mon))
+            else:
+                self.error.set()
         return results
 
-if __name__ == '__main__':
-    sys.exit(mon_detections().main())

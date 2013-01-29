@@ -1,18 +1,15 @@
-from __future__ import with_statement
-import sys
 import itertools
 import lofarpipe.support.lofaringredient as ingredient
 from lofarpipe.support.parset import parameterset
-from lofarpipe.support.baserecipe import BaseRecipe
-from lofarpipe.support.remotecommand import RemoteCommandRecipeMixIn
 from lofarpipe.support.remotecommand import ComputeJob
 from tkp.database.utils import monitoringlist as dbmon
 from tkp.database.utils import general as dbgen
 from tkp.database.orm import Image
 import trap.ingredients as ingred
+from trap.ingredients.common import TrapMaster
 
 
-class user_detections(BaseRecipe, RemoteCommandRecipeMixIn):
+class user_detections(TrapMaster):
     """Get the user entries in an image (ie user detections), do a forced fit and 
     append the results to extractedsources into the database"""
 
@@ -22,10 +19,14 @@ class user_detections(BaseRecipe, RemoteCommandRecipeMixIn):
             dest='parset',
             help="user_detection configuration parset"
         ),
+        'nproc': ingredient.IntField(
+            '--nproc',
+            help="Maximum number of simultaneous processes per compute node",
+            default=8
+        ),
     }
 
-    def go(self):
-        super(user_detections, self).go()
+    def trapstep(self):
         parset_file = self.inputs['parset']
         parset = parameterset(parset_file)
         deRuiter_radius = parset.getFloat('deRuiter_radius', 3.717)
@@ -42,11 +43,6 @@ class user_detections(BaseRecipe, RemoteCommandRecipeMixIn):
             dbgen.insert_extracted_sources(image_id, ff_ud, 'ff_ud')
             dbgen.filter_userdetections_extracted_sources(image_id, deRuiter_radius)
 
-        if self.error.isSet():
-            self.logger.warn("Failed user_detections process detected")
-            return 1
-        else:
-            return 0
 
     def distributed(self, image_ids, image_paths, image_nds):
         nodes = ingred.common.nodes_available(self.config)
@@ -67,15 +63,13 @@ class user_detections(BaseRecipe, RemoteCommandRecipeMixIn):
                 )
             )
 
-        jobs = self._schedule_jobs(jobs)
+        jobs = self._schedule_jobs(jobs, max_per_node=self.inputs['nproc'])
         results = []
         for job in jobs.itervalues():
             if 'ff_ud' in job.results:
                 ff_ud = job.results['ff_ud']
                 image_id = job.results['image_id']
                 results.append((image_id, ff_ud))
+            else:
+                self.error.set()
         return results
-
-
-if __name__ == '__main__':
-    sys.exit(user_detections().main())

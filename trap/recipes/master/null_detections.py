@@ -1,18 +1,14 @@
-from __future__ import with_statement
-import sys
 import itertools
 import lofarpipe.support.lofaringredient as ingredient
 from lofarpipe.support.parset import parameterset
-from lofarpipe.support.baserecipe import BaseRecipe
-from lofarpipe.support.remotecommand import RemoteCommandRecipeMixIn
 from lofarpipe.support.remotecommand import ComputeJob
 from tkp.database.utils import monitoringlist as dbmon
 from tkp.database.utils import general as dbgen
 from tkp.database.orm import Image
 import trap.ingredients as ingred
+from trap.ingredients.common import TrapMaster
 
-
-class null_detections(BaseRecipe, RemoteCommandRecipeMixIn):
+class null_detections(TrapMaster):
     """Get the null detections in an image, do a forced fit and 
     append the results to extractedsources into the database"""
 
@@ -22,10 +18,14 @@ class null_detections(BaseRecipe, RemoteCommandRecipeMixIn):
             dest='parset',
             help="null_detection configuration parset"
         ),
+        'nproc': ingredient.IntField(
+            '--nproc',
+            help="Maximum number of simultaneous processes per compute node",
+            default=8
+        ),
     }
 
-    def go(self):
-        super(null_detections, self).go()
+    def trapstep(self):
         parset_file = self.inputs['parset']
         parset = parameterset(parset_file)
         deRuiter_radius = parset.getFloat('deRuiter_radius', 3.717)
@@ -38,14 +38,9 @@ class null_detections(BaseRecipe, RemoteCommandRecipeMixIn):
         image_nds = [dbmon.get_nulldetections(image_id, deRuiter_radius) for image_id in image_ids]
         ff_nds = self.distributed(image_ids, image_paths, image_nds)
 
-        for ff_nd in ff_nds:
+        for image_id, ff_nd in ff_nds:
             dbgen.insert_extracted_sources(image_id, ff_nd, 'ff_nd')
 
-        if self.error.isSet():
-            self.logger.warn("Failed null_detections process detected")
-            return 1
-        else:
-            return 0
 
     def distributed(self, image_ids, image_paths, image_nds):
         nodes = ingred.common.nodes_available(self.config)
@@ -61,19 +56,19 @@ class null_detections(BaseRecipe, RemoteCommandRecipeMixIn):
                     arguments=[
                         image_id,
                         image_path,
-                        image_nds
+                        image_nd
                     ]
                 )
         )
 
-        jobs = self._schedule_jobs(jobs)
+        jobs = self._schedule_jobs(jobs, max_per_node=self.inputs['nproc'])
         results = []
         for job in jobs.itervalues():
-            if 'ff_mon' in job.results:
-                ff_mon = job.results['ff_mon']
+            if 'ff_nd' in job.results:
+                ff_nd = job.results['ff_nd']
                 image_id = job.results['image_id']
-                results.append((image_id, ff_mon))
+                results.append((image_id, ff_nd))
+            else:
+                self.error.set()
         return results
 
-if __name__ == '__main__':
-    sys.exit(null_detections().main())

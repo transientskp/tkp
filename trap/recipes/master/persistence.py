@@ -2,14 +2,13 @@ from __future__ import with_statement
 import sys
 import itertools
 import lofarpipe.support.lofaringredient as ingredient
-from lofarpipe.support.baserecipe import BaseRecipe
-from lofarpipe.support.remotecommand import RemoteCommandRecipeMixIn
 from lofarpipe.support.remotecommand import ComputeJob
 from trap.ingredients.persistence import master_steps
 import trap.ingredients as ingred
+from trap.ingredients.common import TrapMaster
 
 
-class persistence(BaseRecipe, RemoteCommandRecipeMixIn):
+class persistence(TrapMaster):
     """Store an image into the database"""
 
     inputs = {
@@ -18,23 +17,21 @@ class persistence(BaseRecipe, RemoteCommandRecipeMixIn):
             dest='parset',
             help="persistence configuration parset"
         ),
+        'nproc': ingredient.IntField(
+            '--nproc',
+            help="Maximum number of simultaneous processes per compute node",
+            default=8
+        ),
     }
     outputs = {
         'dataset_id': ingredient.IntField()
     }
 
-    def go(self):
-        super(persistence, self).go()
+    def trapstep(self):
         images = self.inputs['args']
         metadatas = self.distributed(images)
         dataset_id, image_ids = master_steps(metadatas, self.inputs['parset'])
         self.outputs['dataset_id'] = dataset_id
-
-        if self.error.isSet():
-            self.logger.warn("Failed persistence process detected")
-            return 1
-        else:
-            return 0
 
     def distributed(self, images):
         nodes = ingred.common.nodes_available(self.config)
@@ -53,12 +50,12 @@ class persistence(BaseRecipe, RemoteCommandRecipeMixIn):
                     ]
                 )
             )
-        jobs = self._schedule_jobs(jobs, max_per_node=4)
+        jobs = self._schedule_jobs(jobs, max_per_node=self.inputs['nproc'])
         metadatas = []
         for job in jobs.itervalues():
             if 'metadatas' in job.results:
                 metadatas += job.results['metadatas']
+            else:
+                self.error.set()
         return metadatas
 
-if __name__ == '__main__':
-    sys.exit(persistence().main())

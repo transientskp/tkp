@@ -12,20 +12,24 @@ database table.
 """
 
 import itertools
-from lofarpipe.support.baserecipe import BaseRecipe
-from lofarpipe.support.remotecommand import RemoteCommandRecipeMixIn
 import lofarpipe.support.lofaringredient as ingredient
 from lofarpipe.support.remotecommand import ComputeJob
 from tkp.database.orm import Image
 import trap.ingredients as ingred
+from trap.ingredients.common import TrapMaster
 
 
-class quality_check(BaseRecipe, RemoteCommandRecipeMixIn):
+class quality_check(TrapMaster):
     inputs = {
         'parset': ingredient.FileField(
             '-p', '--parset',
             dest='parset',
             help="Quality check configuration parset"
+        ),
+        'nproc': ingredient.IntField(
+            '--nproc',
+            help="Maximum number of simultaneous processes per compute node",
+            default=8
         ),
     }
 
@@ -34,9 +38,8 @@ class quality_check(BaseRecipe, RemoteCommandRecipeMixIn):
     }
 
 
-    def go(self):
+    def trapstep(self):
         self.logger.info("Performing quality checks")
-        super(quality_check, self).go()
         image_ids = self.inputs['args']
         ids_urls = [(id, Image(id=id).url) for id in image_ids]
         rejected_images = self.distributed(ids_urls)
@@ -46,12 +49,6 @@ class quality_check(BaseRecipe, RemoteCommandRecipeMixIn):
         rejected_ids = [i[0] for i in rejected_images]
         good_image_ids = [i for i in image_ids if i not in rejected_ids]
         self.outputs['good_image_ids'] = good_image_ids
-
-        if self.error.isSet():
-            self.logger.error("Failed quality control process detected")
-            return 1
-        else:
-            return 0
 
 
     def distributed(self, ids_urls):
@@ -73,7 +70,7 @@ class quality_check(BaseRecipe, RemoteCommandRecipeMixIn):
                 )
             )
         
-        jobs = self._schedule_jobs(jobs, max_per_node=1)
+        jobs = self._schedule_jobs(jobs, max_per_node=self.inputs['nproc'])
         images_qualified = []
         for job in jobs.itervalues():
                 rejected = job.results.get('rejected', None)

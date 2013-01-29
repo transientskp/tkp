@@ -1,22 +1,16 @@
-import os
 import logging
 from lofar.parameterset import parameterset
+from tkp.classification.manual.classifier import Classifier
 
 logger = logging.getLogger(__name__)
 
-def classify(transient, parset, tkpconfigdir=None):
-
-    paths = [os.path.expanduser('~/.transientskp')]
-    if tkpconfigdir:   # allow nodes to pick up the TKPCONFIGDIR
-        os.environ['TKPCONFIGDIR'] = tkpconfigdir
-        paths.insert(0, tkpconfigdir)
-    from tkp.classification.manual.classifier import Classifier
+def classify(transient, parset):
+    logger.info("Classifying transient #%d", transient.runcatid)
 
     parset = parameterset(parset)
     weight_cutoff = parset.getFloat('weighting.cutoff')
 
-    logger.info("Classifying transient #%d", transient.runcat)
-    classifier = Classifier(transient, paths=paths)
+    classifier = Classifier(transient)
     results = classifier.classify()
     transient.classification = {}
     for key, value in results.iteritems():

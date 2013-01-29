@@ -411,7 +411,7 @@ SELECT t1.runcat
 
         results = cursor.fetchall()
         result_dicts = generic.convert_db_rows_to_dicts(results,
-                                            [d[0] for d in cursor.description])
+                                                        cursor.description)
 
         if not AUTOCOMMIT:
             conn.commit()

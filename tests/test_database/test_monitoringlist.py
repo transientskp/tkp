@@ -51,8 +51,8 @@ class TestIntermittentToMonitorlist(unittest.TestCase):
             
             # First, we check for null detections
             nd = monitoringlist.get_nulldetections(image.id, deRuiter_r = 3.717)
-            print "nd =", nd
-            print "len(nd) =", len(nd)
+#            print "nd =", nd
+#            print "len(nd) =", len(nd)
             
             if im_nr == 1:
                 self.assertEqual(len(nd), 0)
@@ -185,16 +185,16 @@ class TestVariableToMonitorlist(unittest.TestCase):
                 steady_srcs[1] = steady_srcs[1]._replace(flux=15e-2)
             else:
                 steady_srcs[1] = steady_srcs[1]._replace(flux=15e-3)
-            
+
             image.insert_extracted_sources(steady_srcs)
 
             ff_nd = monitoringlist.get_nulldetections(image.id, deRuiter_r = 3.717)
             ff_mon = monitoringlist.get_monsources(image.id, deRuiter_r = 3.717)
-            print "len(ff_nd)=",len(ff_nd)
-            print "ff_nd=",ff_nd
-            print "len(ff_mon)=",len(ff_mon)
-            print "ff_mon=",ff_mon
-            
+#            print "len(ff_nd)=",len(ff_nd)
+#            print "ff_nd=",ff_nd
+#            print "len(ff_mon)=",len(ff_mon)
+#            print "ff_mon=",ff_mon
+#            
             # No forced fits
             self.assertEqual(len(ff_mon), 0)
             self.assertEqual(len(ff_mon), 0)

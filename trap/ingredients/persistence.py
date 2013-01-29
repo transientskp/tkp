@@ -1,11 +1,11 @@
+
 import os
 import logging
 import warnings
-import time
 from lofarpipe.support.parset import parameterset
 import tkp.utility.accessors
-from tkp.database import DataBase, DataSet, Image, quality
-from tkp.utility.accessors.dataaccessor import extract_metadata, time_format
+from tkp.database import DataBase, DataSet, Image
+from tkp.utility.accessors.dataaccessor import extract_metadata
 from tempfile import NamedTemporaryFile
 from pyrap.images import image as pyrap_image
 
@@ -28,6 +28,7 @@ def parse_parset(parset_file):
 
 def image_to_mongodb(filename, hostname, port, db):
     """Copy a file into mongodb"""
+
     try:
         import pymongo
         import gridfs
@@ -133,6 +134,7 @@ def node_steps(images, parset_file):
     mongoport = persistence_parset['mongo_port']
     mongodb = persistence_parset['mongo_db']
     copy_images = persistence_parset['copy_images']
+
     if copy_images:
         logger.info("Copying %s images to mongodb" % len(images))
         for image in images:

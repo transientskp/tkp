@@ -1,13 +1,9 @@
 import os
 import logging
-from contextlib import closing
 from lofarpipe.support.lofarexceptions import PipelineException
-
+import tkp.utility.accessors
+from tkp.utility.accessors import sourcefinder_image_from_accessor
 from lofar.parameterset import parameterset
-from tkp.database import DataBase
-from tkp.database.orm import Image
-from tkp.database.utils import general
-from tkp.database.utils import monitoringlist
 
 logger = logging.getLogger(__name__)
 
@@ -91,10 +87,6 @@ def forced_fits(image_path, positions):
         - image_path: path to image
         - positions: ?
     """
-
-    import tkp.utility.accessors
-    from tkp.utility.accessors import sourcefinder_image_from_accessor
-   
     if not os.path.exists(image_path):
         raise PipelineException("Image '%s' not found" % image_path)
     fitsimage = tkp.utility.accessors.open(image_path)

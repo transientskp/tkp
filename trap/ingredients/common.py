@@ -59,16 +59,8 @@ class TrapMaster(BaseRecipe, RemoteCommandRecipeMixIn):
     """
     def go(self, *args, **kwargs):
         super(TrapMaster, self).go()
-        with log_time(self.logger):
-            #capture all logging, not only trap namespace
-            #logdrain = logging.getLogger()
-            #logdrain.level = self.logger.level
-            #logdrain.handlers = self.logger.handlers
-            #self.logger = logdrain
-
-            # call the actual do-er
-            self.trapstep(*args, **kwargs)
-
+        # call the actual do-er
+        self.trapstep(*args, **kwargs)
         if self.error.isSet():
             self.logger.warn("Failed null_detections process detected")
             return 1

@@ -1,15 +1,14 @@
 
 import logging
-import datetime
 from lofarpipe.support.parset import parameterset
-from tkp.database import DataBase, query
+from tkp.database import DataBase
 from tkp.quality.statistics import rms_with_clipped_subregion
 from tkp.lofar.noise import noise_level
 import tkp.utility.accessors
 import tkp.database.quality
 import tkp.quality.brightsource
 import tkp.quality
-from tkp.database.orm import Image
+
 
 logger = logging.getLogger(__name__)
 
@@ -28,21 +27,23 @@ def parse_parset(parset_file):
     return result
 
 
-def check(image_id, parset_file):
+def reject_check(image_path, parset_file):
     """ checks if an image passes the quality check. If not, a rejection
-        entry is added to the database.
+        tuple is returned.
+
+    NOTE: should only be used on a NODE
+
     args:
-        image_id: id of image in database
+        id: database ID of image. This is not used but kept as a reference for
+            distributed computation!
+        image_path: path to image
         parset_file: parset file location with quality check parameters
     Returns:
-        True if image passes tests, false if not
+        (rejection ID, description) if rejected, else None
     """
-    database = DataBase()
-    db_image = Image(database=database, id=image_id)
-    accessor = tkp.utility.accessors.open(db_image.url)
-    p = parse_parset(parset_file)
 
-    # TODO: this is getting messy and can use a cleanup
+    accessor = tkp.utility.accessors.open(image_path)
+    p = parse_parset(parset_file)
 
     rms = rms_with_clipped_subregion(accessor.data, sigma=p['sigma'], f=p['f'])
     noise = noise_level(accessor.freq_eff, accessor.freq_bw, accessor.tau_time,
@@ -51,38 +52,41 @@ def check(image_id, parset_file):
 
     rms_invalid = tkp.quality.rms_invalid(rms, noise, low_bound=p['low_bound'],
         high_bound=p['high_bound'])
+    
     if not rms_invalid:
-        logger.info("image %i accepted: rms: %s, theoretical noise: %s" % \
-                        (db_image.id, tkp.quality.nice_format(rms),
+        logger.info("image %s accepted: rms: %s, theoretical noise: %s" % \
+                        (image_path, tkp.quality.nice_format(rms),
                          tkp.quality.nice_format(noise)))
     else:
-        logger.info("image %s REJECTED: %s " % (db_image.id, rms_invalid) )
-        tkp.database.quality.reject(database.connection, db_image.id,
-                    tkp.database.quality.reason['rms'].id, rms_invalid)
-        return False
+        logger.info("image %s REJECTED: %s " % (image_path, rms_invalid) )
+        return (tkp.database.quality.reason['rms'].id, rms_invalid)
 
     (semimaj, semimin, theta) = accessor.beam
     beam_invalid = tkp.quality.beam_invalid(semimaj, semimin,
                                         p['oversampled_x'], p['elliptical_x'])
 
     if not beam_invalid:
-        logger.info("image %i accepted: semimaj: %s, semimin: %s" % (db_image
-                                                                   .id,
+        logger.info("image %s accepted: semimaj: %s, semimin: %s" % (image_path,
                                              tkp.quality.nice_format(semimaj),
                                              tkp.quality.nice_format(semimin)))
     else:
-        logger.info("image %s REJECTED: %s " % (db_image.id, beam_invalid) )
-        tkp.database.quality.reject(database.connection, db_image.id,
-                            tkp.database.quality.reason['beam'].id, beam_invalid)
-        return False
+        logger.info("image %s REJECTED: %s " % (image_path, beam_invalid) )
+        return (tkp.database.quality.reason['beam'].id, beam_invalid)
 
     bright_source_near = tkp.quality.brightsource.is_bright_source_near(accessor,
                                             p['min_separation'])
 
     if bright_source_near:
-        logger.info("image %s REJECTED: %s " % (db_image.id, bright_source_near) )
-        tkp.database.quality.reject(database.connection, db_image.id,
-            tkp.database.quality.reason['bright_source'].id, bright_source_near)
-        return False
+        logger.info("image %s REJECTED: %s " % (image_path, bright_source_near) )
+        return (tkp.database.quality.reason['bright_source'].id, bright_source_near)
 
-    return True
+
+def reject_image(image_id, reason, comment):
+    """
+    Adds a rejection for an image to the database
+
+    NOTE: should only be used on a MASTER node
+    """
+    tkp.database.quality.reject(image_id, reason, comment)
+
+

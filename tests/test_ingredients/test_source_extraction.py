@@ -1,7 +1,7 @@
 import unittest
 import tempfile
 import trap.ingredients.source_extraction
-from tkp.testutil import db_subs, db_queries
+from tkp.testutil import db_subs, db_queries, data
 
 class TestSourceExtraction(unittest.TestCase):
     def __init__(self, *args):
@@ -13,5 +13,5 @@ class TestSourceExtraction(unittest.TestCase):
         self.parset.flush()
 
     def test_extract_sources(self):
-        image_ids = db_queries.dataset_images(self.dataset_id)
-        trap.ingredients.source_extraction.extract_sources(image_ids[0], self.parset.name)
+        image_path = data.fits_file
+        trap.ingredients.source_extraction.extract_sources(image_path, self.parset.name)

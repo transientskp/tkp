@@ -9,33 +9,17 @@ If an image passes theses tests, the image id will be put in the image_ids
 output variable, otherwise an rejection entry with put in the rejection
 database table.
 
-stuff you can set in the parset file:
-
-    sigma = 3               # sigma value used for iterave clipping image before RMS calculation
-    f = 4                   # determines size of subsection, result will be 1/fth of the image size
-    low_bound = 1           # multiplied with noise to define lower threshold
-    high_bound = 50         # multiplied with noise to define upper threshold
-    frequency = 450000000
-    subbandwidth = 200000 # in Hz
-    intgr_time = 18654      # integration time in seconds
-    configuration = LBA_INNER
-    subbands = 10           # number of subbands
-    channels = 64           # number of channels
-    ncore = 24              # number of core stations
-    nremote = 16            # number of remote stations
-    nintl = 8                 # number of international stations
-
 """
 
 import itertools
-from lofarpipe.support.baserecipe import BaseRecipe
-from lofarpipe.support.remotecommand import RemoteCommandRecipeMixIn
 import lofarpipe.support.lofaringredient as ingredient
-from lofarpipe.support.clusterdesc import ClusterDesc, get_compute_nodes
 from lofarpipe.support.remotecommand import ComputeJob
-import trap.ingredients.quality
+from tkp.database.orm import Image
+import trap.ingredients as ingred
+from trap.ingredients.common import TrapMaster
 
-class quality_check(BaseRecipe, RemoteCommandRecipeMixIn):
+
+class quality_check(TrapMaster):
     inputs = {
         'parset': ingredient.FileField(
             '-p', '--parset',
@@ -48,54 +32,50 @@ class quality_check(BaseRecipe, RemoteCommandRecipeMixIn):
             default=8
         ),
     }
+
     outputs = {
         'good_image_ids': ingredient.ListField()
     }
 
 
-    def go(self):
+    def trapstep(self):
         self.logger.info("Performing quality checks")
-        super(quality_check, self).go()
-        images = self.inputs['args']
+        image_ids = self.inputs['args']
+        ids_urls = [(id, Image(id=id).url) for id in image_ids]
+        rejected_images = self.distributed(ids_urls)
+        for image_id, (reason, comment) in rejected_images:
+                ingred.quality.reject_image(image_id, reason, comment)
 
-        # Obtain available nodes
-        clusterdesc = ClusterDesc(self.config.get('cluster', "clusterdesc"))
-        if clusterdesc.subclusters:
-            available_nodes = dict(
-                (cl.name, itertools.cycle(get_compute_nodes(cl)))
-                    for cl in clusterdesc.subclusters
-            )
-        else:
-            available_nodes = {
-                clusterdesc.name: get_compute_nodes(clusterdesc)
-            }
-        nodes = list(itertools.chain(*available_nodes.values()))
+        rejected_ids = [i[0] for i in rejected_images]
+        good_image_ids = [i for i in image_ids if i not in rejected_ids]
+        self.outputs['good_image_ids'] = good_image_ids
+
+
+    def distributed(self, ids_urls):
+        nodes = ingred.common.nodes_available(self.config)
 
         command = "python %s" % self.__file__.replace('master', 'nodes')
         jobs = []
         hosts = itertools.cycle(nodes)
-        for image in images:
+        for (id, url) in ids_urls:
             host = hosts.next()
             jobs.append(
                 ComputeJob(
                     host, command,
                     arguments=[
-                        image,
+                        id,
+                        url,
                         self.inputs['parset'],
                     ]
                 )
             )
+        
         jobs = self._schedule_jobs(jobs, max_per_node=self.inputs['nproc'])
-
-        results = []
+        images_qualified = []
         for job in jobs.itervalues():
-            # TODO: some jobs don't have a 'pass' in it. For now it is unclear why.
-            if job.results.get('pass', False):
-                results.append(job.results['image_id'])
-        self.outputs['good_image_ids'] = sorted(results)
+                rejected = job.results.get('rejected', None)
+                if rejected:
+                    image_id = job.results['image_id']
+                    images_qualified.append((image_id, rejected))
+        return images_qualified
 
-        if self.error.isSet():
-            self.logger.error("Failed quality control process detected")
-            return 1
-        else:
-            return 0

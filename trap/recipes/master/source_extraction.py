@@ -1,18 +1,16 @@
 from __future__ import with_statement
-import sys
 import itertools
 import lofarpipe.support.lofaringredient as ingredient
-from lofarpipe.support.baserecipe import BaseRecipe
+from tkp.database.orm import Image
 from lofarpipe.support.remotecommand import ComputeJob
-from lofarpipe.support.remotecommand import RemoteCommandRecipeMixIn
 import tkp.config
+import tkp.database.utils.general as dbgen
 import trap.ingredients as ingred
+from trap.ingredients.common import TrapMaster
 
 
-class source_extraction(BaseRecipe, RemoteCommandRecipeMixIn):
-    """
-    Extract sources from a FITS image
-    """
+class source_extraction(TrapMaster):
+    """Extract sources from a FITS image"""
 
     inputs = {
         'parset': ingredient.FileField(
@@ -26,46 +24,44 @@ class source_extraction(BaseRecipe, RemoteCommandRecipeMixIn):
             default=8
         ),
     }
+    outputs = {}
 
-    outputs = {
-        'image_ids': ingredient.ListField()
-    }
+    def trapstep(self):
+        self.logger.info("Extracting sources...")
+        image_ids = self.inputs['args']
+        image_paths = [Image(id=id).url for id in image_ids]
 
-    def go(self):
-        self.logger.info("Extracting sources")
-        super(source_extraction, self).go()
-        images = self.inputs['args']
+        sources_sets = self.distributed(image_ids, image_paths)
+        for (image_id, sources) in sources_sets:
+            dbgen.insert_extracted_sources(image_id, sources, 'blind')
+
+    def distributed(self, image_ids, image_paths):
         nodes = ingred.common.nodes_available(self.config)
 
-        # Running this on nodes, in case we want to perform source extraction
-        # on individual images that are still stored on the compute nodes
-        # Note that for that option, we will need host <-> data mapping,
-        # eg VDS files
         command = "python %s" % self.__file__.replace('master', 'nodes')
         jobs = []
         hosts = itertools.cycle(nodes)
-        for image in images:
+        for id, url in zip(image_ids, image_paths):
             host = hosts.next()
             jobs.append(
                 ComputeJob(
                     host, command,
                     arguments=[
-                        image,
+                        id,
+                        url,
                         self.inputs['parset'],
                         tkp.config.CONFIGDIR
                     ]
                 )
             )
         jobs = self._schedule_jobs(jobs, max_per_node=self.inputs['nproc'])
-        self.outputs['image_ids'] = [job.results['image_id'] for job in jobs
-        .itervalues() if 'image_id' in job.results]
+        results = []
+        for job in jobs.itervalues():
+            if 'sources' in job.results:
+                image_id = job.results['image_id']
+                sources = job.results['sources']
+                results.append((image_id, sources))
+            else:
+                self.error.set()
+        return results
 
-        # Check if we recorded a failing process before returning
-        if self.error.isSet():
-            self.logger.warn("Failed source extraction process detected")
-            return 1
-        else:
-            return 0
-
-if __name__ == '__main__':
-    sys.exit(source_extraction().main())

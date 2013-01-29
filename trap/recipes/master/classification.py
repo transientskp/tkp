@@ -1,7 +1,4 @@
-from __future__ import with_statement
-
 """
-
 This recipe tries to classify one or more transients according to their
 features.
 
@@ -21,14 +18,12 @@ alert the right people to the transient (the GRB classification could
 follow from a combination of 'fast transient' and an external trigger).
 
 """
-
+from __future__ import with_statement
 import sys
 import itertools
 import datetime
 from contextlib import closing
 from tkp.database import DataBase
-from lofarpipe.support.baserecipe import BaseRecipe
-from lofarpipe.support.remotecommand import RemoteCommandRecipeMixIn
 from lofarpipe.support.remotecommand import ComputeJob
 from lofarpipe.support import lofaringredient
 import tkp.config
@@ -36,8 +31,10 @@ import tkp.classification
 import tkp.classification.manual
 from tkp.classification.transient import DateTime
 import trap.ingredients as ingred
+from trap.ingredients.common import TrapMaster
 
-class classification(BaseRecipe, RemoteCommandRecipeMixIn):
+
+class classification(TrapMaster):
 
     inputs = {
         'parset': lofaringredient.FileField(
@@ -54,8 +51,7 @@ class classification(BaseRecipe, RemoteCommandRecipeMixIn):
         'transients': lofaringredient.ListField()
         }
 
-    def go(self):
-        super(classification, self).go()
+    def trapstep(self):
         transients = self.inputs['args']
         nodes = ingred.common.nodes_available(self.config)
         command = "python %s" % self.__file__.replace('master', 'nodes')
@@ -85,10 +81,4 @@ class classification(BaseRecipe, RemoteCommandRecipeMixIn):
                     t_start = transient.timezero
                 else:
                     t_start = datetime.datetime(1970, 1, 1)
-        if self.error.isSet():
-            return 1
-        else:
-            return 0
 
-if __name__ == '__main__':
-    sys.exit(classification().main())

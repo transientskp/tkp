@@ -15,7 +15,7 @@ def classify(transient, parset, tkpconfigdir=None):
     parset = parameterset(parset)
     weight_cutoff = parset.getFloat('weighting.cutoff')
 
-    logger.info("Classifying transient #%d", transient.runcatid)
+    logger.info("Classifying transient #%d", transient.runcat)
     classifier = Classifier(transient, paths=paths)
     results = classifier.classify()
     transient.classification = {}

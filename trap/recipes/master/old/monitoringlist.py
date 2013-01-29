@@ -42,18 +42,29 @@ class monitoringlist(BaseRecipe, RemoteCommandRecipeMixIn):
             help="Source finder configuration parset (used to pull detection threshold)"
         ),
     }
+    outputs = {
+        'null_detections': ingredients.ListField()
+    }
 
     def go(self):
         super(monitoringlist, self).go()
-        dataset_id = self.inputs['args'][0]
-        database = tkpdb.DataBase()
-        dataset = tkpdb.DataSet(database=database, id=dataset_id)
+        image_id = self.inputs['args']
+        image = self.inputs['args']
+        null_detections = dbmon.get_nulldetections(image_id)
+        if len(null_detections) != 0:
+            forced_fits = self.distributed(null_detections, image)
+            tuple_nd = [forced_fit.serialize() for forced_fit in forced_fits]
+            dbgen.insert_extracted_sources(image_id, tuple_nd, 'ff_nd')
+        
+        if self.error.isSet():
+            self.logger.warn("Failed monitoringlist process detected")
+            return 1
+        else:
+            return 0
 
-        dataset.update_images()
-        image_ids = [img.id for img in dataset.images if not img.rejected]
-        ingred.monitoringlist.mark_sources(dataset_id, self.inputs['parset'])
-
+    def distributed(self, images):
         nodes = ingred.common.nodes_available(self.config)
+        
         command = "python %s" % self.__file__.replace('master', 'nodes')
         jobs = []
         hosts = itertools.cycle(nodes)
@@ -63,18 +74,16 @@ class monitoringlist(BaseRecipe, RemoteCommandRecipeMixIn):
                 ComputeJob(
                     host, command,
                     arguments=[
-                            image_id,
+                            image,
                         ]
                     )
                 )
         jobs = self._schedule_jobs(jobs, max_per_node=self.inputs['nproc'])
-
-        # Check if we recorded a failing process before returning
-        if self.error.isSet():
-            self.logger.warn("Failed monitoringlist process detected")
-            return 1
-        return 0
-
+        forced_fits = []
+        for job in jobs.itervalues():
+            if 'forced_fits' in job.results:
+                forced_fits += job.results['forced_fits']
+        return forced_fits
 
 if __name__ == '__main__':
     sys.exit(monitoringlist().main())

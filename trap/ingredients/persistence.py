@@ -1,7 +1,7 @@
+
 import os
 import logging
 import warnings
-import time
 from lofarpipe.support.parset import parameterset
 import tkp.utility.accessors
 from tkp.database import DataBase, DataSet, Image
@@ -28,6 +28,7 @@ def parse_parset(parset_file):
 
 def image_to_mongodb(filename, hostname, port, db):
     """Copy a file into mongodb"""
+
     try:
         import pymongo
         import gridfs
@@ -54,7 +55,6 @@ def image_to_mongodb(filename, hostname, port, db):
             with open(temp_fits_file.name, "r") as f:
                 new_file.write(f)
             new_file.close()
-
     except Exception, e:
         msg = "Failed to save image to MongoDB: %s" % (str(e),)
         logger.error(msg)
@@ -134,13 +134,17 @@ def node_steps(images, parset_file):
     mongoport = persistence_parset['mongo_port']
     mongodb = persistence_parset['mongo_db']
     copy_images = persistence_parset['copy_images']
-    if copy_images:
-        logger.info("copying %s images to mongodb" % len(images))
-        for image in images:
-            logger.info("saving local copy of %s" % os.path.basename(image))
-            image_to_mongodb(image, mongohost, mongoport, mongodb)
 
-    logger.info("extracting metadata from images")
+    if copy_images:
+        logger.info("Copying %s images to mongodb" % len(images))
+        for image in images:
+            image_to_mongodb(image, mongohost, mongoport, mongodb)
+            logger.info("Saved local copy of %s on %s" \
+                        % (os.path.basename(image), mongohost))
+    else:
+        logger.info("Not copying the %s images to mongodb" % len(images))
+
+    logger.info("Extracting metadata from images")
     metadatas = extract_metadatas(images)
     return metadatas
 

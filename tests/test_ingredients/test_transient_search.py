@@ -12,5 +12,5 @@ class TestTransientSearch(unittest.TestCase):
 
     def test_search_transients(self):
         image_ids = db_queries.dataset_images(self.dataset_id)
-        trap.ingredients.transient_search.search_transients(image_ids,
-                                            self.dataset_id, self.parset.name)
+        trap.ingredients.transient_search.search_transients(image_ids[0],
+                                                self.parset.name)

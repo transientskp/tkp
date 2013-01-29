@@ -7,6 +7,7 @@ import lofarpipe.support.lofaringredient as ingredient
 from trap.ingredients.monitoringlist import add_manual_monitoringlist_entries
 from tkp.database import DataBase
 from tkp.database import DataSet
+from tkp.database.utils import general as dbgen
 
 
 class Trap(control):
@@ -39,6 +40,7 @@ class Trap(control):
         logdrain = logging.getLogger()
         logdrain.level = self.logger.level
         logdrain.handlers = self.logger.handlers
+        [self.logger.removeHandler(h) for h in self.logger.handlers]
         self.logger = logdrain
 
         log_time(self.logger)
@@ -46,40 +48,56 @@ class Trap(control):
             self.logger.warn("No images found, check parameter files.")
             return 1
 
-        self.logger.info("creating dataset in database ...")
         self.outputs.update(self.run_task(
             "persistence",
             images,
         ))
 
-        dataset = DataSet(id=self.outputs['dataset_id'], database=DataBase())
+        dataset = DataSet(id=self.outputs['dataset_id'])
         dataset.update_images()
 
         if not add_manual_monitoringlist_entries(dataset.id, self.inputs):
             return 1
 
+        # sets good_image_ids
+        image_ids = [i.id for i in dataset.images]
         self.outputs.update(self.run_task(
             "quality_check",
-            [i.id for i in dataset.images],
-            nproc=1 # Issue #3357
+            image_ids
         ))
 
-        self.outputs.update(self.run_task(
+        # sets sources_sets
+        good_image_ids = self.outputs['good_image_ids']
+        self.run_task(
             "source_extraction",
-            self.outputs['good_image_ids'],
-            #nproc = self.config.get('DEFAULT', 'default_nproc')
-            nproc=1 # Issue #3357
-        ))
+            good_image_ids,
+        )
 
-        self.outputs.update(self.run_task(
-            "monitoringlist", [dataset.id],
-            nproc=1 # Issue #3357
-        ))
+        for image_id in good_image_ids:
+            self.outputs.update(self.run_task(
+                "null_detections",
+                [image_id],
+            ))
 
-        self.outputs.update(self.run_task(
-            "transient_search", [dataset.id],
-            image_ids=self.outputs['good_image_ids']
-        ))
+            self.outputs.update(self.run_task(
+                "mon_detections",
+                [image_id],
+            ))
+
+            self.outputs.update(self.run_task(
+                "user_detections",
+                [image_id],
+            ))
+
+            self.outputs.update(self.run_task(
+                "source_association",
+                [image_id],
+            ))
+
+            self.outputs.update(self.run_task(
+                "transient_search",
+                [image_id],
+            ))
 
         self.outputs.update(self.run_task(
             "feature_extraction",
@@ -91,6 +109,8 @@ class Trap(control):
             self.outputs['transients']
         ))
 
-        self.run_task("prettyprint", self.outputs['transients'])
+        #self.run_task("prettyprint", self.outputs['transients'])
 
-        dataset.process_ts = datetime.datetime.utcnow()
+        now = datetime.datetime.utcnow()
+        dbgen.update_dataset_process_ts(dataset.id, now)
+

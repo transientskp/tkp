@@ -142,6 +142,7 @@ import monetdb.sql as db
 from ..config import config
 from .database import ENGINE
 import tkp.database
+from tkp.database.database import DataBase
 
 logger = logging.getLogger(__name__)
 
@@ -306,8 +307,7 @@ class DataSet(DBObject):
             data=data, database=database, id=id)
         self.images = set()
         if not self.database:
-            raise ValueError(
-                "can't create DataSet object without a DataBase() object")
+            self.database = DataBase()
         self._init_data()
 
     def __str__(self):
@@ -363,8 +363,7 @@ class DataSet(DBObject):
     # TODO: Verify constants
     def detect_variables(self,  freq_band, V_lim=0.2, eta_lim=3.):
         """Search through the whole dataset for variable sources"""
-        return dbu.select_variability_indices(
-            self.database.connection, self._id, freq_band, V_lim, eta_lim)
+        return dbu.select_variability_indices(self._id, freq_band, V_lim, eta_lim)
         
     def mark_transient_candidates(self, single_epoch_threshold, combined_threshold):
         """Find transient candidates and add to monitoringlist."""
@@ -443,8 +442,7 @@ class Image(DBObject):
             self._data.setdefault('dataset', self.dataset.id)
         self.sources = set()
         if not self.database:
-            raise ValueError(
-                "can't create Image object without a DataBase() object")
+            self.database = DataBase()
         self._init_data()
         if not self.dataset:
             self.dataset = DataSet(id=self._data['dataset'], database=self.database)
@@ -487,8 +485,7 @@ class Image(DBObject):
     def update_rejected(self):
         """Update self.rejected with the rejected status. Will be false
         if not rejected, will be a list of reject descriptions if rejected"""
-        self.rejected = tkp.database.quality.isrejected(self.database.connection,
-                                                         self.id)
+        self.rejected = tkp.database.quality.isrejected(self.id)
 
     def update_sources(self):
         """Renew the set of sources by getting the sources for this
@@ -534,8 +531,7 @@ class Image(DBObject):
        #To do: Figure out a saner method of passing the results around
        # (Namedtuple, for starters?)
        
-        dbu.insert_extracted_sources(
-            self.database.connection, self._id, results=results)
+        dbu.insert_extracted_sources(self._id, results=results, extract='blind')
         
     def associate_extracted_sources(self, deRuiter_r=DERUITER_R):
         """Associate sources from the last images with previously
@@ -547,8 +543,7 @@ class Image(DBObject):
                 association. The default value is set through the
                 tkp.config module
         """
-        dbu.associate_extracted_sources(
-            self.database.connection, self._id, deRuiter_r)
+        dbu.associate_extracted_sources(self._id, deRuiter_r)
         
 
     def monitoringsources(self):

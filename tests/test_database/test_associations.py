@@ -4,6 +4,7 @@ if not  hasattr(unittest.TestCase, 'assertIsInstance'):
 import math
 import tkp.database as tkpdb
 import tkp.database.utils.general as dbgen
+import tkp.database.utils as dbutils
 from tkp.testutil import db_subs
 from tkp.testutil.decorators import requires_database
 
@@ -150,6 +151,32 @@ class TestOne2One(unittest.TestCase):
         self.assertEqual(avg_f_int[0], steady_srcs[0].flux)
         self.assertEqual(avg_f_int_weight[0], 1./steady_srcs[0].flux_err**2)
 
+    def TestMeridianEdgeCase(self):
+        """What happens if a source is right on the meridian?"""
+
+        dataset = tkpdb.DataSet(database=self.database,
+                        data={'description':"Assoc 1-to-1:" + self._testMethodName})
+        n_images = 3
+        im_params = db_subs.example_dbimage_datasets(n_images)
+        src_list = []
+        src0 = db_subs.example_extractedsource_tuple(ra=0.0001, dec=10.5,
+                                             ra_fit_err=0.01, dec_fit_err=0.01)
+        src_list.append(src0)
+        src_list.append(src0._replace(ra=0.0003)) #Slightly more positive, should be fine.
+        #src_list.append(src0._replace(ra=359.9999 - 360.0)) #Fine
+        src_list.append(src0._replace(ra=359.9999)) #Broken
+
+
+        for idx, im in enumerate(im_params):
+            image = tkpdb.Image(database=self.database, dataset=dataset, data=im)
+            image.insert_extracted_sources([src_list[idx]])
+            tkpdb.utils.associate_extracted_sources(image.id, deRuiter_r=3.717)
+        runcat = dbutils.columns_from_table(self.database.connection,
+                                   'runningcatalog', ['datapoints'],
+                                   where={'dataset':dataset.id})
+#        print "***\nRESULTS:", runcat, "\n*****"
+        self.assertEqual(len(runcat), 1)
+        self.assertEqual(runcat[0]['datapoints'], 3)
 class TestOne2Many(unittest.TestCase):
     """
     These tests will check the 1-to-many source associations, i.e. two extractedsources

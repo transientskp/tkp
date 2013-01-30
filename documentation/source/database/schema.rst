@@ -653,251 +653,104 @@ have this table, but with different content.
 **nodes**
     The total number of nodes in the sharded database configuration.
 
-runningcatalog
-==============
+.. _mathematical-diversion:
 
-While a single entry in ``extractedsource`` corresponds to an individual source
-measurement, 
-a single entry in ``runningcatalog`` corresponds to a unique astronomical
-source detected in a specific dataset (series of images). 
-The position of this unique source is a weighted mean of all its individual
-source measurements.
-The relation between a ``runningcatalog`` source and all its measurements in
-``extractedsource`` is maintained in ``assocxtrsource``.
-
-The association procedure matches extracted sources with counterpart candidates 
-in the runningcatalog table. 
-Depending on their association parameters (distance and De Ruiter radius) of
-the ``runningcatalog`` source and ``extractedsource`` source, 
-the source pair ids are added to ``assocxtrsource``. 
-The source properties, position, fluxes and their errors in the 
-``runningcatalog`` and ``runningcatalog_flux`` tables are then updated to
-include the counterpart values from the extracted source as a new datapoint.
-
-If no counterpart could be found for an extracted sources, it is appended to
-``runningcatalog`` 
-as a "new" source (datapoint=1).
-
-Weighted means for sources positions and fluxes are calculated according to
-Bevington, Ch. 4.
-If we have a source property :math:`x` and its 1sigma error :math:`e`), its
-weighted mean is
-
-.. math::
-
-   \overline{\chi}_N = \frac{\sum_{i=1}^{N} w_i x_i}{\sum_{i=1}^{N} w_i},
-
-where :math:`N` is the number of datapoints and :math:`w_i = 1/{e_i}^2` is the
-weight of the :math:`i`-th measurement of :math:`x`.
-
-**id**
-    Every source in the running catalog gets a unique id.
-
-**xtrsrc**
-    The id of the extractedsource for which this runningcatalog source was
-    detected for the first time.
-
-**dataset**
-    The dataset to which the runningcatalog source belongs to.
-
-**datapoints**
-    The number of datapoints (or number of times this source was detected) that
-    is included in the calculation of the averages. It is assumed that a
-    source's position stays relatively constant across bands and therefore all
-    bands are included in averaging the position.
-
-**zone**
-    The zone id in which the source declination resides.  The sphere is devided
-    into zones of equal width: here fixed to 1 degree, and the zone is
-    effectively the truncated declination. (decl=31.3 => zone=31, decl=31.9 =>
-    zone=31)
-
-**wm_ra**
-    The weighted mean of RA of the source [in J2000 degrees].
-
-**wm_decl**
-    The weighted mean of Declination of the source [in J2000 degrees].
-
-**wm_ra_err**
-    The weighted mean of the ra_err of the source
-
-**wm_decl_err**
-    The weighted mean of the decl_err of the source
-
-**avg_wra**
-    The average of ra/ra_err^2, used for calculating the average weight of ra.
-    (This alleviates the computations, when we have lots of datapoints.)
-
-**avg_wdecl**
-    Analogous to avg_wra.
-
-**avg_weight_ra**
-    The average of 1/ra_err^2, used for calculating the average weight of ra.
-        (This alleviates the computations, when we have lots of datapoints.)
-
-**avg_weight_decl**
-    Analogous to avg_weight_ra
-
-**x, y, z**
-    The Cartesian coordinate representation of wm_ra and wm_decl
-
-**margin**
-    Boolean to define that a source is near the 360-0 meridian. Not being used.
-
-**inactive**
-    Boolean to set an entry to inactive.  This is done during the `source
-    association <database_assoc>` procedure, where e.g. the many-to-many cases
-    are handled and an existing entry is replaced by two or more entries.
-
-
-runningcatalog_flux
-===================
-
-The runningcatalog_flux table contains the averaged flux measurements of a
-runningcatalog source, per band and stokes parameter. The combination runcat,
-band and stokes is the primary key.
-
-The flux squared and weights are used for calculations of the variability
-indices, V and eta.
-
-**runcat**
-    Reference to the runningcatalog id to which this band/stokes/flux belongs
-    to
-
-**band**
-    Reference to the frequency band of this flux
-
-**stokes**
-    Stokes parameter: 1 = I, 2 = Q, 3 = U, 4 = V
-
-**f_datapoints**
-    the number of datapoints for which the averages were calculated
-
-**resolution**
-    Not used.
-
-**avg_f_peak**
-    average of peak flux
-
-**avg_f_peak_sq**
-    average of (peak flux)^2
-
-**avg_f_peak_weight**
-    average of one over peak flux errors squared
-
-**avg_weighted_f_peak**
-    average of ratio of (peak flux) and (peak flux errors squared)
-
-**avg_weighted_f_peak_sq**
-    average of ratio of (peak flux squared) and (peak flux errors squared)
-
-**avg_f_int**
-    average of int flux
-
-**avg_f_int_sq**
-    average of (int flux)^2
-
-**avg_f_int_weight**
-    average of one over int flux errors squared
-
-**avg_weighted_f_int**
-    average of ratio of (int flux) and (int flux errors squared)
-
-**avg_weighted_f_int_sq**
-    average of ratio of (int flux squared) and (int flux errors squared)
-
-.. _database_temprunningcatalog:
-
-temprunningcatalog
-==================
-
-This table contains temporary results. 
-At the beginning of the source association procedures the table is empty. 
-At the start, the association query adds candidate pairs (matches between 
-sources in ``runningcatalog`` and ``extractedsource``) to the temporary table. 
-At insertion time, the query calculates for every found source pair 
-the new statistical parameters (weighted means, averages), 
-using "archive" values from ``runningcatalog`` and including 
-the values from ``extractedsource`` as new datapoints. 
-Below, a short description of how this is done is given.
-
-Adding includes the new measurements. 
-Then, all types of association relations 
-(many-to-1, 1-to-many, etc., as described in the `source association
-<database_assoc>`, are processed.
-At the end of this process, the runningcatalog is updated with the new values
-that now include the last datapoint.
-
-When done, this table is emptied again, ready for the next image.
-
-The table name is prefixed "temp", since the data are temporarily stored and
-deleted at the end of the association procedure.
-After handling the many-to-many, 1-to-many and many-to-1 relations, 
-the ``runningcatalog`` is updated with the new "averages". 
-The 0-to-1 and 1-to-0 relations are processed separatedly and do not touch this
-table.
+Mathematical diversion
+======================
 
 On iteratively updated weighted means
 -------------------------------------
 We now take a diversion to note the mechanics of 
 storing and updating weighted means - this happens a lot in the database. 
 
-If we define the average of :math:`x` as 
+We define the average (specifically, the *arithmetic mean*) of :math:`x` as 
 
 .. math::
 
-    \overline{x}_N = \frac{1}{N} \sum_{i=1}^{N} x_i,
+    \overline{x}_N = \frac{1}{N} \sum_{i=1}^{N} x_i
 
-then, if we add the next datapoint, :math:`x_{N+1}`-th, to it, we can build the
+where :math:`x_i` is the :math:`i` th measurement of :math:`x`. 
+
+We may update this in an iterative fashion.
+If we add the next datapoint, :math:`x_{N+1}`, to it, we can build the
 new average as:
 
-.. math::
+.. math:: \overline{x}_{N+1} = \frac{N \overline{x}_N + x_{N+1}}{N+1} .
+   :label: simple_mean_update
 
-    \overline{x}_{N+1} = \frac{N \overline{x}_N + x_{N+1}}{N+1} .
+-simple. We now treat weighted means. 
 
-This is slightly different for weighted means. If we have a weighted mean,
-:math:`\xi_N` defined as:
-
-.. math::
-
-    \xi_N = \frac{\sum_{i=1}^{N} w_i x_i}{\sum_{i=1}^{N} w_i},
-
-and we add the :math:`N+1`-th measurement of :math:`x_{N+1}` and its error
-:math:`e_{N+1}` 
-(but using again :math:`w_{N+1} = 1/{e_{N+1}}^2`), 
-then, defining the sum of the weights 1 to n as
+We first define the weight of the :math:`i` th measurement of x, 
 
 .. math::
-
-    W_N = \sum_{i=1}^{N} w_i
-    
-we get the new average by:
-
-.. math::
-
-    \xi_{N+1} = 
-    \frac{ W_N \xi_{N} + w_{n+1}x_{n+1}}
-         { W_N + w_{n+1} }
-
-Note, if we define:
-
-.. math::
-
-   \overline{w}_N = \frac{W_N}{N} = \frac{\sum_{i=1}^{N} w_i}{N}
+   w_{x_i} = 1/{e_{x_i}}^2
    
-we may use the formula:
+where :math:`e_{x_i}` is the one-sigma error in the :math:`i` th measurement of x.
+   
+We can now define a weighted mean of N measurements of :math:`x`; 
+:math:`\xi_{x_N}` as:
 
 .. math::
 
-    \xi_{N+1} =
-    \frac{ N \overline{w}_N \xi_{N} + w_{n+1}x_{n+1}}
-         { N \overline{w}_N + w_{n+1} }
+    \xi_{x_N} = \frac{\sum_{i=1}^{N} w_{x_i} x_i}{\sum_{i=1}^{N} w_{x_i}}.
+
+To update this weighted average,
+we first define the sum of the weights as
+
+.. math::
+
+    W_{x_N} = \sum_{i=1}^{N} w_{x_i}
+    
+
+we may then calculate the  weighted average after N+1 measurements as:
+
+.. math:: \xi_{x_{N+1}} =   \frac{ W_{x_N} \xi_{{x_N}} + w_{{x_{N+1}}}x_{N+1}}
+                                 { W_{x_N} + w_{x_{N+1}} }
+   :label: wt_mean_update_1 
+
+Note, if we define the mean or 'bar' operator such that:
+
+.. math::
+
+   \overline{y}_{N} = \frac{\sum_{i=1}^{N} y_i}{N}
+   
+for any variable :math:`y`, then
+
+.. math::
+
+   \overline{w}_{x_N} = \frac{\sum_{i=1}^{N} w_{x_i}}{N} = \frac{W_{x_N}}{N} 
+   
+and we may use the formula:
+
+.. math:: \xi_{x_{N+1}} =
+    \frac{ N \overline{w}_{x_N} \xi_{x_N} + w_{x_{N+1}}x_{N+1}}
+         { N \overline{w}_{x_N} + w_{x_{N+1}} }
+   :label: wt_mean_update_2
 
 (Note how this simplifies if :math:`w_i = 1 \quad \forall i`)
 
-In general, we perform similar tricks 
-(storing :math:`\overline{avg}` values, where the overbar signifies summation
-over all values and division by :math:`N`)
+.. warning::
+   For tracking Ra and Dec  (:math:`\alpha` and :math:`\delta`) 
+   weighted means, we substitute 
+   
+   .. math::  N \overline{ w_{\alpha_N} } \xi_{\alpha_N} = 
+              N \overline{ (w_{\alpha} \alpha )_N}
+   
+   to yield another 
+   manipulation of the update formula:
+   
+   .. math:: \xi_{\alpha_{N+1}} =
+       \frac{ N \overline{ (w_{\alpha} \alpha )_N} + w_{\alpha_{N+1}}\alpha_{N+1}}
+            { N \overline{w}_{\alpha_N} + w_{\alpha_{N+1}} }
+      :label: wt_mean_update_3
+      
+   **Note that this requires that we also keep track of the extra aggregate 
+   value:** :math:`\overline{ (w_{\alpha} \alpha )_N}`, which is probably 
+   unnecessary given that we are not performing reduced-:math:`\chi^2` stats 
+   on the position.
+
+In general, we perform similar tricks with aggregate values 
+(i.e. storing the 'barred' values of variables)
 throughout the database code. This has pros and cons - it makes the 
 equations below a little prettier (and possibly simpler to compute),
 but requires many multiplications and divisions by the factor :math:`N` 
@@ -909,7 +762,7 @@ On 'aggregated' variability indexes
 
 We now explain how running averages are used to compute the 'variability indices'
 we use in identifying sources which may be intrinsically transient or variable.
-(Adopted from the Bart Scheers' PhD thesis.)
+(Adopted from Bart Scheers' PhD thesis.)
 
 The first variability indicator, the proportional flux variability of a
 source, is expressed as the ratio of the sample standard deviation, and mean, 
@@ -946,11 +799,11 @@ reduced :math:`\chi^2` statistics. We derive the aggregate form here.
 
 We begin with the familiar reduced-:math:`\chi^2` formula, except with the 
 regular arithmetic mean :math:`\overline{I}` replaced by the 
-weighted mean :math:`\xi_N`, 
+weighted mean :math:`\xi_{I_N}`, 
 
 .. math::
 
-   \xi_N = \frac{\sum_{i=1}^{N} w_i I_i}{\sum_{i=1}^{N} w_i}
+   \xi_{I_N} = \frac{\sum_{i=1}^{N} w_i I_i}{\sum_{i=1}^{N} w_i}
          = \frac{\overline{w_i I_i} }{ \overline{w_i}},
 
 resulting in:
@@ -959,7 +812,7 @@ resulting in:
 
    \eta = \frac{1}{N-1}
                  \sum_{i=1}^N
-                    \frac{\left(I_i - \xi_N \right)^2}
+                    \frac{\left(I_i - \xi_{I_N} \right)^2}
                         {e_i^2}
    
 where :math:`e_i` is the estimated uncertainty, or standard deviation, 
@@ -968,22 +821,22 @@ in :math:`I_i`.  We may rewrite this using :math:`\frac{1}{e_i^2} = w_i`:
 .. math::
 
    \eta = \frac{N}{N-1}\lgroup \frac{1}{N}
-                 \sum_{i=1}^N w_i \left(I_i - \xi_N \right)^2 \rgroup 
+                 \sum_{i=1}^N w_i \left(I_i - \xi_{I_N} \right)^2 \rgroup 
 
 Expanding inside the brackets gives:
 
 .. math::
    \frac{1}{N}\sum_{i=1}^N 
-      w_i \left( I_i^2 - 2\xi_N I_i + \xi_N^2 \right) 
+      w_i \left( I_i^2 - 2\xi_{I_N} I_i + \xi_{I_N}^2 \right) 
 
     = \frac{1}{N} \sum_{i=1}^N w_i I_i^2 
-      - 2\xi_N \frac{1}{N}\sum_{i=1}^N +w_i I_i 
-      + \xi_N^2 \frac{1}{N}\sum_{i=1}^N w_i 
+      - 2\xi_{I_N} \frac{1}{N}\sum_{i=1}^N +w_i I_i 
+      + \xi_{I_N}^2 \frac{1}{N}\sum_{i=1}^N w_i 
    
-   = \overline{w_i I_i^2} - 2\xi_N \overline{w_i I_i} +\xi_N^2 \overline{w_i} 
+   = \overline{w_i I_i^2} - 2\xi_{I_N} \overline{w_i I_i} +\xi_{I_N}^2 \overline{w_i} 
       \qquad . 
 
-Expanding for :math:`\xi_n` results in the final aggregate form of 
+Expanding for :math:`\xi_{I_N}` results in the final aggregate form of 
 the reduced-:math:`\chi^2`:
 
 .. math::
@@ -995,26 +848,171 @@ the reduced-:math:`\chi^2`:
                     \frac{\overline{w I}^2}{\overline{w}}
                  \right)
 
-Relation to database variables
-------------------------------
 
-Note that the indices are calculated per frequency band (and per Stokes
-parameter).
-The parameters in the last aggregate equations correspond to columns 
-in the tables as follows:
+.. note::
 
-:math:`\overline{I}` to ``avg_f_peak``
+   The following sections on the ``runningcatalog``, ``runningcatalog_flux`` and
+   ``temprunningcatalog_flux`` are annotated using the style of mathematical 
+   notations developed above.  
 
-:math:`\overline{{I}^2}` to ``avg_f_peak_sq``
+.. _schema-runningcatalog:
 
-:math:`\overline{w {I}^2}` to ``avg_weighted_f_peak_sq``
+runningcatalog
+==============
+(See :ref:`mathematical-diversion` for explanation of mathematical notation.)
 
-:math:`\overline{w I}` to ``avg_weighted_f_peak``
 
-:math:`\overline{w}` to ``avg_f_peak_weight``
+While a single entry in ``extractedsource`` corresponds to an individual source
+measurement, 
+a single entry in ``runningcatalog`` corresponds to a unique astronomical
+source detected in a specific dataset (series of images). 
+The position of this unique source is a weighted mean of all its individual
+source measurements.
+The relation between a ``runningcatalog`` source and all its measurements in
+``extractedsource`` is maintained in ``assocxtrsource``.
 
-:math:`N` to ``f_datapoints``, (and not ``datapoints``)
+The association procedure matches extracted sources with counterpart candidates 
+in the runningcatalog table. 
+Depending on their association parameters (distance and De Ruiter radius) of
+the ``runningcatalog`` source and ``extractedsource`` source, 
+the source pair ids are added to ``assocxtrsource``. 
+The source properties, position, fluxes and their errors in the 
+``runningcatalog`` and ``runningcatalog_flux`` tables are then updated to
+include the counterpart values from the extracted source as a new datapoint.
 
+If no counterpart could be found for an extracted sources, it is appended to
+``runningcatalog`` 
+as a "new" source (datapoint=1).
+
+**id**
+    Every source in the running catalog gets a unique id.
+
+**xtrsrc**
+    The id of the extractedsource for which this runningcatalog source was
+    detected for the first time.
+
+**dataset**
+    The dataset to which the runningcatalog source belongs to.
+
+**datapoints** :math:`= N_\alpha` or equivalently :math:`N_\delta` 
+    The number of datapoints (or number of times this source was detected) that
+    is included in the calculation of the *position* averages. 
+    It is assumed that a source's position stays relatively constant across 
+    bands and therefore all
+    bands are included in averaging the position.
+
+**zone**
+    The zone id in which the source declination resides.  The sphere is divided
+    into zones of equal width: here fixed to 1 degree, and the zone is
+    effectively the truncated declination. (decl=31.3 => zone=31, decl=31.9 =>
+    zone=31)
+
+**wm_ra** :math:`= \xi_{\alpha}`  
+    The weighted mean of RA of the source [in J2000 degrees].
+
+**wm_decl** :math:`=\xi_{\delta}`  
+    The weighted mean of Declination of the source [in J2000 degrees].
+
+**wm_ra_err**
+    The weighted mean of the ra_err of the source [in arcsec]
+
+**wm_decl_err**
+    The weighted mean of the decl_err of the source [in arcsec]
+    
+.. note::
+
+   I am not sure that the weighted mean of the errors is useful, 
+   since the weighting is dependent upon the errors themselves. 
+   A simple mean error might be more sensible.
+   -TS 30/01/13  
+
+**avg_wra**:math:`=\overline{w_{\alpha}\alpha}`  
+    The average of ra/ra_err^2, used for calculating the average weight of ra.
+    (This alleviates the computations, when we have lots of datapoints.)
+
+**avg_wdecl**   :math:`=\overline{w_{\delta}\delta}`  
+    Analogous to avg_wra.
+
+**avg_weight_ra** :math:`=\overline{w_{\alpha}}`  
+    The average of 1/ra_err^2, used for calculating the weighted mean of ra.
+    (This alleviates the computations, when we have lots of datapoints.)
+    
+.. note::
+   Is it really more efficient this way? It would be good to get a more detailed 
+   explanation. -TS 30/01/13
+
+**avg_weight_decl**   :math:`=\overline{w_{\delta}}`  
+    Analogous to avg_weight_ra
+
+**x, y, z**
+    The Cartesian coordinate representation of wm_ra and wm_decl
+
+**margin**
+    Boolean to define that a source is near the 360-0 meridian. Not being used.
+
+**inactive**
+    Boolean to set an entry to inactive.  This is done during the `source
+    association <database_assoc>` procedure, where e.g. the many-to-many cases
+    are handled and an existing entry is replaced by two or more entries.
+
+.. _schema-runningcatalog-flux:
+
+runningcatalog_flux
+===================
+
+The runningcatalog_flux table contains the averaged flux measurements of a
+runningcatalog source, per band and stokes parameter. The combination runcat,
+band and stokes is the primary key.
+
+The flux squared and weights are used for calculations of the variability
+indices, V and eta.
+
+**runcat**
+    Reference to the runningcatalog id to which this band/stokes/flux belongs
+    to
+
+**band**
+    Reference to the frequency band of this flux
+
+**stokes**
+    Stokes parameter: 1 = I, 2 = Q, 3 = U, 4 = V
+
+**f_datapoints**   :math:`=N_I`  
+    the number of *flux* datapoints for which the flux averages were calculated.
+
+**resolution**
+    Not used.
+
+**avg_f_peak**  :math:`=\overline{I}` 
+   Average of peak flux
+
+**avg_f_peak_sq** :math:`=\overline{{I}^2}`
+    Average of (peak flux)^2
+
+**avg_f_peak_weight**    :math:`=\overline{w_{I}}` 
+   Average of one over peak flux errors squared
+
+**avg_weighted_f_peak** :math:`=\overline{w_{I} I}`
+    Average of ratio of (peak flux) and (peak flux errors squared)
+
+**avg_weighted_f_peak_sq** :math:`=\overline{w_{I} I^2}` 
+   Average of (weighted peak flux squared)
+
+**avg_f_int, avg_f_int_sq, avg_f_int_weight, avg_weighted_f_int, avg_weighted_f_int_sq**
+   Analogous to those above, except for the *integrated* flux.
+
+
+.. _database_temprunningcatalog:
+
+temprunningcatalog
+==================
+(See also :ref:`source association detailed logic <database-assoc-details>`.)
+
+
+Most of the entries in the ``temprunningcatalog`` are identical to those of the 
+same name in :ref:`schema-runningcatalog` and :ref:`schema-runningcatalog-flux`,
+except updated to include the information from a new ``extractedsource``. 
+Those without direct counterparts in those tables are listed below. 
 
 **runcat**
     Reference to the ``runningcatalog`` id. runcat and xtrsrc together form a
@@ -1032,64 +1030,6 @@ in the tables as follows:
     The De Ruiter radius of the runcat-xtrsrc association, calculated by the
     database.
 
-**dataset** 
-    Reference to the ``dataset`` for which this association was calculated.
-    Note that it is abundant, since it can also be deduced from runcat.
-
-**band** 
-    Reference to ``frequencyband`` id. Association candidates are searched for
-    in the same band of the image of the extracted sources
-
-**stokes** 
-    Stokes parameter: 1 = I, 2 = Q, 3 = U, 4 = V. Association candidates are
-    searched for to have the same Stokes parameter as the image of the
-    extracted sources
-
-**datapoints** 
-    The number of datapoints, but now including the new measurement. So this is
-    calculated as :math:`N = N + 1`, where :math:`N` is the number of
-    datapoints from ``runningcatalog`` 
-
-**zone** 
-    The zone value, calculated from the updated ``wm_decl`` value.
-
-**wm_ra**
-    The weighted mean of RA of the ``runningcatalog`` source *and* the
-    extracted source, calculated as above.
-
-**wm_decl** 
-    The weighted mean of DEC of the ``runningcatalog`` source *and* the
-    extracted source, calculated as above.
-
-**wm_ra_err** 
-    The weighted mean of the 1sigma error of RA of the ``runningcatalog``
-    source *and* the extracted source, calculated as above.
-
-**wm_decl_err** 
-    The weighted mean of the 1sigma error of DEC of the ``runningcatalog``
-    source *and* the extracted source, calculated as above.
-
-**avg_wra**
-    The average of the weighted ra (ie ra/ra_err^2) of the ``runningcatalog``
-    source *and* the extracted source, calculated as above
-
-**avg_wdecl** 
-    The average of the weighted DEC (ie decl/decl_err^2) of the
-    ``runningcatalog`` source *and* the extracted source, calculated as above
-
-**avg_weight_ra** 
-    The average of the weight of ra (ie 1/ra_err^2) of the ``runningcatalog``
-    source *and* the extracted source, calculated as above
-
-**avg_weight_decl** 
-    The average of the weight of DEC (ie 1/decl_err^2) of the
-    ``runningcatalog`` source *and* the extracted source, calculated as above
-
-**x, y, z** 
-    The Cartesian coordinate representation of wm_ra and wm_decl
-
-**margin** 
-    Not used (yet)
 
 **inactive** 
     During evaluation of the association pairs, some pairs might be set to
@@ -1098,51 +1038,7 @@ in the tables as follows:
 **beam_semimaj, beam_semimin, beam_pa** 
     Not used (yet)
 
-**f_datapoints** 
-    The association query checks (LEFT OUTER JOIN) whether flux measurements of
-    this source pair already existed in ``runningctalog_flux``. If not it is
-    set to 1, else it will be incremented by 1.
 
-**avg_f_peak** 
-    The average peak flux, as stored in ``runningcatalog_flux``, of the
-    ``runningcatalog`` source *and* the peak flux of the extracted source,
-    calculated as above.
-
-**avg_f_peak_sq** 
-    The average of the peak flux squared, as stored in ``runningcatalog_flux``,
-    of the ``runningcatalog`` source *and* the peak flux squared of the
-    extracted source, calculated as above.
-
-**avg_f_peak_weight** 
-    The average of the weight of the peak flux (ie 1/f_peak_err^2), as stored
-    in ``runningcatalog_flux``, of the ``runningcatalog`` source *and* the
-    weight of the peak flux of the extracted source, calculated as above.
-
-**avg_weighted_f_peak** 
-    The average of the weighted peak flux (ie f_peak/f_peak_err^2), as stored
-    in ``runningcatalog_flux``, of the ``runningcatalog`` source *and* the
-    weighted peak flux of the extracted source, calculated as above.
-
-**avg_weighted_f_peak_sq** 
-    The average of the weighted peak flux squared (ie f_peak^2/f_peak_err^2),
-    as stored in ``runningcatalog_flux``, of the ``runningcatalog`` source
-    *and* the weighted peak flux squared of the extracted source, calculated as
-    above.
-
-**avg_f_int** 
-    Analoguous to the avg_f_peak
-
-**avg_f_int_sq** 
-    Analoguous to the avg_f_peak_sq
-
-**avg_f_int_weight** 
-    Analoguous to the avg_f_peak_weight
-
-**avg_weighted_f_int** 
-    Analoguous to the avg_weighted_f_peak
-
-**avg_weighted_f_int_sq** 
-    Analoguous to the avg_weighted_f_peak_sq
 
 
 

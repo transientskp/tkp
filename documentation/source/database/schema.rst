@@ -342,12 +342,13 @@ The TraP may add forced-fit entries to this table as well. Then
     sourcefinder procedures.
 
 **ra_err**
-    The 1-sigma error on ra, the square root of the quadratic sum of the
+    The 1-sigma error on ra [in arcsec], the square root of the quadratic sum of the
     gaussian fit and systematic errors, calculated by the database at insertion time.
 
 **decl_err**
-    The 1-sigma error on declination, the square root of the quadratic sum of the
-    gaussian fit and systematic errors, calculated by the database at insertion time.
+    The 1-sigma error on declination [in arcsec], 
+    the square root of the quadratic sum of the gaussian fit and systematic errors, 
+    calculated by the database at insertion time.
 
 **ra_fit_err**
     The 1-sigma error from the source fitting for ra [in arcsec], calculated by the
@@ -712,10 +713,10 @@ weight of the :math:`i`-th measurement of :math:`x`.
     zone=31)
 
 **wm_ra**
-    The weighted mean of RA of the source.
+    The weighted mean of RA of the source [in J2000 degrees].
 
 **wm_decl**
-    The weighted mean of Declination of the source.
+    The weighted mean of Declination of the source [in J2000 degrees].
 
 **wm_ra_err**
     The weighted mean of the ra_err of the source

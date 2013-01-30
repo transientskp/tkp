@@ -315,17 +315,13 @@ INSERT INTO temprunningcatalog
                 ,image.band
                 ,image.stokes
                 ,rc0.datapoints + 1 AS datapoints
-                ,((datapoints * rc0.avg_wra + x0.ra /
-                  (x0.ra_err * x0.ra_err)) / (datapoints + 1))
+                ,(datapoints * rc0.avg_wra + x0.ra /(x0.ra_err * x0.ra_err) )
                  /
-                 ((datapoints * rc0.avg_weight_ra + 1 /
-                   (x0.ra_err * x0.ra_err)) / (datapoints + 1))
+                 (datapoints * rc0.avg_weight_ra + 1 / (x0.ra_err * x0.ra_err) )
                  AS wm_ra
-                ,((datapoints * rc0.avg_wdecl + x0.decl /
-                  (x0.decl_err * x0.decl_err)) / (datapoints + 1))
+                ,(datapoints * rc0.avg_wdecl + x0.decl /(x0.decl_err * x0.decl_err)) 
                  /
-                 ((datapoints * rc0.avg_weight_decl + 1 /
-                   (x0.decl_err * x0.decl_err)) / (datapoints + 1))
+                 (datapoints * rc0.avg_weight_decl + 1 /(x0.decl_err * x0.decl_err)) 
                  AS wm_decl
                 ,SQRT(1 / ((datapoints + 1) *
                   ((datapoints * rc0.avg_weight_ra +

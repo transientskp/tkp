@@ -48,7 +48,7 @@ class TestTransientBasics(unittest.TestCase):
             images.append(image)
             if measurements[idx] is not None:
                 image.insert_extracted_sources([ measurements[idx] ])
-            image.associate_extracted_sources()
+            image.associate_extracted_sources(deRuiter_r=3.7)
             freq_bands = dataset.frequency_bands()
             self.assertEqual(len(freq_bands), 1)
             transients = dbt.transient_search(

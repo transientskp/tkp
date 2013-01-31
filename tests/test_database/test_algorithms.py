@@ -37,7 +37,7 @@ class TestSourceAssociation(unittest.TestCase):
         for im in self.im_params:
             self.db_imgs.append( tkpdb.Image( data=im, dataset=self.dataset) )
             self.db_imgs[-1].insert_extracted_sources([])
-            self.db_imgs[-1].associate_extracted_sources()
+            self.db_imgs[-1].associate_extracted_sources(deRuiter_r=3.7)
             running_cat = tkpdb.utils.columns_from_table(self.database.connection,
                                            table="runningcatalog",
                                            keywords="*",
@@ -69,7 +69,7 @@ class TestSourceAssociation(unittest.TestCase):
             if first_epoch:
                 last_img.insert_extracted_sources([db_subs.example_extractedsource_tuple()])
                 
-            last_img.associate_extracted_sources()
+            last_img.associate_extracted_sources(deRuiter_r=3.7)
             
             #First, check the runcat has been updated correctly:
             running_cat = tkpdb.utils.columns_from_table(self.database.connection,
@@ -127,7 +127,7 @@ class TestSourceAssociation(unittest.TestCase):
             self.db_imgs.append( tkpdb.Image( data=im, dataset=self.dataset) )
             last_img =self.db_imgs[-1]
             last_img.insert_extracted_sources([db_subs.example_extractedsource_tuple()])
-            last_img.associate_extracted_sources()
+            last_img.associate_extracted_sources(deRuiter_r=3.7)
             imgs_loaded+=1
             running_cat = tkpdb.utils.columns_from_table(self.database.connection,
                                            table="runningcatalog",

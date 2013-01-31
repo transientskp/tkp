@@ -69,7 +69,7 @@ class TestLightSurface(unittest.TestCase):
             image.insert_extracted_sources(sources)
 
             # Run the association for each list of source for an image
-            image.associate_extracted_sources()
+            image.associate_extracted_sources(deRuiter_r=3.7)
 
         # updates the dataset and its set of images
         self.dataset.update()

@@ -37,12 +37,11 @@ class quality_check(TrapMaster):
         'good_image_ids': ingredient.ListField()
     }
 
-
     def trapstep(self):
         self.logger.info("Performing quality checks")
         image_ids = self.inputs['args']
-        ids_urls = [(id, Image(id=id).url) for id in image_ids]
-        rejected_images = self.distributed(ids_urls)
+        urls = [Image(id=id).url for id in image_ids]
+        rejected_images = self.distributed(image_ids, urls)
         for image_id, (reason, comment) in rejected_images:
                 ingred.quality.reject_image(image_id, reason, comment)
 
@@ -51,20 +50,20 @@ class quality_check(TrapMaster):
         self.outputs['good_image_ids'] = good_image_ids
 
 
-    def distributed(self, ids_urls):
+    def distributed(self, image_ids, image_urls):
         nodes = ingred.common.nodes_available(self.config)
 
         command = "python %s" % self.__file__.replace('master', 'nodes')
         jobs = []
         hosts = itertools.cycle(nodes)
-        for (id, url) in ids_urls:
+        for image_id, image_url in zip(image_ids, image_urls):
             host = hosts.next()
             jobs.append(
                 ComputeJob(
                     host, command,
                     arguments=[
-                        id,
-                        url,
+                        image_id,
+                        image_url,
                         self.inputs['parset'],
                     ]
                 )

@@ -726,7 +726,6 @@ class ImageData(object):
                     str(e).startswith("wcsp2s error: 9:")):
                     logger.warning("Input coordinates (%.2f, %.2f) invalid: ",
                                     source[0], source[1])
-                    detections.append(None)
                 else:
                     raise
             else:
@@ -735,17 +734,15 @@ class ImageData(object):
                                                 boxsize=boxsize, 
                                                 threshold=threshold,
                                                 fixed=fixed)
-                    #Handle case where position errors extend outside image
                     if ( fit_results.ra.error == float('inf') or
                           fit_results.dec.error == float('inf')):
-                        detections.append(None)
+                        logging.warning("position errors extend outside image")
                     else:
                         detections.append(fit_results)
                 except IndexError as e:
                     logger.warning("Input pixel coordinates (%.2f, %.2f) "
                                     "could not be fit because: " + e.message,
                                     source[0], source[1])
-                    detections.append(None)
 
         return detections
 

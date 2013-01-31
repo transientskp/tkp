@@ -38,14 +38,9 @@ import logging
 
 
 _TO_DO = """\
-
-To do:
-
 - avoid the HAS_READ / NameError trick below,
   possibly by use of a singleton
-
 - (optional) use class instead of dictionary to store options
-
 """
 
 
@@ -152,12 +147,6 @@ def set_default_config():
     config.set('source_extraction', 'ra_sys_err', '20.') # unit arcsec
     config.set('source_extraction', 'dec_sys_err', '20.') # unit arcsec
 
-    config.add_section('transient_search')
-    config.set('transient_search', 'probability', '0.99')
-    config.set('transient_search', 'minpoints', '2')
-    config.set('transient_search', 'eta_lim', '3.')
-    config.set('transient_search', 'V_lim', '0.')
-
     config.add_section('logging')
     config.set('logging', 'level', 'ERROR')
     config.set('logging', 'format',
@@ -245,7 +234,6 @@ def parse_config(config):
                 ('source_extraction', 'median_filter'),
                 ('source_extraction', 'interpolate_order'),
                 ('source_extraction', 'deblend_nthresh'),
-                ('transient_search', 'minpoints'),
                 ('alerts', 'port'),
                 ('test', 'max_duration'),
                 ('mongodb', 'port')
@@ -272,9 +260,6 @@ def parse_config(config):
               ('source_extraction', 'eps_dec'),
               ('source_extraction', 'ra_sys_err'),
               ('source_extraction', 'dec_sys_err'),
-              ('transient_search', 'probability'),
-              ('transient_search', 'eta_lim'),
-              ('transient_search', 'V_lim'),
               )
     configuration.update(dict([(section, dict(config.items(section, raw=True)))
                                for section in config.sections()]))

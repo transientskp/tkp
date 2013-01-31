@@ -1,17 +1,15 @@
 """
 A collection of back end subroutines (mostly SQL queries).
 
-In this module we collect together various routines 
-that don't fit into a more specific collection. 
+In this module we collect together various routines
+that don't fit into a more specific collection.
 
 Most of the basic insertion routines are kept here,
-with exceptions of monitoringlist and transients. 
+with exceptions of monitoringlist and transients.
 """
 
 import math, sys
 import logging
-
-from lofarpipe.support.lofarexceptions import PipelineException
 
 import monetdb.sql as db
 from tkp.config import config

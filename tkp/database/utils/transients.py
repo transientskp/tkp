@@ -54,7 +54,7 @@ def _update_known_transients(transients):
             upd += cursor.execute(query, (float(transients[i].siglevel),
                                           float(transients[i].V_int),
                                           float(transients[i].eta_int),
-                                          transients[i].runcat,
+                                          transients[i].runcatid,
                                           transients[i].band))
             if not AUTOCOMMIT:
                 conn.commit()
@@ -116,7 +116,7 @@ def _insert_new_transients(image_id, transients, prob_threshold):
         for i in range(len(transients)):
             if not transients[i].monitored:
                 if transients[i].siglevel > prob_threshold:
-                    ins += cursor.execute(query, (transients[i].runcat,
+                    ins += cursor.execute(query, (transients[i].runcatid,
                                               transients[i].band,
                                               float(transients[i].siglevel),
                                               float(transients[i].V_int),
@@ -506,7 +506,7 @@ def transient_search(image_id,
     
     transients = []
     if len(results) > 0:
-        runcat = results[0]
+        runcatid = results[0]
         band = results[1][0] # all from same band, one (eg the first) is enough
         f_datapoints = results[2]
         wm_ra = results[3]
@@ -518,10 +518,10 @@ def transient_search(image_id,
         trigger_xtrsrc = results[9]
         monitored = results[10]
 
-        for i in range(len(runcat)):
+        for i in range(len(runcatid)):
             prob = 1 - chisqprob(eta_int[i] * (f_datapoints[i] - 1), (f_datapoints[i] - 1))
             transient = Transient()
-            transient.runcat = runcat[i]
+            transient.runcatid = runcatid[i]
             transient.band = band
             transient.f_datapoints = f_datapoints[i]
             transient.ra = wm_ra[i]

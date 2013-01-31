@@ -18,19 +18,9 @@ alert the right people to the transient (the GRB classification could
 follow from a combination of 'fast transient' and an external trigger).
 
 """
-from __future__ import with_statement
-import sys
-import itertools
-import datetime
-from contextlib import closing
-from tkp.database import DataBase
-from lofarpipe.support.remotecommand import ComputeJob
 from lofarpipe.support import lofaringredient
-import tkp.config
-import tkp.classification
-import tkp.classification.manual
-from tkp.classification.transient import DateTime
-import trap.ingredients as ingred
+from lofar.parameterset import parameterset
+from tkp.classification.manual.classifier import Classifier
 from trap.ingredients.common import TrapMaster
 
 
@@ -53,32 +43,17 @@ class classification(TrapMaster):
 
     def trapstep(self):
         transients = self.inputs['args']
-        nodes = ingred.common.nodes_available(self.config)
-        command = "python %s" % self.__file__.replace('master', 'nodes')
-        jobs = []
-        nodes = itertools.cycle(nodes)
+        parset_file = self.inputs['parset']
         for transient in transients:
-            node = nodes.next()
-            self.logger.info("Executing classification for %s on node %s" % (transient, node))
-            jobs.append(
-                ComputeJob(node, command, arguments=[
-                transient, self.inputs['parset'], tkp.config.CONFIGDIR]))
+            self.logger.info("Classifying transient #%d", transient.runcatid)
 
-        self.logger.info("Scheduling jobs")
-        jobs = self._schedule_jobs(jobs, max_per_node=self.inputs['nproc'])
+        parset = parameterset(parset_file)
+        weight_cutoff = parset.getFloat('weighting.cutoff')
 
-        self.logger.info("Getting Transient objects")
-        self.outputs['transients'] = [job.results['transient'] for job in jobs.itervalues()]
-        # Store or update transients in database
-        # Note: we do this here, to avoid compute nodes blocking each other
-        # Things can probably be done a bit more efficient though
-        with closing(DataBase()) as database:
-            self.logger.info("Storing/updating transient into database")
-            for transient in self.outputs['transients']:
-                if isinstance(transient.timezero, DateTime):
-                    t_start = transient.timezero.datetime
-                elif isinstance(transient.timezero, datetime.datetime):
-                    t_start = transient.timezero
-                else:
-                    t_start = datetime.datetime(1970, 1, 1)
-
+        classifier = Classifier(transient)
+        results = classifier.classify()
+        transient.classification = {}
+        for key, value in results.iteritems():
+            if value > weight_cutoff:
+                transient.classification[key] = value
+        return transient

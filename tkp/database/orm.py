@@ -146,8 +146,6 @@ from tkp.database.database import DataBase
 
 logger = logging.getLogger(__name__)
 
-DERUITER_R = config['source_association']['deruiter_radius']
-
 
 class DBObject(object):
     """Generic mini-ORM object
@@ -533,7 +531,7 @@ class Image(DBObject):
        
         dbu.insert_extracted_sources(self._id, results=results, extract='blind')
         
-    def associate_extracted_sources(self, deRuiter_r=DERUITER_R):
+    def associate_extracted_sources(self, deRuiter_r):
         """Associate sources from the last images with previously
         extracted sources within the same dataset
 

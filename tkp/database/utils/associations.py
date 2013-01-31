@@ -21,10 +21,9 @@ from tkp.database import DataBase
 logger = logging.getLogger(__name__)
 
 AUTOCOMMIT = config['database']['autocommit']
-DERUITER_R = config['source_association']['deruiter_radius']
-BG_DENSITY = config['source_association']['bg-density']
 
-def associate_extracted_sources(image_id, deRuiter_r=DERUITER_R):
+
+def associate_extracted_sources(image_id, deRuiter_r):
     """Associate extracted sources with sources detected in the running
     catalog
 
@@ -96,7 +95,7 @@ def associate_extracted_sources(image_id, deRuiter_r=DERUITER_R):
     _empty_temprunningcatalog(conn)
     _delete_inactive_runcat(conn)
 
-def associate_with_catalogedsources(conn, image_id, radius=0.03, deRuiter_r=DERUITER_R):
+def associate_with_catalogedsources(conn, image_id, radius, deRuiter_r):
     """Associate extracted sources in specified image with known sources 
     in the external catalogues
 

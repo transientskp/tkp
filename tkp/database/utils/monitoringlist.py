@@ -231,32 +231,30 @@ def adjust_transients_in_monitoringlist(image_id, transients):
     _insert_new_transients_in_monitoringlist(conn, image_id, transients)
     
 def _update_known_transients_in_monitoringlist(conn, image_id, transients):
-    """Update transients in monitoringlist
-    
+    """Update transients in monitoringlist"""
+    cursor = conn.cursor()
+    query = """\
+    UPDATE monitoringlist
+       SET ra = %s
+          ,decl = %s
+      WHERE runcat = %s
     """
-    
-    try:
-        cursor = conn.cursor()
-        query = """\
-        UPDATE monitoringlist
-           SET ra = %s
-              ,decl = %s
-          WHERE runcat = %s
-        """
-        upd = 0
-        for i in range(len(transients)):
-            upd += cursor.execute(query, (float(transients[i].ra), 
-                                         float(transients[i].decl),
-                                         transients[i].runcat))
-        if not AUTOCOMMIT:
-            conn.commit()                        
-        cursor.close()
-        if upd > 0:
-            logger.info("Updated %s known transients in monitoringlist" % (upd,))
-    except db.Error, e:
-        query = query % (float(transients[i].ra), float(transients[i].decl), transient.runcat)
-        logger.warn("Query failed:\n%s", query)
-        raise
+    upd = 0
+    for transient in transients:
+        try:
+            upd += cursor.execute(query, (float(transient.ra),
+                                     float(transient.decl),
+                                     transient.runcatid))
+        except db.Error, e:
+            logger.warn("Query failed:\n%s", query)
+            raise
+
+    if not AUTOCOMMIT:
+                conn.commit()
+    cursor.close()
+    if upd > 0:
+        logger.info("Updated %s known transients in monitoringlist" % (upd,))
+
 
 def _insert_new_transients_in_monitoringlist(conn, image_id, transients):
     """Insert transients that are not yet stored in monitoringlist.

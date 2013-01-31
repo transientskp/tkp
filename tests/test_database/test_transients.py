@@ -70,7 +70,7 @@ class TestTransientBasics(unittest.TestCase):
         runcats = dataset.runcat_entries()
         self.assertEqual(len(runcats), 1)
         for tr in transients:
-            self.assertEqual(runcats[0]['runcat'], tr.runcat)
+            self.assertEqual(runcats[0]['runcat'], tr.runcatid)
 
         # Check that the trigger xtrsrc happened in the third image
         query = """\

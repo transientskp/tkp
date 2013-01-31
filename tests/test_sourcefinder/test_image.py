@@ -180,7 +180,7 @@ class TestFitFixedPositions(unittest.TestCase):
                                        boxsize = BOX_IN_BEAMPIX*max(img.beam[0], img.beam[1]))
 #        print "XY:", img.wcs.s2p(posn_out_of_img)
 #        print "Results:" , results
-        self.assertListEqual([None], results)
+        self.assertListEqual([], results)
         
         
 
@@ -201,7 +201,7 @@ class TestFitFixedPositions(unittest.TestCase):
 #        print "Posn:", edge_posn
 #        print "XY:", img.wcs.s2p(edge_posn)
 #        print "Results:" , results
-        self.assertListEqual([None], results)
+        self.assertListEqual([], results)
         
     def testErrorBoxOverlapsEdge(self):
         """testErrorBoxOverlapsEdge

@@ -61,7 +61,7 @@ EOF
 }
 
 parse_arguments() {
-	while getopts “hryd:u:p:H:P:b:” OPTION
+	while getopts “hryd:u:p:f:H:P:b:” OPTION
 	do
 		 case $OPTION in
 			 h)

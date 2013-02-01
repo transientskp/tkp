@@ -3,7 +3,6 @@ import itertools
 import lofarpipe.support.lofaringredient as ingredient
 from tkp.database.orm import Image
 from lofarpipe.support.remotecommand import ComputeJob
-import tkp.config
 import tkp.database.utils.general as dbgen
 import trap.ingredients as ingred
 from trap.ingredients.common import TrapMaster
@@ -50,7 +49,6 @@ class source_extraction(TrapMaster):
                         id,
                         url,
                         self.inputs['parset'],
-                        tkp.config.CONFIGDIR
                     ]
                 )
             )

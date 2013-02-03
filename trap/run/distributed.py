@@ -8,6 +8,7 @@ from trap.ingredients.monitoringlist import add_manual_monitoringlist_entries
 from tkp.database import DataBase
 from tkp.database import DataSet
 from tkp.database.utils import general as dbgen
+import trap.ingredients as ingred
 
 
 class Trap(control):
@@ -48,9 +49,12 @@ class Trap(control):
             self.logger.warn("No images found, check parameter files.")
             return 1
 
+        se_parset_file = self.task_definitions.get("source_extraction", "parset")
+        se_parset = ingred.source_extraction.parse_parset(se_parset_file)
         self.outputs.update(self.run_task(
             "persistence",
             images,
+            extraction_radius_pix=se_parset['radius']
         ))
 
         dataset = DataSet(id=self.outputs['dataset_id'])

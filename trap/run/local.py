@@ -57,8 +57,11 @@ class TrapLocal(control):
         tr_parset_file = self.task_definitions.get("transient_search", "parset")
         cl_parset_file = self.task_definitions.get("classification", "parset")
 
+
         # persistence
-        dataset_id, image_ids = ingred.persistence.all(images, p_parset_file)
+        se_parset = ingred.source_extraction.parse_parset(se_parset_file)
+        dataset_id, image_ids = ingred.persistence.all(images,
+                                           se_parset['radius'], p_parset_file)
 
         # manual monitoringlist entries
         if not add_manual_monitoringlist_entries(dataset_id, self.inputs):
@@ -80,7 +83,8 @@ class TrapLocal(control):
         for image_id in good_image_ids:
             image = Image(id=image_id)
             good_images.append(image)
-            extracted_sources = ingred.source_extraction.extract_sources(image.url, se_parset_file)
+            extracted_sources = ingred.source_extraction.extract_sources(
+                                                     image.url, se_parset_file)
             dbgen.insert_extracted_sources(image_id, extracted_sources, 'blind')
 
         # null_detections

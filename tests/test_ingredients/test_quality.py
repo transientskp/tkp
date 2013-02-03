@@ -6,7 +6,9 @@ from tkp.database.database import DataBase
 from tkp.database import query
 import tkp.utility.accessors
 import tkp.testutil.data as testdata
+from tkp.testutil.decorators import requires_database
 
+@requires_database()
 class TestQuality(unittest.TestCase):
     def __init__(self, *args):
         super(TestQuality, self).__init__(*args)

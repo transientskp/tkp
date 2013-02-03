@@ -2,7 +2,9 @@ import unittest
 import tempfile
 import trap.ingredients.transient_search
 from tkp.testutil import db_subs, db_queries
+from tkp.testutil.decorators import requires_database
 
+@requires_database()
 class TestTransientSearch(unittest.TestCase):
     def __init__(self, *args):
         super(TestTransientSearch, self).__init__(*args)

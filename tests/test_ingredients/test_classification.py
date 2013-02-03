@@ -6,8 +6,9 @@ from tkp.database.database import DataBase
 from tkp.database import query
 from tkp.classification.transient import Transient
 from tkp.testutil import db_subs
+from tkp.testutil.decorators import requires_database
 
-
+@requires_database()
 class TestClassification(unittest.TestCase):
     def __init__(self, *args):
         super(TestClassification, self).__init__(*args)

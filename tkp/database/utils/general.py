@@ -15,6 +15,7 @@ import monetdb.sql as db
 from tkp.config import config
 import tkp.database
 from tkp.database import DataBase
+from tkp.utility.coordinates import eq_to_cart
 
 logger = logging.getLogger(__name__)
 
@@ -216,9 +217,7 @@ def _insert_extractedsources(image_id, results, extract):
         r.append(math.sqrt(r[13]**2 + r[3]**2))
         r.append(image_id) # id of the image
         r.append(int(math.floor(r[1]))) # zone
-        r.append(math.cos(math.radians(r[1])) * math.cos(math.radians(r[0]))) # Cartesian x
-        r.append(math.cos(math.radians(r[1])) * math.sin(math.radians(r[0]))) # Cartesian y
-        r.append(math.sin(math.radians(r[1]))) # Cartesian z
+        r.extend(eq_to_cart(r[0], r[1])) #Cartesian x,y,z
         r.append(r[0] * math.cos(math.radians(r[1]))) # ra * cos(radias(decl))
         if extract == 'blind':
             r.append(0)

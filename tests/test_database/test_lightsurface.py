@@ -32,6 +32,7 @@ class TestLightSurface(unittest.TestCase):
                         'freq_bw': 1e6,
                         'centre_ra': 0,
                         'centre_decl': 0,
+                        'xtr_radius' : 3
                 }
                 image = Image(dataset=self.dataset, data=data)
                 images.append(image)

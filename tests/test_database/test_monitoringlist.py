@@ -135,7 +135,7 @@ class TestIntermittentToMonitorlist(unittest.TestCase):
         """
         self.database.cursor.execute(query, (dataset.id,))
         result = zip(*self.database.cursor.fetchall())
-        print "len(result)=",len(result)
+#        print "len(result)=",len(result)
         self.assertEqual(len(result), 3)
         #self.assertEqual(0, 1)
         monruncat = result[0]

@@ -8,6 +8,15 @@ class TestTransientSearch(unittest.TestCase):
         super(TestTransientSearch, self).__init__(*args)
         self.dataset_id = db_subs.create_dataset_8images(extract_sources=True)
         self.parset = tempfile.NamedTemporaryFile()
+        parset_text = """\
+# set the probability threshold (0 to 1) that a source is a transient (i.e. not a constant flux)
+probability.threshold = 0.5
+probability.minpoints = 1
+probability.eta_lim = 0.0
+probability.V_lim = 0.00
+
+"""
+        self.parset.write(parset_text)
         self.parset.flush()
 
     def test_search_transients(self):

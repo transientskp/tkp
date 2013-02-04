@@ -218,6 +218,7 @@ class LofarCasaImage(DataAccessor):
         parse_coordinates(self.table, self.wcs)
         self.freq_eff, self.freq_bw, self.subbandwidth = parse_frequency(self.table,
                                         self.subtables['LOFAR_OBSERVATION'])
+        self.pixel_scale = self.parse_pixel_scale()
         if not self.beam:
             self.beam = parse_beam(self.table, self.wcs)
         self.tau_time = parse_tautime(self.subtables['LOFAR_ORIGIN'])

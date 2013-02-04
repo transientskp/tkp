@@ -54,6 +54,7 @@ class FitsImage(DataAccessor):
         self.header = hdu.header.copy()
         self._read_data(hdu)
         self._coordparse(hdu)
+        self.pixel_scale = self.parse_pixel_scale()
         self._othersparse(hdu)
         self._freqparse(hdu)
 

@@ -17,8 +17,9 @@ def extract_metadata(dataaccessor):
         'bsmaj': float(dataaccessor.beam[0]), ## NB We must cast to a standard python float
         'bsmin': float(dataaccessor.beam[1]), ## as Monetdb converter cannot handle numpy.float64
         'bpa': float(dataaccessor.beam[2]),
-        'centre_ra': dataaccessor.centre_ra,
-        'centre_decl': dataaccessor.centre_decl,
+        'centre_ra': dataaccessor.centre_ra, #J2000 Degrees
+        'centre_decl': dataaccessor.centre_decl, #J2000 Degrees
+        'pixel_scale': dataaccessor.pixel_scale, #In degrees per x/y increment
         'subbandwidth': dataaccessor.subbandwidth,
         'antenna_set': dataaccessor.antenna_set,
         'subbands': dataaccessor.subbands,
@@ -51,6 +52,7 @@ class DataAccessor(object):
         self.url = None
         self.centre_ra = None
         self.centre_decl = None
+        self.pixel_scale = None
         self.antenna_set = None
         self.subbands = None
         self.channels = None
@@ -74,4 +76,22 @@ class DataAccessor(object):
             return False
         return True
 
+    def parse_pixel_scale(self):
+        """Returns pixel width in degrees.
 
+        Valid for both 'lofarcasaimage' and 'fitsimage'.
+
+        Checks that we have square pixels and that the wcs units are degrees-
+        If this is not the case, this must be non-standard (non-LOFAR?) data,
+        so we can safely throw an exception and tell the user to add handling logic.
+        """
+        wcs = self.wcs
+        if wcs.cunit != ('deg', 'deg'):
+            raise ValueError("Image WCS header info not in degrees "
+                             "- unsupported use case")
+        #NB. What's a reasonable epsilon here? 
+        eps = 1e-7
+        if abs(abs(wcs.cdelt[0]) - abs(wcs.cdelt[1])) > eps:
+            raise ValueError("Image WCS header suggests non-square pixels "
+                             "- unsupported use case")
+        return abs(wcs.cdelt[0])

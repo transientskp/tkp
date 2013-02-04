@@ -13,7 +13,7 @@ class persistence(TrapMaster):
 
     inputs = {
       'extraction_radius_pix': ingredient.FloatField(
-            '-r', '--xtr',
+            '--extraction_radius_pix',
             dest='extraction_radius_pix',
             help="Source extraction radius (in pixels)"
         ),

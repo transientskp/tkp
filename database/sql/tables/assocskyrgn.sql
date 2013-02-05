@@ -1,3 +1,7 @@
+/*
+ * Entries in this table signify that a runningcatalog source location 
+ * lies within a skyregion.
+*/
 CREATE TABLE assocskyrgn
   (runcat INT NOT NULL
   ,skyrgn INT NOT NULL

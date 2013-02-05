@@ -1468,13 +1468,15 @@ def _insert_new_runcat_skyrgn_assocs(conn, image_id):
     """
     Process newly created entries from the runningcatalog,
     determine which skyregions they lie within.
-    
+
     Upon creation of a new runningcatalog entry, 
     we need to determine which previous fields of view (skyrgns) 
-    we expect to see it in.
-    
+    we expect to see it in. 
+    This knowledge helps us to make accurate guesses as whether a new 
+    source is really transient or simply being surveyed for the first time. 
+
     .. note:
-    
+
         This could be made more efficient, at the cost of added complexity,
         by tracking which skyregions overlap,
         and then only testing for membership of overlapping regions.

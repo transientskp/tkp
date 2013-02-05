@@ -10,6 +10,11 @@
  *
  * Note II: The params in comment should be specified soon.
  * This means this function inserts deafult values so long.
+ * 
+ * Note III: Two subroutines are called, getBand and getSkyRgn.
+ * These return:
+ *  - A matching band_id, given the freq_eff and freq_bw
+ *  - A matching skyregion_id, given the field centre and extraction radius.
  *
  */
 CREATE FUNCTION insertImage(idataset INT

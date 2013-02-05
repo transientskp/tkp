@@ -1,5 +1,16 @@
 --DROP FUNCTION getSkyRgn;
 
+/*
+ * This function gets an id for a skyregion,
+ * given a pair of central co-ordinates and a radius.
+ * 
+ * If no matching skyregion is found, a new one is inserted. 
+ * In this case we also trigger execution of `updateSkyRgnMembers` for the new
+ * skyregion - this performs a simple assocation with current members of the
+ * runningcatalog to find sources that should be visible in the new skyregion,
+ * and updates the assocskyrgn table accordingly.
+ */
+
 CREATE FUNCTION getSkyRgn(idataset INTEGER
                          ,icentre_ra DOUBLE
                          ,icentre_decl DOUBLE

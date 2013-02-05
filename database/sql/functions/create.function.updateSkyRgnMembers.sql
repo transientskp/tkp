@@ -1,5 +1,14 @@
 --DROP FUNCTION updateSkyRgnMembers;
 
+/*
+ * This function performs a simple assocation with current members of the
+ * runningcatalog to find sources that should be visible in the given skyregion,
+ * and updates the assocskyrgn table accordingly.
+ * 
+ * Any previous entries in assocskyrgn relating to this skyregion are 
+ * deleted first.
+ * 
+ */
 CREATE FUNCTION updateSkyRgnMembers(isky_rgn_id INTEGER) RETURNS DOUBLE
 BEGIN
 

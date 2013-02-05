@@ -68,7 +68,7 @@ commutative if all measurements made at time :math:`t_n` are inserted and
 associated before any measurements made at time :math:`t_{n+1}`.
 
 Case Studies
--------------------
+------------
 
 Here we will discuss the various outcomes which are possible from the source
 association process under different conditions. In the following, individual
@@ -79,12 +79,12 @@ constitute a particular lightcurve are linked to the :math:`L_k` symbol by means
 coloured line.
 
 Single Frequency Band
-^^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^
 
 We start by considering observations with only a single frequency band.
 
 One-to-One Association
-"""""""""""""""""""""""
+""""""""""""""""""""""
 
 .. graphviz:: assoc/one2one.dot
 
@@ -126,7 +126,7 @@ flux :math:`\overline{f_{1,3,5,6}}` and :math:`L_2` having average flux
 are counted twice.
 
 Many-to-Many Association
-""""""""""""""""""""""""""
+""""""""""""""""""""""""
 
 .. note::
 
@@ -160,7 +160,7 @@ truncating this lightcurve.
 
 
 Multiple Frequency Bands
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^^^^
 
 We now introduce the added complexity of multiple bands: the same part of the
 sky being observed at the same time, but at different frequencies. Here, we
@@ -174,7 +174,7 @@ preserved.
 
 
 Multi-Band One-to-One Association
-""""""""""""""""""""""""""""""""""""""""""""""""""""
+"""""""""""""""""""""""""""""""""
 
 .. graphviz:: assoc/one2one.multiband.dot
 
@@ -185,7 +185,7 @@ calculated: :math:`\overline{f_{1\cdots{}4}}` in band 1 and
 :math:`\overline{f_{5\cdots{}8}}` in band 2.
 
 Multi-Band One-to-Many Association
-""""""""""""""""""""""""""""""""""""""""""""""""""""
+""""""""""""""""""""""""""""""""""
 
 .. graphviz:: assoc/one2many.multiband.dot
 
@@ -208,7 +208,7 @@ respectively. Note that the entire flux in Band 2, as well as :math:`f_1` and
 :math:`f_2`, is now counted twice.
 
 Multi-Band Many-to-One Association
-""""""""""""""""""""""""""""""""""""""""""""""""""""
+""""""""""""""""""""""""""""""""""
 
 .. graphviz:: assoc/many2one.multiband.dot
 
@@ -221,7 +221,7 @@ in Band 2, and :math:`L_2` has average fluxes :math:`\overline{f_{2,4,5,6}}`
 in Band 1 and :math:`\overline{f_{8,10,12,14}}` in Band 2.
 
 Multi-Band Many-to-One Association (2)
-""""""""""""""""""""""""""""""""""""""""""""""""""""
+""""""""""""""""""""""""""""""""""""""
 
 .. graphviz:: assoc/many2one.crossband.dot
 
@@ -338,10 +338,13 @@ To that end, we suggest the following:
    bigger, since measurements may be counted twice. Observing the
    "overcounting fraction" as the database grows will help understand the
    nature and severity of the problem.
-   
-===============================
+
+
+.. _database-assoc-details:
+
+===================
 Detailed logic flow
-===============================
+===================
 Herein we give an algorithmic description of how the source association routines
 work.
 
@@ -355,13 +358,13 @@ and new measurements have been inserted into the ``extractedsource`` table.
 
 
 Clean any previously created temporary listings.
---------------------------------------------------
+------------------------------------------------
 To ensure a clean start, we first run ``_empty_temprunningcatalog``, 
 which does what it says on the tin.
 
 
 Generate a list of candidate runningcatalog-extractedsource associations
--------------------------------------------------------------------------
+------------------------------------------------------------------------
 
 ::
 
@@ -396,7 +399,7 @@ For a given image_id,
    
    
 Trim the 'many-to-many' links to prevent exponentional database growth
-------------------------------------------------------------------------
+----------------------------------------------------------------------
 Especially if we employ a large DeRuiter radius limit, we may generate
 a large number of candidate associations which result in a complex 
 web of possible lightcurves. We reduce this to a more manageable situation
@@ -436,7 +439,7 @@ the DeRuiter radius as a weeding tool, to ensure that any connected sub-graph
 has multiple nodes in *at most* one of the two spaces.
 
 Deal with the  'one-to-many' runcat-to-extractedsource link sub-graphs
------------------------------------------------------------------------
+----------------------------------------------------------------------
 When we observe two new sources in the region of a previous known source,
 it is unclear if this is due to increased resolution, or a new source.
 To resolve this, we hedge our bets and replace the old single runcat entry
@@ -482,7 +485,7 @@ extractedsource id, so the database constraints are satisfied.
 
 
 ``_insert_1_to_many_basepoint_assoc`` and ``_insert_1_to_many_assoc``
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 We now start updating the assocxtrsource table to account for our 1-to-many 
 associations.
 
@@ -497,7 +500,7 @@ are associated with the (now superceded) runningcatalog
 entries. These association links are marked as ``type=6``. 
 
 Clean up database entries superceded by one-to-many forks
-------------------------------------------------------------------------------------
+---------------------------------------------------------
 Now we clean up all references to runcat entries superceded during our 
 processing of 1-to-many sets.
 
@@ -536,7 +539,7 @@ next ``transient_search`` execution to re-identify any valid transients.
  
 
 Process all remaining associations
------------------------------------
+----------------------------------
 We now process all the remaining active associations listed in temprunningcatalog.
 :: 
 
@@ -562,7 +565,7 @@ entry in runningcatalog_flux with the same runcat_band_stokes identifying triple
 and then either updates it or inserts a new one, accordingly.
 
 Process remaining extractedsources (those without associations)
-----------------------------------------------------------------
+---------------------------------------------------------------
 We still need to insert the 'new' sources, i.e. those extractions without 
 an identified association.
 
@@ -595,7 +598,7 @@ in assocxtrsource.
  Currently we set ``type = 4``, (i.e. many-to-many ???) in _insert_new_assoc.
 
 Cleanup
------------
+-------
 Now that all the new extractions have been dealt with, we take care of some 
 loose ends. 
 We ``_empty_temprunningcatalog``, and finally ``_delete_inactive_runcat``

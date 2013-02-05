@@ -69,7 +69,7 @@ def modify_fits_headers(parset, fits_file):
         if parset.has_key(parset_field):
             value = parset[parset_field]
             print "setting %s (%s) to %s" % (parset_field, fits_field, value)
-            header[fits_field] = value
+            header.update(fits_field, value)
     fits_file.flush()
     fits_file.close()
 

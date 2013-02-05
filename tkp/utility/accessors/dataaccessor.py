@@ -30,6 +30,25 @@ def extract_metadata(dataaccessor):
         'position': dataaccessor.position,
     }
 
+def parse_pixel_scale(wcs):
+    """Returns pixel width in degrees.
+
+    Valid for both 'lofarcasaimage' and 'fitsimage'.
+
+    Checks that we have square pixels and that the wcs units are degrees-
+    If this is not the case, this must be non-standard (non-LOFAR?) data,
+    so we can safely throw an exception and tell the user to add handling logic.
+    """
+    if wcs.cunit != ('deg', 'deg'):
+        raise ValueError("Image WCS header info not in degrees "
+                         "- unsupported use case")
+    #NB. What's a reasonable epsilon here? 
+    eps = 1e-7
+    if abs(abs(wcs.cdelt[0]) - abs(wcs.cdelt[1])) > eps:
+        raise ValueError("Image WCS header suggests non-square pixels "
+                         "- unsupported use case")
+    return abs(wcs.cdelt[0])
+
 class DataAccessor(object):
     """
     Base class for accessors used with :class:`..sourcefinder.image.ImageData`.
@@ -76,22 +95,4 @@ class DataAccessor(object):
             return False
         return True
 
-    def parse_pixel_scale(self):
-        """Returns pixel width in degrees.
 
-        Valid for both 'lofarcasaimage' and 'fitsimage'.
-
-        Checks that we have square pixels and that the wcs units are degrees-
-        If this is not the case, this must be non-standard (non-LOFAR?) data,
-        so we can safely throw an exception and tell the user to add handling logic.
-        """
-        wcs = self.wcs
-        if wcs.cunit != ('deg', 'deg'):
-            raise ValueError("Image WCS header info not in degrees "
-                             "- unsupported use case")
-        #NB. What's a reasonable epsilon here? 
-        eps = 1e-7
-        if abs(abs(wcs.cdelt[0]) - abs(wcs.cdelt[1])) > eps:
-            raise ValueError("Image WCS header suggests non-square pixels "
-                             "- unsupported use case")
-        return abs(wcs.cdelt[0])

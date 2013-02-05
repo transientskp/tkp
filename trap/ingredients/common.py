@@ -32,21 +32,22 @@ class TrapNode(LOFARnodeTCP):
     This class should be inherited to create a Trap Node recipe. The
     trapstep method should be used from implementing your recipe node logic.
     """
-    def run(self, *args, **kwargs):
-        with log_time(self.logger):
-            # capture all logging and sent it to the master
-            logdrain = logging.getLogger()
-            logdrain.level = self.logger.level
-            logdrain.handlers = self.logger.handlers
-            self.logger.handlers = []
-            #self.logger = logdrain
 
-            try:
-                self.trapstep(*args, **kwargs)
-            except Exception,e:
-                self.logger.error(e)
-                return 1
-        return 0
+    def run(self, *args, **kwargs):
+        # capture all logging and sent it to the master
+        logdrain = logging.getLogger()
+        logdrain.level = self.logger.level
+        logdrain.handlers = self.logger.handlers
+        self.logger.handlers = []
+        self.logger = logging.getLogger(__name__)
+
+        try:
+            self.trapstep(*args, **kwargs)
+            return 0
+        except Exception,e:
+            self.logger.error(e)
+            return 1
+
 
     def trapstep(self):
         raise NotImplementedError()

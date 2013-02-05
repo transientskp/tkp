@@ -1,11 +1,8 @@
-from __future__ import with_statement
 import datetime
 import logging
 from lofarpipe.support.control import control
-from lofarpipe.support.utilities import log_time
 import lofarpipe.support.lofaringredient as ingredient
 from trap.ingredients.monitoringlist import add_manual_monitoringlist_entries
-from tkp.database import DataBase
 from tkp.database import DataSet
 from tkp.database.utils import general as dbgen
 
@@ -37,13 +34,13 @@ class Trap(control):
     def pipeline_logic(self):
         from images_to_process import images
 
+        # capture all logging and sent it to the master
         logdrain = logging.getLogger()
         logdrain.level = self.logger.level
         logdrain.handlers = self.logger.handlers
-        [self.logger.removeHandler(h) for h in self.logger.handlers]
-        self.logger = logdrain
+        self.logger = logging.getLogger(__name__)
 
-        log_time(self.logger)
+
         if not images:
             self.logger.warn("No images found, check parameter files.")
             return 1
@@ -65,6 +62,7 @@ class Trap(control):
             "quality_check",
             image_ids
         ))
+
 
         # sets sources_sets
         good_image_ids = self.outputs['good_image_ids']
@@ -113,4 +111,8 @@ class Trap(control):
 
         now = datetime.datetime.utcnow()
         dbgen.update_dataset_process_ts(dataset.id, now)
+
+
+    def _save_state(self):
+        self.logger.info("skipping storing of pipeline state, since it doesn't work correctly at the moment")
 

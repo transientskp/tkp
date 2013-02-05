@@ -70,12 +70,22 @@ class Trap(control):
 
         # sets sources_sets
         good_image_ids = self.outputs['good_image_ids']
-        self.run_task(
+        self.outputs.update(self.run_task(
             "source_extraction",
             good_image_ids,
-        )
+        ))
 
-        for image_id in good_image_ids:
+        
+        sources_sets = self.outputs['sources_sets']
+        #for image_id in good_image_ids:
+        im_nr = 1
+        for (image_id, sources) in sources_sets:
+
+            self.run_task(
+                "insert_sources",
+                [image_id, sources],
+            )
+
             self.outputs.update(self.run_task(
                 "null_detections",
                 [image_id],
@@ -100,6 +110,7 @@ class Trap(control):
                 "transient_search",
                 [image_id],
             ))
+            im_nr += 1
 
         self.outputs.update(self.run_task(
             "feature_extraction",

@@ -50,10 +50,11 @@ class classification(TrapMaster):
         parset = parameterset(parset_file)
         weight_cutoff = parset.getFloat('weighting.cutoff')
 
-        classifier = Classifier(transient)
-        results = classifier.classify()
-        transient.classification = {}
-        for key, value in results.iteritems():
-            if value > weight_cutoff:
-                transient.classification[key] = value
-        return transient
+        for transient in transients:
+            classifier = Classifier(transient)
+            results = classifier.classify()
+            transient.classification = {}
+            for key, value in results.iteritems():
+                if value > weight_cutoff:
+                    transient.classification[key] = value
+        return transients

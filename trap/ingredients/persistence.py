@@ -55,6 +55,8 @@ def image_to_mongodb(filename, hostname, port, db):
             with open(temp_fits_file.name, "r") as f:
                 new_file.write(f)
             new_file.close()
+            logger.info("Saved local copy of %s on %s"\
+                        % (os.path.basename(filename), hostname))
     except Exception, e:
         msg = "Failed to save image to MongoDB: %s" % (str(e),)
         logger.error(msg)
@@ -88,6 +90,7 @@ def create_dataset(dataset_id, description):
 def extract_metadatas(images):
     results = []
     for image in images:
+        logger.info("Extracting metadata from %s" % image)
         accessor = tkp.utility.accessors.open(image)
         results.append(extract_metadata(accessor))
     return results
@@ -136,15 +139,11 @@ def node_steps(images, parset_file):
     copy_images = persistence_parset['copy_images']
 
     if copy_images:
-        logger.info("Copying %s images to mongodb" % len(images))
         for image in images:
             image_to_mongodb(image, mongohost, mongoport, mongodb)
-            logger.info("Saved local copy of %s on %s" \
-                        % (os.path.basename(image), mongohost))
     else:
-        logger.info("Not copying the %s images to mongodb" % len(images))
+        logger.info("Not copying images to mongodb")
 
-    logger.info("Extracting metadata from images")
     metadatas = extract_metadatas(images)
     return metadatas
 

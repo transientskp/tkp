@@ -1,12 +1,21 @@
 --DROP FUNCTION updateSkyRgnMembers;
 
 /*
- * This function performs a simple assocation with current members of the
+ * This function performs a simple distance-check against current members of the
  * runningcatalog to find sources that should be visible in the given skyregion,
  * and updates the assocskyrgn table accordingly.
  * 
  * Any previous entries in assocskyrgn relating to this skyregion are 
  * deleted first.
+ * 
+ * Note 1. We use the variable 'inter' to cache the extraction_radius as transformed
+ * onto the unit sphere, so this does not have to be recalculated for every
+ * comparison.
+ * 
+ * 
+ * Note 2. (To Do:) This distance check could be made more efficient by 
+ * restricting to a range of RA values, as we do with the Dec. 
+ * However, this optimization is complicated by the meridian wrap-around issue. 
  * 
  */
 CREATE FUNCTION updateSkyRgnMembers(isky_rgn_id INTEGER) RETURNS DOUBLE

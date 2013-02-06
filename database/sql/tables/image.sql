@@ -11,9 +11,6 @@ CREATE TABLE image
   ,freq_bw DOUBLE NULL
   ,taustart_ts TIMESTAMP NOT NULL
   ,skyrgn INT NOT NULL
-  ,x DOUBLE NULL
-  ,y DOUBLE NULL
-  ,z DOUBLE NULL
   ,bmaj_syn DOUBLE NULL
   ,bmin_syn DOUBLE NULL
   ,bpa_syn DOUBLE NULL

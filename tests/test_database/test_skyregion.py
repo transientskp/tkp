@@ -8,7 +8,7 @@ from tkp.testutil.decorators import requires_database, duration
 
 
 @unittest.skip("Only need to test the basics if insertion SQL is altered.")
-@duration(10) # requires deletion of the database for a clean test.
+@duration(10) # requires deletion of the database for a clean test, which takes time.
 class TestSkyRegionBasics(unittest.TestCase):
     def shortDescription(self):
         return None #(Why define this? See http://goo.gl/xChvh )    

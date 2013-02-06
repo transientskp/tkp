@@ -15,14 +15,12 @@ CREATE FUNCTION getSkyRgn(idataset INTEGER
                          ,icentre_ra DOUBLE
                          ,icentre_decl DOUBLE
                          ,ixtr_radius DOUBLE
-                       ) RETURNS SMALLINT
+                       ) RETURNS INT
 
 BEGIN
 
   DECLARE nskyrgn INT;
   DECLARE oskyrgnid INT;
-  DECLARE ox,oy,oz DOUBLE;
-
 
   SELECT COUNT(*)
     INTO nskyrgn
@@ -45,11 +43,6 @@ BEGIN
   ELSE
     SELECT NEXT VALUE FOR seq_skyregion INTO oskyrgnid;
 
-    SELECT cart.x,cart.y,cart.z 
-      INTO ox,oy,oz
-      FROM cartesian(icentre_ra,icentre_decl) cart
-      ;
-
     INSERT INTO skyregion
       (id
       ,dataset
@@ -60,20 +53,22 @@ BEGIN
       ,y
       ,z
       ) 
-    VALUES
-      (oskyrgnid
-      ,idataset
-      ,icentre_ra
-      ,icentre_decl
-      ,ixtr_radius
-      ,ox
-      ,oy
-      ,oz
-      )
+    SELECT oskyrgnid
+	      ,idataset
+	      ,icentre_ra
+	      ,icentre_decl
+	      ,ixtr_radius
+	      ,cart.x
+	      ,cart.y
+	      ,cart.z
+    FROM (SELECT *
+		  FROM cartesian(icentre_ra,icentre_decl)
+		  ) cart
     ;
     
+  DECLARE dummy DOUBLE;
   SELECT updateSkyRgnMembers(oskyrgnid)
-  	INTO ox;
+  	INTO dummy;
     
   END IF;
 

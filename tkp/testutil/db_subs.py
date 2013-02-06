@@ -42,7 +42,11 @@ def delete_test_database(database):
         cursor.execute(query)
         query = "DELETE from assocxtrsource"
         cursor.execute(query)
+        query = "DELETE from assocskyrgn"
+        cursor.execute(query)
         query = "DELETE from temprunningcatalog"
+        cursor.execute(query)
+        query = "DELETE from transient"
         cursor.execute(query)
         query = "DELETE from runningcatalog"
         cursor.execute(query)
@@ -50,9 +54,9 @@ def delete_test_database(database):
         cursor.execute(query)
         query = "DELETE from image"
         cursor.execute(query)
-        query = "DELETE from dataset"
+        query = "DELETE from skyregion"
         cursor.execute(query)
-        query = "DELETE from transient"
+        query = "DELETE from dataset"
         cursor.execute(query)
         if not tkp_conf['database']['autocommit']:
             database.connection.commit()
@@ -77,9 +81,9 @@ def example_dbimage_datasets(n_images):
                       'freq_bw':2e6,
                       'taustart_ts':starttime,
                       'url':testdata.fits_file, # just an arbitrary existing fits file
-                      'centre_ra': 0,
-                      'centre_decl': 0,
-
+                      'centre_ra': 90,
+                      'centre_decl': 45,
+                      'xtr_radius' : 3
                     }
 
     im_params = []
@@ -99,7 +103,7 @@ def example_extractedsource_tuple(ra=123.123, dec=10.5,
     # NOTE: ra_fit_err & dec_fit_err are in degrees (they are converted to arcsec in the db),
     # and ra_sys_err & decl_sys_err are in arcsec.
     # The ra_err is then the sqrt of the quadratic sum
-    return ExtractedSourceTuple(ra=ra, dec=dec, 
+    return ExtractedSourceTuple(ra=ra, dec=dec,
                                 ra_fit_err=ra_fit_err, dec_fit_err=dec_fit_err,
                                 peak=peak, peak_err=peak_err,
                                 flux=flux, flux_err=flux_err,

@@ -33,7 +33,7 @@ def associate_extracted_sources(image_id, deRuiter_r):
     Here we use a default value of deRuiter_r = 3.717/3600. for a
     reliable association.
     """
-    
+
     logger.info("Using a De Ruiter radius of %s" % (deRuiter_r,))
     conn = DataBase().connection
     _empty_temprunningcatalog(conn)
@@ -62,12 +62,14 @@ def associate_extracted_sources(image_id, deRuiter_r):
     _insert_1_to_many_runcat_flux(conn)
     _insert_1_to_many_basepoint_assoc(conn)
     _insert_1_to_many_assoc(conn)
+    _insert_1_to_many_skyrgn(conn)
     _insert_1_to_many_monitoringlist(conn)
     _insert_1_to_many_transient(conn)
     _delete_1_to_many_inactive_assoc(conn)
     _delete_1_to_many_inactive_runcat_flux(conn)
     _flag_1_to_many_inactive_runcat(conn)
     _flag_1_to_many_inactive_tempruncat(conn)
+    _delete_1_to_many_inactive_assocskyrgn(conn)
     _delete_1_to_many_inactive_monitoringlist(conn)
     _delete_1_to_many_inactive_transient(conn)
     #+-----------------------------------------------------+
@@ -83,6 +85,7 @@ def associate_extracted_sources(image_id, deRuiter_r):
     #+-------------------------------------------------------+
     _insert_new_runcat(conn, image_id)
     _insert_new_runcat_flux(conn, image_id)
+    _insert_new_runcat_skyrgn_assocs(conn, image_id)
     _insert_new_assoc(conn, image_id)
     _insert_new_monitoringlist(conn, image_id)
     _insert_new_transient(conn, image_id)
@@ -369,13 +372,13 @@ INSERT INTO temprunningcatalog
          AND t0.stokes = rf0.stokes
 """
         cursor.execute(query, (image_id, image_id,
-                                radius, radius, radius, radius, 
+                                radius, radius, radius, radius,
                                 radius, radius, deRuiter_red))
         if not AUTOCOMMIT:
             conn.commit()
     except db.Error, e:
         q = query % (image_id, image_id,
-                        radius, radius, radius, radius, 
+                        radius, radius, radius, radius,
                         radius, radius, deRuiter_red)
         logger.warn("Failed on query\n%s." % q)
         raise
@@ -693,6 +696,41 @@ def _insert_1_to_many_assoc(conn):
     finally:
         cursor.close()
 
+def _insert_1_to_many_skyrgn(conn):
+    try:
+        cursor = conn.cursor()
+        query = """\
+        INSERT INTO assocskyrgn
+          (runcat
+          ,skyrgn
+          ,distance_deg
+          )
+          SELECT r.id AS runcat
+                 ,asr.skyrgn
+                 ,asr.distance_deg
+            FROM temprunningcatalog t
+                ,runningcatalog r
+                ,assocskyrgn asr
+           WHERE t.inactive = FALSE
+             AND t.xtrsrc = r.xtrsrc
+             AND t.runcat IN (SELECT runcat
+                                FROM temprunningcatalog
+                               WHERE inactive = FALSE
+                              GROUP BY runcat
+                              HAVING COUNT(*) > 1
+                             )
+             AND asr.runcat = t.runcat
+
+        """
+        cursor.execute(query)
+        if not AUTOCOMMIT:
+            conn.commit()
+    except db.Error, e:
+        logger.warn("Failed on query:\n%s" % query)
+        raise
+    finally:
+        cursor.close()
+
 def _insert_1_to_many_monitoringlist(conn):
     """Insert one-to-many in monitoringlist
 
@@ -816,6 +854,33 @@ def _delete_1_to_many_inactive_monitoringlist(conn):
                        WHERE m.runcat = r.id
                          AND m.userentry = FALSE
                          AND r.inactive = TRUE
+                     )
+        """
+        cursor.execute(query)
+        if not AUTOCOMMIT:
+            conn.commit()
+    except db.Error, e:
+        logger.warn("Failed on query:\n%s" % query)
+        raise
+    finally:
+        cursor.close()
+
+def _delete_1_to_many_inactive_assocskyrgn(conn):
+    """Delete the assocskyrgn links of the old runcat
+
+    Since we replaced this runcat.id with multiple new ones, we now
+    delete the old links.
+
+    """
+
+    try:
+        cursor = conn.cursor()
+        query = """\
+        DELETE
+          FROM assocskyrgn
+         WHERE runcat IN (SELECT r.id as runcat
+                        FROM runningcatalog r
+                       WHERE r.inactive = TRUE
                      )
         """
         cursor.execute(query)
@@ -1389,11 +1454,121 @@ def _insert_new_runcat_flux(conn, image_id):
                                  WHERE trc1.xtrsrc IS NULL
                               )
         """
-        cursor.execute(query, (image_id, ))
+        cursor.execute(query, (image_id,))
         if not AUTOCOMMIT:
             conn.commit()
     except db.Error, e:
         q = query % (image_id,)
+        logger.warn("Failed on query:\n%s" % q)
+        raise
+    finally:
+        cursor.close()
+
+def _insert_new_runcat_skyrgn_assocs(conn, image_id):
+    """
+    Process newly created entries from the runningcatalog,
+    determine which skyregions they lie within.
+
+    Upon creation of a new runningcatalog entry, 
+    we need to determine which previous fields of view (skyrgns) 
+    we expect to see it in. 
+    This knowledge helps us to make accurate guesses as whether a new 
+    source is really transient or simply being surveyed for the first time. 
+
+    .. note:
+
+        This could be made more efficient, at the cost of added complexity,
+        by tracking which skyregions overlap,
+        and then only testing for membership of overlapping regions.
+        (That's a job for another day!)
+    """
+
+    #First, mark membership in the skyregion of the image of initial detection.
+    #We look for extracted sources from this image
+    #that are not in temprunningcatalog, i.e. have no association candidates.
+
+    #By dealing with these separately, we save a number of radius comparison 
+    #operations proportional to the number of new sources in this field.
+    assocskyrgn_parent_qry = """\
+    INSERT INTO assocskyrgn
+        (runcat
+        ,skyrgn
+        )
+    SELECT t0.runcat
+          ,t0.skyrgn
+      FROM (SELECT ex.id AS xtrsrc
+                  ,rc.id as runcat
+                  ,im.skyrgn
+              FROM extractedsource ex
+                  ,runningcatalog rc
+                  ,image im
+             WHERE ex.image = %(img_id)s 
+               AND rc.xtrsrc = ex.id
+               AND ex.image = im.id
+           ) t0
+           LEFT OUTER JOIN temprunningcatalog trc
+           ON t0.xtrsrc = trc.xtrsrc
+    WHERE trc.xtrsrc IS NULL
+    """
+    try:
+        cursor = conn.cursor()
+        cursor.execute(assocskyrgn_parent_qry, {'img_id':image_id})
+        if not AUTOCOMMIT:
+                conn.commit()
+    except db.Error, e:
+        q = assocskyrgn_parent_qry, {'img_id':image_id}
+        logger.warn("Failed on query:\n%s" % q)
+        raise
+    finally:
+        cursor.close()
+    #Now search all the other skyregions *in same dataset* to determine matches:
+    assocskyrgn_others_qry = """\
+    INSERT INTO assocskyrgn
+        (runcat
+        ,skyrgn
+        ,distance_deg
+        )
+    SELECT t1.runcat as runcatid
+          ,sky.id as skyrgnid 
+          ,DEGREES(2 * ASIN(SQRT( (rc1.x - sky.x) * (rc1.x - sky.x)
+                             + (rc1.y - sky.y) * (rc1.y - sky.y)
+                             + (rc1.z - sky.z) * (rc1.z - sky.z)
+                             ) / 2) 
+               ) AS idistance_deg
+      FROM skyregion sky
+           ,runningcatalog rc1
+          ,(SELECT t0.runcat
+                  ,t0.self_skyrgn
+              FROM (SELECT ex.id AS xtrsrc
+                          ,rc0.id as runcat
+                          ,im.skyrgn as self_skyrgn
+                      FROM extractedsource ex
+                          ,runningcatalog rc0
+                          ,image im
+                     WHERE ex.image = %(img_id)s  
+                       AND rc0.xtrsrc = ex.id
+                       AND ex.image = im.id
+                   ) t0
+                   LEFT OUTER JOIN temprunningcatalog trc
+                   ON t0.xtrsrc = trc.xtrsrc
+            WHERE trc.xtrsrc IS NULL
+            ) t1
+        WHERE rc1.id = t1.runcat
+          AND sky.dataset = rc1.dataset
+          AND sky.id <> t1.self_skyrgn
+          AND  DEGREES(2 * ASIN(SQRT( (rc1.x - sky.x) * (rc1.x - sky.x)
+                                         + (rc1.y - sky.y) * (rc1.y - sky.y)
+                                         + (rc1.z - sky.z) * (rc1.z - sky.z)
+                                        ) / 2) 
+                   ) < sky.xtr_radius 
+    """
+    try:
+        cursor = conn.cursor()
+        cursor.execute(assocskyrgn_others_qry, {'img_id':image_id})
+        if not AUTOCOMMIT:
+                conn.commit()
+    except db.Error, e:
+        q = assocskyrgn_parent_qry, {'img_id':image_id}
         logger.warn("Failed on query:\n%s" % q)
         raise
     finally:
@@ -1504,7 +1679,7 @@ def _insert_new_monitoringlist(conn, image_id):
                          HAVING COUNT(*) <> 1
                         )
         """
-        ins = cursor.execute(query, (image_id,image_id))
+        ins = cursor.execute(query, (image_id, image_id))
         if not AUTOCOMMIT:
             conn.commit()
         if ins > 0:
@@ -1571,7 +1746,7 @@ def _insert_new_transient(conn, image_id):
                          HAVING COUNT(*) <> 1
                         )
         """
-        ins = cursor.execute(query, (image_id,image_id))
+        ins = cursor.execute(query, (image_id, image_id))
         if not AUTOCOMMIT:
             conn.commit()
         if ins > 0:
@@ -1582,6 +1757,8 @@ def _insert_new_transient(conn, image_id):
         raise
     finally:
         cursor.close()
+
+
 
 def _go_back_to_other_images_and_do_a_forcedfit_in_non_rejected_images(conn, image_id):
     """Return a list of previous image ids and urls in which
@@ -1727,7 +1904,7 @@ def _insert_cat_assocs(conn, image_id, radius, deRuiter_r):
         cursor.execute(query, (BG_DENSITY,
                                image_id,
                                radius, radius, radius, radius, radius, radius,
-                               deRuiter_r/3600.))
+                               deRuiter_r / 3600.))
         if not AUTOCOMMIT:
             conn.commit()
     except db.Error, e:

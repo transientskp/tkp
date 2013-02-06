@@ -1,22 +1,22 @@
---DROP FUNCTION insertImage;
+UPDATE version
+   SET value = 8
+ WHERE name = 'revision'
+   AND value = 9
+; %SPLIT%
 
-/**
- * This function inserts a row in the image table,
- * and returns the value of the id under which it is known.
- *
- * Note I: To be able to create a function that modifies data 
- * (by insertion) we have to set the global bin log var:
- * mysql> SET GLOBAL log_bin_trust_function_creators = 1;
- *
- * Note II: The params in comment should be specified soon.
- * This means this function inserts deafult values so long.
- * 
- * Note III: Two subroutines are called, getBand and getSkyRgn.
- * These return:
- *  - A matching band_id, given the freq_eff and freq_bw
- *  - A matching skyregion_id, given the field centre and extraction radius.
- *
- */
+DROP FUNCTION insertImage; %SPLIT%
+DROP FUNCTION getSkyRgn; %SPLIT%
+DROP FUNCTION updateSkyRgnMembers; %SPLIT%
+DROP FUNCTION cartesian; %SPLIT%
+
+ALTER TABLE IMAGE DROP CONSTRAINT "image_skyrgn_fkey"; %SPLIT%
+ALTER TABLE IMAGE DROP COLUMN skyrgn; %SPLIT%
+
+DROP TABLE assocskyrgn; %SPLIT%
+DROP TABLE skyregion; %SPLIT%
+DROP SEQUENCE seq_skyregion; %SPLIT%
+
+
 CREATE FUNCTION insertImage(idataset INT
                            ,itau_time DOUBLE
                            ,ifreq_eff DOUBLE
@@ -28,7 +28,6 @@ CREATE FUNCTION insertImage(idataset INT
                            ,iurl VARCHAR(1024)
                            ,icentre_ra DOUBLE
                            ,icentre_decl DOUBLE
-                           ,ixtr_radius DOUBLE
                            ) RETURNS INT
 BEGIN
 
@@ -36,10 +35,8 @@ BEGIN
   DECLARE oimageid INT;
   DECLARE iband SMALLINT;
   DECLARE itau INT;
-  DECLARE iskyrgn INT;
 
   SET iband = getBand(ifreq_eff, ifreq_bw);
-  SET iskyrgn = getSkyRgn(idataset, icentre_ra, icentre_decl, ixtr_radius);
   
   SELECT NEXT VALUE FOR seq_image INTO iimageid;
 
@@ -51,11 +48,12 @@ BEGIN
     ,freq_eff
     ,freq_bw
     ,taustart_ts
-    ,skyrgn
     ,bmaj_syn
     ,bmin_syn
     ,bpa_syn
     ,url
+    ,centre_ra
+    ,centre_decl
     ) 
   VALUES
     (iimageid
@@ -65,11 +63,12 @@ BEGIN
     ,ifreq_eff
     ,ifreq_bw
     ,itaustart_ts
-    ,iskyrgn
     ,ibeam_maj 
     ,ibeam_min 
     ,ibeam_pa 
     ,iurl
+    ,icentre_ra
+    ,icentre_decl
     )
   ;
 
@@ -77,3 +76,5 @@ BEGIN
   RETURN oimageid;
 
 END;
+
+

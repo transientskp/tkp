@@ -78,6 +78,7 @@ class TestImage(unittest.TestCase):
             'tau_time': 0,
             'centre_ra': 0,
             'centre_decl': 0,
+            'xtr_radius' : 3
             }
         dataset1 = DataSet(data={'description': 'dataset with images'},
                            database=self.database)
@@ -114,6 +115,7 @@ class TestImage(unittest.TestCase):
                     freq_bw=1e6,
                     centre_ra=0,
                     centre_decl=0,
+                    xtr_radius=3
         )
         image1 = Image(dataset=dataset1, data=data)
         self.assertAlmostEqual(image1.tau_time, 1000.)
@@ -172,6 +174,7 @@ class TestExtractedSource(unittest.TestCase):
                       'freq_bw': 1e6,
                       'centre_ra': 0,
                       'centre_decl': 0,
+                      'xtr_radius' : 3
 				})
         data = dict(zone=13, 
                     ra=12.12, decl=13.13, ra_err=21.1, decl_err=21.09,
@@ -202,6 +205,7 @@ class TestExtractedSource(unittest.TestCase):
             'tau_time': 0,
             'centre_ra': 0,
             'centre_decl': 0,
+            'xtr_radius' : 3
         }
         dataset1 = DataSet(data={'description': 'dataset with images'},
                                  database=self.database)
@@ -255,6 +259,7 @@ class TestExtractedSource(unittest.TestCase):
             'tau_time': 0,
             'centre_ra': 0,
             'centre_decl': 0,
+            'xtr_radius' : 3
                 }
         dataset1 = DataSet(data={'description': 'dataset with images'},
                            database=self.database)

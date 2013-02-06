@@ -124,8 +124,12 @@ def main():
     answer = True if raw_input("%s (y/N) " % msg).lower() == 'y' else False
     if answer:
         for statement in query.split("%SPLIT%"):
+#            print "Executing:"
+#            print statement
             cursor.execute(statement)
+#            raw_input('Done... continue?')
         connection.commit()
+        print "Upgrade completed"
     else:
         print "upgrade cancelled"
         sys.exit(2)

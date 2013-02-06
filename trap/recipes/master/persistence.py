@@ -12,6 +12,11 @@ class persistence(TrapMaster):
     """Store an image into the database"""
 
     inputs = {
+      'extraction_radius_pix': ingredient.FloatField(
+            '--extraction_radius_pix',
+            dest='extraction_radius_pix',
+            help="Source extraction radius (in pixels)"
+        ),
         'parset': ingredient.FileField(
             '-p', '--parset',
             dest='parset',
@@ -30,7 +35,9 @@ class persistence(TrapMaster):
     def trapstep(self):
         images = self.inputs['args']
         metadatas = self.distributed(images)
-        dataset_id, image_ids = master_steps(metadatas, self.inputs['parset'])
+        dataset_id, image_ids = master_steps(metadatas,
+                                             self.inputs['extraction_radius_pix'],
+                                             self.inputs['parset'])
         self.outputs['dataset_id'] = dataset_id
 
     def distributed(self, images):

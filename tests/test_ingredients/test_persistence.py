@@ -5,7 +5,9 @@ from tkp.testutil import db_subs
 from tkp.testutil.decorators import requires_mongodb
 import tkp.testutil.data as testdata
 from tkp.config import config as tkpconfig
+from tkp.testutil.decorators import requires_database
 
+@requires_database()
 class TestPersistence(unittest.TestCase):
     def __init__(self, *args):
         super(TestPersistence, self).__init__(*args)
@@ -13,6 +15,7 @@ class TestPersistence(unittest.TestCase):
         self.parset = tempfile.NamedTemporaryFile()
         self.parset.flush()
         self.images = [testdata.fits_file]
+        self.extraction_radius = 256
 
     def test_parse_parset(self):
         trap.ingredients.persistence.parse_parset(self.parset.name)
@@ -26,17 +29,21 @@ class TestPersistence(unittest.TestCase):
 
     def test_store_images(self):
         images_metadata = trap.ingredients.persistence.extract_metadatas(self.images)
-        trap.ingredients.persistence.store_images(images_metadata, self.dataset_id)
+        trap.ingredients.persistence.store_images(images_metadata,
+                                  self.extraction_radius, self.dataset_id)
 
     def test_node_steps(self):
         trap.ingredients.persistence.node_steps(self.images, self.parset.name)
 
     def test_master_steps(self):
         images_metadata = trap.ingredients.persistence.extract_metadatas(self.images)
-        trap.ingredients.persistence.master_steps(images_metadata, self.parset.name)
+        trap.ingredients.persistence.master_steps(images_metadata,
+                                                  self.extraction_radius,
+                                                  self.parset.name)
 
     def test_all(self):
-        trap.ingredients.persistence.all(self.images, self.parset.name)
+        trap.ingredients.persistence.all(self.images, self.extraction_radius,
+                                         self.parset.name)
 
 @requires_mongodb()
 class TestMongoDb(unittest.TestCase):

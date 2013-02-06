@@ -96,7 +96,7 @@ def extract_metadatas(images):
     return results
 
 
-def store_images(images_metadata, dataset_id):
+def store_images(images_metadata, extraction_radius_pix, dataset_id):
     """ Add images to database.
     Note that all images in one dataset should be inserted in one go, since the
     order is very important here. If you don't add them all in once, you should
@@ -120,6 +120,7 @@ def store_images(images_metadata, dataset_id):
     images_metadata.sort(key=lambda m: m['taustart_ts'])
 
     for metadata in images_metadata:
+        metadata['xtr_radius'] = extraction_radius_pix * metadata['pixel_scale']
         filename = metadata['url']
         db_image = Image(data=metadata, dataset=dataset)
         image_ids.append(db_image.id)
@@ -148,7 +149,7 @@ def node_steps(images, parset_file):
     return metadatas
 
 
-def master_steps(metadatas, parset_file):
+def master_steps(metadatas, extraction_radius_pix, parset_file):
     """this function executes all persistence steps that should be executed on
         a master.
     Args:
@@ -164,13 +165,13 @@ def master_steps(metadatas, parset_file):
     logger.info("added dataset with ID %s" % dataset_id)
 
     logger.info("Storing images")
-    image_ids = store_images(metadatas, dataset_id)
+    image_ids = store_images(metadatas, extraction_radius_pix, dataset_id)
     return dataset_id, image_ids
 
 
-def all(images, parset_file):
+def all(images, extraction_radius_pix, parset_file):
     """
     execute node and then master code, should be used in local run only!
     """
     metadatas = node_steps(images, parset_file)
-    return master_steps(metadatas, parset_file)
+    return master_steps(metadatas, extraction_radius_pix, parset_file)

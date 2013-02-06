@@ -4,6 +4,7 @@
 tables/version.sql
 tables/frequencyband.sql
 tables/dataset.sql
+tables/skyregion.sql
 tables/image.sql
 tables/catalog.sql
 tables/catalogedsource.sql
@@ -11,6 +12,7 @@ tables/extractedsource.sql
 tables/assoccatsource.sql
 tables/runningcatalog.sql
 tables/assocxtrsource.sql
+tables/assocskyrgn.sql
 tables/runningcatalog_flux.sql
 tables/temprunningcatalog.sql
 tables/node.sql
@@ -24,7 +26,10 @@ tables/rejection.sql
 #
 functions/create.function.degrad.sql
 functions/create.function.alpha.sql
+functions/create.function.cartesian.sql
 functions/create.function.getBand.sql
+functions/create.function.updateSkyRgnMembers.sql
+functions/create.function.getSkyRgn.sql
 functions/create.function.insertImage.sql
 functions/create.function.insertDataset.sql
 procedures/create.procedure.BuildFrequencyBands.sql

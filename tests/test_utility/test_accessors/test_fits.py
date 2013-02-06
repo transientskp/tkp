@@ -106,7 +106,8 @@ class DataBaseImage(unittest.TestCase):
 
         database = tkp.database.database.DataBase()
         dataset = DataSet(data={'description': 'Accessor test'}, database=database)
-        dbimage = accessors.dbimage_from_accessor(dataset, image)
+        dbimage = accessors.dbimage_from_accessor(dataset, image,
+                                                  extraction_radius=3)
 
 
 class FrequencyInformation(unittest.TestCase):

@@ -19,7 +19,7 @@ from tkp.utility.accessors.fitsimage import FitsImage
 from tkp.utility.accessors.casaimage import CasaImage
 
 
-def dbimage_from_accessor(dataset, dataccessor):
+def dbimage_from_accessor(dataset, dataccessor, extraction_radius):
     """Create an entry in the database image table from an image 'accessor'
     
     Args:
@@ -36,6 +36,7 @@ def dbimage_from_accessor(dataset, dataccessor):
     if dataccessor.freq_eff is None or dataccessor.freq_bw is None:
         raise ValueError("cannot create database image: frequency information missing")
     data = extract_metadata(dataccessor)
+    data['xtr_radius'] = extraction_radius
     image = DBImage(data=data, dataset=dataset)
     return image
 

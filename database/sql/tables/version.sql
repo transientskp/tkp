@@ -4,5 +4,5 @@ CREATE TABLE version
   ,PRIMARY KEY(name)
 );
 
-INSERT INTO version (name, value) VALUES ('revision', 8);
+INSERT INTO version (name, value) VALUES ('revision', 9);
 

@@ -6,6 +6,7 @@ from tkp.utility import accessors
 from tkp.utility.accessors.lofarcasaimage import LofarCasaImage
 import tkp.config
 from tkp.testutil.decorators import requires_data
+from tkp.utility.coordinates import angsep
 
 
 DATAPATH = tkp.config.config['test']['datapath']
@@ -43,3 +44,23 @@ class TestLofarCasaImage(unittest.TestCase):
         self.assertAlmostEqual(known_dec, calc_dec, 3)
         self.assertAlmostEqual(known_x, calc_x, 3)
         self.assertAlmostEqual(known_y, calc_y, 3)
+
+    def test_pix_scale(self):
+        accessor = LofarCasaImage(casatable)
+        p1_sky = (accessor.centre_ra, accessor.centre_decl)
+        p1_pix = accessor.wcs.s2p(p1_sky)
+
+        pixel_sep = 10 #Along a single axis 
+        p2_pix = (p1_pix[0], p1_pix[1] + pixel_sep)
+        p2_sky = accessor.wcs.p2s(p2_pix)
+
+        coord_dist_deg = angsep(p1_sky[0], p1_sky[1], p2_sky[0], p2_sky[1]) / 3600.0
+        pix_dist_deg = pixel_sep * accessor.pixel_scale
+
+        #6 decimal places => 1e-6*degree / 10pix => 1e-7*degree / 1pix 
+        #  => Approx 0.15 arcseconds drift across 512 pixels
+        # (Probably OK).
+        self.assertAlmostEqual(abs(coord_dist_deg), abs(pix_dist_deg), places=6)
+
+
+

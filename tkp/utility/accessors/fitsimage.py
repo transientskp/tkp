@@ -1,6 +1,6 @@
 import datetime
 from tkp.utility.accessors.beam import degrees2pixels
-from tkp.utility.accessors.dataaccessor import DataAccessor
+from tkp.utility.accessors.dataaccessor import DataAccessor, parse_pixel_scale
 import pyfits
 import numpy
 from tkp.utility.coordinates import WCS
@@ -54,6 +54,7 @@ class FitsImage(DataAccessor):
         self.header = hdu.header.copy()
         self._read_data(hdu)
         self._coordparse(hdu)
+        self.pixel_scale = parse_pixel_scale(self.wcs)
         self._othersparse(hdu)
         self._freqparse(hdu)
 

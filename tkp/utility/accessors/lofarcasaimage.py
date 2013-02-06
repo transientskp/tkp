@@ -4,7 +4,7 @@ import datetime
 import numpy
 from pyrap.tables import table as pyrap_table
 from tkp.utility.accessors.beam import degrees2pixels
-from tkp.utility.accessors.dataaccessor import DataAccessor
+from tkp.utility.accessors.dataaccessor import DataAccessor, parse_pixel_scale
 from tkp.utility.coordinates import julian2unix
 from math import degrees
 
@@ -218,6 +218,7 @@ class LofarCasaImage(DataAccessor):
         parse_coordinates(self.table, self.wcs)
         self.freq_eff, self.freq_bw, self.subbandwidth = parse_frequency(self.table,
                                         self.subtables['LOFAR_OBSERVATION'])
+        self.pixel_scale = parse_pixel_scale(self.wcs)
         if not self.beam:
             self.beam = parse_beam(self.table, self.wcs)
         self.tau_time = parse_tautime(self.subtables['LOFAR_ORIGIN'])

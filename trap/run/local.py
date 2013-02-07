@@ -80,6 +80,7 @@ class TrapLocal(control):
 
         # Sourcefinding
         good_images = []
+        transients = []
         for image_id in good_image_ids:
             image = Image(id=image_id)
             good_images.append(image)
@@ -87,12 +88,11 @@ class TrapLocal(control):
                                                      image.url, se_parset_file)
             dbgen.insert_extracted_sources(image_id, extracted_sources, 'blind')
 
-        # null_detections
-        nd_parset = parameterset(nd_parset_file)
-        deRuiter_radius = nd_parset.getFloat('deRuiter_radius', 3.717)
+            # null_detections
+            nd_parset = parameterset(nd_parset_file)
+            deRuiter_radius = nd_parset.getFloat('deRuiter_radius', 3.717)
 
-        transients = []
-        for image in good_images:
+            #for image in good_images:
             image_id = image.id
             image_path = image.url
 
@@ -124,4 +124,5 @@ class TrapLocal(control):
             ingred.feature_extraction.extract_features(transient)
             ingred.classification.classify(transient, cl_parset_file)
         
-        dbgen.update_dataset_process_ts(dataset_id, datetime.datetime.utcnow())
+        now = datetime.datetime.utcnow()
+        dbgen.update_dataset_process_ts(dataset_id, now)

@@ -33,10 +33,7 @@ class source_extraction(TrapMaster):
         image_paths = [Image(id=id).url for id in image_ids]
 
         sources_sets = self.distributed(image_ids, image_paths)
-        #print "SE, sources_sets:", sources_sets
         self.outputs['sources_sets'] = sources_sets
-        #for (image_id, sources) in sources_sets:
-        #    dbgen.insert_extracted_sources(image_id, sources, 'blind')
 
     def distributed(self, image_ids, image_paths):
         nodes = ingred.common.nodes_available(self.config)

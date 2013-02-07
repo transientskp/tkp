@@ -77,14 +77,12 @@ class Trap(control):
 
         
         sources_sets = self.outputs['sources_sets']
-        #for image_id in good_image_ids:
-        im_nr = 1
         for (image_id, sources) in sources_sets:
 
-            self.run_task(
+            self.outputs.update(self.run_task(
                 "insert_sources",
                 [image_id, sources],
-            )
+            ))
 
             self.outputs.update(self.run_task(
                 "null_detections",
@@ -110,7 +108,6 @@ class Trap(control):
                 "transient_search",
                 [image_id],
             ))
-            im_nr += 1
 
         self.outputs.update(self.run_task(
             "feature_extraction",
@@ -126,7 +123,6 @@ class Trap(control):
 
         now = datetime.datetime.utcnow()
         dbgen.update_dataset_process_ts(dataset.id, now)
-
 
     def _save_state(self):
         self.logger.info("skipping storing of pipeline state, since it doesn't work correctly at the moment")

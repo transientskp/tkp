@@ -50,6 +50,8 @@ def extract_sources(image_path, parset_file):
             parset['deblend_nthresh']
     )
 
+    data_image.update_data(parset['margin'], parset['radius'], parset['max_degradation'])
+
     # Here we do the "blind" extraction of sources in the image
     results = data_image.extract(det=parset['detection_threshold'],
                                 anl=parset['analysis_threshold'])

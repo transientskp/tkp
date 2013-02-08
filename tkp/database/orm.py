@@ -465,6 +465,8 @@ class Image(DBObject):
                     self._data['bsmaj'] = None
                     self._data['bsmin'] = None
                     self._data['bpa'] = None
+                    self._data['deltax'] = None
+                    self._data['deltay'] = None
                 # Insert a default image
                 self._id = dbu.insert_image(
                     self.database.connection, self.dataset.id,
@@ -472,6 +474,8 @@ class Image(DBObject):
                     self._data['taustart_ts'],self._data['tau_time'],
                     self._data['bsmaj'],self._data['bsmin'],  
                     self._data['bpa'],
+                    self._data['deltax'],
+                    self._data['deltay'],
                     self._data['url'],
                     self._data['centre_ra'],
                     self._data['centre_decl'],

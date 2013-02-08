@@ -133,7 +133,7 @@ def insert_dataset(conn, description):
 
 def insert_image(conn,
                  dataset, freq_eff, freq_bw, taustart_ts, tau_time,
-                 beam_maj, beam_min, beam_pa, url,
+                 beam_maj, beam_min, beam_pa, deltax, deltay, url,
                  centre_ra, centre_decl, xtr_radius
                  ):
     """Insert an image for a given dataset with the column values
@@ -148,9 +148,9 @@ def insert_image(conn,
        Note centre_ra, centre_decl, extracion_radius should all be in degrees.
 
     """
-    query = "SELECT insertImage(%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
+    query = "SELECT insertImage(%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
     arguments = (dataset, tau_time, freq_eff, freq_bw, taustart_ts,
-                 beam_maj, beam_min, beam_pa, url,
+                 beam_maj, beam_min, beam_pa, deltax, deltay, url,
                  centre_ra, centre_decl, xtr_radius)
     cursor = tkp.database.query(conn, query, arguments, commit=True)
     image_id = cursor.fetchone()[0]

@@ -14,6 +14,8 @@ CREATE TABLE image
   ,bmaj_syn DOUBLE NULL
   ,bmin_syn DOUBLE NULL
   ,bpa_syn DOUBLE NULL
+  ,deltax DOUBLE NULL
+  ,deltay DOUBLE NULL
   ,fwhm_arcsec DOUBLE NULL
   ,fov_degrees DOUBLE NULL
   ,url VARCHAR(1024) NULL

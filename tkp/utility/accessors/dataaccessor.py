@@ -28,6 +28,8 @@ def extract_metadata(dataaccessor):
         'nremote': dataaccessor.nremote,
         'nintl': dataaccessor.nintl,
         'position': dataaccessor.position,
+        'deltax': dataaccessor.pixelsize[0],
+        'deltay': dataaccessor.pixelsize[1],
     }
 
 def parse_pixel_scale(wcs):
@@ -79,6 +81,7 @@ class DataAccessor(object):
         self.nremote = None
         self.nintl = None
         self.position = None
+        self.pixelsize = None
 
     def not_set(self):
         """returns list of all params that are not set"""

@@ -97,7 +97,7 @@ def parse_data(table, plane=0):
 
 def parse_beam(table, wcs):
     """
-    Return beam parameters in pixels.
+    Return 2 tuples, the beam parameters in degrees and a tuple with pixel size
     """
     def ensure_degrees(quantity):
         if quantity['unit'] == 'deg':
@@ -124,7 +124,8 @@ def parse_beam(table, wcs):
     elif wcs.cunit[1] == "rad":
         deltay = degrees(wcs.cdelt[1])
 
-    return degrees2pixels(bmaj, bmin, bpa, deltax, deltay)
+    beam_pixels = degrees2pixels(bmaj, bmin, bpa, deltax, deltay)
+    return beam_pixels, (deltax, deltay)
 
 
 def parse_tautime(origin_table):
@@ -220,7 +221,7 @@ class LofarCasaImage(DataAccessor):
                                         self.subtables['LOFAR_OBSERVATION'])
         self.pixel_scale = parse_pixel_scale(self.wcs)
         if not self.beam:
-            self.beam = parse_beam(self.table, self.wcs)
+            self.beam, self.pixelsize = parse_beam(self.table, self.wcs)
         self.tau_time = parse_tautime(self.subtables['LOFAR_ORIGIN'])
         self.antenna_set = parse_antennaset(self.subtables['LOFAR_OBSERVATION'])
         self.subbands = parse_subbands(self.subtables['LOFAR_ORIGIN'])

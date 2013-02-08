@@ -65,6 +65,7 @@ class FitsImage(DataAccessor):
             deltax = self.wcs.cdelt[0]
             deltay = self.wcs.cdelt[1]
             self.beam = degrees2pixels(bmaj, bmin, bpa, deltax, deltay)
+            self.pixelsize = (deltax, deltay)
 
         self._timeparse(hdu)
 
@@ -235,6 +236,7 @@ class FitsImage(DataAccessor):
         deltax = self.wcs.cdelt[0]
         deltay = self.wcs.cdelt[1]
         self.beam = degrees2pixels(bmaj, bmin, bpa, deltax, deltay)
+        self.pixelsize = (deltax, deltay)
 
 
     def _othersparse(self, hdu):

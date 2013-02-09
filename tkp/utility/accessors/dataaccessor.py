@@ -14,9 +14,9 @@ def extract_metadata(dataaccessor):
         'freq_bw': dataaccessor.freq_bw,
         'taustart_ts': dataaccessor.taustart_ts,
         'url': dataaccessor.url,
-        'bsmaj': float(dataaccessor.beam[0]), ## NB We must cast to a standard python float
-        'bsmin': float(dataaccessor.beam[1]), ## as Monetdb converter cannot handle numpy.float64
-        'bpa': float(dataaccessor.beam[2]),
+        'beam_smaj_pix': float(dataaccessor.beam[0]), ## NB We must cast to a standard python float
+        'beam_smin_pix': float(dataaccessor.beam[1]), ## as Monetdb converter cannot handle numpy.float64
+        'beam_pa_rad': float(dataaccessor.beam[2]),
         'centre_ra': dataaccessor.centre_ra, #J2000 Degrees
         'centre_decl': dataaccessor.centre_decl, #J2000 Degrees
         'pixel_scale': dataaccessor.pixel_scale, #In degrees per x/y increment

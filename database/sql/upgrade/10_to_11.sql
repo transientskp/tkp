@@ -1,22 +1,48 @@
---DROP FUNCTION insertImage;
+UPDATE version
+   SET value = 11
+ WHERE name = 'revision'
+   AND value = 10
+; %SPLIT%
 
-/**
- * This function inserts a row in the image table,
- * and returns the value of the id under which it is known.
- *
- * Note I: To be able to create a function that modifies data 
- * (by insertion) we have to set the global bin log var:
- * mysql> SET GLOBAL log_bin_trust_function_creators = 1;
- *
- * Note II: The params in comment should be specified soon.
- * This means this function inserts deafult values so long.
- * 
- * Note III: Two subroutines are called, getBand and getSkyRgn.
- * These return:
- *  - A matching band_id, given the freq_eff and freq_bw
- *  - A matching skyregion_id, given the field centre and extraction radius.
- *
- */
+DROP FUNCTION insertImage; %SPLIT%
+
+ALTER TABLE image ADD COLUMN rb_smaj DOUBLE NULL; %SPLIT%
+ALTER TABLE image ADD COLUMN rb_smin DOUBLE NULL; %SPLIT%
+ALTER TABLE image ADD COLUMN rb_pa DOUBLE NULL; %SPLIT%
+
+/* 
+Although we know that the old values were incorrect due to wrong 
+units and no stored conversion parameters, we copy them into 
+the new columns.
+TODO: Can we set those to rejected?
+*/
+UPDATE image
+   SET rb_smaj = bmaj_syn
+      ,rb_smin = bmin_syn
+      ,rb_pa = bpa_syn
+; %SPLIT%
+
+UPDATE image
+   SET deltax = 0
+ WHERE deltax IS NULL
+; %SPLIT%
+
+UPDATE image
+   SET deltay = 0
+ WHERE deltay IS NULL
+; %SPLIT%
+
+ALTER TABLE image ALTER COLUMN rb_smaj SET NOT NULL; %SPLIT%
+ALTER TABLE image ALTER COLUMN rb_smin SET NOT NULL; %SPLIT%
+ALTER TABLE image ALTER COLUMN rb_pa SET NOT NULL; %SPLIT%
+
+ALTER TABLE image ALTER COLUMN deltax SET NOT NULL; %SPLIT%
+ALTER TABLE image ALTER COLUMN deltay SET NOT NULL; %SPLIT%
+
+ALTER TABLE image DROP COLUMN bmaj_syn; %SPLIT%
+ALTER TABLE image DROP COLUMN bmin_syn; %SPLIT%
+ALTER TABLE image DROP COLUMN bpa_syn; %SPLIT%
+
 CREATE FUNCTION insertImage(idataset INT
                            ,itau_time DOUBLE
                            ,ifreq_eff DOUBLE
@@ -42,7 +68,7 @@ BEGIN
 
   SET iband = getBand(ifreq_eff, ifreq_bw);
   SET iskyrgn = getSkyRgn(idataset, icentre_ra, icentre_decl, ixtr_radius);
-  
+
   SELECT NEXT VALUE FOR seq_image INTO iimageid;
 
   INSERT INTO image
@@ -60,7 +86,7 @@ BEGIN
     ,deltax
     ,deltay
     ,url
-    ) 
+    )
   VALUES
     (iimageid
     ,idataset
@@ -70,8 +96,8 @@ BEGIN
     ,ifreq_bw
     ,itaustart_ts
     ,iskyrgn
-    ,irb_smaj 
-    ,irb_smin 
+    ,irb_smaj
+    ,irb_smin
     ,irb_pa
     ,ideltax
     ,ideltay
@@ -82,4 +108,4 @@ BEGIN
   SET oimageid = iimageid;
   RETURN oimageid;
 
-END;
+END;  %SPLIT%

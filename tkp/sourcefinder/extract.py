@@ -1,13 +1,3 @@
-# -*- coding: utf-8 -*-
-#
-# LOFAR Transients Key Project
-#
-# discovery@transientskp.org
-#
-#
-# Source fitting algorithms
-#
-
 """
 Source Extraction Helpers.
 
@@ -26,7 +16,6 @@ except ImportError:
     from scipy import ndimage
 from deconv import deconv
 from ..utility import coordinates
-from ..config import config
 from ..utility.uncertain import Uncertain
 from .gaussian import gaussian
 from . import fitting
@@ -50,9 +39,6 @@ class Island(object):
     def __init__(self, data, rms, chunk, analysis_threshold, detection_map,
                  beam, rms_orig=None, flux_orig=None, subthrrange=None,
                  deblend=False, deblend_nthresh=32, deblend_mincont=0.005,
-                 alpha_maj1=2.5, alpha_min1=0.5,alpha_maj2=0.5, alpha_min2=2.5,
-                 alpha_maj3=1.5, alpha_min3=1.5,
-
                  structuring_element=[[0,1,0], [1,1,1], [0,1,0]],
                  ):
 
@@ -61,12 +47,7 @@ class Island(object):
         self.structuring_element = structuring_element
         self.deblend_mincont = deblend_mincont
         self.deblend_nthresh = deblend_nthresh
-        self.alpha_maj1 = alpha_maj1
-        self.alpha_min1 = alpha_min1
-        self.alpha_maj2 = alpha_maj2
-        self.alpha_min2 = alpha_min2
-        self.alpha_maj3 = alpha_maj3
-        self.alpha_min3 = alpha_min3
+
 
         # If we deblend too far, we hit the recursion limit. And it's slow.
         if self.deblend and self.deblend_nthresh > 300:
@@ -231,10 +212,19 @@ class ParamSet(DictMixin):
     gives all the information necessary to make a Detection.
     """
 
-    def __init__(self, clean_bias=0.0, clean_bias_error=0.0, frac_flux_cal_error=0.0):
+    def __init__(self, clean_bias=0.0, clean_bias_error=0.0,
+                 frac_flux_cal_error=0.0, alpha_maj1=2.5, alpha_min1=0.5,
+                 alpha_maj2=0.5, alpha_min2=2.5, alpha_maj3=1.5, alpha_min3=1.5):
+
         self.clean_bias = clean_bias
         self.clean_bias_error = clean_bias_error
         self.frac_flux_cal_error = frac_flux_cal_error
+        self.alpha_maj1 = alpha_maj1
+        self.alpha_min1 = alpha_min1
+        self.alpha_maj2 = alpha_maj2
+        self.alpha_min2 = alpha_min2
+        self.alpha_maj3 = alpha_maj3
+        self.alpha_min3 = alpha_min3
 
         self.values = {
             'peak': Uncertain(),
@@ -299,13 +289,11 @@ class ParamSet(DictMixin):
         The peak is corrected for the overestimate due to the local
         noise gradient.
         """
-
         peak = self['peak'].value
         flux = self['flux'].value
         smaj = self['semimajor'].value
         smin = self['semiminor'].value
         theta = self['theta'].value
-
 
         theta_B, theta_b = utils.calculate_correlation_lengths(
             beam[0], beam[1])

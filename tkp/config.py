@@ -111,42 +111,6 @@ def set_default_config():
     config.set('mongodb', 'port', '28017')
     config.set('mongodb', 'database', 'tkp')
 
-    config.add_section('source_association')
-    config.set('source_association', 'deRuiter_radius', '3.717')
-    config.set('source_association', 'bg-density', '4.02439375e-06')  # NVSS density
-
-    config.add_section('source_extraction')
-    config.set('source_extraction', 'back_sizex', '32')
-    config.set('source_extraction', 'back_sizey', '32')
-    config.set('source_extraction', 'median_filter', '0')
-    config.set('source_extraction', 'mf_threshold', '0')
-    config.set('source_extraction', 'interpolate_order', '1')
-    config.set('source_extraction', 'margin', '0')
-    config.set('source_extraction', 'radius', '0')
-    config.set('source_extraction', 'max_degradation', '0.2')
-    config.set('source_extraction', 'fdr_alpha', '1e-2')
-    config.set('source_extraction', 'structuring_element',
-               '[[0,1,0], [1,1,1], [0,1,0]]')
-    config.set('source_extraction', 'deblend', 'False')
-    config.set('source_extraction', 'deblend_nthresh', '32')
-    config.set('source_extraction', 'deblend_mincont', '0.005')
-    config.set('source_extraction', 'detection_threshold', '10.0')
-    config.set('source_extraction', 'analysis_threshold', '3.0')
-    config.set('source_extraction', 'residuals', 'True')
-    config.set('source_extraction', 'alpha_maj1', '2.5')
-    config.set('source_extraction', 'alpha_min1', '0.5')
-    config.set('source_extraction', 'alpha_maj2', '0.5')
-    config.set('source_extraction', 'alpha_min2', '2.5')
-    config.set('source_extraction', 'alpha_maj3', '1.5')
-    config.set('source_extraction', 'alpha_min3', '1.5')
-    config.set('source_extraction', 'clean_bias', '0.0')
-    config.set('source_extraction', 'clean_bias_error', '0.0')
-    config.set('source_extraction', 'frac_flux_cal_error', '0.0')
-    config.set('source_extraction', 'eps_ra', '0.')
-    config.set('source_extraction', 'eps_dec', '0.')
-    config.set('source_extraction', 'ra_sys_err', '20.') # unit arcsec
-    config.set('source_extraction', 'dec_sys_err', '20.') # unit arcsec
-
     config.add_section('logging')
     config.set('logging', 'level', 'ERROR')
     config.set('logging', 'format',
@@ -223,44 +187,15 @@ def parse_config(config):
 
     # On to do list: create an inherited configparser that stores a type with
     # the options, and then does the parsing behind the scenes
-    configuration = dict(database={}, source_association={},
-                         source_extraction={})
+    configuration = dict(database={})
     booleans = (('database', 'enabled'), ('database', 'autocommit'),
-                ('source_extraction', 'deblend'),
-                ('source_extraction', 'residuals'),
                 ('mongodb', 'enabled'))
-    integers = (('database', 'port'), ('source_extraction', 'back_sizex'),
-                ('source_extraction', 'back_sizey'),
-                ('source_extraction', 'median_filter'),
-                ('source_extraction', 'interpolate_order'),
-                ('source_extraction', 'deblend_nthresh'),
+    integers = (('database', 'port'),
                 ('alerts', 'port'),
                 ('test', 'max_duration'),
                 ('mongodb', 'port')
                 )
-    floats = (('source_association', 'deRuiter_radius'),
-              ('source_extraction', 'mf_threshold'),
-              ('source_extraction', 'margin'),
-              ('source_extraction', 'radius'),
-              ('source_extraction', 'max_degradation'),
-              ('source_extraction', 'fdr_alpha'),
-              ('source_extraction', 'deblend_mincont'),
-              ('source_extraction', 'detection_threshold'),
-              ('source_extraction', 'analysis_threshold'),
-              ('source_extraction', 'alpha_maj1'),
-              ('source_extraction', 'alpha_min1'),
-              ('source_extraction', 'alpha_maj2'),
-              ('source_extraction', 'alpha_min2'),
-              ('source_extraction', 'alpha_maj3'),
-              ('source_extraction', 'alpha_min3'),
-              ('source_extraction', 'clean_bias'),
-              ('source_extraction', 'clean_bias_error'),
-              ('source_extraction', 'frac_flux_cal_error'),
-              ('source_extraction', 'eps_ra'),
-              ('source_extraction', 'eps_dec'),
-              ('source_extraction', 'ra_sys_err'),
-              ('source_extraction', 'dec_sys_err'),
-              )
+    floats = ()
     configuration.update(dict([(section, dict(config.items(section, raw=True)))
                                for section in config.sections()]))
     for section, option in booleans:
@@ -284,13 +219,6 @@ def parse_config(config):
             raise ValueError(
         "incorrect type for option %s in section %s; must be a real number" %
         (option, section))
-    elements = double_list_from_string(config.get(
-        'source_extraction', 'structuring_element'), contenttype=float)
-    if (len(elements) != 3 or len(elements[0]) != 3 or len(elements[1]) != 3
-        or len(elements[2]) != 3):
-        raise ValueError("""\
-incorrect type for structuring_element in section source_extraction""")
-    configuration['source_extraction']['structuring_element'] = elements
     if configuration['database']['engine'] == 'postgresql':
         # PostgreSQL does not have autocommit
         configuration['database']['autocommit'] = False

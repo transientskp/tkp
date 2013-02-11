@@ -74,4 +74,4 @@ BEGIN
   SET oimageid = iimageid;
   RETURN oimageid;
 
-END;  %SPLIT%
+END;

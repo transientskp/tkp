@@ -1,36 +1,24 @@
-# -*- coding: utf-8 -*-
-#
-# LOFAR Transients Key Project
-#
-# Hanno Spreeuw
-#
-# discovery@transientskp.org
-#
-#
-# Some generic utility routines for number handling and
-# calculating (specific) variances
-#
+"""
+Some generic utility routines for number handling and
+ calculating (specific) variances
+"""
 
-from __future__ import with_statement
 import time
 import logging
 import numpy
 import scipy.stats
+from tkp.utility import containers
+from tkp.utility.memoize import Memoize
+from tkp.sourcefinder import utils
+from tkp.sourcefinder import stats
+from tkp.sourcefinder import extract
 try:
     import ndimage
 except ImportError:
     from scipy import ndimage
-from ..config import config
-from ..utility import containers
-from ..utility.memoize import Memoize
-from . import utils
-from . import stats
-from . import extract
+
 
 logger = logging.getLogger(__name__)
-#logging.basicConfig()
-
-CONFIG = config['source_extraction']
 
 
 class ImageData(object):
@@ -38,18 +26,18 @@ class ImageData(object):
 
     This is your primary contact point for interaction with images: it icludes
     facilities for source extraction and measurement, etc.
-
     """
-    def __init__(self, data, beam, wcs):
+    def __init__(self, data, beam, wcs, max_degradation=0.2, median_filter=0,
+                mf_threshold=0, interpolate_order=1, back_sizex=32,
+                back_sizey=32, margin=0, radius=0, fdr_alpha=1e-2,
+                residuals=True, deblend=False, detection_threshold=10.0,
+                analysis_threshold=3.0,
+                structuring_element=[[0,1,0], [1,1,1], [0,1,0]]):
         """Sets up an ImageData object.
-
         Args:
-
             data (2D numpy.ndarray): actual image data
-
             wcs (utility.coordinates.wcs): world coordinate system
                 specification
-
             bream (3-tuple): beam shape specification as
                 (semimajor, semiminor, theta)
         """
@@ -66,6 +54,22 @@ class ImageData(object):
         self.freq_low = 1
         self.freq_high = 1
 
+        self.max_degradation = max_degradation
+        self.median_filter = median_filter
+        self.mf_threshold = mf_threshold
+        self.interpolate_order = interpolate_order
+        self.back_sizex = back_sizex
+        self.back_sizey= back_sizey
+        self.margin = margin
+        self.radius = radius
+        self.fdr_alpha = fdr_alpha
+        self.structuring_element = structuring_element
+        self.residuals = residuals
+        self.deblend = deblend
+
+
+        self.detection_threshold=detection_threshold
+        self.analysis_threshold=analysis_threshold
 
     ###########################################################################
     #                                                                         #
@@ -119,14 +123,14 @@ class ImageData(object):
     @Memoize
     def _get_data(self):
         """Masked image data"""
-        margin = CONFIG['margin']
+        margin = self.margin
         mask = self.reliable_window()
-        if CONFIG['margin']:
+        if self.margin:
             margin_mask = numpy.ones((self.xdim, self.ydim))
             margin_mask[margin:-margin, margin:-margin] = 0
             mask = numpy.logical_or(mask, margin_mask)
-        if CONFIG['radius']:
-            radius_mask = utils.circular_mask(self.xdim, self.ydim, CONFIG['radius'])
+        if self.radius:
+            radius_mask = utils.circular_mask(self.xdim, self.ydim, self.radius)
             mask = numpy.logical_or(mask, radius_mask)
         mask = numpy.logical_or(mask, numpy.where(self.rawdata == 0, 1, 0))
         return numpy.ma.array(self.rawdata, mask=mask)
@@ -189,7 +193,7 @@ class ImageData(object):
     #                                                                         #
     ###########################################################################
 
-    def reliable_window(self, max_degradation=CONFIG['max_degradation']):
+    def reliable_window(self, max_degradation=None):
         """Calculates limits over which the image may be regarded as
         "reliable".
 
@@ -234,6 +238,9 @@ class ImageData(object):
         **NOTE: This is only valid for a SIN projection. Needs more thought
         for other projection types.**
         """
+
+        if not max_degradation:
+            max_degradation = self.max_degradation
 
         mask = numpy.ones((self.xdim, self.ydim))
         wcs = self.wcs
@@ -352,12 +359,12 @@ class ImageData(object):
         my_xdim, my_ydim = useful_data.shape
 
         rmsgrid, bggrid = [], []
-        for startx in xrange(0, my_xdim, CONFIG['back_sizex']):
+        for startx in xrange(0, my_xdim, self.back_sizex):
             rmsrow, bgrow = [], []
-            for starty in xrange(0, my_ydim, CONFIG['back_sizey']):
+            for starty in xrange(0, my_ydim, self.back_sizey):
                 chunk = useful_data[
-                    startx:startx + CONFIG['back_sizex'],
-                    starty:starty + CONFIG['back_sizey']
+                    startx:startx + self.back_sizex,
+                    starty:starty + self.back_sizey
                 ].ravel()
                 if not chunk.any():
                     rmsrow.append(False)
@@ -419,9 +426,9 @@ class ImageData(object):
         If roundup is true, values of the resultant map which are lower than
         the input grid are trimmed.
         """
-        my_filter = CONFIG['median_filter']
-        mf_threshold = CONFIG['mf_threshold']
-        interpolate_order = CONFIG['interpolate_order']
+        my_filter = self.median_filter
+        mf_threshold = self.mf_threshold
+        interpolate_order = self.interpolate_order
 
         # there's no point in working with the whole of the data array if it's
         # masked.
@@ -439,8 +446,8 @@ class ImageData(object):
                 grid = f_grid
 
         # Bicubic spline interpolation
-        xratio = float(my_xdim)/CONFIG['back_sizex']
-        yratio = float(my_ydim)/CONFIG['back_sizey']
+        xratio = float(my_xdim)/self.back_sizex
+        yratio = float(my_ydim)/self.back_sizey
         # First arg: starting point. Second arg: ending point. Third arg:
         # 1j * number of points. (Why is this complex? Sometimes, NumPy has an
         # utterly baffling API...)
@@ -493,9 +500,9 @@ class ImageData(object):
         """
 
         if det is None:
-            det = CONFIG['detection_threshold']
+            det = self.detection_threshold
         if anl is None:
-            anl = CONFIG['analysis_threshold']
+            anl = self.analysis_threshold
         if anl > det:
             logger.warn(
                 "Analysis threshold is higher than detection threshold"
@@ -529,7 +536,7 @@ class ImageData(object):
         implement a separate cache.
         """
         if not det:
-            det = CONFIG['detection_threshold']
+            det = self.detection_threshold
         self.labels.clear()
         self.clip.clear()
         self.data_bgsubbed *= -1
@@ -548,7 +555,7 @@ class ImageData(object):
 
         # The FDR procedure... guarantees that <FDR> < alpha
         if not alpha:
-            alpha = CONFIG['fdr_alpha']
+            alpha = self.fdr_alpha
         # The correlation length in config.py is used not only for the
         # calculation of error bars with the Condon formulae, but also for
         # calculating the number of independent pixels.
@@ -757,7 +764,7 @@ class ImageData(object):
 
         sci_clip = numpy.where(self.data_bgsubbed > anl * self.rmsmap, 1, 0)
         sci_labels, sci_num = ndimage.label(sci_clip,
-                                            CONFIG['structuring_element'])
+                                            self.structuring_element)
         chunks = ndimage.find_objects(sci_labels)
 
         # Good islands meet the detection threshold and contain enough pixels
@@ -790,7 +797,7 @@ class ImageData(object):
         by John Swinbank, available from TKP svn.
         """
 
-        structuring_element = CONFIG['structuring_element']
+        structuring_element = self.structuring_element
         # Make sure to set sci_clip to zero where either the
         # analysisthresholdmap or self.data_bgsubbed are masked.
         # That is why we use numpy.ma.where and the filling.
@@ -862,7 +869,7 @@ class ImageData(object):
 
         # If required, we can save the 'left overs' from the deblending and
         # fitting processes for later analysis. This needs setting up here:
-        if CONFIG['residuals']:
+        if self.residuals:
             self.residuals_from_gauss_fitting = numpy.zeros(self.data.shape)
             self.residuals_from_deblending = numpy.zeros(self.data.shape)
             for island in island_list:
@@ -870,7 +877,7 @@ class ImageData(object):
                     island.data.filled(fill_value=0.))
 
         # Deblend each of the islands to its consituent parts, if necessary
-        if CONFIG['deblend']:
+        if self.deblend:
             deblended_list = map(lambda x: x.deblend(), island_list)
             #deblended_list = [x.deblend() for x in island_list]
             island_list = list(utils.flatten(deblended_list))
@@ -890,7 +897,7 @@ class ImageData(object):
                 else:
                     results.append(det)
                     
-                if CONFIG['residuals']:
+                if self.residuals:
                     self.residuals_from_deblending[island.chunk] -= (
                         island.data.filled(fill_value=0.))
                     self.residuals_from_gauss_fitting[island.chunk] += residual

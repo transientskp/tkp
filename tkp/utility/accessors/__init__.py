@@ -41,7 +41,7 @@ def dbimage_from_accessor(dataset, dataccessor, extraction_radius):
     return image
 
 
-def sourcefinder_image_from_accessor(image):
+def sourcefinder_image_from_accessor(image, **args):
     """Create a source finder ImageData object from an image 'accessor'
 
     Args:
@@ -53,7 +53,7 @@ def sourcefinder_image_from_accessor(image):
 
         (sourcefinder.ImageData): a source finder image.
     """
-    image = ImageData(image.data, image.beam, image.wcs)
+    image = ImageData(image.data, image.beam, image.wcs, **args)
     return image
 
 

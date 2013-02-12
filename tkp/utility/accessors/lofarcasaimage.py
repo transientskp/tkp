@@ -15,7 +15,6 @@ subtable_names = [
     'LOFAR_ANTENNA',
     'LOFAR_HISTORY',
     'LOFAR_ORIGIN',
-    'LOFAR_SOURCE',
     'LOFAR_QUALITY',
     'LOFAR_STATION',
     'LOFAR_POINTING',
@@ -192,7 +191,7 @@ def parse_taustartts(observation_table):
 def parse_position(antenna_table):
     """extract the position in ITRF (ie, Earth-centred Cartesian) coordinates.
     """
-    position = antenna_table.getcol('POSITION')
+    position = antenna_table.getcol('POSITION')[0]
     return position
 
 

@@ -4,6 +4,7 @@ if not  hasattr(unittest.TestCase, 'assertIsInstance'):
 import os
 from tkp.utility import accessors
 from tkp.utility.accessors.lofarcasaimage import LofarCasaImage
+from tkp.utility.accessors.dataaccessor import extract_metadata
 import tkp.config
 from tkp.testutil.decorators import requires_data
 from tkp.utility.coordinates import angsep
@@ -17,6 +18,7 @@ casatable =  os.path.join(DATAPATH, 'casatable/L55596_000TO009_skymodellsc_wmax6
 class TestLofarCasaImage(unittest.TestCase):
     def test_casaimage(self):
         accessor = LofarCasaImage(casatable)
+        results = extract_metadata(accessor)
         sfimage = accessors.sourcefinder_image_from_accessor(accessor)
 
     def test_parse_beam(self):

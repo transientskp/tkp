@@ -44,10 +44,9 @@ def is_bright_source_near(accessor, distance=20):
     starttime_mjd = unix2julian(starttime)
     m.do_frame(m.epoch("UTC", "%ss" % starttime_mjd))
 
-    ant_no = 0
-    x = qa.quantity(accessor.position[ant_no,0], 'm')
-    y = qa.quantity(accessor.position[ant_no,1], 'm')
-    z = qa.quantity(accessor.position[ant_no,2], 'm')
+    x = qa.quantity(accessor.position[0], 'm')
+    y = qa.quantity(accessor.position[1], 'm')
+    z = qa.quantity(accessor.position[2], 'm')
     position = m.position('ITRF', x, y, z)
     m.doframe(position)
 

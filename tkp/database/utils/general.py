@@ -30,15 +30,18 @@ SELECT im.taustart_ts
       ,ex.id
       ,im.band
       ,im.stokes
+      ,bd.freq_central
   FROM extractedsource ex
       ,assocxtrsource ax
       ,image im
+      ,frequencyband bd
  WHERE ax.runcat IN (SELECT runcat
                        FROM assocxtrsource
                       WHERE xtrsrc = %(xtrsrc)s
                     )
    AND ax.xtrsrc = ex.id
    AND ex.image = im.id
+   AND bd.id = im.band
 ORDER BY im.taustart_ts
 """
 

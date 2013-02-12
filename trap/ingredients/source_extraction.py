@@ -41,7 +41,10 @@ def extract_sources(image_path, parset_file):
     logger.debug("Detecting sources in image %s at detection threshold %s",
                                     image_path, parset['detection_threshold'])
 
-    data_image = sourcefinder_image_from_accessor(fitsimage)
+    data_image = sourcefinder_image_from_accessor(fitsimage,
+                            margin=parset['margin'], radius=parset['radius'],
+                            detection_threshold=parset['detection_threshold'],
+                            analysis_threshold=parset['analysis_threshold'])
 
     logger.debug("Employing margin: %s extraction radius: %s deblend: %s deblend_nthresh: %s",
             parset['margin'],
@@ -51,8 +54,7 @@ def extract_sources(image_path, parset_file):
     )
 
     # Here we do the "blind" extraction of sources in the image
-    results = data_image.extract(det=parset['detection_threshold'],
-                                anl=parset['analysis_threshold'])
+    results = data_image.extract()
     logger.info("Detected %d sources in image %s" % (len(results), image_path))
     
     return [r.serialize() for r in results]

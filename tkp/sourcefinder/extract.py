@@ -1,13 +1,3 @@
-# -*- coding: utf-8 -*-
-#
-# LOFAR Transients Key Project
-#
-# discovery@transientskp.org
-#
-#
-# Source fitting algorithms
-#
-
 """
 Source Extraction Helpers.
 
@@ -26,7 +16,6 @@ except ImportError:
     from scipy import ndimage
 from deconv import deconv
 from ..utility import coordinates
-from ..config import config
 from ..utility.uncertain import Uncertain
 from .gaussian import gaussian
 from . import fitting
@@ -34,11 +23,6 @@ from . import utils
 
 logger = logging.getLogger(__name__)
 
-CONFIG = config['source_extraction']
-# If we deblend too far, we hit the recursion limit. And it's slow.
-if CONFIG['deblend'] and CONFIG['deblend_nthresh'] > 300:
-    logger.warn("Limiting to 300 deblending subtresholds")
-    CONFIG['deblend_nthresh'] = 300
 
 class Island(object):
     """
@@ -53,7 +37,25 @@ class Island(object):
     """
 
     def __init__(self, data, rms, chunk, analysis_threshold, detection_map,
-                 beam, rms_orig=None, flux_orig=None, subthrrange=None):
+                 beam, rms_orig=None, flux_orig=None, subthrrange=None,
+                 deblend=False, deblend_nthresh=32, deblend_mincont=0.005,
+                 structuring_element=[[0,1,0], [1,1,1], [0,1,0]],
+                 ):
+
+        self.deblend = deblend
+        self.deblend_nthresh = deblend_nthresh
+        self.structuring_element = structuring_element
+        self.deblend_mincont = deblend_mincont
+        self.deblend_nthresh = deblend_nthresh
+
+
+        # If we deblend too far, we hit the recursion limit. And it's slow.
+        if self.deblend and self.deblend_nthresh > 300:
+            logger.warn("Limiting to 300 deblending subtresholds")
+            self.deblend_nthresh = 300
+
+
+
         mask = numpy.where(data >= rms * analysis_threshold, 0, 1)
         self.data = numpy.ma.array(data, mask=mask)
         self.rms = rms
@@ -79,7 +81,7 @@ class Island(object):
             self.subthrrange = numpy.logspace(
                 numpy.log(self.data.min()),
                 numpy.log(self.data.max()),
-                num=CONFIG['deblend_nthresh']+1, # first value == min_orig
+                num=deblend_nthresh+1, # first value == min_orig
                 base=numpy.e,
                 endpoint=False
             )[1:]
@@ -111,7 +113,7 @@ class Island(object):
             clipped_data = numpy.where(
                 self.data.filled(fill_value=0) >= level, 1, 0)
             labels, number = ndimage.label((clipped_data),
-                                           CONFIG['structuring_element'])
+                                           self.structuring_element)
             # If we have more than one island, then we need to make subislands.
             if number > 1:
                 subislands = []
@@ -153,7 +155,7 @@ class Island(object):
                 subislands = filter(
                     lambda isl: (isl.data-numpy.ma.array(
                     numpy.ones(isl.data.shape)*level,
-                    mask=isl.data.mask)).sum() > CONFIG['deblend_mincont'] *
+                    mask=isl.data.mask)).sum() > self.deblend_mincont *
                                     self.flux_orig, subislands)
                 # Discard subislands below detection threshold
                 subislands = filter(
@@ -164,7 +166,7 @@ class Island(object):
                 # subthreshold is higher than the present one.
                 # Or we would end up in an infinite loop...
                 if numbersignifsub > 1:
-                    if niter+1 < CONFIG['deblend_nthresh']:
+                    if niter+1 < self.deblend_nthresh:
                         # Apparently, the map command always results in
                         # nested lists.
                         return list(utils.flatten(map(
@@ -172,7 +174,7 @@ class Island(object):
                             subislands)))
                     else:
                         return subislands
-                elif numbersignifsub == 1 and niter+1 < CONFIG['deblend_nthresh']:
+                elif numbersignifsub == 1 and niter+1 < self.deblend_nthresh:
                     return Island.deblend(self, niter=niter+1)
                 else:
                     # In this case we have numbersignifsub == 0 or
@@ -210,7 +212,20 @@ class ParamSet(DictMixin):
     gives all the information necessary to make a Detection.
     """
 
-    def __init__(self):
+    def __init__(self, clean_bias=0.0, clean_bias_error=0.0,
+                 frac_flux_cal_error=0.0, alpha_maj1=2.5, alpha_min1=0.5,
+                 alpha_maj2=0.5, alpha_min2=2.5, alpha_maj3=1.5, alpha_min3=1.5):
+
+        self.clean_bias = clean_bias
+        self.clean_bias_error = clean_bias_error
+        self.frac_flux_cal_error = frac_flux_cal_error
+        self.alpha_maj1 = alpha_maj1
+        self.alpha_min1 = alpha_min1
+        self.alpha_maj2 = alpha_maj2
+        self.alpha_min2 = alpha_min2
+        self.alpha_maj3 = alpha_maj3
+        self.alpha_min3 = alpha_min3
+
         self.values = {
             'peak': Uncertain(),
             'flux': Uncertain(),
@@ -274,36 +289,26 @@ class ParamSet(DictMixin):
         The peak is corrected for the overestimate due to the local
         noise gradient.
         """
-
         peak = self['peak'].value
         flux = self['flux'].value
         smaj = self['semimajor'].value
         smin = self['semiminor'].value
         theta = self['theta'].value
 
-        alpha_maj1 = CONFIG['alpha_maj1']
-        alpha_min1 = CONFIG['alpha_min1']
-        alpha_maj2 = CONFIG['alpha_maj2']
-        alpha_min2 = CONFIG['alpha_min2']
-        alpha_maj3 = CONFIG['alpha_maj3']
-        alpha_min3 = CONFIG['alpha_min3']
-        clean_bias = CONFIG['clean_bias']
-        clean_bias_error = CONFIG['clean_bias_error']
-        frac_flux_cal_error = CONFIG['frac_flux_cal_error']
         theta_B, theta_b = utils.calculate_correlation_lengths(
             beam[0], beam[1])
 
         rho_sq1 = ((smaj*smin/(theta_B*theta_b)) *
-                   (1.+(theta_B/(2.*smaj))**2)**alpha_maj1 *
-                   (1.+(theta_b/(2.*smin))**2)**alpha_min1 *
+                   (1.+(theta_B/(2.*smaj))**2)**self.alpha_maj1 *
+                   (1.+(theta_b/(2.*smin))**2)**self.alpha_min1 *
                    (peak/noise)**2)
         rho_sq2 = ((smaj*smin/(theta_B*theta_b)) *
-                   (1.+(theta_B/(2.*smaj))**2)**alpha_maj2 *
-                   (1.+(theta_b/(2.*smin))**2)**alpha_min2 *
+                   (1.+(theta_B/(2.*smaj))**2)**self.alpha_maj2 *
+                   (1.+(theta_b/(2.*smin))**2)**self.alpha_min2 *
                    (peak/noise)**2)
         rho_sq3 = ((smaj*smin/(theta_B*theta_b)) *
-                   (1.+(theta_B/(2.*smaj))**2)**alpha_maj3 *
-                   (1.+(theta_b/(2.*smin))**2)**alpha_min3 *
+                   (1.+(theta_B/(2.*smaj))**2)**self.alpha_maj3 *
+                   (1.+(theta_b/(2.*smin))**2)**self.alpha_min3 *
                    (peak/noise)**2)
 
         rho1 = numpy.sqrt(rho_sq1)
@@ -342,10 +347,10 @@ class ParamSet(DictMixin):
         if errortheta > numpy.pi:
             errortheta = numpy.pi
 
-        peak += -noise**2/peak + clean_bias
+        peak += -noise**2/peak + self.clean_bias
 
-        errorpeaksq = ((frac_flux_cal_error * peak)**2 +
-                       clean_bias_error**2 +
+        errorpeaksq = ((self.frac_flux_cal_error * peak)**2 +
+                       self.clean_bias_error**2 +
                        2. * peak**2 / rho_sq3)
 
         errorpeak = numpy.sqrt(errorpeaksq)
@@ -377,10 +382,8 @@ class ParamSet(DictMixin):
         smin = self['semiminor'].value
         theta = self['theta'].value
 
-        ##not used
-        ##clean_bias = CONFIG['clean_bias']
-        clean_bias_error = CONFIG['clean_bias_error']
-        frac_flux_cal_error = CONFIG['frac_flux_cal_error']
+        clean_bias_error = self.clean_bias_error
+        frac_flux_cal_error = self.frac_flux_cal_error
         theta_B, theta_b = utils.calculate_correlation_lengths(
             beam[0], beam[1])
 
@@ -564,7 +567,7 @@ class ParamSet(DictMixin):
         return self
 
 
-def source_profile_and_errors(data, threshold, noise, beam, fixed=None):
+def source_profile_and_errors(data, threshold, noise, beam, fixed=None, residuals=True):
     """Return a number of measurable properties with errorbars
 
     Given an island of pixels it will return a number of measurable
@@ -653,7 +656,7 @@ def source_profile_and_errors(data, threshold, noise, beam, fixed=None):
                      param["semiminor"] / beamsize)
     param.calculate_errors(noise, beam, threshold)
     param.deconvolve_from_clean_beam(beam)
-    if CONFIG['residuals']:
+    if residuals:
         gauss_arg = (param["peak"].value,
                      param["xbar"].value,
                      param["ybar"].value,
@@ -671,7 +674,14 @@ def source_profile_and_errors(data, threshold, noise, beam, fixed=None):
 class Detection(object):
     """The result of a measurement at a given position in a given image."""
 
-    def __init__(self, paramset, imagedata, chunk=None):
+    def __init__(self, paramset, imagedata, chunk=None, eps_ra=0., eps_dec=0.,
+                                            ra_sys_err=20,  dec_sys_err=20):
+
+        self.eps_ra = eps_ra
+        self.eps_dec = eps_dec
+        self.ra_sys_err = ra_sys_err
+        self.dec_sys_err = dec_sys_err
+
         self.imagedata = imagedata
         ##self.wcs = imagedata.wcs
         self.chunk = chunk
@@ -751,7 +761,8 @@ class Detection(object):
     
     def printob(self, output=None):
         if output is None:
-             output = sys.stdout;
+            import sys
+            output = sys.stdout;
         output.write("\nPeak =" + str(self.peak ) + " flux " +
             str(self.flux) +  "\nx = "+ str(self.x )+ "\ny = " +
             str(self.y))
@@ -854,10 +865,10 @@ class Detection(object):
             end_ra2, end_dec2 = self.imagedata.wcs.p2s(
                 [self.x.value, self.y.value+errory_proj])
             # Here we include the position calibration errors
-            self.ra.error = CONFIG['eps_ra'] + max(
+            self.ra.error = self.eps_ra + max(
                 numpy.fabs(self.ra.value - end_ra1),
                 numpy.fabs(self.ra.value - end_ra2))
-            self.dec.error = CONFIG['eps_dec'] + max(
+            self.dec.error = self.eps_dec + max(
                 numpy.fabs(self.dec.value - end_dec1),
                 numpy.fabs(self.dec.value - end_dec2))
         except RuntimeError:
@@ -1021,6 +1032,6 @@ class Detection(object):
             float(self.smaj_asec.value),
             float(self.smin_asec.value),
             float(self.theta_celes.value),
-            float(CONFIG['ra_sys_err']),
-            float(CONFIG['dec_sys_err'])
+            float(self.ra_sys_err),
+            float(self.dec_sys_err)
         )

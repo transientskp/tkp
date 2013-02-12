@@ -58,7 +58,7 @@ class LightCurve(object):
             srcids=numpy.array(results[4])
             )
 
-    def __init__(self, taustart_tss, tau_times, fluxes, errors, srcids=None, bands=None, stokes=None):
+    def __init__(self, taustart_tss, tau_times, fluxes, errors, srcids=None, bands=None, stokes=None, freq_central=None):
         """
         Args:
 

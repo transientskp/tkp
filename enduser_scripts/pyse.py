@@ -139,24 +139,6 @@ def handle_args():
     parser.add_option("--sigmap", action="store_true", help="Generate significance map")
     return parser.parse_args()
 
-def set_configuration(options):
-    """
-    Update the standard sourcefinder configuration based on command line
-    arguments.
-    Note that tkp.config.config already contains the default configuration
-    plus any changes made in the users ~/.tkp.cfg.
-    """
-    from tkp.config import config
-    config = config['source_extraction']
-    config['back_sizex'] = options.grid
-    config['back_sizey'] = options.grid
-    config['margin'] = options.margin
-    config['radius'] = options.radius
-    config['deblend'] = bool(options.deblend)
-    config['deblend_nthresh'] = options.deblend_thresholds
-    if options.residuals or options.islands:
-        config['residuals'] = True
-
 def writefits(filename, data, header={}):
     try:
         os.unlink(filename)
@@ -173,6 +155,16 @@ def run_sourcefinder(files, options):
     A string containing a human readable list of sources is returned.
     """
     output = StringIO()
+    configuration = {
+        "back_sizex": options.grid,
+        "back_sizey": options.grid,
+        "margin": options.margin,
+        "radius": options.radius,
+        "deblend": bool(options.deblend),
+        "deblend_nthresh": options.deblend_thresholds
+    }
+    if options.residuals or options.islands:
+        configuration['residuals'] = True
     for counter, filename in enumerate(files):
         print "Processing %s (file %d of %d)." % (filename, counter+1, len(files))
         if (
@@ -183,7 +175,7 @@ def run_sourcefinder(files, options):
             ff = FitsImage(filename, beam=(options.bmaj, options.bmin, options.bpa), plane=0)
         else:
             ff = FitsImage(filename, plane=0)
-        imagedata = sourcefinder_image_from_accessor(ff)
+        imagedata = sourcefinder_image_from_accessor(ff, **configuration)
         if options.fdr:
             print "Using False Detection Rate algorithm with alpha = %f" % (options.alpha,)
             sr = imagedata.fd_extract(options.alpha)
@@ -230,7 +222,6 @@ def run_sourcefinder(files, options):
 if __name__ == "__main__":
     options, files = handle_args()
     if files:
-        set_configuration(options)
         print run_sourcefinder(files, options),
     else:
         print "No files to process specified."

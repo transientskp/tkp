@@ -30,8 +30,8 @@ class ImageData(object):
     def __init__(self, data, beam, wcs, max_degradation=0.2, median_filter=0,
                 mf_threshold=0, interpolate_order=1, back_sizex=32,
                 back_sizey=32, margin=0, radius=0, fdr_alpha=1e-2,
-                residuals=True, deblend=False, detection_threshold=10.0,
-                analysis_threshold=3.0,
+                residuals=True, deblend=False, deblend_nthresh=32,
+                detection_threshold=10.0, analysis_threshold=3.0,
                 structuring_element=[[0,1,0], [1,1,1], [0,1,0]]):
         """Sets up an ImageData object.
         Args:
@@ -66,7 +66,7 @@ class ImageData(object):
         self.structuring_element = structuring_element
         self.residuals = residuals
         self.deblend = deblend
-
+        self.deblend_nthresh = deblend_nthresh
 
         self.detection_threshold=detection_threshold
         self.analysis_threshold=analysis_threshold
@@ -860,12 +860,15 @@ class ImageData(object):
                     0.0).filled(fill_value=0.)
                 self.islands_map[chunk] += selected_data
                 island_list.append(
-                    extract.Island(selected_data,
-                                    self.rmsmap[chunk],
-                                    chunk,
-                                    analysis_threshold,
-                                    detectionthresholdmap[chunk],
-                                    self.beam))
+                    extract.Island(
+                        selected_data,
+                        self.rmsmap[chunk],
+                        chunk,
+                        analysis_threshold,
+                        detectionthresholdmap[chunk],
+                        self.beam
+                    )
+                )
 
         # If required, we can save the 'left overs' from the deblending and
         # fitting processes for later analysis. This needs setting up here:

@@ -44,7 +44,9 @@ def extract_sources(image_path, parset_file):
     data_image = sourcefinder_image_from_accessor(fitsimage,
                             margin=parset['margin'], radius=parset['radius'],
                             detection_threshold=parset['detection_threshold'],
-                            analysis_threshold=parset['analysis_threshold'])
+                            analysis_threshold=parset['analysis_threshold'],
+                            ra_sys_err=parset['ra_sys_err'],
+                            dec_sys_err=parset['dec_sys_err'])
 
     logger.debug("Employing margin: %s extraction radius: %s deblend: %s deblend_nthresh: %s",
             parset['margin'],
@@ -56,10 +58,10 @@ def extract_sources(image_path, parset_file):
     # Here we do the "blind" extraction of sources in the image
     results = data_image.extract()
     logger.info("Detected %d sources in image %s" % (len(results), image_path))
-    
+
     return [r.serialize() for r in results]
 
-    
+
 def forced_fits(image_path, positions):
     """Force fit ?? What does this do
     Args:

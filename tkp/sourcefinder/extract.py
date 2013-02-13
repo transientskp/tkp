@@ -674,7 +674,7 @@ def source_profile_and_errors(data, threshold, noise, beam, fixed=None, residual
 class Detection(object):
     """The result of a measurement at a given position in a given image."""
 
-    def __init__(self, paramset, imagedata, chunk=None, eps_ra=0., eps_dec=0.)
+    def __init__(self, paramset, imagedata, chunk=None, eps_ra=0, eps_dec=0):
 
         self.eps_ra = eps_ra
         self.eps_dec = eps_dec

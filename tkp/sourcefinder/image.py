@@ -32,7 +32,8 @@ class ImageData(object):
                 back_sizey=32, margin=0, radius=0, fdr_alpha=1e-2,
                 residuals=True, deblend=False, deblend_nthresh=32,
                 detection_threshold=10.0, analysis_threshold=3.0,
-                structuring_element=[[0,1,0], [1,1,1], [0,1,0]]):
+                structuring_element=[[0,1,0], [1,1,1], [0,1,0]],
+                ra_sys_err=0.0, dec_sys_err=0.0):
         """Sets up an ImageData object.
         Args:
             data (2D numpy.ndarray): actual image data
@@ -70,6 +71,8 @@ class ImageData(object):
 
         self.detection_threshold=detection_threshold
         self.analysis_threshold=analysis_threshold
+
+        self.ra_sys_err, self.dec_sys_err = ra_sys_err, dec_sys_err
 
     ###########################################################################
     #                                                                         #

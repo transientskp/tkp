@@ -674,13 +674,10 @@ def source_profile_and_errors(data, threshold, noise, beam, fixed=None, residual
 class Detection(object):
     """The result of a measurement at a given position in a given image."""
 
-    def __init__(self, paramset, imagedata, chunk=None, eps_ra=0., eps_dec=0.,
-                                            ra_sys_err=20,  dec_sys_err=20):
+    def __init__(self, paramset, imagedata, chunk=None, eps_ra=0., eps_dec=0.)
 
         self.eps_ra = eps_ra
         self.eps_dec = eps_dec
-        self.ra_sys_err = ra_sys_err
-        self.dec_sys_err = dec_sys_err
 
         self.imagedata = imagedata
         ##self.wcs = imagedata.wcs
@@ -1032,6 +1029,6 @@ class Detection(object):
             float(self.smaj_asec.value),
             float(self.smin_asec.value),
             float(self.theta_celes.value),
-            float(self.ra_sys_err),
-            float(self.dec_sys_err)
+            float(self.imagedata.ra_sys_err),
+            float(self.imagedata.dec_sys_err)
         )

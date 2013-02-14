@@ -1,10 +1,6 @@
-if (BOOST_INCLUDES)
-  include_directories (${BOOST_INCLUDES})
-endif (BOOST_INCLUDES)
+include_directories( ${Boost_INCLUDE_DIRS})
 
-if (PYTHON_INCLUDE_DIRS)
-  include_directories (${PYTHON_INCLUDE_DIRS})
-endif (PYTHON_INCLUDE_DIRS)
+include_directories (${PYTHON_INCLUDE_DIRS})
 
 if (WCSLIB_INCLUDES)
   include_directories (

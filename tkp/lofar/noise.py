@@ -19,17 +19,15 @@ TILES_PER_CORE_STATION = 24
 TILES_PER_REMOTE_STATION = 48
 TILES_PER_INTL_STATION = 96
 
-def noise_level(freq_eff, subbandwidth, tau_time, antenna_set, subbands=1, channels=64, Ncore=24, Nremote=16, Nintl=8):
+def noise_level(freq_eff, bandwidth, tau_time, antenna_set, Ncore, Nremote, Nintl):
     """ Returns the theoretical noise level given the supplied array antenna_set
 
     Args:
-        subbandwidth: in Hz (should be 144042.96875 (144 kHz) or 180053.7109375 (180 kHz))
+        bandwidth: in Hz
         tau_time: in seconds
         inner: in case of LBA, inner or outer
         antenna_set: LBA_INNER, LBA_OUTER, LBA_SPARSE, LBA or HBA
     """
-    bandwidth = subbandwidth * subbands
-
     if antenna_set.startswith("LBA"):
         ds_core = tkp.lofar.antennaarrays.core_dipole_distances[antenna_set]
         Aeff_core = sum([tkp.lofar.noise.Aeff_dipole(freq_eff, x) for x in ds_core])
@@ -75,9 +73,6 @@ def noise_level(freq_eff, subbandwidth, tau_time, antenna_set, subbands=1, chann
     t_ri = baselines_ri / pow(SEFD_ri, 2)
 
     image_sens = W / math.sqrt(4 * bandwidth * tau_time * ( t_cc + t_rr + t_ii + t_cr + t_ci + t_ri))
-
-    #channelwidth = subbandwidth / channels
-    #channel_sens = W / math.sqrt(4 * channelwidth * tau_time * ( t_cc + t_rr + t_ii + t_cr + t_ci + t_ri))
 
     return image_sens
 

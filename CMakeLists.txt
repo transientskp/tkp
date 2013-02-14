@@ -10,7 +10,6 @@ foreach (_syslib dl m pthread util z)
     )
 endforeach (_syslib)
 
-find_package(Boost)
 include (${PROJECT_SOURCE_DIR}/cmake/FindF2Py.cmake)
 include (${PROJECT_SOURCE_DIR}/cmake/FindCFITSIO.cmake)
 include (FindPythonInterp)

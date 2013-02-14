@@ -28,10 +28,10 @@
 // wcs.p2s([pixel_x, pixel_y])  # pixel to spatial
 // wcs.s2p([ra, dec])           # spatial to pixel
 
-#include <vector>
-#include <boost/python.hpp>
-#include <boost/python/detail/api_placeholder.hpp>
 #include <wcs.h>
+#include <boost/python/detail/api_placeholder.hpp>
+#include <boost/python.hpp>
+#include <vector>
 
 using namespace boost::python;
 using namespace std;

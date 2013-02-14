@@ -1658,7 +1658,9 @@ def _insert_new_monitoringlist(conn, image_id):
                 ,r0.dataset AS dataset
             FROM runningcatalog r0
                 ,extractedsource x0
+                ,image i0
            WHERE r0.xtrsrc = x0.id
+             AND x0.image = i0.id
              AND r0.xtrsrc IN (SELECT t0.xtrsrc
                                  FROM (SELECT x1.id AS xtrsrc
                                          FROM extractedsource x1
@@ -1670,22 +1672,23 @@ def _insert_new_monitoringlist(conn, image_id):
                                       ON t0.xtrsrc = trc1.xtrsrc
                                  WHERE trc1.xtrsrc IS NULL
                               )
-             AND EXISTS (SELECT COUNT(*) 
-                           FROM image 
-                          WHERE dataset = (SELECT dataset 
-                                             FROM image 
-                                            WHERE id = %s
-                                          )
-                         HAVING COUNT(*) <> 1
-                        )
+             AND i0.taustart_ts > (SELECT MIN(taustart_ts)
+                                     FROM image 
+                                    WHERE dataset = (SELECT dataset 
+                                                       FROM image 
+                                                      WHERE id = %s
+                                                    )
+                                  )
         """
+        #q = query % (image_id,image_id)
+        #print "q =\n",q
         ins = cursor.execute(query, (image_id, image_id))
         if not AUTOCOMMIT:
             conn.commit()
         if ins > 0:
             logger.info("Added %s new sources to monitoringlist table" % (ins,))
     except db.Error, e:
-        q = query % (image_id,)
+        q = query % (image_id, image_id)
         logger.warn("Failed on query:\n%s" % q)
         raise
     finally:
@@ -1694,7 +1697,8 @@ def _insert_new_monitoringlist(conn, image_id):
 def _insert_new_transient(conn, image_id):
     """A new source needs to be added to the transient table
     
-    Except for sources that were detected in the initial image.
+    Except for sources that were detected in the initial image,
+    checked by timestamp.
 
     We set the siglevel to 1 for a new source and the
     the variability indices 0.
@@ -1737,22 +1741,23 @@ def _insert_new_transient(conn, image_id):
                                       ON t0.xtrsrc = trc1.xtrsrc
                                  WHERE trc1.xtrsrc IS NULL
                               )
-             AND EXISTS (SELECT COUNT(*) 
-                           FROM image 
-                          WHERE dataset = (SELECT dataset 
-                                             FROM image 
-                                            WHERE id = %s
-                                          )
-                         HAVING COUNT(*) <> 1
-                        )
+             AND i0.taustart_ts > (SELECT MIN(taustart_ts)
+                                     FROM image 
+                                    WHERE dataset = (SELECT dataset 
+                                                       FROM image 
+                                                      WHERE id = %s
+                                                    )
+                                  )
         """
+        #q = query % (image_id,image_id)
+        #print "q =\n",q
         ins = cursor.execute(query, (image_id, image_id))
         if not AUTOCOMMIT:
             conn.commit()
         if ins > 0:
             logger.info("Added %s new sources to transient table" % (ins,))
     except db.Error, e:
-        q = query % (image_id,)
+        q = query % (image_id,image_id)
         logger.warn("Failed on query:\n%s" % q)
         raise
     finally:

@@ -66,7 +66,7 @@ class ImageData(object):
         self.fdr_alpha = fdr_alpha
         self.structuring_element = structuring_element
         self.residuals = residuals
-        self.deblend = deblend
+        self.deblend_enabled = deblend
         self.deblend_nthresh = deblend_nthresh
 
         self.detection_threshold=detection_threshold
@@ -883,7 +883,7 @@ class ImageData(object):
                     island.data.filled(fill_value=0.))
 
         # Deblend each of the islands to its consituent parts, if necessary
-        if self.deblend:
+        if self.deblend_enabled:
             deblended_list = map(lambda x: x.deblend(), island_list)
             #deblended_list = [x.deblend() for x in island_list]
             island_list = list(utils.flatten(deblended_list))

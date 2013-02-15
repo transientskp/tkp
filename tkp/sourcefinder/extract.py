@@ -42,7 +42,7 @@ class Island(object):
                  structuring_element=[[0,1,0], [1,1,1], [0,1,0]],
                  ):
 
-        self.deblend = deblend
+        self.deblend_enabled = deblend
         self.deblend_nthresh = deblend_nthresh
         self.structuring_element = structuring_element
         self.deblend_mincont = deblend_mincont
@@ -50,7 +50,7 @@ class Island(object):
 
 
         # If we deblend too far, we hit the recursion limit. And it's slow.
-        if self.deblend and self.deblend_nthresh > 300:
+        if self.deblend_enabled and self.deblend_nthresh > 300:
             logger.warn("Limiting to 300 deblending subtresholds")
             self.deblend_nthresh = 300
 

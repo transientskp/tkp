@@ -89,7 +89,7 @@ def associate_extracted_sources(image_id, deRuiter_r):
     _insert_new_assoc(conn, image_id)
     _insert_new_monitoringlist(conn, image_id)
     _insert_new_transient(conn, image_id)
-    _go_back_to_other_images_and_do_a_forcedfit_in_non_rejected_images(conn, image_id)
+
     #+-------------------------------------------------------+
     #| New sources are added to transient table as well, but |
     #| that is done in the transient_search recipe.          |

@@ -55,16 +55,13 @@ class TestRms(unittest.TestCase):
 
         # this stuff should be in the header of a LOFAR image some day
         integration_time = 18654.3 # s, should be self.good_image.tau_time some day
-        subbandwidth = 200 * 10**3 # Hz, shoud probably be self.good_image.freq_bw some day
+        bandwidth = 200 * 10**3 # Hz, shoud probably be self.good_image.freq_bw some day
         ncore = 23 # ~
         nremote = 8 # ~
         nintl = 0
-        num_subband = 10
-        num_channels = 64
         configuration = "LBA_INNER"
 
-        noise = tkp.lofar.noise.noise_level(frequency, subbandwidth, integration_time, configuration, num_subband,
-                        num_channels, ncore, nremote, nintl)
+        noise = tkp.lofar.noise.noise_level(frequency, bandwidth, integration_time, configuration, ncore, nremote, nintl)
         rms_good = statistics.rms_with_clipped_subregion(good_image.data)
         rms_bad = statistics.rms_with_clipped_subregion(bad_image.data)
 

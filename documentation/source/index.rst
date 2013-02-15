@@ -13,6 +13,7 @@ Contents:
    logic
    installation
    setup
+   scripts
    recipes
    troubleshooting
 

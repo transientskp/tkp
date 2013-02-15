@@ -1,8 +1,9 @@
 .. _recipes-section:
 
 ##############################
-Script and recipe parameters
+recipes and their parameters
 ##############################
+
 .. |last_updated| last_updated::
 
 :Last updated: |last_updated|
@@ -12,77 +13,15 @@ TraP workflow, and details the parameters supplied
 either via command line arguments (in the case of top-level scripts) or via
 parameter sets (for the recipes).
 
-Scripts
-====================
-For a reminder on script arguments at the command line, try::
-
-    trap-script.py --help
-
-at the command line.
-
-
-:py:mod:`trap-images.py`
---------------------------
-
-.. Warning::
-
-    This recipe is deprecated, we now use ``trap-local.py`` or
-    ``trap-run.py``.  Documentation updates coming soon.
-
-
-Runs the distributed trap recipe.
-
-Command line args
-^^^^^^^^^^^^^^^^^^^^
-
-**Monitor coords**
-
-  Manually define co-ordinates for flux monitoring, by typing them in at the command line.
-
-  Examples::
-
-    -m [[RA1,DEC1]]
-    -m [[RA1,DEC1],[RA2,DEC2]]
-    --monitor-coords=[[RA1,DEC1],[RA2,DEC2]]
-
-
-**Monitor list**
-
-  Same as monitor coords, but specify a file containing the coordinates, rather than list them at the command line.
-
-  Examples::
-
-    -l monitor_list.txt
-    --monitor-list=monitor_list.txt
-
-  Where :file:`monitor_list.txt` either contains exactly the same contents as
-  the command line entry, or if you prefer, the same but with extra whitespace
-  e.g.
-
-  :file:`monitor_list.txt`::
-
-    [
-    [RA1, DEC1],
-    [RA2, DEC2],
-    ]
-
-
-**Dataset Id**
-  Specifies a previous dataset to add measurements to, e.g.::
-
-    --dataset-id=12
-
-
-Recipes
-================
 
 persistence
----------------
+================
 Checks for accessibility of each listed image file, inserts it into the database,
 and stores in the MongoDB image store if configured to do so.
 
+
 source_extraction
------------------
+=================
 
 Run the source finding routine. In addition, this recipe will store
 the detected sources inside the database, and tries to associate the
@@ -129,7 +68,7 @@ Notes:
 .. _transient-search-recipe:
 
 transient_search
-----------------
+================
 
 Search through all matched sources and find variable sources by
 looking for deviations in their light curve.
@@ -168,7 +107,7 @@ the recipe is simply run on the front-end node.
 .. _feature_extraction:
 
 feature_extraction
-------------------
+==================
 
 Obtain characteristics from detected transient sources. This may fail
 (ie, produces None or 0 for values) when little to no

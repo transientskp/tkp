@@ -1,10 +1,6 @@
-if (BOOST_INCLUDES)
-  include_directories (${BOOST_INCLUDES})
-endif (BOOST_INCLUDES)
-
-if (PYTHON_INCLUDE_DIRS)
-  include_directories (${PYTHON_INCLUDE_DIRS})
-endif (PYTHON_INCLUDE_DIRS)
+find_package(Boost COMPONENTS python REQUIRED)
+INCLUDE_DIRECTORIES( ${Boost_INCLUDE_DIR} )
+include_directories (${PYTHON_INCLUDE_DIRS})
 
 if (WCSLIB_INCLUDES)
   include_directories (
@@ -14,7 +10,7 @@ endif (WCSLIB_INCLUDES)
 
 add_library (wcslib MODULE wcslib.cpp)
 
-target_link_libraries (wcslib ${WCSLIB_LIBRARIES} ${Boost_PYTHON_LIBRARY})
+target_link_libraries (wcslib ${WCSLIB_LIBRARIES} ${Boost_LIBRARIES})
 set_target_properties(wcslib
   PROPERTIES
   PREFIX ""

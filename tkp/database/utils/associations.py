@@ -1,16 +1,8 @@
-# LOFAR Transients Key Project
-#
-# Bart Scheers, Evert Rol, Tim Staley
-#
-# discovery@transientskp.org
-#
-
 """
-A collection of back end subroutines (mostly SQL queries).
-In this module we deal with source association.
+A collection of back end subroutines (mostly SQL queries), In this module we
+deal with source association.
 """
 
-import sys, os
 import logging
 import monetdb.sql as db
 from tkp.config import config
@@ -92,25 +84,6 @@ def associate_extracted_sources(image_id, deRuiter_r):
     # TODO: Is it? -> Check
     _empty_temprunningcatalog(conn)
     _delete_inactive_runcat(conn)
-
-def associate_with_catalogedsources(conn, image_id, radius, deRuiter_r):
-    """Associate extracted sources in specified image with known sources
-    in the external catalogues
-
-    radius (typical 90arcsec=0.025deg), is the radius of the area centered
-    at the extracted source which are searched for counterparts in the catalogues.
-
-    The dimensionless distance between two sources is given by the
-    "De Ruiter radius", see Ch2&3 of thesis Scheers.
-
-    Here we use a default value of deRuiter_r = 3.717/3600. for a
-    reliable association.
-
-    Every found candidate is added to the assoccatsources table.
-    """
-
-    _insert_cat_assocs(conn, image_id, radius, deRuiter_r)
-
 
 ###############################################################################################
 # Subroutines...
@@ -1675,8 +1648,6 @@ def _insert_new_monitoringlist(conn, image_id):
                                                     )
                                   )
         """
-        #q = query % (image_id,image_id)
-        #print "q =\n",q
         ins = cursor.execute(query, (image_id, image_id))
         if not AUTOCOMMIT:
             conn.commit()
@@ -1744,8 +1715,6 @@ def _insert_new_transient(conn, image_id):
                                                     )
                                   )
         """
-        #q = query % (image_id,image_id)
-        #print "q =\n",q
         ins = cursor.execute(query, (image_id, image_id))
         if not AUTOCOMMIT:
             conn.commit()
@@ -1757,62 +1726,6 @@ def _insert_new_transient(conn, image_id):
         raise
     finally:
         cursor.close()
-
-
-
-def _go_back_to_other_images_and_do_a_forcedfit_in_non_rejected_images(conn, image_id):
-    """Return a list of previous image ids and urls in which
-    the new sources were not detected
-    
-    """
-
-    try:
-        cursor = conn.cursor()
-        query = """\
-        SELECT id
-              ,url
-          FROM image
-         WHERE id <> %(image_id)s
-           AND id not in (SELECT image
-                            FROM rejection
-                           WHERE image=%(image_id)s
-                         )
-           AND dataset = (SELECT dataset 
-                            FROM image i 
-                           WHERE i.id = %(image_id)s
-                         )
-           AND EXISTS (SELECT t0.xtrsrc
-                         FROM (SELECT x1.id AS xtrsrc
-                                 FROM extractedsource x1
-                                     ,image i1
-                                WHERE x1.image = i1.id
-                                  AND i1.id = %(image_id)s
-                              ) t0
-                              LEFT OUTER JOIN temprunningcatalog trc1
-                              ON t0.xtrsrc = trc1.xtrsrc
-                        WHERE trc1.xtrsrc IS NULL
-                      )
-        """
-        cursor.execute(query, {'image_id': image_id})
-        results = zip(*cursor.fetchall())
-        if not AUTOCOMMIT:
-            conn.commit()
-        cursor.close()
-
-        validurls = []
-        if len(results) != 0:
-            imageids = results[0]
-            urls = results[1]
-            # Check if the urls are still available
-            for url in urls:
-                if os.path.exists(url):
-                    validurls.append(url)
-                    logger.info("Image %s still available for forced fit" % (os.path.basename(url),))
-        return validurls
-    except db.Error, e:
-        q = query % {'image_id': image_id}
-        logger.warn("Failed on query:\n%s" % q)
-        raise
 
 def _delete_inactive_runcat(conn):
     """Delete the one-to-many associations from temprunningcatalog,
@@ -1839,79 +1752,3 @@ def _delete_inactive_runcat(conn):
         raise
     finally:
         cursor.close()
-
-def _insert_cat_assocs(conn, image_id, radius, deRuiter_r):
-    """Insert found xtrsrc--catsrc associations into assoccatsource table.
-
-    The search for cataloged counterpart sources is done in the catalogedsource
-    table, which should have been preloaded with a selection of
-    the catalogedsources, depending on the expected field of view.
-
-    """
-
-    try:
-        cursor = conn.cursor()
-        query = """\
-        INSERT INTO assoccatsource
-          (xtrsrc
-          ,catsrc
-          ,distance_arcsec
-          ,type
-          ,r
-          ,loglr
-          )
-          SELECT x0.id AS xtrsrc
-                ,c0.id AS catsrc
-                ,3600 * DEGREES(2 * ASIN(SQRT((x0.x - c0.x) * (x0.x - c0.x)
-                                          + (x0.y - c0.y) * (x0.y - c0.y)
-                                          + (x0.z - c0.z) * (x0.z - c0.z)
-                                          ) / 2) ) AS distance_arcsec
-                ,3
-                ,3600 * sqrt( ((x0.ra * cos(RADIANS(x0.decl)) - c0.ra * cos(RADIANS(c0.decl)))
-                             * (x0.ra * cos(RADIANS(x0.decl)) - c0.ra * cos(RADIANS(c0.decl))))
-                             / (x0.ra_err * x0.ra_err + c0.ra_err*c0.ra_err)
-                            +
-                              ((x0.decl - c0.decl) * (x0.decl - c0.decl))
-                             / (x0.decl_err * x0.decl_err + c0.decl_err*c0.decl_err)
-                            ) as r
-                ,LOG10(EXP((   (x0.ra * COS(RADIANS(x0.decl)) - c0.ra * COS(RADIANS(c0.decl)))
-                             * (x0.ra * COS(RADIANS(x0.decl)) - c0.ra * COS(RADIANS(x0.decl)))
-                             / (x0.ra_err * x0.ra_err + c0.ra_err * c0.ra_err)
-                            +  (x0.decl - c0.decl) * (x0.decl - c0.decl)
-                             / (x0.decl_err * x0.decl_err + c0.decl_err * c0.decl_err)
-                           ) / 2
-                          )
-                      /
-                      (2 * PI() * SQRT(x0.ra_err * x0.ra_err + c0.ra_err * c0.ra_err)
-                                * SQRT(x0.decl_err * x0.decl_err + c0.decl_err * c0.decl_err) * %s)
-                      ) AS loglr
-            FROM extractedsource x0
-                ,catalogedsource c0
-           WHERE x0.image = %s
-             AND c0.zone BETWEEN CAST(FLOOR(x0.decl - %s) AS INTEGER)
-                             AND CAST(FLOOR(x0.decl + %s) AS INTEGER)
-             AND c0.decl BETWEEN x0.decl - %s
-                             AND x0.decl + %s
-             AND c0.ra BETWEEN x0.ra - alpha(%s, x0.decl)
-                           AND x0.ra + alpha(%s, x0.decl)
-             AND SQRT(  (x0.ra * COS(RADIANS(x0.decl)) - c0.ra * COS(RADIANS(c0.decl)))
-                      * (x0.ra * COS(RADIANS(x0.decl)) - c0.ra * COS(RADIANS(c0.decl)))
-                      / (x0.ra_err * x0.ra_err + c0.ra_err * c0.ra_err)
-                     + (x0.decl - c0.decl) * (x0.decl - c0.decl)
-                      / (x0.decl_err * x0.decl_err + c0.decl_err * c0.decl_err)
-                     ) < %s
-        """
-        cursor.execute(query, (BG_DENSITY,
-                               image_id,
-                               radius, radius, radius, radius, radius, radius,
-                               deRuiter_r / 3600.))
-        if not AUTOCOMMIT:
-            conn.commit()
-    except db.Error, e:
-        logger.warn("Query failed:\n%s" % query)
-        raise
-    finally:
-        cursor.close()
-
-
-

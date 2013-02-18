@@ -1,17 +1,3 @@
-# -*- coding: utf-8 -*-
-
-#
-# LOFAR Transients Key Project
-#
-# Evert Rol, Tim Staley
-#
-# discovery@transientskp.org
-#
-#
-# Simplified miniature ORM to deal with the most basic and essential
-# database tables.
-#
-
 """
 This module contains lightweight container objects that corresponds
 to a dataset, image or extracted source in the database; it is actually a
@@ -65,17 +51,15 @@ fail)::
     # Here, dataset indirectly holds the database connection:
     >>> dataset.database
     DataBase(host=heastro1, name=trap, user=trap, ...)
-    >>> image1 = Image(data={'freq_eff': '80e6', 'freq_bw': 1e6,
-        'taustart_ts': datetime(2011, 5, 1, 0, 0, 0), 'tau_time': 1800., 'url': '/'},
-        dataset=dataset)  # initialize with defaults
+    >>> image1 = Image(data={'freq_eff': '80e6', 'freq_bw': 1e6, \
+        'taustart_ts': datetime(2011, 5, 1, 0, 0, 0), 'tau_time': 1800.,  'url': '/'}, dataset=dataset)  # initialize with defaults
         # note the dataset kwarg, which holds the database connection
     >>> image1.tau_time
     1800.
     >>> image1.taustart_ts
     datetime.datetime(2011, 5, 1, 0, 0, 0)
-    >>> image2 = Image(data={'freq_eff': '80e6', 'freq_bw': 1e6,
-        'taustart_ts': datetime(2011, 5, 1, 0, 1, 0), 'tau_time': 1500., 'url': '/'},
-        dataset=dataset)
+    >>> image2 = Image(data={'freq_eff': '80e6', 'freq_bw': 1e6, \
+        'taustart_ts': datetime(2011, 5, 1, 0, 1, 0), 'tau_time': 1500.,'url': '/'}, dataset=dataset)
     >>> image2.tau_time
     1500
     >>> image2.taustart_ts
@@ -103,12 +87,12 @@ means there aren't any updates.
     >>> image2.update(tau_time=2500)    # updates the database as well
     >>> image2.tau_time
     2500
-    >>> database.cursor.execute("SELECT tau_time FROM images WHERE imageid=%s" %
+    >>> database.cursor.execute("SELECT tau_time FROM images WHERE imageid=%s" % \
                                  (image2.id,))
     >>> database.cursors.fetchone()[0]
     2500
     # Manually update the database
-    >>> database.cursor.execute("UPDATE images SET tau_time=2000.0 imageid=%s" %
+    >>> database.cursor.execute("UPDATE images SET tau_time=2000.0 imageid=%s" % \
                                  (image2.id,))
     >>> image2.tau_time   # not updated yet!
     2500
@@ -362,11 +346,6 @@ class DataSet(DBObject):
     def detect_variables(self,  freq_band, V_lim=0.2, eta_lim=3.):
         """Search through the whole dataset for variable sources"""
         return dbu.select_variability_indices(self._id, freq_band, V_lim, eta_lim)
-        
-    def mark_transient_candidates(self, single_epoch_threshold, combined_threshold):
-        """Find transient candidates and add to monitoringlist."""
-        candidates = self._find_transient_candidates(single_epoch_threshold, combined_threshold)
-        self._add_runcat_sources_to_monitoringlist([c['runcat'] for c in candidates])
 
     def add_manual_entry_to_monitoringlist(self, ra, dec):
         dbu.add_manual_entry_to_monitoringlist(self.database.connection, self.id, ra, dec)
@@ -381,41 +360,6 @@ class DataSet(DBObject):
         self.database.cursor.execute(query, (self.id,))
         bands = zip(*self.database.cursor.fetchall())[0]
         return bands
-
-    def _find_transient_candidates(self, single_epoch_threshold, combined_threshold):
-        """Find sources not present in all epochs.
-        
-        Returns a list of associated source ids, which 
-            - Do not have an associated extracted source in all epochs
-            - Have at least one extracted source with SNR above the single_epoch_threshold
-            - Have a a summed SNR above the combined_threshold 
-            - Excludes non-detections due to a shifting field of view (edge cases).
-            
-        Returns: a list of dicts
-        [ {runcat, xtrsrc, datapoints, max_det_sigma, sum_det_sigma} ]
-            
-        """
-        all_candidates = dbu.select_winking_sources(self.database.connection, self._id)
-                
-        thresholded_candidates = dbu.select_transient_candidates_above_thresh(
-                    conn=self.database.connection,
-                    runcat_ids=[c['runcat'] for c in all_candidates],
-                    single_epoch_threshold=single_epoch_threshold,
-                    combined_threshold=combined_threshold
-                    )
-        
-        #Pull in the  xtrsrc and datapoints info
-        for tc in thresholded_candidates:
-            for ac in all_candidates:
-                if tc['runcat']==ac['runcat']:
-                    tc.update(ac)
-        
-        #TODO: Filter out those which only disappear because they drop out of FoV
-        ###  --- This will require FoV information in database
-        return thresholded_candidates
-    
-    def _add_runcat_sources_to_monitoringlist(self, runcat_ids):
-        dbu.add_runcat_sources_to_monitoringlist(self.database.connection, self._id, runcat_ids)
 
 
 class Image(DBObject):
@@ -549,26 +493,6 @@ class Image(DBObject):
         """
         dbu.associate_extracted_sources(self._id, deRuiter_r)
         
-
-    def monitoringsources(self):
-        return dbu.get_monitoringlist_not_observed(
-                           self.database.connection,
-                           self._id,
-                           self.dataset.id)
-
-    def insert_monitored_sources(self, results):
-        """Insert the list of measured monitoring sources for this image into
-        extractedsource and runningcatalog
-
-        Note that the insertion into runningcatalog can be done by
-        xtrsrc_id from monitoringlist. In case it is negative, it is
-        appended to runningcatalog, and xtrsrc_id is updated in the
-        monitoringlist.
-        """
-
-        dbu.insert_monitored_sources(self.database.connection, results,
-                                      self._id)
-
 
 class ExtractedSource(DBObject):
     """Class corresponding to the extractedsource table in the database"""

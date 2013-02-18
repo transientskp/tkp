@@ -8,7 +8,7 @@ Most of the basic insertion routines are kept here,
 with exceptions of monitoringlist and transients.
 """
 
-import math, sys
+import math
 import logging
 
 import monetdb.sql as db
@@ -324,33 +324,6 @@ def lightcurve(conn, xtrsrcid):
     args = {'xtrsrc': xtrsrcid}
     cursor = tkp.database.query(conn, lightcurve_query, args)
     return cursor.fetchall()
-
-
-def get_imagefiles_for_ids(conn, image_ids):
-    """Return a list of image filenames for the give image ids
-
-    The actual returned list contains 2-tuples of (id, url)
-    """
-    
-    where_string = ", ".join(["%s"] * len(image_ids))
-    where_tuple = tuple(image_ids)
-    query = ("""SELECT id, url FROM image WHERE id in (%s)""" %
-             where_string)
-    cursor = conn.cursor()
-    try:
-        querytxt = query % where_tuple
-        cursor.execute(query, where_tuple)
-        results = cursor.fetchall()
-        ## extra
-        #if not AUTOCOMMIT:
-        #    conn.commit()
-    except db.Error, e:
-        query = query % where_tuple
-        logger.warn("Query failed: %s", query)
-        raise
-    finally:
-        cursor.close()
-    return results
 
 
 def match_nearests_in_catalogs(conn, runcatid, radius, deRuiter_r,

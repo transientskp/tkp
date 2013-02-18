@@ -1,11 +1,3 @@
-#
-# LOFAR Transients Key Project
-#
-# Bart Scheers, Evert Rol, Tim Staley
-#
-# discovery@transientskp.org
-#
-
 """
 A collection of generic functions used to generate SQL queries
 and return data in an easy to use format such as dictionaries.
@@ -35,7 +27,7 @@ def columns_from_table(conn, table,
 
     Example:
 
-        >>> columns_from_table(conn, 'image',
+        >>> columns_from_table(conn, 'image', \
             keywords=['taustart_ts', 'tau_time', 'freq_eff', 'freq_bw'], where={'imageid': 1})
             [{'freq_eff': 133984375.0, 'taustart_ts': datetime.datetime(2010, 10, 9, 9, 4, 2), 'tau_time': 14400.0, 'freq_bw': 1953125.0}]
 

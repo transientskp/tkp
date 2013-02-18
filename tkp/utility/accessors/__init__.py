@@ -69,7 +69,7 @@ def open(path):
     Will raise an exception if something went wrong.
     """
     if not os.access(path, os. F_OK):
-        raise IOError("%s does not exists!" % path)
+        raise IOError("%s does not exist!" % path)
     if not os.access(path, os. R_OK):
         raise IOError("Don't have permission to read %s!" % path)
     Accessor = tkp.utility.accessors.detection.detect(path)

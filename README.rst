@@ -1,8 +1,15 @@
 Introduction
 ============
 
-This is the Transient Key Project (TKP).
+This is the Transient Key Project (TKP), a Python package which contains the
+necessary routines for source finding, source associations, determination of
+source characteristics and source classification.
 
+The TKP projects consists of two python modules, TKP (Transient Key Project)
+and TRAP (TRAnsient Pipeline). The TKP contains all the independent logic for
+performing transient detection, the TRAP module contains a specific arrangement
+of the different TKP components to actually perform transient detection,
+optionally in a distributed way.
 
 Installation
 ============
@@ -14,6 +21,8 @@ You can use CMake to build this project::
 Don't forget that you need to populate a database also. see the database
 subdirectory for details.
 
+You can also use the setup.py script, but this will not build the required
+wcslib shared object.
 
 Requirements
 ============
@@ -45,13 +54,8 @@ Optional:
 - pygsl <http://pygsl.sourceforge.net/>
 
 
-testing
--------
-
-- nosetests
-
-For Ubuntu
-----------
+Installation for Ubuntu
+-----------------------
 
 All packages above (except pyrap and pygsl) are available in debian/ubuntu or pypi::
 
@@ -68,8 +72,15 @@ TKP uses the latest version of the MonetDB API which is only availably through P
 
     $ sudo pip install python-monetdb
 
+For running the TRAP you need to in stall the Lofar System software.
+
+$ sudo apt-get install python-pymongo  python-gridfs mongodb-server
+
 Testing
 =======
+
+For testing we advice you to use nosetests. All tests are located in the
+tests subfolder.
 
 To run the tests you need a test database::
 
@@ -101,7 +112,6 @@ packages like monetdb)::
 And then run python nose from the tests folder::
 
  $ cd tests && nosetests
-
 
 It is vital that the test suite be run before changes are committed. If your
 changes cause additional test failures, they must be accompanied by
@@ -150,24 +160,30 @@ Note that this will overwrite any existing configuration file: use with care!
 
 TKP library Details
 ===================
-The transients pipeline library is a set of Python modules that form the backbone of the transients pipeline: it contains the routines used by the various steps in the pipeline.
+The transients pipeline library is a set of Python modules that form the
+backbone of the transients pipeline: it contains the routines used by the
+various steps in the pipeline.
 
 The modules are separated into four subpackages:
 
 **database**
- the routines that interface with the database. The modules in this subpackage contain the necessary SQL queries to
- match sources and find transients, as well as more general functions and a few classes.
+ the routines that interface with the database. The modules in this subpackage
+ contain the necessary SQL queries to
+ match sources and find transients, as well as more general functions and a few
+ classes.
 
 **sourcefinder**
  the modules in this subpackage handle the detection of sources in an (2D) image.
 
 **classification**
- the modules in this subpackage deal with the classification of detected sources, mainly through the source light curves
- (and possibly their spectra). It also contains functions to extract the required characteristics of the light curves
- for classification.
+ the modules in this subpackage deal with the classification of detected
+ sources, mainly through the source light curves (and possibly their spectra).
+ It also contains functions to extract therequired characteristics of the light
+ curves for classification.
 
 **utility**
- this subpackage contains a variety of utility functions, such as (image) data file handlers and coordinate functions.
+ this subpackage contains a variety of utility functions, such as (image) data
+ file handlers and coordinate functions.
 
 
 Directory notes

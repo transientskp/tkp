@@ -58,3 +58,4 @@ class TestAutodetect(unittest.TestCase):
         accessor = tkp.utility.accessors.open(lofarcasatable)
         self.assertEqual(accessor.__class__, LofarCasaImage)
         self.assertRaises(IOError, tkp.utility.accessors.open, antennafile)
+        self.assertRaises(IOError, tkp.utility.accessors.open, 'doesntexists')

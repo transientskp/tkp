@@ -5,10 +5,7 @@ These can be used to populate ImageData objects based on some data source
 (FITS file, array in memory... etc).
 """
 
-# Todo: use of numpy.squeeze() appears a bad idea, in the case of
-# (unlikely, but not impossible) [1, Y] or [X, 1] shaped images...
-
-
+import os
 import pyfits
 from tkp.database import Image as DBImage
 from tkp.utility.accessors.dataaccessor import extract_metadata
@@ -21,16 +18,12 @@ from tkp.utility.accessors.casaimage import CasaImage
 
 def dbimage_from_accessor(dataset, dataccessor, extraction_radius):
     """Create an entry in the database image table from an image 'accessor'
-    
     Args:
-
         - dataset (dataset.DataSet): DataSet for the image. Also
           provides the database connection.
         - image (DataAccessor): FITS/AIPS/HDF5 image available through
           an accessor
-
     Returns:
-
         (dataset.Image): a dataset.Image instance.
     """
     if dataccessor.freq_eff is None or dataccessor.freq_bw is None:
@@ -43,14 +36,10 @@ def dbimage_from_accessor(dataset, dataccessor, extraction_radius):
 
 def sourcefinder_image_from_accessor(image, **args):
     """Create a source finder ImageData object from an image 'accessor'
-
     Args:
-
         - image (DataAccessor): FITS/AIPS/HDF5 image available through
           an accessor.
-
     Returns:
-
         (sourcefinder.ImageData): a source finder image.
     """
     image = ImageData(image.data, image.beam, image.wcs, **args)
@@ -75,8 +64,14 @@ def writefits(data, filename, header = {}):
 
 def open(path):
     """
-    Returns an accessor object (if available) for the file or directory 'path'
+    Returns an accessor object (if available) for the file or directory 'path'.
+    
+    Will raise an exception if something went wrong.
     """
+    if not os.access(path, os. F_OK):
+        raise IOError("%s does not exist!" % path)
+    if not os.access(path, os. R_OK):
+        raise IOError("Don't have permission to read %s!" % path)
     Accessor = tkp.utility.accessors.detection.detect(path)
     if not Accessor:
         raise IOError("no accessor found for %s" % path)

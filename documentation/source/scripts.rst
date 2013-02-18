@@ -1,8 +1,8 @@
 .. _scripts-section:
 
-######
-Script
-######
+#######
+Scripts
+#######
 
 .. |last_updated| last_updated::
 

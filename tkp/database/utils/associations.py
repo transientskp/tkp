@@ -1,15 +1,13 @@
 # LOFAR Transients Key Project
 #
-# Bart Scheers, Evert Rol, Tim Staley 
+# Bart Scheers, Evert Rol, Tim Staley
 #
 # discovery@transientskp.org
 #
 
 """
-A collection of back end subroutines (mostly SQL queries), 
-
+A collection of back end subroutines (mostly SQL queries).
 In this module we deal with source association.
-
 """
 
 import sys, os
@@ -25,13 +23,10 @@ AUTOCOMMIT = config['database']['autocommit']
 
 def associate_extracted_sources(image_id, deRuiter_r):
     """Associate extracted sources with sources detected in the running
-    catalog
+    catalog.
 
     The dimensionless distance between two sources is given by the
-    "De Ruiter radius", see Ch2&3 of thesis Scheers.
-    
-    Here we use a default value of deRuiter_r = 3.717/3600. for a
-    reliable association.
+    "De Ruiter radius", see Chapters 2 & 3 of Scheers' thesis.
     """
 
     logger.info("Using a De Ruiter radius of %s" % (deRuiter_r,))
@@ -48,7 +43,7 @@ def associate_extracted_sources(image_id, deRuiter_r):
     #+------------------------------------------------------+
     #| Here we process (flag) the many-to-many associations.|
     #+------------------------------------------------------+
-    # _process_many_to_many() 
+    # _process_many_to_many()
     _flag_many_to_many_tempruncat(conn)
     #+------------------------------------------------------+
     #| After this, the assocs have been reduced to many-to-1|
@@ -99,12 +94,12 @@ def associate_extracted_sources(image_id, deRuiter_r):
     _delete_inactive_runcat(conn)
 
 def associate_with_catalogedsources(conn, image_id, radius, deRuiter_r):
-    """Associate extracted sources in specified image with known sources 
+    """Associate extracted sources in specified image with known sources
     in the external catalogues
 
     radius (typical 90arcsec=0.025deg), is the radius of the area centered
     at the extracted source which are searched for counterparts in the catalogues.
-    
+
     The dimensionless distance between two sources is given by the
     "De Ruiter radius", see Ch2&3 of thesis Scheers.
 
@@ -169,8 +164,8 @@ def _insert_temprunningcatalog(conn, image_id, deRuiter_r, radius=0.03):
     for a single known source in runningcatalog.
 
     The n-1 assocs will be treated similar as the 1-1 assocs.
-    
-    NOTE: Beware of the extra condition on x0.image in the WHERE clause, 
+
+    NOTE: Beware of the extra condition on x0.image in the WHERE clause,
     preventing the query to grow exponentially in response time
     """
 
@@ -1634,10 +1629,10 @@ def _insert_new_assoc(conn, image_id):
 
 def _insert_new_monitoringlist(conn, image_id):
     """This query looks for sources extracted from the latest image,
-    which have no candidate associations. If there is already more than 
+    which have no candidate associations. If there is already more than
     one image in this dataset, then *ALL* of these un-associated sources
     are added to the monitoringlist.
-    
+
     NB (TS) To me this seems very fragile - as soon as we have offset images,
     this will result in us duplicating all new sources from an offset image
     in the monitoringlist. I don't think this is desirable.
@@ -1658,7 +1653,9 @@ def _insert_new_monitoringlist(conn, image_id):
                 ,r0.dataset AS dataset
             FROM runningcatalog r0
                 ,extractedsource x0
+                ,image i0
            WHERE r0.xtrsrc = x0.id
+             AND x0.image = i0.id
              AND r0.xtrsrc IN (SELECT t0.xtrsrc
                                  FROM (SELECT x1.id AS xtrsrc
                                          FROM extractedsource x1
@@ -1670,22 +1667,23 @@ def _insert_new_monitoringlist(conn, image_id):
                                       ON t0.xtrsrc = trc1.xtrsrc
                                  WHERE trc1.xtrsrc IS NULL
                               )
-             AND EXISTS (SELECT COUNT(*) 
-                           FROM image 
-                          WHERE dataset = (SELECT dataset 
-                                             FROM image 
-                                            WHERE id = %s
-                                          )
-                         HAVING COUNT(*) <> 1
-                        )
+             AND i0.taustart_ts > (SELECT MIN(taustart_ts)
+                                     FROM image
+                                    WHERE dataset = (SELECT dataset
+                                                       FROM image
+                                                      WHERE id = %s
+                                                    )
+                                  )
         """
+        #q = query % (image_id,image_id)
+        #print "q =\n",q
         ins = cursor.execute(query, (image_id, image_id))
         if not AUTOCOMMIT:
             conn.commit()
         if ins > 0:
             logger.info("Added %s new sources to monitoringlist table" % (ins,))
     except db.Error, e:
-        q = query % (image_id,)
+        q = query % (image_id, image_id)
         logger.warn("Failed on query:\n%s" % q)
         raise
     finally:
@@ -1694,7 +1692,8 @@ def _insert_new_monitoringlist(conn, image_id):
 def _insert_new_transient(conn, image_id):
     """A new source needs to be added to the transient table
     
-    Except for sources that were detected in the initial image.
+    Except for sources that were detected in the initial image,
+    checked by timestamp.
 
     We set the siglevel to 1 for a new source and the
     the variability indices 0.
@@ -1737,22 +1736,23 @@ def _insert_new_transient(conn, image_id):
                                       ON t0.xtrsrc = trc1.xtrsrc
                                  WHERE trc1.xtrsrc IS NULL
                               )
-             AND EXISTS (SELECT COUNT(*) 
-                           FROM image 
-                          WHERE dataset = (SELECT dataset 
-                                             FROM image 
-                                            WHERE id = %s
-                                          )
-                         HAVING COUNT(*) <> 1
-                        )
+             AND i0.taustart_ts > (SELECT MIN(taustart_ts)
+                                     FROM image 
+                                    WHERE dataset = (SELECT dataset 
+                                                       FROM image 
+                                                      WHERE id = %s
+                                                    )
+                                  )
         """
+        #q = query % (image_id,image_id)
+        #print "q =\n",q
         ins = cursor.execute(query, (image_id, image_id))
         if not AUTOCOMMIT:
             conn.commit()
         if ins > 0:
             logger.info("Added %s new sources to transient table" % (ins,))
     except db.Error, e:
-        q = query % (image_id,)
+        q = query % (image_id,image_id)
         logger.warn("Failed on query:\n%s" % q)
         raise
     finally:

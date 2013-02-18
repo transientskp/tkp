@@ -152,14 +152,10 @@ def parse_stations(observation_table, antenna_table):
         (number of core stations, remote stations, international stations)
     """
     nvis_used = observation_table.getcol('NVIS_USED')
-    station_ids = antenna_table.getcol('STATION_ID')
-    names = antenna_table.getcol('NAME')
+    names = numpy.array(antenna_table.getcol('NAME'))
     mask = numpy.sum(nvis_used, axis=2) > 0
-    used_ids = station_ids[mask.ravel()]
-    used = [names[id] for id in used_ids]
-    ncore = 0
-    nremote = 0
-    nintl = 0
+    used = names[mask[0]]
+    ncore = nremote = nintl = 0
     for station in used:
         if station.startswith('CS'):
             ncore += 1

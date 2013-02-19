@@ -1627,11 +1627,21 @@ def _insert_new_monitoringlist(conn, image_id):
     which have no candidate associations. If there is already more than
     one image in this dataset, then *ALL* of these un-associated sources
     are added to the monitoringlist.
-
-    NB (TS) To me this seems very fragile - as soon as we have offset images,
-    this will result in us duplicating all new sources from an offset image
-    in the monitoringlist. I don't think this is desirable.
     """
+
+#    Some non-trivial subqueries here:
+#    First We grab the minimum image_timestamp for each runcat entry in this dataset
+#    as temp table 'tstamps' (via skyrgn associations).
+#    Then we grab the new, unassociated runcat entries using the left join
+#    trc by xtrsrc.
+#    If the image the new source was found in has a timestamp *greater* 
+#    than the minimum this implies that region was previously surveyed 
+#    ('real' transient). Otherwise, it's simply the first time we've looked at 
+#    that patch of sky. (We are relying on the assumption that images are 
+#    processed in strict time order).
+#    (NB. This ignores the possibility of later, more sensitive observations 
+#    revealing new sources - but it's a start.) 
+#
 
     try:
         cursor = conn.cursor()
@@ -1649,6 +1659,19 @@ def _insert_new_monitoringlist(conn, image_id):
             FROM runningcatalog r0
                 ,extractedsource x0
                 ,image i0
+                ,(SELECT rc2.id as ts_runcat
+                        ,MIN(taustart_ts) as ts_min
+                         FROM image i2
+                             ,assocskyrgn asr2
+                             ,runningcatalog rc2
+                        WHERE i2.dataset in (SELECT dataset 
+                                           FROM image 
+                                          WHERE id = %s
+                                        )
+                         AND i2.skyrgn = asr2.skyrgn
+                         AND rc2.id = asr2.runcat
+                         GROUP BY rc2.id
+                  ) tstamps
            WHERE r0.xtrsrc = x0.id
              AND x0.image = i0.id
              AND r0.xtrsrc IN (SELECT t0.xtrsrc
@@ -1662,13 +1685,8 @@ def _insert_new_monitoringlist(conn, image_id):
                                       ON t0.xtrsrc = trc1.xtrsrc
                                  WHERE trc1.xtrsrc IS NULL
                               )
-             AND i0.taustart_ts > (SELECT MIN(taustart_ts)
-                                     FROM image
-                                    WHERE dataset = (SELECT dataset
-                                                       FROM image
-                                                      WHERE id = %s
-                                                    )
-                                  )
+             AND r0.id = tstamps.ts_runcat
+             AND i0.taustart_ts > tstamps.ts_min
         """
         #q = query % (image_id,image_id)
         #print "q =\n",q
@@ -1686,18 +1704,17 @@ def _insert_new_monitoringlist(conn, image_id):
 
 def _insert_new_transient(conn, image_id):
     """A new source needs to be added to the transient table
-    
+
     Except for sources that were detected in the initial image,
     checked by timestamp.
 
     We set the siglevel to 1 for a new source and the
     the variability indices 0.
-    
-    NB (TS) See note on ``_insert_new_monitoringlist``.
+
     """
 
-    # TODO: Is the image i0 enough or do we 
-    # need to specify i0.id = %s
+    #See insert_new_monitoringlist for notes.
+
     try:
         cursor = conn.cursor()
         query = """\
@@ -1718,6 +1735,19 @@ def _insert_new_transient(conn, image_id):
             FROM runningcatalog r0
                 ,extractedsource x0
                 ,image i0
+                ,(SELECT rc2.id as ts_runcat
+                        ,MIN(taustart_ts) as ts_min
+                         FROM image i2
+                             ,assocskyrgn asr2
+                             ,runningcatalog rc2
+                        WHERE i2.dataset in (SELECT dataset 
+                                           FROM image 
+                                          WHERE id = %s
+                                        )
+                         AND i2.skyrgn = asr2.skyrgn
+                         AND rc2.id = asr2.runcat
+                         GROUP BY rc2.id
+                  ) tstamps
            WHERE r0.xtrsrc = x0.id
              AND x0.image = i0.id
              AND r0.xtrsrc IN (SELECT t0.xtrsrc
@@ -1731,13 +1761,8 @@ def _insert_new_transient(conn, image_id):
                                       ON t0.xtrsrc = trc1.xtrsrc
                                  WHERE trc1.xtrsrc IS NULL
                               )
-             AND i0.taustart_ts > (SELECT MIN(taustart_ts)
-                                     FROM image 
-                                    WHERE dataset = (SELECT dataset 
-                                                       FROM image 
-                                                      WHERE id = %s
-                                                    )
-                                  )
+             AND r0.id = tstamps.ts_runcat
+             AND i0.taustart_ts > tstamps.ts_min
         """
         #q = query % (image_id,image_id)
         #print "q =\n",q
@@ -1747,7 +1772,7 @@ def _insert_new_transient(conn, image_id):
         if ins > 0:
             logger.info("Added %s new sources to transient table" % (ins,))
     except db.Error, e:
-        q = query % (image_id,image_id)
+        q = query % (image_id, image_id)
         logger.warn("Failed on query:\n%s" % q)
         raise
     finally:

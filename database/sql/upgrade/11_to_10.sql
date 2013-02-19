@@ -16,6 +16,21 @@ UPDATE image
       ,bpa_syn = rb_pa
 ; %SPLIT%
 
+UPDATE image
+   SET bmaj_syn = NULL
+ WHERE bmaj_syn = 0
+; %SPLIT%
+
+UPDATE image
+   SET bmin_syn = NULL
+ WHERE bmin_syn = 0
+; %SPLIT%
+
+UPDATE image
+   SET bpa_syn = NULL
+ WHERE bpa_syn = 0
+; %SPLIT%
+
 ALTER TABLE image DROP COLUMN rb_smaj; %SPLIT%
 ALTER TABLE image DROP COLUMN rb_smin; %SPLIT%
 ALTER TABLE image DROP COLUMN rb_pa; %SPLIT%

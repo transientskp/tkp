@@ -17,6 +17,21 @@ the new columns.
 TODO: Can we set those to rejected?
 */
 UPDATE image
+   SET bmaj_syn = 0
+ WHERE bmaj_syn IS NULL
+; %SPLIT%
+
+UPDATE image
+   SET bmin_syn = 0
+ WHERE bmin_syn IS NULL
+; %SPLIT%
+
+UPDATE image
+   SET bpa_syn = 0
+ WHERE bpa_syn IS NULL
+; %SPLIT%
+
+UPDATE image
    SET rb_smaj = bmaj_syn
       ,rb_smin = bmin_syn
       ,rb_pa = bpa_syn

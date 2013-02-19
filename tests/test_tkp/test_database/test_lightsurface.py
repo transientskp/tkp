@@ -90,7 +90,7 @@ class TestLightSurface(unittest.TestCase):
 
         sources = sorted(sources, key=attrgetter('ra'))
         extracted_source = sources[0].id
-        lightcurve = tkp.database.utils.general.lightcurve(self.database.connection, extracted_source)
+        lightcurve = tkp.database.utils.general.lightcurve(extracted_source)
 
         # check if a lightcurve only contains sources for one frequency
         # TODO: ok this is not good, a lightcurve contains points from all frequencies now

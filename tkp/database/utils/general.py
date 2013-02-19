@@ -14,7 +14,7 @@ import logging
 import monetdb.sql as db
 from tkp.config import config
 import tkp.database
-from tkp.database import DataBase
+from tkp.database.database import DataBase
 from tkp.utility.coordinates import eq_to_cart
 
 logger = logging.getLogger(__name__)
@@ -82,60 +82,41 @@ DELETE
                          ) < %(deRuiter_red)s
              )
     """
-    try:
-        conn = DataBase().connection
-        args = {'image_id': image_id,
-                'assoc_theta': assoc_theta,
-                'deRuiter_red': deRuiter_r / 3600.
-                }
-        cursor = conn.cursor()
-        q = filter_ud_xtrsrcs_query % (args)
-        #print "FILTER Q:\n", q
-        #answer=str(raw_input('Continue (y/n)? '))
-        #if answer != 'y':
-        #    sys.exit()
-        filtered = cursor.execute(filter_ud_xtrsrcs_query, args)
-        if not AUTOCOMMIT:
-            conn.commit()
-        if filtered == 0:
-            logger.info("No user-entry sources removed from extractedsource for image %s" \
-                            % (image_id,))
-        else:
-            logger.info("Removed %d sources from extractedsource for image %s" \
-                            % (filtered, image_id))
-        #answer=str(raw_input('Continue (y/n)? '))
-        #if answer != 'y':
-        #    sys.exit()
-    except db.Error, e:
-        logger.warn("Failed on query nr %s." % q)
-        raise
-    finally:
-        cursor.close()
+    args = {'image_id': image_id,
+            'assoc_theta': assoc_theta,
+            'deRuiter_red': deRuiter_r / 3600.
+    }
+    cursor = tkp.database.query(filter_ud_xtrsrcs_query, args, True)
+    if cursor.rowcount == 0:
+        logger.info("No user-entry sources removed from extractedsource for "
+                    "image %s" % (image_id,))
+    else:
+        logger.info("Removed %d sources from extractedsource for image %s" %
+                    (cursor.rowcount, image_id))
 
 
 def update_dataset_process_ts(dataset_id, process_ts):
     """Update dataset start-of-processing timestamp.
 
     """
-    conn = DataBase().connection
     args = {'dataset_id': dataset_id, 'process_ts': process_ts}
-    cursor = tkp.database.query(conn, update_dataset_process_ts_query, args, commit=True)
+    tkp.database.query(update_dataset_process_ts_query, args, commit=True)
     return dataset_id
 
-def insert_dataset(conn, description):
+
+def insert_dataset(description):
     """Insert dataset with description as given by argument.
 
     DB function insertDataset() sets the necessary default values.
     """
     query = "SELECT insertDataset(%s)"
     arguments = description
-    cursor = tkp.database.query(conn, query, arguments, commit=True)
+    cursor = tkp.database.query(query, arguments, commit=True)
     dataset_id = cursor.fetchone()[0]
     return dataset_id
 
 
-def insert_image(conn,
-                 dataset, freq_eff, freq_bw, taustart_ts, tau_time,
+def insert_image(dataset, freq_eff, freq_bw, taustart_ts, tau_time,
                  beam_maj, beam_min, beam_pa, deltax, deltay, url,
                  centre_ra, centre_decl, xtr_radius
                  ):
@@ -155,7 +136,7 @@ def insert_image(conn,
     arguments = (dataset, tau_time, freq_eff, freq_bw, taustart_ts,
                  beam_maj, beam_min, beam_pa, deltax, deltay, url,
                  centre_ra, centre_decl, xtr_radius)
-    cursor = tkp.database.query(conn, query, arguments, commit=True)
+    cursor = tkp.database.query(query, arguments, commit=True)
     image_id = cursor.fetchone()[0]
     return image_id
 
@@ -221,7 +202,6 @@ def _insert_extractedsources(image_id, results, extract):
       source-distance calculations
 
     """
-    conn = DataBase().connection
     xtrsrc = []
     for src in results:
         r = list(src)
@@ -248,64 +228,53 @@ def _insert_extractedsources(image_id, results, extract):
         xtrsrc.append(r)
     values = [str(tuple(xsrc)) for xsrc in xtrsrc]
 
-    cursor = conn.cursor()
-    try:
-        query = """\
-        INSERT INTO extractedsource
-          (ra
-          ,decl
-          ,ra_fit_err
-          ,decl_fit_err
-          ,f_peak
-          ,f_peak_err
-          ,f_int
-          ,f_int_err
-          ,det_sigma
-          ,semimajor
-          ,semiminor
-          ,pa
-          ,ra_sys_err
-          ,decl_sys_err
-          ,ra_err
-          ,decl_err
-          ,image
-          ,zone
-          ,x
-          ,y
-          ,z
-          ,racosdecl
-          ,extract_type
-          )
-        VALUES
-        """\
-        + ",".join(values)
-        cursor.execute(query)
-        if not AUTOCOMMIT:
-            conn.commit()
-        if len(values) == 0:
-                logger.info("No forced-fit sources added to extractedsource for image %s" \
-                            % (image_id,))
-        else:
-            if extract == 'blind':
-                logger.info("Inserted %d sources in extractedsource for image %s" \
-                            % (len(values), image_id))
-            elif extract == 'ff_nd':
-                logger.info("Inserted %d forced-fit null detections in extractedsource for image %s" \
-                            % (len(values), image_id))
-            elif extract == 'ff_mon':
-                logger.info("Inserted %d forced-fit monitoringsources in extractedsource for image %s" \
-                            % (len(values), image_id))
-            elif extract == 'ff_ud':
-                logger.info("Inserted %d forced-fit user entries in extractedsource for image %s" \
-                            % (len(values), image_id))
-    except db.Error, e:
-        logger.warn("Failed on query nr %s." % query)
-        raise
-    finally:
-        cursor.close()
+    query = """\
+INSERT INTO extractedsource
+  (ra
+  ,decl
+  ,ra_fit_err
+  ,decl_fit_err
+  ,f_peak
+  ,f_peak_err
+  ,f_int
+  ,f_int_err
+  ,det_sigma
+  ,semimajor
+  ,semiminor
+  ,pa
+  ,ra_sys_err
+  ,decl_sys_err
+  ,ra_err
+  ,decl_err
+  ,image
+  ,zone
+  ,x
+  ,y
+  ,z
+  ,racosdecl
+  ,extract_type
+  )
+VALUES
+""" + ",".join(values)
+    tkp.database.query(query)
+    if len(values) == 0:
+            logger.info("No forced-fit sources added to extractedsource for image %s" \
+                        % (image_id,))
+    elif extract == 'blind':
+        logger.info("Inserted %d sources in extractedsource for image %s" \
+                    % (len(values), image_id))
+    elif extract == 'ff_nd':
+        logger.info("Inserted %d forced-fit null detections in extractedsource for image %s" \
+                    % (len(values), image_id))
+    elif extract == 'ff_mon':
+        logger.info("Inserted %d forced-fit monitoringsources in extractedsource for image %s" \
+                    % (len(values), image_id))
+    elif extract == 'ff_ud':
+        logger.info("Inserted %d forced-fit user entries in extractedsource for image %s" \
+                    % (len(values), image_id))
 
 
-def lightcurve(conn, xtrsrcid):
+def lightcurve(xtrsrcid):
     """Obtain a light curve for a specific extractedsource
     Args:
         xtrsrcid (int): the source identifier that corresponds to a
@@ -322,12 +291,11 @@ def lightcurve(conn, xtrsrcid):
             - stokes
     """
     args = {'xtrsrc': xtrsrcid}
-    cursor = tkp.database.query(conn, lightcurve_query, args)
+    cursor = tkp.database.query(lightcurve_query, args)
     return cursor.fetchall()
 
 
-def match_nearests_in_catalogs(conn, runcatid, radius, deRuiter_r,
-                              catalogid=None):
+def match_nearests_in_catalogs(conn, runcatid, radius, deRuiter_r):
     """Match a source with position ra, decl with catalogedsources
     within radius
 
@@ -338,18 +306,10 @@ def match_nearests_in_catalogs(conn, runcatid, radius, deRuiter_r,
     goodness-of-match measure.
     
     Args:
-
         runcatid: id of source in runningcatalog
 
-    Kwargs:
-    
         radius (float): search radius around the source to search, in
         degrees
-
-        catalogid (int or list of ints): the catalog(s) to search. If
-        none, all catalogs are searched for. A single integer
-        specifies one catalog, while a list of integers specifies
-        multiple catalogs.
 
         deRuiter_r (float): the De Ruiter radius, a dimensionless search radius.
         Source pairs with a De Ruiter radius that falls outside the cut-off
@@ -359,75 +319,56 @@ def match_nearests_in_catalogs(conn, runcatid, radius, deRuiter_r,
     assoc_r. So the first source in the list is the closest match for
     a catalog.
     """
-    
-    results = []
     query = """\
-    SELECT c.id
-          ,c.catsrcname
-          ,c.catalog
-          ,k.name
-          ,c.ra
-          ,c.decl
-          ,c.ra_err
-          ,c.decl_err
-          ,3600 * DEGREES(2 * ASIN(SQRT( (r.x - c.x) * (r.x - c.x)
-                                       + (r.y - c.y) * (r.y - c.y)
-                                       + (r.z - c.z) * (r.z - c.z)
-                                       ) / 2)
-                         ) AS distance_arcsec
-          ,3600 * SQRT(  (r.wm_ra - c.ra) * COS(RADIANS(r.wm_decl)) 
-                       * (r.wm_ra - c.ra) * COS(RADIANS(r.wm_decl))
-                         / (r.wm_ra_err * r.wm_ra_err + c.ra_err * c.ra_err)
-                      + (r.wm_decl - c.decl) * (r.wm_decl - c.decl)
-                        / (r.wm_decl_err * r.wm_decl_err + c.decl_err * c.decl_err)
-                      ) AS assoc_r
-      FROM runningcatalog r
-          ,catalogedsource c
-          ,catalog k
-     WHERE r.id = %s
-       AND c.zone BETWEEN CAST(FLOOR(r.wm_decl - %s) AS INTEGER)
-                      AND CAST(FLOOR(r.wm_decl + %s) AS INTEGER)
-       AND c.decl BETWEEN r.wm_decl - %s
-                      AND r.wm_decl + %s
-       AND c.ra BETWEEN r.wm_ra - alpha(%s, r.wm_decl)
-                    AND r.wm_ra + alpha(%s, r.wm_decl)
-       AND c.x * r.x + c.y * r.y + c.z * r.z > COS(RADIANS(%s))
-       AND c.catalog = k.id
-       AND SQRT(  (r.wm_ra - c.ra) * COS(RADIANS(r.wm_decl)) 
-                       * (r.wm_ra - c.ra) * COS(RADIANS(r.wm_decl))
-                         / (r.wm_ra_err * r.wm_ra_err + c.ra_err * c.ra_err)
-                      + (r.wm_decl - c.decl) * (r.wm_decl - c.decl)
-                        / (r.wm_decl_err * r.wm_decl_err + c.decl_err * c.decl_err)
-                      ) < %s
-    ORDER BY c.catalog
-            ,assoc_r
-    """
+SELECT c.id
+      ,c.catsrcname
+      ,c.catalog
+      ,k.name
+      ,c.ra
+      ,c.decl
+      ,c.ra_err
+      ,c.decl_err
+      ,3600 * DEGREES(2 * ASIN(SQRT( (r.x - c.x) * (r.x - c.x)
+                                   + (r.y - c.y) * (r.y - c.y)
+                                   + (r.z - c.z) * (r.z - c.z)
+                                   ) / 2)
+                     ) AS distance_arcsec
+      ,3600 * SQRT(  (r.wm_ra - c.ra) * COS(RADIANS(r.wm_decl))
+                   * (r.wm_ra - c.ra) * COS(RADIANS(r.wm_decl))
+                     / (r.wm_ra_err * r.wm_ra_err + c.ra_err * c.ra_err)
+                  + (r.wm_decl - c.decl) * (r.wm_decl - c.decl)
+                    / (r.wm_decl_err * r.wm_decl_err + c.decl_err * c.decl_err)
+                  ) AS assoc_r
+  FROM runningcatalog r
+      ,catalogedsource c
+      ,catalog k
+ WHERE r.id = %(runcatid)s
+   AND c.zone BETWEEN CAST(FLOOR(r.wm_decl - %(radius)s) AS INTEGER)
+                  AND CAST(FLOOR(r.wm_decl + %(radius)s) AS INTEGER)
+   AND c.decl BETWEEN r.wm_decl - %(radius)s
+                  AND r.wm_decl + %(radius)s
+   AND c.ra BETWEEN r.wm_ra - alpha(%(radius)s, r.wm_decl)
+                AND r.wm_ra + alpha(%(radius)s, r.wm_decl)
+   AND c.x * r.x + c.y * r.y + c.z * r.z > COS(RADIANS(%(radius)s))
+   AND c.catalog = k.id
+   AND SQRT(  (r.wm_ra - c.ra) * COS(RADIANS(r.wm_decl))
+                   * (r.wm_ra - c.ra) * COS(RADIANS(r.wm_decl))
+                     / (r.wm_ra_err * r.wm_ra_err + c.ra_err * c.ra_err)
+                  + (r.wm_decl - c.decl) * (r.wm_decl - c.decl)
+                    / (r.wm_decl_err * r.wm_decl_err + c.decl_err * c.decl_err)
+                  ) < %(deruiter)s
+ORDER BY c.catalog
+        ,assoc_r
+"""
 
-    try:
-        cursor = conn.cursor()
-        cursor.execute(query,  (runcatid,
-                                radius, radius, radius, radius,
-                                radius, radius, 
-                                radius,
-                                deRuiter_r/3600.))
-        results = cursor.fetchall()
-        results = [
-            {'catsrcid': result[0], 'catsrcname': result[1],
-             'catid': result[2], 'catname': result[3],
-             'ra': result[4], 'decl': result[5],
-             'ra_err': result[6], 'decl_err': result[7],
-             'dist_arcsec': result[8], 'assoc_r': result[9]}
-            for result in results]
-    except db.Error, e:
-        query = query % (runcatid,
-                         radius, radius, radius, radius,
-                         radius, radius,
-                         radius,
-                         deRuiter_r/3600.)
-        logger.warn("Query failed:\n%s", query)
-        raise
-    finally:
-        cursor.close()
-    return results
+    args = {'runcatid': runcatid, 'radius': radius, 'deruiter': deRuiter_r/3600.}
+    cursor = tkp.database.query(query, args, True)
+    results = cursor.fetchall()
+    descriptions = ['catsrcid', 'catsrcname', 'catid', 'catname', 'ra', 'decl',
+                                'ra_err', 'decl_err', 'dist_arcsec', 'assoc_r']
+    result_dicts = []
+    for result in results:
+        result_dicts.append(dict(zip(descriptions, result)))
+    return result_dicts
 
 

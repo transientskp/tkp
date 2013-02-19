@@ -1,22 +1,3 @@
-import re
-
-
-def parse_fits(fitsfile):
-    """
-    Extract relevant info from headers in FITS file.
-    This should go into the DataAccessor code some day
-    """
-    history = fitsfile.header['HISTORY*']
-    xy_line = [i for i in history.values() if 'cellx' in i][0]
-    extracted = re.search(r"cellx='(?P<x>\d+).*celly='(?P<y>\d+)", xy_line).groupdict()
-    data = {}
-    data['cellsize'] = int(extracted['x'])
-    data['bmaj'] = fitsfile.header['BMAJ']
-    data['bmin'] = fitsfile.header['BMIN']
-    data['nx'] = fitsfile.header['NAXIS1']
-    data['ny'] = fitsfile.header['NAXIS2']
-    return data
-
 
 def undersampled(semibmaj, semibmin):
     """

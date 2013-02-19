@@ -8,9 +8,8 @@ mostly involving the 'transient' table.
 import logging
 import monetdb.sql as db
 from tkp.config import config
-from . import generic
 from scipy.stats import chisqprob
-from tkp.database import DataBase
+from tkp.database.database import DataBase
 from tkp.classification.transient import Transient
 
 logger = logging.getLogger(__name__)

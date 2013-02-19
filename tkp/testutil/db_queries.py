@@ -73,9 +73,9 @@ def count_associated_sources(conn, dataset):
 
 
 def dataset_images(dataset_id, database=None):
-    database = database or DataBase()
     q = "SELECT id FROM image WHERE dataset=%(dataset)s LIMIT 1"
-    cursor = query(database.connection, q, {'dataset': dataset_id})
+    args = {'dataset': dataset_id}
+    cursor = query(q, args)
     image_ids = [x[0] for x in cursor.fetchall()]
     return image_ids
 

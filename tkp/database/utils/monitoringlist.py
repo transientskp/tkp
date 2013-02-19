@@ -4,13 +4,11 @@ A collection of back end subroutines (mostly SQL queries).
 This module contains the routines to deal with flagging and monitoring 
 of transient candidates, mostly involving the monitoringlist.
 """
-import math
 import logging
 import monetdb.sql as db
 from tkp.config import config
 from . import general
-import tkp.database
-from tkp.database import DataBase
+from tkp.database.database import DataBase
 from collections import namedtuple
 
 logger = logging.getLogger(__name__)

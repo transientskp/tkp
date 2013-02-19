@@ -4,7 +4,8 @@ import logging
 import warnings
 from lofarpipe.support.parset import parameterset
 import tkp.utility.accessors
-from tkp.database import DataBase, DataSet, Image
+from tkp.database.database import DataBase
+from tkp.database.orm import DataSet, Image
 from tkp.utility.accessors.dataaccessor import extract_metadata
 from tempfile import NamedTemporaryFile
 from pyrap.images import image as pyrap_image

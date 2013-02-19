@@ -10,10 +10,10 @@ To do:
 """
 import logging
 import numpy
-from tkp.database import DataBase
+from tkp.database.database import DataBase
 from tkp.classification.features import lightcurve as lcmod
 from tkp.classification.features import catalogs as catmod
-from tkp.database import ExtractedSource
+from tkp.database.orm import ExtractedSource
 
 logger = logging.getLogger(__name__)
 

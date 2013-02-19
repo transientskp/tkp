@@ -1,7 +1,7 @@
 import logging
 from collections import namedtuple
 import tkp.database
-from tkp.database import DataBase
+from tkp.database.database import DataBase
 
 logger = logging.getLogger(__name__)
 
@@ -50,10 +50,9 @@ def reject(imageid, reason, comment):
         reason: why is the image rejected, a defined in tkp.database.quality.reason
         comment: an optional comment with details about the reason
     """
-    database = DataBase()
     args = {'imageid': imageid, 'reason': reason, 'comment': comment}
     query = query_reject % args
-    tkp.database.query(database.connection, query, commit=True)
+    tkp.database.query(query, commit=True)
 
 
 def unreject(imageid):
@@ -62,9 +61,8 @@ def unreject(imageid):
         connection: A database connection object
         image: The image ID of the image to reject
     """
-    database = DataBase()
     query = query_unreject % {'image': imageid}
-    tkp.database.query(database.connection, query, commit=True)
+    tkp.database.query(query, commit=True)
 
 
 def isrejected(imageid):
@@ -75,9 +73,8 @@ def isrejected(imageid):
     returns:
         False if not rejected, a list of reason id's if rejected
     """
-    database = DataBase()
     query = query_isrejected % {'imageid': imageid}
-    cursor = tkp.database.query(database.connection, query)
+    cursor = tkp.database.query(query)
     results = cursor.fetchall()
     if len(results) > 0:
         return ["%s: %s" % row for row in results]

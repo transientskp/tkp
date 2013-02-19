@@ -1,6 +1,7 @@
 import logging
 import json
-from tkp.database import DataBase, DataSet
+from tkp.database.database import DataBase
+from tkp.database.orm import DataSet
 
 logger = logging.getLogger(__name__)
 

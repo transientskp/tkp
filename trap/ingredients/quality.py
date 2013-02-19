@@ -1,7 +1,6 @@
-
 import logging
 from lofarpipe.support.parset import parameterset
-from tkp.database import DataBase
+from tkp.database.database import DataBase
 from tkp.quality.statistics import rms_with_clipped_subregion
 from tkp.lofar.noise import noise_level
 import tkp.utility.accessors

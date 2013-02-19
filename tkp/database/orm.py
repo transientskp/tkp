@@ -113,19 +113,14 @@ database, using the ``id`` in the initializer::
     2000
     
 If an ``id`` is supplied, ``data`` is ignored.
-
-
-
-
 """
 
-from __future__ import with_statement
 import logging
 from . import utils as dbu
 import monetdb.sql as db
-from ..config import config
 from .database import ENGINE
 import tkp.database
+import tkp.database.quality
 from tkp.database.database import DataBase
 
 logger = logging.getLogger(__name__)
@@ -307,8 +302,7 @@ class DataSet(DBObject):
 
         if self._id is None:
             try:
-                self._id = dbu.insert_dataset(self.database.connection,
-                                              self._data['description'])
+                self._id = dbu.insert_dataset(self._data['description'])
             except self.database.Error, e:
                 logger.warn("insertion of DataSet() into the database failed")
                 raise
@@ -319,7 +313,7 @@ class DataSet(DBObject):
         dataset from the database. Implemented separately from update(),
         since normally this would be too much overhead"""
         query = "SELECT id FROM image WHERE dataset = %s ORDER BY id" % self._id
-        cursor = tkp.database.query(self.database.connection, query)
+        cursor = tkp.database.query(query)
         result = cursor.fetchall()
         image_ids = [row[0] for row in result]
         self.images = [Image(database=self.database, id=id) for id in image_ids]
@@ -412,8 +406,7 @@ class Image(DBObject):
                     self._data['deltax'] = None
                     self._data['deltay'] = None
                 # Insert a default image
-                self._id = dbu.insert_image(
-                    self.database.connection, self.dataset.id,
+                self._id = dbu.insert_image(self.dataset.id,
                     self._data['freq_eff'], self._data['freq_bw'],
                     self._data['taustart_ts'],self._data['tau_time'],
                     self._data['bsmaj'],self._data['bsmin'],  
@@ -534,4 +527,4 @@ class ExtractedSource(DBObject):
                 - database ID of this particular source
         """
 
-        return dbu.lightcurve(self.database.connection, self._id)
+        return dbu.lightcurve(self._id)

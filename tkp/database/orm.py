@@ -363,10 +363,7 @@ class DataSet(DBObject):
         """Search through the whole dataset for variable sources"""
         return dbu.select_variability_indices(self._id, freq_band, V_lim, eta_lim)
         
-    def mark_transient_candidates(self, single_epoch_threshold, combined_threshold):
-        """Find transient candidates and add to monitoringlist."""
-        candidates = self._find_transient_candidates(single_epoch_threshold, combined_threshold)
-        self._add_runcat_sources_to_monitoringlist([c['runcat'] for c in candidates])
+
 
     def add_manual_entry_to_monitoringlist(self, ra, dec):
         dbu.add_manual_entry_to_monitoringlist(self.database.connection, self.id, ra, dec)
@@ -414,8 +411,6 @@ class DataSet(DBObject):
         ###  --- This will require FoV information in database
         return thresholded_candidates
     
-    def _add_runcat_sources_to_monitoringlist(self, runcat_ids):
-        dbu.add_runcat_sources_to_monitoringlist(self.database.connection, self._id, runcat_ids)
 
 
 class Image(DBObject):

@@ -548,15 +548,15 @@ dataset).
     Values are calculated by the database from centre_ra and centre_decl. Not
     yet stored in table.
 
-**rb_maj** 
-    The major axis of the restoring beam, in arcsec. 
-    Value originates or is read from the CASA Main table in the imageinfor
-    subsection from the ``restoringbeam`` record. 
+**rb_smaj** 
+    The semi-major axis of the restoring beam, in degrees. 
+    Full major axis value originates or is read from the CASA Main table in the imageinfor
+    subsection from the ``restoringbeam`` record and is converted at db insertion time.
 
-**rb_min** 
-    The minor axis of the restoring beam, in arcsec. 
-    Value originates or is read from the CASA Main table in the imageinfor
-    subsection from the ``restoringbeam`` record. 
+**rb_smin** 
+    The semi-minor axis of the restoring beam, in degrees. 
+    Full minor axis value originates or is read from the CASA Main table in the imageinfor
+    subsection from the ``restoringbeam`` record and is converted at db insertion time.
 
 **rb_pa** 
     The position angle of the restoring beam (from north to east to the major

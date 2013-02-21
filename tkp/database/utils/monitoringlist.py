@@ -59,7 +59,7 @@ def get_userdetections(image_id, deRuiter_r, radius=0.03):
         raise
     return r
 
-def get_nulldetections(image_id, deRuiter_r, radius=0.03):
+def get_nulldetections(image_id, deRuiter_r):
     """Returns the runcat sources that do not have a counterpart in the 
     extractedsources of the current image.
 
@@ -94,12 +94,12 @@ def get_nulldetections(image_id, deRuiter_r, radius=0.03):
                                 AND x.image = i.id
                                 AND x.image = %(imgid)s
                                 AND i.dataset = r.dataset
-                                AND r.zone BETWEEN CAST(FLOOR(x.decl - %(radius)s) as INTEGER)
-                                               AND CAST(FLOOR(x.decl + %(radius)s) as INTEGER)
-                                AND r.wm_decl BETWEEN x.decl - %(radius)s
-                                                  AND x.decl + %(radius)s
-                                AND r.wm_ra BETWEEN x.ra - alpha(%(radius)s, x.decl)
-                                                AND x.ra + alpha(%(radius)s, x.decl)
+                                AND r.zone BETWEEN CAST(FLOOR(x.decl - i.rb_smaj) AS INTEGER)
+                                                 AND CAST(FLOOR(x.decl + i.rb_smaj) AS INTEGER)
+                                AND r.wm_decl BETWEEN x.decl - i.rb_smaj
+                                                    AND x.decl + i.rb_smaj
+                                AND r.wm_ra BETWEEN x.ra - alpha(i.rb_smaj, x.decl)
+                                                  AND x.ra + alpha(i.rb_smaj, x.decl)
                                 AND SQRT(  (x.ra * COS(RADIANS(x.decl)) - r.wm_ra * COS(RADIANS(r.wm_decl)))
                                          * (x.ra * COS(RADIANS(x.decl)) - r.wm_ra * COS(RADIANS(r.wm_decl)))
                                          / (x.ra_err * x.ra_err + r.wm_ra_err * r.wm_ra_err) 
@@ -109,7 +109,7 @@ def get_nulldetections(image_id, deRuiter_r, radius=0.03):
                             )
         ;
         """
-        qry_params = {'imgid':image_id, 'radius': radius, 'drrad': deRuiter_red}
+        qry_params = {'imgid':image_id, 'drrad': deRuiter_red}
         cursor.execute(query, qry_params)
         results = zip(*cursor.fetchall())
         if not AUTOCOMMIT:
@@ -125,7 +125,7 @@ def get_nulldetections(image_id, deRuiter_r, radius=0.03):
         raise
     return r
 
-def get_monsources(image_id, deRuiter_r, radius=0.03):
+def get_monsources(image_id, deRuiter_r):
     """Returns the user-entry sources and no-counterpart sources from 
     monitoringlist
     
@@ -146,7 +146,7 @@ def get_monsources(image_id, deRuiter_r, radius=0.03):
           FROM monitoringlist m1
               ,runningcatalog r1
               ,image i1
-         WHERE i1.id = %s
+         WHERE i1.id = %(imgid)s
            AND i1.dataset = m1.dataset
            AND m1.dataset = r1.dataset 
            AND m1.runcat = r1.id
@@ -157,41 +157,38 @@ def get_monsources(image_id, deRuiter_r, radius=0.03):
                                   ,extractedsource x
                                   ,runningcatalog r
                                   ,image i
-                             WHERE i.id = %s
+                             WHERE i.id = %(imgid)s
                                AND i.id = x.image
-                               AND x.image = %s
+                               AND x.image = %(imgid)s
                                AND i.dataset = m.dataset
                                AND m.runcat = r.id
                                AND m.userentry = FALSE
-                               AND r.zone BETWEEN CAST(FLOOR(x.decl - %s) as INTEGER)
-                                              AND CAST(FLOOR(x.decl + %s) as INTEGER)
-                               AND r.wm_decl BETWEEN x.decl - %s
-                                                 AND x.decl + %s
-                               AND r.wm_ra BETWEEN x.ra - alpha(%s, x.decl)
-                                               AND x.ra + alpha(%s, x.decl)
+                               AND r.zone BETWEEN CAST(FLOOR(x.decl - i.rb_smaj) AS INTEGER)
+                                              AND CAST(FLOOR(x.decl + i.rb_smaj) AS INTEGER)
+                               AND r.wm_decl BETWEEN x.decl - i.rb_smaj
+                                                 AND x.decl + i.rb_smaj
+                               AND r.wm_ra BETWEEN x.ra - alpha(i.rb_smaj, x.decl)
+                                               AND x.ra + alpha(i.rb_smaj, x.decl)
                                AND SQRT(  (x.racosdecl - r.wm_ra * COS(RADIANS(r.wm_decl)))
                                         * (x.racosdecl - r.wm_ra * COS(RADIANS(r.wm_decl)))
                                         / (x.ra_err * x.ra_err + r.wm_ra_err * r.wm_ra_err)
                                        + (x.decl - r.wm_decl) * (x.decl - r.wm_decl)
                                         / (x.decl_err * x.decl_err + r.wm_decl_err * r.wm_decl_err)                            
-                                       ) < %s
+                                       ) < %(dr_deg)s
                             )
         """
-        cursor.execute(query, (image_id, image_id, image_id,
-                                radius, radius, radius,
-                                radius, radius, radius, deRuiter_r / 3600.))
+        qry_params = {'imgid':image_id, 'dr_deg':deRuiter_r / 3600.}
+        cursor.execute(query, qry_params)
         results = zip(*cursor.fetchall())
         if not AUTOCOMMIT:
             conn.commit()
         cursor.close()
-        q = query % (image_id, image_id, image_id,
-                        radius, radius, radius, radius, radius, radius,
-                        deRuiter_r / 3600.)
+        q = query % qry_params
         r = []
         if len(results) != 0:
             r = zip(list(results[1]), list(results[2]))
     except db.Error, e:
-        query = query % (image_id, image_id, image_id, radius, radius, radius, radius, radius, radius, deRuiter_r / 3600.)
+        query = query % qry_params
         logger.warn("Query failed:\n%s", query)
         raise
     return r

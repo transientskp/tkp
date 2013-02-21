@@ -20,10 +20,6 @@ class TestOne2One(unittest.TestCase):
 
     def tearDown(self):
         """remove all stuff after the test has been run"""
-        #self.database.connection.rollback()
-        #self.database.execute("delete from assocxtrsource")
-        #self.database.execute("delete from runningcatalog_flux")
-        #self.database.execute("delete from runningcatalog")
         self.database.close()
 
     def test_one2one(self):
@@ -39,26 +35,9 @@ class TestOne2One(unittest.TestCase):
             steady_srcs.append(src)
 
         for im in im_params:
-            #image = tkpdb.Image(database=self.database, dataset=dataset, data=im)
-            imageid = dbgen.insert_image(self.database.connection,
-                                         dataset.id,
-                                         im['freq_eff'], 
-                                         im['freq_bw'], 
-                                         im['taustart_ts'], 
-                                         im['tau_time'],
-                                         im['beam_smaj_pix'], 
-                                         im['beam_smin_pix'], 
-                                         im['beam_pa_rad'], 
-                                         im['deltax'], 
-                                         im['deltay'], 
-                                         im['url'],
-                                         im['centre_ra'], 
-                                         im['centre_decl'], 
-                                         im['xtr_radius']
-                                         )
-            #image.insert_extracted_sources(steady_srcs)
-            dbgen.insert_extracted_sources(imageid, steady_srcs, 'blind')
-            tkpdb.utils.associate_extracted_sources(imageid, deRuiter_r = 3.717)
+            image = tkpdb.Image(database=self.database, dataset=dataset, data=im)
+            dbgen.insert_extracted_sources(image.id, steady_srcs, 'blind')
+            tkpdb.utils.associate_extracted_sources(image.id, deRuiter_r = 3.717)
 
         # Check runningcatalog, runningcatalog_flux, assocxtrsource
         query = """\
@@ -179,10 +158,6 @@ class TestOne2Many(unittest.TestCase):
 
     def tearDown(self):
         """remove all stuff after the test has been run"""
-        #self.database.connection.rollback()
-        #self.database.execute("delete from assocxtrsource")
-        #self.database.execute("delete from runningcatalog_flux")
-        #self.database.execute("delete from runningcatalog")
         self.database.close()
 
     def test_one2many(self):
@@ -191,22 +166,8 @@ class TestOne2Many(unittest.TestCase):
         im_params = db_subs.example_dbimage_datasets(n_images)
 
         # image 1
-        imageid1 = dbgen.insert_image(self.database.connection,
-                                     dataset.id,
-                                     im_params[0]['freq_eff'], 
-                                     im_params[0]['freq_bw'], 
-                                     im_params[0]['taustart_ts'], 
-                                     im_params[0]['tau_time'],
-                                     im_params[0]['beam_smaj_pix'], 
-                                     im_params[0]['beam_smin_pix'], 
-                                     im_params[0]['beam_pa_rad'], 
-                                     im_params[0]['deltax'], 
-                                     im_params[0]['deltay'], 
-                                     im_params[0]['url'],
-                                     im_params[0]['centre_ra'], 
-                                     im_params[0]['centre_decl'], 
-                                     im_params[0]['xtr_radius']
-                                     )
+        image = tkpdb.Image(database=self.database, dataset=dataset, data=im_params[0])
+        imageid1 = image.id
         src = []
         # 1 source
         src.append(db_subs.example_extractedsource_tuple(ra=123.1235, dec=10.55,
@@ -269,22 +230,8 @@ class TestOne2Many(unittest.TestCase):
         #TODO: Add runcat_flux test
 
         # image 2
-        imageid2 = dbgen.insert_image(self.database.connection,
-                                     dataset.id,
-                                     im_params[1]['freq_eff'], 
-                                     im_params[1]['freq_bw'], 
-                                     im_params[1]['taustart_ts'], 
-                                     im_params[1]['tau_time'],
-                                     im_params[1]['beam_smaj_pix'], 
-                                     im_params[1]['beam_smin_pix'], 
-                                     im_params[1]['beam_pa_rad'], 
-                                     im_params[1]['deltax'], 
-                                     im_params[1]['deltay'], 
-                                     im_params[1]['url'],
-                                     im_params[1]['centre_ra'], 
-                                     im_params[1]['centre_decl'], 
-                                     im_params[1]['xtr_radius']
-                                     )
+        image = tkpdb.Image(database=self.database, dataset=dataset, data=im_params[1])
+        imageid2 = image.id
         src = []
         # 2 sources (located close to source 1, catching the 1-to-many case
         src.append(db_subs.example_extractedsource_tuple(ra=123.12349, dec=10.549,
@@ -409,10 +356,6 @@ class TestMany2One(unittest.TestCase):
 
     def tearDown(self):
         """remove all stuff after the test has been run"""
-        #self.database.connection.rollback()
-        #self.database.execute("delete from assocxtrsource")
-        #self.database.execute("delete from runningcatalog_flux")
-        #self.database.execute("delete from runningcatalog")
         self.database.close()
 
     def test_many2one(self):
@@ -421,22 +364,8 @@ class TestMany2One(unittest.TestCase):
         im_params = db_subs.example_dbimage_datasets(n_images)
 
         # image 1
-        imageid1 = dbgen.insert_image(self.database.connection,
-                                     dataset.id,
-                                     im_params[0]['freq_eff'], 
-                                     im_params[0]['freq_bw'], 
-                                     im_params[0]['taustart_ts'], 
-                                     im_params[0]['tau_time'],
-                                     im_params[0]['beam_smaj_pix'], 
-                                     im_params[0]['beam_smin_pix'], 
-                                     im_params[0]['beam_pa_rad'], 
-                                     im_params[0]['deltax'], 
-                                     im_params[0]['deltay'], 
-                                     im_params[0]['url'],
-                                     im_params[0]['centre_ra'], 
-                                     im_params[0]['centre_decl'], 
-                                     im_params[0]['xtr_radius']
-                                     )
+        image = tkpdb.Image(database=self.database, dataset=dataset, data=im_params[0])
+        imageid1 = image.id
         src = []
         # 2 sources (located close together, so the catching the many-to-1 case in next image
         src.append(db_subs.example_extractedsource_tuple(ra=122.985, dec=10.5,
@@ -474,22 +403,8 @@ class TestMany2One(unittest.TestCase):
         self.assertEqual(len(im1src), len(src))
         
         # image 2
-        imageid2 = dbgen.insert_image(self.database.connection,
-                                     dataset.id,
-                                     im_params[1]['freq_eff'], 
-                                     im_params[1]['freq_bw'], 
-                                     im_params[1]['taustart_ts'], 
-                                     im_params[1]['tau_time'],
-                                     im_params[1]['beam_smaj_pix'], 
-                                     im_params[1]['beam_smin_pix'], 
-                                     im_params[1]['beam_pa_rad'], 
-                                     im_params[1]['deltax'], 
-                                     im_params[1]['deltay'], 
-                                     im_params[1]['url'],
-                                     im_params[1]['centre_ra'], 
-                                     im_params[1]['centre_decl'], 
-                                     im_params[1]['xtr_radius']
-                                     )
+        image = tkpdb.Image(database=self.database, dataset=dataset, data=im_params[1])
+        imageid2 = image.id
         src = []
         # 1 source
         src.append(db_subs.example_extractedsource_tuple(ra=123.0, dec=10.5,
@@ -597,10 +512,6 @@ class TestMany2Many(unittest.TestCase):
 
     def tearDown(self):
         """remove all stuff after the test has been run"""
-        #self.database.connection.rollback()
-        #self.database.execute("delete from assocxtrsource")
-        #self.database.execute("delete from runningcatalog_flux")
-        #self.database.execute("delete from runningcatalog")
         self.database.close()
 
     def test_many2many(self):
@@ -609,24 +520,8 @@ class TestMany2Many(unittest.TestCase):
         im_params = db_subs.example_dbimage_datasets(n_images)
 
         # image 1
-        print "im_params[0] =",im_params[0]
-        print "im_params[1] =",im_params[1]
-        imageid1 = dbgen.insert_image(self.database.connection,
-                                      dataset.id,
-                                      im_params[1]['freq_eff'], 
-                                      im_params[1]['freq_bw'], 
-                                      im_params[1]['taustart_ts'], 
-                                      im_params[1]['tau_time'],
-                                      im_params[1]['beam_smaj_pix'], 
-                                      im_params[1]['beam_smin_pix'], 
-                                      im_params[1]['beam_pa_rad'], 
-                                      im_params[1]['deltax'], 
-                                      im_params[1]['deltay'], 
-                                      im_params[1]['url'],
-                                      im_params[1]['centre_ra'], 
-                                      im_params[1]['centre_decl'], 
-                                      im_params[1]['xtr_radius']
-                                      )
+        image = tkpdb.Image(database=self.database, dataset=dataset, data=im_params[0])
+        imageid1 = image.id
         src1 = []
         # 2 sources (located relatively close together, so the catching the many-to-1 case in next image
         src1.append(db_subs.example_extractedsource_tuple(ra=122.985, dec=10.5,
@@ -665,22 +560,8 @@ class TestMany2Many(unittest.TestCase):
         self.assertEqual(len(im1src), len(src1))
         
         # image 2
-        imageid2 = dbgen.insert_image(self.database.connection,
-                                      dataset.id,
-                                      im_params[0]['freq_eff'], 
-                                      im_params[0]['freq_bw'], 
-                                      im_params[0]['taustart_ts'], 
-                                      im_params[0]['tau_time'],
-                                      im_params[0]['beam_smaj_pix'], 
-                                      im_params[0]['beam_smin_pix'], 
-                                      im_params[0]['beam_pa_rad'], 
-                                      im_params[0]['deltax'], 
-                                      im_params[0]['deltay'], 
-                                      im_params[0]['url'],
-                                      im_params[0]['centre_ra'], 
-                                      im_params[0]['centre_decl'], 
-                                      im_params[0]['xtr_radius']
-                                      )
+        image = tkpdb.Image(database=self.database, dataset=dataset, data=im_params[1])
+        imageid2 = image.id
         src2 = []
         # 2 sources, where both can be associated with both from image 1
         src2.append(db_subs.example_extractedsource_tuple(ra=123.0, dec=10.485,

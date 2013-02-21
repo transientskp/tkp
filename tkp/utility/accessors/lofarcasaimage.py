@@ -96,7 +96,9 @@ def parse_data(table, plane=0):
 
 def parse_beam(table, wcs):
     """
-    Return 2 tuples, the beam parameters in degrees and a tuple with pixel size
+    Return 2 tuples:
+    - the beam parameters in degrees (major/minor/pa)
+    - pixel size in degrees per pixel (xscale, yscale)
     """
     def ensure_degrees(quantity):
         if quantity['unit'] == 'deg':

@@ -142,39 +142,23 @@ def insert_image(dataset, freq_eff, freq_bw, taustart_ts, tau_time,
 
 
 def insert_extracted_sources(image_id, results, extract):
-    """Insert all extracted sources
-
-    Insert the sources that were detected by the Source Extraction
-    procedures into the extractedsources table.
+    """Insert all extracted sources with their properties that were detected by
+    the Source Extraction procedures into the extractedsources table.
 
     Therefore, we use a temporary table containing the "raw" detections,
     from which the sources will then be inserted into extractedsources.
-    
+
     (ra , dec , [deg]
-    ra_err, dec_err, [deg, but converted to as in db] 
+    ra_err, dec_err, [deg, but converted to as in db]
     peak, peak_err,  [Jy]
     flux, flux_err,    [Jy]
     significance level,
     beam major width , beam minor width, [as]
     beam parallactic angle).  [deg]
     extract tells whether the source results are originating from:
-    0: blind source extraction 
+    0: blind source extraction
     1: from forced fits at null detection locations
     2: from forced fits for monitoringlist sources
-    """
-    
-    #To do: Figure out a saner method of passing the results around
-    # (Namedtuple for starters?) 
-    if len(results) == 0:
-        logger.info("No extract_type=%s sources added to extractedsource for image %s" \
-                            % (extract, image_id))
-    else:
-        _insert_extractedsources(image_id, results, extract)
-
-#TO DO(?): merge the private function below into the public function above?
-
-def _insert_extractedsources(image_id, results, extract):
-    """Insert all extracted sources with their properties
 
     The content of results is in the following sequence:
     (ra, dec, ra_fit_err, dec_fit_err, peak_flux, peak_flux_err, 
@@ -188,8 +172,7 @@ def _insert_extractedsources(image_id, results, extract):
     ra_sys_err and dec_sys_err represent the systematic errors in ra and declination, 
     and are in arcsec!
     ra_err^2 = ra_sys_err^2 + ra_fit_err^2, idem for decl_err.
-    
-    
+
     For all extracted sources additional parameters are calculated,
     and appended to the sourcefinder data. Appended and converted are:
     - the image id to which the extracted sources belong to 
@@ -200,8 +183,12 @@ def _insert_extractedsources(image_id, results, extract):
     - the Cartesian coordinates of the source position
     - ra * cos(radians(decl)), this is very often being used in 
       source-distance calculations
-
     """
+    if not len(results):
+        logger.info("No extract_type=%s sources added to extractedsource for"
+                    " image %s" % (extract, image_id))
+        return
+
     xtrsrc = []
     for src in results:
         r = list(src)
@@ -256,22 +243,23 @@ INSERT INTO extractedsource
   )
 VALUES
 """ + ",".join(values)
-    tkp.database.query(query)
-    if len(values) == 0:
-            logger.info("No forced-fit sources added to extractedsource for image %s" \
-                        % (image_id,))
+    cursor = tkp.database.query(query, commit=True)
+    insert_num = cursor.rowcount
+    if insert_num == 0:
+            logger.info("No forced-fit sources added to extractedsource for "
+                        "image %s" % (image_id,))
     elif extract == 'blind':
-        logger.info("Inserted %d sources in extractedsource for image %s" \
-                    % (len(values), image_id))
+        logger.info("Inserted %d sources in extractedsource for image %s" %
+                    (insert_num, image_id))
     elif extract == 'ff_nd':
-        logger.info("Inserted %d forced-fit null detections in extractedsource for image %s" \
-                    % (len(values), image_id))
+        logger.info("Inserted %d forced-fit null detections in extractedsource"
+                    " for image %s" % (insert_num, image_id))
     elif extract == 'ff_mon':
-        logger.info("Inserted %d forced-fit monitoringsources in extractedsource for image %s" \
-                    % (len(values), image_id))
+        logger.info("Inserted %d forced-fit monitoringsources in "
+                    "extractedsource for image %s"  % (insert_num, image_id))
     elif extract == 'ff_ud':
-        logger.info("Inserted %d forced-fit user entries in extractedsource for image %s" \
-                    % (len(values), image_id))
+        logger.info("Inserted %d forced-fit user entries in extractedsource "
+                    "for image %s" % (insert_num, image_id))
 
 
 def lightcurve(xtrsrcid):
@@ -295,7 +283,7 @@ def lightcurve(xtrsrcid):
     return cursor.fetchall()
 
 
-def match_nearests_in_catalogs(conn, runcatid, radius, deRuiter_r):
+def match_nearests_in_catalogs(runcatid, radius, deRuiter_r):
     """Match a source with position ra, decl with catalogedsources
     within radius
 

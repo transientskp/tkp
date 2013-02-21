@@ -8,26 +8,15 @@ from tkp.testutil import db_subs
 from tkp.testutil.decorators import requires_database
 
 
+@requires_database()
 class TestOne2One(unittest.TestCase):
     """
     These tests will check the 1-to-1 source associations, i.e. an extractedsource
     has exactly one counterpart in the runningcatalog
     """
-    @requires_database()
-    def setUp(self):
-
-        self.database = tkpdb.DataBase()
-
-    def tearDown(self):
-        """remove all stuff after the test has been run"""
-        #self.database.connection.rollback()
-        #self.database.execute("delete from assocxtrsource")
-        #self.database.execute("delete from runningcatalog_flux")
-        #self.database.execute("delete from runningcatalog")
-        self.database.close()
 
     def test_one2one(self):
-        dataset = tkpdb.DataSet(database=self.database, data={'description': 'assoc test set: 1-1'})
+        dataset = tkpdb.DataSet(data={'description': 'assoc test set: 1-1'})
         n_images = 8
         im_params = db_subs.example_dbimage_datasets(n_images)
 
@@ -39,7 +28,7 @@ class TestOne2One(unittest.TestCase):
             steady_srcs.append(src)
 
         for im in im_params:
-            image = tkpdb.Image(database=self.database, dataset=dataset, data=im)
+            image = tkpdb.Image(dataset=dataset, data=im)
             image.insert_extracted_sources(steady_srcs)
             tkpdb.utils.associate_extracted_sources(image.id, deRuiter_r = 3.717)
 
@@ -56,8 +45,8 @@ class TestOne2One(unittest.TestCase):
           FROM runningcatalog
          WHERE dataset = %s
         """
-        self.database.cursor.execute(query, (dataset.id,))
-        runcat = zip(*self.database.cursor.fetchall())
+        cursor = tkpdb.query(query, (dataset.id,))
+        runcat = zip(*cursor.fetchall())
         self.assertNotEqual(len(runcat), 0)
         dp = runcat[0]
         wm_ra = runcat[1]
@@ -97,8 +86,8 @@ class TestOne2One(unittest.TestCase):
            AND r.dataset = %s
         ORDER BY a.xtrsrc
         """
-        self.database.cursor.execute(query, (dataset.id,))
-        assoc = zip(*self.database.cursor.fetchall())
+        cursor = tkpdb.query(query, (dataset.id,))
+        assoc = zip(*cursor.fetchall())
         self.assertNotEqual(len(assoc), 0)
         aruncat = assoc[0]
         axtrsrc = assoc[1]
@@ -112,8 +101,8 @@ class TestOne2One(unittest.TestCase):
            AND i.dataset = %s
         ORDER BY x.id
         """
-        self.database.cursor.execute(query, (dataset.id,))
-        xtrsrcs = zip(*self.database.cursor.fetchall())
+        cursor = tkpdb.query(query, (dataset.id,))
+        xtrsrcs = zip(*cursor.fetchall())
         self.assertNotEqual(len(xtrsrcs), 0)
         xtrsrc = xtrsrcs[0]
         self.assertEqual(len(xtrsrc), n_images * n_steady_srcs)
@@ -135,8 +124,8 @@ class TestOne2One(unittest.TestCase):
          WHERE r.id = rf.runcat 
            AND r.dataset = %s
         """
-        self.database.cursor.execute(query, (dataset.id,))
-        fluxes = zip(*self.database.cursor.fetchall())
+        cursor = tkpdb.query(query, (dataset.id,))
+        fluxes = zip(*cursor.fetchall())
         self.assertNotEqual(len(fluxes), 0)
         f_datapoints = fluxes[2]
         avg_f_peak = fluxes[3]
@@ -149,6 +138,7 @@ class TestOne2One(unittest.TestCase):
         self.assertEqual(avg_f_peak_weight[0], 1./steady_srcs[0].peak_err**2)
         self.assertEqual(avg_f_int[0], steady_srcs[0].flux)
         self.assertEqual(avg_f_int_weight[0], 1./steady_srcs[0].flux_err**2)
+
 
 class TestOne2Many(unittest.TestCase):
     """

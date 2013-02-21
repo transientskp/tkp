@@ -321,7 +321,7 @@ INSERT INTO temprunningcatalog
 """
     deRuiter_red = float(deRuiter_r) / 3600.
     args = {'image_id': image_id, 'radius': radius, 'deRuiter': deRuiter_red}
-    tkp.database.query(query, args, True)
+    tkp.database.query(query, args, commit=True)
 
 
 def _flag_many_to_many_tempruncat():
@@ -394,7 +394,7 @@ UPDATE temprunningcatalog
               )
 ;
 """
-    tkp.database.query(query)
+    tkp.database.query(query, commit=True)
 
 
 def _insert_1_to_many_runcat():
@@ -1067,7 +1067,7 @@ UPDATE runningcatalog_flux
    AND band = %s
    AND stokes = %s
 """
-    tkp.database.query(query, tuple(result))
+    tkp.database.query(query, tuple(result), commit=True)
 
 
 def _insert_new_runcat(image_id):

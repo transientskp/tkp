@@ -136,13 +136,18 @@ def insert_dataset(conn, description):
 
 def insert_image(conn,
                  dataset, freq_eff, freq_bw, taustart_ts, tau_time,
-                 beam_maj, beam_min, beam_pa, deltax, deltay, url,
+                 beam_smaj_pix, beam_smin_pix, beam_pa_rad, deltax, deltay, url,
                  centre_ra, centre_decl, xtr_radius
                  ):
     """Insert an image for a given dataset with the column values
     given in the argument list.
 
     Args:
+     - restoring beam: beam_smaj_pix, beam_smin_pix are the semimajor and
+       semiminor axes in pixel values; beam_pa_rad is the position angle
+       in radians.
+       They all will be converted to degrees, because that is unit used in 
+       the database.
      - centre_ra, centre_decl, xtr_radius:
        These define the region within ``xtr_radius`` degrees of the
        field centre, that will be used for source extraction.
@@ -151,10 +156,32 @@ def insert_image(conn,
        Note centre_ra, centre_decl, extracion_radius should all be in degrees.
 
     """
-    query = "SELECT insertImage(%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
-    arguments = (dataset, tau_time, freq_eff, freq_bw, taustart_ts,
-                 beam_maj, beam_min, beam_pa, deltax, deltay, url,
-                 centre_ra, centre_decl, xtr_radius)
+    query = """\
+    SELECT insertImage(%(dataset)s
+                      ,%(tau_time)s
+                      ,%(freq_eff)s
+                      ,%(freq_bw)s
+                      ,%(taustart_ts)s
+                      ,%(rb_smaj)s
+                      ,%(rb_smin)s
+                      ,%(rb_pa)s
+                      ,%(deltax)s
+                      ,%(deltay)s
+                      ,%(url)s
+                      ,%(centre_ra)s
+                      ,%(centre_decl)s
+                      ,%(xtr_radius)s
+                      )
+    """
+    arguments = {'dataset': dataset, 'tau_time': tau_time, 'freq_eff': freq_eff, 
+                 'freq_bw': freq_bw, 'taustart_ts': taustart_ts,
+                 'rb_smaj': beam_smaj_pix * math.fabs(deltax),
+                 'rb_smin': beam_smin_pix * math.fabs(deltay),
+                 'rb_pa': 180 * beam_pa_rad / math.pi, 
+                 'deltax': deltax, 'deltay': deltay, 
+                 'url': url,
+                 'centre_ra': centre_ra, 'centre_decl': centre_decl, 
+                 'xtr_radius': xtr_radius}
     cursor = tkp.database.query(conn, query, arguments, commit=True)
     image_id = cursor.fetchone()[0]
     return image_id

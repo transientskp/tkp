@@ -11,11 +11,11 @@ CREATE TABLE image
   ,freq_bw DOUBLE NULL
   ,taustart_ts TIMESTAMP NOT NULL
   ,skyrgn INT NOT NULL
-  ,bmaj_syn DOUBLE NULL
-  ,bmin_syn DOUBLE NULL
-  ,bpa_syn DOUBLE NULL
-  ,deltax DOUBLE NULL
-  ,deltay DOUBLE NULL
+  ,rb_smaj DOUBLE NOT NULL
+  ,rb_smin DOUBLE NOT NULL
+  ,rb_pa DOUBLE NOT NULL
+  ,deltax DOUBLE NOT NULL
+  ,deltay DOUBLE NOT NULL
   ,fwhm_arcsec DOUBLE NULL
   ,fov_degrees DOUBLE NULL
   ,url VARCHAR(1024) NULL

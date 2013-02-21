@@ -32,7 +32,9 @@ class TestOne2One(unittest.TestCase):
             image.insert_extracted_sources(steady_srcs)
             tkpdb.utils.associate_extracted_sources(image.id, deRuiter_r = 3.717)
 
-        # Check runningcatalog, runningcatalog_flux, assocxtrsource
+        # Check runningcatalog, runningcatalog_flux, assocxtrsource.
+        # note that the order of insertions is not garanteed, so we ORDER by
+        # wm_RA
         query = """\
         SELECT datapoints
               ,wm_ra
@@ -44,6 +46,7 @@ class TestOne2One(unittest.TestCase):
               ,z
           FROM runningcatalog
          WHERE dataset = %s
+        ORDER BY wm_ra
         """
         cursor = tkpdb.query(query, (dataset.id,))
         runcat = zip(*cursor.fetchall())

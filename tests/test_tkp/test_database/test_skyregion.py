@@ -124,7 +124,7 @@ class TestSkyRegionAssociation(unittest.TestCase):
                          'assocskyrgn', where={'skyrgn':image2._data['skyrgn']})
         self.assertEqual(len(assocs), 0)
 
-#    @unittest.skip("Skipping")
+    @unittest.skip("TODO: This test failes due to issue #4213")
     def test_new_runcat_insertion(self):
         """Here we test the association logic executed upon insertion of a 
         new runningcatalog source. 
@@ -182,6 +182,7 @@ class TestSkyRegionAssociation(unittest.TestCase):
 
         self.assertEqual(len(im0_assocs), 1)
         self.assertEqual(im0_assocs[0]['runcat'], runcats[0]['id'])
+
 
 class TestOneToManyAssocUpdates(unittest.TestCase):
     """Check assocsky updates are made correctly when the runningcatalog forks.

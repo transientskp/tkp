@@ -80,10 +80,15 @@ def example_dbimage_datasets(n_images):
                       'freq_eff':140e6,
                       'freq_bw':2e6,
                       'taustart_ts':starttime,
+                      'beam_smaj_pix': float(2.7),
+                      'beam_smin_pix': float(2.3),
+                      'beam_pa_rad': float(1.7),
+                      'deltax': float(-0.01111),
+                      'deltay': float(0.01111),
                       'url':testdata.fits_file, # just an arbitrary existing fits file
-                      'centre_ra': 90,
-                      'centre_decl': 45,
-                      'xtr_radius' : 3
+                      'centre_ra': 90.,
+                      'centre_decl': 45.,
+                      'xtr_radius' : 3.
                     }
 
     im_params = []

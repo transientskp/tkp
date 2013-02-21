@@ -138,8 +138,7 @@ def _empty_temprunningcatalog(conn):
     finally:
         cursor.close()
 
-
-def _insert_temprunningcatalog(conn, image_id, deRuiter_r, radius=0.03):
+def _insert_temprunningcatalog(conn, image_id, deRuiter_r):
     """Select matched sources
 
     Here we select the extractedsource that have a positional match
@@ -308,9 +307,9 @@ INSERT INTO temprunningcatalog
                 ,x0.f_peak_err
                 ,x0.f_int
                 ,x0.f_int_err
-                ,image.dataset
-                ,image.band
-                ,image.stokes
+                ,i0.dataset
+                ,i0.band
+                ,i0.stokes
                 ,rc0.datapoints + 1 AS datapoints
                 ,(datapoints * rc0.avg_wra + x0.ra /(x0.ra_err * x0.ra_err) )
                  /
@@ -343,17 +342,17 @@ INSERT INTO temprunningcatalog
                  / (datapoints + 1) AS avg_weight_decl
             FROM extractedsource x0
                 ,runningcatalog rc0
-                ,image
-           WHERE image.id = %s
-             AND x0.image = image.id
+                ,image i0
+           WHERE i0.id = %s
+             AND x0.image = i0.id
              AND x0.image = %s
-             AND image.dataset = rc0.dataset
-             AND rc0.zone BETWEEN CAST(FLOOR(x0.decl - %s) as INTEGER)
-                                 AND CAST(FLOOR(x0.decl + %s) as INTEGER)
-             AND rc0.wm_decl BETWEEN x0.decl - %s
-                                    AND x0.decl + %s
-             AND rc0.wm_ra BETWEEN x0.ra - alpha(%s, x0.decl)
-                                  AND x0.ra + alpha(%s, x0.decl)
+             AND i0.dataset = rc0.dataset
+             AND rc0.zone BETWEEN CAST(FLOOR(x0.decl - i0.rb_smaj) AS INTEGER)
+                              AND CAST(FLOOR(x0.decl + i0.rb_smaj) AS INTEGER)
+             AND rc0.wm_decl BETWEEN x0.decl - i0.rb_smaj
+                                 AND x0.decl + i0.rb_smaj
+             AND rc0.wm_ra BETWEEN x0.ra - alpha(i0.rb_smaj, x0.decl)
+                               AND x0.ra + alpha(i0.rb_smaj, x0.decl)
              AND SQRT(  (x0.ra * COS(RADIANS(x0.decl)) - rc0.wm_ra * COS(RADIANS(rc0.wm_decl)))
                       * (x0.ra * COS(RADIANS(x0.decl)) - rc0.wm_ra * COS(RADIANS(rc0.wm_decl)))
                       / (x0.ra_err * x0.ra_err + rc0.wm_ra_err * rc0.wm_ra_err)
@@ -366,16 +365,12 @@ INSERT INTO temprunningcatalog
          AND t0.band = rf0.band
          AND t0.stokes = rf0.stokes
 """
-        cursor.execute(query, (image_id, image_id,
-                                radius, radius, radius, radius,
-                                radius, radius, deRuiter_red))
+        cursor.execute(query, (image_id, image_id, deRuiter_red))
         if not AUTOCOMMIT:
             conn.commit()
     except db.Error, e:
-        q = query % (image_id, image_id,
-                        radius, radius, radius, radius,
-                        radius, radius, deRuiter_red)
-        logger.warn("Failed on query\n%s." % q)
+        q = query % (image_id, image_id, deRuiter_red)
+        logger.warn("Failed on query: \n%s" % q)
         raise
     finally:
         cursor.close()
@@ -1886,14 +1881,17 @@ def _insert_cat_assocs(conn, image_id, radius, deRuiter_r):
                                 * SQRT(x0.decl_err * x0.decl_err + c0.decl_err * c0.decl_err) * %s)
                       ) AS loglr
             FROM extractedsource x0
+                ,image i0
                 ,catalogedsource c0
            WHERE x0.image = %s
-             AND c0.zone BETWEEN CAST(FLOOR(x0.decl - %s) AS INTEGER)
-                             AND CAST(FLOOR(x0.decl + %s) AS INTEGER)
-             AND c0.decl BETWEEN x0.decl - %s
-                             AND x0.decl + %s
-             AND c0.ra BETWEEN x0.ra - alpha(%s, x0.decl)
-                           AND x0.ra + alpha(%s, x0.decl)
+             AND x0.image = i0.id
+             AND i0.id = %s
+             AND c0.zone BETWEEN CAST(FLOOR(x0.decl - i0.rb_smaj) AS INTEGER)
+                             AND CAST(FLOOR(x0.decl + i0.rb_smaj) AS INTEGER)
+             AND c0.decl BETWEEN x0.decl - i0.rb_smaj
+                             AND x0.decl + i0.rb_smaj
+             AND c0.ra BETWEEN x0.ra - alpha(i0.rb_smaj, x0.decl)
+                           AND x0.ra + alpha(i0.rb_smaj, x0.decl)
              AND SQRT(  (x0.ra * COS(RADIANS(x0.decl)) - c0.ra * COS(RADIANS(c0.decl)))
                       * (x0.ra * COS(RADIANS(x0.decl)) - c0.ra * COS(RADIANS(c0.decl)))
                       / (x0.ra_err * x0.ra_err + c0.ra_err * c0.ra_err)
@@ -1901,14 +1899,12 @@ def _insert_cat_assocs(conn, image_id, radius, deRuiter_r):
                       / (x0.decl_err * x0.decl_err + c0.decl_err * c0.decl_err)
                      ) < %s
         """
-        cursor.execute(query, (BG_DENSITY,
-                               image_id,
-                               radius, radius, radius, radius, radius, radius,
-                               deRuiter_r / 3600.))
+        cursor.execute(query, (BG_DENSITY, image_id, image_id, deRuiter_r / 3600.))
         if not AUTOCOMMIT:
             conn.commit()
     except db.Error, e:
-        logger.warn("Query failed:\n%s" % query)
+        q = query % (BG_DENSITY, image_id, image_id, deRuiter_r / 3600.)
+        logger.warn("Query failed:\n%s" % q)
         raise
     finally:
         cursor.close()

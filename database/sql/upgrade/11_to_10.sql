@@ -1,30 +1,48 @@
---DROP FUNCTION insertImage;
+UPDATE version
+   SET value = 10
+ WHERE name = 'revision'
+   AND value = 11
+; %SPLIT%
 
-/**
- * This function inserts a row in the image table,
- * and returns the value of the id under which it is known.
- *
- * Note I: To be able to create a function that modifies data 
- * (by insertion) we have to set the global bin log var:
- * mysql> SET GLOBAL log_bin_trust_function_creators = 1;
- *
- * Note II: The params in comment should be specified soon.
- * This means this function inserts deafult values so long.
- * 
- * Note III: Two subroutines are called, getBand and getSkyRgn.
- * These return:
- *  - A matching band_id, given the freq_eff and freq_bw
- *  - A matching skyregion_id, given the field centre and extraction radius.
- *
- */
+DROP FUNCTION insertImage; %SPLIT%
+
+ALTER TABLE image ADD COLUMN bmaj_syn DOUBLE NULL; %SPLIT%
+ALTER TABLE image ADD COLUMN bmin_syn DOUBLE NULL; %SPLIT%
+ALTER TABLE image ADD COLUMN bpa_syn DOUBLE NULL; %SPLIT%
+
+UPDATE image
+   SET bmaj_syn = rb_smaj 
+      ,bmin_syn = rb_smin
+      ,bpa_syn = rb_pa
+; %SPLIT%
+
+UPDATE image
+   SET bmaj_syn = NULL
+ WHERE bmaj_syn = 0
+; %SPLIT%
+
+UPDATE image
+   SET bmin_syn = NULL
+ WHERE bmin_syn = 0
+; %SPLIT%
+
+UPDATE image
+   SET bpa_syn = NULL
+ WHERE bpa_syn = 0
+; %SPLIT%
+
+ALTER TABLE image DROP COLUMN rb_smaj; %SPLIT%
+ALTER TABLE image DROP COLUMN rb_smin; %SPLIT%
+ALTER TABLE image DROP COLUMN rb_pa; %SPLIT%
+
 CREATE FUNCTION insertImage(idataset INT
                            ,itau_time DOUBLE
                            ,ifreq_eff DOUBLE
                            ,ifreq_bw DOUBLE
                            ,itaustart_ts TIMESTAMP
-                           ,irb_smaj DOUBLE
-                           ,irb_smin DOUBLE
-                           ,irb_pa DOUBLE
+                           ,ibeam_maj DOUBLE
+                           ,ibeam_min DOUBLE
+                           ,ibeam_pa DOUBLE
                            ,ideltax DOUBLE
                            ,ideltay DOUBLE
                            ,iurl VARCHAR(1024)
@@ -54,13 +72,13 @@ BEGIN
     ,freq_bw
     ,taustart_ts
     ,skyrgn
-    ,rb_smaj
-    ,rb_smin
-    ,rb_pa
+    ,bmaj_syn
+    ,bmin_syn
+    ,bpa_syn
     ,deltax
     ,deltay
     ,url
-    ) 
+    )
   VALUES
     (iimageid
     ,idataset
@@ -70,9 +88,9 @@ BEGIN
     ,ifreq_bw
     ,itaustart_ts
     ,iskyrgn
-    ,irb_smaj 
-    ,irb_smin 
-    ,irb_pa
+    ,ibeam_maj
+    ,ibeam_min
+    ,ibeam_pa
     ,ideltax
     ,ideltay
     ,iurl
@@ -82,4 +100,4 @@ BEGIN
   SET oimageid = iimageid;
   RETURN oimageid;
 
-END;
+END;  %SPLIT%

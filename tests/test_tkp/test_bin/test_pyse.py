@@ -1,6 +1,5 @@
 import os
 import unittest
-from optparse import OptionParser
 from tempfile import NamedTemporaryFile
 import tkp.bin.pyse
 import tkp.config
@@ -16,7 +15,7 @@ class AttributeDict(dict):
     __setattr__ = dict.__setitem__
 
 options = AttributeDict({
-    'grid': 0,
+    'grid': 100,
     'margin': 0,
     'radius': 0,
     'deblend': False,
@@ -27,8 +26,13 @@ options = AttributeDict({
     'bmaj': 0.5,
     'bmin': 0.5,
     'bpa': 0.5,
-    'detection': 0,
-    'options.analysis': 0,
+    'detection': 5,
+    'analysis': 5,
+    'regions': False,
+    'rmsmap': False,
+    'sigmap': False,
+    'skymodel': False,
+    'csv': False,
 })
 
 class TestPyse(unittest.TestCase):

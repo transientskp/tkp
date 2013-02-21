@@ -53,8 +53,8 @@ def writefits(data, filename, header = {}):
     Key/value pairs for the FITS header can be supplied in the optional
     header argument as a dictionary.
     """
-    if header.__class__.__name__=='Header':
-        pyfits.writeto(filename,data.transpose(),header)
+    if header.__class__.__name__ == 'Header':
+        pyfits.writeto(filename, data.transpose(), header)
     else:
         hdu = pyfits.PrimaryHDU(data.transpose())
         for key in header.iterkeys():

@@ -760,6 +760,7 @@ def add_nulldetections(image_id):
     try:
         conn = DataBase().connection
         cursor = conn.cursor()
+        #Note extra clauses on image id ARE necessary (MonetDB performance quirks)
         query = """\
         INSERT INTO monitoringlist
           (runcat
@@ -777,6 +778,7 @@ def add_nulldetections(image_id):
                 ,assocxtrsource a 
            WHERE x.image = %(imgid)s
              AND x.image = i.id 
+             AND i.id = %(imgid)s
              AND i.dataset = r.dataset 
              AND r.id = a.runcat 
              AND a.xtrsrc = x.id 
@@ -789,6 +791,7 @@ def add_nulldetections(image_id):
                                    ,monitoringlist m0
                               WHERE x0.image = %(imgid)s
                                 AND x0.image = i0.id 
+                                AND i0.id = %(imgid)s
                                 AND i0.dataset = r0.dataset 
                                 AND r0.id = a0.runcat 
                                 AND a0.xtrsrc = x0.id 

@@ -26,6 +26,11 @@ class TestLightCurve(unittest.TestCase):
                     'url': '/',
                     'freq_eff': 80e6,
                     'freq_bw': 1e6,
+                    'beam_smaj_pix': float(2.7),
+                    'beam_smin_pix': float(2.3),
+                    'beam_pa_rad': float(1.7),
+                    'deltax': float(-0.01111),
+                    'deltay': float(0.01111),
                     'centre_ra': 0,
                     'centre_decl': 0,
                     'xtr_radius' : 3

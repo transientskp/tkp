@@ -29,7 +29,7 @@ class TestOne2One(unittest.TestCase):
 
         for im in im_params:
             image = tkpdb.Image(dataset=dataset, data=im)
-            image.insert_extracted_sources(steady_srcs)
+            dbgen.insert_extracted_sources(image.id, steady_srcs, 'blind')
             tkpdb.utils.associate_extracted_sources(image.id, deRuiter_r = 3.717)
 
         # Check runningcatalog, runningcatalog_flux, assocxtrsource.
@@ -155,10 +155,6 @@ class TestOne2Many(unittest.TestCase):
 
     def tearDown(self):
         """remove all stuff after the test has been run"""
-        #self.database.connection.rollback()
-        #self.database.execute("delete from assocxtrsource")
-        #self.database.execute("delete from runningcatalog_flux")
-        #self.database.execute("delete from runningcatalog")
         self.database.close()
 
     def test_one2many(self):
@@ -181,15 +177,15 @@ class TestOne2Many(unittest.TestCase):
                                                         ))
         results = []
         results.append(src[-1])
-        dbgen.insert_extracted_sources(image.id, results, 'blind')
-        tkpdb.utils.associate_extracted_sources(image.id, deRuiter_r = 3.717)
+        dbgen.insert_extracted_sources(imageid1, results, 'blind')
+        tkpdb.utils.associate_extracted_sources(imageid1, deRuiter_r = 3.717)
         
         query = """\
         SELECT id
           FROM extractedsource 
          WHERE image = %s
         """
-        self.database.cursor.execute(query, (image.id,))
+        self.database.cursor.execute(query, (imageid1,))
         im1 = zip(*self.database.cursor.fetchall())
         self.assertNotEqual(len(im1), 0)
         im1src1 = im1[0]
@@ -254,8 +250,8 @@ class TestOne2Many(unittest.TestCase):
         results = []
         results.append(src[0])
         results.append(src[1])
-        dbgen.insert_extracted_sources(image.id, results, 'blind')
-        tkpdb.utils.associate_extracted_sources(image.id, deRuiter_r = 3.717)
+        dbgen.insert_extracted_sources(imageid2, results, 'blind')
+        tkpdb.utils.associate_extracted_sources(imageid2, deRuiter_r = 3.717)
 
         query = """\
         SELECT id
@@ -263,7 +259,7 @@ class TestOne2Many(unittest.TestCase):
          WHERE image = %s
         ORDER BY id
         """
-        self.database.cursor.execute(query, (image.id,))
+        self.database.cursor.execute(query, (imageid2,))
         im2 = zip(*self.database.cursor.fetchall())
         self.assertNotEqual(len(im2), 0)
         im2src = im2[0]
@@ -357,10 +353,6 @@ class TestMany2One(unittest.TestCase):
 
     def tearDown(self):
         """remove all stuff after the test has been run"""
-        #self.database.connection.rollback()
-        #self.database.execute("delete from assocxtrsource")
-        #self.database.execute("delete from runningcatalog_flux")
-        #self.database.execute("delete from runningcatalog")
         self.database.close()
 
     def test_many2one(self):
@@ -369,7 +361,7 @@ class TestMany2One(unittest.TestCase):
         im_params = db_subs.example_dbimage_datasets(n_images)
 
         # image 1
-        image = tkpdb.Image(database=self.database, dataset=dataset, data=im_params[1])
+        image = tkpdb.Image(database=self.database, dataset=dataset, data=im_params[0])
         imageid1 = image.id
         src = []
         # 2 sources (located close together, so the catching the many-to-1 case in next image
@@ -408,7 +400,7 @@ class TestMany2One(unittest.TestCase):
         self.assertEqual(len(im1src), len(src))
         
         # image 2
-        image = tkpdb.Image(database=self.database, dataset=dataset, data=im_params[0])
+        image = tkpdb.Image(database=self.database, dataset=dataset, data=im_params[1])
         imageid2 = image.id
         src = []
         # 1 source
@@ -517,10 +509,6 @@ class TestMany2Many(unittest.TestCase):
 
     def tearDown(self):
         """remove all stuff after the test has been run"""
-        #self.database.connection.rollback()
-        #self.database.execute("delete from assocxtrsource")
-        #self.database.execute("delete from runningcatalog_flux")
-        #self.database.execute("delete from runningcatalog")
         self.database.close()
 
     def test_many2many(self):
@@ -529,7 +517,7 @@ class TestMany2Many(unittest.TestCase):
         im_params = db_subs.example_dbimage_datasets(n_images)
 
         # image 1
-        image = tkpdb.Image(database=self.database, dataset=dataset, data=im_params[1])
+        image = tkpdb.Image(database=self.database, dataset=dataset, data=im_params[0])
         imageid1 = image.id
         src1 = []
         # 2 sources (located relatively close together, so the catching the many-to-1 case in next image
@@ -569,7 +557,7 @@ class TestMany2Many(unittest.TestCase):
         self.assertEqual(len(im1src), len(src1))
         
         # image 2
-        image = tkpdb.Image(database=self.database, dataset=dataset, data=im_params[0])
+        image = tkpdb.Image(database=self.database, dataset=dataset, data=im_params[1])
         imageid2 = image.id
         src2 = []
         # 2 sources, where both can be associated with both from image 1

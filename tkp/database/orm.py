@@ -362,6 +362,8 @@ class Image(DBObject):
     TABLE = 'image'
     ID = 'id'
     REQUIRED = ('dataset', 'tau_time', 'freq_eff', 'freq_bw', 'taustart_ts',
+                'beam_smaj_pix', 'beam_smin_pix', 'beam_pa_rad',
+                'deltax', 'deltay',
                 'url', 'centre_ra', 'centre_decl', 'xtr_radius')
 
 
@@ -399,18 +401,18 @@ class Image(DBObject):
 
         if self._id is None:
             try:
-                if 'bsmaj' not in self._data:
-                    self._data['bsmaj'] = None
-                    self._data['bsmin'] = None
-                    self._data['bpa'] = None
-                    self._data['deltax'] = None
-                    self._data['deltay'] = None
+                #if 'bsmaj' not in self._data:
+                #    self._data['bsmaj'] = None
+                #    self._data['bsmin'] = None
+                #    self._data['bpa'] = None
+                #    self._data['deltax'] = None
+                #    self._data['deltay'] = None
                 # Insert a default image
                 self._id = dbu.insert_image(self.dataset.id,
                     self._data['freq_eff'], self._data['freq_bw'],
                     self._data['taustart_ts'],self._data['tau_time'],
-                    self._data['bsmaj'],self._data['bsmin'],  
-                    self._data['bpa'],
+                    self._data['beam_smaj_pix'],self._data['beam_smin_pix'],  
+                    self._data['beam_pa_rad'],
                     self._data['deltax'],
                     self._data['deltay'],
                     self._data['url'],

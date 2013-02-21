@@ -117,7 +117,6 @@ def get_nulldetections(image_id, deRuiter_r, radius=0.03):
         r = ()
         if len(results) != 0:
             p = zip(list(results[1]), list(results[2]))
-            #maxbeam = max(results[3][0],results[4][0]) # all bmaj & bmin are the same
             r = (p,)
     except db.Error, e:
         query = query % (image_id, image_id, image_id, \
@@ -142,24 +141,10 @@ def get_monsources(image_id, deRuiter_r, radius=0.03):
     try:
         conn = DataBase().connection 
         cursor = conn.cursor()
-        # Taken out, because it is done by get_userdetections()
-        #SELECT m.id AS id
-        #      ,m.ra AS ra
-        #      ,m.decl AS decl
-        #      ,i.bmaj_syn AS bmaj_syn
-        #      ,i.bmin_syn AS bmin_syn
-        #  FROM monitoringlist m
-        #      ,image i
-        # WHERE i.id = %s
-        #   AND m.dataset = i.dataset
-        #   AND m.userentry = TRUE
-        #UNION
         query = """\
         SELECT m1.id AS id
               ,r1.wm_ra AS ra
               ,r1.wm_decl AS decl
-              ,i1.bmaj_syn AS bmaj_syn
-              ,i1.bmin_syn AS bmin_syn
           FROM monitoringlist m1
               ,runningcatalog r1
               ,image i1
@@ -207,8 +192,7 @@ def get_monsources(image_id, deRuiter_r, radius=0.03):
         r = ()
         if len(results) != 0:
             p = zip(list(results[1]), list(results[2]))
-            maxbeam = max(results[3][0],results[4][0]) # all bmaj & bmin are the same
-            r = (p, maxbeam)
+            r = (p,)
     except db.Error, e:
         query = query % (image_id,image_id,image_id, radius, radius,radius,radius,radius,radius,deRuiter_r / 3600.)
         logger.warn("Query failed:\n%s", query)

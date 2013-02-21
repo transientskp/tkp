@@ -95,7 +95,7 @@ def _empty_temprunningcatalog():
     tkp.database.query(query, commit=True)
 
 
-def _insert_temprunningcatalog(image_id, deRuiter_r, radius=0.03):
+def _insert_temprunningcatalog(image_id, deRuiter_r):
     """Select matched sources
 
     Here we select the extractedsource that have a positional match
@@ -261,9 +261,9 @@ INSERT INTO temprunningcatalog
                 ,x0.f_peak_err
                 ,x0.f_int
                 ,x0.f_int_err
-                ,image.dataset
-                ,image.band
-                ,image.stokes
+                ,i0.dataset
+                ,i0.band
+                ,i0.stokes
                 ,rc0.datapoints + 1 AS datapoints
                 ,(datapoints * rc0.avg_wra + x0.ra /(x0.ra_err * x0.ra_err) )
                  /
@@ -296,17 +296,17 @@ INSERT INTO temprunningcatalog
                  / (datapoints + 1) AS avg_weight_decl
             FROM extractedsource x0
                 ,runningcatalog rc0
-                ,image
-           WHERE image.id = %(image_id)s
-             AND x0.image = image.id
+                ,image i0
+           WHERE i0.id = %(image_id)s
+             AND x0.image = i0.id
              AND x0.image = %(image_id)s
-             AND image.dataset = rc0.dataset
-             AND rc0.zone BETWEEN CAST(FLOOR(x0.decl - %(radius)s) as INTEGER)
-                                 AND CAST(FLOOR(x0.decl + %(radius)s) as INTEGER)
-             AND rc0.wm_decl BETWEEN x0.decl - %(radius)s
-                                    AND x0.decl + %(radius)s
-             AND rc0.wm_ra BETWEEN x0.ra - alpha(%(radius)s, x0.decl)
-                                  AND x0.ra + alpha(%(radius)s, x0.decl)
+             AND i0.dataset = rc0.dataset
+             AND rc0.zone BETWEEN CAST(FLOOR(x0.decl - i0.rb_smaj) AS INTEGER)
+                              AND CAST(FLOOR(x0.decl + i0.rb_smaj) AS INTEGER)
+             AND rc0.wm_decl BETWEEN x0.decl - i0.rb_smaj
+                                 AND x0.decl + i0.rb_smaj
+             AND rc0.wm_ra BETWEEN x0.ra - alpha(i0.rb_smaj, x0.decl)
+                               AND x0.ra + alpha(i0.rb_smaj, x0.decl)
              AND SQRT(  (x0.ra * COS(RADIANS(x0.decl)) - rc0.wm_ra * COS(RADIANS(rc0.wm_decl)))
                       * (x0.ra * COS(RADIANS(x0.decl)) - rc0.wm_ra * COS(RADIANS(rc0.wm_decl)))
                       / (x0.ra_err * x0.ra_err + rc0.wm_ra_err * rc0.wm_ra_err)
@@ -320,7 +320,7 @@ INSERT INTO temprunningcatalog
          AND t0.stokes = rf0.stokes
 """
     deRuiter_red = float(deRuiter_r) / 3600.
-    args = {'image_id': image_id, 'radius': radius, 'deRuiter': deRuiter_red}
+    args = {'image_id': image_id, 'deRuiter': deRuiter_red}
     tkp.database.query(query, args, commit=True)
 
 

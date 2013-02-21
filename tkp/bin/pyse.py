@@ -204,8 +204,8 @@ def run_sourcefinder(files, options):
         if options.skymodel:
             skymodelfile = os.path.splitext(os.path.basename(filename))[0] + ".skymodel"
             skymodelfile = open(skymodelfile, 'w')
-            if ff.freqeff:
-                skymodelfile.write(skymodel(sr, ff.freqeff))
+            if ff.freq_eff:
+                skymodelfile.write(skymodel(sr, ff.freq_eff))
             else:
                 print "WARNING: Using default reference frequency for %s" % (skymodelfile.name,)
                 skymodelfile.write(skymodel(sr))

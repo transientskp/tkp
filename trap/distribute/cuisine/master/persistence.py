@@ -2,7 +2,7 @@ from __future__ import with_statement
 import itertools
 import lofarpipe.support.lofaringredient as ingredient
 from lofarpipe.support.remotecommand import ComputeJob
-from trap.ingredients.persistence import master_steps
+from trap.steps.persistence import master_steps
 from trap.distribute.cuisine.common import TrapMaster, nodes_available
 
 

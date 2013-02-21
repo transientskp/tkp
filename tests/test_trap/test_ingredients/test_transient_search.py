@@ -1,6 +1,6 @@
 import unittest
 import tempfile
-import trap.ingredients.transient_search
+import trap.steps.transient_search
 from tkp.testutil import db_subs, db_queries
 from tkp.testutil.decorators import requires_database
 
@@ -23,5 +23,5 @@ probability.V_lim = 0.00
 
     def test_search_transients(self):
         image_ids = db_queries.dataset_images(self.dataset_id)
-        trap.ingredients.transient_search.search_transients(image_ids[0],
+        trap.steps.transient_search.search_transients(image_ids[0],
                                                 self.parset.name)

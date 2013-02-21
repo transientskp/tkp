@@ -1,6 +1,6 @@
 import unittest
 import tempfile
-import trap.ingredients.quality
+import trap.steps.quality
 from tkp.testutil import db_subs
 from tkp.database.database import DataBase
 from tkp.database import query
@@ -17,9 +17,9 @@ class TestQuality(unittest.TestCase):
     def test_parse_parset(self):
         parset = tempfile.NamedTemporaryFile()
         parset.flush()
-        trap.ingredients.quality.parse_parset(parset.name)
+        trap.steps.quality.parse_parset(parset.name)
 
     def test_check(self):
         parset = tempfile.NamedTemporaryFile()
         parset.flush()
-        trap.ingredients.quality.reject_check(self.accessor.url, parset.name)
+        trap.steps.quality.reject_check(self.accessor.url, parset.name)

@@ -1,6 +1,6 @@
 import unittest
 import tempfile
-import trap.ingredients.monitoringlist
+import trap.steps.monitoringlist
 from tkp.testutil import db_subs, db_queries
 from tkp.testutil.decorators import requires_database
 

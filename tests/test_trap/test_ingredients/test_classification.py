@@ -1,6 +1,6 @@
 import unittest
 import tempfile
-import trap.ingredients.classification
+import trap.steps.classification
 from tkp.database import query
 from tkp.classification.transient import Transient
 from tkp.testutil import db_subs
@@ -21,5 +21,5 @@ class TestClassification(unittest.TestCase):
         self.parset.flush()
 
     def runTest(self):
-        trap.ingredients.classification.classify(self.transients[0], self.parset.name)
+        trap.steps.classification.classify(self.transients[0], self.parset.name)
 

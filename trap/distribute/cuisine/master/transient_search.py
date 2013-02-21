@@ -1,6 +1,6 @@
 from lofarpipe.support import lofaringredient
 from tkp.database.utils import monitoringlist as dbmon
-import trap.ingredients as ingred
+from trap import steps
 from trap.distribute.cuisine.common import TrapMaster
 
 
@@ -21,7 +21,7 @@ class transient_search(TrapMaster):
     def go(self):
         image_id = self.inputs['args'][0]
         parset = self.inputs['parset']
-        transients = ingred.transient_search.search_transients(image_id, parset)
+        transients = steps.transient_search.search_transients(image_id, parset)
         dbmon.adjust_transients_in_monitoringlist(image_id, transients)
         self.outputs['transients'] = transients
 

@@ -1,9 +1,9 @@
 import logging
 import datetime
 from lofarpipe.support.parset import parameterset
-from trap import ingredients as ingred
+from trap import steps
 import lofarpipe.support.lofaringredient as ingredient
-from trap.ingredients.monitoringlist import add_manual_monitoringlist_entries
+from trap.steps.monitoringlist import add_manual_monitoringlist_entries
 from tkp.database.orm import Image
 from tkp.database.utils import general as dbgen
 from tkp.database.utils import monitoringlist as dbmon
@@ -59,8 +59,8 @@ class TrapLocal(control):
 
 
         # persistence
-        se_parset = ingred.source_extraction.parse_parset(se_parset_file)
-        dataset_id, image_ids = ingred.persistence.all(images,
+        se_parset = steps.source_extraction.parse_parset(se_parset_file)
+        dataset_id, image_ids = steps.persistence.all(images,
                                            se_parset['radius'], p_parset_file)
 
         # manual monitoringlist entries
@@ -71,10 +71,10 @@ class TrapLocal(control):
         good_image_ids = []
         for image_id in image_ids:
             image = Image(id=image_id)
-            rejected = ingred.quality.reject_check(image.url, q_parset_file)
+            rejected = steps.quality.reject_check(image.url, q_parset_file)
             if rejected:
                 reason, comment = rejected
-                ingred.quality.reject_image(image_id, reason, comment)
+                steps.quality.reject_image(image_id, reason, comment)
             else:
                 good_image_ids.append(image_id)
 
@@ -84,7 +84,7 @@ class TrapLocal(control):
         for image_id in good_image_ids:
             image = Image(id=image_id)
             good_images.append(image)
-            extracted_sources = ingred.source_extraction.extract_sources(
+            extracted_sources = steps.source_extraction.extract_sources(
                                                      image.url, se_parset_file)
             dbgen.insert_extracted_sources(image_id, extracted_sources, 'blind')
 
@@ -97,17 +97,17 @@ class TrapLocal(control):
             image_path = image.url
 
             null_detections = dbmon.get_nulldetections(image_id, deRuiter_radius)
-            ff_nd = ingred.source_extraction.forced_fits(image_path, null_detections)
+            ff_nd = steps.source_extraction.forced_fits(image_path, null_detections)
             dbgen.insert_extracted_sources(image_id, ff_nd, 'ff_nd')
 
             # mon_detections
             monsources = dbmon.get_monsources(image_id, deRuiter_radius)
-            ff_mon = ingred.source_extraction.forced_fits(image_path, monsources)
+            ff_mon = steps.source_extraction.forced_fits(image_path, monsources)
             dbgen.insert_extracted_sources(image_id, ff_mon, 'ff_mon')
 
             # user_detections
             user_detections = dbmon.get_userdetections(image_id, deRuiter_radius)
-            ff_ud = ingred.source_extraction.forced_fits(image_path, user_detections)
+            ff_ud = steps.source_extraction.forced_fits(image_path, user_detections)
             dbgen.insert_extracted_sources(image_id, ff_ud, 'ff_ud')
             dbgen.filter_userdetections_extracted_sources(image_id, deRuiter_radius)
 
@@ -116,13 +116,13 @@ class TrapLocal(control):
             dbmon.add_nulldetections(image_id)
 
             # Transient_search
-            transients = ingred.transient_search.search_transients(image_id, tr_parset_file)
+            transients = steps.transient_search.search_transients(image_id, tr_parset_file)
             dbmon.adjust_transients_in_monitoringlist(image_id, transients)
         
         # Classification
         for transient in transients:
-            ingred.feature_extraction.extract_features(transient)
-            ingred.classification.classify(transient, cl_parset_file)
+            steps.feature_extraction.extract_features(transient)
+            steps.classification.classify(transient, cl_parset_file)
         
         now = datetime.datetime.utcnow()
         dbgen.update_dataset_process_ts(dataset_id, now)

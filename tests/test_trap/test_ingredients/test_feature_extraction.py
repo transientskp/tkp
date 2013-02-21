@@ -1,5 +1,5 @@
 import unittest
-import trap.ingredients.feature_extraction
+import trap.steps.feature_extraction
 from tkp.database import query
 from tkp.classification.transient import Transient
 from tkp.testutil import db_subs
@@ -17,4 +17,4 @@ class TestFeatureExtraction(unittest.TestCase):
     @unittest.skip("TODO: extract_features recipe needs modification!!!")
     def test_extract_features(self):
         transient = self.transients[0]
-        trap.ingredients.feature_extraction.extract_features(transient)
+        trap.steps.feature_extraction.extract_features(transient)

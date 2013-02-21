@@ -2,10 +2,10 @@ import datetime
 import logging
 from lofarpipe.support.control import control
 import lofarpipe.support.lofaringredient as ingredient
-from trap.ingredients.monitoringlist import add_manual_monitoringlist_entries
+from trap.steps.monitoringlist import add_manual_monitoringlist_entries
 from tkp.database import DataSet
 from tkp.database.utils import general as dbgen
-import trap.ingredients as ingred
+from trap import steps
 
 
 class Trap(control):
@@ -47,7 +47,7 @@ class Trap(control):
             return 1
 
         se_parset_file = self.task_definitions.get("source_extraction", "parset")
-        se_parset = ingred.source_extraction.parse_parset(se_parset_file)
+        se_parset = steps.source_extraction.parse_parset(se_parset_file)
         self.outputs.update(self.run_task(
             "persistence",
             images,

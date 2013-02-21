@@ -15,7 +15,7 @@ import itertools
 import lofarpipe.support.lofaringredient as ingredient
 from lofarpipe.support.remotecommand import ComputeJob
 from tkp.database.orm import Image
-import trap.ingredients as ingred
+from trap import steps
 from trap.distribute.cuisine.common import TrapMaster, nodes_available
 
 
@@ -43,7 +43,7 @@ class quality_check(TrapMaster):
         urls = [Image(id=id).url for id in image_ids]
         rejected_images = self.distributed(image_ids, urls)
         for image_id, (reason, comment) in rejected_images:
-                ingred.quality.reject_image(image_id, reason, comment)
+                steps.quality.reject_image(image_id, reason, comment)
 
         rejected_ids = [i[0] for i in rejected_images]
         good_image_ids = [i for i in image_ids if i not in rejected_ids]

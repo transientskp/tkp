@@ -230,15 +230,15 @@ def prepare_job(jobname, debug=False):
 def run_job(jobname, debug=False):
     print "running job '%s'" % jobname
     prepare_job(jobname, debug)
-    import trap.run.distributed
-    sys.exit(trap.run.distributed.Trap().main())
+    import trap.distribute.cuisine.run
+    sys.exit(trap.distribute.cuisine.run.Trap().main())
 
 
 def runlocal_job(jobname, debug=False):
     print "running job '%s' (local)" % jobname
     prepare_job(jobname, debug)
-    import trap.run.local
-    traplocal = trap.run.local.TrapLocal()
+    import trap.distribute.local.run
+    traplocal = trap.distribute.local.run.TrapLocal()
     sys.exit(traplocal.main())
 
 

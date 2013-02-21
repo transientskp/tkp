@@ -1,6 +1,6 @@
 import unittest
 import tempfile
-import trap.ingredients.source_extraction
+import trap.steps.source_extraction
 from tkp.testutil import db_subs, db_queries, data
 
 class TestSourceExtraction(unittest.TestCase):
@@ -29,4 +29,4 @@ dec_sys_err = 20
 
     def test_extract_sources(self):
         image_path = data.fits_file
-        trap.ingredients.source_extraction.extract_sources(image_path, self.parset.name)
+        trap.steps.source_extraction.extract_sources(image_path, self.parset.name)

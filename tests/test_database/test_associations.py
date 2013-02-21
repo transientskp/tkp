@@ -151,6 +151,7 @@ class TestOne2One(unittest.TestCase):
         self.assertEqual(avg_f_int[0], steady_srcs[0].flux)
         self.assertEqual(avg_f_int_weight[0], 1./steady_srcs[0].flux_err**2)
 
+    @unittest.skip("https://support.astron.nl/lofar_issuetracker/issues/4084")
     def TestMeridianEdgeCase(self):
         """What happens if a source is right on the meridian?"""
 

@@ -1,11 +1,9 @@
 from __future__ import with_statement
 import itertools
 import lofarpipe.support.lofaringredient as ingredient
-from tkp.database.orm import Image
 from lofarpipe.support.remotecommand import ComputeJob
-import tkp.database.utils.general as dbgen
-import trap.ingredients as ingred
-from trap.ingredients.common import TrapMaster
+from tkp.database.orm import Image
+from trap.distribute.cuisine.common import TrapMaster, nodes_available
 
 
 class source_extraction(TrapMaster):
@@ -36,7 +34,7 @@ class source_extraction(TrapMaster):
         self.outputs['sources_sets'] = sources_sets
 
     def distributed(self, image_ids, image_paths):
-        nodes = ingred.common.nodes_available(self.config)
+        nodes = nodes_available(self.config)
 
         command = "python %s" % self.__file__.replace('master', 'nodes')
         jobs = []

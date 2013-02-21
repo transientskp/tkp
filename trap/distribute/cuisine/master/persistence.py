@@ -1,11 +1,9 @@
 from __future__ import with_statement
-import sys
 import itertools
 import lofarpipe.support.lofaringredient as ingredient
 from lofarpipe.support.remotecommand import ComputeJob
 from trap.ingredients.persistence import master_steps
-import trap.ingredients as ingred
-from trap.ingredients.common import TrapMaster
+from trap.distribute.cuisine.common import TrapMaster, nodes_available
 
 
 class persistence(TrapMaster):
@@ -41,7 +39,7 @@ class persistence(TrapMaster):
         self.outputs['dataset_id'] = dataset_id
 
     def distributed(self, images):
-        nodes = ingred.common.nodes_available(self.config)
+        nodes = nodes_available(self.config)
 
         command = "python %s" % self.__file__.replace('master', 'nodes')
         jobs = []

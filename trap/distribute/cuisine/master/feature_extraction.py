@@ -1,7 +1,7 @@
-import sys
-import trap.ingredients.feature_extraction
 from lofarpipe.support import lofaringredient
-from trap.ingredients.common import TrapMaster
+
+import trap.ingredients.feature_extraction
+from trap.distribute.cuisine.common import TrapMaster
 
 
 class feature_extraction(TrapMaster):

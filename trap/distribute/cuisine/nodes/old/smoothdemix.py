@@ -2,7 +2,8 @@ import os
 import lofar.parmdb
 import numpy as numpy
 import lofar.expion.parmdbmain
-import median_filter
+from trap.distribute.cuisine.nodes.old import median_filter
+
 
 def smoothparmdb(instrument_name,instrument_name_smoothed, half_window, threshold):
     print 'Smoothing with ', instrument_name, instrument_name_smoothed, half_window, threshold

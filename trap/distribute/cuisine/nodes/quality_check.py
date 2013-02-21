@@ -1,6 +1,6 @@
-from trap.ingredients.common import TrapNode, node_run
+from trap.distribute.cuisine.common import TrapNode, node_run
 import trap.ingredients.quality
-import trap.recipes
+import trap.distribute.cuisine
 
 class quality_check(TrapNode):
     def trapstep(self, image_id, image_path, parset_file):

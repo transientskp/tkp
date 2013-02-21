@@ -1,4 +1,4 @@
 ClusterName = Local
-Compute.Nodes = [ example ]
+Compute.Nodes = [ localhost ]
 Compute.RemoteDisks = [ / ]
 Compute.RemoteFileSys = [ example:/ ]

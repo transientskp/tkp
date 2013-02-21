@@ -7,7 +7,6 @@ No implementation specific code (like the LOFAR pipeline logic) should be placed
 in this module.
 """
 import classification
-import common
 import feature_extraction
 import monitoringlist
 import persistence

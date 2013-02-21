@@ -1,7 +1,7 @@
 from lofarpipe.support import lofaringredient
 from tkp.database.utils import monitoringlist as dbmon
 import trap.ingredients as ingred
-from trap.ingredients.common import TrapMaster
+from trap.distribute.cuisine.common import TrapMaster
 
 
 class transient_search(TrapMaster):

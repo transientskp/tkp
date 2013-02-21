@@ -16,7 +16,7 @@ import lofarpipe.support.lofaringredient as ingredient
 from lofarpipe.support.remotecommand import ComputeJob
 from tkp.database.orm import Image
 import trap.ingredients as ingred
-from trap.ingredients.common import TrapMaster
+from trap.distribute.cuisine.common import TrapMaster, nodes_available
 
 
 class quality_check(TrapMaster):
@@ -51,7 +51,7 @@ class quality_check(TrapMaster):
 
 
     def distributed(self, image_ids, image_urls):
-        nodes = ingred.common.nodes_available(self.config)
+        nodes = nodes_available(self.config)
 
         command = "python %s" % self.__file__.replace('master', 'nodes')
         jobs = []

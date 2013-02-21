@@ -1,5 +1,5 @@
 import trap.ingredients as ingred
-from trap.ingredients.common import node_run, TrapNode
+from trap.distribute.cuisine.common import node_run, TrapNode
 
 
 class null_detections(TrapNode):

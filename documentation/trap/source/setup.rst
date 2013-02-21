@@ -84,8 +84,6 @@ recipes for the TRAP; these are in the master and nodes subdirectories
 (frontend and compute node recipes). The SIP recipes can be found in
 :file:`/opt/LofIm/lofar/lib/python2.6/dist-packages/lofarpipe/recipes`, but
 some of these have a slightly adjusted variant in the TKP recipes directory.
-The main TKP recipes directory also contains an example `trap-images.py`
-recipe which takes a list of images as input and searches them for transients.
 
 It is assumed you know how to edit the :file:`trap.cfg` and :file:`tasks.cfg`
 files, as well as set up parset and other files. For simplicity,

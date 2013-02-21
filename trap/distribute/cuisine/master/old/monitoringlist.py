@@ -17,8 +17,7 @@ import lofarpipe.support.lofaringredient as ingredient
 from lofarpipe.support.baserecipe import BaseRecipe
 from lofarpipe.support.remotecommand import ComputeJob
 from lofarpipe.support.remotecommand import RemoteCommandRecipeMixIn
-import tkp.database as tkpdb
-import trap.ingredients as ingred
+
 
 class monitoringlist(BaseRecipe, RemoteCommandRecipeMixIn):
     """
@@ -63,7 +62,7 @@ class monitoringlist(BaseRecipe, RemoteCommandRecipeMixIn):
             return 0
 
     def distributed(self, images):
-        nodes = ingred.common.nodes_available(self.config)
+        nodes = trap.distribute.cuisine.common.nodes_available(self.config)
         
         command = "python %s" % self.__file__.replace('master', 'nodes')
         jobs = []

@@ -1,5 +1,5 @@
 import tkp.database.utils.general as dbgen
-from trap.ingredients.common import TrapMaster
+from trap.distribute.cuisine.common import TrapMaster
 
 class insert_sources(TrapMaster):
     """Extract sources from a FITS image"""

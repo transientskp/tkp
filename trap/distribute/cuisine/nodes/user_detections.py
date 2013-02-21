@@ -1,6 +1,6 @@
 import trap.ingredients as ingred
-from trap.ingredients.common import TrapNode, node_run
-import trap.recipes
+from trap.distribute.cuisine.common import TrapNode, node_run
+
 
 class user_detections(TrapNode):
     def trapstep(self, image_id, image_path, image_nd):

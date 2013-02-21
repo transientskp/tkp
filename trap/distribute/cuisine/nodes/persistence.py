@@ -1,6 +1,6 @@
-from trap.ingredients.common import TrapNode, node_run
+from trap.distribute.cuisine.common import TrapNode, node_run
 import trap.ingredients.persistence
-import trap.recipes
+import trap.distribute.cuisine
 
 class persistence(TrapNode):
     def trapstep(self, image,  parset_file):

@@ -21,7 +21,7 @@ follow from a combination of 'fast transient' and an external trigger).
 from lofarpipe.support import lofaringredient
 from lofar.parameterset import parameterset
 from tkp.classification.manual.classifier import Classifier
-from trap.ingredients.common import TrapMaster
+from trap.distribute.cuisine.common import TrapMaster
 
 
 class classification(TrapMaster):

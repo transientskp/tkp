@@ -8,7 +8,6 @@ from __future__ import with_statement
 import os
 import shutil
 import sys
-import subprocess
 import logging
 import tempfile
 import numpy as numpy
@@ -20,12 +19,12 @@ from lofarpipe.support.pipelinelogging import CatchLog4CPlus
 from lofarpipe.support.utilities import read_initscript, catch_segfaults
 
 # Add demix directory to sys.path before importing demix modules.
+from trap.distribute.cuisine.nodes.old import shiftphasecenter as spc, demixing
+
 sys.path.insert(0, os.path.join(os.path.dirname(sys.argv[0]), "demix"))
-import shiftphasecenter as spc
-import demixing as dmx
 import smoothdemix as smdx
 import subtract_from_averaged as sfa
-from find_a_team import getAteamList
+from trap.distribute.cuisine.nodes.old.find_a_team import getAteamList
 
 class demixing(LOFARnodeTCP):
     """

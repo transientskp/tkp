@@ -564,31 +564,31 @@ def _insert_1_to_many_assoc():
 
     """
     query = """\
-    INSERT INTO assocxtrsource
-      (runcat
-      ,xtrsrc
-      ,distance_arcsec
-      ,r
-      ,type
-      )
-      SELECT r.id
-            ,a.xtrsrc
-            ,a.distance_arcsec
-            ,a.r
-            ,6
-        FROM assocxtrsource a
-            ,runningcatalog r
-            ,temprunningcatalog t
-       WHERE t.inactive = FALSE
-         AND t.xtrsrc = r.xtrsrc
-         AND t.runcat = a.runcat
-         AND t.runcat IN (SELECT runcat
-                            FROM temprunningcatalog
-                           WHERE inactive = FALSE
-                          GROUP BY runcat
-                          HAVING COUNT(*) > 1
-                         )
-    """
+INSERT INTO assocxtrsource
+  (runcat
+  ,xtrsrc
+  ,distance_arcsec
+  ,r
+  ,type
+  )
+  SELECT r.id
+        ,a.xtrsrc
+        ,a.distance_arcsec
+        ,a.r
+        ,6
+    FROM assocxtrsource a
+        ,runningcatalog r
+        ,temprunningcatalog t
+   WHERE t.inactive = FALSE
+     AND t.xtrsrc = r.xtrsrc
+     AND t.runcat = a.runcat
+     AND t.runcat IN (SELECT runcat
+                        FROM temprunningcatalog
+                       WHERE inactive = FALSE
+                      GROUP BY runcat
+                      HAVING COUNT(*) > 1
+                     )
+"""
     tkp.database.query(query, commit=True)
 
 
@@ -624,11 +624,9 @@ def _insert_1_to_many_monitoringlist():
     In case where we have a non-user-entry source in the monitoringlist 
     that goes one-to-many in the associations, we have to "split" it up 
     into the new runcat ids and delete the old runcat.
-
-    TODO: See discussion in issues #3564 & #3919 how to proceed
     """
+    #TODO: See discussion in issues #3564 & #3919 how to proceed
     #TODO: Discriminate between the user and non-user entries.
-
     query = """\
 INSERT INTO monitoringlist
   (runcat

@@ -12,7 +12,7 @@ class TestClassification(unittest.TestCase):
     def setUpClass(cls):
         cls.dataset_id = db_subs.create_dataset_8images(extract_sources=True)
         runcat_query = "select id from runningcatalog where dataset=%s"
-        cursor = query(runcat_query, [self.dataset_id])
+        cursor = query(runcat_query, [cls.dataset_id])
         cls.transients = [Transient(runcatid=i) for (i,) in cursor.fetchall()]
         cls.parset = tempfile.NamedTemporaryFile()
         cls.parset.write("weighting.cutoff = 0.2\n")

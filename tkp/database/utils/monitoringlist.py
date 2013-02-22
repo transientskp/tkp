@@ -22,6 +22,7 @@ MonitorTuple = namedtuple('MonitorTuple',
 
 AUTOCOMMIT = config['database']['autocommit']
 
+#NB CURRENTLY UNSUPPORTED.
 def get_userdetections(image_id, deRuiter_r, radius=0.03):
     """Returns the monitoringlist user-entry sources for a forced fit
     in the current image
@@ -77,6 +78,8 @@ def get_nulldetections(image_id, deRuiter_r):
         #print "\nTrying to find null detections for image_id:", image_id, "\n"
         conn = DataBase().connection
         cursor = conn.cursor()
+        #The first subquery looks for extractedsources without runcat associations.
+        # The second subquery looks for runcat entries we expect to see in this image.
         #NB extra clause on x.image is necessary for performance reasons.
         query = """\
         SELECT r1.id
@@ -107,6 +110,14 @@ def get_nulldetections(image_id, deRuiter_r):
                                          / (x.decl_err * x.decl_err + r.wm_decl_err * r.wm_decl_err)
                                         ) < %(drrad)s
                             )
+            AND r1.id IN(SELECT rc2.id
+                           FROM runningcatalog rc2
+                               ,assocskyrgn asr2
+                               ,image im2
+                          WHERE im2.id = %(imgid)s
+                            AND asr2.skyrgn = im2.skyrgn
+                            AND asr2.runcat = rc2.id 
+                        )
         ;
         """
         qry_params = {'imgid':image_id, 'drrad': deRuiter_red}

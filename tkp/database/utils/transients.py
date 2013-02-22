@@ -16,7 +16,7 @@ logger = logging.getLogger(__name__)
 
 AUTOCOMMIT = config['database']['autocommit']
 
-def _update_known_transients(transients): 
+def _update_known_transients(transients):
     """Update the known transient sources in the database,
     ie. for which the runcatid is known.
     
@@ -66,7 +66,7 @@ def _update_known_transients(transients):
         logger.warn("Failed on query:\n%s", query)
         raise
 
-def _insert_new_transients(image_id, transients, prob_threshold): 
+def _insert_new_transients(image_id, transients, prob_threshold):
     """Insert new transient sources in the database,
     ie those for which no runcat id exists yet.
     
@@ -262,7 +262,7 @@ def transient_search(image_id,
 
     # TODO: We want the trigger_xtrsrc here as well
     results = select_variability_indices(image_id, V_lim, eta_lim, probability_threshold)
-    
+
     transients = []
     if len(results) > 0:
         runcatid = results[0]

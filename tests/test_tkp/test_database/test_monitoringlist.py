@@ -22,7 +22,7 @@ class TestIntermittentToMonitorlist(unittest.TestCase):
         self.database.close()
 
     def test_intermittentToMonitorlist(self):
-        dataset = tkpdb.DataSet(database=self.database, data={'description': "Monlist:"+self._testMethodName})
+        dataset = tkpdb.DataSet(database=self.database, data={'description': "Monlist:" + self._testMethodName})
         n_images = 3
         im_params = db_subs.example_dbimage_datasets(n_images)
 
@@ -31,60 +31,56 @@ class TestIntermittentToMonitorlist(unittest.TestCase):
         # one being detected in all images and not in the monlist
         # the second having a null-detection in the second image
         # and stored in the monlist
-        n_steady_srcs = 2 
+        n_steady_srcs = 2
         for i in range(n_steady_srcs):
             src = db_subs.example_extractedsource_tuple()
             src = src._replace(ra=src.ra + 2 * i)
             steady_srcs.append(src)
 
-        im_nr = 1
-        for im in im_params:
+        for idx, im in enumerate(im_params):
             image = tkpdb.Image(database=self.database, dataset=dataset, data=im)
-            
-            if im_nr == 2:
+
+            if idx == 1:
                 # The second image has a null detection, so only the first source is detected
                 image.insert_extracted_sources(steady_srcs[0:1])
             else:
                 image.insert_extracted_sources(steady_srcs)
-            
+
             # First, we check for null detections
-            nd = monitoringlist.get_nulldetections(image.id, deRuiter_r = 3.717)
-#            print "nd =", nd
-#            print "len(nd) =", len(nd)
-            
-            if im_nr == 1:
+            nd = monitoringlist.get_nulldetections(image.id, deRuiter_r=3.717)
+
+            if idx == 0:
                 self.assertEqual(len(nd), 0)
-            elif im_nr == 2:
+            elif idx == 1:
                 self.assertEqual(len(nd), 1)
                 # The null detection is found,
                 # We simulate the forced fit result back into extractedsource
                 # Check that the null-detection ra is the ra of source two
-                self.assertEqual(nd[0][0][0], steady_srcs[1].ra)
+                self.assertEqual(nd[0][0], steady_srcs[1].ra)
                 #print "nd=",nd
                 tuple_ff_nd = steady_srcs[1:2]
                 monitoringlist.insert_forcedfits_into_extractedsource(image.id, tuple_ff_nd, 'ff_nd')
-            elif im_nr == 3:
+            elif idx == 2:
                 self.assertEqual(len(nd), 0)
-            
+
             # Secondly, we do the source association
-            dbass.associate_extracted_sources(image.id, deRuiter_r = 3.717)
+            dbass.associate_extracted_sources(image.id, deRuiter_r=3.717)
             monitoringlist.add_nulldetections(image.id)
             # We also need to run the transient search in order to pick up the variable
             # eta_lim, V_lim, prob_threshold, minpoints, resp.
-            transients = tr_search.transient_search(image.id, \
-                                                     0.0, \
-                                                     0.0, \
-                                                     0.5, \
+            transients = tr_search.transient_search(image.id,
+                                                     0.0,
+                                                     0.0,
+                                                     0.5,
                                                      1)
-            
+
             # Adjust (insert/update/remove) transients in monlist as well
-            monitoringlist.adjust_transients_in_monitoringlist(image.id, \
+            monitoringlist.adjust_transients_in_monitoringlist(image.id,
                                                                transients)
-            im_nr += 1
-           
+
         # So after the three images have been processed,
         # We should have the null-detection source in the monlist
-        
+
         # Get the null detection in extractedsource
         # These are of extract_type = 1
         query = """\
@@ -94,7 +90,7 @@ class TestIntermittentToMonitorlist(unittest.TestCase):
          where x.image = i.id 
            and i.dataset = %s
            and x.extract_type = 1
-        """ 
+        """
         self.database.cursor.execute(query, (dataset.id,))
         result = zip(*self.database.cursor.fetchall())
         null_det = result[0]
@@ -159,7 +155,7 @@ class TestVariableToMonitorlist(unittest.TestCase):
         self.database.close()
 
     def test_variableToMonitorlist(self):
-        dataset = tkpdb.DataSet(database=self.database, data={'description': "Monlist:"+self._testMethodName})
+        dataset = tkpdb.DataSet(database=self.database, data={'description': "Monlist:" + self._testMethodName})
         n_images = 3
         im_params = db_subs.example_dbimage_datasets(n_images)
 
@@ -168,7 +164,7 @@ class TestVariableToMonitorlist(unittest.TestCase):
         # one being constant in all images and not ending up in the monlist,
         # while the second showing flux increase in the second image
         # and should be stored in the monlist
-        n_steady_srcs = 2 
+        n_steady_srcs = 2
         for i in range(n_steady_srcs):
             src = db_subs.example_extractedsource_tuple()
             src = src._replace(ra=src.ra + 2 * i)
@@ -177,7 +173,7 @@ class TestVariableToMonitorlist(unittest.TestCase):
         im_nr = 1
         for im in im_params:
             image = tkpdb.Image(database=self.database, dataset=dataset, data=im)
-            
+
             if im_nr == 2:
                 # flux of second source spikes
                 steady_srcs[1] = steady_srcs[1]._replace(flux=15e-2)
@@ -186,8 +182,8 @@ class TestVariableToMonitorlist(unittest.TestCase):
 
             image.insert_extracted_sources(steady_srcs)
 
-            ff_nd = monitoringlist.get_nulldetections(image.id, deRuiter_r = 3.717)
-            ff_mon = monitoringlist.get_monsources(image.id, deRuiter_r = 3.717)
+            ff_nd = monitoringlist.get_nulldetections(image.id, deRuiter_r=3.717)
+            ff_mon = monitoringlist.get_monsources(image.id, deRuiter_r=3.717)
 #            print "len(ff_nd)=",len(ff_nd)
 #            print "ff_nd=",ff_nd
 #            print "len(ff_mon)=",len(ff_mon)
@@ -196,26 +192,26 @@ class TestVariableToMonitorlist(unittest.TestCase):
             # No forced fits
             self.assertEqual(len(ff_mon), 0)
             self.assertEqual(len(ff_mon), 0)
-            
+
             # Then we do the source association
-            dbass.associate_extracted_sources(image.id, deRuiter_r = 3.717)
-            monitoringlist.add_nulldetections(image.id)     
+            dbass.associate_extracted_sources(image.id, deRuiter_r=3.717)
+            monitoringlist.add_nulldetections(image.id)
             # We also need to run the transient search in order to pick up the variable
             # eta_lim, V_lim, prob_threshold, minpoints, resp.
-            transients = tr_search.transient_search(image.id, \
-                                                     0.0, \
-                                                     0.0, \
-                                                     0.5, \
+            transients = tr_search.transient_search(image.id,
+                                                     0.0,
+                                                     0.0,
+                                                     0.5,
                                                      1)
-            
+
             # Adjust (insert/update/remove) transients in monlist as well
-            monitoringlist.adjust_transients_in_monitoringlist(image.id, \
+            monitoringlist.adjust_transients_in_monitoringlist(image.id,
                                                                transients)
             im_nr += 1
-           
+
         # So after the three images have been processed,
         # We should have the variable source in the monlist
-        
+
         query = """\
         SELECT runcat
               ,ra

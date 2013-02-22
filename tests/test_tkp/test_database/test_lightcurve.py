@@ -1,10 +1,13 @@
+import datetime
+from operator import attrgetter, itemgetter
+
 import unittest2 as unittest
+
 from tkp.testutil.decorators import requires_database
 from tkp.database.orm import DataSet
 from tkp.database.orm import Image
 import tkp.database
-import datetime
-from operator import attrgetter, itemgetter
+
 
 class TestLightCurve(unittest.TestCase):
     def setUp(self):

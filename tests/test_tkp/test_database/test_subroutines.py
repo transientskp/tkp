@@ -1,11 +1,12 @@
+import math
+
 import unittest2 as unittest
+
 import tkp.database as tkpdb
 from tkp.testutil.decorators import requires_database
-from tkp.testutil import db_subs
 from tkp.testutil.db_queries import convert_to_cartesian as db_cartesian
 from tkp.utility.coordinates import eq_to_cart as py_cartesian
-import tkp.database.utils as db_utils
-import math
+
 """Test miscellaneous minor database functions"""
 
 

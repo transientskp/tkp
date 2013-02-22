@@ -35,12 +35,15 @@ of detected sources in the presence of correlated noise in a single map
 (TEST_DECONV.FITS).
 """
 
-import unittest2 as unittest
 import os
+
+import unittest2 as unittest
+
 from tkp.utility import accessors
 from tkp.sourcefinder import image
 import tkp.config
 from tkp.testutil.decorators import requires_data, duration
+
 
 DATAPATH = tkp.config.config['test']['datapath']
 NUMBER_INSERTED = float(3969)

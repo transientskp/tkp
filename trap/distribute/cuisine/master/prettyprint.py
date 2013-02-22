@@ -1,5 +1,7 @@
-import trap.steps.prettyprint
 from lofarpipe.support.baserecipe import BaseRecipe
+
+import trap.steps.prettyprint
+
 
 class prettyprint(BaseRecipe):
     inputs = {}

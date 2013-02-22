@@ -1,8 +1,11 @@
-import os, errno, time, sys,pylab
+import os
+import time
+import sys
 import numpy as np
-from datetime import datetime
+
+import pylab
 import monetdb.sql as db
-from monetdb.sql import Error as Error
+
 #import MySQLdb as db
 #from MySQLdb import Error as Error
 import logging

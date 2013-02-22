@@ -1,7 +1,6 @@
 import logging
 from collections import namedtuple
 import tkp.database
-from tkp.database.database import DataBase
 
 logger = logging.getLogger(__name__)
 

@@ -1,6 +1,7 @@
-from tkp.utility.coordinates import WCS
 import logging
 import warnings
+
+from tkp.utility.coordinates import WCS
 
 
 logger = logging.getLogger(__name__)

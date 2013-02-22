@@ -1,9 +1,6 @@
 import unittest
 import tempfile
 import trap.steps.quality
-from tkp.testutil import db_subs
-from tkp.database.database import DataBase
-from tkp.database import query
 import tkp.utility.accessors
 import tkp.testutil.data as testdata
 from tkp.testutil.decorators import requires_database

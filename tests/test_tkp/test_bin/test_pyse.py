@@ -1,7 +1,9 @@
 import os
-import unittest2 as unittest
 import tempfile
 import shutil
+
+import unittest2 as unittest
+
 import tkp.bin.pyse
 import tkp.config
 from tkp.utility.accessors import FitsImage

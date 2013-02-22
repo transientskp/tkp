@@ -5,12 +5,13 @@ TODO: This is implementation specific and should be moved outside this module.
 """
 import logging
 import sys
-from lofarpipe.support.clusterdesc import ClusterDesc, get_compute_nodes
 import itertools
+
+from lofarpipe.support.clusterdesc import ClusterDesc, get_compute_nodes
 from lofarpipe.support.lofarnode import LOFARnodeTCP
 from lofarpipe.support.baserecipe import BaseRecipe
 from lofarpipe.support.remotecommand import RemoteCommandRecipeMixIn
-from lofarpipe.support.pipelinelogging import log_time
+
 
 def nodes_available(config):
     """ Obtain list of available nodes """

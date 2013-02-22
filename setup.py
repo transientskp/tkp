@@ -81,7 +81,7 @@ setup(
 
 
 # use numpy to compile fortran stuff into python module
-from numpy.distutils.core import setup, Extension
+from numpy.distutils.core import Extension
 setup(
   name="deconv",
   version="1.0",

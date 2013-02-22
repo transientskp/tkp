@@ -116,12 +116,15 @@ If an ``id`` is supplied, ``data`` is ignored.
 """
 
 import logging
-from . import utils as dbu
+
 import monetdb.sql as db
+
+from . import utils as dbu
 from .database import ENGINE
 import tkp.database
 import tkp.database.quality
 from tkp.database.database import DataBase
+
 
 logger = logging.getLogger(__name__)
 

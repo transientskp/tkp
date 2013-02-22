@@ -3,7 +3,7 @@ import tkp.database as tkpdb
 import tkp.database.utils.transients as dbt
 import tkp.database.utils as dbutils
 from tkp.testutil import db_subs
-from tkp.testutil.decorators import requires_database, duration
+from tkp.testutil.decorators import requires_database
 
 
 class TestTransientBasics(unittest.TestCase):

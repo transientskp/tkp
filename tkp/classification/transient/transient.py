@@ -10,11 +10,6 @@ A Transient object class, that stores a variety of information related to any ty
 """
 
 
-from .utils import Position
-from .utils import DateTime
-
-
-
 class Undefined(object):
     """This is a small helper class to use for undefined values.
 

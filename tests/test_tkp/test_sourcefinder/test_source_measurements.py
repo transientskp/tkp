@@ -13,9 +13,11 @@ later, as well as tests for the kappa*sigma clipper and the
 deblending algorithm.
 """
 
-import unittest2 as unittest
 import os
 import numpy as np
+
+import unittest2 as unittest
+
 import tkp.utility.accessors
 from tkp.sourcefinder import image
 import tkp.config

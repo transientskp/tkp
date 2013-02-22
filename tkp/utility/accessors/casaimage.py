@@ -1,5 +1,7 @@
-from tkp.utility.accessors.dataaccessor import DataAccessor
 import logging
+
+from tkp.utility.accessors.dataaccessor import DataAccessor
+
 
 logger = logging.getLogger(__name__)
 

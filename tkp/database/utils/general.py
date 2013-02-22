@@ -11,10 +11,8 @@ with exceptions of monitoringlist and transients.
 import math
 import logging
 
-import monetdb.sql as db
 from tkp.config import config
 import tkp.database
-from tkp.database.database import DataBase
 from tkp.utility.coordinates import eq_to_cart
 
 logger = logging.getLogger(__name__)

@@ -33,7 +33,6 @@ file.
 from __future__ import with_statement
 import ConfigParser
 import os
-import os.path
 import logging
 
 

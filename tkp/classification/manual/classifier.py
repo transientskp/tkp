@@ -34,11 +34,8 @@ from the object.
 
 """
 
-
-import os
 import  itertools
 import imp
-import tkp.config
 
 
 class ClassifiedObject(object):

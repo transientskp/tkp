@@ -1,5 +1,7 @@
-import unittest2 as unittest
 import math
+
+import unittest2 as unittest
+
 import tkp.database as tkpdb
 import tkp.database.utils.general as dbgen
 from tkp.testutil import db_subs

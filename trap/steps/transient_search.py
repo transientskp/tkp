@@ -1,7 +1,9 @@
-import os
 import logging
-import tkp.database.utils as dbu
+
 from lofar.parameterset import parameterset
+
+import tkp.database.utils as dbu
+
 
 logger = logging.getLogger(__name__)
 

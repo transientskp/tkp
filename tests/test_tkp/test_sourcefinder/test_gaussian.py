@@ -1,10 +1,13 @@
 """
 Tests for elliptical Gaussian fitting code in the TKP pipeline.
 """
-import unittest2 as unittest
 import numpy
+
+import unittest2 as unittest
+
 from tkp.sourcefinder.gaussian import gaussian
 from tkp.sourcefinder.fitting import moments, fitgaussian
+
 
 # The units that are tested often require information about the resolution element:
 # (semimajor(pixels),semiminor(pixels),beam position angle (radians).

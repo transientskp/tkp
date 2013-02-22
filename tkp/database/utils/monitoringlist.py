@@ -5,11 +5,14 @@ This module contains the routines to deal with flagging and monitoring
 of transient candidates, mostly involving the monitoringlist.
 """
 import logging
+from collections import namedtuple
+
 import monetdb.sql as db
+
 from tkp.config import config
 from . import general
 from tkp.database.database import DataBase
-from collections import namedtuple
+
 
 logger = logging.getLogger(__name__)
 

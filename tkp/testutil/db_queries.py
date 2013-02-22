@@ -13,7 +13,6 @@ A collection of back end db query subroutines used for unittesting
 import logging
 import monetdb.sql as db
 from tkp.config import config
-from tkp.database.database import DataBase
 from tkp.database import query
 
 def count_runcat_entries(conn, dataset):

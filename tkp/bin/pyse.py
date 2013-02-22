@@ -17,20 +17,19 @@ For help with command line options:
 See chapters 2 & 3 of Spreeuw, PhD Thesis, University of Amsterdam, 2010,
 <http://dare.uva.nl/en/record/340633> for details.
 """
-import sys
 import math
 import os.path
 from cStringIO import StringIO
 from optparse import OptionParser
+import numpy
 
 import pyfits
-import numpy
 
 from tkp.utility.accessors import FitsImage
 from tkp.utility.accessors import sourcefinder_image_from_accessor
 from tkp.utility.accessors import writefits as tkp_writefits
-
 from tkp.sourcefinder.utils import generate_result_maps
+
 
 def regions(sourcelist):
     """

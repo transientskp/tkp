@@ -1,8 +1,11 @@
 import logging
+
+from lofar.parameterset import parameterset
+
 import tkp.utility.accessors
 from tkp.utility.accessors import sourcefinder_image_from_accessor
-from lofar.parameterset import parameterset
 import tkp.utility.accessors
+
 
 logger = logging.getLogger(__name__)
 

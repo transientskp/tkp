@@ -1,8 +1,9 @@
 import os
-import tkp.config
-
 import unittest
+
+import tkp.config
 from tkp.testutil import db_subs
+
 
 if not  hasattr(unittest.TestCase, 'assertIsInstance'):
     import unittest2 as unittest

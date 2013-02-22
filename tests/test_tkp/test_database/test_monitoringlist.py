@@ -1,6 +1,5 @@
 import unittest2 as unittest
 import tkp.database as tkpdb
-import tkp.database.utils as dbutils
 from tkp.testutil import db_subs
 from tkp.testutil.decorators import requires_database
 from tkp.database.utils import monitoringlist

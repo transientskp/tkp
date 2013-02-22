@@ -1,11 +1,14 @@
-import unittest2 as unittest
 import os
+
+import unittest2 as unittest
+
 from tkp.utility import accessors
 from tkp.utility.accessors.lofarcasaimage import LofarCasaImage
 from tkp.utility.accessors.dataaccessor import extract_metadata
 import tkp.config
 from tkp.testutil.decorators import requires_data
 from tkp.utility.coordinates import angsep
+
 
 DATAPATH = tkp.config.config['test']['datapath']
 casatable =  os.path.join(DATAPATH, 'casatable/L55596_000TO009_skymodellsc_wmax6000_noise_mult10_cell40_npix512_wplanes215.img.restored.corr')

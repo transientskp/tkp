@@ -3,7 +3,6 @@ This script is used to inject missing header info into a FITS file or CASA
 table. his can be useful to make your data processable by the TRAP pipeline.
 """
 
-import sys
 import os.path
 import argparse
 from lofarpipe.support.parset import parameterset

@@ -1,10 +1,11 @@
 import unittest
-import trap.management
 import os
 import sys
-import os.path
 import shutil
 import tempfile
+
+import trap.management
+
 
 project_name = 'test_project'
 job_name = 'test_job'

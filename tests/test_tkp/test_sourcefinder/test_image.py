@@ -1,12 +1,15 @@
+import numpy as np
+import os
+
 import unittest2 as unittest
+
 from tkp.testutil.decorators import requires_data
 import tkp.sourcefinder
 from tkp.sourcefinder import image as sfimage
 import tkp.config
 from tkp.utility import accessors
 from tkp.utility.uncertain import Uncertain
-import numpy as np
-import os
+
 
 DATAPATH = tkp.config.config['test']['datapath']
 

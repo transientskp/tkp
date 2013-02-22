@@ -1,10 +1,13 @@
-import unittest2 as unittest
 import os
+
+import unittest2 as unittest
+
 from tkp.testutil.decorators import requires_data
 from tkp.utility import accessors
 import tkp.quality.restoringbeam
 import tkp.lofar.beam
 import tkp.config
+
 
 DATAPATH = tkp.config.config['test']['datapath']
 fits_file = os.path.join(DATAPATH,

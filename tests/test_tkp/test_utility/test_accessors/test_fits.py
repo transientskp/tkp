@@ -2,17 +2,18 @@
 Tests for simulated LOFAR datasets.
 """
 
-import unittest2 as unittest
 import os
-import pyfits
+
+import unittest2 as unittest
+
 import tkp.config
 from tkp.utility import accessors
-from tkp.utility.accessors.casaimage import CasaImage
 from tkp.utility.accessors.fitsimage import FitsImage
 from tkp.database import DataSet
 from tkp.database import DataBase
 from tkp.testutil.decorators import requires_data
 from tkp.testutil.decorators import requires_database
+
 
 DATAPATH = tkp.config.config['test']['datapath']
 

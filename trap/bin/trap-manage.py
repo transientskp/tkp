@@ -1,6 +1,5 @@
 #!/usr/bin/env python
 
-import os, sys
 import trap.management
 
 if __name__ == "__main__":

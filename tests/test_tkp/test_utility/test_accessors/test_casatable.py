@@ -1,5 +1,7 @@
-import unittest2 as unittest
 import os
+
+import unittest2 as unittest
+
 from tkp.utility.accessors.casaimage import CasaImage
 import tkp.config
 from tkp.testutil.decorators import requires_data

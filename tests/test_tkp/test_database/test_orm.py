@@ -1,10 +1,13 @@
-import unittest2 as unittest
 import datetime
+
+import unittest2 as unittest
+
 from tkp.testutil.decorators import requires_database
 from tkp.database import DataSet
 from tkp.database import DataBase
 from tkp.database import Image
 from tkp.database import ExtractedSource
+
 # We're cheating here: a unit test shouldn't really depend on an
 # external dependency like the database being up and running
 

@@ -1,8 +1,11 @@
-import unittest2 as unittest
-from tkp.sourcefinder.utils import maximum_pixel_method_variance, fudge_max_pix
 import numpy
 from numpy.testing import assert_array_equal
+
+import unittest2 as unittest
+
+from tkp.sourcefinder.utils import maximum_pixel_method_variance, fudge_max_pix
 from tkp.sourcefinder.utils import circular_mask
+
 
 class TestCircularMask(unittest.TestCase):
     def test_known_results(self):

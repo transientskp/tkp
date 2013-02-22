@@ -14,10 +14,12 @@ number like 1e-8 will almost always be equal to any other small
 number. Multiplying by the order of magnitude ascertains the
 comparison is more approritate.
 """
-import unittest2 as unittest
 import numpy
 from datetime import datetime
 from datetime import timedelta
+
+import unittest2 as unittest
+
 from tkp.classification.features import lightcurve as lcmod
 from tkp.classification.transient import DateTime
 

@@ -13,7 +13,6 @@ logger = logging.getLogger(__name__)
 # port = 0 is a flag to use the default port instead
 ENGINE = config['database']['engine']
 if ENGINE == 'monetdb':
-    import monetdb
     import monetdb.sql as engine
     if config['database']['port'] == 0:
         config['database']['port'] = 50000

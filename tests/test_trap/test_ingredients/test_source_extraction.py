@@ -1,7 +1,7 @@
 import unittest
 import tempfile
 import trap.steps.source_extraction
-from tkp.testutil import db_subs, db_queries, data
+from tkp.testutil import db_subs, data
 
 class TestSourceExtraction(unittest.TestCase):
     @classmethod

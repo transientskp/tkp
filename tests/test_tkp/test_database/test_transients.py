@@ -53,7 +53,6 @@ class TestTransientBasics(unittest.TestCase):
                                             eta_lim=1,
                                             V_lim=0.1,
                                             probability_threshold=0.7,
-                                            minpoints=1,
                                             image_id=image.id)
 
         # Check the number of detected transients
@@ -149,8 +148,7 @@ class TestTransientRoutines(unittest.TestCase):
                  eta_lim=1.1,
                  V_lim=0.01,
                  probability_threshold=0.01,
-                 image_id=self.db_imgs[-1].id,
-                 minpoints=1)
+                 image_id=self.db_imgs[-1].id)
         self.assertEqual(len(transients), 3)
 
 #        for t in all_transients:
@@ -163,16 +161,14 @@ class TestTransientRoutines(unittest.TestCase):
                  eta_lim=1.1,
                  V_lim=2.0,
                  probability_threshold=0.01,
-                 image_id=self.db_imgs[-1].id,
-                 minpoints=1)
+                 image_id=self.db_imgs[-1].id)
         self.assertEqual(len(transients), more_highly_variable)
 
         transients = dbutils.transient_search(
                  eta_lim=100,
                  V_lim=0.01,
                  probability_threshold=0.01,
-                 image_id=self.db_imgs[-1].id,
-                 minpoints=1)
+                 image_id=self.db_imgs[-1].id)
         self.assertEqual(len(transients), very_non_flat)
 
 

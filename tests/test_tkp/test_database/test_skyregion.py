@@ -32,8 +32,8 @@ class TestSkyRegionBasics(unittest.TestCase):
         image0 = tkpdb.Image(dataset=self.dataset, data=im_params[0])
         image0.update()
 
-        skyrgns = dbutils.columns_from_table(self.database.connection,
-                     'skyregion', where={'dataset':self.dataset.id})
+        skyrgns = dbutils.columns_from_table('skyregion',
+                                             where={'dataset':self.dataset.id})
 #        if self.clean_table:
         self.assertEqual(len(skyrgns), 1)
         rgn_keys = ['centre_ra', 'centre_decl', 'xtr_radius']
@@ -54,8 +54,8 @@ class TestSkyRegionBasics(unittest.TestCase):
         image2 = tkpdb.Image(dataset=self.dataset, data=im_params[2])
         image2.update()
         self.assertNotEqual(image2._data['skyrgn'], first_skyrgn_id)
-        skyrgns = dbutils.columns_from_table(self.database.connection,
-                             'skyregion', where={'dataset':self.dataset.id})
+        skyrgns = dbutils.columns_from_table('skyregion',
+                                             where={'dataset':self.dataset.id})
         for db_row in skyrgns:
             if all([db_row[k] == im_params[2][k] for k in rgn_keys]):
                 second_skyrgn_id = db_row['id']
@@ -98,8 +98,7 @@ class TestSkyRegionAssociation(unittest.TestCase):
         image0.associate_extracted_sources(deRuiter_r=3.7)
         image0.update()
 
-        runcats = dbutils.columns_from_table(self.database.connection,
-                                'runningcatalog',
+        runcats = dbutils.columns_from_table('runningcatalog',
                                 where={'dataset':self.dataset.id})
         self.assertEqual(len(runcats), 1) #Just a sanity check.
         ##Second, different *But overlapping* image:
@@ -108,8 +107,8 @@ class TestSkyRegionAssociation(unittest.TestCase):
         image1 = tkpdb.Image(dataset=self.dataset, data=im_params[idx])
         image1.update()
 
-        assocs = dbutils.columns_from_table(self.database.connection,
-                         'assocskyrgn', where={'skyrgn':image1._data['skyrgn']})
+        assocs = dbutils.columns_from_table('assocskyrgn',
+                                    where={'skyrgn':image1._data['skyrgn']})
         self.assertEqual(len(assocs), 1)
         self.assertEqual(assocs[0]['runcat'], runcats[0]['id'])
 
@@ -118,8 +117,8 @@ class TestSkyRegionAssociation(unittest.TestCase):
         im_params[idx]['centre_decl'] += im_params[idx]['xtr_radius'] * 1.1
         image2 = tkpdb.Image(dataset=self.dataset, data=im_params[idx])
         image2.update()
-        assocs = dbutils.columns_from_table(self.database.connection,
-                         'assocskyrgn', where={'skyrgn':image2._data['skyrgn']})
+        assocs = dbutils.columns_from_table('assocskyrgn',
+                                    where={'skyrgn':image2._data['skyrgn']})
         self.assertEqual(len(assocs), 0)
 
     @unittest.skip("TODO: This test failes due to issue #4213")
@@ -162,21 +161,20 @@ class TestSkyRegionAssociation(unittest.TestCase):
         image1.associate_extracted_sources(deRuiter_r=3.7)
         image1.update()
 
-        runcats = dbutils.columns_from_table(self.database.connection,
-                        'runningcatalog',
+        runcats = dbutils.columns_from_table('runningcatalog',
                         where={'dataset':self.dataset.id})
 
         #We now expect to see both runcat entries in the field of im1 
-        im1_assocs = dbutils.columns_from_table(self.database.connection,
-                         'assocskyrgn', where={'skyrgn':image1._data['skyrgn']})
+        im1_assocs = dbutils.columns_from_table('assocskyrgn',
+                                    where={'skyrgn':image1._data['skyrgn']})
 
         self.assertEqual(len(im1_assocs), 2)
         self.assertEqual(im1_assocs[0]['runcat'], runcats[0]['id'])
         self.assertEqual(im1_assocs[1]['runcat'], runcats[1]['id'])
 
         #But only one in field of im0 ( the first source).
-        im0_assocs = dbutils.columns_from_table(self.database.connection,
-                         'assocskyrgn', where={'skyrgn':image0._data['skyrgn']})
+        im0_assocs = dbutils.columns_from_table('assocskyrgn',
+                                    where={'skyrgn':image0._data['skyrgn']})
 
         self.assertEqual(len(im0_assocs), 1)
         self.assertEqual(im0_assocs[0]['runcat'], runcats[0]['id'])
@@ -217,10 +215,9 @@ class TestOneToManyAssocUpdates(unittest.TestCase):
         imgs[idx].insert_extracted_sources([src_a, src_b])
         imgs[idx].associate_extracted_sources(deRuiter_r=3.7)
         imgs[idx].update()
-        runcats = dbutils.columns_from_table(self.database.connection,
-                                'runningcatalog',
+        runcats = dbutils.columns_from_table('runningcatalog',
                                 where={'dataset':self.dataset.id})
         self.assertEqual(len(runcats), 2) #Just a sanity check.
-        skyassocs = dbutils.columns_from_table(self.database.connection,
-                         'assocskyrgn', where={'skyrgn':imgs[idx]._data['skyrgn']})
+        skyassocs = dbutils.columns_from_table('assocskyrgn',
+                                   where={'skyrgn':imgs[idx]._data['skyrgn']})
         self.assertEqual(len(skyassocs), 2)

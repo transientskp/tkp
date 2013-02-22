@@ -70,8 +70,7 @@ class TestIntermittentToMonitorlist(unittest.TestCase):
             transients = tr_search.transient_search(image.id,
                                                      0.0,
                                                      0.0,
-                                                     0.5,
-                                                     1)
+                                                     0.5)
 
             # Adjust (insert/update/remove) transients in monlist as well
             monitoringlist.adjust_transients_in_monitoringlist(image.id,
@@ -200,8 +199,7 @@ class TestVariableToMonitorlist(unittest.TestCase):
             transients = tr_search.transient_search(image.id,
                                                      0.0,
                                                      0.0,
-                                                     0.5,
-                                                     1)
+                                                     0.5)
 
             # Adjust (insert/update/remove) transients in monlist as well
             monitoringlist.adjust_transients_in_monitoringlist(image.id,

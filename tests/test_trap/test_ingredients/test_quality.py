@@ -10,9 +10,9 @@ from tkp.testutil.decorators import requires_database
 
 @requires_database()
 class TestQuality(unittest.TestCase):
-    def __init__(self, *args):
-        super(TestQuality, self).__init__(*args)
-        self.accessor = tkp.utility.accessors.open(testdata.casa_table)
+    @classmethod
+    def setUpClass(cls):
+        cls.accessor = tkp.utility.accessors.open(testdata.casa_table)
 
     def test_parse_parset(self):
         parset = tempfile.NamedTemporaryFile()

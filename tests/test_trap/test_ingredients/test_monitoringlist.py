@@ -6,9 +6,9 @@ from tkp.testutil.decorators import requires_database
 
 @requires_database()
 class TestMonitoringlist(unittest.TestCase):
-    def __init__(self, *args):
-        super(TestMonitoringlist, self).__init__(*args)
-        self.dataset_id = db_subs.create_dataset_8images()
-        self.parset = tempfile.NamedTemporaryFile()
-        self.parset.flush()
+    @classmethod
+    def setUpClass(cls):
+        cls.dataset_id = db_subs.create_dataset_8images()
+        cls.parset = tempfile.NamedTemporaryFile()
+        cls.parset.flush()
 

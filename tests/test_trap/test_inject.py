@@ -10,11 +10,11 @@ DATAPATH = tkp.config.config['test']['datapath']
 fits_file = os.path.join(DATAPATH, 'missingheaders.fits')
 
 class TestInject(unittest.TestCase):
-    def __init__(self, *args):
-        super(TestInject, self).__init__(*args)
+    @classmethod
+    def setUpClass(cls):
         temp_dir = tempfile.mkdtemp()
-        self.fixed_file = os.path.join(temp_dir, 'fixed.fits')
-        shutil.copy(fits_file, self.fixed_file)
+        cls.fixed_file = os.path.join(temp_dir, 'fixed.fits')
+        shutil.copy(fits_file, cls.fixed_file)
 
     def test_no_injection(self):
         # stuff should be missing here

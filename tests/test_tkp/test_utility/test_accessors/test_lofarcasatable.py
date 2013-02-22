@@ -12,9 +12,9 @@ casatable =  os.path.join(DATAPATH, 'casatable/L55596_000TO009_skymodellsc_wmax6
 
 @requires_data(casatable)
 class TestLofarCasaImage(unittest.TestCase):
-    def __init__(self, *args):
-        super(TestLofarCasaImage, self).__init__(*args)
-        self.accessor = LofarCasaImage(casatable)
+    @classmethod
+    def setUpClass(cls):
+        cls.accessor = LofarCasaImage(casatable)
              
     def test_casaimage(self):
         results = extract_metadata(self.accessor)

@@ -9,13 +9,13 @@ from tkp.testutil.decorators import requires_database
 
 @requires_database()
 class TestPersistence(unittest.TestCase):
-    def __init__(self, *args):
-        super(TestPersistence, self).__init__(*args)
-        self.dataset_id = db_subs.create_dataset_8images()
-        self.parset = tempfile.NamedTemporaryFile()
-        self.parset.flush()
-        self.images = [testdata.fits_file]
-        self.extraction_radius = 256
+    @classmethod
+    def setUpClass(cls):
+        cls.dataset_id = db_subs.create_dataset_8images()
+        cls.parset = tempfile.NamedTemporaryFile()
+        cls.parset.flush()
+        cls.images = [testdata.fits_file]
+        cls.extraction_radius = 256
 
     def test_parse_parset(self):
         trap.steps.persistence.parse_parset(self.parset.name)
@@ -47,9 +47,9 @@ class TestPersistence(unittest.TestCase):
 
 @requires_mongodb()
 class TestMongoDb(unittest.TestCase):
-    def __init__(self, *args):
-        super(TestMongoDb, self).__init__(*args)
-        self.images = [testdata.fits_file]
+    @classmethod
+    def setUpClass(cls):
+        cls.images = [testdata.fits_file]
 
     def test_image_to_mongodb(self):
         hostname = tkpconfig['mongodb']['hostname']

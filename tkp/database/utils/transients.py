@@ -8,16 +8,12 @@ mostly involving the 'transient' table.
 import logging
 from scipy.stats import chisqprob
 
-import monetdb.sql as db
-
-from tkp.config import config
-from tkp.database.database import DataBase
+import tkp.database
 from tkp.classification.transient import Transient
 
 
 logger = logging.getLogger(__name__)
 
-AUTOCOMMIT = config['database']['autocommit']
 
 def _update_known_transients(transients):
     """Update the known transient sources in the database,
@@ -36,38 +32,26 @@ def _update_known_transients(transients):
     Transient behaviour is checked per frequency band,
     because we assume that fluxes are not comparable across bands.
     """
+    query = """\
+UPDATE transient
+   SET siglevel = %s
+      ,V_int = %s
+      ,eta_int = %s
+ WHERE runcat = %s
+   AND band = %s
+"""
+    upd = 0
+    for i in range(len(transients)):
+        args = (float(transients[i].siglevel),
+                float(transients[i].V_int),
+                float(transients[i].eta_int),
+                transients[i].runcatid,
+                transients[i].band)
+        cursor = tkp.database.query(query, args, commit=True)
+        upd += cursor.rowcount
+    if upd > 0:
+        logger.info("Updated %s known transients" % (upd,))
 
-    try:
-        conn = DataBase().connection
-        cursor = conn.cursor()
-        query = """\
-        UPDATE transient
-           SET siglevel = %s
-              ,V_int = %s
-              ,eta_int = %s
-         WHERE runcat = %s
-           AND band = %s
-        """
-        upd = 0
-        for i in range(len(transients)):
-            upd += cursor.execute(query, (float(transients[i].siglevel),
-                                          float(transients[i].V_int),
-                                          float(transients[i].eta_int),
-                                          transients[i].runcatid,
-                                          transients[i].band))
-            if not AUTOCOMMIT:
-                conn.commit()
-        cursor.close()
-        if upd > 0:
-            logger.info("Updated %s known transients" % (upd,))
-    except db.Error:
-        query = query % (float(transients[i].siglevel),
-                         float(transients[i].V_int),
-                         float(transients[i].eta_int),
-                         transients[i].runcat,
-                         transients[i].band)
-        logger.warn("Failed on query:\n%s", query)
-        raise
 
 def _insert_new_transients(image_id, transients, prob_threshold):
     """Insert new transient sources in the database,
@@ -89,55 +73,40 @@ def _insert_new_transients(image_id, transients, prob_threshold):
     Transient behaviour is checked per frequency band,
     because we assume that fluxes are not comparable across bands.
     """
-
-    try:
-        conn = DataBase().connection
-        cursor = conn.cursor()
-        query = """\
-        INSERT INTO transient
-          (runcat
-          ,band
-          ,siglevel
-          ,V_int
-          ,eta_int
-          ,trigger_xtrsrc
-          )
-        VALUES
-          (%s
-          ,%s
-          ,%s
-          ,%s
-          ,%s
-          ,%s
-          )
-        """
-        ins = 0
-        for i in range(len(transients)):
-            if not transients[i].monitored:
-                if transients[i].siglevel > prob_threshold:
-                    ins += cursor.execute(query, (transients[i].runcatid,
-                                              transients[i].band,
-                                              float(transients[i].siglevel),
-                                              float(transients[i].V_int),
-                                              float(transients[i].eta_int),
-                                              transients[i].trigger_xtrsrc))
-                    if not AUTOCOMMIT:
-                        conn.commit()
-        cursor.close()
-        if ins == 0:
-            logger.info("No new transients found in image %s" % (image_id))
-        else:
-            logger.info("Inserted %s new transients in transients table" % (ins,))
-    except db.Error:
-        query = query % (transients[i].runcat,
-                         transients[i].band,
-                         float(transients[i].siglevel),
-                         float(transients[i].V_int),
-                         float(transients[i].eta_int),
-                         transients[i].trigger_xtrsrc,
-                         transients[i].runcat)
-        logger.warn("Failed on query:\n%s", query)
-        raise
+    query = """\
+INSERT INTO transient
+  (runcat
+  ,band
+  ,siglevel
+  ,V_int
+  ,eta_int
+  ,trigger_xtrsrc
+  )
+VALUES
+  (%s
+  ,%s
+  ,%s
+  ,%s
+  ,%s
+  ,%s
+  )
+"""
+    ins = 0
+    for i in range(len(transients)):
+        if not transients[i].monitored:
+            if transients[i].siglevel > prob_threshold:
+                args = (transients[i].runcatid,
+                        transients[i].band,
+                        float(transients[i].siglevel),
+                        float(transients[i].V_int),
+                        float(transients[i].eta_int),
+                        transients[i].trigger_xtrsrc)
+                cursor = tkp.database.query(query, args, commit=True)
+                ins += cursor.rowcount
+    if ins == 0:
+        logger.info("No new transients found in image %s" % image_id)
+    else:
+        logger.info("Inserted %s new transients in transients table" % (ins,))
 
 
 def select_variability_indices(image_id, V_lim, eta_lim, prob_threshold):
@@ -149,8 +118,8 @@ def select_variability_indices(image_id, V_lim, eta_lim, prob_threshold):
     average fluxes and the variance measures, and thus can quickly
     obtain any sources that exceed a constant flux by a certain amount.
 
-    We select those sources that have integrated-flux V-indexes (variability) and
-    eta-indexes (reduced-chi-sq values) larger than the specified limits.
+    We select those sources that have integrated-flux V-indexes (variability)
+    and eta-indexes (reduced-chi-sq values) larger than the specified limits.
 
     We also perform a left outer join with the monitoringlist and the
     transient tables, to determine if the source has been inserted into those
@@ -168,18 +137,14 @@ def select_variability_indices(image_id, V_lim, eta_lim, prob_threshold):
 
         dsid (int): dataset of interest
 
-        image_id: the image and thus frequency band being searched for variability
+        image_id: the image and thus frequency band being searched for
+                  variability
 
         V_lim (): 
 
         eta_lim ():
     """
-
-    results = []
-    try:
-        conn = DataBase().connection
-        cursor = conn.cursor()
-        query = """\
+    query = """\
 SELECT t1.runcat
       ,t1.band
       ,t1.f_datapoints
@@ -244,27 +209,17 @@ SELECT t1.runcat
 ORDER BY t1.runcat
         ,t1.band
 """
-        cursor.execute(query, (image_id, image_id, V_lim, eta_lim, prob_threshold))
-
-        results = zip(*cursor.fetchall())
-        if not AUTOCOMMIT:
-            conn.commit()
-        cursor.close()
-    except db.Error:
-        query = query % (image_id, image_id, V_lim, eta_lim, prob_threshold)
-        logger.warn("Query failed:\n%s", query)
-        raise
-    
+    args = (image_id, image_id, V_lim, eta_lim, prob_threshold)
+    cursor = tkp.database.query(query, args)
+    results = zip(*cursor.fetchall())
     return results
 
-def transient_search(image_id,
-                     eta_lim,
-                     V_lim,
-                     probability_threshold,
-                     minpoints):
+
+def transient_search(image_id, eta_lim, V_lim, probability_threshold):
 
     # TODO: We want the trigger_xtrsrc here as well
-    results = select_variability_indices(image_id, V_lim, eta_lim, probability_threshold)
+    results = select_variability_indices(image_id, V_lim, eta_lim,
+                                            probability_threshold)
 
     transients = []
     if len(results) > 0:
@@ -281,7 +236,8 @@ def transient_search(image_id,
         monitored = results[10]
 
         for i in range(len(runcatid)):
-            prob = 1 - chisqprob(eta_int[i] * (f_datapoints[i] - 1), (f_datapoints[i] - 1))
+            prob = 1 - chisqprob(eta_int[i] * (f_datapoints[i] - 1),
+                                        (f_datapoints[i] - 1))
             transient = Transient()
             transient.runcatid = runcatid[i]
             transient.band = band

@@ -11,13 +11,11 @@ with exceptions of monitoringlist and transients.
 import math
 import logging
 
-from tkp.config import config
 import tkp.database
 from tkp.utility.coordinates import eq_to_cart
 
-logger = logging.getLogger(__name__)
 
-AUTOCOMMIT = config['database']['autocommit']
+logger = logging.getLogger(__name__)
 
 
 lightcurve_query = """

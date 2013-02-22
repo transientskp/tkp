@@ -3,18 +3,13 @@ A collection of generic functions used to generate SQL queries
 and return data in an easy to use format such as dictionaries.
 """
 import logging
-import monetdb.sql as db
-from tkp.config import config
+import tkp.database
+
 
 logger = logging.getLogger(__name__)
 
-AUTOCOMMIT = config['database']['autocommit']
 
-
-def columns_from_table(conn, table,
-                       keywords=None,
-                       alias=None,
-                       where=None):
+def columns_from_table(table, keywords=None, alias=None, where=None):
     """Obtain specific column (keywords) values from 'table', with
     kwargs limitations.
 
@@ -27,7 +22,7 @@ def columns_from_table(conn, table,
 
     Example:
 
-        >>> columns_from_table(conn, 'image', \
+        >>> columns_from_table('image', \
             keywords=['taustart_ts', 'tau_time', 'freq_eff', 'freq_bw'], where={'imageid': 1})
             [{'freq_eff': 133984375.0, 'taustart_ts': datetime.datetime(2010, 10, 9, 9, 4, 2), 'tau_time': 14400.0, 'freq_bw': 1953125.0}]
 
@@ -62,12 +57,6 @@ def columns_from_table(conn, table,
             corresponds to a table row.
 
     """
-
-    # Note from the Python docs: If items(), keys(), values(),
-    # iteritems(), iterkeys(), and itervalues() are called with no
-    # intervening modifications to the dictionary, the lists will
-    # directly correspond.
-    results = []
     if keywords is None:
         query = "SELECT * FROM " + table
     else:
@@ -78,18 +67,12 @@ def columns_from_table(conn, table,
     where = " AND ".join(["%s=%%s" % key for key in where.iterkeys()])
     if where:
         query += " WHERE " + where
-    try:
-        cursor = conn.cursor()
-        cursor.execute(query, where_args)
-        results = cursor.fetchall()
-        results = convert_db_rows_to_dicts(results, cursor.description, alias)
-    except db.Error:
-        query = query % where_args
-        logger.warn("Query failed: %s" % query)
-        raise
-    finally:
-        conn.cursor().close()
-    return results
+
+    cursor = tkp.database.query(query, where_args)
+    results = cursor.fetchall()
+    results_dict = convert_db_rows_to_dicts(results, cursor.description, alias)
+    return results_dict
+
 
 def convert_db_rows_to_dicts(results, cursor_description, alias_map=None):
     """Takes a list of rows as returned by cursor.fetchall(),
@@ -109,6 +92,7 @@ def convert_db_rows_to_dicts(results, cursor_description, alias_map=None):
         result_dicts.append(rd)
     return result_dicts
 
+
 def get_db_rows_as_dicts(cursor, alias_map=None):
     """Grab results of cursor.fetchall(), convert to a list of dictionaries."""
     return convert_db_rows_to_dicts(cursor.fetchall(), cursor.description,
@@ -116,7 +100,7 @@ def get_db_rows_as_dicts(cursor, alias_map=None):
 
 
 
-def set_columns_for_table(conn, table, data=None, where=None):
+def set_columns_for_table(table, data=None, where=None):
     """Set specific columns (keywords) for 'table', with 'where'
     limitations.
 
@@ -128,11 +112,6 @@ def set_columns_for_table(conn, table, data=None, where=None):
     The data argument is a dictionary with the names and corresponding
     values of the columns that need to be updated.
     """
-
-    # Note from the Python docs: If items(), keys(), values(),
-    # iteritems(), iterkeys(), and itervalues() are called with no
-    # intervening modifications to the dictionary, the lists will
-    # directly correspond.
     query = "UPDATE " + table + " SET " + ", ".join(["%s=%%s" % key for key in data.iterkeys()])
     if where is None:
         where = {}
@@ -141,14 +120,5 @@ def set_columns_for_table(conn, table, data=None, where=None):
     values = tuple(data.itervalues())
     if where:
         query += " WHERE " + where
-    try:
-        cursor = conn.cursor()
-        cursor.execute(query, values + where_args)
-        if not AUTOCOMMIT:
-            conn.commit()
-    except db.Error, e:
-        query = query % (values + where_args)
-        logger.warn("Query failed: %s", query)
-        raise
-    finally:
-        cursor.close()
+
+    tkp.database.query(query, values + where_args, commit=True)

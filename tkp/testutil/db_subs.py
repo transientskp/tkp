@@ -68,7 +68,7 @@ def delete_test_database(database):
         cursor.close()
 
 
-def example_dbimage_datasets(n_images):
+def example_dbimage_datasets(n_images, **kwargs):
     """Generate a list of image data dictionaries.
 
     These can be used to create known entries in the image table.
@@ -90,6 +90,7 @@ def example_dbimage_datasets(n_images):
                       'centre_decl': 45.,
                       'xtr_radius' : 3.
                     }
+    init_im_params.update(kwargs)
 
     im_params = []
     for i in range(n_images):

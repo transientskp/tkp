@@ -117,6 +117,12 @@ def convert_db_rows_to_dicts(results, cursor_description, alias_map=None):
         result_dicts.append(rd)
     return result_dicts
 
+def get_db_rows_as_dicts(cursor, alias_map=None):
+    """Grab results of cursor.fetchall(), convert to a list of dictionaries."""
+    return convert_db_rows_to_dicts(cursor.fetchall(), cursor.description,
+                                    alias_map)
+
+
 
 def set_columns_for_table(conn, table, data=None, where=None):
     """Set specific columns (keywords) for 'table', with 'where'

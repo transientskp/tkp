@@ -109,7 +109,7 @@ class TrapLocal(control):
             dbgen.insert_extracted_sources(image_id, ff_mon, 'ff_mon')
 
             # user_detections
-            user_detections = dbmon.get_userdetections(image_id, deRuiter_radius)
+            user_detections = dbmon.get_userdetections(image_id)
             ff_ud = steps.source_extraction.forced_fits(image_path, user_detections)
             dbgen.insert_extracted_sources(image_id, ff_ud, 'ff_ud')
             dbgen.filter_userdetections_extracted_sources(image_id, deRuiter_radius)

@@ -35,7 +35,7 @@ class user_detections(TrapMaster):
 
         self.logger.info("starting user_detections for images %s" % image_ids)
 
-        image_uds = [dbmon.get_userdetections(image_id, deRuiter_radius) for image_id in image_ids]
+        image_uds = [dbmon.get_userdetections(image_id) for image_id in image_ids]
         ff_uds = self.distributed(image_ids, image_paths, image_uds)
 
         for (image_id, ff_ud) in ff_uds:

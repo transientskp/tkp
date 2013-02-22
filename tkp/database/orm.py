@@ -250,9 +250,8 @@ class DBObject(object):
 
     def _sync_with_database(self):
         """Update object attributes from the database"""
-        results = dbu.columns_from_table(
-            self.database.connection, self.TABLE, keywords=None,
-            where={self.ID: self._id})
+        results = dbu.columns_from_table(self.TABLE, keywords=None,
+                                            where={self.ID: self._id})
         # Shallow copy, but that's ok: all database values are
         # immutable (including datetime objects)
         if results:
@@ -269,8 +268,8 @@ class DBObject(object):
 
         if not kwargs:
             return
-        dbu.set_columns_for_table(self.database.connection, self.TABLE,
-                                  data=kwargs, where={self.ID: self._id})
+        dbu.set_columns_for_table(self.TABLE, data=kwargs,
+                                  where={self.ID: self._id})
         self._data.update(kwargs)
         
 
@@ -333,8 +332,7 @@ class DataSet(DBObject):
             Currently only returns 3 columns:
             [{'runcat,'xtrsrc','datapoints'}]
         """
-        return dbu.columns_from_table(self.database.connection, 
-                                      'runningcatalog',
+        return dbu.columns_from_table('runningcatalog',
                                       keywords=['id','xtrsrc','datapoints'],
                                       alias={'id':'runcat'}, 
                                       where={'dataset':self.id})
@@ -344,9 +342,11 @@ class DataSet(DBObject):
         """Search through the whole dataset for variable sources"""
         return dbu.select_variability_indices(self._id, freq_band, V_lim, eta_lim)
 
+
     def add_manual_entry_to_monitoringlist(self, ra, dec):
-        dbu.add_manual_entry_to_monitoringlist(self.database.connection, self.id, ra, dec)
-        
+        dbu.add_manual_entry_to_monitoringlist(self.id, ra, dec)
+
+
     def frequency_bands(self):
         """Return a list of distinct bands present in the dataset."""
         query = """\

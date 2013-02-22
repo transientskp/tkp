@@ -174,8 +174,9 @@ class TestSkyRegionAssociation(unittest.TestCase):
                          'assocskyrgn', where={'skyrgn':image1._data['skyrgn']})
 
         self.assertEqual(len(im1_assocs), 2)
-        self.assertEqual(im1_assocs[0]['runcat'], runcats[0]['id'])
-        self.assertEqual(im1_assocs[1]['runcat'], runcats[1]['id'])
+        runcat_ids = [r['id'] for r in  runcats]
+        for assoc in im1_assocs:
+            self.assertTrue(assoc['runcat'] in runcat_ids)
 
         #But only one in field of im0 ( the first source).
         im0_assocs = dbutils.columns_from_table(self.database.connection,

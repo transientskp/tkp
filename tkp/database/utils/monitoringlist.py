@@ -4,7 +4,7 @@ A collection of back end subroutines (mostly SQL queries).
 This module contains the routines to deal with flagging and monitoring 
 of transient candidates, mostly involving the monitoringlist.
 """
-import math,sys
+import math, sys
 import logging
 import monetdb.sql as db
 from tkp.config import config
@@ -16,8 +16,8 @@ from collections import namedtuple
 
 logger = logging.getLogger(__name__)
 
-MonitorTuple = namedtuple('MonitorTuple', 
-                          ('ra', 'decl', 'runcat','monitorid')
+MonitorTuple = namedtuple('MonitorTuple',
+                          ('ra', 'decl', 'runcat', 'monitorid')
                           )
 
 AUTOCOMMIT = config['database']['autocommit']
@@ -26,7 +26,7 @@ def get_userdetections(image_id, deRuiter_r, radius=0.03):
     """Returns the monitoringlist user-entry sources for a forced fit
     in the current image
     
-    Output: monlist.id, ra, decl
+    Output: list of tuples: [ (monlist.id, ra, decl)]
     """
     deRuiter_red = deRuiter_r / 3600.
     try:
@@ -49,88 +49,83 @@ def get_userdetections(image_id, deRuiter_r, radius=0.03):
         if not AUTOCOMMIT:
             conn.commit()
         cursor.close()
-        r = ()
+        r = []
         if len(results) != 0:
-            p = zip(list(results[1]), list(results[2]))
+            r = zip(list(results[1]), list(results[2]))
             #maxbeam = max(results[3][0],results[4][0]) # all bmaj & bmin are the same
-            r = (p,)
     except db.Error, e:
         query = query % (image_id,)
         logger.warn("Query failed:\n%s", query)
         raise
     return r
 
-def get_nulldetections(image_id, deRuiter_r, radius=0.03):
+def get_nulldetections(image_id, deRuiter_r):
     """Returns the runcat sources that do not have a counterpart in the 
-    extractedsources of the current image
-    
+    extractedsources of the current image.
+
+    NB This is run *prior* to source association.
+
     We do not have to take into account associations with monitoringlist 
     sources, since they have been added to extractedsources at the beginning 
     of the association procedures (marked as extract_type=1 sources), and so
     they must have an occurence in extractedsource and runcat.
-    
-    Output: id, ra, decl
+
+    Output: list of tuples [(runcatid, ra, decl)]
     """
     deRuiter_red = deRuiter_r / 3600.
     try:
         #print "\nTrying to find null detections for image_id:", image_id, "\n"
         conn = DataBase().connection
         cursor = conn.cursor()
+        #NB extra clause on x.image is necessary for performance reasons.
         query = """\
         SELECT r1.id
               ,r1.wm_ra
               ,r1.wm_decl
           FROM runningcatalog r1
               ,image i1
-         WHERE i1.id = %s
+         WHERE i1.id = %(imgid)s
            AND i1.dataset = r1.dataset
            AND r1.id NOT IN (SELECT r.id
                                FROM runningcatalog r
                                    ,extractedsource x
                                    ,image i
-                              WHERE i.id = %s
+                              WHERE i.id = %(imgid)s
                                 AND x.image = i.id
-                                AND x.image = %s
+                                AND x.image = %(imgid)s
                                 AND i.dataset = r.dataset
-                                AND r.zone BETWEEN CAST(FLOOR(x.decl - %s) as INTEGER)
-                                               AND CAST(FLOOR(x.decl + %s) as INTEGER)
-                                AND r.wm_decl BETWEEN x.decl - %s
-                                                  AND x.decl + %s
-                                AND r.wm_ra BETWEEN x.ra - alpha(%s, x.decl)
-                                                AND x.ra + alpha(%s, x.decl)
+                                AND r.zone BETWEEN CAST(FLOOR(x.decl - i.rb_smaj) AS INTEGER)
+                                                 AND CAST(FLOOR(x.decl + i.rb_smaj) AS INTEGER)
+                                AND r.wm_decl BETWEEN x.decl - i.rb_smaj
+                                                    AND x.decl + i.rb_smaj
+                                AND r.wm_ra BETWEEN x.ra - alpha(i.rb_smaj, x.decl)
+                                                  AND x.ra + alpha(i.rb_smaj, x.decl)
                                 AND SQRT(  (x.ra * COS(RADIANS(x.decl)) - r.wm_ra * COS(RADIANS(r.wm_decl)))
                                          * (x.ra * COS(RADIANS(x.decl)) - r.wm_ra * COS(RADIANS(r.wm_decl)))
                                          / (x.ra_err * x.ra_err + r.wm_ra_err * r.wm_ra_err) 
                                         + (x.decl - r.wm_decl) * (x.decl - r.wm_decl)
                                          / (x.decl_err * x.decl_err + r.wm_decl_err * r.wm_decl_err)
-                                        ) < %s
+                                        ) < %(drrad)s
                             )
         ;
         """
-        #q = query % (image_id, image_id, image_id,
-        #               radius, radius, radius, 
-        #               radius, radius, radius, deRuiter_red)
-        cursor.execute(query, (image_id, image_id, image_id, 
-                                radius, radius, radius,
-                                radius, radius, radius, deRuiter_red))
+        qry_params = {'imgid':image_id, 'drrad': deRuiter_red}
+        cursor.execute(query, qry_params)
         results = zip(*cursor.fetchall())
         if not AUTOCOMMIT:
-            conn.commit()                        
+            conn.commit()
         cursor.close()
-        r = ()
+        r = []
         if len(results) != 0:
-            p = zip(list(results[1]), list(results[2]))
-            r = (p,)
+            r = zip(list(results[1]), list(results[2]))
+            #maxbeam = max(results[3][0],results[4][0]) # all bmaj & bmin are the same
     except db.Error, e:
-        query = query % (image_id, image_id, image_id, \
-                         radius, radius, radius, \
-                         radius, radius, radius, \
-                         deRuiter_red)
+        query = query % qry_params
         logger.warn("Query failed:\n%s", query)
         raise
     return r
 
-def get_monsources(image_id, deRuiter_r, radius=0.03):
+def get_monsources(image_id, deRuiter_r):
     """Returns the user-entry sources and no-counterpart sources from 
     monitoringlist
     
@@ -138,11 +133,11 @@ def get_monsources(image_id, deRuiter_r, radius=0.03):
     those that do not have a counterpart in extractedsource need to be 
     passed on to sourcefinder for a forced fit.
     
-    Output: id, ra, decl
+    Output: list of tuples [(runcatid, ra, decl)]
     """
     deRuiter_red = deRuiter_r / 3600.
     try:
-        conn = DataBase().connection 
+        conn = DataBase().connection
         cursor = conn.cursor()
         query = """\
         SELECT m1.id AS id
@@ -151,7 +146,7 @@ def get_monsources(image_id, deRuiter_r, radius=0.03):
           FROM monitoringlist m1
               ,runningcatalog r1
               ,image i1
-         WHERE i1.id = %s
+         WHERE i1.id = %(imgid)s
            AND i1.dataset = m1.dataset
            AND m1.dataset = r1.dataset 
            AND m1.runcat = r1.id
@@ -162,42 +157,38 @@ def get_monsources(image_id, deRuiter_r, radius=0.03):
                                   ,extractedsource x
                                   ,runningcatalog r
                                   ,image i
-                             WHERE i.id = %s
+                             WHERE i.id = %(imgid)s
                                AND i.id = x.image
-                               AND x.image = %s
+                               AND x.image = %(imgid)s
                                AND i.dataset = m.dataset
                                AND m.runcat = r.id
                                AND m.userentry = FALSE
-                               AND r.zone BETWEEN CAST(FLOOR(x.decl - %s) as INTEGER)
-                                              AND CAST(FLOOR(x.decl + %s) as INTEGER)
-                               AND r.wm_decl BETWEEN x.decl - %s
-                                                 AND x.decl + %s
-                               AND r.wm_ra BETWEEN x.ra - alpha(%s, x.decl)
-                                               AND x.ra + alpha(%s, x.decl)
+                               AND r.zone BETWEEN CAST(FLOOR(x.decl - i.rb_smaj) AS INTEGER)
+                                              AND CAST(FLOOR(x.decl + i.rb_smaj) AS INTEGER)
+                               AND r.wm_decl BETWEEN x.decl - i.rb_smaj
+                                                 AND x.decl + i.rb_smaj
+                               AND r.wm_ra BETWEEN x.ra - alpha(i.rb_smaj, x.decl)
+                                               AND x.ra + alpha(i.rb_smaj, x.decl)
                                AND SQRT(  (x.racosdecl - r.wm_ra * COS(RADIANS(r.wm_decl)))
                                         * (x.racosdecl - r.wm_ra * COS(RADIANS(r.wm_decl)))
                                         / (x.ra_err * x.ra_err + r.wm_ra_err * r.wm_ra_err)
                                        + (x.decl - r.wm_decl) * (x.decl - r.wm_decl)
                                         / (x.decl_err * x.decl_err + r.wm_decl_err * r.wm_decl_err)                            
-                                       ) < %s
+                                       ) < %(dr_deg)s
                             )
         """
-        cursor.execute(query, (image_id, image_id, image_id, 
-                                radius, radius, radius,
-                                radius, radius, radius, deRuiter_r / 3600.))
+        qry_params = {'imgid':image_id, 'dr_deg':deRuiter_r / 3600.}
+        cursor.execute(query, qry_params)
         results = zip(*cursor.fetchall())
         if not AUTOCOMMIT:
-            conn.commit()                        
+            conn.commit()
         cursor.close()
-        q = query % (image_id, image_id, image_id, 
-                        radius, radius, radius, radius, radius, radius,
-                        deRuiter_r / 3600.)
-        r = ()
+        q = query % qry_params
+        r = []
         if len(results) != 0:
-            p = zip(list(results[1]), list(results[2]))
-            r = (p,)
+            r = zip(list(results[1]), list(results[2]))
     except db.Error, e:
-        query = query % (image_id,image_id,image_id, radius, radius,radius,radius,radius,radius,deRuiter_r / 3600.)
+        query = query % qry_params
         logger.warn("Query failed:\n%s", query)
         raise
     return r
@@ -213,7 +204,7 @@ def adjust_transients_in_monitoringlist(image_id, transients):
     conn = DataBase().connection
     _update_known_transients_in_monitoringlist(conn, image_id, transients)
     _insert_new_transients_in_monitoringlist(conn, image_id, transients)
-    
+
 def _update_known_transients_in_monitoringlist(conn, image_id, transients):
     """Update transients in monitoringlist"""
     cursor = conn.cursor()
@@ -247,7 +238,7 @@ def _insert_new_transients_in_monitoringlist(conn, image_id, transients):
     runcat ids are not in the monitoringlistlist
     
     """
-    
+
     try:
         cursor = conn.cursor()
         query = """\
@@ -278,7 +269,7 @@ def _insert_new_transients_in_monitoringlist(conn, image_id, transients):
         """
         ins = cursor.execute(query, (image_id, image_id))
         if not AUTOCOMMIT:
-            conn.commit()                        
+            conn.commit()
         cursor.close()
         if ins == 0:
             logger.info("No new transients inserted in monitoringlist")
@@ -344,14 +335,14 @@ def get_monitoringlist_not_observed(conn, image_id, dataset_id):
     """
     not_observed = get_monitoringlist_not_observed_blind_entries(
                                  conn, image_id, dataset_id)
-    
+
     not_observed.extend(
             get_monitoringlist_not_observed_manual_entries(
                                conn, image_id, dataset_id)
                         )
     return not_observed
-    
-    
+
+
 
 def get_monitoringlist_not_observed_blind_entries(conn, image_id, dataset_id):
     """
@@ -388,8 +379,8 @@ def get_monitoringlist_not_observed_blind_entries(conn, image_id, dataset_id):
         A list of sources yet to be observed; format is:
         [( ra, decl, runcatid , monitorid )]
     """
-    
-    
+
+
 #NOTES:
 # t1 : A Table comprising pairs of (runcatid, xtrsrcid) 
 #         for extracted sources in this image.
@@ -452,8 +443,8 @@ def get_monitoringlist_not_observed_manual_entries(conn, image_id, dataset_id):
     Returns:
         List of MonitorTuples
     """
-    
-    
+
+
 ##Notes:
 # See: comments for blind entries function.
 # NB if ml entry is new, runcat will be NULL
@@ -461,7 +452,7 @@ def get_monitoringlist_not_observed_manual_entries(conn, image_id, dataset_id):
 #    (with xtrsrc=NULL), so it's fine.
 #
     try:
-        cursor = conn.cursor()        
+        cursor = conn.cursor()
         query = """\
         SELECT ml.ra as ra
                 ,ml.decl AS decl
@@ -523,22 +514,22 @@ def insert_monitored_sources(conn, results, image_id):
     #NB Commit at the end.
     for runcatid, monitorid, result in results:
 
-        
+
         #TO DO: This whole logic flow probably needs cleaning up more, and optimizing.
-        
+
         # Always insert them into extractedsource
-        xtrsrcid =_insert_user_monitored_source_into_extractedsource(
+        xtrsrcid = _insert_user_monitored_source_into_extractedsource(
                              cursor, image_id, result)
-        
-        if runcatid is None: 
+
+        if runcatid is None:
             #This is a userentry, measured for the first time. It needs a runcat entry.
             runcatid = _insert_user_monitored_source_into_runcat(
                                  cursor, xtrsrcid, image_id)
-            
+
             #Also update the monitoringlist entry
-            _update_monitoringlist_entry_rcid(cursor, monitorid, runcatid )
-            
-        
+            _update_monitoringlist_entry_rcid(cursor, monitorid, runcatid)
+
+
         # Whether the source is user or blind-extraction generated,
         # We don't update the runningcatalog, because:
         # - the fluxes are below the detection limit, and
@@ -546,12 +537,12 @@ def insert_monitored_sources(conn, results, image_id):
         # - the positions will have large errors, and
         #   contribute very litte to the average position
         # We thus only need to update the association table,
-        _insert_monitored_source_into_assocxtrsource(cursor,runcatid,xtrsrcid)
+        _insert_monitored_source_into_assocxtrsource(cursor, runcatid, xtrsrcid)
 
     if not AUTOCOMMIT:
-        conn.commit()                        
+        conn.commit()
     cursor.close()
-        
+
 def _insert_user_monitored_source_into_extractedsource(cursor, image_id, result):
     """Returns: xtrsrcid
     
@@ -561,10 +552,10 @@ def _insert_user_monitored_source_into_extractedsource(cursor, image_id, result)
     # Note: ra/decl_fit_err in degrees
     # Note: ra/decl_sys_err in arcsec
     # Note: ra/decl_err, to be calculated, in arcsec
-    ra, dec, ra_fit_err, decl_fit_err, peak, peak_err, flux, flux_err, sigma, \
-    semimajor, semiminor, pa, ra_sys_err, decl_sys_err = result
-    ra_err = math.sqrt(ra_sys_err**2 + (ra_fit_err * 3600.)**2)
-    decl_err = math.sqrt(decl_sys_err**2 + (decl_fit_err * 3600.)**2)
+    (ra, dec, ra_fit_err, decl_fit_err, peak, peak_err, flux, flux_err, sigma,
+    semimajor, semiminor, pa, ra_sys_err, decl_sys_err) = result
+    ra_err = math.sqrt(ra_sys_err ** 2 + (ra_fit_err * 3600.) ** 2)
+    decl_err = math.sqrt(decl_sys_err ** 2 + (decl_fit_err * 3600.) ** 2)
     x = math.cos(math.radians(dec)) * math.cos(math.radians(ra))
     y = math.cos(math.radians(dec)) * math.sin(math.radians(ra))
     z = math.sin(math.radians(dec))
@@ -625,24 +616,24 @@ def _insert_user_monitored_source_into_extractedsource(cursor, image_id, result)
         cursor.execute(
             query, (image_id, int(math.floor(dec)), ra, dec, ra_err, decl_err,
                     x, y, z, racosdecl, sigma, peak, peak_err, flux, flux_err,
-                    semimajor, semiminor, pa, 
-                    ra_fit_err*3600., decl_fit_err*3600., ra_sys_err, decl_sys_err))
+                    semimajor, semiminor, pa,
+                    ra_fit_err * 3600., decl_fit_err * 3600., ra_sys_err, decl_sys_err))
         return cursor.lastrowid
     except db.Error, e:
         query = query % (
             image_id, int(math.floor(dec)), ra, dec, ra_err, decl_err,
             x, y, z, sigma, peak, peak_err, flux, flux_err,
             semimajor, semiminor, pa,
-            ra_fit_err*3600., decl_fit_err*3600., ra_sys_err, decl_sys_err)
+            ra_fit_err * 3600., decl_fit_err * 3600., ra_sys_err, decl_sys_err)
         logger.warn("Query failed: %s", query)
         cursor.close()
         raise
-        
-        
+
+
 
 def _insert_user_monitored_source_into_runcat(cursor, xtrsrcid, image_id):
     """Returns: runcatid"""
-    
+
     # Insert as new source into the running catalog
     # and update the monitoringlist.xtrsrc
     query = """\
@@ -704,8 +695,8 @@ def _insert_user_monitored_source_into_runcat(cursor, xtrsrcid, image_id):
         logger.warn("query failed: %s", query)
         cursor.close()
         raise
-            
-def _update_monitoringlist_entry_rcid(cursor, monitorid, runcatid ):
+
+def _update_monitoringlist_entry_rcid(cursor, monitorid, runcatid):
     # Now update the monitoringlist.runcat
     query = """\
     UPDATE monitoringlist 
@@ -718,9 +709,9 @@ def _update_monitoringlist_entry_rcid(cursor, monitorid, runcatid ):
 #                query = query % (xtrsrcid, xtrsrc_id)
         logger.warn("query failed: %s", query % (runcatid, monitorid))
         cursor.close()
-        raise                    
-            
-def _insert_monitored_source_into_assocxtrsource(cursor,runcatid,xtrsrcid):
+        raise
+
+def _insert_monitored_source_into_assocxtrsource(cursor, runcatid, xtrsrcid):
     query = """\
     INSERT INTO assocxtrsource 
       (runcat
@@ -759,7 +750,7 @@ def add_nulldetections(image_id):
     
     Insert checks whether runcat ref of source exists
     """
-    
+
     # TODO:
     # Do we need to take care of updates here as well (like the adjust_transients)?
     # Or is that correctly done in update monlist
@@ -769,6 +760,7 @@ def add_nulldetections(image_id):
     try:
         conn = DataBase().connection
         cursor = conn.cursor()
+        #Note extra clauses on image id ARE necessary (MonetDB performance quirks)
         query = """\
         INSERT INTO monitoringlist
           (runcat
@@ -784,9 +776,9 @@ def add_nulldetections(image_id):
                 ,image i
                 ,runningcatalog r
                 ,assocxtrsource a 
-           WHERE x.image = %s
+           WHERE x.image = %(imgid)s
              AND x.image = i.id 
-             AND x.image = %s
+             AND i.id = %(imgid)s
              AND i.dataset = r.dataset 
              AND r.id = a.runcat 
              AND a.xtrsrc = x.id 
@@ -797,9 +789,9 @@ def add_nulldetections(image_id):
                                    ,runningcatalog r0
                                    ,assocxtrsource a0 
                                    ,monitoringlist m0
-                              WHERE x0.image = %s
+                              WHERE x0.image = %(imgid)s
                                 AND x0.image = i0.id 
-                                AND x0.image = %s
+                                AND i0.id = %(imgid)s
                                 AND i0.dataset = r0.dataset 
                                 AND r0.id = a0.runcat 
                                 AND a0.xtrsrc = x0.id 
@@ -807,102 +799,21 @@ def add_nulldetections(image_id):
                                 AND r0.id = m0.runcat
                             )
         """
-        ins = cursor.execute(query, (image_id, image_id, image_id, image_id))
+        qry_params = {'imgid':image_id}
+        ins = cursor.execute(query, qry_params)
         if not AUTOCOMMIT:
             conn.commit()
         cursor.close()
         if ins > 0:
             logger.info("Added %s forced fit null detections to monlist" % (ins,))
     except db.Error, e:
-        query = query % (image_id,image_id,image_id,image_id) 
+        query = query % qry_params
         logger.warn("query failed:\n%s", query)
         raise
 
-def add_runcat_sources_to_monitoringlist(conn, dataset_id, runcat_ids):
-    """
-    Add entries to monitoringlist.
-     
-    Insert each runcat id if it doesn't already exist.
-    (Action is idempotent).
-    
-    """
-    
-    #De-duplicate our input list:
-    
-    
-    ##NB Should be able to check for pre-existing runcats, 
-    ## and insert, all in one go with something like:
-    try:
-        cursor = conn.cursor()
-        q = """\
-        INSERT INTO monitoringlist
-          (runcat
-          ,ra
-          ,decl
-          ,dataset
-          )
-          SELECT id AS runcat
-                ,wm_ra AS ra
-                ,wm_decl AS decl
-                ,dataset
-            FROM runningcatalog
-           WHERE id = %s
-             AND dataset = %s
-             AND NOT EXISTS (SELECT runcat 
-                               FROM monitoringlist
-                              WHERE runcat = %s
-                                AND dataset = %s
-                            )
-        """
-        print "QUERY:\n%s" + q % (runcat_ids[0],dataset_id,runcat_ids[0],dataset_id)
-        #sys.exit()
-        cursor.execute(q, (runcat_ids[0],dataset_id,runcat_ids[0],dataset_id))
-        if not AUTOCOMMIT:
-            conn.commit()
-        cursor.close()
-    except db.Error, e:
-        query = q % (runcat_ids[0],dataset_id,runcat_ids[0],dataset_id)
-        logger.warn("query failed:\n%s", query)
-        raise
 
-## But I can't get it to work, so I'll do it the simple way.
-               
-    #prior_runcat_entries = generic.columns_from_table(conn, 
-    #                          'monitoringlist', 
-    #                          ['runcat'], 
-    #                          where={'dataset':dataset_id})
-    #
 
-    #runcat_ids = set(runcat_ids).difference(
-    #                       set(e['runcat'] for e in prior_runcat_entries)
-    #                       )
-    #
-    #if len(runcat_ids):
-    #    cursor = conn.cursor()
-    #    try:
-    #        values_placeholder = ", ".join(["( %s, %s )"] * len(runcat_ids))
-    #        values_list = []
-    #        for rcid in runcat_ids:
-    #            values_list.extend([ rcid, dataset_id])
-    #        query = """\
-    #INSERT INTO monitoringlist
-    #(runcat, dataset)
-    #VALUES
-    #{placeholder}
-    #""".format(placeholder = values_placeholder)
-    #        cursor.execute(query, tuple(values_list))
-    #        if not AUTOCOMMIT:
-    #            conn.commit()
-    #    except db.Error:
-    #        query = query 
-    #        logger.warn("Query %s failed", query)
-    #        cursor.close()
-    #        raise
-    #    finally:
-    #        cursor.close()
-    
-
-def add_manual_entry_to_monitoringlist(conn, dataset_id, 
+def add_manual_entry_to_monitoringlist(conn, dataset_id,
                           ra, dec):
     """
     Add manual entry to monitoringlist.
@@ -912,7 +823,7 @@ def add_manual_entry_to_monitoringlist(conn, dataset_id,
     (This is updated when we perform our first forced extraction 
     at these co-ordinates.) 
     """
-    
+
     cursor = conn.cursor()
     try:
         query = """\
@@ -931,7 +842,7 @@ def add_manual_entry_to_monitoringlist(conn, dataset_id,
         if not AUTOCOMMIT:
             conn.commit()
     except db.Error:
-        query = query 
+        query = query
         logger.warn("Query %s failed", query)
         cursor.close()
         raise
@@ -960,7 +871,7 @@ def select_winking_sources(conn, dsid):
     return resultdict
 
 def select_transient_candidates_above_thresh(
-                    conn, 
+                    conn,
                     runcat_ids,
                     single_epoch_threshold,
                     combined_threshold
@@ -973,13 +884,13 @@ def select_transient_candidates_above_thresh(
         [ {runcat, max_det_sigma, sum_det_sigma} ]
         
     """
-    
+
     if not runcat_ids:
         return []
     cursor = conn.cursor()
     try:
         ids_placeholder = ", ".join(["%s"] * len(runcat_ids))
-        query= """\
+        query = """\
 SELECT ax.runcat
        ,MAX(ex.det_sigma)
        ,SUM(ex.det_sigma)
@@ -993,8 +904,8 @@ SELECT ax.runcat
         MAX(ex.det_sigma)>=%s    
         AND SUM(ex.det_sigma)>=%s;
 """.format(ids_placeholder)
-        query_tuple = tuple(runcat_ids +[single_epoch_threshold, combined_threshold])
-        
+        query_tuple = tuple(runcat_ids + [single_epoch_threshold, combined_threshold])
+
 #        print "QUERY:"
 #        print query % query_tuple
         cursor.execute(query, query_tuple)

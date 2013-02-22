@@ -67,12 +67,14 @@ class TestSkyRegionAssociation(unittest.TestCase):
     """Test whether skyregions are correctly associated to runcat sources"""
     def shortDescription(self):
          return None #(Why define this? See http://goo.gl/xChvh )
+
     @requires_database()
     def setUp(self):
         self.database = tkpdb.DataBase()
         self.dataset = tkpdb.DataSet(database=self.database,
                 data={'description': "Skyrgn:" + self._testMethodName})
-#    @unittest.skip("Skipping")
+
+
     def test_new_skyregion_insertion(self):
         """Here we test the association logic executed upon insertion of a 
         new skyregion. 
@@ -122,7 +124,6 @@ class TestSkyRegionAssociation(unittest.TestCase):
                                     where={'skyrgn':image2._data['skyrgn']})
         self.assertEqual(len(assocs), 0)
 
-    @unittest.skip("TODO: This test failes due to issue #4213")
     def test_new_runcat_insertion(self):
         """Here we test the association logic executed upon insertion of a 
         new runningcatalog source. 
@@ -187,6 +188,7 @@ class TestOneToManyAssocUpdates(unittest.TestCase):
     """
     def shortDescription(self):
          return None #(Why define this? See http://goo.gl/xChvh )
+
     @requires_database()
     def setUp(self):
         self.database = tkpdb.DataBase()
@@ -257,8 +259,7 @@ class TestTransientExclusion(unittest.TestCase):
             imgs[idx].insert_extracted_sources([central_src])
             imgs[idx].associate_extracted_sources(deRuiter_r=3.7)
 
-        runcats = dbutils.columns_from_table(self.database.connection,
-                                'runningcatalog',
+        runcats = dbutils.columns_from_table('runningcatalog',
                                 where={'dataset':self.dataset.id})
 
         self.assertEqual(len(runcats), 2) #Just a sanity check.
@@ -316,14 +317,12 @@ class TestTransientExclusion(unittest.TestCase):
         self.assertEqual(len(nd_posns), 0)
         imgs[1].associate_extracted_sources(deRuiter_r=0.1)
 
-        runcats = dbutils.columns_from_table(self.database.connection,
-                                'runningcatalog',
-                                where={'dataset':self.dataset.id})
+        runcats = dbutils.columns_from_table('runningcatalog',
+                                where={'dataset': self.dataset.id})
         self.assertEqual(len(runcats), 4) #sanity check.
 
-        monlist = dbutils.columns_from_table(self.database.connection,
-                                'monitoringlist',
-                                where={'dataset':self.dataset.id})
+        monlist = dbutils.columns_from_table('monitoringlist',
+                                where={'dataset': self.dataset.id})
         self.assertEqual(len(monlist), 1)
 
         transients_qry = """\
@@ -383,13 +382,11 @@ class TestTransientExclusion(unittest.TestCase):
 
         imgs[1].associate_extracted_sources(deRuiter_r=0.1)
 
-        runcats = dbutils.columns_from_table(self.database.connection,
-                                'runningcatalog',
+        runcats = dbutils.columns_from_table('runningcatalog',
                                 where={'dataset':self.dataset.id})
         self.assertEqual(len(runcats), 4) #sanity check.
 
-#        monlist = dbutils.columns_from_table(self.database.connection,
-#                                'monitoringlist',
+#        monlist = dbutils.columns_from_table('monitoringlist',
 #                                where={'dataset':self.dataset.id})
 #        self.assertEqual(len(monlist), 1)
 

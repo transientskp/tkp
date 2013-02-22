@@ -22,10 +22,11 @@ logger = logging.getLogger(__name__)
 
 
 class ImageData(object):
-    """Encapsulates an image in terms of a numpy array + meta/headerdata.
-
-    This is your primary contact point for interaction with images: it icludes
+    """
+    Encapsulates an image in terms of a numpy array + meta/headerdata. This is
+    your primary contact point for interaction with images: it includes
     facilities for source extraction and measurement, etc.
+
     """
     def __init__(self, data, beam, wcs, max_degradation=0.2, median_filter=0,
                 mf_threshold=0, interpolate_order=1, back_sizex=32,
@@ -37,10 +38,13 @@ class ImageData(object):
         """Sets up an ImageData object.
         Args:
             data (2D numpy.ndarray): actual image data
+
             wcs (utility.coordinates.wcs): world coordinate system
-                specification
-            bream (3-tuple): beam shape specification as
-                (semimajor, semiminor, theta)
+            specification
+
+            bream (3-tuple): beam shape specification as (semimajor,
+            semiminor, theta)
+
         """
 
         # Do data, wcs and beam need deepcopy?

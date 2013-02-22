@@ -1,7 +1,7 @@
-.. _front:
+.. _trap:
 
 ++++++++++++++++++++++
-LOFAR Transients Tools
+Transient Key Project
 ++++++++++++++++++++++
 .. |last_updated| last_updated::
 
@@ -10,10 +10,12 @@ LOFAR Transients Tools
 .. toctree::
    :maxdepth: 2
 
-   developing
-   tools/index
+   introduction
+   tkp/index
+   trap/index
    database/index
-   library/index
+   tools/index
+   developing
 
 
 ++++++++++++++++++

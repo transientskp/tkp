@@ -33,8 +33,10 @@ extensions = [
     'sphinx.ext.viewcode',
     'sphinx.ext.graphviz',
     'sphinx.ext.mathjax',
-    'tkp.utility.sphinx.lastupdated'
+    'tkp.utility.sphinx.lastupdated',
+    'sphinxcontrib.programoutput',
 ]
+
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
@@ -49,7 +51,7 @@ source_suffix = '.rst'
 master_doc = 'index'
 
 # General information about the project.
-project = u'LOFAR Transients Tools'
+project = u'Transient Key Project'
 copyright = u'2012, LOFAR Transients Key Project'
 
 # The version info for the project you're documenting, acts as replacement for
@@ -173,7 +175,7 @@ html_theme = 'default'
 #html_file_suffix = None
 
 # Output file base name for HTML help builder.
-htmlhelp_basename = 'TKPAPIdoc'
+htmlhelp_basename = 'TKP'
 
 
 # -- Options for LaTeX output --------------------------------------------------
@@ -187,7 +189,7 @@ htmlhelp_basename = 'TKPAPIdoc'
 # Grouping the document tree into LaTeX files. List of tuples
 # (source start file, target name, title, author, documentclass [howto/manual]).
 latex_documents = [
-  ('index', 'TKPAPI.tex', u'TKP API Documentation',
+  ('index', 'TKP.tex', u'TKP Documentation',
    u'Transients Key Project', 'manual'),
 ]
 
@@ -220,7 +222,7 @@ latex_documents = [
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
 man_pages = [
-    ('index', 'tkpapi', u'TKP API Documentation',
+    ('index', 'tkp', u'TKP Documentation',
      [u'LOFAR Transients Key Project'], 1)
 ]
 

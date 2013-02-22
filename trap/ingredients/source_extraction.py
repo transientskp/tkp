@@ -73,7 +73,7 @@ def forced_fits(image_path, positions):
 
     if len(positions):
         boxsize = BOX_IN_BEAMPIX * max(data_image.beam[0],data_image.beam[1])
-        forced_fits = data_image.fit_fixed_positions(positions[0], boxsize)
+        forced_fits = data_image.fit_fixed_positions(positions, boxsize)
         return [forced_fit.serialize() for forced_fit in forced_fits]
     else:
         return []

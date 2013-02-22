@@ -1,5 +1,5 @@
 import os
-import unittest
+import unittest2 as unittest
 import tempfile
 import shutil
 import tkp.bin.pyse
@@ -41,15 +41,16 @@ options = AttributeDict({
 
 
 class TestPyse(unittest.TestCase):
-    def __init__(self, *args):
-        super(TestPyse, self).__init__(*args)
+    @classmethod
+    def setUpClass(cls):
         temp_dir = tempfile.mkdtemp()
-        self.filename = os.path.join(temp_dir, 'playground.fits')
-        shutil.copy(orig_fits_file, self.filename)
-        self.fits = FitsImage(self.filename)
-        self.fits.beam = (.5, .5, .5)
-        self.imagedata = sourcefinder_image_from_accessor(self.fits)
-        self.sourcelist = self.imagedata.extract()
+        os.chdir(temp_dir)
+        cls.filename = os.path.join(temp_dir, 'playground.fits')
+        shutil.copy(orig_fits_file, cls.filename)
+        cls.fits = FitsImage(cls.filename)
+        cls.fits.beam = (.5, .5, .5)
+        cls.imagedata = sourcefinder_image_from_accessor(cls.fits)
+        cls.sourcelist = cls.imagedata.extract()
 
     def test_regions(self):
         tkp.bin.pyse.regions(self.sourcelist)

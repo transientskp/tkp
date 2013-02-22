@@ -3,6 +3,7 @@ import tkp.database as tkpdb
 import tkp.database.utils as dbutils
 from tkp.testutil import db_subs
 from tkp.testutil.decorators import requires_database, duration
+from tkp.database.utils import monitoringlist as dbmon
 
 
 @unittest.skip("Only need to test the basics if insertion SQL is altered.")
@@ -169,8 +170,9 @@ class TestSkyRegionAssociation(unittest.TestCase):
                                     where={'skyrgn':image1._data['skyrgn']})
 
         self.assertEqual(len(im1_assocs), 2)
-        self.assertEqual(im1_assocs[0]['runcat'], runcats[0]['id'])
-        self.assertEqual(im1_assocs[1]['runcat'], runcats[1]['id'])
+        runcat_ids = [r['id'] for r in  runcats]
+        for assoc in im1_assocs:
+            self.assertTrue(assoc['runcat'] in runcat_ids)
 
         #But only one in field of im0 ( the first source).
         im0_assocs = dbutils.columns_from_table('assocskyrgn',
@@ -221,3 +223,175 @@ class TestOneToManyAssocUpdates(unittest.TestCase):
         skyassocs = dbutils.columns_from_table('assocskyrgn',
                                    where={'skyrgn':imgs[idx]._data['skyrgn']})
         self.assertEqual(len(skyassocs), 2)
+
+class TestTransientExclusion(unittest.TestCase):
+    def shortDescription(self):
+        return None #(Why define this? See http://goo.gl/xChvh )
+
+    @requires_database()
+    def setUp(self):
+        self.database = tkpdb.DataBase()
+        self.dataset = tkpdb.DataSet(database=self.database,
+                data={'description': "Skyrgn:" + self._testMethodName})
+
+    def test_two_field_basic_case(self):
+        """Here we create 2 disjoint image fields, with one source in each,
+        and check that the second source inserted does not get flagged as transient.
+        """
+        n_images = 2
+        xtr_radius = 1.5
+        im_params = db_subs.example_dbimage_datasets(n_images,
+                                                     xtr_radius=xtr_radius)
+        im_params[1]['centre_decl'] += xtr_radius * 2 + 0.5
+
+        imgs = []
+        for idx in range(len(im_params)):
+            imgs.append(tkpdb.Image(dataset=self.dataset, data=im_params[idx]))
+
+        for idx in range(len(im_params)):
+            central_src = db_subs.example_extractedsource_tuple(
+                                    ra=im_params[idx]['centre_ra'],
+                                    dec=im_params[idx]['centre_decl'])
+
+            imgs.append(tkpdb.Image(dataset=self.dataset, data=im_params[idx]))
+            imgs[idx].insert_extracted_sources([central_src])
+            imgs[idx].associate_extracted_sources(deRuiter_r=3.7)
+
+        runcats = dbutils.columns_from_table(self.database.connection,
+                                'runningcatalog',
+                                where={'dataset':self.dataset.id})
+
+        self.assertEqual(len(runcats), 2) #Just a sanity check.
+
+        transients_qry = """\
+        SELECT *
+          FROM transient tr
+              ,runningcatalog rc
+        WHERE rc.dataset = %s
+          AND tr.runcat = rc.id
+        """
+        self.database.cursor.execute(transients_qry, (self.dataset.id,))
+        transients = dbutils.get_db_rows_as_dicts(self.database.cursor)
+        self.assertEqual(len(transients), 0)
+
+    def test_two_field_overlap_new_transient(self):
+        """Now for something more interesting - two overlapping fields, 4 sources:
+        one steady source only in lower field, 
+        one steady source in both fields,
+        one steady source only in upper field,
+        one transient source in both fields but only at 2nd timestep.
+        """
+        n_images = 2
+        xtr_radius = 1.5
+        im_params = db_subs.example_dbimage_datasets(n_images,
+                                                     xtr_radius=xtr_radius)
+        im_params[1]['centre_decl'] += xtr_radius * 1
+
+        imgs = []
+
+        lower_steady_src = db_subs.example_extractedsource_tuple(
+                                ra=im_params[0]['centre_ra'],
+                                dec=im_params[0]['centre_decl'] - 0.5 * xtr_radius)
+        upper_steady_src = db_subs.example_extractedsource_tuple(
+                                ra=im_params[1]['centre_ra'],
+                                dec=im_params[1]['centre_decl'] + 0.5 * xtr_radius)
+        overlap_steady_src = db_subs.example_extractedsource_tuple(
+                                ra=im_params[0]['centre_ra'],
+                                dec=im_params[0]['centre_decl'] + 0.2 * xtr_radius)
+        overlap_transient = db_subs.example_extractedsource_tuple(
+                                ra=im_params[0]['centre_ra'],
+                                dec=im_params[0]['centre_decl'] + 0.8 * xtr_radius)
+
+        imgs.append(tkpdb.Image(dataset=self.dataset, data=im_params[0]))
+        imgs.append(tkpdb.Image(dataset=self.dataset, data=im_params[1]))
+
+        imgs[0].insert_extracted_sources([lower_steady_src, overlap_steady_src])
+        nd_posns = dbmon.get_nulldetections(imgs[0].id, deRuiter_r=1)
+        self.assertEqual(len(nd_posns), 0)
+        imgs[0].associate_extracted_sources(deRuiter_r=0.1)
+
+        imgs[1].insert_extracted_sources([upper_steady_src, overlap_steady_src,
+                                          overlap_transient])
+        nd_posns = dbmon.get_nulldetections(imgs[1].id, deRuiter_r=1)
+        self.assertEqual(len(nd_posns), 0)
+        imgs[1].associate_extracted_sources(deRuiter_r=0.1)
+
+        runcats = dbutils.columns_from_table(self.database.connection,
+                                'runningcatalog',
+                                where={'dataset':self.dataset.id})
+        self.assertEqual(len(runcats), 4) #sanity check.
+
+        monlist = dbutils.columns_from_table(self.database.connection,
+                                'monitoringlist',
+                                where={'dataset':self.dataset.id})
+        self.assertEqual(len(monlist), 1)
+
+        transients_qry = """\
+        SELECT *
+          FROM transient tr
+              ,runningcatalog rc
+        WHERE rc.dataset = %s
+          AND tr.runcat = rc.id
+        """
+        self.database.cursor.execute(transients_qry, (self.dataset.id,))
+        transients = dbutils.get_db_rows_as_dicts(self.database.cursor)
+        self.assertEqual(len(transients), 1)
+
+    def test_two_field_overlap_nulling_src(self):
+        """Similar to above, but one source disappears:
+        Two overlapping fields, 4 sources:
+        one steady source only in lower field, 
+        one steady source in both fields,
+        one steady source only in upper field,
+        one transient source in both fields but only at *1st* timestep.
+        """
+        n_images = 2
+        xtr_radius = 1.5
+        im_params = db_subs.example_dbimage_datasets(n_images,
+                                                     xtr_radius=xtr_radius)
+        im_params[1]['centre_decl'] += xtr_radius * 1
+
+        imgs = []
+
+        lower_steady_src = db_subs.example_extractedsource_tuple(
+                                ra=im_params[0]['centre_ra'],
+                                dec=im_params[0]['centre_decl'] - 0.5 * xtr_radius)
+        upper_steady_src = db_subs.example_extractedsource_tuple(
+                                ra=im_params[1]['centre_ra'],
+                                dec=im_params[1]['centre_decl'] + 0.5 * xtr_radius)
+        overlap_steady_src = db_subs.example_extractedsource_tuple(
+                                ra=im_params[0]['centre_ra'],
+                                dec=im_params[0]['centre_decl'] + 0.2 * xtr_radius)
+        overlap_transient = db_subs.example_extractedsource_tuple(
+                                ra=im_params[0]['centre_ra'],
+                                dec=im_params[0]['centre_decl'] + 0.8 * xtr_radius)
+
+        imgs.append(tkpdb.Image(dataset=self.dataset, data=im_params[0]))
+        imgs.append(tkpdb.Image(dataset=self.dataset, data=im_params[1]))
+
+        imgs[0].insert_extracted_sources([lower_steady_src, overlap_steady_src,
+                                          overlap_transient])
+        nd_posns = dbmon.get_nulldetections(imgs[0].id, deRuiter_r=1)
+        self.assertEqual(len(nd_posns), 0)
+        imgs[0].associate_extracted_sources(deRuiter_r=0.1)
+
+        imgs[1].insert_extracted_sources([upper_steady_src, overlap_steady_src])
+        #This time we don't expect to get an immediate transient detection,
+        #but we *do* expect to get a null-source forced extraction request:
+        nd_posns = dbmon.get_nulldetections(imgs[1].id, deRuiter_r=1)
+        self.assertEqual(len(nd_posns), 1)
+
+        imgs[1].associate_extracted_sources(deRuiter_r=0.1)
+
+        runcats = dbutils.columns_from_table(self.database.connection,
+                                'runningcatalog',
+                                where={'dataset':self.dataset.id})
+        self.assertEqual(len(runcats), 4) #sanity check.
+
+#        monlist = dbutils.columns_from_table(self.database.connection,
+#                                'monitoringlist',
+#                                where={'dataset':self.dataset.id})
+#        self.assertEqual(len(monlist), 1)
+
+
+

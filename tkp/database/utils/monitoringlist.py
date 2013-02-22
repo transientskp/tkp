@@ -18,6 +18,7 @@ MonitorTuple = namedtuple('MonitorTuple',
                           )
 
 
+#NB CURRENTLY UNSUPPORTED.
 def get_userdetections(image_id):
     """Returns the monitoringlist user-entry sources for a forced fit
     in the current image
@@ -58,6 +59,9 @@ def get_nulldetections(image_id, deRuiter_r):
 
     Output: list of tuples [(runcatid, ra, decl)]
     """
+    #The first subquery looks for extractedsources without runcat associations.
+    # The second subquery looks for runcat entries we expect to see in this image.
+    #NB extra clause on x.image is necessary for performance reasons.
     query = """\
 SELECT r1.id
       ,r1.wm_ra
@@ -87,6 +91,14 @@ SELECT r1.id
                                  / (x.decl_err * x.decl_err + r.wm_decl_err * r.wm_decl_err)
                                 ) < %(drrad)s
                     )
+            AND r1.id IN(SELECT rc2.id
+                           FROM runningcatalog rc2
+                               ,assocskyrgn asr2
+                               ,image im2
+                          WHERE im2.id = %(imgid)s
+                            AND asr2.skyrgn = im2.skyrgn
+                            AND asr2.runcat = rc2.id 
+                        )
 """
     deRuiter_red = deRuiter_r / 3600.
     qry_params = {'imgid':image_id, 'drrad': deRuiter_red}

@@ -14,10 +14,7 @@ number like 1e-8 will almost always be equal to any other small
 number. Multiplying by the order of magnitude ascertains the
 comparison is more approritate.
 """
-
-import unittest
-if not  hasattr(unittest.TestCase, 'assertIsInstance'):
-    import unittest2 as unittest
+import unittest2 as unittest
 import numpy
 from datetime import datetime
 from datetime import timedelta

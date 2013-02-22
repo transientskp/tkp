@@ -1,8 +1,5 @@
-import unittest
-if not  hasattr(unittest.TestCase, 'assertIsInstance'):
-    import unittest2 as unittest
+import unittest2 as unittest
 import os
-from tkp.utility import accessors
 from tkp.utility.accessors.casaimage import CasaImage
 import tkp.config
 from tkp.testutil.decorators import requires_data

@@ -1,6 +1,4 @@
-import unittest
-if not  hasattr(unittest.TestCase, 'assertIsInstance'):
-    import unittest2 as unittest
+import unittest2 as unittest
 from tkp.sourcefinder.utils import maximum_pixel_method_variance, fudge_max_pix
 import numpy
 from numpy.testing import assert_array_equal

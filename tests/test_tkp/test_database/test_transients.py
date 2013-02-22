@@ -1,6 +1,4 @@
-import unittest
-if not  hasattr(unittest.TestCase, 'assertIsInstance'):
-    import unittest2 as unittest
+import unittest2 as unittest
 import tkp.database as tkpdb
 import tkp.database.utils.transients as dbt
 import tkp.database.utils as dbutils

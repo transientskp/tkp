@@ -1,7 +1,4 @@
-import unittest
-if not  hasattr(unittest.TestCase, 'assertIsInstance'):
-    import unittest2 as unittest
-
+import unittest2 as unittest
 from tkp.classification.manual.classifier import Classifier
 from tkp.classification.transient import Transient
 

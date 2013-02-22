@@ -58,7 +58,7 @@ class user_detections(TrapMaster):
                     arguments=[
                         image_id,
                         image_path,
-                        image_nds
+                        image_nd
                     ]
                 )
             )

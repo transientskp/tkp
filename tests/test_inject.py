@@ -4,7 +4,7 @@ import tempfile
 import shutil
 import tkp
 import tkp.utility.accessors
-import trap.inject
+import tkp.inject
 
 DATAPATH = tkp.config.config['test']['datapath']
 fits_file = os.path.join(DATAPATH, 'missingheaders.fits')
@@ -41,6 +41,6 @@ class TestInject(unittest.TestCase):
             'bpa': 0.4,
         }
 
-        trap.inject.modify_fits_headers(parset, self.fixed_file)
+        tkp.inject.modify_fits_headers(parset, self.fixed_file)
         fixed_fits = tkp.utility.accessors.open(self.fixed_file)
         self.assertTrue(fixed_fits.not_set() == [])

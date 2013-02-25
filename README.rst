@@ -8,9 +8,7 @@ source characteristics and source classification.
 Please read the documentation at the website, or generate it yourself
 using Sphinx and the documentation source in the documentation folder.
 
-You can find the online documentation at::
-
- http://docs.transientskp.org/
+You can find the online documentation at <http://docs.transientskp.org>
 
 
 Installation
@@ -53,24 +51,27 @@ For core functionality:
 - pygsl <http://pygsl.sourceforge.net/>
 - MonetDB <http://www.monetdb.org/>
 
+
 For running the TRAP you need to in stall the Lofar System software.
 
 
 Installation for Ubuntu
 -----------------------
 
-All packages above (except pyrap and pygsl) are available in debian/ubuntu
-and pypi::
+All packages above (except pyrap and pygsl) are available in debian/ubuntu::
 
     $ sudo apt-get install build-essential cmake python-numpy python-scipy \
         python-dateutil python-pyfits libboost-python-dev libwcs4 wcslib-dev \
         python-tz gfortran python-pymongo python-gridfs mongodb-server
 
+Most of the python packages are also available in pypi.
+
 To install pyrap and pygsl download the source from the website and follow the
 instructions in the README.
 
-TKP uses MonetDB for storing all data. If you want to run a MonetDB server
-follow the instructions described here: http://dev.monetdb.org/downloads/deb/
+There are ubuntu and Debian packages available. To install them follow the
+instructions here: <http://dev.monetdb.org/downloads/deb/>. Don't forget
+the monetdb-python package.
 
 
 

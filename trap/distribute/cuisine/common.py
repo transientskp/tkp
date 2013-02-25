@@ -64,7 +64,7 @@ class TrapMaster(BaseRecipe, RemoteCommandRecipeMixIn):
         # call the actual do-er
         self.trapstep(*args, **kwargs)
         if self.error.isSet():
-            self.logger.warn("Failed null_detections process detected")
+            self.logger.error("Recipe failed")
             return 1
         else:
             return 0

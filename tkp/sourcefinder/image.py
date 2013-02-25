@@ -40,7 +40,7 @@ class ImageData(object):
           - data (2D numpy.ndarray): actual image data
           - wcs (utility.coordinates.wcs): world coordinate system
             specification
-          - bream (3-tuple): beam shape specification as
+          - beam (3-tuple): beam shape specification as
             (semimajor, semiminor, theta)
 
         """

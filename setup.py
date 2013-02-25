@@ -4,17 +4,13 @@ import os
 from distutils.core import setup
 from distutils.command.install import INSTALL_SCHEMES
 
-
-trap_scripts = [
-    "trap/bin/trap-manage.py",
-    "trap/bin/trap-local.py",
-    "trap/bin/trap-run.py",
-    "trap/bin/trap-inject.py",
-]
-
 tkp_scripts = [
     "tkp/bin/pyse.py",
+    "tkp/bin/tkp-manage.py",
+    "tkp/bin/tkp-inject.py",
+
     ]
+
 
 def fullsplit(path, result=None):
     """
@@ -36,43 +32,26 @@ def fullsplit(path, result=None):
 for scheme in INSTALL_SCHEMES.values():
     scheme['data'] = scheme['purelib']
 
-trap_packages, tkp_packages, trap_data_files = [], [], []
+tkp_packages = []
+tkp_data_files = []
 root_dir = os.path.dirname(__file__)
 if root_dir != '':
     os.chdir(root_dir)
-    for dirpath, dirnames, filenames in os.walk('trap'):
-        # Ignore dirnames that start with '.'
-        for i, dirname in enumerate(dirnames):
-            if dirname.startswith('.'): del dirnames[i]
-        if '__init__.py' in filenames:
-            trap_packages.append('.'.join(fullsplit(dirpath)))
-        elif filenames:
-            trap_data_files.append([dirpath, [os.path.join(dirpath, f) for f in filenames]])
-
     for dirpath, dirnames, filenames in os.walk('tkp'):
         # Ignore dirnames that start with '.'
         for i, dirname in enumerate(dirnames):
             if dirname.startswith('.'): del dirnames[i]
         if '__init__.py' in filenames:
             tkp_packages.append('.'.join(fullsplit(dirpath)))
-
-setup(
-    name = "trap",
-    version = "0.1",
-    packages = trap_packages,
-    data_files = trap_data_files,
-    scripts = trap_scripts,
-    description = "LOFAR TRAnsients Pipeline (TRAP)",
-    author = "TKP Discovery WG",
-    author_email = "discovery@transientskp.org",
-    url = "http://www.transientskp.org/",
-)
+        elif filenames:
+            tkp_data_files.append([dirpath, [os.path.join(dirpath, f) for f in filenames]])
 
 setup(
     name = "tkp",
     version = "0.1",
     packages = tkp_packages,
     scripts = tkp_scripts,
+    data_files=tkp_data_files,
     description = "LOFAR Transients Key Project (TKP)",
     author = "TKP Discovery WG",
     author_email = "discovery@transientskp.org",

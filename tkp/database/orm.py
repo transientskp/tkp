@@ -119,8 +119,13 @@ import logging
 
 import monetdb.sql as db
 
-from . import utils as dbu
-from .database import ENGINE
+from tkp.database.database import ENGINE
+from tkp.database.generic import columns_from_table, set_columns_for_table
+from tkp.database.general import insert_dataset, insert_image,\
+    insert_extracted_sources, lightcurve
+from tkp.database.monitoringlist import add_manual_entry_to_monitoringlist
+from tkp.database.transients import select_variability_indices
+from tkp.database.associations import associate_extracted_sources
 import tkp.database
 import tkp.database.quality
 from tkp.database.database import DataBase
@@ -250,7 +255,7 @@ class DBObject(object):
 
     def _sync_with_database(self):
         """Update object attributes from the database"""
-        results = dbu.columns_from_table(self.TABLE, keywords=None,
+        results = columns_from_table(self.TABLE, keywords=None,
                                             where={self.ID: self._id})
         # Shallow copy, but that's ok: all database values are
         # immutable (including datetime objects)
@@ -268,7 +273,7 @@ class DBObject(object):
 
         if not kwargs:
             return
-        dbu.set_columns_for_table(self.TABLE, data=kwargs,
+        set_columns_for_table(self.TABLE, data=kwargs,
                                   where={self.ID: self._id})
         self._data.update(kwargs)
         
@@ -304,7 +309,7 @@ class DataSet(DBObject):
 
         if self._id is None:
             try:
-                self._id = dbu.insert_dataset(self._data['description'])
+                self._id = insert_dataset(self._data['description'])
             except self.database.Error, e:
                 logger.warn("insertion of DataSet() into the database failed")
                 raise
@@ -332,7 +337,7 @@ class DataSet(DBObject):
             Currently only returns 3 columns:
             [{'runcat,'xtrsrc','datapoints'}]
         """
-        return dbu.columns_from_table('runningcatalog',
+        return columns_from_table('runningcatalog',
                                       keywords=['id','xtrsrc','datapoints'],
                                       alias={'id':'runcat'}, 
                                       where={'dataset':self.id})
@@ -340,11 +345,11 @@ class DataSet(DBObject):
     # TODO: Verify constants
     def detect_variables(self,  freq_band, V_lim=0.2, eta_lim=3.):
         """Search through the whole dataset for variable sources"""
-        return dbu.select_variability_indices(self._id, freq_band, V_lim, eta_lim)
+        return select_variability_indices(self._id, freq_band, V_lim, eta_lim)
 
 
     def add_manual_entry_to_monitoringlist(self, ra, dec):
-        dbu.add_manual_entry_to_monitoringlist(self.id, ra, dec)
+        add_manual_entry_to_monitoringlist(self.id, ra, dec)
 
 
     def frequency_bands(self):
@@ -411,7 +416,7 @@ class Image(DBObject):
                 #    self._data['deltax'] = None
                 #    self._data['deltay'] = None
                 # Insert a default image
-                self._id = dbu.insert_image(self.dataset.id,
+                self._id = insert_image(self.dataset.id,
                     self._data['freq_eff'], self._data['freq_bw'],
                     self._data['taustart_ts'],self._data['tau_time'],
                     self._data['beam_smaj_pix'],self._data['beam_smin_pix'],  
@@ -477,7 +482,7 @@ class Image(DBObject):
        #To do: Figure out a saner method of passing the results around
        # (Namedtuple, for starters?)
        
-        dbu.insert_extracted_sources(self._id, results=results, extract='blind')
+        insert_extracted_sources(self._id, results=results, extract='blind')
         
     def associate_extracted_sources(self, deRuiter_r):
         """Associate sources from the last images with previously
@@ -489,7 +494,7 @@ class Image(DBObject):
                 association. The default value is set through the
                 tkp.config module
         """
-        dbu.associate_extracted_sources(self._id, deRuiter_r)
+        associate_extracted_sources(self._id, deRuiter_r)
         
 
 class ExtractedSource(DBObject):
@@ -532,4 +537,4 @@ class ExtractedSource(DBObject):
                 - database ID of this particular source
         """
 
-        return dbu.lightcurve(self._id)
+        return lightcurve(self._id)

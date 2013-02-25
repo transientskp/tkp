@@ -1,10 +1,11 @@
 import unittest2 as unittest
 import tkp.database as tkpdb
+from tkp.database import monitoringlist
 from tkp.testutil import db_subs
 from tkp.testutil.decorators import requires_database
-from tkp.database.utils import monitoringlist
-from tkp.database.utils import associations as dbass
-from tkp.database.utils import transients as tr_search
+from tkp.database import associations as dbass
+from tkp.database import transients as tr_search
+
 
 class TestIntermittentToMonitorlist(unittest.TestCase):
     """

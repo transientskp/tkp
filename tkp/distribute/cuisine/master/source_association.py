@@ -1,7 +1,7 @@
 import lofarpipe.support.lofaringredient as ingredient
 from lofarpipe.support.parset import parameterset
-from tkp.database.utils import associations as dbass
-from tkp.database.utils import monitoringlist as dbmon
+from tkp.database import monitoringlist as dbmon
+from tkp.database import associations as dbass
 from tkp.distribute.cuisine.common import TrapMaster
 
 

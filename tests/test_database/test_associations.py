@@ -3,8 +3,9 @@ import math
 import unittest2 as unittest
 
 import tkp.database as tkpdb
-import tkp.database.utils.general as dbgen
-import tkp.database.utils as dbutils
+import tkp.database.general as dbgen
+from tkp.database.associations import associate_extracted_sources
+from tkp.database.generic import columns_from_table
 from tkp.testutil import db_subs
 from tkp.testutil.decorators import requires_database
 
@@ -31,7 +32,7 @@ class TestOne2One(unittest.TestCase):
         for im in im_params:
             image = tkpdb.Image(dataset=dataset, data=im)
             dbgen.insert_extracted_sources(image.id, steady_srcs, 'blind')
-            tkpdb.utils.associate_extracted_sources(image.id, deRuiter_r = 3.717)
+            associate_extracted_sources(image.id, deRuiter_r = 3.717)
 
         # Check runningcatalog, runningcatalog_flux, assocxtrsource.
         # note that the order of insertions is not garanteed, so we ORDER by
@@ -162,8 +163,8 @@ class TestOne2One(unittest.TestCase):
         for idx, im in enumerate(im_params):
             image = tkpdb.Image(dataset=dataset, data=im)
             image.insert_extracted_sources([src_list[idx]])
-            tkpdb.utils.associate_extracted_sources(image.id, deRuiter_r=3.717)
-        runcat = dbutils.columns_from_table('runningcatalog', ['datapoints'],
+            associate_extracted_sources(image.id, deRuiter_r=3.717)
+        runcat = columns_from_table('runningcatalog', ['datapoints'],
                                    where={'dataset':dataset.id})
 #        print "***\nRESULTS:", runcat, "\n*****"
         self.assertEqual(len(runcat), 1)
@@ -198,12 +199,12 @@ class TestOne2One(unittest.TestCase):
                                 data=im_params[idx])
             image.insert_extracted_sources([src_list[idx]])
             #Peform very loose association since we just want to store DR value.
-            tkpdb.utils.associate_extracted_sources(image.id, deRuiter_r=100)
-        runcat = dbutils.columns_from_table('runningcatalog', ['id'],
+            associate_extracted_sources(image.id, deRuiter_r=100)
+        runcat = columns_from_table('runningcatalog', ['id'],
                                    where={'dataset':dataset.id})
 #        print "***\nRESULTS:", runcat, "\n*****"
         self.assertEqual(len(runcat), 1)
-        assoc = dbutils.columns_from_table('assocxtrsource', ['r'],
+        assoc = columns_from_table('assocxtrsource', ['r'],
                                    where={'runcat':runcat[0]['id']})
 #        print "Got assocs:", assoc
         self.assertEqual(len(assoc), 2)
@@ -245,7 +246,7 @@ class TestOne2Many(unittest.TestCase):
         results = []
         results.append(src[-1])
         dbgen.insert_extracted_sources(imageid1, results, 'blind')
-        tkpdb.utils.associate_extracted_sources(imageid1, deRuiter_r = 3.717)
+        associate_extracted_sources(imageid1, deRuiter_r = 3.717)
         
         query = """\
         SELECT id
@@ -318,7 +319,7 @@ class TestOne2Many(unittest.TestCase):
         results.append(src[0])
         results.append(src[1])
         dbgen.insert_extracted_sources(imageid2, results, 'blind')
-        tkpdb.utils.associate_extracted_sources(imageid2, deRuiter_r = 3.717)
+        associate_extracted_sources(imageid2, deRuiter_r = 3.717)
 
         query = """\
         SELECT id
@@ -452,7 +453,7 @@ class TestMany2One(unittest.TestCase):
         results.append(src[0])
         results.append(src[1])
         dbgen.insert_extracted_sources(imageid1, results, 'blind')
-        tkpdb.utils.associate_extracted_sources(imageid1, deRuiter_r = 3.717)
+        associate_extracted_sources(imageid1, deRuiter_r = 3.717)
 
         query = """\
         SELECT id
@@ -482,7 +483,7 @@ class TestMany2One(unittest.TestCase):
         results = []
         results.append(src[-1])
         dbgen.insert_extracted_sources(imageid2, results, 'blind')
-        tkpdb.utils.associate_extracted_sources(imageid2, deRuiter_r = 3.717)
+        associate_extracted_sources(imageid2, deRuiter_r = 3.717)
         
         query = """\
         SELECT id
@@ -609,7 +610,7 @@ class TestMany2Many(unittest.TestCase):
         results.append(src1[1])
         dbgen.insert_extracted_sources(imageid1, results, 'blind')
         # We use a default value of 3.717
-        tkpdb.utils.associate_extracted_sources(imageid1, deRuiter_r = 3.717)
+        associate_extracted_sources(imageid1, deRuiter_r = 3.717)
 
         query = """\
         SELECT id
@@ -648,7 +649,7 @@ class TestMany2Many(unittest.TestCase):
         results.append(src2[0])
         results.append(src2[1])
         dbgen.insert_extracted_sources(imageid2, results, 'blind')
-        tkpdb.utils.associate_extracted_sources(imageid2, deRuiter_r = 3.717)
+        associate_extracted_sources(imageid2, deRuiter_r = 3.717)
         
         query = """\
         SELECT id

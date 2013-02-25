@@ -1,7 +1,6 @@
 import unittest2 as unittest
 import tkp.database as tkpdb
-import tkp.database.utils.transients as dbt
-import tkp.database.utils as dbutils
+from tkp.database.transients import transient_search
 from tkp.testutil import db_subs
 from tkp.testutil.decorators import requires_database
 
@@ -49,7 +48,7 @@ class TestTransientBasics(unittest.TestCase):
             image.associate_extracted_sources(deRuiter_r=3.7)
             freq_bands = dataset.frequency_bands()
             self.assertEqual(len(freq_bands), 1)
-            transients = dbt.transient_search(
+            transients = transient_search(
                                             eta_lim=1,
                                             V_lim=0.1,
                                             probability_threshold=0.7,
@@ -144,7 +143,7 @@ class TestTransientRoutines(unittest.TestCase):
         bands = self.dataset.frequency_bands()
         self.assertEqual(len(bands), 1)
         #First run with lax limits:
-        transients = dbutils.transient_search(
+        transients = transient_search(
                  eta_lim=1.1,
                  V_lim=0.01,
                  probability_threshold=0.01,
@@ -157,14 +156,14 @@ class TestTransientRoutines(unittest.TestCase):
         more_highly_variable = sum(t.V_int > 2.0 for t in transients)
         very_non_flat = sum(t.eta_int > 100.0 for t in transients)
 
-        transients = dbutils.transient_search(
+        transients = transient_search(
                  eta_lim=1.1,
                  V_lim=2.0,
                  probability_threshold=0.01,
                  image_id=self.db_imgs[-1].id)
         self.assertEqual(len(transients), more_highly_variable)
 
-        transients = dbutils.transient_search(
+        transients = transient_search(
                  eta_lim=100,
                  V_lim=0.01,
                  probability_threshold=0.01,

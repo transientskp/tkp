@@ -7,7 +7,7 @@ of transient candidates, mostly involving the monitoringlist.
 import logging
 from collections import namedtuple
 
-from tkp.database.utils import general
+from tkp.database import general
 import tkp.database
 
 

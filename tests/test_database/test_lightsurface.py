@@ -11,9 +11,8 @@ import tkp.database
 
 class TestLightSurface(unittest.TestCase):
     def setUp(self):
-        import tkp.database
         self.database = tkp.database.DataBase()
-        self.dataset = DataSet(data={'description': 'dataset with images'}, database=self.database)
+        self.dataset = DataSet(data={'description': 'dataset with images'})
 
     def tearDown(self):
         self.database.close()
@@ -94,13 +93,13 @@ class TestLightSurface(unittest.TestCase):
 
         sources = sorted(sources, key=attrgetter('ra'))
         extracted_source = sources[0].id
-        lightcurve = tkp.database.utils.general.lightcurve(extracted_source)
+        lightcurve = tkp.database.general.lightcurve(extracted_source)
 
         # check if a lightcurve only contains sources for one frequency
         # TODO: ok this is not good, a lightcurve contains points from all frequencies now
         #self.assertEqual(len(images), len(lightcurve))
 
-        #lightsurface = tkp.database.utils.general.lightsurface(self.database.connection, extracted_source)
+        #lightsurface = tkp.database.general.lightsurface(extracted_source)
 
 
 if __name__ == '__main__':

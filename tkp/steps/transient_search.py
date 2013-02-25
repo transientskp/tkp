@@ -2,7 +2,7 @@ import logging
 
 from lofar.parameterset import parameterset
 
-import tkp.database.utils as dbu
+from tkp.database.transients import transient_search
 
 
 logger = logging.getLogger(__name__)
@@ -16,7 +16,7 @@ def search_transients(image_id, parset):
     prob_threshold = parset.getFloat('probability.threshold')
     minpoints = parset.getInt('probability.minpoints')
 
-    transients = dbu.transient_search(image_id = image_id,
+    transients = transient_search(image_id = image_id,
                                       eta_lim = eta_lim,
                                       V_lim = V_lim,
                                       probability_threshold = prob_threshold)

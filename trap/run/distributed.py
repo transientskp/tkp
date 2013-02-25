@@ -89,15 +89,17 @@ class Trap(control):
                 [image_id],
             ))
 
-            self.outputs.update(self.run_task(
-                "mon_detections",
-                [image_id],
-            ))
+##            This is currently just duplicating the 'null_detections' recipe.
+#            self.outputs.update(self.run_task(
+#                "mon_detections",
+#                [image_id],
+#            ))
 
-            self.outputs.update(self.run_task(
-                "user_detections",
-                [image_id],
-            ))
+##        User detections currently unsupported.
+#            self.outputs.update(self.run_task(
+#                "user_detections",
+#                [image_id],
+#            ))
 
             self.outputs.update(self.run_task(
                 "source_association",

@@ -38,6 +38,8 @@ class mon_detections(TrapMaster):
 
         self.logger.info("starting mon_detections for images %s" % image_ids)
 
+        ##NB This is a duplicate of get_nulldetections recipe.
+        ##Currently unclear if there *is* separate functionality to implement.
         image_nds = [dbmon.get_nulldetections(image_id, deRuiter_radius) for image_id in image_ids]
         ff_mds = self.distributed(image_ids, image_paths, image_nds)
 

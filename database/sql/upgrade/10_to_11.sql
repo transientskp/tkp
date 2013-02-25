@@ -10,6 +10,8 @@ ALTER TABLE image ADD COLUMN rb_smaj DOUBLE NULL; %SPLIT%
 ALTER TABLE image ADD COLUMN rb_smin DOUBLE NULL; %SPLIT%
 ALTER TABLE image ADD COLUMN rb_pa DOUBLE NULL; %SPLIT%
 
+ALTER TABLE image ADD COLUMN temp_deltax DOUBLE NULL; %SPLIT%
+ALTER TABLE image ADD COLUMN temp_deltay DOUBLE NULL; %SPLIT%
 /* 
 Although we know that the old values were incorrect due to wrong 
 units and no stored conversion parameters, we copy them into 
@@ -47,16 +49,38 @@ UPDATE image
  WHERE deltay IS NULL
 ; %SPLIT%
 
+UPDATE image
+   SET temp_deltax = deltax
+      ,temp_deltay = deltay
+; %SPLIT%
+
 ALTER TABLE image ALTER COLUMN rb_smaj SET NOT NULL; %SPLIT%
 ALTER TABLE image ALTER COLUMN rb_smin SET NOT NULL; %SPLIT%
 ALTER TABLE image ALTER COLUMN rb_pa SET NOT NULL; %SPLIT%
 
-ALTER TABLE image ALTER COLUMN deltax SET NOT NULL; %SPLIT%
-ALTER TABLE image ALTER COLUMN deltay SET NOT NULL; %SPLIT%
+ALTER TABLE image ALTER COLUMN temp_deltax SET NOT NULL; %SPLIT%
+ALTER TABLE image ALTER COLUMN temp_deltay SET NOT NULL; %SPLIT%
 
 ALTER TABLE image DROP COLUMN bmaj_syn; %SPLIT%
 ALTER TABLE image DROP COLUMN bmin_syn; %SPLIT%
 ALTER TABLE image DROP COLUMN bpa_syn; %SPLIT%
+
+ALTER TABLE image DROP COLUMN deltax; %SPLIT%
+ALTER TABLE image DROP COLUMN deltay; %SPLIT%
+
+ALTER TABLE image ADD COLUMN deltax DOUBLE NULL; %SPLIT%
+ALTER TABLE image ADD COLUMN deltay DOUBLE NULL; %SPLIT%
+
+UPDATE image
+   SET deltax = temp_deltax
+      ,deltay = temp_deltay
+; %SPLIT%
+
+ALTER TABLE image DROP COLUMN temp_deltax; %SPLIT%
+ALTER TABLE image DROP COLUMN temp_deltay; %SPLIT%
+
+ALTER TABLE image ALTER COLUMN deltax SET NOT NULL; %SPLIT%
+ALTER TABLE image ALTER COLUMN deltay SET NOT NULL; %SPLIT%
 
 CREATE FUNCTION insertImage(idataset INT
                            ,itau_time DOUBLE

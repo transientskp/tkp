@@ -35,12 +35,14 @@ class ImageData(object):
                 structuring_element=[[0,1,0], [1,1,1], [0,1,0]],
                 ra_sys_err=0.0, dec_sys_err=0.0):
         """Sets up an ImageData object.
-        Args:
-            data (2D numpy.ndarray): actual image data
-            wcs (utility.coordinates.wcs): world coordinate system
-                specification
-            bream (3-tuple): beam shape specification as
-                (semimajor, semiminor, theta)
+
+        *Args:*
+          - data (2D numpy.ndarray): actual image data
+          - wcs (utility.coordinates.wcs): world coordinate system
+            specification
+          - beam (3-tuple): beam shape specification as
+            (semimajor, semiminor, theta)
+
         """
 
         # Do data, wcs and beam need deepcopy?

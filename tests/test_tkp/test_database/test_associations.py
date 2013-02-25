@@ -4,6 +4,7 @@ import unittest2 as unittest
 
 import tkp.database as tkpdb
 import tkp.database.utils.general as dbgen
+import tkp.database.utils as dbutils
 from tkp.testutil import db_subs
 from tkp.testutil.decorators import requires_database
 
@@ -141,6 +142,72 @@ class TestOne2One(unittest.TestCase):
         self.assertEqual(avg_f_peak_weight[0], 1./steady_srcs[0].peak_err**2)
         self.assertEqual(avg_f_int[0], steady_srcs[0].flux)
         self.assertEqual(avg_f_int_weight[0], 1./steady_srcs[0].flux_err**2)
+
+    @unittest.skip("https://support.astron.nl/lofar_issuetracker/issues/4084")
+    def TestMeridianEdgeCase(self):
+        """What happens if a source is right on the meridian?"""
+
+        dataset = tkpdb.DataSet(data={'description':"Assoc 1-to-1:" + self._testMethodName})
+        n_images = 3
+        im_params = db_subs.example_dbimage_datasets(n_images)
+        src_list = []
+        src0 = db_subs.example_extractedsource_tuple(ra=0.0001, dec=10.5,
+                                             ra_fit_err=0.01, dec_fit_err=0.01)
+        src_list.append(src0)
+        src_list.append(src0._replace(ra=0.0003)) #Slightly more positive, should be fine.
+        #src_list.append(src0._replace(ra=359.9999 - 360.0)) #Fine
+        src_list.append(src0._replace(ra=359.9999)) #Broken
+
+
+        for idx, im in enumerate(im_params):
+            image = tkpdb.Image(dataset=dataset, data=im)
+            image.insert_extracted_sources([src_list[idx]])
+            tkpdb.utils.associate_extracted_sources(image.id, deRuiter_r=3.717)
+        runcat = dbutils.columns_from_table('runningcatalog', ['datapoints'],
+                                   where={'dataset':dataset.id})
+#        print "***\nRESULTS:", runcat, "\n*****"
+        self.assertEqual(len(runcat), 1)
+        self.assertEqual(runcat[0]['datapoints'], 3)
+
+    def TestDeRuiterCalculation(self):
+        """Check all the unit conversions are correct"""
+        dataset = tkpdb.DataSet(data={'description':"Assoc 1-to-1:" + self._testMethodName})
+        n_images = 2
+        im_params = db_subs.example_dbimage_datasets(n_images)
+
+
+        #Note ra / ra_fit_err are in degrees.
+        # ra_sys_err is in arcseconds, but we set it = 0 so doesn't matter.
+        #ra_fit_err cannot be zero or we get div by zero errors.
+        #Also, there is a hard limit on association radii: 
+        #currently this defaults to 0.03 degrees== 108 arcseconds 
+        src0 = db_subs.example_extractedsource_tuple(ra=10.00, dec=0.0,
+                                             ra_fit_err=0.1, dec_fit_err=1.00,
+                                             ra_sys_err=0.0, dec_sys_err=0.0)
+        src1 = db_subs.example_extractedsource_tuple(ra=10.02, dec=0.0,
+                                             ra_fit_err=0.1, dec_fit_err=1.00,
+                                             ra_sys_err=0.0, dec_sys_err=0.0)
+        src_list = [src0, src1]
+        #NB dec_fit_err nonzero, but since delta_dec==0 this simplifies to:
+        expected_DR_radius = math.sqrt((src1.ra - src0.ra) ** 2 /
+                               (src0.ra_fit_err ** 2 + src1.ra_fit_err ** 2))
+#        print "Expected DR", expected_DR_radius
+
+        for idx in [0, 1]:
+            image = tkpdb.Image(dataset=dataset,
+                                data=im_params[idx])
+            image.insert_extracted_sources([src_list[idx]])
+            #Peform very loose association since we just want to store DR value.
+            tkpdb.utils.associate_extracted_sources(image.id, deRuiter_r=100)
+        runcat = dbutils.columns_from_table('runningcatalog', ['id'],
+                                   where={'dataset':dataset.id})
+#        print "***\nRESULTS:", runcat, "\n*****"
+        self.assertEqual(len(runcat), 1)
+        assoc = dbutils.columns_from_table('assocxtrsource', ['r'],
+                                   where={'runcat':runcat[0]['id']})
+#        print "Got assocs:", assoc
+        self.assertEqual(len(assoc), 2)
+        self.assertAlmostEqual(assoc[1]['r'], expected_DR_radius)
 
 
 class TestOne2Many(unittest.TestCase):

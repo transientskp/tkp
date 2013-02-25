@@ -8,7 +8,7 @@ imported, functions will silently return None.
 """
 
 from tkp.database.database import DataBase
-from tkp.database.utils import match_nearests_in_catalogs
+from tkp.database.general import match_nearests_in_catalogs
 
 
 def match_catalogs(transient):
@@ -18,7 +18,7 @@ def match_catalogs(transient):
     for each catalog. Each such source is a dictionary with keys
     catsrcid, catsrcname, catid, catname, ra, decl, ra_err, decl_err,
     dist_arcsec, assoc_r. See
-    :py:func:`~tkp.database.utils.match_nearests_in_catalogs` for details.
+    :py:func:`~tkp.database.general.match_nearests_in_catalogs` for details.
 
     The returned dictionary contains the catalog name as its key, and
     a source as the corresponding value.

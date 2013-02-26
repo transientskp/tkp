@@ -3,7 +3,8 @@ Introduction
 
 This is the Transient Key Project (TKP), a Python package which contains the
 necessary routines for source finding, source associations, determination of
-source characteristics and source classification.
+source characteristics, source classification transient detection and transient
+classification.
 
 Please read the documentation at the website, or generate it yourself
 using Sphinx and the documentation source in the documentation folder.
@@ -16,7 +17,11 @@ Installation
 
 You can use CMake to build this project::
 
- $ mkdir build && cd build && cmake ..
+  $ mkdir -p trap/build
+  $ cd trap/build
+  $ cmake -DCMAKE_INSTALL_PREFIX=<prefix> ..
+  $ make
+  $ make install
 
 Don't forget that you need to populate a database also. see the database
 subdirectory for details.
@@ -52,7 +57,9 @@ For core functionality:
 - MonetDB <http://www.monetdb.org/>
 
 
-For running the TRAP you need to in stall the Lofar System software.
+For running the TKP pipeline you need to in stall the Lofar User Software:
+
+- LUS <http://lus.lofar.org/documentation/pipeline/>
 
 
 Installation for Ubuntu

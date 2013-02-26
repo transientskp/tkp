@@ -1,11 +1,10 @@
-.. _pyse:
+.. _scripts:
 
-==================================
 PySE: Source Finding & Measurement
 ==================================
 
 Preamble
-========
+--------
 
 This document briefly describes the means by which the Transients Project
 source extraction & measurement code (henceforth ``pyse``) may be used to
@@ -13,7 +12,7 @@ obtain a list of sources found in a collection of images stored as FITS files.
 It does not attempt to act as a complete reference to the TKP codebase.
 
 Introduction
-============
+------------
 
 Pyse provides the following capabilities:
 
@@ -48,7 +47,7 @@ transients are unresolved, so the code does not attempt to decompose complex,
 extended sources into a multiple component model.
 
 Command Line Usage
-==================
+------------------
 
 A script is available to make it possible to test the basic functionality of
 the ``pyse`` code. It does not make all the features listed above available.
@@ -174,7 +173,7 @@ All of these arguments are optional (with the caveat that the beam shape must
 be provided if not included with the image).
 
 Output Definition
-=================
+-----------------
 
 The Gaussian fitted to sources is defined as:
 
@@ -186,7 +185,7 @@ In other words:
 
 - :math:`x` and :math:`y` are the Cartesian coordinates of the centre of the Gaussian;
 
-- :math:`peak` is the value at the centre of the Gaussian;
+    - :math:`peak` is the value at the centre of the Gaussian;
 
 - :math:`theta` is the position angle of the major axis measured counterclockwise
   from the y axis;
@@ -194,9 +193,72 @@ In other words:
 - :math:`semimajor` and :math:`semiminor` are the half-widths at half-maximum of the
   Gaussian along its major and minor axes, respectively.
 
-Final Remarks
-=============
 
-Other functionality can be exposed through this interface if required.
 
-Bug reports and comments are welcome! Please use the LOFAR issue tracker.
+tkp-manage.py
+==============
+
+the ``-manage.py`` script is designed to be the new method for using the
+TRAP pipeline. It can setup a local pipeline working environment filled with
+templates, create new jobs in this environment, start a job, clean a job and
+probably more actions will be added in the future.
+
+When the TRAP is correctly installed on the system you can issue the
+``tkp-manage.py`` command. Documentation of subcommands is also available
+on the command line. You can use the ``--help`` flag (also per subcommand) to
+explore all possible options.
+
+.. program-output:: python ../tkp/bin/tkp-manage.py -h
+
+
+initproject
+-----------
+Initialise a pipeline environment. As an end user this is the first thing you
+want to do. It will set up a local environment which you can use to configure
+your pipeline and for creating jobs. A project can be seen as a set of
+configured jobs. When a project is initialised it is populated with a generic
+setup that hopefully works for your setup, but probably the modification of
+some of the configuration files is required.
+
+A new project contains a ``manage.py`` script, which has the same functionality
+as the ``tkp-manage.py``. People familiar with the Django framework will
+recognize this.
+
+.. program-output:: python ../tkp/bin/tkp-manage.py  initproject -h
+
+initjob
+-------
+This command will initaliase a new job. It will setup a subfolder which is
+populated with a set of templates you need to modify.
+
+.. program-output:: python ../tkp/bin/tkp-manage.py initjob -h
+
+run
+---
+Run will start a job. It needs a job name as argument.
+
+.. program-output:: python ../tkp/bin/tkp-manage.py run -h
+
+runlocal
+--------
+
+This command will run the pipeline in a non-distributed way. This is mainly
+intended for development purposes but may speedup your pipeline if you use
+it on a single machine.
+
+.. program-output:: python ../tkp/bin/tkp-manage.py run -h
+
+clean
+-----
+
+Will cleanup a job.
+
+.. program-output:: python ../tkp/bin/tkp-manage.py clean -h
+
+
+info
+----
+
+Will print some info/statistics about a job.
+
+.. program-output:: python ../tkp/bin/tkp-manage.py info -h

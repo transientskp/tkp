@@ -11,4 +11,9 @@ Modules from the ``tkp.database`` package.
 
    introduction
    database
-   utils
+   association
+   general
+   generic
+   monitoringlist
+   orm
+   transients

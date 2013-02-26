@@ -11,10 +11,10 @@ Transient Key Project
    :maxdepth: 2
 
    introduction
+   usage/index
    tkp/index
-   trap/index
    database/index
-   tools/index
+   testing
    developing
 
 

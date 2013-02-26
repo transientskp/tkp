@@ -29,7 +29,6 @@ def fullsplit(path, result=None):
 # Tell distutils not to put the data_files in platform-specific installation
 # locations. See here for an explanation:
 # http://groups.google.com/group/comp.lang.python/browse_thread/thread/35ec7b2fed36eaec/2105ee4d9e8042cb
-INSTALL_SCHEMES_BACKUP = INSTALL_SCHEMES
 for scheme in INSTALL_SCHEMES.values():
     scheme['data'] = scheme['purelib']
 
@@ -57,13 +56,10 @@ setup(
     author = "TKP Discovery WG",
     author_email = "discovery@transientskp.org",
     url = "http://www.transientskp.org/",
-    )
-
-# restore this, since compiling fortran fails somehow when left like this
-INSTALL_SCHEMES = INSTALL_SCHEMES_BACKUP
+)
 
 # use numpy to compile fortran stuff into python module
-from numpy.distutils.core import Extension
+from numpy.distutils.core import Extension, setup
 setup(
   name="deconv",
   version="1.0",

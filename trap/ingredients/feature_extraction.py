@@ -19,7 +19,7 @@ logger = logging.getLogger(__name__)
 
 def extract_features(transient):
     database = DataBase()
-    source = ExtractedSource(id=transient.trigger_xtrsrc, database=database)
+    source = ExtractedSource(id=transient['trigger_xtrsrc'], database=database)
     # NOTE: The light curve is based on peak fluxes, while
     #       transients were found using the integrated fluxes (and errors).
     lightcurve = lcmod.LightCurve(*zip(*source.lightcurve()))
@@ -48,10 +48,10 @@ def extract_features(transient):
         }
 
     # TODO: (gijs) a function should not modify an argument
-    transient.duration = lightcurve.duration['total']
-    transient.timezero = lightcurve.duration['start']
-    transient.variability = variability
-    transient.features = features
-    transient.catalogs = catmod.match_catalogs(transient)
+    transient['duration'] = lightcurve.duration['total']
+    transient['timezero'] = lightcurve.duration['start']
+    transient['variability'] = variability
+    transient['features'] = features
+    transient['catalogs'] = catmod.match_catalogs(transient)
 
     return transient

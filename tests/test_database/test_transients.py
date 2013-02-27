@@ -51,7 +51,7 @@ class TestTransientBasics(unittest.TestCase):
             image.associate_extracted_sources(deRuiter_r=3.7)
             freq_bands = dataset.frequency_bands()
             self.assertEqual(len(freq_bands), 1)
-            transients = dbt.transient_search(
+            transients = dbt.multi_epoch_transient_search(
                                             eta_lim=1,
                                             V_lim=0.1,
                                             probability_threshold=0.7,
@@ -147,7 +147,7 @@ class TestTransientRoutines(unittest.TestCase):
         bands = self.dataset.frequency_bands()
         self.assertEqual(len(bands), 1)
         #First run with lax limits:
-        transients = dbutils.transient_search(
+        transients = dbutils.multi_epoch_transient_search(
                  eta_lim=1.1,
                  V_lim=0.01,
                  probability_threshold=0.01,
@@ -155,13 +155,25 @@ class TestTransientRoutines(unittest.TestCase):
                  minpoints=1)
         self.assertEqual(len(transients), 3)
 
-#        for t in all_transients:
+        qry = """\
+        SELECT tr.*
+          FROM transient tr
+              ,runningcatalog rc
+          WHERE rc.dataset = %(dsid)s
+            AND tr.runcat = rc.id
+        """
+        cursor = self.database.connection.cursor()
+        cursor.execute(qry, {'dsid':self.dataset.id})
+        transient_table_entries = dbutils.generic.get_db_rows_as_dicts(cursor)
+        cursor.close()
+        self.assertEqual(len(transient_table_entries), len(transients))
+#        for t in all_transients:    
 #            print "V_int:", t['v_int'], "  eta_int:", t['eta_int']
         #Now test thresholding:
         more_highly_variable = sum(t['v_int'] > 2.0 for t in transients)
         very_non_flat = sum(t['eta_int'] > 100.0 for t in transients)
 
-        transients = dbutils.transient_search(
+        transients = dbutils.multi_epoch_transient_search(
                  eta_lim=1.1,
                  V_lim=2.0,
                  probability_threshold=0.01,
@@ -169,7 +181,7 @@ class TestTransientRoutines(unittest.TestCase):
                  minpoints=1)
         self.assertEqual(len(transients), more_highly_variable)
 
-        transients = dbutils.transient_search(
+        transients = dbutils.multi_epoch_transient_search(
                  eta_lim=100,
                  V_lim=0.01,
                  probability_threshold=0.01,

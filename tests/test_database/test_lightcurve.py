@@ -8,6 +8,7 @@ from tkp.database.orm import Image
 import tkp.database
 import datetime
 from operator import attrgetter, itemgetter
+import tkp.database.utils.transients as dbtransients
 
 class TestLightCurve(unittest.TestCase):
     def setUp(self):
@@ -101,8 +102,7 @@ class TestLightCurve(unittest.TestCase):
         self.assertAlmostEqual(lightcurve[3][2], 40.)
 
         # Since the light curves are very similar, only eta_nu is different
-        results = self.dataset.detect_variables(
-                                            self.dataset.frequency_bands()[0])
+        results = dbtransients._select_updated_variability_indices(self.dataset.images[-1].id)
         results = sorted(results, key=itemgetter('eta_int'))
         for result, eta_nu in zip(results, (16666.66666667, 66666.666666667,
                                             150000.0)):

@@ -4,15 +4,15 @@ bg-density = 4.02439375e-06
 # extraction threshold (basically S/N) and associetion radius (in units of the default De Ruiter radius) 
 # Systematic errors on ra & decl (units in arcsec)
 # See Dario Carbone's presentation at TKP Meeting 20121204
-detection.threshold = 15
-analysis.threshold = 5
-association.radius = 1
-backsize.x = 32
-backsize.y = 32
+detection_threshold = 15
+analysis_threshold = 5
+association_radius = 1
+backsize_x = 32
+backsize_y = 32
 margin = 10
 deblend = False
 deblend_nthresh = 32
 radius = 280
-ra.sys.err = 20
-dec.sys.err = 20
+ra_sys_err = 20
+dec_sys_err = 20
 

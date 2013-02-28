@@ -67,9 +67,9 @@ def image_to_mongodb(filename, hostname, port, db):
         return False
 
     finally:
-        connection.close()
-
-        # Only close this if it has been created.
+        # Only clear up things which have been created
+        if "connection" in locals():
+            connection.close()
         if "temp_fits_file" in locals():
             temp_fits_file.close()
 

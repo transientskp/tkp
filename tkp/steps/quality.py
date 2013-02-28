@@ -59,26 +59,26 @@ def reject_check(image_path, parset_file):
     rms = rms_with_clipped_subregion(accessor.data, sigma, f)
     noise = noise_level(accessor.freq_eff, accessor.freq_bw, accessor.tau_time,
         accessor.antenna_set, accessor.ncore, accessor.nremote, accessor.nintl)
-    rms_invalid = rms_invalid(rms, noise, low_bound, high_bound)
-    if not rms_invalid:
+    rms_check = rms_invalid(rms, noise, low_bound, high_bound)
+    if not rms_check:
         logger.info("image %s accepted: rms: %s, theoretical noise: %s" % \
                         (image_path, nice_format(rms),
                          nice_format(noise)))
     else:
-        logger.info("image %s REJECTED: %s " % (image_path, rms_invalid) )
-        return (tkp.database.quality.reason['rms'].id, rms_invalid)
+        logger.info("image %s REJECTED: %s " % (image_path, rms_check) )
+        return (tkp.database.quality.reason['rms'].id, rms_check)
 
     # beam shape check
     (semimaj, semimin, theta) = accessor.beam
-    beam_invalid = beam_invalid(semimaj, semimin, oversampled_x, elliptical_x)
+    beam_check = beam_invalid(semimaj, semimin, oversampled_x, elliptical_x)
 
-    if not beam_invalid:
+    if not beam_check:
         logger.info("image %s accepted: semimaj: %s, semimin: %s" % (image_path,
                                              nice_format(semimaj),
                                              nice_format(semimin)))
     else:
-        logger.info("image %s REJECTED: %s " % (image_path, beam_invalid) )
-        return (tkp.database.quality.reason['beam'].id, beam_invalid)
+        logger.info("image %s REJECTED: %s " % (image_path, beam_check) )
+        return (tkp.database.quality.reason['beam'].id, beam_check)
 
     # Bright source check
     bright = tkp.quality.brightsource.is_bright_source_near(accessor, min_separation)

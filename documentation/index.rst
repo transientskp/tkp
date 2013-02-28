@@ -12,10 +12,8 @@ Transient Key Project
 
    introduction
    usage/index
-   tkp/index
-   database/index
-   testing
-   developing
+   overview/index
+   developers/index
 
 
 ++++++++++++++++++

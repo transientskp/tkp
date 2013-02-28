@@ -6,6 +6,7 @@ from tkp.utility.coordinates import unix2julian
 
 logger = logging.getLogger(__name__)
 
+
 targets = { 'CasA': {'ra' : 6.123487680622104,  'dec' : 1.0265153995604648},
             'CygA': {'ra' : 5.233686575770755,  'dec' : 0.7109409582180791},
             'TauA': {'ra' : 1.4596748493730913, 'dec' : 0.38422502335921294},
@@ -16,14 +17,14 @@ targets = { 'CasA': {'ra' : 6.123487680622104,  'dec' : 1.0265153995604648},
         }
 
 def is_bright_source_near(accessor, distance=20):
-    """ Checks if there is any of the bright radio sources defined in targets
+    """
+    Checks if there is any of the bright radio sources defined in targets
     near the center of the image.
-    Args:
-        accessor: a TKP accessor
-        distance: maximum allowed distance of a bright source (in degrees)
-    Returns:
-        False if not bright source is near, description of source if a bright
-         source is near
+
+    :param accessor: a TKP accessor
+    :param distance: maximum allowed distance of a bright source (in degrees)
+    :returns: False if not bright source is near, description of source if a
+              bright source is near
     """
 
     #TODO: this function should be split up and tested more atomically

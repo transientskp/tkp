@@ -1,3 +1,9 @@
+"""
+This module implements the CASA LOFAR data container format, described in this
+document:
+
+http://www.lofar.org/operations/lib/exe/fetch.php?media=:public:documents:casa_image_for_lofar_0.03.00.pdf
+"""
 import logging
 import warnings
 import datetime

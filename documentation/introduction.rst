@@ -17,34 +17,22 @@ then use the supplied script(s) to setup, configure and maintain a pipeline
 environment. A pipeline environment is a folder somewhere in the end user's
 folder containing a configuration and a set of one or more jobs.
 
-Configuration
-=============
 
-Per-user settings may be defined by in the file .tkp.cfg in your home
-directory. This file follows the standard Python ConfigParser syntax.
+Documentation layout
+====================
 
-You will need to configure a database unless you can rely upon the default.
+The documentation is split into three parts:
 
-    [database]
-    enabled = True
-    host = ldb001
-    name = tkp
-    user = tkp
-    password = tkp
-    port = 50000
+**Usage**
+  where you can read about what TKP is and  how you can use it.
 
-A default configuration file may be generated as follows::
+**Overview**
+  which will explain more about the design of TKP and how this is implemented.
 
-  import tkp.config
-  tkp.config.write_config()
+**Developers**
+  which should be used as reference for TKP developers, or if you want to reuse
+  parts of TKP in an other project.
 
-
-Note that this will overwrite any existing configuration file: use with care!
-
-.. Warning::
-
-  We are working on moving all tkp.config settings to configuration and parset
-  files inside a pipeline project folder, this will be removed in the future.
 
 
 TKP library Details

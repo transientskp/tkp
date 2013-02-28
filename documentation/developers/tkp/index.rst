@@ -6,7 +6,6 @@ Library & API
 .. toctree::
    :maxdepth: 2
 
-   introduction
    config
    steps
    database/index

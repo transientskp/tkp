@@ -2,7 +2,25 @@
 Lofar
 +++++
 
-The TKP lofar submodule contains all code related to calculate physical
-properties of the LOFAR hardware.
+.. automodule:: tkp.lofar
+  :members:
 
 
+Antenna arrays
+==============
+
+.. automodule:: tkp.lofar.antennaarrays
+  :members:
+
+Beam
+====
+
+.. automodule:: tkp.lofar.beam
+  :members:
+
+
+noise
+=====
+
+.. automodule:: tkp.lofar.noise
+  :members:

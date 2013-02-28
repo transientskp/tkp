@@ -1,8 +1,30 @@
+.. _quality:
+
 +++++++
 Quality
 +++++++
 
-The TKP quality submodule contains all code related to perform quality checks
-on input LOFAR images.
+.. automodule:: tkp.quality
+  :members:
 
 
+
+:mod:`tkp.quality.restoringbeam` -- Restoring beam
+==================================================
+
+.. automodule:: tkp.quality.restoringbeam
+  :members:
+
+
+:mod:`tkp.quality.brightsource` -- Bright Source
+================================================
+
+.. automodule:: tkp.quality.brightsource
+  :members:
+
+
+:mod:`tkp.quality.rms` -- RMS
+=============================
+
+.. automodule:: tkp.quality.rms
+  :members:

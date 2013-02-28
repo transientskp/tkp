@@ -3,6 +3,7 @@ import numpy
 from numpy.testing import assert_array_equal, assert_array_almost_equal
 
 import unittest2 as unittest
+from tkp.quality.rms import rms_invalid
 
 from tkp.utility import accessors
 import tkp.quality
@@ -65,8 +66,8 @@ class TestRms(unittest.TestCase):
         rms_good = statistics.rms_with_clipped_subregion(good_image.data)
         rms_bad = statistics.rms_with_clipped_subregion(bad_image.data)
 
-        self.assertFalse(tkp.quality.rms_invalid(rms_good, noise))
-        self.assertTrue(tkp.quality.rms_invalid(rms_bad, noise))
+        self.assertFalse(rms_invalid(rms_good, noise))
+        self.assertTrue(rms_invalid(rms_bad, noise))
 
     def test_rms_fits(self):
         accessors.open(good_file)

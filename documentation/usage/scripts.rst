@@ -1,7 +1,11 @@
 .. _scripts:
 
-PySE: Source Finding & Measurement
-==================================
+Scripts
+*******
+
+
+PySE
+====
 
 Preamble
 --------
@@ -198,7 +202,7 @@ In other words:
 tkp-manage.py
 ==============
 
-the ``-manage.py`` script is designed to be the new method for using the
+the ``tkp-manage.py`` script is designed to be the new method for using the
 TRAP pipeline. It can setup a local pipeline working environment filled with
 templates, create new jobs in this environment, start a job, clean a job and
 probably more actions will be added in the future.

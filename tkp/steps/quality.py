@@ -1,8 +1,11 @@
 import logging
 from lofarpipe.support.parset import parameterset
 from tkp.database.database import DataBase
+from tkp.quality.restoringbeam import beam_invalid
+from tkp.quality.rms import rms_invalid
 from tkp.quality.statistics import rms_with_clipped_subregion
 from tkp.lofar.noise import noise_level
+from tkp.utility import nice_format
 import tkp.utility.accessors
 import tkp.database.quality
 import tkp.quality.brightsource
@@ -56,23 +59,23 @@ def reject_check(image_path, parset_file):
     rms = rms_with_clipped_subregion(accessor.data, sigma, f)
     noise = noise_level(accessor.freq_eff, accessor.freq_bw, accessor.tau_time,
         accessor.antenna_set, accessor.ncore, accessor.nremote, accessor.nintl)
-    rms_invalid = tkp.quality.rms_invalid(rms, noise, low_bound, high_bound)
+    rms_invalid = rms_invalid(rms, noise, low_bound, high_bound)
     if not rms_invalid:
         logger.info("image %s accepted: rms: %s, theoretical noise: %s" % \
-                        (image_path, tkp.quality.nice_format(rms),
-                         tkp.quality.nice_format(noise)))
+                        (image_path, nice_format(rms),
+                         nice_format(noise)))
     else:
         logger.info("image %s REJECTED: %s " % (image_path, rms_invalid) )
         return (tkp.database.quality.reason['rms'].id, rms_invalid)
 
     # beam shape check
     (semimaj, semimin, theta) = accessor.beam
-    beam_invalid = tkp.quality.beam_invalid(semimaj, semimin, oversampled_x, elliptical_x)
+    beam_invalid = beam_invalid(semimaj, semimin, oversampled_x, elliptical_x)
 
     if not beam_invalid:
         logger.info("image %s accepted: semimaj: %s, semimin: %s" % (image_path,
-                                             tkp.quality.nice_format(semimaj),
-                                             tkp.quality.nice_format(semimin)))
+                                             nice_format(semimaj),
+                                             nice_format(semimin)))
     else:
         logger.info("image %s REJECTED: %s " % (image_path, beam_invalid) )
         return (tkp.database.quality.reason['beam'].id, beam_invalid)

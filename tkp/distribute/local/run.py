@@ -100,7 +100,7 @@ class TrapLocal(control):
             image_path = image.url
 
             null_detections = dbmon.get_nulldetections(image_id, deRuiter_radius)
-            ff_nd = steps.source_extraction.forced_fits(image_path, null_detections)
+            ff_nd = steps.source_extraction.forced_fits(image_path, null_detections, nd_parset_file)
             dbgen.insert_extracted_sources(image_id, ff_nd, 'ff_nd')
 
             # mon_detections - duplicates nulldetections
@@ -125,7 +125,7 @@ class TrapLocal(control):
         # Classification
         for transient in transients:
             steps.feature_extraction.extract_features(transient)
-            tkp.steps.classification.classify(transient, cl_parset_file)
+            steps.classification.classify(transient, cl_parset_file)
         
         now = datetime.datetime.utcnow()
         dbgen.update_dataset_process_ts(dataset_id, now)

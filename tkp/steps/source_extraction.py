@@ -65,14 +65,23 @@ def extract_sources(image_path, parset_file):
     return [r.serialize() for r in results]
 
 
-def forced_fits(image_path, positions):
+def forced_fits(image_path, positions, parset_file):
     """Force fit ?? What does this do
     Args:
         - image_path: path to image
         - positions: ?
     """
+    logger.info("Forced fitting in image: %s" % (image_path))
     fitsimage = tkp.utility.accessors.open(image_path)
-    data_image = sourcefinder_image_from_accessor(fitsimage)
+    parset = parse_parset(parset_file)
+    
+    data_image = sourcefinder_image_from_accessor(fitsimage,
+                            margin=parset['margin'], radius=parset['radius'],
+                            detection_threshold=parset['detection_threshold'],
+                            analysis_threshold=parset['analysis_threshold'],
+                            ra_sys_err=parset['ra_sys_err'],
+                            dec_sys_err=parset['dec_sys_err'])
+
 
     if len(positions):
         boxsize = BOX_IN_BEAMPIX * max(data_image.beam[0],data_image.beam[1])

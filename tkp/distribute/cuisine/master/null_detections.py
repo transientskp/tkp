@@ -55,7 +55,8 @@ class null_detections(TrapMaster):
                     arguments=[
                         image_id,
                         image_path,
-                        image_nd
+                        image_nd,
+                        self.inputs['parset']
                     ]
                 )
         )

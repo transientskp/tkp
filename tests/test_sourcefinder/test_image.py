@@ -221,3 +221,37 @@ class TestSimpleImageSourceFind(unittest.TestCase):
         for i in range(len(r)):
             self.assertAlmostEqual(r[i], known_result[i], places=5)
 
+class TestMaskedSource(unittest.TestCase):
+    """
+    Source is masked
+
+    Check that we don't find sources when they fall within a masked region
+    of the image.
+    """
+
+    @requires_data(os.path.join(DATAPATH, 'GRB120422A/GRB120422A-120429.fits'))
+    def testWholeSourceMasked(self):
+        """
+        Source in masked region
+        """
+
+        self.image = accessors.sourcefinder_image_from_accessor(
+                       accessors.FitsImage(os.path.join(DATAPATH,
+                                        'GRB120422A/GRB120422A-120429.fits')))
+        self.image.data[250:280, 250:280] = np.ma.masked
+        results = self.image.extract(det=5, anl=3)
+        self.assertFalse(results)
+
+    def testWholeSourceMasked(self):
+        """
+        Part of source masked
+
+        Tip of major axis is around 267, 264
+        """
+
+        self.image = accessors.sourcefinder_image_from_accessor(
+                       accessors.FitsImage(os.path.join(DATAPATH,
+                                        'GRB120422A/GRB120422A-120429.fits')))
+        self.image.data[266:269, 263:266] = np.ma.masked
+        results = self.image.extract(det=5, anl=3)
+        self.assertFalse(results)

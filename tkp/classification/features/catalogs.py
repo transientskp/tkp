@@ -18,7 +18,7 @@ def match_catalogs(transient):
     for each catalog. Each such source is a dictionary with keys
     catsrcid, catsrcname, catid, catname, ra, decl, ra_err, decl_err,
     dist_arcsec, assoc_r. See
-    :py:func:`~tkp.database.general.match_nearests_in_catalogs` for details.
+    :py:func:`~tkp.database.utils.match_nearests_in_catalogs` for details.
 
     The returned dictionary contains the catalog name as its key, and
     a source as the corresponding value.
@@ -36,8 +36,8 @@ def match_catalogs(transient):
     #        results[value] = results[value][0]
     #    else:
     #        results[value] = {}
-    results = match_nearests_in_catalogs(transient.runcatid,radius=0.5,
-                                         deRuiter_r=3.717)
+    results = match_nearests_in_catalogs(transient['runcat'],
+                                    radius=0.5, deRuiter_r=3.717)
     if len(results) > 0:
         results = results[0]
     else:

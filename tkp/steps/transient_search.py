@@ -2,7 +2,7 @@ import logging
 
 from lofar.parameterset import parameterset
 
-from tkp.database.transients import transient_search
+from tkp.database.transients import multi_epoch_transient_search
 
 
 logger = logging.getLogger(__name__)
@@ -16,7 +16,7 @@ def search_transients(image_id, parset):
     prob_threshold = parset.getFloat('probability.threshold')
     minpoints = parset.getInt('probability.minpoints')
 
-    transients = transient_search(image_id = image_id,
+    transients = multi_epoch_transient_search(image_id = image_id,
                                       eta_lim = eta_lim,
                                       V_lim = V_lim,
                                       probability_threshold = prob_threshold)

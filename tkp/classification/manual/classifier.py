@@ -1,4 +1,10 @@
 """
+
+.. warning:
+
+  This module is deprecated and in dire need of code review. (TS 26/02/12)
+
+
 Classify an object, by parsing it through a user defined decision tree.
 
 This module contains the necessary classes to classify an arbitrary

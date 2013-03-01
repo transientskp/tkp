@@ -68,10 +68,11 @@ class TestIntermittentToMonitorlist(unittest.TestCase):
             monitoringlist.add_nulldetections(image.id)
             # We also need to run the transient search in order to pick up the variable
             # eta_lim, V_lim, prob_threshold, minpoints, resp.
-            transients = tr_search.transient_search(image.id,
+            transients = tr_search.multi_epoch_transient_search(image.id,
                                                      0.0,
                                                      0.0,
-                                                     0.5)
+                                                     0.5,
+                                                     1)
 
             # Adjust (insert/update/remove) transients in monlist as well
             monitoringlist.adjust_transients_in_monitoringlist(image.id,

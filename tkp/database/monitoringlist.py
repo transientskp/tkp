@@ -185,26 +185,25 @@ def adjust_transients_in_monitoringlist(image_id, transients):
 def _update_known_transients_in_monitoringlist(transients):
     """Update transients in monitoringlist"""
     query = """\
-UPDATE monitoringlist
-   SET ra = %s
-      ,decl = %s
-  WHERE runcat = %s
-"""
+    UPDATE monitoringlist
+       SET ra = %(wm_ra)s
+          ,decl = %(wm_decl)s
+      WHERE runcat = %(runcat)s
+    """
     upd = 0
-    for transient in transients:
-        args = (float(transient.ra), float(transient.decl), transient.runcatid)
-        cursor = tkp.database.query(query, args, commit=True)
+    for entry in transients:
+        cursor = tkp.database.query(query, entry, commit=True)
         upd += cursor.rowcount
     if upd > 0:
         logger.info("Updated %s known transients in monitoringlist" % (upd,))
 
 
 def _insert_new_transients_in_monitoringlist(image_id):
-    """Insert transients that are not yet stored in monitoringlist.
+    """
+    Copy newly identified transients from transients table into monitoringlist.
 
-    Therefore, we have to grab the transients and check that there
-    runcat ids are not in the monitoringlistlist
-    
+    We grab the transients and check that their runcat ids are not in the 
+    monitoringlist.
     """
     query = """\
 INSERT INTO monitoringlist
@@ -216,19 +215,19 @@ INSERT INTO monitoringlist
   SELECT t.runcat
         ,r.wm_ra
         ,r.wm_decl
-        ,r.dataset
+        ,r.dataset 
     FROM transient t
         ,runningcatalog r
-        ,image i
-   WHERE t.runcat = r.id
-     AND r.dataset = i.dataset
+        ,image i 
+   WHERE t.runcat = r.id 
+     AND r.dataset = i.dataset 
      AND i.id = %(image_id)s
-     AND t.runcat NOT IN (SELECT m0.runcat
+     AND t.runcat NOT IN (SELECT m0.runcat 
                             FROM monitoringlist m0
                                 ,runningcatalog r0
                                 ,image i0
-                           WHERE m0.runcat = r0.id
-                             AND r0.dataset = i0.dataset
+                           WHERE m0.runcat = r0.id 
+                             AND r0.dataset = i0.dataset 
                              AND i0.id = %(image_id)s
                          )
 """

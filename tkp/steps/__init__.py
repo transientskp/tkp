@@ -12,5 +12,5 @@ import persistence
 import prettyprint
 import quality
 import source_extraction
-from tkp.steps import classification
+import classification
 import transient_search

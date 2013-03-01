@@ -1,6 +1,7 @@
 import unittest2 as unittest
 import tkp.database as tkpdb
-from tkp.database.transients import transient_search
+from tkp.database.transients import multi_epoch_transient_search
+from tkp.database.generic import get_db_rows_as_dicts
 from tkp.testutil import db_subs
 from tkp.testutil.decorators import requires_database
 
@@ -48,10 +49,11 @@ class TestTransientBasics(unittest.TestCase):
             image.associate_extracted_sources(deRuiter_r=3.7)
             freq_bands = dataset.frequency_bands()
             self.assertEqual(len(freq_bands), 1)
-            transients = transient_search(
+            transients = multi_epoch_transient_search(
                                             eta_lim=1,
                                             V_lim=0.1,
                                             probability_threshold=0.7,
+                                            minpoints=1,
                                             image_id=image.id)
 
         # Check the number of detected transients
@@ -61,12 +63,12 @@ class TestTransientBasics(unittest.TestCase):
         freq_bands = dataset.frequency_bands()
         self.assertEqual(len(freq_bands), 1)
         for tr in transients:
-            self.assertEqual(freq_bands[0], tr.band)
+            self.assertEqual(freq_bands[0], tr['band'])
 
         runcats = dataset.runcat_entries()
         self.assertEqual(len(runcats), 1)
         for tr in transients:
-            self.assertEqual(runcats[0]['runcat'], tr.runcatid)
+            self.assertEqual(runcats[0]['runcat'], tr['runcat'])
 
         # Check that the trigger xtrsrc happened in the third image
         query = """\
@@ -143,31 +145,46 @@ class TestTransientRoutines(unittest.TestCase):
         bands = self.dataset.frequency_bands()
         self.assertEqual(len(bands), 1)
         #First run with lax limits:
-        transients = transient_search(
+        transients = multi_epoch_transient_search(
                  eta_lim=1.1,
                  V_lim=0.01,
                  probability_threshold=0.01,
-                 image_id=self.db_imgs[-1].id)
+                 image_id=self.db_imgs[-1].id,
+                 minpoints=1)
         self.assertEqual(len(transients), 3)
 
-#        for t in all_transients:
+        qry = """\
+        SELECT tr.*
+          FROM transient tr
+              ,runningcatalog rc
+          WHERE rc.dataset = %(dsid)s
+            AND tr.runcat = rc.id
+        """
+        cursor = self.database.connection.cursor()
+        cursor.execute(qry, {'dsid':self.dataset.id})
+        transient_table_entries = get_db_rows_as_dicts(cursor)
+        cursor.close()
+        self.assertEqual(len(transient_table_entries), len(transients))
+#        for t in all_transients:    
 #            print "V_int:", t['v_int'], "  eta_int:", t['eta_int']
         #Now test thresholding:
-        more_highly_variable = sum(t.V_int > 2.0 for t in transients)
-        very_non_flat = sum(t.eta_int > 100.0 for t in transients)
+        more_highly_variable = sum(t['v_int'] > 2.0 for t in transients)
+        very_non_flat = sum(t['eta_int'] > 100.0 for t in transients)
 
-        transients = transient_search(
+        transients = multi_epoch_transient_search(
                  eta_lim=1.1,
                  V_lim=2.0,
                  probability_threshold=0.01,
-                 image_id=self.db_imgs[-1].id)
+                 image_id=self.db_imgs[-1].id,
+                 minpoints=1)
         self.assertEqual(len(transients), more_highly_variable)
 
-        transients = transient_search(
+        transients = multi_epoch_transient_search(
                  eta_lim=100,
                  V_lim=0.01,
                  probability_threshold=0.01,
-                 image_id=self.db_imgs[-1].id)
+                 image_id=self.db_imgs[-1].id,
+                 minpoints=1)
         self.assertEqual(len(transients), very_non_flat)
 
 

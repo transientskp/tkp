@@ -124,7 +124,6 @@ from tkp.database.generic import columns_from_table, set_columns_for_table
 from tkp.database.general import insert_dataset, insert_image,\
     insert_extracted_sources, lightcurve
 from tkp.database.monitoringlist import add_manual_entry_to_monitoringlist
-from tkp.database.transients import select_variability_indices
 from tkp.database.associations import associate_extracted_sources
 import tkp.database
 import tkp.database.quality
@@ -338,15 +337,10 @@ class DataSet(DBObject):
             [{'runcat,'xtrsrc','datapoints'}]
         """
         return columns_from_table('runningcatalog',
-                                      keywords=['id','xtrsrc','datapoints'],
-                                      alias={'id':'runcat'}, 
+                                      keywords=['id', 'xtrsrc', 'datapoints'],
+                                      alias={'id':'runcat'},
                                       where={'dataset':self.id})
         
-    # TODO: Verify constants
-    def detect_variables(self,  freq_band, V_lim=0.2, eta_lim=3.):
-        """Search through the whole dataset for variable sources"""
-        return select_variability_indices(self._id, freq_band, V_lim, eta_lim)
-
 
     def add_manual_entry_to_monitoringlist(self, ra, dec):
         add_manual_entry_to_monitoringlist(self.id, ra, dec)

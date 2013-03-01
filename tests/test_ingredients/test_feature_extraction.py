@@ -2,22 +2,23 @@ import unittest
 import trap.ingredients.feature_extraction
 from tkp.database.database import DataBase
 from tkp.database import query
-from tkp.classification.transient import Transient
+from tkp.database.utils import generic as dbgeneric
 from tkp.testutil import db_subs
 from tkp.testutil.decorators import requires_database
 
 @requires_database()
 class TestFeatureExtraction(unittest.TestCase):
-    def __init__(self, *args):
-        super(TestFeatureExtraction, self).__init__(*args)
-        self.dataset_id = db_subs.create_dataset_8images(extract_sources=True)
-
+    def setUp(self):
         self.database = DataBase()
-        runcat_query = "select id from runningcatalog where dataset=%s"
-        cursor = query(self.database.connection, runcat_query, [self.dataset_id])
-        self.transients = [Transient(runcatid=i) for (i,) in cursor.fetchall()]
+        #NB This is basically nonsense, we're just selecting any old
+        #extracted source so we can check the feature extraction syntax.
+        xtrsrc_qry = """SELECT id as trigger_xtrsrc 
+                          FROM extractedsource"""
+        cursor = query(self.database.connection, xtrsrc_qry)
+
+        self.transients = dbgeneric.get_db_rows_as_dicts(cursor)
 
     @unittest.skip("TODO: extract_features recipe needs modification!!!")
     def test_extract_features(self):
-        transient = self.transients[0]
-        trap.ingredients.feature_extraction.extract_features(transient)
+        for t in self.transients:
+            trap.ingredients.feature_extraction.extract_features(t)

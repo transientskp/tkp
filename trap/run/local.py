@@ -120,11 +120,11 @@ class TrapLocal(control):
             # Transient_search
             transients = ingred.transient_search.search_transients(image_id, tr_parset_file)
             dbmon.adjust_transients_in_monitoringlist(image_id, transients)
-        
+
         # Classification
         for transient in transients:
             ingred.feature_extraction.extract_features(transient)
-            ingred.classification.classify(transient, cl_parset_file)
-        
+#            ingred.classification.classify(transient, cl_parset_file)
+
         now = datetime.datetime.utcnow()
         dbgen.update_dataset_process_ts(dataset_id, now)

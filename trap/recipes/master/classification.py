@@ -1,4 +1,9 @@
 """
+
+.. warning:
+
+  This recipe is deprecated and in dire need of code review. (TS 26/02/12)
+
 This recipe tries to classify one or more transients according to their
 features.
 

@@ -87,8 +87,9 @@ class TrapLocal(control):
         for image_id in good_image_ids:
             image = Image(id=image_id)
             good_images.append(image)
+            se_parset = steps.source_extraction.parse_parset(se_parset_file)
             extracted_sources = steps.source_extraction.extract_sources(
-                                                     image.url, se_parset_file)
+                                                     image.url, se_parset)
             dbgen.insert_extracted_sources(image_id, extracted_sources, 'blind')
 
             # null_detections

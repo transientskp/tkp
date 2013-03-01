@@ -29,28 +29,27 @@ def parse_parset(parset_file):
     }
 
 
-def extract_sources(image_path, parset_file):
-    """Extract sources from an image
-    Args:
-        - image_path: path to file to extract sources from
-        - parset: parameter set *filename* containing at least the
+def extract_sources(image_path, parset):
+    """
+    Extract sources from an image.
+
+    :param image_path: path to file to extract sources from
+    :param parset: parameter set *filename* containing at least the
                 detection and analysis threshold and the association radius,
                 the last one a multiplication factor of the de Ruiter radius.
+    :returns: a list of
     """
-    logger.info("Extracting image: %s" % (image_path))
-    fitsimage = tkp.utility.accessors.open(image_path)
-    parset = parse_parset(parset_file)
-
+    logger.info("Extracting image: %s" % image_path)
+    accessor = tkp.utility.accessors.open(image_path)
     logger.debug("Detecting sources in image %s at detection threshold %s",
-                                    image_path, parset['detection_threshold'])
-
-    data_image = sourcefinder_image_from_accessor(fitsimage,
-                            margin=parset['margin'], radius=parset['radius'],
+                 image_path, parset['detection_threshold'])
+    data_image = sourcefinder_image_from_accessor(accessor,
+                            margin=parset['margin'],
+                            radius=parset['radius'],
                             detection_threshold=parset['detection_threshold'],
                             analysis_threshold=parset['analysis_threshold'],
                             ra_sys_err=parset['ra_sys_err'],
                             dec_sys_err=parset['dec_sys_err'])
-
     logger.debug("Employing margin: %s extraction radius: %s deblend: %s deblend_nthresh: %s",
             parset['margin'],
             parset['radius'],
@@ -58,10 +57,8 @@ def extract_sources(image_path, parset_file):
             parset['deblend_nthresh']
     )
 
-    # Here we do the "blind" extraction of sources in the image
-    results = data_image.extract()
+    results = data_image.extract()  # "blind" extraction of sources
     logger.info("Detected %d sources in image %s" % (len(results), image_path))
-
     return [r.serialize() for r in results]
 
 

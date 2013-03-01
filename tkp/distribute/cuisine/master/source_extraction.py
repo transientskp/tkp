@@ -4,6 +4,7 @@ import lofarpipe.support.lofaringredient as ingredient
 from lofarpipe.support.remotecommand import ComputeJob
 from tkp.database.orm import Image
 from tkp.distribute.cuisine.common import TrapMaster, nodes_available
+from tkp.steps.source_extraction import parse_parset
 
 
 class source_extraction(TrapMaster):
@@ -30,10 +31,13 @@ class source_extraction(TrapMaster):
         image_ids = self.inputs['args']
         image_paths = [Image(id=id).url for id in image_ids]
 
-        sources_sets = self.distributed(image_ids, image_paths)
+        parset = parse_parset(self.inputs['parset'])
+        sources_sets = self.distributed(image_ids, image_paths, parset)
         self.outputs['sources_sets'] = sources_sets
 
-    def distributed(self, image_ids, image_paths):
+
+
+    def distributed(self, image_ids, image_paths, parset):
         nodes = nodes_available(self.config)
 
         command = "python %s" % self.__file__.replace('master', 'nodes')
@@ -47,7 +51,7 @@ class source_extraction(TrapMaster):
                     arguments=[
                         id,
                         url,
-                        self.inputs['parset'],
+                        parset,
                     ]
                 )
             )

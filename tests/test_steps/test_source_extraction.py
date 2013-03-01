@@ -1,6 +1,6 @@
 import unittest
 import tempfile
-import tkp.steps.source_extraction
+from tkp.steps.source_extraction import extract_sources, parse_parset
 from tkp.testutil import db_subs, data
 
 class TestSourceExtraction(unittest.TestCase):
@@ -9,12 +9,8 @@ class TestSourceExtraction(unittest.TestCase):
         cls.dataset_id = db_subs.create_dataset_8images()
         cls.parset = tempfile.NamedTemporaryFile()
         parset_text = """\
-# extraction threshold (basically S/N) and associetion radius (in units of the default De Ruiter radius) 
-# Systematic errors on ra & decl (units in arcsec)
-# See Dario Carbone's presentation at TKP Meeting 20121204
 detection_threshold = 15
 analysis_threshold = 5
-#association_radius = 1  # TODO: not used?
 backsize_x = 32
 backsize_y = 32
 margin = 10
@@ -29,4 +25,5 @@ dec_sys_err = 20
 
     def test_extract_sources(self):
         image_path = data.fits_file
-        tkp.steps.source_extraction.extract_sources(image_path, self.parset.name)
+        parset = parse_parset(self.parset.name)
+        extract_sources(image_path, parset)

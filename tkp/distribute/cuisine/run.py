@@ -116,10 +116,10 @@ class Trap(control):
             self.outputs['transients']
         ))
 
-        self.outputs.update(self.run_task(
-            "classification",
-            self.outputs['transients']
-        ))
+#        self.outputs.update(self.run_task(
+#            "classification",
+#            self.outputs['transients']
+#        ))
 
         #self.run_task("prettyprint", self.outputs['transients'])
 

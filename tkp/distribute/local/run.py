@@ -1,18 +1,15 @@
 import logging
 import datetime
-
 from lofarpipe.support.parset import parameterset
+from trap import ingredients as ingred
 import lofarpipe.support.lofaringredient as ingredient
-from lofarpipe.support.control import control
-
-from tkp import steps
-from tkp.database import monitoringlist as dbmon
-from tkp.steps.monitoringlist import add_manual_monitoringlist_entries
+from trap.ingredients.monitoringlist import add_manual_monitoringlist_entries
 from tkp.database.orm import Image
-from tkp.database import general as dbgen
-from tkp.database import associations as dbass
+from tkp.database.utils import general as dbgen
+from tkp.database.utils import monitoringlist as dbmon
+from tkp.database.utils import associations as dbass
+from lofarpipe.support.control import control
 from images_to_process import images
-
 
 class MonetFilter(logging.Filter):
     def filter(self, record):
@@ -126,7 +123,7 @@ class TrapLocal(control):
         # Classification
         for transient in transients:
             steps.feature_extraction.extract_features(transient)
-            steps.classification.classify(transient, cl_parset_file)
+#            ingred.classification.classify(transient, cl_parset_file)
         
         now = datetime.datetime.utcnow()
         dbgen.update_dataset_process_ts(dataset_id, now)

@@ -66,11 +66,8 @@ class TestPyse(unittest.TestCase):
     def test_summary(self):
         tkp.bin.pyse.summary(self.filename, self.sourcelist)
 
-    unittest.skip()
+    unittest.skip("make jenkins happy")
     def test_handle_args(self):
-        # somehow doesn't work correctly with jenkins, probably due to args
-        import sys
-        sys.argv = sys.argv[0]
         tkp.bin.pyse.handle_args()
 
     def test_writefites(self):

@@ -352,22 +352,16 @@ class DataSet(DBObject):
             Currently only returns 3 columns:
             [{'runcat,'xtrsrc','datapoints'}]
         """
-        return dbu.columns_from_table(self.database.connection, 
+        return dbu.columns_from_table(self.database.connection,
                                       'runningcatalog',
-                                      keywords=['id','xtrsrc','datapoints'],
-                                      alias={'id':'runcat'}, 
+                                      keywords=['id', 'xtrsrc', 'datapoints'],
+                                      alias={'id':'runcat'},
                                       where={'dataset':self.id})
-        
-    # TODO: Verify constants
-    def detect_variables(self,  freq_band, V_lim=0.2, eta_lim=3.):
-        """Search through the whole dataset for variable sources"""
-        return dbu.select_variability_indices(self._id, freq_band, V_lim, eta_lim)
-        
 
 
     def add_manual_entry_to_monitoringlist(self, ra, dec):
         dbu.add_manual_entry_to_monitoringlist(self.database.connection, self.id, ra, dec)
-        
+
     def frequency_bands(self):
         """Return a list of distinct bands present in the dataset."""
         query = """\

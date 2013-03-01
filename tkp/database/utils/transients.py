@@ -104,23 +104,14 @@ def _insert_transients(transients):
     logger.info("Inserted %s new transients in transients table" % (ins,))
 
 
-
-def select_variability_indices(image_id, V_lim, eta_lim, minpoints):
+def _select_updated_variability_indices(image_id):
     """
-    Select sources and integrated flux variability indices from the running
-    catalog, for a given frequency band (i.e. image_id)
+    Select sources and integrated flux variability indices, for sources which
+    have had an extra datapoint added by the specified image.
 
-    This comes relatively easily, since we have kept track of the
-    average fluxes and the variance measures, and thus can quickly
-    obtain any sources that exceed a constant flux by a certain amount.
-
-    We select those sources that have integrated-flux V-indexes (variability) and
-    eta-indexes (reduced-chi-sq values) larger than the specified limits,
-    with a minimum number of points ('minpoints') in the lightcurve. 
-
-    We also perform a left outer join with the transient table, 
-    to determine if the source has been inserted into that table yet. 
-    This allows us to distinguish newly identified transients.
+    As part of the results we return a field 'new_transient' which is TRUE
+    if the runcat-source/band combination does not yet have an entry in the 
+    transient table.  
 
     NB Variability index  = std.dev(flux) / mean(flux).
     In the pathological case where mean(flux)==0.0, we simply substitute
@@ -132,9 +123,6 @@ def select_variability_indices(image_id, V_lim, eta_lim, minpoints):
 
     *Args*:
       - image_id: the image and thus frequency band being searched for variability
-      - V_lim: Minimum normalised variance value for transients. 
-      - eta_lim: Minimum reduced chi-sq value for transients.
-      - minpoints: Minimum number of lightcurve points to be considered a candidate.
 
     *Returns*:
     A list of dicts with keys as follows:
@@ -151,6 +139,10 @@ def select_variability_indices(image_id, V_lim, eta_lim, minpoints):
 #        and selecting it from transients gives the *old* value.
 #        So; we recalculate it later, (using scipy.stats),
 #        and apply a threshold there.
+
+    #  NB We also perform a left outer join with the transient table, 
+    #  to determine if the source has been inserted into that table yet. 
+    #  This allows us to distinguish newly identified transients.
 
         query = """\
 SELECT t1.runcat
@@ -206,18 +198,14 @@ SELECT t1.runcat
            AND rc0.id = a0.runcat
            AND a0.xtrsrc = x0.id
            AND x0.image = %(imgid)s
-           AND f_datapoints > %(minpoints)s
        ) t1
        LEFT OUTER JOIN transient tr0
        ON t1.runcat = tr0.runcat
        AND t1.band = tr0.band
- WHERE t1.V_int_inter / t1.avg_f_int > %(v_lim)s
-   AND t1.eta_int_inter / t1.avg_f_int_weight > %(eta_lim)s
 ORDER BY t1.runcat
         ,t1.band
 """
-        qry_params = {'imgid':image_id, 'v_lim': V_lim, 'eta_lim': eta_lim,
-                      'minpoints':minpoints}
+        qry_params = {'imgid':image_id}
         cursor.execute(query, qry_params)
         results = generic.get_db_rows_as_dicts(cursor)
         if not AUTOCOMMIT:
@@ -230,51 +218,72 @@ ORDER BY t1.runcat
 
     return results
 
-
-def transient_search(image_id,
+def multi_epoch_transient_search(image_id,
                      eta_lim,
                      V_lim,
                      probability_threshold,
                      minpoints):
     """
-    Calculates fresh variability indices, then updates transients table accordingly.
+    Updates transients table and returns a list of all currently valid 
+    multiple-epoch transients.
 
-    Be aware of the difference between a newly detected source at 
+    (Be aware of the difference between a newly detected source at 
     some epoch and a source turning into a variable/transient due
-    to significant flux changes. The former is picked up by the
-    association procedure, while the latter is picked up by
-    the transient search procedure.
+    to significant flux changes. The former is identified in the
+    association procedure, while the latter is identified inspecting the 
+    variability indices, here.)
 
     Transients are stored in the transient table,
     as well as in the monitoringlist (done by the association recipe),
     to ensure it is measured even when it drops below the threshold.
+    
     Transient behaviour is checked per frequency band,
     because we assume that fluxes are not comparable across bands.
     
     *Returns*:
-    A list of dicts with keys as follows:
+    A list of dicts representing currently valid transients, i.e. those that 
+    satisfy the variability criteria given,
+    with keys as follows:
         [{ runcat, band, f_datapoints,
         wm_ra, wm_decl, wm_ra_err, wm_decl_err,
         v_int, eta_int, 'siglevel', 
         trigger_xtrsrc, new_transient }]
     """
+    # TODO: 
+    # What do we do with transients that start as transient, but as
+    # more data is collected the siglevel decreases below the threshold?
+    # Should they get removed from the transient table?
 
-    # TODO: We want the trigger_xtrsrc here as well
-    results = select_variability_indices(image_id, V_lim, eta_lim, minpoints)
+    ##Bit of a kludge here:
+    ## We want to update *all* transient entries, even if they have dropped below
+    ## the 'new transient' selection criteria.
+    ## Since the updating is done in a separate query anyway, we might as well just
+    ## select all variability indices, and filter the results in python.
 
-    transients = []
-    for candidate in results:
-        probability_not_flat = 1 - chisqprob(candidate['eta_int'] * (candidate['f_datapoints'] - 1),
-                                             (candidate['f_datapoints'] - 1))
-        candidate['siglevel'] = float(probability_not_flat) #Monetdb doesn't like numpy.float64
-        if candidate['siglevel'] > probability_threshold:
-            transients.append(candidate)
-        # TODO: 
-        # What do we do with transients that start as transient, but as
-        # more data is collected the siglevel decreases below the threshold?
-        # Should they get removed from the transient table?
-    _update_known_transients(transients)
-    new_transients = [entry for entry in transients if entry['new_transient']]
+    ## NB we cannot even sensibly limit our indices query by minpoints, 
+    ## since we must update old entries which only just received their 
+    ## second datapoint (i.e. transients in last timestep).
+
+
+    updated_variability_indices = _select_updated_variability_indices(image_id)
+
+    #Calculate updated siglevels:
+    for entry in updated_variability_indices:
+        probability_not_flat = 1 - chisqprob(entry['eta_int'] * (entry['f_datapoints'] - 1),
+                                             (entry['f_datapoints'] - 1))
+        entry['siglevel'] = float(probability_not_flat) #Monetdb doesn't like numpy.float64
+
+    old_transients = [entry for entry in updated_variability_indices
+                            if not entry['new_transient']]
+    _update_known_transients(old_transients)
+
+    filtered_transients = []
+    for candidate in updated_variability_indices:
+        if candidate['v_int'] > V_lim:
+            if candidate['eta_int'] > eta_lim:
+                if candidate['siglevel'] > probability_threshold:
+                    filtered_transients.append(candidate)
+
+    new_transients = [entry for entry in filtered_transients if entry['new_transient']]
     _insert_transients(new_transients)
-
-    return transients
+    return filtered_transients

@@ -65,12 +65,12 @@ class TestTransientBasics(unittest.TestCase):
         freq_bands = dataset.frequency_bands()
         self.assertEqual(len(freq_bands), 1)
         for tr in transients:
-            self.assertEqual(freq_bands[0], tr.band)
+            self.assertEqual(freq_bands[0], tr['band'])
 
         runcats = dataset.runcat_entries()
         self.assertEqual(len(runcats), 1)
         for tr in transients:
-            self.assertEqual(runcats[0]['runcat'], tr.runcatid)
+            self.assertEqual(runcats[0]['runcat'], tr['runcat'])
 
         # Check that the trigger xtrsrc happened in the third image
         query = """\
@@ -158,8 +158,8 @@ class TestTransientRoutines(unittest.TestCase):
 #        for t in all_transients:
 #            print "V_int:", t['v_int'], "  eta_int:", t['eta_int']
         #Now test thresholding:
-        more_highly_variable = sum(t.V_int > 2.0 for t in transients)
-        very_non_flat = sum(t.eta_int > 100.0 for t in transients)
+        more_highly_variable = sum(t['v_int'] > 2.0 for t in transients)
+        very_non_flat = sum(t['eta_int'] > 100.0 for t in transients)
 
         transients = dbutils.transient_search(
                  eta_lim=1.1,

@@ -213,24 +213,23 @@ def adjust_transients_in_monitoringlist(image_id, transients):
     
     """
     conn = DataBase().connection
-    _update_known_transients_in_monitoringlist(conn, image_id, transients)
-    _insert_new_transients_in_monitoringlist(conn, image_id, transients)
+    _update_known_transients_in_monitoringlist(conn, transients)
+    _insert_new_transients_in_monitoringlist(conn, image_id)
 
-def _update_known_transients_in_monitoringlist(conn, image_id, transients):
+def _update_known_transients_in_monitoringlist(conn, transients):
     """Update transients in monitoringlist"""
-    cursor = conn.cursor()
     query = """\
     UPDATE monitoringlist
-       SET ra = %s
-          ,decl = %s
-      WHERE runcat = %s
+       SET ra = %(wm_ra)s
+          ,decl = %(wm_decl)s
+      WHERE runcat = %(runcat)s
     """
     upd = 0
-    for transient in transients:
+
+    cursor = conn.cursor()
+    for entry in transients:
         try:
-            upd += cursor.execute(query, (float(transient.ra),
-                                     float(transient.decl),
-                                     transient.runcatid))
+            upd += cursor.execute(query, entry)
         except db.Error, e:
             logger.warn("Query failed:\n%s", query)
             raise
@@ -242,43 +241,43 @@ def _update_known_transients_in_monitoringlist(conn, image_id, transients):
         logger.info("Updated %s known transients in monitoringlist" % (upd,))
 
 
-def _insert_new_transients_in_monitoringlist(conn, image_id, transients):
-    """Insert transients that are not yet stored in monitoringlist.
+def _insert_new_transients_in_monitoringlist(conn, image_id):
+    """Copy newly identified transients from transients table into monitoringlist.
 
-    Therefore, we have to grab the transients and check that there
-    runcat ids are not in the monitoringlistlist
-    
+    We grab the transients and check that their runcat ids are not in the 
+    monitoringlist.
     """
 
+    query = """\
+    INSERT INTO monitoringlist
+      (runcat
+      ,ra
+      ,decl
+      ,dataset
+      )
+      SELECT t.runcat
+            ,r.wm_ra
+            ,r.wm_decl
+            ,r.dataset 
+        FROM transient t
+            ,runningcatalog r
+            ,image i 
+       WHERE t.runcat = r.id 
+         AND r.dataset = i.dataset 
+         AND i.id = %(imgid)s
+         AND t.runcat NOT IN (SELECT m0.runcat 
+                                FROM monitoringlist m0
+                                    ,runningcatalog r0
+                                    ,image i0
+                               WHERE m0.runcat = r0.id 
+                                 AND r0.dataset = i0.dataset 
+                                 AND i0.id = %(imgid)s
+                             )
+    """
+    qry_params = {'imgid':image_id}
     try:
         cursor = conn.cursor()
-        query = """\
-        INSERT INTO monitoringlist
-          (runcat
-          ,ra
-          ,decl
-          ,dataset
-          )
-          SELECT t.runcat
-                ,r.wm_ra
-                ,r.wm_decl
-                ,r.dataset 
-            FROM transient t
-                ,runningcatalog r
-                ,image i 
-           WHERE t.runcat = r.id 
-             AND r.dataset = i.dataset 
-             AND i.id = %s
-             AND t.runcat NOT IN (SELECT m0.runcat 
-                                    FROM monitoringlist m0
-                                        ,runningcatalog r0
-                                        ,image i0
-                                   WHERE m0.runcat = r0.id 
-                                     AND r0.dataset = i0.dataset 
-                                     AND i0.id = %s
-                                 )
-        """
-        ins = cursor.execute(query, (image_id, image_id))
+        ins = cursor.execute(query, qry_params)
         if not AUTOCOMMIT:
             conn.commit()
         cursor.close()
@@ -287,8 +286,8 @@ def _insert_new_transients_in_monitoringlist(conn, image_id, transients):
         else:
             logger.info("Inserted %s new transients in monitoringlist" % (ins,))
     except db.Error, e:
-        query = query % (image_id, image_id)
-        logger.warn("Query failed:\n%s", query)
+        logged_query = query % qry_params
+        logger.warn("Query failed:\n%s", logged_query)
         raise
 
 def is_monitored(conn, runcatid):

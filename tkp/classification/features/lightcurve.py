@@ -14,7 +14,7 @@ import logging
 import numpy
 import pygsl.statistics
 from tkp.utility.sigmaclip import calcsigma
-from tkp.classification.transient import DateTime
+from tkp.classification.transient.utils import DateTime
 from .sql import lightcurve as sql_lightcurve
 
 

@@ -14,7 +14,7 @@ def search_transients(image_id, parset):
     prob_threshold = parset.getFloat('probability.threshold')
     minpoints = parset.getInt('probability.minpoints')
 
-    transients = dbu.transient_search(image_id = image_id,
+    transients = dbu.multi_epoch_transient_search(image_id=image_id,
                                       eta_lim = eta_lim,
                                       V_lim = V_lim,
                                       probability_threshold = prob_threshold,

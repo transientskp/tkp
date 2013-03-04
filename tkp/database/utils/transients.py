@@ -271,7 +271,10 @@ def multi_epoch_transient_search(image_id,
     for entry in updated_variability_indices:
         probability_not_flat = 1 - chisqprob(entry['eta_int'] * (entry['f_datapoints'] - 1),
                                              (entry['f_datapoints'] - 1))
-        entry['siglevel'] = float(probability_not_flat) #Monetdb doesn't like numpy.float64
+        if probability_not_flat == probability_not_flat:
+            entry['siglevel'] = float(probability_not_flat) #Monetdb doesn't like numpy.float64
+        else: #prob = NaN
+            entry['siglevel'] = 0.0
 
     old_transients = [entry for entry in updated_variability_indices
                             if not entry['new_transient']]

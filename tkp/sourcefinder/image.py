@@ -34,7 +34,7 @@ class ImageData(object):
                 residuals=True, deblend=False, deblend_nthresh=32,
                 detection_threshold=10.0, analysis_threshold=3.0,
                 structuring_element=[[0,1,0], [1,1,1], [0,1,0]],
-                ra_sys_err=0.0, dec_sys_err=0.0):
+                ra_sys_err=0.0, dec_sys_err=0.0, force_beam=False):
         """Sets up an ImageData object.
 
         *Args:*
@@ -76,6 +76,10 @@ class ImageData(object):
         self.analysis_threshold=analysis_threshold
 
         self.ra_sys_err, self.dec_sys_err = ra_sys_err, dec_sys_err
+
+        # If force_beam is True, we force all blind extraction results to have
+        # major/minor axes equal to the restoring beam.
+        self.force_beam = force_beam
 
     ###########################################################################
     #                                                                         #
@@ -204,7 +208,7 @@ class ImageData(object):
         "reliable".
 
         Kwargs:
-        
+
             keyword max_degradation (float): astrometry accuracy
                 allowed. See description below
 
@@ -425,7 +429,7 @@ class ImageData(object):
         Returns:
 
             (numpy.ndarray)
-            
+
         Used to transform the RMS, background or FDR grids produced by
         L{_grids()} to a map we can compare with the image data.
 
@@ -499,10 +503,10 @@ class ImageData(object):
             noisemap (numpy.ndarray):
 
             bgmap (numpy.ndarray):
-            
+
         Returns:
 
-             (..utility.containers.ExtractionResults): 
+             (..utility.containers.ExtractionResults):
         """
 
         if det is None:
@@ -624,7 +628,6 @@ class ImageData(object):
         return self.data_bgsubbed[y-numpix:y+numpix+1,
                                   x-numpix:x+numpix+1].max()
 
-    
     @staticmethod
     def box_slice_about_pixel(x,y,box_radius):
         """
@@ -651,18 +654,18 @@ class ImageData(object):
         if threshold is not None:
             # We'll mask out anything below threshold*self.rmsmap from the fit.
             labels, num = self.labels.setdefault( #Dictionary mapping threshold -> islands map
-                threshold, 
+                threshold,
                 ndimage.label(
                     self.clip.setdefault( #Dictionary mapping threshold -> mask
-                        threshold, 
+                        threshold,
                         numpy.where(
                             self.data_bgsubbed > threshold * self.rmsmap, 1, 0
                             )
                         )
                     )
                 )
-    
-            
+
+
             mylabel = labels[x, y]
             if mylabel == 0:  # 'Background'
                 raise ValueError("Fit region is below specified threshold, fit aborted.")
@@ -674,7 +677,7 @@ class ImageData(object):
             fitme = self.data_bgsubbed[chunk]
             if fitme.size < 1:
                 raise IndexError("Fit region too close to edge or too small")
-        
+
 
         # set argument for fixed parameters based on input string
         if fixed == 'position':
@@ -692,13 +695,13 @@ class ImageData(object):
         if threshold is not None:
             threshold_at_pixel = threshold * self.rmsmap[x, y]
         else:
-            threshold_at_pixel = None 
-        
+            threshold_at_pixel = None
+
         measurement, residuals = extract.source_profile_and_errors(
-            fitme, 
-            threshold_at_pixel, 
+            fitme,
+            threshold_at_pixel,
             self.rmsmap[x, y],
-            self.beam, 
+            self.beam,
             fixed=fixed)
 
         try:
@@ -895,7 +898,11 @@ class ImageData(object):
         # appending it to the results list.
         results = containers.ExtractionResults()
         for island in island_list:
-            measurement, residual = island.fit()
+            if self.force_beam:
+                fixed = {'semimajor': self.beam[0], 'semiminor': self.beam[1]}
+            else:
+                fixed = None
+            measurement, residual = island.fit(fixed=fixed)
             try:
                 det = extract.Detection(measurement, self, chunk=island.chunk)
                 if (det.ra.error == float('inf') or

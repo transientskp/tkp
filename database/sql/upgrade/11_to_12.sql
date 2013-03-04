@@ -30,8 +30,8 @@ BEGIN
     SELECT id
       INTO ifreqbandid
       FROM frequencyband
-     WHERE freq_low <= ifreq_eff - (ibandwidth / 2)
-       AND freq_high >= ifreq_eff + (ibandwidth / 2)
+     WHERE ABS(freq_central - ifreq_eff) <= 1.0
+       AND ABS(freq_high - freq_low - ibandwidth) <= 1.0
      LIMIT 1
     ;
   ELSE

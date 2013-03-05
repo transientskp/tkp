@@ -144,7 +144,34 @@ def _check_meridian_wrap(conn, image_id):
     
     When so, the association query needs to be rewritten to take into account
     sources across the 0/360 meridian.
-
+    
+    The query returns:
+    q_across: true, if the extraction region of the image crosses 
+              the ra=0/360 border
+    ra_min:   the min value of the ra-between for the normal case, 
+              when the image is outside the ra=0/360 meridian,
+              otherwise NULL
+    ra_max:   the max value of the ra-between for the normal case, 
+              when the image is outside the ra=0/360 meridian,
+              otherwise NULL
+    ra_min1/max1 and ra_min2/max2 are the values which may be used 
+    for the case of a cross-meridian image. 
+    F.ex. using a search radius of 5 degrees, and when a source is at 
+    359.99 the ra-betweens 1 and 2 are :
+    ... AND (ra BETWEEN ra_min1 AND ra_max1 OR ra BETWEEN ra_min2 AND ra_max2) ...
+    ... AND (ra BETWEEN 354.99 AND 360 OR ra BETWEEN 0 AND 4.99) ...
+    ra_min1:  the min value of the high-end ra-between, if the 
+              extraction region of the image crosses the ra=0/360 border,
+              otherwise NULL
+    ra_max1:  the min value of the high-end ra-between, if the
+              extraction region of the image crosses the ra=0/360 border,
+              otherwise NULL
+    ra_min2, ra_max2: As ra_min1/max1, but for the low-end ra values.
+    
+    These values are not being used in the cross-meridian association query,
+    but are merely reported to notice the search area.
+    The cross-meridian association query uses the cartesian dot product,
+    to get the search area.
     """
 
     try:
@@ -256,9 +283,15 @@ def _insert_temprunningcatalog(conn, image_id, deRuiter_r):
     """
 
     deRuiter_red = float(deRuiter_r) / 3600.
-    # Note that we removed the wm_ra between statement, 
-    # because the dot-product of the cartesian coordinates 
-    # will handle the meridian wrapping correctly 
+    # The cross-meridian differs slightly from the normal association 
+    # query. 
+    # We removed the wm_ra between statement, because the dot-product 
+    # of the cartesian coordinates will handle the distance checking 
+    # in case of meridian wrapping.
+    # The ra values are translated to the opposite site of the sphere,
+    # where we can easily work with the modulo values to calculate
+    # the ra position (but this is of course translated back) 
+    # and de Ruiter radius.
     q_across_ra0 = """\
 INSERT INTO temprunningcatalog
   (runcat

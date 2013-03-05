@@ -35,8 +35,8 @@ class TestLightSurface(unittest.TestCase):
                         'beam_pa_rad': float(1.7),
                         'deltax': float(-0.01111),
                         'deltay': float(0.01111),
-                        'centre_ra': 0,
-                        'centre_decl': 0,
+                        'centre_ra': 111,
+                        'centre_decl': 11,
                         'xtr_radius' : 3
                 }
                 image = Image(dataset=self.dataset, data=data)
@@ -46,8 +46,8 @@ class TestLightSurface(unittest.TestCase):
         data_list = []
         for i in range(1, 4):
             data_list.append({
-                'ra': 111.111*i,
-                'decl': 11.11*i,
+                'ra': 111.111 + i,
+                'decl': 11.11 + i,
                 'ra_fit_err': 0.01,
                 'decl_fit_err': 0.01,
                 'ra_sys_err': 20,

@@ -21,12 +21,11 @@ BEGIN
   -- similar bands which match our criteria. We arbitrarily choose one of
   -- them.
   IF nfreqbandid >= 1 THEN
-    SELECT id
+    SELECT MAX(id)
       INTO ifreqbandid
       FROM frequencyband
      WHERE ABS(freq_central - ifreq_eff) <= 1.0
        AND ABS(freq_high - freq_low - ibandwidth) <= 1.0
-     LIMIT 1
     ;
   ELSE
     SELECT NEXT VALUE FOR seq_frequencyband INTO ifreqbandid;

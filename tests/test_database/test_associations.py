@@ -180,7 +180,8 @@ class TestOne2One(unittest.TestCase):
         dataset = tkpdb.DataSet(database=self.database,
                         data={'description':"Assoc 1-to-1:" + self._testMethodName})
         n_images = 2
-        im_params = db_subs.example_dbimage_datasets(n_images)
+        im_params = db_subs.example_dbimage_datasets(n_images, centre_ra=10,
+                                                     centre_decl=0)
 
 
         #Note ra / ra_fit_err are in degrees.

@@ -86,9 +86,9 @@ def example_dbimage_datasets(n_images, **kwargs):
                       'deltax': float(-0.01111),
                       'deltay': float(0.01111),
                       'url':testdata.fits_file, # just an arbitrary existing fits file
-                      'centre_ra': 90.,
-                      'centre_decl': 45.,
-                      'xtr_radius' : 3.
+                      'centre_ra': 123.,
+                      'centre_decl': 10.,
+                      'xtr_radius' : 10. # (Degrees)
                     }
     init_im_params.update(kwargs)
 

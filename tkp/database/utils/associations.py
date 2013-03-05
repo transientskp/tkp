@@ -31,6 +31,7 @@ def associate_extracted_sources(image_id, deRuiter_r):
 
     logger.info("Using a De Ruiter radius of %s" % (deRuiter_r,))
     conn = DataBase().connection
+    _delete_bad_blind_extractions(conn, image_id)
     _empty_temprunningcatalog(conn)
     #+------------------------------------------------------+
     #| Here we select all extracted sources that have one or|
@@ -116,6 +117,69 @@ def associate_with_catalogedsources(conn, image_id, radius, deRuiter_r):
 # Subroutines...
 # Here be SQL dragons.
 ###############################################################################################
+def _delete_bad_blind_extractions(conn, image_id):
+    """Remove blind extractions centred outside designated extract region.
+
+    These occur sometimes due to highly elliptical fits on noisy data,
+    creating a best fit centred outside the original pixel region.
+    The source-extraction code has been modified to (probably) prevent this, 
+    but we check for them anyway. 
+
+    NB. We currently only delete blind extractions. 
+    We expect that occasionally forced fits to sources just inside the extraction 
+    radius might converge just outside, but these should be restricted to a 
+    very small additional margin. By not deleting these edge cases, 
+    the data allows us to construct proper lightcurves, and (I think) does
+    not contribute to their weighted mean positions (so sources cannot 'migrate'
+    across the border). 
+    TODO(TS): Check this.
+
+    Only extractions from the specified image are checked for deletion.
+
+    Returns:
+      Number of extractedsource rows deleted.
+    """
+    curs = conn.cursor()
+    qry = """\
+DELETE 
+FROM extractedsource 
+WHERE image = %(imgid)s 
+  AND id IN (SELECT badid
+              FROM (SELECT ex0.id as badid
+                    ,SQRT(
+                      ( (ex0.ra  - sky.centre_ra)* COS(RADIANS(sky.centre_decl))
+                     *(ex0.ra  - sky.centre_ra)* COS(RADIANS(sky.centre_decl))
+                      + (ex0.decl - sky.centre_decl) * (ex0.decl - sky.centre_decl))
+                      ) as distance
+                      ,sky.xtr_radius as xtr_radius
+                  FROM extractedsource ex0
+                      ,image im
+                      ,skyregion sky
+                  WHERE im.id = %(imgid)s
+                   AND ex0.image = im.id
+                   AND ex0.extract_type = 0
+                   AND im.skyrgn = sky.id
+                   ) t1
+               WHERE t1.distance > t1.xtr_radius
+               )
+"""
+
+    qry_params = {'imgid':image_id}
+    try:
+        n_deleted = curs.execute(qry, qry_params)
+        if n_deleted:
+            logger.warn("Removed %s bad blind extractions for image %s"
+                         "(centred outside extraction region)",
+                         n_deleted, image_id)
+        if not AUTOCOMMIT:
+            conn.commit()
+    except db.Error as e:
+        logger.warn("Failed on query:\n" + (qry % qry_params))
+        raise
+    finally:
+        curs.close()
+    return n_deleted
+
 
 def _empty_temprunningcatalog(conn):
     """Initialize the temporary storage table

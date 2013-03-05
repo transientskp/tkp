@@ -37,7 +37,7 @@ class TestLightSurface(unittest.TestCase):
                         'deltay': float(0.01111),
                         'centre_ra': 0,
                         'centre_decl': 0,
-                        'xtr_radius' : 3
+                        'xtr_radius' : 3000
                 }
                 image = Image(dataset=self.dataset, data=data)
                 images.append(image)

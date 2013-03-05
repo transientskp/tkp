@@ -76,6 +76,8 @@ def example_dbimage_datasets(n_images, **kwargs):
     starttime = datetime.datetime(2012, 1, 1) #Happy new year
     time_spacing = datetime.timedelta(seconds=600)
 
+    # To what extent are these numbers arbitrary? Do we rely on specific
+    # values to test certain features?
     init_im_params = {'tau_time':300,
                       'freq_eff':140e6,
                       'freq_bw':2e6,
@@ -88,7 +90,7 @@ def example_dbimage_datasets(n_images, **kwargs):
                       'url':testdata.fits_file, # just an arbitrary existing fits file
                       'centre_ra': 90.,
                       'centre_decl': 45.,
-                      'xtr_radius' : 3.
+                      'xtr_radius' : 3000
                     }
     init_im_params.update(kwargs)
 

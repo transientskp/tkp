@@ -5,6 +5,7 @@ Some generic utility routines for number handling and
 
 import time
 import logging
+import itertools
 import numpy
 import scipy.stats
 from tkp.utility import containers
@@ -897,14 +898,14 @@ class ImageData(object):
             measurement, residual = island.fit()
             try:
                 det = extract.Detection(measurement, self, chunk=island.chunk)
-                if (det.ra.error == float('inf') or 
+                if (det.ra.error == float('inf') or
                         det.dec.error == float('inf')):
                     logger.warn('Bad fit from blind extraction at pixel coords:'
                                   '%f %f - measurement discarded'
                                   '(increase fitting margin?)', det.x, det.y )
                 else:
                     results.append(det)
-                    
+
                 if self.residuals:
                     self.residuals_from_deblending[island.chunk] -= (
                         island.data.filled(fill_value=0.))
@@ -912,4 +913,27 @@ class ImageData(object):
             except RuntimeError:
                 logger.warn("Island not processed; unphysical?")
                 raise
-        return results
+        # Filter the results to ensure that all the sources are completely
+        # within the usable region of the image.
+        def is_unmasked(det):
+            # Check that both ends of each axis aren't masked.
+            # The axis will not likely fall exactly on a pixel number, so
+            # check all the surroundings.
+            def check_point(x, y):
+                x = (numpy.floor(x), numpy.ceil(x))
+                y = (numpy.floor(y), numpy.ceil(y))
+                for position in itertools.product(x, y):
+                    if self.data.mask[position[0], position[1]]:
+                        return False
+                return True
+            for point in (
+                (det.start_smaj_x, det.start_smaj_y),
+                (det.start_smin_x, det.start_smin_y),
+                (det.end_smaj_x, det.end_smaj_y),
+                (det.end_smin_x, det.end_smin_y)
+            ):
+                if not check_point(*point):
+                    return False
+            return True
+        # Filter will return a list; ensure we return an ExtractionResults.
+        return containers.ExtractionResults(filter(is_unmasked, results))

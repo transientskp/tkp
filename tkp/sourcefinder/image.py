@@ -915,7 +915,7 @@ class ImageData(object):
                 raise
         # Filter the results to ensure that all the sources are completely
         # within the usable region of the image.
-        def is_masked(det):
+        def is_unmasked(det):
             # Check that both ends of each axis aren't masked.
             # The axis will not likely fall exactly on a pixel number, so
             # check all the surroundings.
@@ -936,4 +936,4 @@ class ImageData(object):
                     return False
             return True
         # Filter will return a list; ensure we return an ExtractionResults.
-        return containers.ExtractionResults(filter(is_masked, results))
+        return containers.ExtractionResults(filter(is_unmasked, results))

@@ -136,7 +136,7 @@ class TestSkyRegionAssociation(unittest.TestCase):
         Then we check that the back-associations to image0 are correct.
         """
         n_images = 6
-        im_params = db_subs.example_dbimage_datasets(n_images)
+        im_params = db_subs.example_dbimage_datasets(n_images, xtr_radius=3)
 
         #We first create 2 overlapping images, 
         #one above the other in dec by 1.0*xtr_radius

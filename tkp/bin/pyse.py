@@ -136,6 +136,7 @@ def handle_args():
     parser.add_option("--csv", action="store_true", help="Generate csv text file for use in programs such as TopCat")
     parser.add_option("--rmsmap", action="store_true", help="Generate RMS map")
     parser.add_option("--sigmap", action="store_true", help="Generate significance map")
+    parser.add_option("--force-beam", action="store_true", help="Force fit axis lengths to beam size")
     return parser.parse_args()
 
 def writefits(filename, data, header={}):
@@ -160,7 +161,8 @@ def run_sourcefinder(files, options):
         "margin": options.margin,
         "radius": options.radius,
         "deblend": bool(options.deblend),
-        "deblend_nthresh": options.deblend_thresholds
+        "deblend_nthresh": options.deblend_thresholds,
+        "force_beam": options.force_beam
     }
     if options.residuals or options.islands:
         configuration['residuals'] = True

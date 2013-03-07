@@ -18,6 +18,7 @@ def associate_extracted_sources(image_id, deRuiter_r):
     """
 
     logger.info("Using a De Ruiter radius of %s" % (deRuiter_r,))
+    _delete_bad_blind_extractions(image_id)
     _empty_temprunningcatalog()
     #+------------------------------------------------------+
     #| Here we select all extracted sources that have one or|
@@ -84,6 +85,61 @@ def associate_extracted_sources(image_id, deRuiter_r):
 # Subroutines...
 # Here be SQL dragons.
 ###############################################################################################
+def _delete_bad_blind_extractions(image_id):
+    """Remove blind extractions centred outside designated extract region.
+
+    These occur sometimes due to highly elliptical fits on noisy data,
+    creating a best fit centred outside the original pixel region.
+    The source-extraction code has been modified to (probably) prevent this, 
+    but we check for them anyway. 
+
+    NB. We currently only delete blind extractions. 
+    We expect that occasionally forced fits to sources just inside the extraction 
+    radius might converge just outside, but these should be restricted to a 
+    very small additional margin. By not deleting these edge cases, 
+    the data allows us to construct proper lightcurves, and (I think) does
+    not contribute to their weighted mean positions (so sources cannot 'migrate'
+    across the border). 
+    TODO(TS): Check this.
+
+    Only extractions from the specified image are checked for deletion.
+
+    Returns:
+      Number of extractedsource rows deleted.
+    """
+    query = """\
+DELETE 
+FROM extractedsource 
+WHERE image = %(imgid)s 
+  AND id IN (SELECT badid
+              FROM (SELECT ex0.id as badid
+                    ,SQRT(
+                      ( (ex0.ra  - sky.centre_ra)* COS(RADIANS(sky.centre_decl))
+                     *(ex0.ra  - sky.centre_ra)* COS(RADIANS(sky.centre_decl))
+                      + (ex0.decl - sky.centre_decl) * (ex0.decl - sky.centre_decl))
+                      ) as distance
+                      ,sky.xtr_radius as xtr_radius
+                  FROM extractedsource ex0
+                      ,image im
+                      ,skyregion sky
+                  WHERE im.id = %(imgid)s
+                   AND ex0.image = im.id
+                   AND ex0.extract_type = 0
+                   AND im.skyrgn = sky.id
+                   ) t1
+               WHERE t1.distance > t1.xtr_radius
+               )
+"""
+
+    qry_params = {'imgid':image_id}
+    cursor = tkp.database.query(query, qry_params, commit=True)
+    n_deleted = cursor.rowcount
+    if n_deleted:
+        logger.warn("Removed %s bad blind extractions for image %s"
+                     "(centred outside extraction region)",
+                     n_deleted, image_id)
+    return n_deleted
+
 
 def _empty_temprunningcatalog():
     """Initialize the temporary storage table
@@ -93,6 +149,115 @@ def _empty_temprunningcatalog():
     """
     query = "DELETE FROM temprunningcatalog"
     tkp.database.query(query, commit=True)
+
+
+
+def _check_meridian_wrap(image_id):
+    """Checks whether an image is close to the meridian ra = 0 or ra = 360
+    
+    When so, the association query needs to be rewritten to take into account
+    sources across the 0/360 meridian.
+    
+    The query returns:
+    q_across: true, if the extraction region of the image crosses 
+              the ra=0/360 border
+    ra_min:   the min value of the ra-between for the normal case, 
+              when the image is outside the ra=0/360 meridian,
+              otherwise NULL
+    ra_max:   the max value of the ra-between for the normal case, 
+              when the image is outside the ra=0/360 meridian,
+              otherwise NULL
+    ra_min1/max1 and ra_min2/max2 are the values which may be used 
+    for the case of a cross-meridian image. 
+    F.ex. using a search radius of 5 degrees, and when a source is at 
+    359.99 the ra-betweens 1 and 2 are :
+    ... AND (ra BETWEEN ra_min1 AND ra_max1 OR ra BETWEEN ra_min2 AND ra_max2) ...
+    ... AND (ra BETWEEN 354.99 AND 360 OR ra BETWEEN 0 AND 4.99) ...
+    ra_min1:  the min value of the high-end ra-between, if the 
+              extraction region of the image crosses the ra=0/360 border,
+              otherwise NULL
+    ra_max1:  the min value of the high-end ra-between, if the
+              extraction region of the image crosses the ra=0/360 border,
+              otherwise NULL
+    ra_min2, ra_max2: As ra_min1/max1, but for the low-end ra values.
+    
+    These values are not being used in the cross-meridian association query,
+    but are merely reported to notice the search area.
+    The cross-meridian association query uses the cartesian dot product,
+    to get the search area.
+    """
+
+    meridian_wrap_query = """\
+SELECT CASE WHEN s.centre_ra - alpha(s.xtr_radius, s.centre_decl) < 0 OR
+                 s.centre_ra + alpha(s.xtr_radius, s.centre_decl) > 360
+            THEN TRUE
+            ELSE FALSE
+       END AS q_across
+      ,CASE WHEN s.centre_ra - alpha(s.xtr_radius, s.centre_decl) > 0 AND
+                 s.centre_ra + alpha(s.xtr_radius, s.centre_decl) < 360
+            THEN s.centre_ra - alpha(s.xtr_radius, s.centre_decl)
+            ELSE NULL
+       END AS ra_min
+      ,CASE WHEN s.centre_ra - alpha(s.xtr_radius, s.centre_decl) > 0 AND
+                 s.centre_ra + alpha(s.xtr_radius, s.centre_decl) < 360
+            THEN s.centre_ra + alpha(s.xtr_radius, s.centre_decl)
+            ELSE NULL
+       END AS ra_max
+      ,CASE WHEN s.centre_ra - alpha(s.xtr_radius, s.centre_decl) < 0
+            THEN s.centre_ra - alpha(s.xtr_radius, s.centre_decl) + 360.0
+            ELSE CASE WHEN s.centre_ra + alpha(s.xtr_radius, s.centre_decl) > 360
+                      THEN s.centre_ra - alpha(s.xtr_radius, s.centre_decl)
+                      ELSE NULL
+                 END
+       END AS ra_min1
+      ,CASE WHEN s.centre_ra - alpha(s.xtr_radius, s.centre_decl) < 0 OR
+                 s.centre_ra + alpha(s.xtr_radius, s.centre_decl) > 360
+            THEN 360
+            ELSE NULL
+       END AS ra_max1
+      ,CASE WHEN s.centre_ra - alpha(s.xtr_radius, s.centre_decl) < 0 OR
+                 s.centre_ra + alpha(s.xtr_radius, s.centre_decl) > 360
+            THEN 0
+            ELSE NULL
+       END AS ra_min2
+      ,CASE WHEN s.centre_ra - alpha(s.xtr_radius, s.centre_decl) < 0
+            THEN s.centre_ra + alpha(s.xtr_radius, s.centre_decl)
+            ELSE CASE WHEN s.centre_ra + alpha(s.xtr_radius, s.centre_decl) > 360
+                      THEN s.centre_ra + alpha(s.xtr_radius, s.centre_decl) - 360
+                      ELSE NULL
+                 END
+       END AS ra_max2
+  FROM image i
+      ,skyregion s
+ WHERE i.skyrgn = s.id
+   AND i.id = %(image_id)s
+"""
+    args = {'image_id': image_id}
+    cursor = tkp.database.query(meridian_wrap_query, args, commit=True)
+    results = zip(*cursor.fetchall())
+    
+    if len(results) != 0:
+        q_across = results[0]
+        ra_min = results[1]
+        ra_max = results[2]
+        ra_min1 = results[3]
+        ra_max1 = results[4]
+        ra_min2 = results[5]
+        ra_max2 = results[6]
+        if len(q_across) != 1:
+            raise ValueError("More than one FoVs for image '%s'" % image_id)
+    else:
+        raise ValueError("No FoV information present for image '%s'" % image_id)
+    
+    return {
+        'q_across': q_across[0], 
+        'ra_min': ra_min[0], 
+        'ra_max': ra_max[0], 
+        'ra_min1': ra_min1[0], 
+        'ra_max1': ra_max1[0], 
+        'ra_min2': ra_min2[0], 
+        'ra_max2': ra_max2[0]
+    }
 
 
 def _insert_temprunningcatalog(image_id, deRuiter_r):
@@ -119,13 +284,214 @@ def _insert_temprunningcatalog(image_id, deRuiter_r):
     This result set might contain multiple associations (1-n,n-1)
     for a single known source in runningcatalog.
 
-    The n-1 assocs will be treated similar as the 1-1 assocs.
+    The n-1 assocs will be treated similar as n 1-1 assocs.
 
     NOTE: Beware of the extra condition on x0.image in the WHERE clause,
     preventing the query to grow exponentially in response time
     """
 
-    #TODO: This query can be reduced for the (weighted) average calculations
+    deRuiter_red = float(deRuiter_r) / 3600.
+    # The cross-meridian differs slightly from the normal association 
+    # query. 
+    # We removed the wm_ra between statement, because the dot-product 
+    # of the cartesian coordinates will handle the distance checking 
+    # in case of meridian wrapping.
+    # The ra values are translated to the opposite site of the sphere,
+    # where we can easily work with the modulo values to calculate
+    # the ra position (but this is of course translated back) 
+    # and de Ruiter radius.
+    q_across_ra0 = """\
+INSERT INTO temprunningcatalog
+  (runcat
+  ,xtrsrc
+  ,distance_arcsec
+  ,r
+  ,dataset
+  ,band
+  ,stokes
+  ,datapoints
+  ,zone
+  ,wm_ra
+  ,wm_decl
+  ,wm_ra_err
+  ,wm_decl_err
+  ,avg_wra
+  ,avg_wdecl
+  ,avg_weight_ra
+  ,avg_weight_decl
+  ,x
+  ,y
+  ,z
+  ,f_datapoints
+  ,avg_f_peak
+  ,avg_f_peak_sq
+  ,avg_f_peak_weight
+  ,avg_weighted_f_peak
+  ,avg_weighted_f_peak_sq
+  ,avg_f_int
+  ,avg_f_int_sq
+  ,avg_f_int_weight
+  ,avg_weighted_f_int
+  ,avg_weighted_f_int_sq
+  )
+  SELECT t0.runcat
+        ,t0.xtrsrc
+        ,t0.distance_arcsec
+        ,t0.r
+        ,t0.dataset
+        ,t0.band
+        ,t0.stokes
+        ,t0.datapoints
+        ,CAST(FLOOR(t0.wm_decl) AS INTEGER) AS zone
+        ,t0.wm_ra
+        ,t0.wm_decl
+        ,t0.wm_ra_err
+        ,t0.wm_decl_err
+        ,t0.avg_wra
+        ,t0.avg_wdecl
+        ,t0.avg_weight_ra
+        ,t0.avg_weight_decl
+        ,COS(RADIANS(t0.wm_decl)) * COS(RADIANS(t0.wm_ra)) AS x
+        ,COS(RADIANS(t0.wm_decl)) * SIN(RADIANS(t0.wm_ra)) AS y
+        ,SIN(RADIANS(t0.wm_decl)) AS z
+        ,CASE WHEN rf0.f_datapoints IS NULL
+              THEN 1
+              ELSE rf0.f_datapoints + 1
+         END AS f_datapoints
+        ,CASE WHEN rf0.f_datapoints IS NULL
+              THEN t0.f_peak 
+              ELSE (rf0.f_datapoints * rf0.avg_f_peak 
+                    + t0.f_peak)
+                   / (rf0.f_datapoints + 1) 
+         END AS avg_f_peak
+        ,CASE WHEN rf0.f_datapoints IS NULL
+              THEN t0.f_peak * t0.f_peak
+              ELSE (rf0.f_datapoints * rf0.avg_f_peak_sq 
+                    + t0.f_peak * t0.f_peak)
+                   / (rf0.f_datapoints + 1) 
+         END AS avg_f_peak_sq
+        ,CASE WHEN rf0.f_datapoints IS NULL
+              THEN 1 / (t0.f_peak_err * t0.f_peak_err)
+              ELSE (rf0.f_datapoints * rf0.avg_f_peak_weight 
+                    + 1 / (t0.f_peak_err * t0.f_peak_err))
+                   / (rf0.f_datapoints + 1) 
+         END AS avg_f_peak_weight
+        ,CASE WHEN rf0.f_datapoints IS NULL
+              THEN t0.f_peak / (t0.f_peak_err * t0.f_peak_err)
+              ELSE (rf0.f_datapoints * rf0.avg_weighted_f_peak 
+                    + t0.f_peak / (t0.f_peak_err * t0.f_peak_err))
+                   / (rf0.f_datapoints + 1) 
+         END AS avg_weighted_f_peak
+        ,CASE WHEN rf0.f_datapoints IS NULL
+              THEN t0.f_peak * t0.f_peak / (t0.f_peak_err * t0.f_peak_err)
+              ELSE (rf0.f_datapoints * rf0.avg_weighted_f_peak_sq 
+                    + (t0.f_peak * t0.f_peak) / (t0.f_peak_err * t0.f_peak_err))
+                   / (rf0.f_datapoints + 1) 
+         END AS avg_weighted_f_peak_sq
+        ,CASE WHEN rf0.f_datapoints IS NULL
+              THEN t0.f_int
+              ELSE (rf0.f_datapoints * rf0.avg_f_int 
+                    + t0.f_int)
+                   / (rf0.f_datapoints + 1) 
+         END AS avg_f_int
+        ,CASE WHEN rf0.f_datapoints IS NULL
+              THEN t0.f_int * t0.f_int
+              ELSE (rf0.f_datapoints * rf0.avg_f_int_sq 
+                    + t0.f_int * t0.f_int)
+                   / (rf0.f_datapoints + 1) 
+         END AS avg_f_int_sq
+        ,CASE WHEN rf0.f_datapoints IS NULL
+              THEN 1 / (t0.f_int_err * t0.f_int_err)
+              ELSE (rf0.f_datapoints * rf0.avg_f_int_weight 
+                    + 1 / (t0.f_int_err * t0.f_int_err))
+                   / (rf0.f_datapoints + 1) 
+         END AS avg_f_int_weight
+        ,CASE WHEN rf0.f_datapoints IS NULL
+              THEN t0.f_int / (t0.f_int_err * t0.f_int_err)
+              ELSE (rf0.f_datapoints * rf0.avg_weighted_f_int 
+                    + t0.f_int / (t0.f_int_err * t0.f_int_err))
+                   / (rf0.f_datapoints + 1) 
+         END AS avg_weighted_f_int
+        ,CASE WHEN rf0.f_datapoints IS NULL
+              THEN t0.f_int * t0.f_int / (t0.f_int_err * t0.f_int_err)
+              ELSE (rf0.f_datapoints * rf0.avg_weighted_f_int_sq 
+                    + (t0.f_int * t0.f_int) / (t0.f_int_err * t0.f_int_err))
+                   / (rf0.f_datapoints + 1) 
+         END AS avg_weighted_f_int_sq
+    FROM (SELECT rc0.id as runcat
+                ,x0.id as xtrsrc
+                ,3600 * DEGREES(2 * ASIN(SQRT( (rc0.x - x0.x) * (rc0.x - x0.x)
+                                             + (rc0.y - x0.y) * (rc0.y - x0.y)
+                                             + (rc0.z - x0.z) * (rc0.z - x0.z)
+                                             ) / 2) 
+                               ) AS distance_arcsec
+                ,3600 * SQRT(  (MOD(rc0.wm_ra + 180, 360) * COS(RADIANS(rc0.wm_decl)) - MOD(x0.ra + 180, 360) * COS(RADIANS(x0.decl)))
+                             * (MOD(rc0.wm_ra + 180, 360) * COS(RADIANS(rc0.wm_decl)) - MOD(x0.ra + 180, 360) * COS(RADIANS(x0.decl))) 
+                               / (rc0.wm_ra_err * rc0.wm_ra_err + x0.ra_err * x0.ra_err)
+                            + (rc0.wm_decl - x0.decl) * (rc0.wm_decl - x0.decl)
+                              / (rc0.wm_decl_err * rc0.wm_decl_err + x0.decl_err * x0.decl_err)
+                            ) AS r
+                ,x0.f_peak
+                ,x0.f_peak_err
+                ,x0.f_int
+                ,x0.f_int_err
+                ,i0.dataset
+                ,i0.band
+                ,i0.stokes
+                ,rc0.datapoints + 1 AS datapoints
+                ,(datapoints * rc0.avg_weight_ra * MOD(rc0.wm_ra + 180, 360) + MOD(x0.ra + 180, 360) / (x0.ra_err * x0.ra_err) )
+                 / 
+                 (datapoints * rc0.avg_weight_ra + 1 / (x0.ra_err * x0.ra_err) ) - 180
+                 AS wm_ra
+                ,(datapoints * rc0.avg_weight_decl * rc0.wm_decl + x0.decl / (x0.decl_err * x0.decl_err)) 
+                 /
+                 (datapoints * rc0.avg_weight_decl + 1 / (x0.decl_err * x0.decl_err)) 
+                 AS wm_decl
+                ,SQRT(1 / ((datapoints + 1) *
+                  ((datapoints * rc0.avg_weight_ra +
+                    1 / (x0.ra_err * x0.ra_err)) / (datapoints + 1))
+                          )
+                     ) AS wm_ra_err
+                ,SQRT(1 / ((datapoints + 1) *
+                  ((datapoints * rc0.avg_weight_decl +
+                    1 / (x0.decl_err * x0.decl_err)) / (datapoints + 1))
+                          )
+                     ) AS wm_decl_err
+                ,(datapoints * avg_weight_ra * MOD(rc0.wm_ra + 180, 360) + MOD(x0.ra + 180, 360) / (x0.ra_err * x0.ra_err) )
+                 / (datapoints + 1) AS avg_wra
+                ,(datapoints * rc0.avg_wdecl + x0.decl /
+                  (x0.decl_err * x0.decl_err))
+                 / (datapoints + 1) AS avg_wdecl
+                ,(datapoints * rc0.avg_weight_ra + 1 /
+                  (x0.ra_err * x0.ra_err))
+                 / (datapoints + 1) AS avg_weight_ra
+                ,(datapoints * rc0.avg_weight_decl + 1 /
+                  (x0.decl_err * x0.decl_err))
+                 / (datapoints + 1) AS avg_weight_decl
+            FROM extractedsource x0
+                ,runningcatalog rc0
+                ,image i0
+           WHERE i0.id = %(image_id)s
+             AND x0.image = i0.id
+             AND x0.image = %(image_id)s
+             AND i0.dataset = rc0.dataset
+             AND rc0.zone BETWEEN CAST(FLOOR(x0.decl - i0.rb_smaj) as INTEGER)
+                              AND CAST(FLOOR(x0.decl + i0.rb_smaj) as INTEGER)
+             AND rc0.wm_decl BETWEEN x0.decl - i0.rb_smaj
+                                 AND x0.decl + i0.rb_smaj
+             AND rc0.x*x0.x + rc0.y*x0.y + rc0.z*x0.z > cos(radians(i0.rb_smaj))
+             AND SQRT(  (MOD(x0.ra + 180, 360) * COS(RADIANS(x0.decl)) - MOD(rc0.wm_ra + 180, 360) * COS(RADIANS(rc0.wm_decl)))
+                      * (MOD(x0.ra + 180, 360) * COS(RADIANS(x0.decl)) - MOD(rc0.wm_ra + 180, 360) * COS(RADIANS(rc0.wm_decl)))
+                      / (x0.ra_err * x0.ra_err + rc0.wm_ra_err * rc0.wm_ra_err)
+                     + (x0.decl - rc0.wm_decl) * (x0.decl - rc0.wm_decl)
+                      / (x0.decl_err * x0.decl_err + rc0.wm_decl_err * rc0.wm_decl_err)
+                     ) < %(deRuiter)s
+         ) t0
+         LEFT OUTER JOIN runningcatalog_flux rf0
+         ON t0.runcat = rf0.runcat
+         AND t0.band = rf0.band
+         AND t0.stokes = rf0.stokes
+"""
     query = """\
 INSERT INTO temprunningcatalog
   (runcat
@@ -307,6 +673,7 @@ INSERT INTO temprunningcatalog
                                  AND x0.decl + i0.rb_smaj
              AND rc0.wm_ra BETWEEN x0.ra - alpha(i0.rb_smaj, x0.decl)
                                AND x0.ra + alpha(i0.rb_smaj, x0.decl)
+             AND rc0.x * x0.x + rc0.y * x0.y + rc0.z * x0.z > COS(RADIANS(i0.rb_smaj))
              AND SQRT(  (x0.ra * COS(RADIANS(x0.decl)) - rc0.wm_ra * COS(RADIANS(rc0.wm_decl)))
                       * (x0.ra * COS(RADIANS(x0.decl)) - rc0.wm_ra * COS(RADIANS(rc0.wm_decl)))
                       / (x0.ra_err * x0.ra_err + rc0.wm_ra_err * rc0.wm_ra_err)
@@ -319,6 +686,11 @@ INSERT INTO temprunningcatalog
          AND t0.band = rf0.band
          AND t0.stokes = rf0.stokes
 """
+    mw =_check_meridian_wrap(image_id)
+    if mw['q_across'] == True:
+        logger.info("Search across 0/360 meridian: %s" % mw)
+        query = q_across_ra0
+
     deRuiter_red = float(deRuiter_r) / 3600.
     args = {'image_id': image_id, 'deRuiter': deRuiter_red}
     tkp.database.query(query, args, commit=True)

@@ -418,9 +418,9 @@ class Image(DBObject):
                     self._data['deltax'],
                     self._data['deltay'],
                     self._data['url'],
-                    self._data['centre_ra'],
-                    self._data['centre_decl'],
-                    self._data['xtr_radius'],
+                    self._data['centre_ra'], #Degrees J2000
+                    self._data['centre_decl'], #Degrees J2000
+                    self._data['xtr_radius'], #Degrees
                 )
             except self.database.Error, e:
                 logger.warn("insertion of Image() into the database failed")

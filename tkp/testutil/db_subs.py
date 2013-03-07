@@ -71,6 +71,15 @@ def example_dbimage_datasets(n_images, **kwargs):
     """Generate a list of image data dictionaries.
 
     These can be used to create known entries in the image table.
+
+    A subset of the defaults may be overridden by passing the relevant
+    dictionary values as keyword args.
+    
+    Note that while RA and Dec and extraction radius are arbitrary, 
+    they should (usually) be close enough and large enough to enclose 
+    the RA and Dec of any fake source extractions inserted, since the 
+    association routines reject sources outside of designated extraction 
+    regions.
     """
     starttime = datetime.datetime(2012, 1, 1) #Happy new year
     time_spacing = datetime.timedelta(seconds=600)
@@ -85,9 +94,9 @@ def example_dbimage_datasets(n_images, **kwargs):
                       'deltax': float(-0.01111),
                       'deltay': float(0.01111),
                       'url':testdata.fits_file, # just an arbitrary existing fits file
-                      'centre_ra': 90.,
-                      'centre_decl': 45.,
-                      'xtr_radius' : 3.
+                      'centre_ra': 123., #Arbitarily picked.
+                      'centre_decl': 10., #Arbitarily picked.
+                      'xtr_radius' : 10. # (Degrees)
                     }
     init_im_params.update(kwargs)
 
@@ -98,13 +107,19 @@ def example_dbimage_datasets(n_images, **kwargs):
 
     return im_params
 
-def example_extractedsource_tuple(ra=123.123, dec=10.5,
+def example_extractedsource_tuple(ra=123.123, dec=10.5, #Arbitrarily picked defaults
                                   ra_fit_err=5. / 3600, dec_fit_err=6. / 3600,
                                   peak=15e-3, peak_err=5e-4,
                                   flux=15e-3, flux_err=5e-4,
                                   sigma=15,
                                   beam_maj=100, beam_min=100, beam_angle=45,
                                   ra_sys_err=20, dec_sys_err=20):
+    """Generates an example 'fake extraction' for unit testing.
+     
+    Note that while RA and Dec are arbitrary, they should (usually) be close 
+    to the RA and Dec of any fake images used, since the association routines
+    reject sources outside of designated extraction regions.
+    """
     # NOTE: ra_fit_err & dec_fit_err are in degrees (they are converted to arcsec in the db),
     # and ra_sys_err & decl_sys_err are in arcsec.
     # The ra_err is then the sqrt of the quadratic sum

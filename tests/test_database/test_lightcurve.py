@@ -32,8 +32,8 @@ class TestLightCurve(unittest.TestCase):
                     'beam_pa_rad': float(1.7),
                     'deltax': float(-0.01111),
                     'deltay': float(0.01111),
-                    'centre_ra': 0,
-                    'centre_decl': 0,
+                    'centre_ra': 111,
+                    'centre_decl': 11,
                     'xtr_radius' : 3
             }
             image = Image(dataset=self.dataset, data=data)
@@ -43,17 +43,16 @@ class TestLightCurve(unittest.TestCase):
         data_list = []
         for i in range(1, 4):
             data_list.append({
-                'ra': 111.111*i,
-                'decl': 11.11*i,
+                'ra': 111.11 + i,
+                'decl': 11.11 + i,
                 'ra_fit_err': 0.01,
                 'decl_fit_err': 0.01,
                 'ra_sys_err': 20,
                 'decl_sys_err': 20,
-                'i_peak': 10*i,
+                'i_peak': 10 * i ,
                 'i_peak_err': 0.1
             #  x=0.11, y=0.22, z=0.33, det_sigma=11.1, zone=i
             })
-
         # Insert the 3 sources in each image, while further varying the flux
         for i, image in enumerate(images):
             # Create the "source finding results"
@@ -62,8 +61,8 @@ class TestLightCurve(unittest.TestCase):
             for data in data_list:
                 source = (data['ra'], data['decl'],
                      data['ra_fit_err'], data['decl_fit_err'], # Gaussian fit errors
-                     data['i_peak']*(1+i), data['i_peak_err'], # Peak
-                     data['i_peak']*(1+i), data['i_peak_err'], # Integrated
+                     data['i_peak'] * (1 + i), data['i_peak_err'], # Peak
+                     data['i_peak'] * (1 + i), data['i_peak_err'], # Integrated
                      10., # Significance level
                      1, 1, 0, # Beam params (width arcsec major, width arcsec minor, parallactic angle)
                      data['ra_sys_err'], data['decl_sys_err']) # Systematic errors
@@ -110,4 +109,4 @@ class TestLightCurve(unittest.TestCase):
             self.assertAlmostEqual(result['eta_int'], eta_nu)
             self.assertAlmostEqual(result['v_int'], 0.516397779494)
 
-    
+

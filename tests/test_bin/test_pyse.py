@@ -38,6 +38,7 @@ options = AttributeDict({
     'sigmap': True,
     'skymodel': True,
     'csv': True,
+    'force_beam': True,
     'alpha': .1,
 })
 

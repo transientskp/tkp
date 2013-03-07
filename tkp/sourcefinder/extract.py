@@ -196,10 +196,11 @@ class Island(object):
         """Deviation"""
         return (self.data/ self.rms_orig).max()
 
-    def fit(self):
+    def fit(self, fixed=None):
         """Fit the position"""
         measurement, gauss_residual = source_profile_and_errors(
-            self.data, self.threshold(), self.noise(), self.beam)
+            self.data, self.threshold(), self.noise(), self.beam, fixed=fixed
+        )
         measurement["xbar"] += self.position[0] + 1 # address + offset  = address but not address + address 
         measurement["ybar"] += self.position[1] + 1 # because addresses start at 0
         measurement.sig = self.sig()
@@ -897,19 +898,28 @@ class Detection(object):
         # Next, the axes.
         # Note that the signs of numpy.sin and numpy.cos in the
         # four expressions below are arbitrary.
-        end_smaj_x = (self.x.value - numpy.sin(self.theta.value) *
+        self.end_smaj_x = (self.x.value - numpy.sin(self.theta.value) *
                       self.smaj.value)
-        end_smaj_y = (self.y.value + numpy.cos(self.theta.value) *
+        self.start_smaj_x = (self.x.value + numpy.sin(self.theta.value) *
                       self.smaj.value)
-        end_smin_x = (self.x.value + numpy.cos(self.theta.value) *
+        self.end_smaj_y = (self.y.value + numpy.cos(self.theta.value) *
+                      self.smaj.value)
+        self.start_smaj_y = (self.y.value - numpy.cos(self.theta.value) *
+                      self.smaj.value)
+        self.end_smin_x = (self.x.value + numpy.cos(self.theta.value) *
                       self.smin.value)
-        end_smin_y = (self.y.value + numpy.sin(self.theta.value) *
+        self.start_smin_x = (self.x.value - numpy.cos(self.theta.value) *
+                      self.smin.value)
+        self.end_smin_y = (self.y.value + numpy.sin(self.theta.value) *
+                      self.smin.value)
+        self.start_smin_y = (self.y.value - numpy.sin(self.theta.value) *
                       self.smin.value)
 
+
         end_smaj_ra, end_smaj_dec = self.imagedata.wcs.p2s(
-            [end_smaj_x, end_smaj_y])
+            [self.end_smaj_x, self.end_smaj_y])
         end_smin_ra, end_smin_dec = self.imagedata.wcs.p2s(
-            [end_smin_x, end_smin_y])
+            [self.end_smin_x, self.end_smin_y])
 
         smaj_asec = coordinates.angsep(self.ra.value, self.dec.value,
                                        end_smaj_ra, end_smaj_dec)

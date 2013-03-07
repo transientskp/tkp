@@ -144,7 +144,6 @@ class TestOne2One(unittest.TestCase):
         self.assertEqual(avg_f_int[0], steady_srcs[0].flux)
         self.assertEqual(avg_f_int_weight[0], 1./steady_srcs[0].flux_err**2)
 
-    @unittest.skip("https://support.astron.nl/lofar_issuetracker/issues/4084")
     def TestMeridianEdgeCase(self):
         """What happens if a source is right on the meridian?"""
 
@@ -155,26 +154,30 @@ class TestOne2One(unittest.TestCase):
         src0 = db_subs.example_extractedsource_tuple(ra=0.0001, dec=10.5,
                                              ra_fit_err=0.01, dec_fit_err=0.01)
         src_list.append(src0)
-        src_list.append(src0._replace(ra=0.0003)) #Slightly more positive, should be fine.
-        #src_list.append(src0._replace(ra=359.9999 - 360.0)) #Fine
-        src_list.append(src0._replace(ra=359.9999)) #Broken
-
+        src1 = src0._replace(ra=0.0003) 
+        src_list.append(src1) 
+        src2 = src0._replace(ra=359.9999) 
+        src_list.append(src2) 
 
         for idx, im in enumerate(im_params):
+            im['centre_ra'] = 359.9
             image = tkpdb.Image(dataset=dataset, data=im)
             image.insert_extracted_sources([src_list[idx]])
             associate_extracted_sources(image.id, deRuiter_r=3.717)
-        runcat = columns_from_table('runningcatalog', ['datapoints'],
+        runcat = columns_from_table('runningcatalog', ['datapoints', 'wm_ra'],
                                    where={'dataset':dataset.id})
 #        print "***\nRESULTS:", runcat, "\n*****"
         self.assertEqual(len(runcat), 1)
         self.assertEqual(runcat[0]['datapoints'], 3)
+        avg_ra = ((src0.ra+180)%360 + (src1.ra+180)%360 + (src2.ra+180)%360)/3 - 180
+        self.assertAlmostEqual(runcat[0]['wm_ra'], avg_ra)
 
     def TestDeRuiterCalculation(self):
         """Check all the unit conversions are correct"""
         dataset = tkpdb.DataSet(data={'description':"Assoc 1-to-1:" + self._testMethodName})
         n_images = 2
-        im_params = db_subs.example_dbimage_datasets(n_images)
+        im_params = db_subs.example_dbimage_datasets(n_images, centre_ra=10,
+                                                     centre_decl=0)
 
 
         #Note ra / ra_fit_err are in degrees.

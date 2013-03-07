@@ -32,7 +32,9 @@ def associate_extracted_sources(image_id, deRuiter_r):
 
     logger.info("Using a De Ruiter radius of %s" % (deRuiter_r,))
     conn = DataBase().connection
-    _delete_bad_blind_extractions(conn, image_id)
+    ##This is used as a check that everything from the sourcefinder is sensible.
+    ##Currently switched off as it's incompatible with sources about the meridian.
+#    _delete_bad_blind_extractions(conn, image_id)
     _empty_temprunningcatalog(conn)
     #+------------------------------------------------------+
     #| Here we select all extracted sources that have one or|

@@ -153,7 +153,8 @@ class TestOne2One(unittest.TestCase):
         dataset = tkpdb.DataSet(database=self.database,
                         data={'description':"Assoc 1-to-1:" + self._testMethodName})
         n_images = 3
-        im_params = db_subs.example_dbimage_datasets(n_images)
+        im_params = db_subs.example_dbimage_datasets(n_images, centre_ra=0.5,
+                                                      centre_decl=10)
         src_list = []
         src0 = db_subs.example_extractedsource_tuple(ra=0.0001, dec=10.5,
                                              ra_fit_err=0.01, dec_fit_err=0.01)

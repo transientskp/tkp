@@ -221,6 +221,26 @@ class TestSimpleImageSourceFind(unittest.TestCase):
         for i in range(len(r)):
             self.assertAlmostEqual(r[i], known_result[i], places=5)
 
+    @requires_data(os.path.join(DATAPATH, 'GRB120422A/GRB120422A-120429.fits'))
+    def testForceSourceShape(self):
+        """
+        Force source shape to beam
+
+        This image contains a single source (with parameters as listed under
+        testSingleSourceExtraction(), above). Here we force the lengths of the
+        major/minor axes to be held constant when fitting.
+        """
+        self.image = accessors.sourcefinder_image_from_accessor(
+           accessors.FitsImage(
+               os.path.join(DATAPATH, 'GRB120422A/GRB120422A-120429.fits')
+            ),
+            force_beam=True
+        )
+        results = self.image.extract(det=5, anl=3)
+        self.assertEqual(results[0].smaj.value, self.image.beam[0])
+        self.assertEqual(results[0].smin.value, self.image.beam[1])
+
+
 class TestMaskedSource(unittest.TestCase):
     """
     Source is masked

@@ -23,6 +23,7 @@ def parse_parset(parset_file):
         'dec_sys_err': parset.getFloat('dec_sys_err'),
         'detection_threshold': parset.getFloat('detection_threshold'),
         'analysis_threshold': parset.getFloat('analysis_threshold'),
+        'force_beam': parset.getBool('force_beam', False)
     }
 
 
@@ -46,7 +47,8 @@ def extract_sources(image_path, parset_file):
                             detection_threshold=parset['detection_threshold'],
                             analysis_threshold=parset['analysis_threshold'],
                             ra_sys_err=parset['ra_sys_err'],
-                            dec_sys_err=parset['dec_sys_err'])
+                            dec_sys_err=parset['dec_sys_err'],
+                            force_beam=parset['force_beam'])
 
     logger.debug("Employing margin: %s extraction radius: %s deblend: %s deblend_nthresh: %s",
             parset['margin'],

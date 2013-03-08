@@ -920,18 +920,24 @@ class ImageData(object):
             except RuntimeError:
                 logger.warn("Island not processed; unphysical?")
                 raise
-        # Filter the results to ensure that all the sources are completely
-        # within the usable region of the image.
-        def is_unmasked(det):
-            # Check that both ends of each axis aren't masked.
+
+        def is_usable(det):
+            # Check that both ends of each axis are usable; that is, that they
+            # fall within an unmasked part of the image.
             # The axis will not likely fall exactly on a pixel number, so
             # check all the surroundings.
             def check_point(x, y):
                 x = (numpy.floor(x), numpy.ceil(x))
                 y = (numpy.floor(y), numpy.ceil(y))
                 for position in itertools.product(x, y):
-                    if self.data.mask[position[0], position[1]]:
+                    try:
+                        if self.data.mask[position[0], position[1]]:
+                            # Point falls in mask
+                            return False
+                    except IndexError:
+                        # Point falls completely outside image
                         return False
+                # Point is ok
                 return True
             for point in (
                 (det.start_smaj_x, det.start_smaj_y),
@@ -943,4 +949,4 @@ class ImageData(object):
                     return False
             return True
         # Filter will return a list; ensure we return an ExtractionResults.
-        return containers.ExtractionResults(filter(is_unmasked, results))
+        return containers.ExtractionResults(filter(is_usable, results))

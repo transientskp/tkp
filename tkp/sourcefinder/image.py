@@ -697,12 +697,19 @@ class ImageData(object):
         else:
             threshold_at_pixel = None
 
-        measurement, residuals = extract.source_profile_and_errors(
-            fitme,
-            threshold_at_pixel,
-            self.rmsmap[x, y],
-            self.beam,
-            fixed=fixed)
+        try:
+            measurement, residuals = extract.source_profile_and_errors(
+                fitme,
+                threshold_at_pixel,
+                self.rmsmap[x, y],
+                self.beam,
+                fixed=fixed
+            )
+        except ValueError:
+            # Fit failed to converge
+            # Moments are not applicable when holding parameters fixed
+            logger.error("Gaussian fit failed at %f, %f", x, y)
+            return None
 
         try:
             assert(abs(measurement['xbar']) < boxsize)
@@ -714,11 +721,7 @@ class ImageData(object):
         measurement['ybar'] += y-boxsize/2.0
         measurement.sig = (fitme / self.rmsmap[chunk]).max()
 
-        if not measurement.moments and not measurement.gaussian:
-            logger.error("Moments & Gaussian fit failed at %f, %f", x, y)
-            return None
-        return extract.Detection(
-            measurement, self)
+        return extract.Detection(measurement, self)
 
     def fit_fixed_positions(self, sources, boxsize, threshold=None, 
                             fixed='position+error'):

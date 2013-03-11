@@ -24,7 +24,6 @@ tables/rejection.sql
 #
 #system functions
 #
-functions/create.function.degrad.sql
 functions/create.function.alpha.sql
 functions/create.function.cartesian.sql
 functions/create.function.getBand.sql
@@ -34,29 +33,6 @@ functions/create.function.insertImage.sql
 functions/create.function.insertDataset.sql
 procedures/create.procedure.BuildFrequencyBands.sql
 procedures/create.procedure.BuildNodes.sql
-#
-# utility functions
-#
-functions/create.function.getDistanceArcsec.sql
-functions/create.function.getDistanceXSource2CatArcsec.sql
-functions/create.function.getDistanceXSourcesArcsec.sql
-functions/create.function.solidangle_arcsec2.sql
-functions/create.function.nearestNeighborInCat.sql
-functions/create.function.getNeighborsInCat.sql
-functions/create.function.getNearestNeighborInCat.sql
-functions/create.function.getNearestNeighborInImage.sql
-functions/create.function.decl2deg.sql
-functions/create.function.decl2dms.sql
-functions/create.function.getAssocParams.sql
-functions/create.function.getAssocParamsByPos.sql
-functions/create.function.getAssocParamsRunCat.sql
-functions/create.function.ra2deg.sql
-functions/create.function.ra2hms.sql
-functions/create.function.getSkyDensity_sr.sql
-functions/create.function.getHuynhSkyDensity_deg2.sql
-functions/create.function.localSourceDensityInCat_deg2.sql
-functions/create.function.neighborsInCatsParams.sql
-functions/create.function.neighborsInCats.sql
 #
 # initialisation
 #

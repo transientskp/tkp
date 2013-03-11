@@ -1,6 +1,6 @@
 """
 This is a tool for managing a TRAP project. It can be used to initialize a
-TRAP project and manage (init, clean, remove) its containing jobs.
+TKP project and manage (init, clean, remove) its containing jobs.
 
 To start using this tool you first create a TRAP project by running:
 
@@ -17,8 +17,9 @@ import errno
 import getpass
 import stat
 import sys
-import tkp
 
+import tkp
+from tkp.database.sql.populate import populate
 
 class CommandError(Exception):
     """
@@ -40,45 +41,6 @@ def check_if_exists(filename):
     if not os.access(filename, os.R_OK):
         raise CommandError("can't read %s" % filename)
     return True
-
-
-def parse_arguments():
-    parser = argparse.ArgumentParser(
-        description='This is a tool for managing a TRAP project',
-        epilog=__doc__)
-    parser_subparsers = parser.add_subparsers()
-
-    initproject_parser = parser_subparsers.add_parser('initproject')
-    initproject_parser.add_argument('initprojectname', help='project folder name')
-    initproject_parser.add_argument('--target', help='location of new TRAP project')
-
-    initjob_parser = parser_subparsers.add_parser('initjob')
-    initjob_parser.add_argument('initjobname', help='Name of new job')
-
-    run_parser = parser_subparsers.add_parser('run')
-    run_parser.add_argument('runjobname', help='Name of job to run')
-    run_parser.add_argument('-d', '--debug', help='enable debug logging', action='store_true')
-    run_parser.add_argument('-m', '--monitor-coords',
-        help='Specify a list of RA,DEC co-ordinate pairs to monitor (decimal degrees, no spaces)')
-    run_parser.add_argument('-l', '--monitor-list',
-        help='Specify a file containing a list of RA,DEC')
-
-    runlocal_parser = parser_subparsers.add_parser('runlocal')
-    runlocal_parser.add_argument('runlocaljobname', help='Name of job to run (local run)')
-    runlocal_parser.add_argument('-m', '--monitor-coords',
-        help='Specify a list of RA,DEC co-ordinate pairs to monitor (decimal degrees, no spaces)')
-    runlocal_parser.add_argument('-l', '--monitor-list',
-        help='Specify a file containing a list of RA,DEC')
-    runlocal_parser.add_argument('-d', '--debug', help='enable debug logging', action='store_true')
-
-    clean_parser = parser_subparsers.add_parser('clean')
-    clean_parser.add_argument('cleanjobname', help='Name of job to clean')
-
-    info_parser = parser_subparsers.add_parser('info')
-    info_parser.add_argument('infojobname', help='Name of job to print info of')
-
-    parsed = vars(parser.parse_args())
-    return parsed
 
 
 def get_template_dir():
@@ -201,14 +163,14 @@ def copy_template(job_or_project, name, target=None, **options):
                                   "problem.\n" % new_path)
 
 
-def init_project(projectname, target=None):
-    print "creating project '%s'" % projectname
-    return copy_template("project", projectname, target)
+def init_project(args):
+    print "creating project '%s'" % args.name
+    return copy_template("project", args.name, args.target)
 
 
-def init_job(jobname, target=None):
-    print "creating job '%s'" % jobname
-    return copy_template("job", jobname, target)
+def init_job(args):
+    print "creating job '%s'" % args.name
+    return copy_template("job", args.name, args.target)
 
 
 def prepare_job(jobname, debug=False):
@@ -227,19 +189,20 @@ def prepare_job(jobname, debug=False):
     sys.argv += ["-c", pipelinefile, "-t", tasksfile, "-j", jobname]
 
 
-def run_job(jobname, debug=False):
-    print "running job '%s'" % jobname
-    prepare_job(jobname, debug)
-    import tkp.distribute.cuisine.run
-    sys.exit(tkp.distribute.cuisine.run.Trap().main())
-
-
-def runlocal_job(jobname, debug=False):
-    print "running job '%s' (local)" % jobname
-    prepare_job(jobname, debug)
-    import tkp.distribute.local.run
-    traplocal = tkp.distribute.local.run.TrapLocal()
-    sys.exit(traplocal.main())
+def run_job(args):
+    print "running job '%s'" % args.name
+    prepare_job(args.name, args.debug)
+    if args.method == 'cuisine':
+        import tkp.distribute.cuisine.run
+        sys.exit(tkp.distribute.cuisine.run.Trap().main())
+    elif args.method == 'local':
+        import tkp.distribute.local.run
+        sys.exit(tkp.distribute.local.run.TrapLocal().main())
+    elif args.method == 'celery':
+        raise NotImplementedError("be patient, it is comming ;)")
+    else:
+        sys.stderr.write("I don't know what is a %s" % args.method)
+        sys.exit(1)
 
 
 def clean_job(jobname):
@@ -256,23 +219,79 @@ def info_job(jobname):
     print "TODO: print info about job %s" % jobname
 
 
+def init_db(options):
+    populate(options)
+
+
+def parse_arguments():
+    parser = argparse.ArgumentParser(
+        description='This is a tool for managing a TRAP project',
+        epilog=__doc__)
+    parser_subparsers = parser.add_subparsers()
+
+    # initproject
+    initproject_parser = parser_subparsers.add_parser('initproject')
+    initproject_parser.add_argument('name', help='project folder name')
+    initproject_parser.add_argument('-t', '--target',
+                                    help='location of new TKP project')
+    initproject_parser.set_defaults(func=init_project)
+
+    # initjob
+    initjob_parser = parser_subparsers.add_parser('initjob')
+    initjob_parser.add_argument('initjobname', help='Name of new job')
+    initproject_parser.set_defaults(func=init_job)
+
+    # runjob
+    run_parser = parser_subparsers.add_parser('run')
+    run_parser.add_argument('name', help='Name of job to run')
+    run_parser.add_argument('-d', '--debug', help='enable debug logging',
+                            action='store_true')
+    m_help = 'Specify a list of RA,DEC co-ordinate pairs to monitor (decimal' \
+             ' degrees, no spaces)'
+    run_parser.add_argument('-m', '--monitor-coords',
+                            help=m_help)
+    run_parser.add_argument('-l', '--monitor-list',
+                            help='Specify a file containing a list of RA,DEC')
+    run_parser.add_argument('-f', '--method', choices=['cuisine',
+                                                       'local',
+                                                       'celery'],
+                            default="cuisine",
+                            help="what distribution method to use")
+    run_parser.set_defaults(func=run_job)
+
+    #initdb
+    initdb_parser = parser_subparsers.add_parser('initdb')
+    initdb_parser.add_argument('-d', '--database', help='what database to use',
+                               default=getpass.getuser())
+    initdb_parser.add_argument('-u', '--user', type=str, help='user')
+    initdb_parser.add_argument('-p', '--password', type=str, help='password')
+    initdb_parser.add_argument('-H', '--host', type=str, help='host')
+    initdb_parser.add_argument('-P', '--port', type=int, help='port',
+                               default=5432)
+    initdb_parser.add_argument('-b', '--backend', choices=["monetdb",
+                                                           'postgresql'],
+                               default="postgresql",
+                               help="what database backend to use")
+    initdb_parser.add_argument('-y', '--yes', help="don't ask for confirmation",
+                               action="store_true")
+    initdb_parser.set_defaults(func=init_db)
+
+    # clean
+    clean_parser = parser_subparsers.add_parser('clean')
+    clean_parser.add_argument('cleanjobname', help='Name of job to clean')
+    clean_parser.set_defaults(func=clean_job)
+
+    # info
+    info_parser = parser_subparsers.add_parser('info')
+    info_parser.add_argument('infojobname', help='Name of job to print info of')
+    info_parser.set_defaults(func=info_job)
+
+    return parser.parse_args()
+
+
 def main():
-    parsed = parse_arguments()
-    if parsed.has_key('initprojectname'):
-        target = parsed.get('target', '')
-        init_project(parsed['initprojectname'], target)
-    elif parsed.has_key('initjobname'):
-        init_job(parsed['initjobname'])
-    elif parsed.has_key('cleanjobname'):
-        clean_job(parsed['cleanjobname'])
-    elif parsed.has_key('infojobname'):
-        info_job(parsed['infojobname'])
-    elif parsed.has_key('runjobname'):
-        run_job(parsed['runjobname'], parsed['debug'])
-    elif parsed.has_key('runlocaljobname'):
-        runlocal_job(parsed['runlocaljobname'], parsed['debug'])
-    else:
-        parsed.print_help()
+    args = parse_arguments()
+    args.func(args)
 
 
 if __name__ == '__main__':

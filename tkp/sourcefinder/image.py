@@ -697,12 +697,19 @@ class ImageData(object):
         else:
             threshold_at_pixel = None
 
-        measurement, residuals = extract.source_profile_and_errors(
-            fitme,
-            threshold_at_pixel,
-            self.rmsmap[x, y],
-            self.beam,
-            fixed=fixed)
+        try:
+            measurement, residuals = extract.source_profile_and_errors(
+                fitme,
+                threshold_at_pixel,
+                self.rmsmap[x, y],
+                self.beam,
+                fixed=fixed
+            )
+        except ValueError:
+            # Fit failed to converge
+            # Moments are not applicable when holding parameters fixed
+            logger.error("Gaussian fit failed at %f, %f", x, y)
+            return None
 
         try:
             assert(abs(measurement['xbar']) < boxsize)
@@ -714,11 +721,7 @@ class ImageData(object):
         measurement['ybar'] += y-boxsize/2.0
         measurement.sig = (fitme / self.rmsmap[chunk]).max()
 
-        if not measurement.moments and not measurement.gaussian:
-            logger.error("Moments & Gaussian fit failed at %f, %f", x, y)
-            return None
-        return extract.Detection(
-            measurement, self)
+        return extract.Detection(measurement, self)
 
     def fit_fixed_positions(self, sources, boxsize, threshold=None, 
                             fixed='position+error'):
@@ -920,18 +923,24 @@ class ImageData(object):
             except RuntimeError:
                 logger.warn("Island not processed; unphysical?")
                 raise
-        # Filter the results to ensure that all the sources are completely
-        # within the usable region of the image.
-        def is_unmasked(det):
-            # Check that both ends of each axis aren't masked.
+
+        def is_usable(det):
+            # Check that both ends of each axis are usable; that is, that they
+            # fall within an unmasked part of the image.
             # The axis will not likely fall exactly on a pixel number, so
             # check all the surroundings.
             def check_point(x, y):
                 x = (numpy.floor(x), numpy.ceil(x))
                 y = (numpy.floor(y), numpy.ceil(y))
                 for position in itertools.product(x, y):
-                    if self.data.mask[position[0], position[1]]:
+                    try:
+                        if self.data.mask[position[0], position[1]]:
+                            # Point falls in mask
+                            return False
+                    except IndexError:
+                        # Point falls completely outside image
                         return False
+                # Point is ok
                 return True
             for point in (
                 (det.start_smaj_x, det.start_smaj_y),
@@ -943,4 +952,4 @@ class ImageData(object):
                     return False
             return True
         # Filter will return a list; ensure we return an ExtractionResults.
-        return containers.ExtractionResults(filter(is_unmasked, results))
+        return containers.ExtractionResults(filter(is_usable, results))

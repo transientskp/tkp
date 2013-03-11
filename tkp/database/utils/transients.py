@@ -50,7 +50,9 @@ def _update_known_transients(transients):
                 conn.commit()
         except db.Error:
             query = query % tr
-            logger.warn("Failed on query:\n%s", query)
+            logger.error("Failed on query:\n%s", query)
+            conn.rollback()
+            logger.error("Query rolled back")
             raise
 
     cursor.close()
@@ -98,7 +100,9 @@ def _insert_transients(transients):
 
             except db.Error:
                 query = query % entry
-                logger.warn("Failed on query:\n%s", query)
+                logger.error("Failed on query:\n%s", query)
+                conn.rollback()
+                logger.error("Query rolled back")
                 raise
     cursor.close()
     logger.info("Inserted %s new transients in transients table" % (ins,))

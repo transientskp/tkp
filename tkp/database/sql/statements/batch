@@ -24,24 +24,24 @@ tables/rejection.sql
 #
 #system functions
 #
-functions/create.function.alpha.sql
-functions/create.function.cartesian.sql
-functions/create.function.getBand.sql
-functions/create.function.updateSkyRgnMembers.sql
-functions/create.function.getSkyRgn.sql
-functions/create.function.insertImage.sql
-functions/create.function.insertDataset.sql
-procedures/create.procedure.BuildFrequencyBands.sql
-procedures/create.procedure.BuildNodes.sql
+functions/alpha.sql
+functions/cartesian.sql
+functions/getBand.sql
+functions/updateSkyRgnMembers.sql
+functions/getSkyRgn.sql
+functions/insertImage.sql
+functions/insertDataset.sql
+procedures/BuildFrequencyBands.sql
+procedures/BuildNodes.sql
 #
 # initialisation
 #
-init/init.tables.sql
+init/tables.sql
 #
 # catalogs
 #
-load/load.cat.vlss.sql
-load/load.cat.wenss.sql
-load/load.cat.nvss.sql
-load/load.cat.exo.sql
+load/vlss.sql
+load/wenss.sql
+load/nvss.sql
+load/exo.sql
 

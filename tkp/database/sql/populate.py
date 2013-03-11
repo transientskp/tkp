@@ -5,21 +5,21 @@ initialises a PostgreSQL database with TKP tables.
 
 import os
 import sys
-import argparse
-import getpass
+import tkp
+
+tkp_folder = tkp.__path__[0]
+sql_repo = os.path.join(tkp_folder, 'database/sql/statements')
 
 from tkp.database.sql.preprocessor import dialectise
-
-here = os.path.dirname(__file__)
 
 # use these to replace strings in the SQL files
 tokens = (
     ('%NODE%', '1'),
     ('%NODES%', '1'),
-    ('%VLSS%', os.path.join(here, 'catalog/vlss/vlss.csv')),
-    ('%WENSS%', os.path.join(here, 'catalog/wenss/wenss.csv')),
-    ('%NVSS%', os.path.join(here, 'catalog/nvss/nvss.csv')),
-    ('%EXO%', os.path.join(here, 'catalog/exoplanets/exo.csv')),
+    ('%VLSS%', os.path.join(tkp_folder, '../database/catalog/vlss/vlss.csv')),
+    ('%WENSS%', os.path.join(tkp_folder, '../database/catalog/wenss/wenss.csv')),
+    ('%NVSS%', os.path.join(tkp_folder, '../database/catalog/nvss/nvss.csv')),
+    ('%EXO%', os.path.join(tkp_folder, '../database/catalog/exoplanets/exo.csv')),
 )
 
 
@@ -81,12 +81,12 @@ def populate(options):
     conn = connect(options)
     cur = conn.cursor()
 
-    batch_file = os.path.join(here, 'sql/batch')
+    batch_file = os.path.join(sql_repo, 'batch')
 
     for line in [l.strip() for l in open(batch_file) if not l.startswith("#")]:
-        if not line: # skip empty lines
+        if not line:  # skip empty lines
             continue
-        sql_file = os.path.join(here, 'sql', line)
+        sql_file = os.path.join(sql_repo, line)
         with open(sql_file) as sql_handler:
             sql = sql_handler.read()
             dialected = dialectise(sql, options.backend, tokens)

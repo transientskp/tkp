@@ -905,7 +905,12 @@ class ImageData(object):
                 fixed = {'semimajor': self.beam[0], 'semiminor': self.beam[1]}
             else:
                 fixed = None
-            measurement, residual = island.fit(fixed=fixed)
+            fit_results = island.fit(fixed=fixed)
+            if fit_results:
+                measurement, residual = fit_results
+            else:
+                # Failed to fit; drop this island and go to the next.
+                continue
             try:
                 det = extract.Detection(measurement, self, chunk=island.chunk)
                 if (det.ra.error == float('inf') or

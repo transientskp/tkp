@@ -1,20 +1,20 @@
-CREATE SEQUENCE seq_dataset AS INTEGER;
-
 CREATE TABLE dataset
-  (id INT NOT NULL DEFAULT NEXT VALUE FOR seq_dataset
+  (id SERIAL
   ,rerun INT NOT NULL DEFAULT '0'
-  ,"type" TINYINT NOT NULL DEFAULT 1
+  ,"type" SMALLINT NOT NULL DEFAULT 1
   ,process_ts TIMESTAMP NOT NULL
-  ,detection_threshold DOUBLE NULL
-  ,analysis_threshold DOUBLE NULL
-  ,assoc_radius DOUBLE NULL
+  ,detection_threshold DOUBLE PRECISION NULL
+  ,analysis_threshold DOUBLE PRECISION NULL
+  ,assoc_radius DOUBLE PRECISION NULL
   ,backsize_x SMALLINT NULL
   ,backsize_y SMALLINT NULL
-  ,margin_width DOUBLE NULL
+  ,margin_width DOUBLE PRECISION NULL
   ,description VARCHAR(100) NOT NULL
-  ,node TINYINT NOT NULL DEFAULT %NODE%
-  ,nodes TINYINT NOT NULL DEFAULT %NODES%
+  ,node SMALLINT NOT NULL DEFAULT %NODE%
+  ,nodes SMALLINT NOT NULL DEFAULT %NODES%
+{% ifdb postgresql %}
   ,PRIMARY KEY (id)
+{% endifdb %}
   )
 ;
 

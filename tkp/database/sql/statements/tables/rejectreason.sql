@@ -1,7 +1,9 @@
-CREATE TABLE rejectreason (
-	id INT AUTO_INCREMENT,
-	description VARCHAR(512),
-	PRIMARY KEY (id)
+CREATE TABLE rejectreason
+  (id SERIAL
+	,description VARCHAR(512)
+{% ifdb postgresql %}
+	,PRIMARY KEY (id)
+{% endifdb %}
 );
 
 INSERT INTO rejectreason VALUES (0, 'RMS too high');

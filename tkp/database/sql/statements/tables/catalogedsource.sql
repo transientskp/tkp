@@ -4,38 +4,40 @@
  */
 
 CREATE TABLE catalogedsource 
-  (id INT AUTO_INCREMENT
-  ,catalog TINYINT NOT NULL
+  (id SERIAL
+  ,catalog SMALLINT NOT NULL
   ,orig_catsrcid INT NOT NULL
   ,catsrcname VARCHAR(120) NULL
   ,tau INT NULL
   ,band SMALLINT NOT NULL
-  ,stokes TINYINT NOT NULL DEFAULT 1 
-  ,freq_eff DOUBLE NOT NULL
+  ,stokes SMALLINT NOT NULL DEFAULT 1
+  ,freq_eff DOUBLE PRECISION NOT NULL
   ,zone INT NOT NULL
-  ,ra DOUBLE NOT NULL
-  ,decl DOUBLE NOT NULL
-  ,ra_err DOUBLE NOT NULL
-  ,decl_err DOUBLE NOT NULL
-  ,x DOUBLE NOT NULL
-  ,y DOUBLE NOT NULL
-  ,z DOUBLE NOT NULL
-  ,margin BOOLEAN NOT NULL DEFAULT 0
-  ,det_sigma DOUBLE NOT NULL DEFAULT 0
+  ,ra DOUBLE PRECISION NOT NULL
+  ,decl DOUBLE PRECISION NOT NULL
+  ,ra_err DOUBLE PRECISION NOT NULL
+  ,decl_err DOUBLE PRECISION NOT NULL
+  ,x DOUBLE PRECISION NOT NULL
+  ,y DOUBLE PRECISION NOT NULL
+  ,z DOUBLE PRECISION NOT NULL
+  ,margin BOOLEAN NOT NULL DEFAULT FALSE
+  ,det_sigma DOUBLE PRECISION NOT NULL DEFAULT 0
   ,src_type VARCHAR(1) NULL
   ,fit_probl VARCHAR(2) NULL
-  ,PA DOUBLE NULL
-  ,PA_err DOUBLE NULL
-  ,major DOUBLE NULL
-  ,major_err DOUBLE NULL
-  ,minor DOUBLE NULL
-  ,minor_err DOUBLE NULL
-  ,avg_f_peak DOUBLE NULL
-  ,avg_f_peak_err DOUBLE NULL
-  ,avg_f_int DOUBLE NULL
-  ,avg_f_int_err DOUBLE NULL
+  ,PA DOUBLE PRECISION NULL
+  ,PA_err DOUBLE PRECISION NULL
+  ,major DOUBLE PRECISION NULL
+  ,major_err DOUBLE PRECISION NULL
+  ,minor DOUBLE PRECISION NULL
+  ,minor_err DOUBLE PRECISION NULL
+  ,avg_f_peak DOUBLE PRECISION NULL
+  ,avg_f_peak_err DOUBLE PRECISION NULL
+  ,avg_f_int DOUBLE PRECISION NULL
+  ,avg_f_int_err DOUBLE PRECISION NULL
   ,frame VARCHAR(20) NULL
+{% ifdb postgresql %}
   ,PRIMARY KEY (id)
+{% endifdb %}
   ,FOREIGN KEY (catalog) REFERENCES catalog (id)
   ,FOREIGN KEY (band) REFERENCES frequencyband (id)
   )

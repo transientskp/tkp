@@ -1,13 +1,13 @@
 import logging
 import datetime
 from lofarpipe.support.parset import parameterset
-from trap import ingredients as ingred
 import lofarpipe.support.lofaringredient as ingredient
-from trap.ingredients.monitoringlist import add_manual_monitoringlist_entries
+from tkp.steps.monitoringlist import add_manual_monitoringlist_entries
+from tkp import steps
 from tkp.database.orm import Image
-from tkp.database.utils import general as dbgen
-from tkp.database.utils import monitoringlist as dbmon
-from tkp.database.utils import associations as dbass
+from tkp.database import general as dbgen
+from tkp.database import monitoringlist as dbmon
+from tkp.database import associations as dbass
 from lofarpipe.support.control import control
 from images_to_process import images
 

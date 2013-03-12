@@ -1,10 +1,7 @@
 """
-The ingredients module is a collection of functions that combine functions
-in TKP in a useful way. They are the layer between the TKP functions and
-the control functions and frameworks, like the distribution logic.
-
-No implementation specific code (like the LOFAR pipeline logic) should be placed
-in this module.
+The `tkp.steps` module is the highest level abstraction of all TKP components
+for transient detection. It should be seen as the TKP interface to the
+distribute submodules or a external project.
 """
 import feature_extraction
 import monitoringlist

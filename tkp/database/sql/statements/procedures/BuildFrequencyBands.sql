@@ -2,7 +2,17 @@
 
 /**
  */
+{% ifdb monetdb %}
 CREATE PROCEDURE BuildFrequencyBands()
+{% endifdb %}
+
+{% ifdb postgresql %}
+CREATE OR REPLACE FUNCTION BuildFrequencyBands()
+RETURNS void
+AS $$
+{% endifdb %}
+
+
 BEGIN
 
   /* Some cataloged sources do not have spectral information
@@ -140,3 +150,7 @@ BEGIN
   ;
 
 END;
+
+{% ifdb postgresql %}
+$$ LANGUAGE plpgsql;
+{% endifdb %}

@@ -89,7 +89,11 @@ def populate(options):
         sql_file = os.path.join(sql_repo, line)
         with open(sql_file) as sql_handler:
             sql = sql_handler.read()
-            dialected = dialectise(sql, options.backend, tokens)
+            dialected = dialectise(sql, options.backend, tokens).strip()
+
+            if not dialected:  # empty query, can happen
+                continue
+
             try:
                 cur.execute(dialected)
             except Exception as e:

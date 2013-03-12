@@ -14,6 +14,7 @@
 -- Copyright August 2008-2011 MonetDB B.V.
 -- All Rights Reserved.
 
+{% ifdb monetdb %}
 CREATE FUNCTION degrees(r double) 
 RETURNS double
 	RETURN r*180/pi();
@@ -22,3 +23,7 @@ CREATE FUNCTION radians(d double)
 RETURNS double
 	RETURN d*pi()/180;
 
+{% endifdb %}
+
+-- a query file can't be empty (which is the case for postgresql)
+select 1;

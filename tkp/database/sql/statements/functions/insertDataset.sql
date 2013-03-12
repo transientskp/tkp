@@ -13,8 +13,9 @@
  *
  */
 CREATE FUNCTION insertDataset(idescription VARCHAR(100)) RETURNS INT
-BEGIN
 
+{% ifdb monetdb %}
+BEGIN
   DECLARE idsid INT;
   DECLARE odsid INT;
   DECLARE irerun INT;
@@ -51,3 +52,42 @@ BEGIN
   RETURN odsid;
 
 END;
+{% endifdb %}
+
+
+{% ifdb postgresql %}
+AS $$
+  DECLARE idsid INT;
+  DECLARE odsid INT;
+  DECLARE irerun INT;
+BEGIN
+  SELECT MAX(rerun)
+    INTO irerun
+    FROM dataset
+   WHERE description = idescription
+  ;
+
+  IF irerun IS NULL THEN
+    irerun := 0;
+  ELSE
+    irerun := irerun + 1;
+  END IF;
+
+  INSERT INTO dataset
+    (rerun
+    ,process_ts
+    ,description
+    )
+  VALUES
+    (irerun
+    ,NOW()
+    ,idescription
+    )
+  ;
+
+  RETURN lastvalue();
+
+END;
+
+$$ LANGUAGE plpgsql;
+{% endifdb %}

@@ -18,21 +18,29 @@
  *
  */
 CREATE FUNCTION insertImage(idataset INT
-                           ,itau_time DOUBLE
-                           ,ifreq_eff DOUBLE
-                           ,ifreq_bw DOUBLE
+                           ,itau_time DOUBLE PRECISION
+                           ,ifreq_eff DOUBLE PRECISION
+                           ,ifreq_bw DOUBLE PRECISION
                            ,itaustart_ts TIMESTAMP
-                           ,irb_smaj DOUBLE
-                           ,irb_smin DOUBLE
-                           ,irb_pa DOUBLE
-                           ,ideltax DOUBLE
-                           ,ideltay DOUBLE
+                           ,irb_smaj DOUBLE PRECISION
+                           ,irb_smin DOUBLE PRECISION
+                           ,irb_pa DOUBLE PRECISION
+                           ,ideltax DOUBLE PRECISION
+                           ,ideltay DOUBLE PRECISION
                            ,iurl VARCHAR(1024)
-                           ,icentre_ra DOUBLE
-                           ,icentre_decl DOUBLE
-                           ,ixtr_radius DOUBLE
+                           ,icentre_ra DOUBLE PRECISION
+                           ,icentre_decl DOUBLE PRECISION
+                           ,ixtr_radius DOUBLE PRECISION
                            ) RETURNS INT
+
+
+{% ifdb postgresql %}
+AS $$
+{% endifdb %}
+
+{% ifdb monetdb %}
 BEGIN
+{% endifdb %}
 
   DECLARE iimageid INT;
   DECLARE oimageid INT;
@@ -40,14 +48,19 @@ BEGIN
   DECLARE itau INT;
   DECLARE iskyrgn INT;
 
+{% ifdb postgresql %}
+BEGIN
+  iband := getBand(ifreq_eff, ifreq_bw);
+  iskyrgn := getSkyRgn(idataset, icentre_ra, icentre_decl, ixtr_radius);
+{% endifdb %}
+
+{% ifdb monetdb %}
   SET iband = getBand(ifreq_eff, ifreq_bw);
   SET iskyrgn = getSkyRgn(idataset, icentre_ra, icentre_decl, ixtr_radius);
-  
-  SELECT NEXT VALUE FOR seq_image INTO iimageid;
+{% endifdb %}
 
   INSERT INTO image
-    (id
-    ,dataset
+    (dataset
     ,band
     ,tau_time
     ,freq_eff
@@ -62,8 +75,7 @@ BEGIN
     ,url
     ) 
   VALUES
-    (iimageid
-    ,idataset
+    (idataset
     ,iband
     ,itau_time
     ,ifreq_eff
@@ -79,7 +91,10 @@ BEGIN
     )
   ;
 
-  SET oimageid = iimageid;
-  RETURN oimageid;
+  RETURN lastval();
 
 END;
+
+{% ifdb postgresql %}
+$$ LANGUAGE plpgsql;
+{% endifdb %}

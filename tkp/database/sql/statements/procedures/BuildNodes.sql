@@ -10,19 +10,21 @@
  * and when you have an idea about the zoneheight.
  * TODO: Find out what a good zoneheight will be.
  */
-CREATE PROCEDURE BuildNodes(inode_min INT, inode_max INT, max_incl BOOLEAN)
-BEGIN
 
+ {% ifdb monetdb %}
+CREATE PROCEDURE BuildNodes(inode_min INT, inode_max INT, max_incl BOOLEAN)
+
+BEGIN
   DECLARE izone INT;
 
   SET izone = inode_min;
   IF max_incl THEN
     WHILE izone <= inode_max DO
-      INSERT INTO node 
+      INSERT INTO node
         (zone
         ,zoneheight
         )
-      VALUES 
+      VALUES
         (izone
         ,1.0
         )
@@ -31,11 +33,11 @@ BEGIN
     END WHILE;
   ELSE
     WHILE izone < inode_max DO
-      INSERT INTO node 
+      INSERT INTO node
         (zone
         ,zoneheight
         )
-      VALUES 
+      VALUES
         (izone
         ,1.0
         )
@@ -45,3 +47,43 @@ BEGIN
   END IF;
 
 END;
+
+{% endifdb %}
+
+{% ifdb postgresql %}
+CREATE OR REPLACE FUNCTION BuildNodes(inode_min INT, inode_max INT, max_incl BOOLEAN)
+RETURNS void
+AS $$
+  DECLARE izone INT;
+BEGIN
+  izone := inode_min;
+  IF max_incl THEN
+    WHILE izone <= inode_max LOOP
+      INSERT INTO node
+        (zone
+        ,zoneheight
+        )
+      VALUES
+        (izone
+        ,1.0
+        )
+      ;
+      izone := izone + 1;
+    END LOOP;
+  ELSE
+    WHILE izone < inode_max LOOP
+      INSERT INTO node
+        (zone
+        ,zoneheight
+        )
+      VALUES
+        (izone
+        ,1.0
+        )
+      ;
+      izone := izone + 1;
+    END LOOP;
+  END IF;
+END;
+$$ LANGUAGE plpgsql;
+{% endifdb %}

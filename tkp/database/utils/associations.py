@@ -748,7 +748,6 @@ INSERT INTO temprunningcatalog
          AND t0.stokes = rf0.stokes
 """
     mw =_check_meridian_wrap(conn, image_id)
-    print "mw=",mw
     if mw['q_across'] == True:
         logger.info("Search across 0/360 meridian: %s" % mw)
         query = q_across_ra0

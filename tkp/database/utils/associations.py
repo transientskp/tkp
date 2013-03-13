@@ -401,7 +401,10 @@ INSERT INTO temprunningcatalog
         ,t0.stokes
         ,t0.datapoints
         ,CAST(FLOOR(t0.wm_decl) AS INTEGER) AS zone
-        ,t0.wm_ra
+        ,CASE WHEN t0.wm_ra < 0
+              THEN wm_ra + 360
+              ELSE t0.wm_ra
+         END AS wm_ra
         ,t0.wm_decl
         ,t0.wm_ra_err
         ,t0.wm_decl_err
@@ -499,7 +502,7 @@ INSERT INTO temprunningcatalog
                 ,rc0.datapoints + 1 AS datapoints
                 ,(datapoints * rc0.avg_weight_ra * MOD(rc0.wm_ra + 180, 360) + MOD(x0.ra + 180, 360) / (x0.ra_err * x0.ra_err) )
                  / 
-                 (datapoints * rc0.avg_weight_ra + 1 / (x0.ra_err * x0.ra_err) ) - 180
+                 (datapoints * rc0.avg_weight_ra + 1 / (x0.ra_err * x0.ra_err) ) - 180 
                  AS wm_ra
                 ,(datapoints * rc0.avg_weight_decl * rc0.wm_decl + x0.decl / (x0.decl_err * x0.decl_err)) 
                  /
@@ -745,6 +748,7 @@ INSERT INTO temprunningcatalog
          AND t0.stokes = rf0.stokes
 """
     mw =_check_meridian_wrap(conn, image_id)
+    print "mw=",mw
     if mw['q_across'] == True:
         logger.info("Search across 0/360 meridian: %s" % mw)
         query = q_across_ra0

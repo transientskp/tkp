@@ -648,7 +648,16 @@ class ImageData(object):
 
         Returns an instance of :class:`tkp.sourcefinder.extract.Detection`.
         """
-
+        if ((
+                # Recent NumPy
+                hasattr(numpy.ma.core, "MaskedConstant") and
+                isinstance(self.rmsmap, numpy.ma.core.MaskedConstant)
+            ) or (
+                # Old NumPy
+                numpy.ma.is_masked(self.rmsmap[x, y])
+        )):
+            logger.error("Background is masked: cannot fit")
+            return None
 
         chunk = ImageData.box_slice_about_pixel(x, y, boxsize/2.0)
         if threshold is not None:

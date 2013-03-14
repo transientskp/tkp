@@ -93,9 +93,10 @@ BEGIN
       ,ifreq_eff + (ibandwidth / 2)
       )
     ;
+    ifreqbandid := lastval();
   END IF;
 
-  RETURN lastval();
+  RETURN ifreqbandid;
 END;
 
 $$ LANGUAGE plpgsql;

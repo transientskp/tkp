@@ -44,5 +44,5 @@ init/tables.sql
 load/vlss.sql
 load/wenss.sql
 load/nvss.sql
-load/exo.sql
+#load/exo.sql
 

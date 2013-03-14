@@ -69,16 +69,23 @@ def populate(options):
     Populates a database
     :param options: a argparse namespace generated with tkp.management
     """
-    if options.database:
-        if not options.user:
-            options.user = options.database
-            #if not parsed.password:
-            #    parsed.password = parsed.database
+    if options.port == 0:
+        if options.backend == 'monetdb':
+            options.port = 50000
+        else:
+            options.port = 5432
+
+    if not options.user:
+        options.user = options.database
+
+    if options.backend == 'monetdb' and not options.password:
+        options.password = options.database
 
     if not options.yes:
         verify(options)
 
     conn = connect(options)
+    #conn.autocommit = True
     cur = conn.cursor()
 
     batch_file = os.path.join(sql_repo, 'batch')

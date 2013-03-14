@@ -267,7 +267,7 @@ def parse_arguments():
     initdb_parser.add_argument('-p', '--password', type=str, help='password')
     initdb_parser.add_argument('-H', '--host', type=str, help='host')
     initdb_parser.add_argument('-P', '--port', type=int, help='port',
-                               default=5432)
+                               default=0)
     initdb_parser.add_argument('-b', '--backend', choices=["monetdb",
                                                            'postgresql'],
                                default="postgresql",

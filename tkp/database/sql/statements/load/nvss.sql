@@ -1,10 +1,24 @@
-DECLARE i_freq_eff DOUBLE;
+{% ifdb monetdb %}
+DECLARE i_freq_eff_nvss DOUBLE PRECISION;
 DECLARE iband INT;
 DECLARE iname VARCHAR(50);
-
 SET iname = 'NVSS';
-SET i_freq_eff = 1400000000.0;
-SET iband = getBand(i_freq_eff, 26000000);
+SET i_freq_eff_nvss = 1400000000.0;
+SET iband = getBand(i_freq_eff_nvss, 26000000);
+{% endifdb %}
+
+
+{% ifdb postgresql %}
+DO $$
+DECLARE i_freq_eff_nvss DOUBLE PRECISION;
+DECLARE iband INT;
+DECLARE iname VARCHAR(50);
+BEGIN
+iname := 'NVSS';
+i_freq_eff_nvss := 1400000000.0;
+iband := getBand(i_freq_eff_nvss, 26000000);
+{% endifdb %}
+
 
 INSERT INTO catalog
   (name
@@ -17,37 +31,39 @@ VALUES
 ;
 
 CREATE TABLE aux_catalogedsource
-  (aviz_RAJ2000 DOUBLE
-  ,aviz_DEJ2000 DOUBLE
+  (aviz_RAJ2000 DOUBLE PRECISION
+  ,aviz_DEJ2000 DOUBLE PRECISION
   ,aorig_catsrcid INT
   ,afield VARCHAR(8)
-  ,axpos DOUBLE
-  ,aypos DOUBLE
+  ,axpos DOUBLE PRECISION
+  ,aypos DOUBLE PRECISION
   ,aname VARCHAR(14)
   ,aRAJ2000 VARCHAR(11)
   ,aDEJ2000 VARCHAR(11)
-  ,ae_RAJ2000 DOUBLE
-  ,ae_DEJ2000 DOUBLE
-  ,aS1400 DOUBLE
-  ,ae_S1400 DOUBLE
+  ,ae_RAJ2000 DOUBLE PRECISION
+  ,ae_DEJ2000 DOUBLE PRECISION
+  ,aS1400 DOUBLE PRECISION
+  ,ae_S1400 DOUBLE PRECISION
   ,al_MajAxis CHAR(1)
-  ,aMajAxis DOUBLE
+  ,aMajAxis DOUBLE PRECISION
   ,al_MinAxis CHAR(1)
-  ,aMinAxis DOUBLE
-  ,aPA DOUBLE
-  ,ae_MajAxis DOUBLE
-  ,ae_MinAxis DOUBLE 
-  ,ae_PA DOUBLE 
+  ,aMinAxis DOUBLE PRECISION
+  ,aPA DOUBLE PRECISION
+  ,ae_MajAxis DOUBLE PRECISION
+  ,ae_MinAxis DOUBLE PRECISION
+  ,ae_PA DOUBLE PRECISION
   ,af_resFlux VARCHAR(2)
-  ,aresFlux DOUBLE
-  ,apolFlux DOUBLE
-  ,apolPA DOUBLE
-  ,ae_polFlux DOUBLE
-  ,ae_polPA DOUBLE
+  ,aresFlux DOUBLE PRECISION
+  ,apolFlux DOUBLE PRECISION
+  ,apolPA DOUBLE PRECISION
+  ,ae_polFlux DOUBLE PRECISION
+  ,ae_polPA DOUBLE PRECISION
   ,aImage VARCHAR(5)
   ) 
 ;
 
+
+{% ifdb monetdb %}
 COPY 1773484 RECORDS
 INTO aux_catalogedsource
 FROM
@@ -55,6 +71,19 @@ FROM
 USING DELIMITERS ';', '\n'
 NULL AS ''
 ;
+{% endifdb %}
+
+
+{% ifdb postgresql %}
+COPY
+aux_catalogedsource
+FROM
+'%NVSS%'
+USING DELIMITERS ';'
+NULL AS ''
+;
+{% endifdb %}
+
 
 /* So we can put our FoV conditions in here...*/
 INSERT INTO catalogedsource
@@ -92,7 +121,7 @@ INSERT INTO catalogedsource
         ,CAST(FLOOR(aviz_DEJ2000) AS INTEGER)
         ,15 * ae_RAJ2000 * COS(RADIANS(aviz_DEJ2000))
         ,ae_DEJ2000 
-        ,i_freq_eff
+        ,i_freq_eff_nvss
         ,COS(RADIANS(aviz_DEJ2000)) * COS(RADIANS(aviz_RAJ2000))
         ,COS(RADIANS(aviz_DEJ2000)) * SIN(RADIANS(aviz_RAJ2000))
         ,SIN(RADIANS(aviz_DEJ2000))
@@ -113,3 +142,9 @@ INSERT INTO catalogedsource
 
 DROP TABLE aux_catalogedsource;
 
+
+
+{% ifdb postgresql %}
+END;
+$$;
+{% endifdb %}

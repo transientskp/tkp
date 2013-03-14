@@ -36,28 +36,15 @@ CREATE FUNCTION insertImage(idataset INT
 
 {% ifdb postgresql %}
 AS $$
-{% endifdb %}
-
-{% ifdb monetdb %}
-BEGIN
-{% endifdb %}
-
   DECLARE iimageid INT;
   DECLARE oimageid INT;
   DECLARE iband SMALLINT;
   DECLARE itau INT;
   DECLARE iskyrgn INT;
 
-{% ifdb postgresql %}
 BEGIN
   iband := getBand(ifreq_eff, ifreq_bw);
   iskyrgn := getSkyRgn(idataset, icentre_ra, icentre_decl, ixtr_radius);
-{% endifdb %}
-
-{% ifdb monetdb %}
-  SET iband = getBand(ifreq_eff, ifreq_bw);
-  SET iskyrgn = getSkyRgn(idataset, icentre_ra, icentre_decl, ixtr_radius);
-{% endifdb %}
 
   INSERT INTO image
     (dataset
@@ -95,6 +82,60 @@ BEGIN
 
 END;
 
-{% ifdb postgresql %}
 $$ LANGUAGE plpgsql;
+{% endifdb %}
+
+
+{% ifdb monetdb %}
+BEGIN
+
+  DECLARE iimageid INT;
+  DECLARE oimageid INT;
+  DECLARE iband SMALLINT;
+  DECLARE itau INT;
+  DECLARE iskyrgn INT;
+
+  SET iband = getBand(ifreq_eff, ifreq_bw);
+  SET iskyrgn = getSkyRgn(idataset, icentre_ra, icentre_decl, ixtr_radius);
+
+  SELECT NEXT VALUE FOR seq_image INTO iimageid;
+
+  INSERT INTO image
+    (id
+    ,dataset
+    ,band
+    ,tau_time
+    ,freq_eff
+    ,freq_bw
+    ,taustart_ts
+    ,skyrgn
+    ,rb_smaj
+    ,rb_smin
+    ,rb_pa
+    ,deltax
+    ,deltay
+    ,url
+    )
+  VALUES
+    (iimageid
+    ,idataset
+    ,iband
+    ,itau_time
+    ,ifreq_eff
+    ,ifreq_bw
+    ,itaustart_ts
+    ,iskyrgn
+    ,irb_smaj
+    ,irb_smin
+    ,irb_pa
+    ,ideltax
+    ,ideltay
+    ,iurl
+    )
+  ;
+
+  SET oimageid = iimageid;
+  RETURN oimageid;
+
+END;
 {% endifdb %}

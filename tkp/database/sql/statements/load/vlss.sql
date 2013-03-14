@@ -1,16 +1,34 @@
+
+-- postgresql only support procedural code inside a DO statement
+{% ifdb monetdb %}
 DECLARE i_freq_eff DOUBLE PRECISION;
 DECLARE iband INT;
 DECLARE iname VARCHAR(50);
-
-SET iname = 'VLSS'; 
+SET iname = 'VLSS';
 SET i_freq_eff = 73800000;
 SET iband = getBand(i_freq_eff,1600000);
+{% endifdb %}
+
+
+
+{% ifdb postgresql %}
+DO $$
+DECLARE i_freq_eff DOUBLE PRECISION;
+DECLARE iband INT;
+DECLARE iname VARCHAR(50);
+BEGIN
+
+iname  := 'VLSS';
+i_freq_eff := 73800000;
+iband := getBand(i_freq_eff,1600000);
+{% endifdb %}
+
 
 INSERT INTO catalog
   (name
   ,fullname
-  ) 
-VALUES 
+  )
+VALUES
   (iname
   ,'The VLA Low-frequency Sky Survey at 73.8MHz, The VLSS Catalog, Version 2007-06-26'
   )
@@ -42,6 +60,8 @@ CREATE TABLE aux_catalogedsource
   )
 ;
 
+-- copy syntax differs between monetdb and postgresql
+{% ifdb monetdb %}
 COPY 68311 RECORDS
 INTO aux_catalogedsource
 FROM
@@ -49,6 +69,19 @@ FROM
 USING DELIMITERS ';', '\n'
 NULL AS ''
 ;
+{% endifdb %}
+
+
+{% ifdb postgresql %}
+COPY aux_catalogedsource
+FROM
+'%VLSS%'
+WITH
+  DELIMITER ';'
+  NULL AS ''
+;
+{% endifdb %}
+
 
 /* So we can put our FoV conditions in here...*/
 INSERT INTO catalogedsource
@@ -83,7 +116,7 @@ INSERT INTO catalogedsource
         ,aviz_DEJ2000
         ,CAST(FLOOR(aviz_DEJ2000) AS INTEGER)
         ,15 * ae_RAJ2000 * COS(RADIANS(aviz_DEJ2000))
-        ,ae_DEJ2000 
+        ,ae_DEJ2000
         ,i_freq_eff
         ,COS(RADIANS(aviz_DEJ2000)) * COS(RADIANS(aviz_RAJ2000))
         ,COS(RADIANS(aviz_DEJ2000)) * SIN(RADIANS(aviz_RAJ2000))
@@ -104,3 +137,8 @@ INSERT INTO catalogedsource
 
 DROP TABLE aux_catalogedsource;
 
+
+{% ifdb postgresql %}
+END;
+$$;
+{% endifdb %}

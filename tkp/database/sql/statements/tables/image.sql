@@ -1,6 +1,16 @@
+{% ifdb monetdb %}
+CREATE SEQUENCE seq_image AS INTEGER;
+CREATE TABLE image
+  (id INTEGER NOT NULL DEFAULT NEXT VALUE FOR seq_image
+{% endifdb %}
 
-CREATE TABLE image 
+
+{% ifdb postgresql %}
+CREATE TABLE image
   (id SERIAL
+{% endifdb %}
+
+
   ,dataset INT NOT NULL
   ,tau INT NULL
   ,band SMALLINT NOT NULL
@@ -20,9 +30,7 @@ CREATE TABLE image
   ,url VARCHAR(1024) NULL
   ,node SMALLINT NOT NULL DEFAULT %NODE%
   ,nodes SMALLINT NOT NULL DEFAULT %NODES%
-{% ifdb postgresql %}
   ,PRIMARY KEY (id)
-{% endifdb %}
   ,FOREIGN KEY (dataset) REFERENCES dataset (id)
   ,FOREIGN KEY (band) REFERENCES frequencyband (id)
   ,FOREIGN KEY (skyrgn) REFERENCES skyregion (id)

@@ -1,8 +1,20 @@
-DECLARE i_freq_eff DOUBLE;
+{% ifdb monetdb %}
+DECLARE i_freq_eff DOUBLE PRECISION;
 DECLARE iband INT;
 DECLARE iname VARCHAR(50);
-
 SET iname = 'EXO';
+{% endifdb %}
+
+
+{% ifdb postgresql %}
+DO $$
+DECLARE i_freq_eff DOUBLE PRECISION;
+DECLARE iband INT;
+DECLARE iname VARCHAR(50);
+BEGIN
+iname := 'EXO';
+{% endifdb %}
+
 
 INSERT INTO catalog
   (name
@@ -26,13 +38,27 @@ CREATE TABLE aux_catalogedsource
   ) 
 ;
 
+{% ifdb monetdb %}
 COPY 473 RECORDS
 INTO aux_catalogedsource
-FROM 
+FROM
 '%EXO%'
 USING DELIMITERS ';', '\n', '"'
 NULL AS '""'
 ;
+{% endifdb %}
+
+
+{% ifdb postgresql %}
+COPY
+aux_catalogedsource
+FROM 
+'%EXO%'
+USING DELIMITERS ';'
+NULL AS '""'
+;
+{% endifdb %}
+
 
 INSERT INTO catalogedsource
   (catalog
@@ -56,16 +82,18 @@ INSERT INTO catalogedsource
         ,aorig_catsrcname 
         ,0
         ,0
-        ,CAST(FLOOR(aDEJ2000) AS INTEGER)
-        ,CAST(aRAJ2000 AS DOUBLE)
-        ,CAST(aDEJ2000 AS DOUBLE)
-        ,CAST(ae_RAJ2000 AS DOUBLE)
-        ,CAST(ae_DEJ2000 AS DOUBLE)
-        ,COS(RADIANS(CAST(aDEJ2000 AS DOUBLE))) * COS(RADIANS(CAST(aRAJ2000 AS DOUBLE)))
-        ,COS(RADIANS(CAST(aDEJ2000 AS DOUBLE))) * SIN(RADIANS(CAST(aRAJ2000 AS DOUBLE)))
-        ,SIN(RADIANS(CAST(aDEJ2000 AS DOUBLE)))
-        ,CAST(aFlux AS DOUBLE)
-        ,CAST(aFlux_err AS DOUBLE)
+        ,CAST(FLOOR(CAST(aDEJ2000 AS DOUBLE PRECISION)) AS INTEGER)
+        ,CAST(aRAJ2000 AS DOUBLE PRECISION)
+        ,CAST(aDEJ2000 AS DOUBLE PRECISION)
+        ,CAST(ae_RAJ2000 AS DOUBLE PRECISION)
+        ,CAST(ae_DEJ2000 AS DOUBLE PRECISION)
+        ,COS(RADIANS(CAST(aDEJ2000 AS DOUBLE PRECISION))) *
+                          COS(RADIANS(CAST(aRAJ2000 AS DOUBLE PRECISION)))
+        ,COS(RADIANS(CAST(aDEJ2000 AS DOUBLE PRECISION))) *
+                          SIN(RADIANS(CAST(aRAJ2000 AS DOUBLE PRECISION)))
+        ,SIN(RADIANS(CAST(aDEJ2000 AS DOUBLE PRECISION)))
+        ,CAST(aFlux AS DOUBLE PRECISION)
+        ,CAST(aFlux_err AS DOUBLE PRECISION)
     FROM aux_catalogedsource c1
         ,catalog c0
    WHERE c0.name = iname
@@ -73,3 +101,9 @@ INSERT INTO catalogedsource
 
 DROP TABLE aux_catalogedsource;
 
+
+
+{% ifdb postgresql %}
+END;
+$$;
+{% endifdb %}

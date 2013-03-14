@@ -16,6 +16,7 @@ CREATE FUNCTION insertDataset(idescription VARCHAR(100)) RETURNS INT
 
 {% ifdb monetdb %}
 BEGIN
+
   DECLARE idsid INT;
   DECLARE odsid INT;
   DECLARE irerun INT;

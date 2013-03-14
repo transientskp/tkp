@@ -19,17 +19,54 @@
  *}     for even faster load.                                         |
  *+-------------------------------------------------------------------+
  */
-DECLARE ifreq_eff_main, ifreq_eff_pole DOUBLE;
-DECLARE iband_main, iband_pole INT;
-DECLARE iname_main, iname_pole VARCHAR(50);
 
+{% ifdb monetdb %}
+DECLARE ifreq_eff_main DOUBLE PRECISION;
+DECLARE ifreq_eff_pole DOUBLE PRECISION;
+DECLARE iband_main INT;
+DECLARE iband_pole INT;
+DECLARE iname_main VARCHAR(50);
+DECLARE iname_pole VARCHAR(50);
 /*see Rengelink et al.(1997) Eq.9*/
-DECLARE C1_sq, C2_sq DOUBLE;
+DECLARE C1_sq DOUBLE PRECISION;
+DECLARE C2_sq  DOUBLE PRECISION;
+
 SET C1_sq = 0.0016;
 SET C2_sq = 1.69;
-
 SET iname_main = 'WENSSm';
 SET iname_pole = 'WENSSp';
+SET ifreq_eff_main = 325000000.0;
+SET iband_main = getBand(ifreq_eff_main, 10000000);
+SET ifreq_eff_pole = 352000000.0;
+SET iband_pole = getBand(ifreq_eff_pole, 20000000);
+{% endifdb %}
+
+
+{% ifdb postgresql %}
+DO $$
+
+DECLARE ifreq_eff_main DOUBLE PRECISION;
+DECLARE ifreq_eff_pole DOUBLE PRECISION;
+DECLARE iband_main INT;
+DECLARE iband_pole INT;
+DECLARE iname_main VARCHAR(50);
+DECLARE iname_pole VARCHAR(50);
+/*see Rengelink et al.(1997) Eq.9*/
+DECLARE C1_sq DOUBLE PRECISION;
+DECLARE C2_sq  DOUBLE PRECISION;
+
+BEGIN
+
+C1_sq := 0.0016;
+C2_sq := 1.69;
+iname_main := 'WENSSm';
+iname_pole := 'WENSSp';
+ifreq_eff_main := 325000000.0;
+iband_main := getBand(ifreq_eff_main, 10000000);
+ifreq_eff_pole := 352000000.0;
+iband_pole := getBand(ifreq_eff_pole, 20000000);
+{% endifdb %}
+
 
 INSERT INTO catalog
   (name
@@ -45,14 +82,11 @@ VALUES
   )
 ;
 
-SET ifreq_eff_main = 325000000.0;
-SET iband_main = getBand(ifreq_eff_main, 10000000);
-SET ifreq_eff_pole = 352000000.0;
-SET iband_pole = getBand(ifreq_eff_pole, 20000000);
+
 
 CREATE TABLE aux_catalogedsource
-  (aviz_RAJ2000 DOUBLE
-  ,aviz_DEJ2000 DOUBLE
+  (aviz_RAJ2000 DOUBLE PRECISION
+  ,aviz_DEJ2000 DOUBLE PRECISION
   ,aorig_catsrcid INT
   ,aname VARCHAR(16)
   ,af_name VARCHAR(8)
@@ -62,22 +96,35 @@ CREATE TABLE aux_catalogedsource
   ,adummy2 VARCHAR(20)
   ,aflg1 VARCHAR(2)
   ,aflg2 VARCHAR(1)
-  ,a_I DOUBLE
-  ,a_S DOUBLE
-  ,amajor DOUBLE
-  ,aminor DOUBLE
-  ,aPA DOUBLE
-  ,arms DOUBLE
+  ,a_I DOUBLE PRECISION
+  ,a_S DOUBLE PRECISION
+  ,amajor DOUBLE PRECISION
+  ,aminor DOUBLE PRECISION
+  ,aPA DOUBLE PRECISION
+  ,arms DOUBLE PRECISION
   ,aframe VARCHAR(20)
   )
 ;
 
+
+{% ifdb monetdb %}
 COPY 229420 RECORDS 
 INTO aux_catalogedsource
 FROM
 '%WENSS%'
 USING DELIMITERS ';', '\n' 
 ;
+{% endifdb %}
+
+
+{% ifdb postgresql %}
+COPY aux_catalogedsource
+FROM
+'%WENSS%'
+USING DELIMITERS ';'
+;
+{% endifdb %}
+
 
 /* First, we will insert the main catalog */
 INSERT INTO catalogedsource
@@ -234,3 +281,8 @@ INSERT INTO catalogedsource
 
 DROP TABLE aux_catalogedsource;
 
+
+{% ifdb postgresql %}
+END;
+$$;
+{% endifdb %}

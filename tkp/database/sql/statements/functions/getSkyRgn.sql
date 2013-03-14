@@ -16,20 +16,12 @@ CREATE FUNCTION getSkyRgn(idataset INTEGER, icentre_ra DOUBLE PRECISION,
                           ixtr_radius DOUBLE PRECISION)
 RETURNS INT
 
-{% ifdb monetdb %}
-BEGIN
-  DECLARE nskyrgn INT;
-  DECLARE oskyrgnid INT;
-  DECLARE dummy DOUBLE PRECISION;
-{% endifdb %}
-
 {% ifdb postgresql %}
 AS $$
   DECLARE nskyrgn INT;
   DECLARE oskyrgnid INT;
   DECLARE dummy DOUBLE PRECISION;
 BEGIN
-{% endifdb %}
 
   SELECT COUNT(*)
     INTO nskyrgn
@@ -82,6 +74,68 @@ BEGIN
 
 END;
 
-{% ifdb postgresql %}
 $$ LANGUAGE plpgsql;
+{% endifdb %}
+
+
+
+{% ifdb monetdb %}
+BEGIN
+
+  DECLARE nskyrgn INT;
+  DECLARE oskyrgnid INT;
+
+  SELECT COUNT(*)
+    INTO nskyrgn
+    FROM skyregion
+   WHERE dataset = idataset
+     AND centre_ra = icentre_ra
+     AND centre_decl = icentre_decl
+     AND xtr_radius = ixtr_radius
+  ;
+
+  IF nskyrgn = 1 THEN
+    SELECT id
+      INTO oskyrgnid
+      FROM skyregion
+     WHERE dataset = idataset
+	   AND centre_ra = icentre_ra
+	   AND centre_decl = icentre_decl
+	   AND xtr_radius = ixtr_radius
+    ;
+  ELSE
+    SELECT NEXT VALUE FOR seq_skyregion INTO oskyrgnid;
+
+    INSERT INTO skyregion
+      (id
+      ,dataset
+      ,centre_ra
+      ,centre_decl
+      ,xtr_radius
+      ,x
+      ,y
+      ,z
+      )
+    SELECT oskyrgnid
+	      ,idataset
+	      ,icentre_ra
+	      ,icentre_decl
+	      ,ixtr_radius
+	      ,cart.x
+	      ,cart.y
+	      ,cart.z
+    FROM (SELECT *
+		  FROM cartesian(icentre_ra,icentre_decl)
+		  ) cart
+    ;
+
+  DECLARE dummy DOUBLE;
+  SELECT updateSkyRgnMembers(oskyrgnid)
+  	INTO dummy;
+
+  END IF;
+
+  RETURN oskyrgnid;
+
+END;
 {% endifdb %}

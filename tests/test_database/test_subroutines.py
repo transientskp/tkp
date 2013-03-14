@@ -21,7 +21,7 @@ class TestCartesianConversions(unittest.TestCase):
         ( (ra, decl), (x,y,z) )
     """
     def setUp(self):
-        self.db = tkpdb.DataBase()
+        self.db = tkpdb.Database()
 
     def test_known_results(self):
         pole_results = ((0.0, 90.0),

@@ -39,7 +39,7 @@ doc test (since the database value can differ, and thus the test would
 fail)::
 
     # database sets up and holds the connection to the actual database
-    >>> database = tkp.database.database.DataBase()
+    >>> database = tkp.database.database.Database()
 
     # Each object type takes a data dictionary on creation, which for newly objects
     # has some required keys (& values). For a DataSet, this is only 'description';
@@ -119,7 +119,7 @@ import logging
 
 import monetdb.sql as db
 
-from tkp.database.database import ENGINE
+#from tkp.database.database import ENGINE
 from tkp.database.generic import columns_from_table, set_columns_for_table
 from tkp.database.general import insert_dataset, insert_image,\
     insert_extracted_sources, lightcurve
@@ -127,7 +127,7 @@ from tkp.database.monitoringlist import add_manual_entry_to_monitoringlist
 from tkp.database.associations import associate_extracted_sources
 import tkp.database
 import tkp.database.quality
-from tkp.database.database import DataBase
+from tkp.database.database import Database
 
 
 logger = logging.getLogger(__name__)
@@ -189,10 +189,11 @@ class DBObject(object):
         """Obtain the 'name' attribute, where 'name' is a database column name"""
         # Get here when 'name' is not found as attribute
         # That likely means it is stored in self._data
-        try:
-            return self._data[name]
-        except KeyError:
-            raise AttributeError("attribute '%s' not found" % name)
+        return self._data[name]
+        #try:
+        #
+        #except KeyError:
+        #    raise AttributeError("attribute '%s' not found" % name)
         
     @property
     def id(self):
@@ -209,8 +210,8 @@ class DBObject(object):
             query = ("INSERT INTO " + self.TABLE + " (" +
                      ", ".join(self._data.iterkeys()) + ") VALUES (" +
                      ", ".join(["%s"] * len(self._data)) + ")")
-            if ENGINE == 'postgresql':
-                query += " RETURNING " + self.ID
+            #if ENGINE == 'postgresql':
+            #    query += " RETURNING " + self.ID
             values = tuple(self._data.itervalues())
             cursor = self.database.cursor
             try:
@@ -219,8 +220,8 @@ class DBObject(object):
                 if not self.database.autocommit:
                     self.database.connection.commit()
                 self._id = cursor.lastrowid
-                if ENGINE == 'postgresql':
-                    self._id = cursor.fetchone()[0]
+                #if ENGINE == 'postgresql':
+                #    self._id = cursor.fetchone()[0]
             except self.database.Error:
                 logger.warn("insertion into database failed: %s",
                              (query % values))
@@ -290,7 +291,7 @@ class DataSet(DBObject):
             data=data, database=database, id=id)
         self.images = set()
         if not self.database:
-            self.database = DataBase()
+            self.database = Database()
         self._init_data()
 
     def __str__(self):
@@ -383,7 +384,7 @@ class Image(DBObject):
             self._data.setdefault('dataset', self.dataset.id)
         self.sources = set()
         if not self.database:
-            self.database = DataBase()
+            self.database = Database()
         self._init_data()
         if not self.dataset:
             self.dataset = DataSet(id=self._data['dataset'], database=self.database)
@@ -515,7 +516,7 @@ class ExtractedSource(DBObject):
             self._data.setdefault('image', self.image.id)
         if not self.database:
             raise ValueError(
-                "can't create ExtractedSource object without a DataBase() object")
+                "can't create ExtractedSource object without a Database() object")
         self._init_data()
 
     def lightcurve(self):

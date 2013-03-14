@@ -137,7 +137,9 @@ class TestManagement(unittest.TestCase):
         #tkp.management.runlocal_job(job_name, debug=True)
 
     def test_clean_job(self):
-        tkp.management.clean_job(job_name)
+        namespace = argparse.Namespace()
+        namespace.name = job_name
+        tkp.management.clean_job(namespace)
 
     def test_info_job(self):
         t = tempfile.mkdtemp()

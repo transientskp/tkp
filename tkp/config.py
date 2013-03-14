@@ -9,16 +9,6 @@ The module also tries to read (in order):
 
 - a :file:`.tkp.cfg` file in the users home directory,
 
-where parameters can be overriden (such as the database login details).
-
-There are three sections in the configuration:
-
-- database
-
-- source_association
-
-- source_extraction
-
 The parameters are stored in a dictionary, with each section as keyword.
 Each value in itself is another dictionary, with (option, value) pairs.
 
@@ -93,16 +83,6 @@ def set_default_config():
     """Set up the default configuration"""
 
     config = ConfigParser.SafeConfigParser()
-
-    config.add_section('database')
-    config.set('database', 'enabled', 'True')
-    config.set('database', 'host', 'localhost')
-    config.set('database', 'name', 'tkp')
-    config.set('database', 'user', 'tkp')
-    config.set('database', 'password', 'tkp')
-    config.set('database', 'port', '0')
-    config.set('database', 'autocommit', 'False')
-    config.set('database', 'engine', 'monetdb')
 
     config.add_section('mongodb')
     config.set('mongodb', 'enabled', 'False')
@@ -187,10 +167,8 @@ def parse_config(config):
     # On to do list: create an inherited configparser that stores a type with
     # the options, and then does the parsing behind the scenes
     configuration = dict(database={})
-    booleans = (('database', 'enabled'), ('database', 'autocommit'),
-                ('mongodb', 'enabled'))
-    integers = (('database', 'port'),
-                ('alerts', 'port'),
+    booleans = (('mongodb', 'enabled'),)
+    integers = (('alerts', 'port'),
                 ('test', 'max_duration'),
                 ('mongodb', 'port')
                 )
@@ -218,9 +196,6 @@ def parse_config(config):
             raise ValueError(
         "incorrect type for option %s in section %s; must be a real number" %
         (option, section))
-    if configuration['database']['engine'] == 'postgresql':
-        # PostgreSQL does not have autocommit
-        configuration['database']['autocommit'] = False
     return configuration
 
 

@@ -3,10 +3,10 @@ import datetime
 import unittest2 as unittest
 
 from tkp.testutil.decorators import requires_database
-from tkp.database import DataSet
-from tkp.database import DataBase
-from tkp.database import Image
-from tkp.database import ExtractedSource
+import tkp.database
+from tkp.database.orm import DataSet, Image
+from tkp.database.database import Database
+from tkp.database.orm import ExtractedSource
 
 # We're cheating here: a unit test shouldn't really depend on an
 # external dependency like the database being up and running
@@ -14,19 +14,18 @@ from tkp.database import ExtractedSource
 class TestDataSet(unittest.TestCase):
 
     def setUp(self):
-        self.database = DataBase()
+        self.database = Database()
 
     def tearDown(self):
-        self.database.close()
+        tkp.database.rollback()
 
     @requires_database()
     def test_create(self):
         """Create a new dataset, and retrieve it"""
-        dataset1 = DataSet(data={'description': 'dataset 1'},
-                           database=self.database)
+        dataset1 = DataSet(data={'description': 'dataset 1'})
         # The name for the following dataset will be ignored, and set
         # to the name of the dataset with dsid = dsid
-        dataset2 = DataSet(database=self.database, id=dataset1.id)
+        dataset2 = DataSet(id=dataset1.id)
         # update some stuff
         dataset2.update()
         self.assertEqual(dataset2.description, "dataset 1")
@@ -39,16 +38,14 @@ class TestDataSet(unittest.TestCase):
         self.assertEqual(dataset2.description, "dataset 1")
         self.assertEqual(dataset2.id, dataset1.id)
         # 'data' is ignored if dsid is given:
-        dataset3 = DataSet(data={'description': 'dataset 3'},
-                           id=dataset1.id, database=self.database)
+        dataset3 = DataSet(data={'description': 'dataset 3'}, id=dataset1.id)
         self.assertEqual(dataset3.description, "dataset 1")
         self.assertEqual(dataset3.id, dataset1.id)
 
     @requires_database()
     def test_update(self):
         """Update all or individual dataset columns"""
-        dataset1 = DataSet(data={'description': 'dataset 1'},
-                            database=self.database)
+        dataset1 = DataSet(data={'description': 'dataset 1'}, )
         self.assertEqual(dataset1.description, "dataset 1")
         dataset1.update(rerun=5, description="new dataset")
         self.database.cursor.execute(
@@ -64,10 +61,10 @@ class TestImage(unittest.TestCase):
 
     def setUp(self):
         import tkp.database.database
-        self.database = tkp.database.database.DataBase()
+        self.database = tkp.database.database.Database()
 
     def tearDown(self):
-        self.database.close()
+        tkp.database.rollback()
 
     @requires_database()
     def test_create(self):
@@ -165,10 +162,10 @@ class TestExtractedSource(unittest.TestCase):
     
     def setUp(self):
         import tkp.database.database
-        self.database = tkp.database.database.DataBase()
+        self.database = tkp.database.database.Database()
 
     def tearDown(self):
-        self.database.close()
+        tkp.database.rollback()
 
     @requires_database()
     def test_create(self):

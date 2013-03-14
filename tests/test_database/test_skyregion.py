@@ -21,7 +21,7 @@ class TestSkyRegionBasics(unittest.TestCase):
         conversely a new region results in a new skyrgn entry.
 
         """
-        self.database = tkpdb.DataBase()
+        self.database = tkpdb.Database()
         db_subs.delete_test_database(self.database)
 
         self.dataset = tkpdb.DataSet(database=self.database,
@@ -70,7 +70,7 @@ class TestSkyRegionAssociation(unittest.TestCase):
 
     @requires_database()
     def setUp(self):
-        self.database = tkpdb.DataBase()
+        self.database = tkpdb.Database()
         self.dataset = tkpdb.DataSet(database=self.database,
                 data={'description': "Skyrgn:" + self._testMethodName})
 
@@ -191,7 +191,7 @@ class TestOneToManyAssocUpdates(unittest.TestCase):
 
     @requires_database()
     def setUp(self):
-        self.database = tkpdb.DataBase()
+        self.database = tkpdb.Database()
         self.dataset = tkpdb.DataSet(database=self.database,
                 data={'description': "Skyrgn:" + self._testMethodName})
 #    @unittest.skip("Skipping")
@@ -234,7 +234,7 @@ class TestTransientExclusion(unittest.TestCase):
 
     @requires_database()
     def setUp(self):
-        self.database = tkpdb.DataBase()
+        self.database = tkpdb.Database()
         self.dataset = tkpdb.DataSet(database=self.database,
                 data={'description': "Skyrgn:" + self._testMethodName})
 

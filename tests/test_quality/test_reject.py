@@ -10,13 +10,14 @@ from tkp.testutil import db_subs
 class TestReject(unittest.TestCase):
     @requires_database()
     def setUp(self):
-        self.database = tkp.database.DataBase()
         self.fake_images = db_subs.example_dbimage_datasets(n_images=1)
         self.dataset = tkp.database.DataSet(data={'description':
-                                                  "Reject:" + self._testMethodName},
-                                            database=self.database)
+                                                  "Reject:" + self._testMethodName})
         self.image = tkp.database.Image(data=self.fake_images[0],
                                         dataset=self.dataset)
+
+    def tearDown(self):
+        tkp.database.rollback()
 
     def test_rejectrms(self):
         tkp.database.quality.unreject(self.image.id)
@@ -38,6 +39,7 @@ class TestReject(unittest.TestCase):
     def test_unknownreason(self):
         self.assertRaises(monetdb.exceptions.OperationalError,
               tkp.database.quality.reject, self.image.id, 666666, "bad reason")
+        tkp.database.rollback()
 
     def test_isrejected(self):
         tkp.database.quality.unreject(self.image.id)

@@ -223,11 +223,11 @@ class TestOne2Many(unittest.TestCase):
     @requires_database()
     def setUp(self):
 
-        self.database = tkpdb.DataBase()
+        self.database = tkpdb.Database()
 
     def tearDown(self):
         """remove all stuff after the test has been run"""
-        self.database.close()
+        tkpdb.rollback()
 
     def test_one2many(self):
         dataset = tkpdb.DataSet(database=self.database, data={'description': 'assoc test set: 1-n'})
@@ -421,11 +421,11 @@ class TestMany2One(unittest.TestCase):
     @requires_database()
     def setUp(self):
 
-        self.database = tkpdb.DataBase()
+        self.database = tkpdb.Database()
 
     def tearDown(self):
         """remove all stuff after the test has been run"""
-        self.database.close()
+        tkpdb.rollback()
 
     def test_many2one(self):
         dataset = tkpdb.DataSet(database=self.database, data={'description': 'assoc test set: n-1'})
@@ -577,11 +577,11 @@ class TestMany2Many(unittest.TestCase):
     @requires_database()
     def setUp(self):
 
-        self.database = tkpdb.DataBase()
+        self.database = tkpdb.Database()
 
     def tearDown(self):
         """remove all stuff after the test has been run"""
-        self.database.close()
+        tkpdb.rollback()
 
     def test_many2many(self):
         dataset = tkpdb.DataSet(database=self.database, data={'description': 'assoc test set: n-m'})

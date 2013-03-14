@@ -1,6 +1,6 @@
 import logging
 from lofarpipe.support.parset import parameterset
-from tkp.database.database import DataBase
+from tkp.database.database import Database
 from tkp.quality.restoringbeam import beam_invalid
 from tkp.quality.rms import rms_invalid
 from tkp.quality.statistics import rms_with_clipped_subregion

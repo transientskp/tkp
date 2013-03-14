@@ -12,10 +12,11 @@ import tkp.database.transients as dbtransients
 
 class TestLightCurve(unittest.TestCase):
     def setUp(self):
-        self.database = tkp.database.DataBase()
+        self.database = tkp.database.Database()
         self.dataset = DataSet(data={'description': 'dataset with images'}, database=self.database)
+
     def tearDown(self):
-        self.database.close()
+        tkp.database.rollback()
 
     @requires_database()
     def test_lightcurve(self):

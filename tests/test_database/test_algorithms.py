@@ -1,27 +1,22 @@
 import unittest2 as unittest
-import tkp.database as tkpdb
+from tkp.database.orm import DataSet, Image
+import tkp.database
 from tkp.testutil.decorators import requires_database
 from tkp.testutil import db_subs
 from tkp.database.generic import columns_from_table
 
+
 class TestSourceAssociation(unittest.TestCase):
     @requires_database()
     def setUp(self):
-    
-        self.database = tkpdb.DataBase()
-#        Often fixes things if the database is playing up:
-        #db_subs.delete_test_database(self.database)
-        self.dataset = tkpdb.DataSet(data={'description':"Src. assoc:"+self._testMethodName},
-                                                    database = self.database)
+        self.dataset = DataSet(data={'description': "Src. assoc:" +
+                                                    self._testMethodName})
         
         self.im_params = db_subs.example_dbimage_datasets(n_images=8)
         self.db_imgs=[]
 
     def tearDown(self):
-        """remove all stuff after the test has been run"""
-        #self.database.connection.rollback()
-        #db_subs.delete_test_database(self.database) ##Run this if needed?
-        self.database.close()
+        tkp.database.rollback()
 
         
     def test_null_case_sequential(self):
@@ -32,7 +27,7 @@ class TestSourceAssociation(unittest.TestCase):
         
         """
         for im in self.im_params:
-            self.db_imgs.append( tkpdb.Image( data=im, dataset=self.dataset) )
+            self.db_imgs.append(Image( data=im, dataset=self.dataset))
             self.db_imgs[-1].insert_extracted_sources([])
             self.db_imgs[-1].associate_extracted_sources(deRuiter_r=3.7)
             running_cat = columns_from_table(table="runningcatalog",
@@ -59,7 +54,7 @@ class TestSourceAssociation(unittest.TestCase):
         first_epoch = True
         extracted_source_ids=[]
         for im in self.im_params:
-            self.db_imgs.append( tkpdb.Image( data=im, dataset=self.dataset) )
+            self.db_imgs.append( Image( data=im, dataset=self.dataset) )
             last_img =self.db_imgs[-1] 
             
             if first_epoch:
@@ -117,7 +112,7 @@ class TestSourceAssociation(unittest.TestCase):
         first_image = True
         fixed_src_runcat_id = None
         for im in self.im_params:
-            self.db_imgs.append( tkpdb.Image( data=im, dataset=self.dataset) )
+            self.db_imgs.append( Image( data=im, dataset=self.dataset) )
             last_img =self.db_imgs[-1]
             last_img.insert_extracted_sources([db_subs.example_extractedsource_tuple()])
             last_img.associate_extracted_sources(deRuiter_r=3.7)

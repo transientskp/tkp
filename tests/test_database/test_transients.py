@@ -9,9 +9,9 @@ from tkp.testutil.decorators import requires_database
 class TestTransientBasics(unittest.TestCase):
     @requires_database()
     def setUp(self):
-        self.database = tkpdb.DataBase()
+        self.database = tkpdb.Database()
     def tearDown(self):
-        self.database.close()
+        tkpdb.rollback()
 
     def test_single_band_transient_search(self):
         """test_single_band_transient_search
@@ -116,7 +116,7 @@ class TestTransientBasics(unittest.TestCase):
 class TestTransientRoutines(unittest.TestCase):
     @requires_database()
     def setUp(self):
-        self.database = tkpdb.DataBase()
+        self.database = tkpdb.Database()
         self.dataset = tkpdb.DataSet(data={'description':"Trans:" +
                                                         self._testMethodName},
                                     database=self.database)
@@ -139,7 +139,7 @@ class TestTransientRoutines(unittest.TestCase):
             self.db_imgs[i].associate_extracted_sources(deRuiter_r=3.7)
 
     def tearDown(self):
-        self.database.close()
+        tkpdb.rollback()
 
     def test_full_transient_search_routine(self):
         bands = self.dataset.frequency_bands()
@@ -163,7 +163,6 @@ class TestTransientRoutines(unittest.TestCase):
         cursor = self.database.connection.cursor()
         cursor.execute(qry, {'dsid':self.dataset.id})
         transient_table_entries = get_db_rows_as_dicts(cursor)
-        cursor.close()
         self.assertEqual(len(transient_table_entries), len(transients))
 #        for t in all_transients:    
 #            print "V_int:", t['v_int'], "  eta_int:", t['eta_int']

@@ -17,18 +17,18 @@ main three modules are:
 Database
 ========
 
-The database module provides a single class, :py:class:`DataBase`, which takes
+The database module provides a single class, :py:class:`Database`, which takes
 care of the connection to the database. It provides a `connection` and
 a `cursor` object to the database, as well as a few shortcut utility functions
 for executing SQL queries.
 
-The most typical use for the :py:class:`DataBase` class is something as follows,
+The most typical use for the :py:class:`Database` class is something as follows,
 assuming the default login settings (taking from the tkp configuration file)
 are appropriate::
 
     from contextlib import closing
 
-    with closing(DataBase()) as database:
+    with closing(Database()) as database:
         database.execute(<sql query>, <args>)
         results = database.fetchall()
         # or, more explicity:
@@ -76,10 +76,10 @@ The utils module contains the actual SQL queries used for the various database
 routines, such as source insertion, source association, keeping track of the
 monitoring list, etcetera. All functions and queries within each function
 follow a fixed pattern: functions accept a connection object (e.g.
-DataBase().connection), and each query is executed within a try-except block in
+Database().connection), and each query is executed within a try-except block in
 case the database raises an error. There is some overhead in the sense that
 a cursor is created within each function (instead of using the
-DataBase().cursor object), but other than that, the routines in utils provide
+Database().cursor object), but other than that, the routines in utils provide
 the fastest and most direct interaction with the database.
 
 Several functions are called from methods of the classes in the dataset module,

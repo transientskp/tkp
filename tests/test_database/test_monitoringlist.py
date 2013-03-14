@@ -15,11 +15,10 @@ class TestIntermittentToMonitorlist(unittest.TestCase):
     """
     @requires_database()
     def setUp(self):
-
-        self.database = tkpdb.DataBase()
+        self.database = tkpdb.Database()
 
     def tearDown(self):
-        self.database.close()
+        tkpdb.rollback()
 
     def test_intermittentToMonitorlist(self):
         dataset = tkpdb.DataSet(database=self.database, data={'description': "Monlist:" + self._testMethodName})

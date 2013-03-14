@@ -7,7 +7,7 @@ If the database is not available or the database module cannot be
 imported, functions will silently return None.
 """
 
-from tkp.database.database import DataBase
+from tkp.database.database import Database
 from tkp.database.general import match_nearests_in_catalogs
 
 
@@ -26,7 +26,7 @@ def match_catalogs(transient):
     # Hardcode the catalogs for now
     #catalogs = {3: 'NVSS', 4: 'VLSS', 5: 'WENSS', 6: 'WENSS'} 
     # We check for all catalogs in the db (VLSS, WENSSm, WENSSp, NVSS, EXO)
-    database = DataBase()
+    database = Database()
     results = {}
     #for key, value in catalogs.iteritems():
     #    results[value] = match_nearests_in_catalogs(

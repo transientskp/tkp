@@ -11,11 +11,11 @@ import tkp.database
 
 class TestLightSurface(unittest.TestCase):
     def setUp(self):
-        self.database = tkp.database.DataBase()
+        self.database = tkp.database.Database()
         self.dataset = DataSet(data={'description': 'dataset with images'})
 
     def tearDown(self):
-        self.database.close()
+        tkp.database.rollback()
 
     @requires_database()
     def test_lightsurface(self):

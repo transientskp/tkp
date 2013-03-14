@@ -23,19 +23,21 @@ class TestReject(unittest.TestCase):
         tkp.database.quality.reject(self.image.id,
                                     tkp.database.quality.reason['rms'].id,
                                     "10 times too high")
-        self.database.execute("select count(*) from rejection where image=%s" %
-                              self.image.id)
-        self.assertEqual(self.database.fetchone()[0], 1)
+        query = "select count(*) from rejection where image=%s"
+        args = (self.image.id,)
+        cursor = tkp.database.query(query, args)
+        self.assertEqual(cursor.fetchone()[0], 1)
 
     def test_unreject(self):
         tkp.database.quality.unreject(self.image.id)
-        self.database.execute("select count(*) from rejection where image=%s" %
-                              self.image.id)
-        self.assertEqual(self.database.fetchone()[0], 0)
+        query = "select count(*) from rejection where image=%s"
+        args = (self.image.id,)
+        cursor = tkp.database.query(query, args)
+        self.assertEqual(cursor.fetchone()[0], 0)
 
     def test_unknownreason(self):
         self.assertRaises(monetdb.exceptions.OperationalError,
-              tkp.database.quality.reject,self.image.id, 666666, "bad reason")
+              tkp.database.quality.reject, self.image.id, 666666, "bad reason")
 
     def test_isrejected(self):
         tkp.database.quality.unreject(self.image.id)

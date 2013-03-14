@@ -205,7 +205,8 @@ def run_job(args):
         sys.exit(1)
 
 
-def clean_job(jobname):
+def clean_job(namespace):
+    jobname = namespace.name
     here = os.getcwd()
     statefile = os.path.join(here, jobname, "statefile")
     if os.access(statefile, os.R_OK):
@@ -238,7 +239,7 @@ def parse_arguments():
 
     # initjob
     initjob_parser = parser_subparsers.add_parser('initjob')
-    initjob_parser.add_argument('initjobname', help='Name of new job')
+    initjob_parser.add_argument('name', help='Name of new job')
     initproject_parser.set_defaults(func=init_job)
 
     # runjob

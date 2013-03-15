@@ -345,7 +345,10 @@ INSERT INTO temprunningcatalog
         ,t0.stokes
         ,t0.datapoints
         ,CAST(FLOOR(t0.wm_decl) AS INTEGER) AS zone
-        ,t0.wm_ra
+        ,CASE WHEN t0.wm_ra < 0
+              THEN wm_ra + 360
+              ELSE t0.wm_ra
+         END AS wm_ra
         ,t0.wm_decl
         ,t0.wm_ra_err
         ,t0.wm_decl_err

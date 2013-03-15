@@ -1,5 +1,5 @@
 from lofarpipe.support import lofaringredient
-from tkp.database.monitoringlist import adjust_transients_in_monitoringlist
+from tkp.db.monitoringlist import adjust_transients_in_monitoringlist
 from tkp import steps
 from tkp.distribute.cuisine.common import TrapMaster
 

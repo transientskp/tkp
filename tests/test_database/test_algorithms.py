@@ -1,9 +1,9 @@
 import unittest2 as unittest
-from tkp.database.orm import DataSet, Image
-import tkp.database
+from tkp.db.orm import DataSet, Image
+import tkp.db
 from tkp.testutil.decorators import requires_database
 from tkp.testutil import db_subs
-from tkp.database.generic import columns_from_table
+from tkp.db.generic import columns_from_table
 
 
 class TestSourceAssociation(unittest.TestCase):
@@ -16,7 +16,7 @@ class TestSourceAssociation(unittest.TestCase):
         self.db_imgs=[]
 
     def tearDown(self):
-        tkp.database.rollback()
+        tkp.db.rollback()
 
         
     def test_null_case_sequential(self):
@@ -37,7 +37,7 @@ class TestSourceAssociation(unittest.TestCase):
             
 #    def test_null_case_post_insert(self):
 #        for im in self.im_params:
-#            self.db_imgs.append( tkpdb.Image( data=im, dataset=self.dataset) )            
+#            self.db_imgs.append( tkp.db.Image( data=im, dataset=self.dataset) )
 #        pass
     
     def test_only_first_epoch_source(self):

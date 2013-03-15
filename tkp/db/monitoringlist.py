@@ -7,8 +7,8 @@ of transient candidates, mostly involving the monitoringlist.
 import logging
 from collections import namedtuple
 
-from tkp.database import general
-import tkp.database
+from tkp.db import general
+import tkp.db
 
 
 logger = logging.getLogger(__name__)
@@ -37,7 +37,7 @@ SELECT m.id
  WHERE m.dataset = t.dataset
    AND m.userentry = TRUE
 """
-    cursor = tkp.database.query(query, (image_id,))
+    cursor = tkp.db.execute(query, (image_id,))
     results = zip(*cursor.fetchall())
     if len(results) != 0:
         return zip(list(results[1]), list(results[2]))
@@ -102,7 +102,7 @@ SELECT r1.id
 """
     deRuiter_red = deRuiter_r / 3600.
     qry_params = {'imgid':image_id, 'drrad': deRuiter_red}
-    cursor = tkp.database.query(query, qry_params)
+    cursor = tkp.db.execute(query, qry_params)
     results = zip(*cursor.fetchall())
     if len(results) != 0:
         return zip(list(results[1]), list(results[2]))
@@ -161,7 +161,7 @@ SELECT m1.id AS id
 """
     deRuiter_red = deRuiter_r / 3600.
     qry_params = {'imgid':image_id, 'dr_deg': deRuiter_red}
-    cursor = tkp.database.query(query, qry_params)
+    cursor = tkp.db.execute(query, qry_params)
     results = zip(*cursor.fetchall())
     if len(results) != 0:
         return zip(list(results[1]), list(results[2]))
@@ -192,7 +192,7 @@ def _update_known_transients_in_monitoringlist(transients):
     """
     upd = 0
     for entry in transients:
-        cursor = tkp.database.query(query, entry, commit=True)
+        cursor = tkp.db.execute(query, entry, commit=True)
         upd += cursor.rowcount
     if upd > 0:
         logger.info("Updated %s known transients in monitoringlist" % (upd,))
@@ -231,7 +231,7 @@ INSERT INTO monitoringlist
                              AND i0.id = %(image_id)s
                          )
 """
-    cursor = tkp.database.query(query, {'image_id': image_id}, commit=True)
+    cursor = tkp.db.execute(query, {'image_id': image_id}, commit=True)
     ins = cursor.rowcount
     if ins == 0:
         logger.info("No new transients inserted in monitoringlist")
@@ -297,7 +297,7 @@ INSERT INTO monitoringlist
                         AND r0.id = m0.runcat
                     )
 """
-    cursor = tkp.database.query(query, {'image_id': image_id}, commit=True)
+    cursor = tkp.db.execute(query, {'image_id': image_id}, commit=True)
     ins = cursor.rowcount
     if ins > 0:
         logger.info("Added %s forced fit null detections to monlist" % (ins,))
@@ -324,4 +324,4 @@ INSERT INTO monitoringlist
         ,%s
         ,TRUE
 """
-    cursor = tkp.database.query(query, commit=True)
+    cursor = tkp.db.execute(query, commit=True)

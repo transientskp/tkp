@@ -20,7 +20,7 @@ import sys
 import logging
 
 import tkp
-from tkp.database.sql.populate import populate
+from tkp.db.sql.populate import populate
 
 
 logging.basicConfig(level=logging.INFO)

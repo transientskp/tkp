@@ -2,9 +2,9 @@ import itertools
 import lofarpipe.support.lofaringredient as ingredient
 from lofarpipe.support.parset import parameterset
 from lofarpipe.support.remotecommand import ComputeJob
-from tkp.database import monitoringlist as dbmon
-from tkp.database import general as dbgen
-from tkp.database.orm import Image
+from tkp.db import monitoringlist as dbmon
+from tkp.db import general as dbgen
+from tkp.db.orm import Image
 from tkp.distribute.cuisine.common import TrapMaster, nodes_available
 
 

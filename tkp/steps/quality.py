@@ -1,13 +1,13 @@
 import logging
 from lofarpipe.support.parset import parameterset
-from tkp.database.database import Database
+from tkp.db.database import Database
 from tkp.quality.restoringbeam import beam_invalid
 from tkp.quality.rms import rms_invalid
 from tkp.quality.statistics import rms_with_clipped_subregion
 from tkp.lofar.noise import noise_level
 from tkp.utility import nice_format
 import tkp.utility.accessors
-import tkp.database.quality
+import tkp.db.quality
 import tkp.quality.brightsource
 import tkp.quality
 
@@ -66,7 +66,7 @@ def reject_check(image_path, parset_file):
                          nice_format(noise)))
     else:
         logger.info("image %s REJECTED: %s " % (image_path, rms_check) )
-        return (tkp.database.quality.reason['rms'].id, rms_check)
+        return (tkp.db.quality.reason['rms'].id, rms_check)
 
     # beam shape check
     (semimaj, semimin, theta) = accessor.beam
@@ -78,13 +78,13 @@ def reject_check(image_path, parset_file):
                                              nice_format(semimin)))
     else:
         logger.info("image %s REJECTED: %s " % (image_path, beam_check) )
-        return (tkp.database.quality.reason['beam'].id, beam_check)
+        return (tkp.db.quality.reason['beam'].id, beam_check)
 
     # Bright source check
     bright = tkp.quality.brightsource.is_bright_source_near(accessor, min_separation)
     if bright:
         logger.info("image %s REJECTED: %s " % (image_path, bright) )
-        return (tkp.database.quality.reason['bright_source'].id, bright)
+        return (tkp.db.quality.reason['bright_source'].id, bright)
 
 
 def reject_image(image_id, reason, comment):
@@ -93,6 +93,6 @@ def reject_image(image_id, reason, comment):
 
     NOTE: should only be used on a MASTER node
     """
-    tkp.database.quality.reject(image_id, reason, comment)
+    tkp.db.quality.reject(image_id, reason, comment)
 
 

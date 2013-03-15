@@ -1,8 +1,8 @@
 import unittest
 from tkp.steps.feature_extraction import extract_features
-from tkp.database import query
+from tkp.db import execute
 from tkp.testutil.decorators import requires_database
-from tkp.database.generic import get_db_rows_as_dicts
+from tkp.db.generic import get_db_rows_as_dicts
 
 @requires_database()
 class TestFeatureExtraction(unittest.TestCase):
@@ -12,7 +12,7 @@ class TestFeatureExtraction(unittest.TestCase):
         #extracted source so we can check the feature extraction syntax.
         xtrsrc_qry = """SELECT id as trigger_xtrsrc 
                           FROM extractedsource"""
-        cursor = query(xtrsrc_qry)
+        cursor = execute(xtrsrc_qry)
         cls.transients = get_db_rows_as_dicts(cursor)
 
     @unittest.skip("TODO: extract_features recipe needs modification!!!")

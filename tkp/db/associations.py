@@ -3,7 +3,7 @@ A collection of back end subroutines (mostly SQL queries), In this module we
 deal with source association.
 """
 import logging
-import tkp.database
+import tkp.db
 
 
 logger = logging.getLogger(__name__)
@@ -134,7 +134,7 @@ WHERE image = %(imgid)s
 """
 
     qry_params = {'imgid':image_id}
-    cursor = tkp.database.query(query, qry_params, commit=True)
+    cursor = tkp.db.execute(query, qry_params, commit=True)
     n_deleted = cursor.rowcount
     if n_deleted:
         logger.warn("Removed %s bad blind extractions for image %s"
@@ -150,7 +150,7 @@ def _empty_temprunningcatalog():
     the current observed sources.
     """
     query = "DELETE FROM temprunningcatalog"
-    tkp.database.query(query, commit=True)
+    tkp.db.execute(query, commit=True)
 
 
 
@@ -235,7 +235,7 @@ SELECT CASE WHEN s.centre_ra - alpha(s.xtr_radius, s.centre_decl) < 0 OR
    AND i.id = %(image_id)s
 """
     args = {'image_id': image_id}
-    cursor = tkp.database.query(meridian_wrap_query, args, commit=True)
+    cursor = tkp.db.execute(meridian_wrap_query, args, commit=True)
     results = zip(*cursor.fetchall())
     
     if len(results) != 0:
@@ -698,7 +698,7 @@ INSERT INTO temprunningcatalog
 
     deRuiter_red = float(deRuiter_r) / 3600.
     args = {'image_id': image_id, 'deRuiter': deRuiter_red}
-    tkp.database.query(query, args, commit=True)
+    tkp.db.execute(query, args, commit=True)
 
 
 def _flag_many_to_many_tempruncat():
@@ -771,7 +771,7 @@ UPDATE temprunningcatalog
               )
 ;
 """
-    tkp.database.query(query, commit=True)
+    tkp.db.execute(query, commit=True)
 
 
 def _insert_1_to_many_runcat():
@@ -832,7 +832,7 @@ INSERT INTO runningcatalog
                     HAVING COUNT(*) > 1
                    )
 """
-    tkp.database.query(query, commit=True)
+    tkp.db.execute(query, commit=True)
 
 
 def _insert_1_to_many_runcat_flux():
@@ -884,7 +884,7 @@ INSERT INTO runningcatalog_flux
                          HAVING COUNT(*) > 1
                         )
 """
-    tkp.database.query(query, commit=True)
+    tkp.db.execute(query, commit=True)
 
 
 def _insert_1_to_many_basepoint_assoc():
@@ -918,7 +918,7 @@ INSERT INTO assocxtrsource
                       HAVING COUNT(*) > 1
                      )
     """
-    tkp.database.query(query, commit=True)
+    tkp.db.execute(query, commit=True)
 
 
 def _insert_1_to_many_assoc():
@@ -966,7 +966,7 @@ INSERT INTO assocxtrsource
                       HAVING COUNT(*) > 1
                      )
 """
-    tkp.database.query(query, commit=True)
+    tkp.db.execute(query, commit=True)
 
 
 def _insert_1_to_many_skyrgn():
@@ -992,7 +992,7 @@ INSERT INTO assocskyrgn
                      )
      AND asr.runcat = t.runcat
 """
-    tkp.database.query(query, commit=True)
+    tkp.db.execute(query, commit=True)
 
 
 def _insert_1_to_many_monitoringlist():
@@ -1026,7 +1026,7 @@ INSERT INTO monitoringlist
                       HAVING COUNT(*) > 1
                      )
 """
-    tkp.database.query(query, commit=True)
+    tkp.db.execute(query, commit=True)
 
 
 def _insert_1_to_many_transient():
@@ -1075,7 +1075,7 @@ INSERT INTO transient
                       HAVING COUNT(*) > 1
                      )
 """
-    tkp.database.query(query, commit=True)
+    tkp.db.execute(query, commit=True)
 
 
 def _delete_1_to_many_inactive_monitoringlist():
@@ -1096,7 +1096,7 @@ DELETE
                  AND r.inactive = TRUE
              )
 """
-    tkp.database.query(query, commit=True)
+    tkp.db.execute(query, commit=True)
 
 
 def _delete_1_to_many_inactive_assocskyrgn():
@@ -1113,7 +1113,7 @@ DELETE
                WHERE r.inactive = TRUE
              )
 """
-    tkp.database.query(query, commit=True)
+    tkp.db.execute(query, commit=True)
 
 
 def _delete_1_to_many_inactive_transient():
@@ -1132,7 +1132,7 @@ DELETE
                  AND r.inactive = TRUE
              )
 """
-    tkp.database.query(query, commit=True)
+    tkp.db.execute(query, commit=True)
 
 
 def _delete_1_to_many_inactive_assoc():
@@ -1159,7 +1159,7 @@ DELETE
                   HAVING COUNT(*) > 1
                  )
     """
-    tkp.database.query(query, commit=True)
+    tkp.db.execute(query, commit=True)
 
 
 def _delete_1_to_many_inactive_runcat_flux():
@@ -1179,7 +1179,7 @@ DELETE
                   HAVING COUNT(*) > 1
                  )
 """
-    tkp.database.query(query, commit=True)
+    tkp.db.execute(query, commit=True)
 
 
 def _flag_1_to_many_inactive_runcat():
@@ -1199,7 +1199,7 @@ UPDATE runningcatalog
               HAVING COUNT(*) > 1
              )
 """
-    tkp.database.query(query, commit=True)
+    tkp.db.execute(query, commit=True)
 
 
 def _flag_1_to_many_inactive_tempruncat():
@@ -1227,7 +1227,7 @@ UPDATE temprunningcatalog
                   HAVING COUNT(*) > 1
                  )
 """
-    tkp.database.query(query, commit=True)
+    tkp.db.execute(query, commit=True)
 
 
 def _insert_1_to_1_assoc():
@@ -1254,7 +1254,7 @@ INSERT INTO assocxtrsource
      AND t.inactive = FALSE
      AND t.xtrsrc = x.id
 """
-    tkp.database.query(query, commit=True)
+    tkp.db.execute(query, commit=True)
 
 
 def _update_1_to_1_runcat():
@@ -1332,7 +1332,7 @@ UPDATE runningcatalog
                   AND temprunningcatalog.inactive = FALSE
               )
 """
-    tkp.database.query(query, commit=True)
+    tkp.db.execute(query, commit=True)
 
 
 def _select_for_update_1_to_1_runcat_flux():
@@ -1362,7 +1362,7 @@ SELECT f_datapoints
   FROM temprunningcatalog
  WHERE inactive = FALSE
 """
-    cursor = tkp.database.query(query, commit=True)
+    cursor = tkp.db.execute(query, commit=True)
     results = cursor.fetchall()
     for result in results:
         _insert_or_update_1_to_1_runcat_flux(tuple(result))
@@ -1387,7 +1387,7 @@ SELECT COUNT(*)
 """
     # Be aware that the last items must correspond to the query
     # in _select_for_update_1_to_1_runcat_flux()
-    cursor = tkp.database.query(query, (result[-3], result[-2], result[-1]))
+    cursor = tkp.db.execute(query, (result[-3], result[-2], result[-1]))
     cnt = cursor.fetchone()[0]
     if cnt == 0:
         query = """\
@@ -1442,7 +1442,7 @@ UPDATE runningcatalog_flux
    AND band = %s
    AND stokes = %s
 """
-    tkp.database.query(query, tuple(result), commit=True)
+    tkp.db.execute(query, tuple(result), commit=True)
 
 
 def _insert_new_runcat(image_id):
@@ -1525,7 +1525,7 @@ INSERT INTO runningcatalog
          ON t0.xtrsrc = trc0.xtrsrc
    WHERE trc0.xtrsrc IS NULL
 """
-    cursor = tkp.database.query(query, (image_id,), True)
+    cursor = tkp.db.execute(query, (image_id,), True)
     ins = cursor.rowcount
     if ins > 0:
         logger.info("Added %s new sources to runningcatalog" % ins)
@@ -1590,7 +1590,7 @@ INSERT INTO runningcatalog_flux
                          WHERE trc1.xtrsrc IS NULL
                       )
 """
-    tkp.database.query(query, {'image_id': image_id}, True)
+    tkp.db.execute(query, {'image_id': image_id}, True)
 
 
 def _insert_new_runcat_skyrgn_assocs(image_id):
@@ -1639,7 +1639,7 @@ SELECT t0.runcat
        ON t0.xtrsrc = trc.xtrsrc
 WHERE trc.xtrsrc IS NULL
 """
-    tkp.database.query(assocskyrgn_parent_qry, {'img_id':image_id}, True)
+    tkp.db.execute(assocskyrgn_parent_qry, {'img_id':image_id}, True)
 
     #Now search all the other skyregions *in same dataset* to determine matches:
     assocskyrgn_others_qry = """\
@@ -1682,7 +1682,7 @@ SELECT t1.runcat as runcatid
                                     ) / 2)
                ) < sky.xtr_radius
 """
-    tkp.database.query(assocskyrgn_others_qry, {'img_id':image_id}, True)
+    tkp.db.execute(assocskyrgn_others_qry, {'img_id':image_id}, True)
 
 
 def _insert_new_assoc(image_id):
@@ -1730,7 +1730,7 @@ INSERT INTO assocxtrsource
                          WHERE trc1.xtrsrc IS NULL
                       )
 """
-    tkp.database.query(query, {'image_id':image_id}, True)
+    tkp.db.execute(query, {'image_id':image_id}, True)
 
 
 def _insert_new_monitoringlist(image_id):
@@ -1795,7 +1795,7 @@ INSERT INTO monitoringlist
      AND r0.id = tstamps.ts_runcat
      AND i0.taustart_ts > tstamps.ts_min
 """
-    cursor = tkp.database.query(query, (image_id, image_id))
+    cursor = tkp.db.execute(query, (image_id, image_id))
     ins = cursor.rowcount
     if ins > 0:
         logger.info("Added %s new sources to monitoringlist table" % (ins,))
@@ -1859,7 +1859,7 @@ INSERT INTO transient
      AND r0.id = tstamps.ts_runcat
      AND i0.taustart_ts > tstamps.ts_min
 """
-    cursor = tkp.database.query(query, (image_id, image_id))
+    cursor = tkp.db.execute(query, (image_id, image_id))
     ins = cursor.rowcount
     if ins > 0:
         logger.info("Added %s new sources to transient table" % (ins,))
@@ -1878,4 +1878,4 @@ DELETE
   FROM runningcatalog
  WHERE inactive = TRUE
 """
-    tkp.database.query(query, commit=True)
+    tkp.db.execute(query, commit=True)

@@ -7,8 +7,8 @@ from lofarpipe.support.parset import parameterset
 from pyrap.images import image as pyrap_image
 
 import tkp.utility.accessors
-from tkp.database.database import Database
-from tkp.database.orm import DataSet, Image
+from tkp.db.database import Database
+from tkp.db.orm import DataSet, Image
 from tkp.utility.accessors.dataaccessor import extract_metadata
 
 

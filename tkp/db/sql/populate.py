@@ -12,7 +12,7 @@ import tkp
 tkp_folder = tkp.__path__[0]
 sql_repo = os.path.join(tkp_folder, 'database/sql/statements')
 
-from tkp.database.sql.preprocessor import dialectise
+from tkp.db.sql.preprocessor import dialectise
 
 # use these to replace strings in the SQL files
 tokens = (

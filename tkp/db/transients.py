@@ -8,8 +8,8 @@ mostly involving the 'transient' table.
 import logging
 from scipy.stats import chisqprob
 
-import tkp.database
-from tkp.database.generic import get_db_rows_as_dicts
+import tkp.db
+from tkp.db.generic import get_db_rows_as_dicts
 
 
 logger = logging.getLogger(__name__)
@@ -36,7 +36,7 @@ UPDATE transient
     """
     upd = 0
     for tr in transients:
-        cursor = tkp.database.query(query, tr, commit=True)
+        cursor = tkp.db.execute(query, tr, commit=True)
         upd += cursor.rowcount
     if upd > 0:
         logger.info("Updated %s known transients" % (upd,))
@@ -72,7 +72,7 @@ VALUES
     """
     ins = 0
     for entry in transients:
-        cursor = tkp.database.query(query, entry, commit=True)
+        cursor = tkp.db.execute(query, entry, commit=True)
         ins += cursor.rowcount
     logger.info("Inserted %s new transients in transients table" % (ins,))
 
@@ -173,7 +173,7 @@ ORDER BY t1.runcat
         ,t1.band
 """
     qry_params = {'imgid':image_id}
-    cursor = tkp.database.query(query, qry_params)
+    cursor = tkp.db.execute(query, qry_params)
     results = get_db_rows_as_dicts(cursor)
     return results
 

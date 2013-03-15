@@ -3,10 +3,10 @@ import datetime
 import unittest2 as unittest
 
 from tkp.testutil.decorators import requires_database
-import tkp.database
-from tkp.database.orm import DataSet, Image
-from tkp.database.database import Database
-from tkp.database.orm import ExtractedSource
+import tkp.db
+from tkp.db.orm import DataSet, Image
+from tkp.db.database import Database
+from tkp.db.orm import ExtractedSource
 
 # We're cheating here: a unit test shouldn't really depend on an
 # external dependency like the database being up and running
@@ -17,7 +17,7 @@ class TestDataSet(unittest.TestCase):
         self.database = Database()
 
     def tearDown(self):
-        tkp.database.rollback()
+        tkp.db.rollback()
 
     @requires_database()
     def test_create(self):
@@ -60,11 +60,11 @@ class TestDataSet(unittest.TestCase):
 class TestImage(unittest.TestCase):
 
     def setUp(self):
-        import tkp.database.database
-        self.database = tkp.database.database.Database()
+        import tkp.db.database
+        self.database = tkp.db.database.Database()
 
     def tearDown(self):
-        tkp.database.rollback()
+        tkp.db.rollback()
 
     @requires_database()
     def test_create(self):
@@ -161,11 +161,11 @@ class TestImage(unittest.TestCase):
 class TestExtractedSource(unittest.TestCase):
     
     def setUp(self):
-        import tkp.database.database
-        self.database = tkp.database.database.Database()
+        import tkp.db.database
+        self.database = tkp.db.database.Database()
 
     def tearDown(self):
-        tkp.database.rollback()
+        tkp.db.rollback()
 
     @requires_database()
     def test_create(self):

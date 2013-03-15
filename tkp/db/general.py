@@ -11,7 +11,7 @@ with exceptions of monitoringlist and transients.
 import math
 import logging
 
-import tkp.database
+import tkp.db
 from tkp.utility.coordinates import eq_to_cart
 
 
@@ -82,7 +82,7 @@ DELETE
             'assoc_theta': assoc_theta,
             'deRuiter_red': deRuiter_r / 3600.
     }
-    cursor = tkp.database.query(filter_ud_xtrsrcs_query, args, True)
+    cursor = tkp.db.execute(filter_ud_xtrsrcs_query, args, True)
     if cursor.rowcount == 0:
         logger.info("No user-entry sources removed from extractedsource for "
                     "image %s" % (image_id,))
@@ -96,7 +96,7 @@ def update_dataset_process_ts(dataset_id, process_ts):
 
     """
     args = {'dataset_id': dataset_id, 'process_ts': process_ts}
-    tkp.database.query(update_dataset_process_ts_query, args, commit=True)
+    tkp.db.execute(update_dataset_process_ts_query, args, commit=True)
     return dataset_id
 
 
@@ -107,7 +107,7 @@ def insert_dataset(description):
     """
     query = "SELECT insertDataset(%s)"
     arguments = (description,)
-    cursor = tkp.database.query(query, arguments, commit=True)
+    cursor = tkp.db.execute(query, arguments, commit=True)
     dataset_id = cursor.fetchone()[0]
     return dataset_id
 
@@ -159,7 +159,7 @@ def insert_image(dataset, freq_eff, freq_bw, taustart_ts, tau_time,
                  'url': url,
                  'centre_ra': centre_ra, 'centre_decl': centre_decl, 
                  'xtr_radius': xtr_radius}
-    cursor = tkp.database.query(query, arguments, commit=True)
+    cursor = tkp.db.execute(query, arguments, commit=True)
     image_id = cursor.fetchone()[0]
     return image_id
 
@@ -266,7 +266,7 @@ INSERT INTO extractedsource
   )
 VALUES
 """ + ",".join(values)
-    cursor = tkp.database.query(query, commit=True)
+    cursor = tkp.db.execute(query, commit=True)
     insert_num = cursor.rowcount
     if insert_num == 0:
             logger.info("No forced-fit sources added to extractedsource for "
@@ -302,7 +302,7 @@ def lightcurve(xtrsrcid):
             - stokes
     """
     args = {'xtrsrc': xtrsrcid}
-    cursor = tkp.database.query(lightcurve_query, args)
+    cursor = tkp.db.execute(lightcurve_query, args)
     return cursor.fetchall()
 
 
@@ -373,7 +373,7 @@ ORDER BY c.catalog
 """
 
     args = {'runcatid': runcatid, 'radius': radius, 'deruiter': deRuiter_r/3600.}
-    cursor = tkp.database.query(query, args, True)
+    cursor = tkp.db.execute(query, args, True)
     results = cursor.fetchall()
     descriptions = ['catsrcid', 'catsrcname', 'catid', 'catname', 'ra', 'decl',
                                 'ra_err', 'decl_err', 'dist_arcsec', 'assoc_r']

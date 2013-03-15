@@ -39,7 +39,7 @@ doc test (since the database value can differ, and thus the test would
 fail)::
 
     # database sets up and holds the connection to the actual database
-    >>> database = tkp.database.database.Database()
+    >>> database = tkp.db.database.Database()
 
     # Each object type takes a data dictionary on creation, which for newly objects
     # has some required keys (& values). For a DataSet, this is only 'description';
@@ -120,14 +120,14 @@ import logging
 import monetdb.sql as db
 
 #from tkp.database.database import ENGINE
-from tkp.database.generic import columns_from_table, set_columns_for_table
-from tkp.database.general import insert_dataset, insert_image,\
+from tkp.db.generic import columns_from_table, set_columns_for_table
+from tkp.db.general import insert_dataset, insert_image,\
     insert_extracted_sources, lightcurve
-from tkp.database.monitoringlist import add_manual_entry_to_monitoringlist
-from tkp.database.associations import associate_extracted_sources
-import tkp.database
-import tkp.database.quality
-from tkp.database.database import Database
+from tkp.db.monitoringlist import add_manual_entry_to_monitoringlist
+from tkp.db.associations import associate_extracted_sources
+import tkp.db
+import tkp.db.quality
+from tkp.db.database import Database
 
 
 logger = logging.getLogger(__name__)
@@ -320,7 +320,7 @@ class DataSet(DBObject):
         dataset from the database. Implemented separately from update(),
         since normally this would be too much overhead"""
         query = "SELECT id FROM image WHERE dataset = %s ORDER BY id" % self._id
-        cursor = tkp.database.query(query)
+        cursor = tkp.db.execute(query)
         result = cursor.fetchall()
         image_ids = [row[0] for row in result]
         self.images = [Image(database=self.database, id=id) for id in image_ids]
@@ -431,7 +431,7 @@ class Image(DBObject):
     def update_rejected(self):
         """Update self.rejected with the rejected status. Will be false
         if not rejected, will be a list of reject descriptions if rejected"""
-        self.rejected = tkp.database.quality.isrejected(self.id)
+        self.rejected = tkp.db.quality.isrejected(self.id)
 
     def update_sources(self):
         """Renew the set of sources by getting the sources for this

@@ -7,7 +7,7 @@ These can be used to populate ImageData objects based on some data source
 
 import os
 import pyfits
-from tkp.database.orm import Image as DBImage
+from tkp.db.orm import Image as DBImage
 from tkp.utility.accessors.dataaccessor import extract_metadata
 from tkp.sourcefinder.image import ImageData
 import tkp.utility.accessors.detection

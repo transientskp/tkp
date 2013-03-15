@@ -1,13 +1,12 @@
 import logging
-import monetdb.sql
-from tkp.database.database import Database
-from tkp.database.orm import DataSet, Image, ExtractedSource
+from tkp.db.database import Database
+from tkp.db.orm import DataSet, Image, ExtractedSource
 
 
 logger = logging.getLogger(__name__)
 
 
-def query(query, parameters=(), commit=False):
+def execute(query, parameters=(), commit=False):
     """
     A generic wrapper for doing any query to the database
 

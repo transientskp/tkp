@@ -3,7 +3,7 @@ A collection of generic functions used to generate SQL queries
 and return data in an easy to use format such as dictionaries.
 """
 import logging
-import tkp.database
+import tkp.db
 
 
 logger = logging.getLogger(__name__)
@@ -68,7 +68,7 @@ def columns_from_table(table, keywords=None, alias=None, where=None):
     if where:
         query += " WHERE " + where
 
-    cursor = tkp.database.query(query, where_args)
+    cursor = tkp.db.execute(query, where_args)
     results = cursor.fetchall()
     results_dict = convert_db_rows_to_dicts(results, cursor.description, alias)
     return results_dict
@@ -121,4 +121,4 @@ def set_columns_for_table(table, data=None, where=None):
     if where:
         query += " WHERE " + where
 
-    tkp.database.query(query, values + where_args, commit=True)
+    tkp.db.execute(query, values + where_args, commit=True)

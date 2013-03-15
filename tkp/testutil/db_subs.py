@@ -2,8 +2,8 @@ import datetime
 import logging
 from collections import namedtuple
 from tkp.config import config as tkp_conf
-from tkp.database.database import Database
-from tkp.database.orm import DataSet, Image
+from tkp.db.database import Database
+from tkp.db.orm import DataSet, Image
 import tkp.testutil.data as testdata
 
 ExtractedSourceTuple = namedtuple("ExtractedSourceTuple",

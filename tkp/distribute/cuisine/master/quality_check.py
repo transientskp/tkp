@@ -14,7 +14,7 @@ database table.
 import itertools
 import lofarpipe.support.lofaringredient as ingredient
 from lofarpipe.support.remotecommand import ComputeJob
-from tkp.database.orm import Image
+from tkp.db.orm import Image
 from tkp import steps
 from tkp.distribute.cuisine.common import TrapMaster, nodes_available
 

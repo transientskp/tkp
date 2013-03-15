@@ -311,7 +311,7 @@ class DataSet(DBObject):
             try:
                 self._id = insert_dataset(self._data['description'])
             except self.database.Error, e:
-                logger.warn("insertion of DataSet() into the database failed")
+                logger.error("insert dataset failed: %s" % e)
                 raise
         return self._id
 

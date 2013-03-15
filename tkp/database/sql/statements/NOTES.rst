@@ -15,7 +15,7 @@ Notes about SQL dialects
 * When using a function, for MonetDB the DECLARE statements need to be between
   the BEGIN END statements, for PostgreSQL  _before_ the statements.
 
-* PostgreSQL has a lastvalue() function that returns the last inserted ID. For
+* PostgreSQL has a lastval() function that returns the last inserted ID. For
   MonetDB you need to get the nextval of the sequency manually.
 
 * postgresql(9) only support procedural code inside a DO statement. If version8

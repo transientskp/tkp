@@ -106,7 +106,7 @@ def insert_dataset(description):
     DB function insertDataset() sets the necessary default values.
     """
     query = "SELECT insertDataset(%s)"
-    arguments = description
+    arguments = (description,)
     cursor = tkp.database.query(query, arguments, commit=True)
     dataset_id = cursor.fetchone()[0]
     return dataset_id

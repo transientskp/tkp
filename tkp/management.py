@@ -17,9 +17,13 @@ import errno
 import getpass
 import stat
 import sys
+import logging
 
 import tkp
 from tkp.database.sql.populate import populate
+
+
+logging.basicConfig(level=logging.INFO)
 
 class CommandError(Exception):
     """

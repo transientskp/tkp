@@ -12,7 +12,8 @@ def query(query, parameters=(), commit=False):
     A generic wrapper for doing any query to the database
 
     :param query: the query string
-    :param commit: should a commit be performed afterwards
+    :param parameters: The query parameters. These will be converted and escaped.
+    :param commit: should a commit be performed afterwards, boolean
 
     :returns: a database cursor object
     """
@@ -22,8 +23,11 @@ def query(query, parameters=(), commit=False):
         cursor.execute(query, parameters)
         if commit:
             database.connection.commit()
-    except monetdb.sql.Error as e:
+    except database.connection.Error as e:
         logger.error("Query failed: %s. Query: %s." % (e, query % parameters))
+        raise
+    except Exception as e:
+        logger.error("WTF!!! %s" % e)
         raise
     return cursor
 

@@ -5,7 +5,9 @@ initialises a PostgreSQL database with TKP tables.
 
 import os
 import sys
+from subprocess import call
 import tkp
+
 
 tkp_folder = tkp.__path__[0]
 sql_repo = os.path.join(tkp_folder, 'database/sql/statements')
@@ -29,7 +31,7 @@ def verify(parsed):
 
     :param parsed: a argparse namespace
     """
-    print("WARNING: this script will populate a database with these settings:")
+    print("This script will populate a database with these settings:")
     print("")
     print("\tbackend:  " + parsed.backend)
     print("\tdatabase: " + parsed.database)
@@ -37,6 +39,8 @@ def verify(parsed):
     print("\tpassword: " + (parsed.password or ""))
     print("\thost:     " + (parsed.host or ""))
     print("\tport:     " + str(parsed.port))
+    print("")
+    print("!!! WARNING !!! This will REMOVE all data in '%s'" % parsed.database)
     print("")
     answer = raw_input("Do you want to continue? [y/N]: ")
     if answer.lower() != 'y':
@@ -62,6 +66,54 @@ def connect(parsed):
                                    password=parsed.password, host=parsed.host,
                                    port=parsed.port)
 
+auth_query = """
+ALTER USER "monetdb" RENAME TO "%(username)s";
+ALTER USER SET PASSWORD '%(password)s' USING OLD PASSWORD 'monetdb';
+CREATE SCHEMA "%(database)s" AUTHORIZATION "%(username)s";
+ALTER USER "%(username)s" SET SCHEMA "%(database)s";
+"""
+
+def recreate(options):
+    """
+    Destroys and creates a new database.
+
+    :param options: a argparse namespace generated with tkp.management
+
+    WARNING: this will DESTROY your database!
+
+    Note: this will raise an Exception ONLY when the creation of the database
+          fails
+    """
+    if options.backend == 'monetdb':
+        import monetdb.sql
+        monetdb_cmd = lambda cmd: call('monetdb %s %s' % (cmd, options.database),
+                                   shell=True)
+        monetdb_cmd('stop')
+        monetdb_cmd('destroy -f')
+        monetdb_cmd('create')
+        monetdb_cmd('release')
+        if monetdb_cmd('start') != 0:
+            raise Exception("can't create a new monetdb database!")
+
+        con = monetdb.sql.connect(username='monetdb', password='monetdb',
+                                  hostname=options.host, port=options.port,
+                                  database=options.database)
+        cur = con.cursor()
+        params = {
+            'username': options.user,
+            'password': options.password,
+            'database': options.database,
+        }
+        cur.execute(auth_query % params)
+        con.commit()
+        con.close()
+
+    elif options.backend == 'postgresql':
+        call('dropdb %s' % options.database, shell=True)
+        if call('createdb %s' % options.database, shell=True) != 0:
+            raise Exception("can't create a new postgresql database!")
+    else:
+        raise NotImplementedError
 
 
 def populate(options):
@@ -78,14 +130,19 @@ def populate(options):
     if not options.user:
         options.user = options.database
 
-    if options.backend == 'monetdb' and not options.password:
-        options.password = options.database
+    if options.backend == 'monetdb':
+        if not options.password:
+            options.password = options.database
+        # TODO: sockets still need to be implemented for MonetDB...
+        if not options.host:
+            options.host = 'localhost'
 
     if not options.yes:
         verify(options)
 
+    recreate(options)
+
     conn = connect(options)
-    #conn.autocommit = True
     cur = conn.cursor()
 
     batch_file = os.path.join(sql_repo, 'batch')
@@ -93,6 +150,7 @@ def populate(options):
     for line in [l.strip() for l in open(batch_file) if not l.startswith("#")]:
         if not line:  # skip empty lines
             continue
+        print "processing %s" % line
         sql_file = os.path.join(sql_repo, line)
         with open(sql_file) as sql_handler:
             sql = sql_handler.read()
@@ -106,6 +164,5 @@ def populate(options):
             except Exception as e:
                 sys.stderr.write("\nproblem with file \"%s\"\n\n" % sql_file)
                 raise
-
-    cur.close()
+    conn.commit()
     conn.close()

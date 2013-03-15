@@ -143,13 +143,13 @@ SELECT t1.runcat
               ,avg_f_int_weight
               ,CASE WHEN rf0.f_datapoints = 1
                     THEN 0
-                    ELSE SQRT(CAST(rf0.f_datapoints AS DOUBLE) * (avg_f_int_sq - avg_f_int * avg_f_int)
-                             / (CAST(rf0.f_datapoints AS DOUBLE) - 1.0)
+                    ELSE SQRT(CAST(rf0.f_datapoints AS DOUBLE PRECISION) * (avg_f_int_sq - avg_f_int * avg_f_int)
+                             / (CAST(rf0.f_datapoints AS DOUBLE PRECISION) - 1.0)
                              )
                END AS V_int_inter
               ,CASE WHEN rf0.f_datapoints = 1
                     THEN 0
-                    ELSE (CAST(rf0.f_datapoints AS DOUBLE) / (CAST(rf0.f_datapoints AS DOUBLE) - 1.0))
+                    ELSE (CAST(rf0.f_datapoints AS DOUBLE PRECISION) / (CAST(rf0.f_datapoints AS DOUBLE PRECISION) - 1.0))
                          * (avg_f_int_weight * avg_weighted_f_int_sq - avg_weighted_f_int * avg_weighted_f_int)
                END AS eta_int_inter
               ,a0.xtrsrc

@@ -54,6 +54,7 @@ class Database(object):
         If these are also not set a default set of settings are used.
 
         """
+        e = os.environ
         Database.engine = engine or os.environ.get('TKP_DBENGINE',
                                                    defaults['engine'])
         Database.database = database or os.environ.get('TKP_DBNAME',
@@ -82,6 +83,8 @@ class Database(object):
                                                 host=self.hostname,
                                                 port=self.port,
                                                 database=self.database)
+        else:
+            raise NotImplementedError("engine %s not supported " % self.engine)
 
             # I don't like this but it is used in some parts of TKP
         self.cursor = self._connection.cursor()

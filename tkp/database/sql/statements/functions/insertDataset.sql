@@ -86,7 +86,7 @@ BEGIN
     )
   ;
 
-  RETURN lastvalue();
+  RETURN lastval();
 
 END;
 

@@ -1,5 +1,0 @@
-Transient props: src_idx: 6; ifirst: 359; fpeak: 5.87965365355; tau: 11.1512280052
-+----+
-orig_catsrcid;ra[deg];decl[deg];mu[Jy];sigma[Jy]\n
-+----+
-

@@ -648,7 +648,16 @@ class ImageData(object):
 
         Returns an instance of :class:`tkp.sourcefinder.extract.Detection`.
         """
-
+        if ((
+                # Recent NumPy
+                hasattr(numpy.ma.core, "MaskedConstant") and
+                isinstance(self.rmsmap, numpy.ma.core.MaskedConstant)
+            ) or (
+                # Old NumPy
+                numpy.ma.is_masked(self.rmsmap[x, y])
+        )):
+            logger.error("Background is masked: cannot fit")
+            return None
 
         chunk = ImageData.box_slice_about_pixel(x, y, boxsize/2.0)
         if threshold is not None:
@@ -905,7 +914,12 @@ class ImageData(object):
                 fixed = {'semimajor': self.beam[0], 'semiminor': self.beam[1]}
             else:
                 fixed = None
-            measurement, residual = island.fit(fixed=fixed)
+            fit_results = island.fit(fixed=fixed)
+            if fit_results:
+                measurement, residual = fit_results
+            else:
+                # Failed to fit; drop this island and go to the next.
+                continue
             try:
                 det = extract.Detection(measurement, self, chunk=island.chunk)
                 if (det.ra.error == float('inf') or

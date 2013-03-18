@@ -189,11 +189,11 @@ class DBObject(object):
         """Obtain the 'name' attribute, where 'name' is a database column name"""
         # Get here when 'name' is not found as attribute
         # That likely means it is stored in self._data
-        return self._data[name]
-        #try:
-        #
-        #except KeyError:
-        #    raise AttributeError("attribute '%s' not found" % name)
+
+        if name in self._data:
+            return self._data[name]
+        else:
+            raise AttributeError("attribute '%s' not found" % name)
         
     @property
     def id(self):
@@ -205,7 +205,6 @@ class DBObject(object):
         Several containers have their specific SQL function to create
         a new object, so this property will need to overridden.
         """
-
         if self._id is None:
             query = ("INSERT INTO " + self.TABLE + " (" +
                      ", ".join(self._data.iterkeys()) + ") VALUES (" +
@@ -306,7 +305,6 @@ class DataSet(DBObject):
 
         This uses the SQL function insertDataset().
         """
-
         if self._id is None:
             try:
                 self._id = insert_dataset(self._data['description'])

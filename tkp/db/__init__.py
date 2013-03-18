@@ -16,6 +16,7 @@ def execute(query, parameters=(), commit=False):
 
     :returns: a database cursor object
     """
+    #logger.debug('executing query\n%s' % query % parameters)
     database = Database()
     cursor = database.connection.cursor()
     try:
@@ -26,7 +27,7 @@ def execute(query, parameters=(), commit=False):
         logger.error("Query failed: %s. Query: %s." % (e, query % parameters))
         raise
     except Exception as e:
-        logger.error("WTF!!! %s" % e)
+        logger.error("Big problem here: %s" % e)
         raise
     return cursor
 

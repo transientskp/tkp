@@ -38,6 +38,12 @@ class TrapLocal(control):
             ,
             optional=True
         ),
+
+        # we need to add the TKP flags here also, otherwise lofar pipeline will barf
+        'distribute': ingredient.StringField(
+            '-f', '--method',
+            optional=True
+        )
         }
 
     def pipeline_logic(self):

@@ -10,7 +10,7 @@ import tkp
 
 
 tkp_folder = tkp.__path__[0]
-sql_repo = os.path.join(tkp_folder, 'database/sql/statements')
+sql_repo = os.path.join(tkp_folder, 'db/sql/statements')
 
 from tkp.db.sql.preprocessor import dialectise
 
@@ -64,7 +64,7 @@ def connect(parsed):
         import monetdb
         return monetdb.sql.connect(database=parsed.database, user=parsed.user,
                                    password=parsed.password, host=parsed.host,
-                                   port=parsed.port)
+                                   port=parsed.port, autocommit=True)
 
 auth_query = """
 ALTER USER "monetdb" RENAME TO "%(username)s";
@@ -164,5 +164,5 @@ def populate(options):
             except Exception as e:
                 sys.stderr.write("\nproblem with file \"%s\"\n\n" % sql_file)
                 raise
-    conn.commit()
+    #conn.commit()
     conn.close()

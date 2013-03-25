@@ -1,17 +1,3 @@
-# -*- coding: utf-8 -*-
-
-#
-# LOFAR Transients Key Project
-#
-# Evert Rol, Tim Staley
-#
-# discovery@transientskp.org
-#
-#
-# Simplified miniature ORM to deal with the most basic and essential
-# database tables.
-#
-
 """
 This module contains lightweight container objects that corresponds
 to a dataset, image or extracted source in the database; it is actually a
@@ -65,17 +51,15 @@ fail)::
     # Here, dataset indirectly holds the database connection:
     >>> dataset.database
     DataBase(host=heastro1, name=trap, user=trap, ...)
-    >>> image1 = Image(data={'freq_eff': '80e6', 'freq_bw': 1e6,
-        'taustart_ts': datetime(2011, 5, 1, 0, 0, 0), 'tau_time': 1800., 'url': '/'},
-        dataset=dataset)  # initialize with defaults
+    >>> image1 = Image(data={'freq_eff': '80e6', 'freq_bw': 1e6, \
+        'taustart_ts': datetime(2011, 5, 1, 0, 0, 0), 'tau_time': 1800.,  'url': '/'}, dataset=dataset)  # initialize with defaults
         # note the dataset kwarg, which holds the database connection
     >>> image1.tau_time
     1800.
     >>> image1.taustart_ts
     datetime.datetime(2011, 5, 1, 0, 0, 0)
-    >>> image2 = Image(data={'freq_eff': '80e6', 'freq_bw': 1e6,
-        'taustart_ts': datetime(2011, 5, 1, 0, 1, 0), 'tau_time': 1500., 'url': '/'},
-        dataset=dataset)
+    >>> image2 = Image(data={'freq_eff': '80e6', 'freq_bw': 1e6, \
+        'taustart_ts': datetime(2011, 5, 1, 0, 1, 0), 'tau_time': 1500.,'url': '/'}, dataset=dataset)
     >>> image2.tau_time
     1500
     >>> image2.taustart_ts
@@ -103,12 +87,12 @@ means there aren't any updates.
     >>> image2.update(tau_time=2500)    # updates the database as well
     >>> image2.tau_time
     2500
-    >>> database.cursor.execute("SELECT tau_time FROM images WHERE imageid=%s" %
+    >>> database.cursor.execute("SELECT tau_time FROM images WHERE imageid=%s" % \
                                  (image2.id,))
     >>> database.cursors.fetchone()[0]
     2500
     # Manually update the database
-    >>> database.cursor.execute("UPDATE images SET tau_time=2000.0 imageid=%s" %
+    >>> database.cursor.execute("UPDATE images SET tau_time=2000.0 imageid=%s" % \
                                  (image2.id,))
     >>> image2.tau_time   # not updated yet!
     2500
@@ -129,20 +113,22 @@ database, using the ``id`` in the initializer::
     2000
     
 If an ``id`` is supplied, ``data`` is ignored.
-
-
-
-
 """
 
-from __future__ import with_statement
 import logging
-from . import utils as dbu
+
 import monetdb.sql as db
-from ..config import config
-from .database import ENGINE
+
+from tkp.database.database import ENGINE
+from tkp.database.generic import columns_from_table, set_columns_for_table
+from tkp.database.general import insert_dataset, insert_image,\
+    insert_extracted_sources, lightcurve
+from tkp.database.monitoringlist import add_manual_entry_to_monitoringlist
+from tkp.database.associations import associate_extracted_sources
 import tkp.database
+import tkp.database.quality
 from tkp.database.database import DataBase
+
 
 logger = logging.getLogger(__name__)
 
@@ -268,9 +254,8 @@ class DBObject(object):
 
     def _sync_with_database(self):
         """Update object attributes from the database"""
-        results = dbu.columns_from_table(
-            self.database.connection, self.TABLE, keywords=None,
-            where={self.ID: self._id})
+        results = columns_from_table(self.TABLE, keywords=None,
+                                            where={self.ID: self._id})
         # Shallow copy, but that's ok: all database values are
         # immutable (including datetime objects)
         if results:
@@ -287,8 +272,8 @@ class DBObject(object):
 
         if not kwargs:
             return
-        dbu.set_columns_for_table(self.database.connection, self.TABLE,
-                                  data=kwargs, where={self.ID: self._id})
+        set_columns_for_table(self.TABLE, data=kwargs,
+                                  where={self.ID: self._id})
         self._data.update(kwargs)
         
 
@@ -323,8 +308,7 @@ class DataSet(DBObject):
 
         if self._id is None:
             try:
-                self._id = dbu.insert_dataset(self.database.connection,
-                                              self._data['description'])
+                self._id = insert_dataset(self._data['description'])
             except self.database.Error, e:
                 logger.warn("insertion of DataSet() into the database failed")
                 raise
@@ -335,7 +319,7 @@ class DataSet(DBObject):
         dataset from the database. Implemented separately from update(),
         since normally this would be too much overhead"""
         query = "SELECT id FROM image WHERE dataset = %s ORDER BY id" % self._id
-        cursor = tkp.database.query(self.database.connection, query)
+        cursor = tkp.database.query(query)
         result = cursor.fetchall()
         image_ids = [row[0] for row in result]
         self.images = [Image(database=self.database, id=id) for id in image_ids]
@@ -352,15 +336,15 @@ class DataSet(DBObject):
             Currently only returns 3 columns:
             [{'runcat,'xtrsrc','datapoints'}]
         """
-        return dbu.columns_from_table(self.database.connection,
-                                      'runningcatalog',
+        return columns_from_table('runningcatalog',
                                       keywords=['id', 'xtrsrc', 'datapoints'],
                                       alias={'id':'runcat'},
                                       where={'dataset':self.id})
-
+        
 
     def add_manual_entry_to_monitoringlist(self, ra, dec):
-        dbu.add_manual_entry_to_monitoringlist(self.database.connection, self.id, ra, dec)
+        add_manual_entry_to_monitoringlist(self.id, ra, dec)
+
 
     def frequency_bands(self):
         """Return a list of distinct bands present in the dataset."""
@@ -372,39 +356,6 @@ class DataSet(DBObject):
         self.database.cursor.execute(query, (self.id,))
         bands = zip(*self.database.cursor.fetchall())[0]
         return bands
-
-    def _find_transient_candidates(self, single_epoch_threshold, combined_threshold):
-        """Find sources not present in all epochs.
-        
-        Returns a list of associated source ids, which 
-            - Do not have an associated extracted source in all epochs
-            - Have at least one extracted source with SNR above the single_epoch_threshold
-            - Have a a summed SNR above the combined_threshold 
-            - Excludes non-detections due to a shifting field of view (edge cases).
-            
-        Returns: a list of dicts
-        [ {runcat, xtrsrc, datapoints, max_det_sigma, sum_det_sigma} ]
-            
-        """
-        all_candidates = dbu.select_winking_sources(self.database.connection, self._id)
-                
-        thresholded_candidates = dbu.select_transient_candidates_above_thresh(
-                    conn=self.database.connection,
-                    runcat_ids=[c['runcat'] for c in all_candidates],
-                    single_epoch_threshold=single_epoch_threshold,
-                    combined_threshold=combined_threshold
-                    )
-        
-        #Pull in the  xtrsrc and datapoints info
-        for tc in thresholded_candidates:
-            for ac in all_candidates:
-                if tc['runcat']==ac['runcat']:
-                    tc.update(ac)
-        
-        #TODO: Filter out those which only disappear because they drop out of FoV
-        ###  --- This will require FoV information in database
-        return thresholded_candidates
-    
 
 
 class Image(DBObject):
@@ -459,8 +410,7 @@ class Image(DBObject):
                 #    self._data['deltax'] = None
                 #    self._data['deltay'] = None
                 # Insert a default image
-                self._id = dbu.insert_image(
-                    self.database.connection, self.dataset.id,
+                self._id = insert_image(self.dataset.id,
                     self._data['freq_eff'], self._data['freq_bw'],
                     self._data['taustart_ts'],self._data['tau_time'],
                     self._data['beam_smaj_pix'],self._data['beam_smin_pix'],  
@@ -526,7 +476,7 @@ class Image(DBObject):
        #To do: Figure out a saner method of passing the results around
        # (Namedtuple, for starters?)
        
-        dbu.insert_extracted_sources(self._id, results=results, extract='blind')
+        insert_extracted_sources(self._id, results=results, extract='blind')
         
     def associate_extracted_sources(self, deRuiter_r):
         """Associate sources from the last images with previously
@@ -538,28 +488,8 @@ class Image(DBObject):
                 association. The default value is set through the
                 tkp.config module
         """
-        dbu.associate_extracted_sources(self._id, deRuiter_r)
+        associate_extracted_sources(self._id, deRuiter_r)
         
-
-    def monitoringsources(self):
-        return dbu.get_monitoringlist_not_observed(
-                           self.database.connection,
-                           self._id,
-                           self.dataset.id)
-
-    def insert_monitored_sources(self, results):
-        """Insert the list of measured monitoring sources for this image into
-        extractedsource and runningcatalog
-
-        Note that the insertion into runningcatalog can be done by
-        xtrsrc_id from monitoringlist. In case it is negative, it is
-        appended to runningcatalog, and xtrsrc_id is updated in the
-        monitoringlist.
-        """
-
-        dbu.insert_monitored_sources(self.database.connection, results,
-                                      self._id)
-
 
 class ExtractedSource(DBObject):
     """Class corresponding to the extractedsource table in the database"""
@@ -601,4 +531,4 @@ class ExtractedSource(DBObject):
                 - database ID of this particular source
         """
 
-        return dbu.lightcurve(self.database.connection, self._id)
+        return lightcurve(self._id)

@@ -1,3 +1,4 @@
 """
-functions for calculating LOFAR specific properties
+functions for calculating LOFAR hardware specific properties.
 """
+

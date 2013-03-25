@@ -1,31 +1,18 @@
-# -*- coding: utf-8 -*-
-
-#
-# LOFAR Transients Key Project
-#
-# Evert Rol, Tim Staley
-#
-# discovery@transientskp.org
-#
-#
-# Interface with the MonetDB pipeline database.
-#
+"""
+Interface with the MonetDB pipeline database.
+"""
 
 import logging
-import contextlib
 from tkp.config import config
 from ..utility.exceptions import TKPDataBaseError
 
-
 logger = logging.getLogger(__name__)
-
 
 # Set up the Python DB API.
 # Record which module was imported as the engine via the ENGINE global.
 # port = 0 is a flag to use the default port instead
 ENGINE = config['database']['engine']
 if ENGINE == 'monetdb':
-    import monetdb
     import monetdb.sql as engine
     if config['database']['port'] == 0:
         config['database']['port'] = 50000

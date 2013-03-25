@@ -6,11 +6,9 @@ on how to use it.
 """
 
 import argparse
-import readline
 import os
 import sys
 import monetdb
-import monetdb.sql
 
 sql_folder = os.path.join(os.path.dirname(__file__), 'sql/upgrade')
 

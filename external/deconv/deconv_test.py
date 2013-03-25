@@ -1,9 +1,6 @@
 #! /usr/bin/env python
 
 
-from timeit import Timer
-
-
 def timing(deconv):
     deconv(1, 1, 0, 1, 1, 0)
     deconv(1, 1, 0, 1, 1, 180)
@@ -77,7 +74,6 @@ def run():
     correctness(deconv)
     print
     print 'Python routine:'
-    from deconv2 import deconv
     correctness(deconv)
 
 	

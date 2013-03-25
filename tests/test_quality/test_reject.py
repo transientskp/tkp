@@ -1,12 +1,10 @@
-import unittest
-from tkp.testutil import db_subs
-if not  hasattr(unittest.TestCase, 'assertIsInstance'):
-    import unittest2 as unittest
+import unittest2 as unittest
 import monetdb
 import tkp.quality
 import tkp.database
 import tkp.database.quality
 from tkp.testutil.decorators import requires_database
+from tkp.testutil import db_subs
 
 
 class TestReject(unittest.TestCase):

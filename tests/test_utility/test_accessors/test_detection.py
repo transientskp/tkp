@@ -1,16 +1,15 @@
-import unittest
-if not  hasattr(unittest.TestCase, 'assertIsInstance'):
-    import unittest2 as unittest
 import os
-import tkp.config
 
+import unittest2 as unittest
+
+import tkp.config
 from tkp.utility.accessors.detection import isfits, islofarcasa, islofarhdf5, detect, iscasa
 from tkp.utility.accessors.lofarcasaimage import LofarCasaImage
 from tkp.utility.accessors.casaimage import CasaImage
-from tkp.utility.accessors.lofarhdf5image import LofarHdf5Image
 from tkp.utility.accessors.fitsimage import FitsImage
 import tkp.utility.accessors
 from tkp.testutil.decorators import requires_data
+
 
 DATAPATH = tkp.config.config['test']['datapath']
 lofarcasatable = os.path.join(DATAPATH, 'casatable/L55596_000TO009_skymodellsc_wmax6000_noise_mult10_cell40_npix512_wplanes215.img.restored.corr')

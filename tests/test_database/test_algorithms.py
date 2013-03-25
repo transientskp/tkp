@@ -1,11 +1,8 @@
-import unittest
-if not  hasattr(unittest.TestCase, 'assertIsInstance'):
-    import unittest2 as unittest
+import unittest2 as unittest
 import tkp.database as tkpdb
 from tkp.testutil.decorators import requires_database
 from tkp.testutil import db_subs
-import tkp.database.utils as db_utils
-
+from tkp.database.generic import columns_from_table
 
 class TestSourceAssociation(unittest.TestCase):
     @requires_database()
@@ -38,8 +35,7 @@ class TestSourceAssociation(unittest.TestCase):
             self.db_imgs.append( tkpdb.Image( data=im, dataset=self.dataset) )
             self.db_imgs[-1].insert_extracted_sources([])
             self.db_imgs[-1].associate_extracted_sources(deRuiter_r=3.7)
-            running_cat = tkpdb.utils.columns_from_table(self.database.connection,
-                                           table="runningcatalog",
+            running_cat = columns_from_table(table="runningcatalog",
                                            keywords="*",
                                            where={"dataset":self.dataset.id})
             self.assertEqual(len(running_cat), 0)
@@ -72,8 +68,7 @@ class TestSourceAssociation(unittest.TestCase):
             last_img.associate_extracted_sources(deRuiter_r=3.7)
             
             #First, check the runcat has been updated correctly:
-            running_cat = tkpdb.utils.columns_from_table(self.database.connection,
-                                           table="runningcatalog",
+            running_cat = columns_from_table(table="runningcatalog",
                                            keywords=['datapoints'],
                                            where={"dataset":self.dataset.id})
             self.assertEqual(len(running_cat), 1)
@@ -87,8 +82,7 @@ class TestSourceAssociation(unittest.TestCase):
             if first_epoch:
                 self.assertEqual(len(img_xtrsrc_ids),1)
                 extracted_source_ids.extend(img_xtrsrc_ids)
-                assocxtrsrcs_rows = tkpdb.utils.columns_from_table(self.database.connection,
-                                           table="assocxtrsource",
+                assocxtrsrcs_rows = columns_from_table(table="assocxtrsource",
                                            keywords=['runcat', 'xtrsrc' ],
                                            where={"xtrsrc":img_xtrsrc_ids[0]})
                 self.assertEqual(len(assocxtrsrcs_rows),1)
@@ -101,8 +95,7 @@ class TestSourceAssociation(unittest.TestCase):
         
         #Assocxtrsources still ok after multiple images?
         self.assertEqual(len(extracted_source_ids),1)
-        assocxtrsrcs_rows = tkpdb.utils.columns_from_table(self.database.connection,
-                                           table="assocxtrsource",
+        assocxtrsrcs_rows = columns_from_table(table="assocxtrsource",
                                            keywords=['runcat', 'xtrsrc' ],
                                            where={"xtrsrc":extracted_source_ids[0]})
         self.assertEqual(len(assocxtrsrcs_rows),1)
@@ -129,8 +122,7 @@ class TestSourceAssociation(unittest.TestCase):
             last_img.insert_extracted_sources([db_subs.example_extractedsource_tuple()])
             last_img.associate_extracted_sources(deRuiter_r=3.7)
             imgs_loaded+=1
-            running_cat = tkpdb.utils.columns_from_table(self.database.connection,
-                                           table="runningcatalog",
+            running_cat = columns_from_table(table="runningcatalog",
                                            keywords=['id', 'datapoints'],
                                            where={"dataset":self.dataset.id})
             self.assertEqual(len(running_cat), 1)
@@ -147,8 +139,7 @@ class TestSourceAssociation(unittest.TestCase):
             self.assertEqual(len(img_xtrsrc_ids), 1)
 
             #Get the association row for most recent extraction:
-            assocxtrsrcs_rows = tkpdb.utils.columns_from_table(self.database.connection,
-                                       table="assocxtrsource",
+            assocxtrsrcs_rows = columns_from_table(table="assocxtrsource",
                                        keywords=['runcat', 'xtrsrc' ],
                                        where={"xtrsrc":img_xtrsrc_ids[0]})
 #            print "ImageID:", last_img.id

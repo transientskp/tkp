@@ -1,19 +1,18 @@
-#!/usr/bin/python
-import sys,os
-import nose
-import optparse
+#!/usr/bin/env python
 """A small wrapper around nosetests.
 
-Takes care of a '--datapath' argument (see handle_args) 
+Takes care of a '--datapath' argument (see handle_args)
 and turns down the monetdb logging level-
 this is otherwise disruptive when viewing error messages.
 """
+import sys
+import nose
 
 def handle_args(args):
-    """Quick and dirty routine to grab datapath option.
-       (Unfortunately optparse doesn't play well at passing arguments to a subprocess.)        
     """
-
+    Quick and dirty routine to grab datapath option. Unfortunately optparse
+    doesn't play well at passing arguments to a subprocess.
+    """
     default_datapath=tkp.config.config['test']['datapath']
     usage = """runtests.py [--datapath=/path/to/test_data] [Standard nosetests args]  
 e.g.
@@ -37,7 +36,6 @@ Default path to TKP test data: {0}
 
 if __name__ == "__main__":
     import logging
-    import monetdb
     try:
         import tkp.config
     except ImportError:

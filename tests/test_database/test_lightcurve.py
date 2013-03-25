@@ -1,14 +1,14 @@
+import datetime
+from operator import attrgetter, itemgetter
 
-import unittest
-if not  hasattr(unittest.TestCase, 'assertIsInstance'):
-    import unittest2 as unittest
+import unittest2 as unittest
+
 from tkp.testutil.decorators import requires_database
 from tkp.database.orm import DataSet
 from tkp.database.orm import Image
 import tkp.database
-import datetime
-from operator import attrgetter, itemgetter
-import tkp.database.utils.transients as dbtransients
+import tkp.database.transients as dbtransients
+
 
 class TestLightCurve(unittest.TestCase):
     def setUp(self):

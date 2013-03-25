@@ -1,11 +1,9 @@
-import unittest
-if not  hasattr(unittest.TestCase, 'assertIsInstance'):
-    import unittest2 as unittest
+import unittest2 as unittest
 import tkp.database as tkpdb
-import tkp.database.utils.transients as dbt
-import tkp.database.utils as dbutils
+from tkp.database.transients import multi_epoch_transient_search
+from tkp.database.generic import get_db_rows_as_dicts
 from tkp.testutil import db_subs
-from tkp.testutil.decorators import requires_database, duration
+from tkp.testutil.decorators import requires_database
 
 
 class TestTransientBasics(unittest.TestCase):
@@ -51,7 +49,7 @@ class TestTransientBasics(unittest.TestCase):
             image.associate_extracted_sources(deRuiter_r=3.7)
             freq_bands = dataset.frequency_bands()
             self.assertEqual(len(freq_bands), 1)
-            transients = dbt.multi_epoch_transient_search(
+            transients = multi_epoch_transient_search(
                                             eta_lim=1,
                                             V_lim=0.1,
                                             probability_threshold=0.7,
@@ -147,7 +145,7 @@ class TestTransientRoutines(unittest.TestCase):
         bands = self.dataset.frequency_bands()
         self.assertEqual(len(bands), 1)
         #First run with lax limits:
-        transients = dbutils.multi_epoch_transient_search(
+        transients = multi_epoch_transient_search(
                  eta_lim=1.1,
                  V_lim=0.01,
                  probability_threshold=0.01,
@@ -164,7 +162,7 @@ class TestTransientRoutines(unittest.TestCase):
         """
         cursor = self.database.connection.cursor()
         cursor.execute(qry, {'dsid':self.dataset.id})
-        transient_table_entries = dbutils.generic.get_db_rows_as_dicts(cursor)
+        transient_table_entries = get_db_rows_as_dicts(cursor)
         cursor.close()
         self.assertEqual(len(transient_table_entries), len(transients))
 #        for t in all_transients:    
@@ -173,7 +171,7 @@ class TestTransientRoutines(unittest.TestCase):
         more_highly_variable = sum(t['v_int'] > 2.0 for t in transients)
         very_non_flat = sum(t['eta_int'] > 100.0 for t in transients)
 
-        transients = dbutils.multi_epoch_transient_search(
+        transients = multi_epoch_transient_search(
                  eta_lim=1.1,
                  V_lim=2.0,
                  probability_threshold=0.01,
@@ -181,7 +179,7 @@ class TestTransientRoutines(unittest.TestCase):
                  minpoints=1)
         self.assertEqual(len(transients), more_highly_variable)
 
-        transients = dbutils.multi_epoch_transient_search(
+        transients = multi_epoch_transient_search(
                  eta_lim=100,
                  V_lim=0.01,
                  probability_threshold=0.01,

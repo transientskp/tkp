@@ -1,7 +1,10 @@
-import os, errno, time, sys
+import os
+import time
+import sys
 from datetime import datetime
+
 import monetdb.sql as db
-from monetdb.sql import Error as Error
+
 #import MySQLdb as db
 #from MySQLdb import Error as Error
 import logging

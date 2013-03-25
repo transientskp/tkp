@@ -1,18 +1,16 @@
 import logging
 import monetdb.sql
-from .database import DataBase
-from .orm import DataSet
-from .orm import Image
-from .orm import ExtractedSource
+from tkp.database.database import DataBase
 
-import quality
+#TODO: this should really be removed, other modules should import this directly
+from tkp.database.orm import DataSet, Image, ExtractedSource
 
 from tkp.config import config
 autocommit = config['database']['autocommit']
 
 logger = logging.getLogger(__name__)
 
-def query(conn, query, parameters=None, commit=False):
+def query(query, parameters=None, commit=False):
     """A generic wrapper for doing any query to the database
     Args:
         conn: the database connection object
@@ -22,10 +20,12 @@ def query(conn, query, parameters=None, commit=False):
         a MonetDB cursor object
     """
     try:
-        cursor = conn.cursor()
+        database = DataBase()
+        connection = database.connection
+        cursor = connection.cursor()
         cursor.execute(query, parameters)
         if not autocommit and commit:
-            conn.commit()
+            connection.commit()
     except monetdb.sql.Error as e:
         logger.error("Query failed: %s. Query: %s." % (e, query))
         raise

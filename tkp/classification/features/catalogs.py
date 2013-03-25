@@ -8,7 +8,7 @@ imported, functions will silently return None.
 """
 
 from tkp.database.database import DataBase
-from tkp.database.utils import match_nearests_in_catalogs
+from tkp.database.general import match_nearests_in_catalogs
 
 
 def match_catalogs(transient):
@@ -36,9 +36,8 @@ def match_catalogs(transient):
     #        results[value] = results[value][0]
     #    else:
     #        results[value] = {}
-    results = match_nearests_in_catalogs(
-                        database.connection, transient['runcat'],
-                        radius=0.5, deRuiter_r=3.717)
+    results = match_nearests_in_catalogs(transient['runcat'],
+                                    radius=0.5, deRuiter_r=3.717)
     if len(results) > 0:
         results = results[0]
     else:

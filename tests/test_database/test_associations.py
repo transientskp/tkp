@@ -1,30 +1,24 @@
-import unittest
-if not  hasattr(unittest.TestCase, 'assertIsInstance'):
-    import unittest2 as unittest
 import math
+
+import unittest2 as unittest
+
 import tkp.database as tkpdb
-import tkp.database.utils.general as dbgen
-import tkp.database.utils as dbutils
+import tkp.database.general as dbgen
+from tkp.database.associations import associate_extracted_sources
+from tkp.database.generic import columns_from_table
 from tkp.testutil import db_subs
 from tkp.testutil.decorators import requires_database
 
 
+@requires_database()
 class TestOne2One(unittest.TestCase):
     """
     These tests will check the 1-to-1 source associations, i.e. an extractedsource
     has exactly one counterpart in the runningcatalog
     """
-    @requires_database()
-    def setUp(self):
-
-        self.database = tkpdb.DataBase()
-
-    def tearDown(self):
-        """remove all stuff after the test has been run"""
-        self.database.close()
 
     def test_one2one(self):
-        dataset = tkpdb.DataSet(database=self.database, data={'description': 'assoc test set: 1-1'})
+        dataset = tkpdb.DataSet(data={'description': 'assoc test set: 1-1'})
         n_images = 8
         im_params = db_subs.example_dbimage_datasets(n_images)
 
@@ -36,11 +30,13 @@ class TestOne2One(unittest.TestCase):
             steady_srcs.append(src)
 
         for im in im_params:
-            image = tkpdb.Image(database=self.database, dataset=dataset, data=im)
+            image = tkpdb.Image(dataset=dataset, data=im)
             dbgen.insert_extracted_sources(image.id, steady_srcs, 'blind')
-            tkpdb.utils.associate_extracted_sources(image.id, deRuiter_r = 3.717)
+            associate_extracted_sources(image.id, deRuiter_r = 3.717)
 
-        # Check runningcatalog, runningcatalog_flux, assocxtrsource
+        # Check runningcatalog, runningcatalog_flux, assocxtrsource.
+        # note that the order of insertions is not garanteed, so we ORDER by
+        # wm_RA
         query = """\
         SELECT datapoints
               ,wm_ra
@@ -52,9 +48,10 @@ class TestOne2One(unittest.TestCase):
               ,z
           FROM runningcatalog
          WHERE dataset = %s
+        ORDER BY wm_ra
         """
-        self.database.cursor.execute(query, (dataset.id,))
-        runcat = zip(*self.database.cursor.fetchall())
+        cursor = tkpdb.query(query, (dataset.id,))
+        runcat = zip(*cursor.fetchall())
         self.assertNotEqual(len(runcat), 0)
         dp = runcat[0]
         wm_ra = runcat[1]
@@ -94,8 +91,8 @@ class TestOne2One(unittest.TestCase):
            AND r.dataset = %s
         ORDER BY a.xtrsrc
         """
-        self.database.cursor.execute(query, (dataset.id,))
-        assoc = zip(*self.database.cursor.fetchall())
+        cursor = tkpdb.query(query, (dataset.id,))
+        assoc = zip(*cursor.fetchall())
         self.assertNotEqual(len(assoc), 0)
         aruncat = assoc[0]
         axtrsrc = assoc[1]
@@ -109,8 +106,8 @@ class TestOne2One(unittest.TestCase):
            AND i.dataset = %s
         ORDER BY x.id
         """
-        self.database.cursor.execute(query, (dataset.id,))
-        xtrsrcs = zip(*self.database.cursor.fetchall())
+        cursor = tkpdb.query(query, (dataset.id,))
+        xtrsrcs = zip(*cursor.fetchall())
         self.assertNotEqual(len(xtrsrcs), 0)
         xtrsrc = xtrsrcs[0]
         self.assertEqual(len(xtrsrc), n_images * n_steady_srcs)
@@ -132,8 +129,8 @@ class TestOne2One(unittest.TestCase):
          WHERE r.id = rf.runcat 
            AND r.dataset = %s
         """
-        self.database.cursor.execute(query, (dataset.id,))
-        fluxes = zip(*self.database.cursor.fetchall())
+        cursor = tkpdb.query(query, (dataset.id,))
+        fluxes = zip(*cursor.fetchall())
         self.assertNotEqual(len(fluxes), 0)
         f_datapoints = fluxes[2]
         avg_f_peak = fluxes[3]
@@ -150,8 +147,7 @@ class TestOne2One(unittest.TestCase):
     def TestMeridianCrossLowHighEdgeCase(self):
         """What happens if a source is right on the meridian?"""
 
-        dataset = tkpdb.DataSet(database=self.database,
-                        data={'description':"Assoc 1-to-1:" + self._testMethodName})
+        dataset = tkpdb.DataSet(data={'description':"Assoc 1-to-1:" + self._testMethodName})
         n_images = 3
         im_params = db_subs.example_dbimage_datasets(n_images, centre_ra=0.5,
                                                       centre_decl=10)
@@ -166,13 +162,12 @@ class TestOne2One(unittest.TestCase):
 
         for idx, im in enumerate(im_params):
             im['centre_ra'] = 359.9
-            image = tkpdb.Image(database=self.database, dataset=dataset, data=im)
+            image = tkpdb.Image(dataset=dataset, data=im)
             image.insert_extracted_sources([src_list[idx]])
-            tkpdb.utils.associate_extracted_sources(image.id, deRuiter_r=3.717)
-        runcat = dbutils.columns_from_table(self.database.connection,
-                                   'runningcatalog', ['datapoints', 'wm_ra'],
+            associate_extracted_sources(image.id, deRuiter_r=3.717)
+        runcat = columns_from_table('runningcatalog', ['datapoints', 'wm_ra'],
                                    where={'dataset':dataset.id})
-        print "***\nRESULTS:", runcat, "\n*****"
+#        print "***\nRESULTS:", runcat, "\n*****"
         self.assertEqual(len(runcat), 1)
         self.assertEqual(runcat[0]['datapoints'], 3)
         avg_ra = ((src0.ra+180)%360 + (src1.ra+180)%360 + (src2.ra+180)%360)/3 - 180
@@ -181,8 +176,8 @@ class TestOne2One(unittest.TestCase):
     def TestMeridianCrossHighLowEdgeCase(self):
         """What happens if a source is right on the meridian?"""
 
-        dataset = tkpdb.DataSet(database=self.database,
-                        data={'description':"Assoc 1-to-1:" + self._testMethodName})
+        dataset = tkpdb.DataSet(data={'description':"Assoc 1-to-1:" +
+                                                    self._testMethodName})
         n_images = 3
         im_params = db_subs.example_dbimage_datasets(n_images, centre_ra=0.5,
                                                       centre_decl=10)
@@ -197,11 +192,10 @@ class TestOne2One(unittest.TestCase):
 
         for idx, im in enumerate(im_params):
             im['centre_ra'] = 359.9
-            image = tkpdb.Image(database=self.database, dataset=dataset, data=im)
+            image = tkpdb.Image(dataset=dataset, data=im)
             image.insert_extracted_sources([src_list[idx]])
-            tkpdb.utils.associate_extracted_sources(image.id, deRuiter_r=3.717)
-        runcat = dbutils.columns_from_table(self.database.connection,
-                                   'runningcatalog', ['datapoints', 'wm_ra'],
+            associate_extracted_sources(image.id, deRuiter_r=3.717)
+        runcat = columns_from_table('runningcatalog', ['datapoints', 'wm_ra'],
                                    where={'dataset':dataset.id})
         print "***\nRESULTS:", runcat, "\n*****"
         self.assertEqual(len(runcat), 1)
@@ -212,8 +206,8 @@ class TestOne2One(unittest.TestCase):
     def TestMeridianHigherEdgeCase(self):
         """What happens if a source is right on the meridian?"""
 
-        dataset = tkpdb.DataSet(database=self.database,
-                        data={'description':"Assoc 1-to-1:" + self._testMethodName})
+        dataset = tkpdb.DataSet(data={'description':"Assoc 1-to-1:" +
+                                                    self._testMethodName})
         n_images = 3
         im_params = db_subs.example_dbimage_datasets(n_images, centre_ra=0.5,
                                                       centre_decl=10)
@@ -228,11 +222,10 @@ class TestOne2One(unittest.TestCase):
 
         for idx, im in enumerate(im_params):
             im['centre_ra'] = 359.9
-            image = tkpdb.Image(database=self.database, dataset=dataset, data=im)
+            image = tkpdb.Image(dataset=dataset, data=im)
             image.insert_extracted_sources([src_list[idx]])
-            tkpdb.utils.associate_extracted_sources(image.id, deRuiter_r=3.717)
-        runcat = dbutils.columns_from_table(self.database.connection,
-                                   'runningcatalog', ['datapoints', 'wm_ra'],
+            associate_extracted_sources(image.id, deRuiter_r=3.717)
+        runcat = columns_from_table('runningcatalog', ['datapoints', 'wm_ra'],
                                    where={'dataset':dataset.id})
         print "***\nRESULTS:", runcat, "\n*****"
         self.assertEqual(len(runcat), 1)
@@ -243,8 +236,8 @@ class TestOne2One(unittest.TestCase):
     def TestMeridianLowerEdgeCase(self):
         """What happens if a source is right on the meridian?"""
 
-        dataset = tkpdb.DataSet(database=self.database,
-                        data={'description':"Assoc 1-to-1:" + self._testMethodName})
+        dataset = tkpdb.DataSet(data={'description':"Assoc 1-to-1:" +
+                                                    self._testMethodName})
         n_images = 3
         im_params = db_subs.example_dbimage_datasets(n_images, centre_ra=0.5,
                                                       centre_decl=10)
@@ -259,11 +252,10 @@ class TestOne2One(unittest.TestCase):
 
         for idx, im in enumerate(im_params):
             im['centre_ra'] = 359.9
-            image = tkpdb.Image(database=self.database, dataset=dataset, data=im)
+            image = tkpdb.Image(dataset=dataset, data=im)
             image.insert_extracted_sources([src_list[idx]])
-            tkpdb.utils.associate_extracted_sources(image.id, deRuiter_r=3.717)
-        runcat = dbutils.columns_from_table(self.database.connection,
-                                   'runningcatalog', ['datapoints', 'wm_ra'],
+            associate_extracted_sources(image.id, deRuiter_r=3.717)
+        runcat = columns_from_table('runningcatalog', ['datapoints', 'wm_ra'],
                                    where={'dataset':dataset.id})
         print "***\nRESULTS:", runcat, "\n*****"
         self.assertEqual(len(runcat), 1)
@@ -273,8 +265,7 @@ class TestOne2One(unittest.TestCase):
 
     def TestDeRuiterCalculation(self):
         """Check all the unit conversions are correct"""
-        dataset = tkpdb.DataSet(database=self.database,
-                        data={'description':"Assoc 1-to-1:" + self._testMethodName})
+        dataset = tkpdb.DataSet(data={'description':"Assoc 1-to-1:" + self._testMethodName})
         n_images = 2
         im_params = db_subs.example_dbimage_datasets(n_images, centre_ra=10,
                                                      centre_decl=0)
@@ -298,18 +289,16 @@ class TestOne2One(unittest.TestCase):
 #        print "Expected DR", expected_DR_radius
 
         for idx in [0, 1]:
-            image = tkpdb.Image(database=self.database, dataset=dataset,
+            image = tkpdb.Image(dataset=dataset,
                                 data=im_params[idx])
             image.insert_extracted_sources([src_list[idx]])
             #Peform very loose association since we just want to store DR value.
-            tkpdb.utils.associate_extracted_sources(image.id, deRuiter_r=100)
-        runcat = dbutils.columns_from_table(self.database.connection,
-                                   'runningcatalog', ['id'],
+            associate_extracted_sources(image.id, deRuiter_r=100)
+        runcat = columns_from_table('runningcatalog', ['id'],
                                    where={'dataset':dataset.id})
 #        print "***\nRESULTS:", runcat, "\n*****"
         self.assertEqual(len(runcat), 1)
-        assoc = dbutils.columns_from_table(self.database.connection,
-                                   'assocxtrsource', ['r'],
+        assoc = columns_from_table('assocxtrsource', ['r'],
                                    where={'runcat':runcat[0]['id']})
 #        print "Got assocs:", assoc
         self.assertEqual(len(assoc), 2)
@@ -351,7 +340,7 @@ class TestOne2Many(unittest.TestCase):
         results = []
         results.append(src[-1])
         dbgen.insert_extracted_sources(imageid1, results, 'blind')
-        tkpdb.utils.associate_extracted_sources(imageid1, deRuiter_r = 3.717)
+        associate_extracted_sources(imageid1, deRuiter_r = 3.717)
         
         query = """\
         SELECT id
@@ -424,7 +413,7 @@ class TestOne2Many(unittest.TestCase):
         results.append(src[0])
         results.append(src[1])
         dbgen.insert_extracted_sources(imageid2, results, 'blind')
-        tkpdb.utils.associate_extracted_sources(imageid2, deRuiter_r = 3.717)
+        associate_extracted_sources(imageid2, deRuiter_r = 3.717)
 
         query = """\
         SELECT id
@@ -558,7 +547,7 @@ class TestMany2One(unittest.TestCase):
         results.append(src[0])
         results.append(src[1])
         dbgen.insert_extracted_sources(imageid1, results, 'blind')
-        tkpdb.utils.associate_extracted_sources(imageid1, deRuiter_r = 3.717)
+        associate_extracted_sources(imageid1, deRuiter_r = 3.717)
 
         query = """\
         SELECT id
@@ -588,7 +577,7 @@ class TestMany2One(unittest.TestCase):
         results = []
         results.append(src[-1])
         dbgen.insert_extracted_sources(imageid2, results, 'blind')
-        tkpdb.utils.associate_extracted_sources(imageid2, deRuiter_r = 3.717)
+        associate_extracted_sources(imageid2, deRuiter_r = 3.717)
         
         query = """\
         SELECT id
@@ -715,7 +704,7 @@ class TestMany2Many(unittest.TestCase):
         results.append(src1[1])
         dbgen.insert_extracted_sources(imageid1, results, 'blind')
         # We use a default value of 3.717
-        tkpdb.utils.associate_extracted_sources(imageid1, deRuiter_r = 3.717)
+        associate_extracted_sources(imageid1, deRuiter_r = 3.717)
 
         query = """\
         SELECT id
@@ -754,7 +743,7 @@ class TestMany2Many(unittest.TestCase):
         results.append(src2[0])
         results.append(src2[1])
         dbgen.insert_extracted_sources(imageid2, results, 'blind')
-        tkpdb.utils.associate_extracted_sources(imageid2, deRuiter_r = 3.717)
+        associate_extracted_sources(imageid2, deRuiter_r = 3.717)
         
         query = """\
         SELECT id

@@ -1,12 +1,21 @@
+"""
+This module implements the CASA LOFAR data container format, described in this
+document:
+
+http://www.lofar.org/operations/lib/exe/fetch.php?media=:public:documents:casa_image_for_lofar_0.03.00.pdf
+"""
 import logging
 import warnings
 import datetime
 import numpy
+from math import degrees
+
 from pyrap.tables import table as pyrap_table
+
 from tkp.utility.accessors.beam import degrees2pixels
 from tkp.utility.accessors.dataaccessor import DataAccessor, parse_pixel_scale
 from tkp.utility.coordinates import julian2unix
-from math import degrees
+
 
 logger = logging.getLogger(__name__)
 

@@ -15,7 +15,6 @@ import math
 import numpy
 import scipy.optimize
 from .gaussian import gaussian
-from ..utility.uncertain import Uncertain
 import utils
 
 

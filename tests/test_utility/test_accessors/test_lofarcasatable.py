@@ -1,7 +1,7 @@
-import unittest
-if not  hasattr(unittest.TestCase, 'assertIsInstance'):
-    import unittest2 as unittest
 import os
+
+import unittest2 as unittest
+
 from tkp.utility import accessors
 from tkp.utility.accessors.lofarcasaimage import LofarCasaImage
 from tkp.utility.accessors.dataaccessor import extract_metadata
@@ -9,14 +9,15 @@ import tkp.config
 from tkp.testutil.decorators import requires_data
 from tkp.utility.coordinates import angsep
 
+
 DATAPATH = tkp.config.config['test']['datapath']
 casatable =  os.path.join(DATAPATH, 'casatable/L55596_000TO009_skymodellsc_wmax6000_noise_mult10_cell40_npix512_wplanes215.img.restored.corr')
 
 @requires_data(casatable)
 class TestLofarCasaImage(unittest.TestCase):
-    def __init__(self, *args):
-        super(TestLofarCasaImage, self).__init__(*args)
-        self.accessor = LofarCasaImage(casatable)
+    @classmethod
+    def setUpClass(cls):
+        cls.accessor = LofarCasaImage(casatable)
              
     def test_casaimage(self):
         results = extract_metadata(self.accessor)

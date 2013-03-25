@@ -1,14 +1,17 @@
 import datetime
-from tkp.utility.accessors.beam import degrees2pixels
-from tkp.utility.accessors.dataaccessor import DataAccessor, parse_pixel_scale
-import pyfits
 import numpy
-from tkp.utility.coordinates import WCS
 import pytz
 import dateutil.parser
 import logging
 import warnings
 import re
+
+import pyfits
+
+from tkp.utility.accessors.beam import degrees2pixels
+from tkp.utility.accessors.dataaccessor import DataAccessor, parse_pixel_scale
+from tkp.utility.coordinates import WCS
+
 
 logger = logging.getLogger(__name__)
 

@@ -1,10 +1,9 @@
-import os
 import datetime
 import logging
 from collections import namedtuple
 from tkp.config import config as tkp_conf
-from tkp.database.database import DataBase
-from tkp.database.orm import DataSet, Image
+from tkp.db.database import Database
+from tkp.db.orm import DataSet, Image
 import tkp.testutil.data as testdata
 
 ExtractedSourceTuple = namedtuple("ExtractedSourceTuple",
@@ -301,7 +300,7 @@ def create_dataset_8images(database=False, extract_sources=False):
     returns: dataset database id
     """
     if not database:
-        database = DataBase()
+        database = Database()
     dataset = DataSet(data={'description': 'testdataset'}, database=database)
     n_images = 8
     db_imgs = []

@@ -1,0 +1,48 @@
+#
+# ordered list of sql files that should be imported
+#
+tables/version.sql
+tables/frequencyband.sql
+tables/dataset.sql
+tables/skyregion.sql
+tables/image.sql
+tables/catalog.sql
+tables/catalogedsource.sql
+tables/extractedsource.sql
+tables/assoccatsource.sql
+tables/runningcatalog.sql
+tables/assocxtrsource.sql
+tables/assocskyrgn.sql
+tables/runningcatalog_flux.sql
+tables/temprunningcatalog.sql
+tables/node.sql
+tables/monitoringlist.sql
+tables/transient.sql
+tables/classification.sql
+tables/rejectreason.sql
+tables/rejection.sql
+#
+#system functions
+#
+functions/degrad.sql
+functions/alpha.sql
+functions/cartesian.sql
+functions/getBand.sql
+functions/updateSkyRgnMembers.sql
+functions/getSkyRgn.sql
+functions/insertImage.sql
+functions/insertDataset.sql
+procedures/BuildFrequencyBands.sql
+procedures/BuildNodes.sql
+#
+# initialisation
+#
+init/tables.sql
+#
+# catalogs
+#
+load/vlss.sql
+load/wenss.sql
+load/nvss.sql
+#load/exo.sql
+

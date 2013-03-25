@@ -1,23 +1,21 @@
-
-import unittest
-if not  hasattr(unittest.TestCase, 'assertIsInstance'):
-    import unittest2 as unittest
-from tkp.testutil.decorators import requires_database
-from tkp.database.orm import DataSet
-from tkp.database.orm import Image
-import tkp.database
 import datetime
 from operator import attrgetter
+
+import unittest2 as unittest
+
+from tkp.testutil.decorators import requires_database
+from tkp.db.orm import DataSet
+from tkp.db.orm import Image
+import tkp.db
 
 
 class TestLightSurface(unittest.TestCase):
     def setUp(self):
-        import tkp.database
-        self.database = tkp.database.DataBase()
-        self.dataset = DataSet(data={'description': 'dataset with images'}, database=self.database)
+        self.database = tkp.db.Database()
+        self.dataset = DataSet(data={'description': 'dataset with images'})
 
     def tearDown(self):
-        self.database.close()
+        tkp.db.rollback()
 
     @requires_database()
     def test_lightsurface(self):
@@ -95,13 +93,13 @@ class TestLightSurface(unittest.TestCase):
 
         sources = sorted(sources, key=attrgetter('ra'))
         extracted_source = sources[0].id
-        lightcurve = tkp.database.utils.general.lightcurve(self.database.connection, extracted_source)
+        lightcurve = tkp.db.general.lightcurve(extracted_source)
 
         # check if a lightcurve only contains sources for one frequency
         # TODO: ok this is not good, a lightcurve contains points from all frequencies now
         #self.assertEqual(len(images), len(lightcurve))
 
-        #lightsurface = tkp.database.utils.general.lightsurface(self.database.connection, extracted_source)
+        #lightsurface = tkp.db.general.lightsurface(extracted_source)
 
 
 if __name__ == '__main__':

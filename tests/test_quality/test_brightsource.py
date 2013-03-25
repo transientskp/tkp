@@ -1,12 +1,13 @@
-import unittest
-if not  hasattr(unittest.TestCase, 'assertIsInstance'):
-    import unittest2 as unittest
 import os
 from math import degrees
+
+import unittest2 as unittest
+
 from tkp.testutil.decorators import requires_data
 import tkp.quality.brightsource
 import tkp.utility.accessors
 import tkp.config
+
 
 DATAPATH = tkp.config.config['test']['datapath']
 testimage = os.path.join(DATAPATH,

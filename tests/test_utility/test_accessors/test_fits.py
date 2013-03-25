@@ -1,18 +1,20 @@
-# Tests for simulated LOFAR datasets.
+"""
+Tests for simulated LOFAR datasets.
+"""
 
-import unittest
-if not  hasattr(unittest.TestCase, 'assertIsInstance'):
-    import unittest2 as unittest
 import os
-import pyfits
+
+import unittest2 as unittest
+
 import tkp.config
 from tkp.utility import accessors
-from tkp.utility.accessors.casaimage import CasaImage
 from tkp.utility.accessors.fitsimage import FitsImage
-from tkp.database import DataSet
-from tkp.database import DataBase
+from tkp.db.orm import DataSet
+from tkp.db.database import Database
+import tkp.db
 from tkp.testutil.decorators import requires_data
 from tkp.testutil.decorators import requires_database
+
 
 DATAPATH = tkp.config.config['test']['datapath']
 
@@ -99,12 +101,12 @@ class DataBaseImage(unittest.TestCase):
     @requires_database()
     @requires_data(os.path.join(DATAPATH, 'L15_12h_const/observed-all.fits'))
     def testDBImageFromAccessor(self):
-        import tkp.database.database 
+        import tkp.db.database
 
         image = FitsImage(os.path.join(DATAPATH, 'L15_12h_const/observed-all.fits'),
                                       beam=(54./3600, 54./3600, 0.))
 
-        database = tkp.database.database.DataBase()
+        database = tkp.db.database.Database()
         dataset = DataSet(data={'description': 'Accessor test'}, database=database)
         dbimage = accessors.dbimage_from_accessor(dataset, image,
                                                   extraction_radius=3)
@@ -116,7 +118,7 @@ class FrequencyInformation(unittest.TestCase):
     @requires_database()
     @requires_data(os.path.join(DATAPATH, 'VLSS.fits'))
     def testFreqinfo(self):
-        database = DataBase()
+        database = Database()
         dataset = DataSet(data={'description': 'dataset'}, database=database)
 
         # image without frequency information
@@ -127,7 +129,7 @@ class FrequencyInformation(unittest.TestCase):
         self.assertListEqual(
             list(accessors.sourcefinder_image_from_accessor(image).data.shape),
             [2048, 2048])
-        database.close()
+        tkp.db.rollback()
 
 if __name__ == '__main__':
     unittest.main()

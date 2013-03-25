@@ -1,13 +1,12 @@
-import unittest
-if not  hasattr(unittest.TestCase, 'assertIsInstance'):
-    import unittest2 as unittest
-import tkp.database as tkpdb
+import math
+
+import unittest2 as unittest
+
+import tkp.db
 from tkp.testutil.decorators import requires_database
-from tkp.testutil import db_subs
 from tkp.testutil.db_queries import convert_to_cartesian as db_cartesian
 from tkp.utility.coordinates import eq_to_cart as py_cartesian
-import tkp.database.utils as db_utils
-import math
+
 """Test miscellaneous minor database functions"""
 
 
@@ -22,7 +21,7 @@ class TestCartesianConversions(unittest.TestCase):
         ( (ra, decl), (x,y,z) )
     """
     def setUp(self):
-        self.db = tkpdb.DataBase()
+        self.db = tkp.db.Database()
 
     def test_known_results(self):
         pole_results = ((0.0, 90.0),

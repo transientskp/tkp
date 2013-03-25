@@ -26,7 +26,6 @@ set(PYTHON_PACKAGES_DIR
 include (${PROJECT_SOURCE_DIR}/cmake/FindWCSLIB.cmake)
 
 add_subdirectory (external)
-add_subdirectory (enduser_scripts)
 
 install (CODE
     "execute_process(

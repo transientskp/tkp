@@ -1,12 +1,15 @@
-# Test functions used for manipulating coordinates in the TKP pipeline.
+"""
+Test functions used for manipulating coordinates in the TKP pipeline.
+"""
 
-import unittest
-if not  hasattr(unittest.TestCase, 'assertIsInstance'):
-    import unittest2 as unittest
 import datetime
 import pytz
-from tkp.utility import coordinates
+
+import unittest2 as unittest
 from pyrap.measures import measures
+
+from tkp.utility import coordinates
+
 
 class mjd2lstTest(unittest.TestCase):
     # Note that the precise conversion can vary slightly depending on the

@@ -1,52 +1,54 @@
-import unittest
-from tkp.testutil import db_subs
-if not  hasattr(unittest.TestCase, 'assertIsInstance'):
-    import unittest2 as unittest
+import unittest2 as unittest
 import monetdb
 import tkp.quality
-import tkp.database
-import tkp.database.quality
+import tkp.db
+import tkp.db.quality
 from tkp.testutil.decorators import requires_database
+from tkp.testutil import db_subs
 
 
 class TestReject(unittest.TestCase):
     @requires_database()
     def setUp(self):
-        self.database = tkp.database.DataBase()
         self.fake_images = db_subs.example_dbimage_datasets(n_images=1)
-        self.dataset = tkp.database.DataSet(data={'description':
-                                                  "Reject:" + self._testMethodName},
-                                            database=self.database)
-        self.image = tkp.database.Image(data=self.fake_images[0],
+        self.dataset = tkp.db.DataSet(data={'description':
+                                                  "Reject:" + self._testMethodName})
+        self.image = tkp.db.Image(data=self.fake_images[0],
                                         dataset=self.dataset)
 
+    def tearDown(self):
+        tkp.db.rollback()
+
     def test_rejectrms(self):
-        tkp.database.quality.unreject(self.image.id)
-        tkp.database.quality.reject(self.image.id,
-                                    tkp.database.quality.reason['rms'].id,
+        tkp.db.quality.unreject(self.image.id)
+        tkp.db.quality.reject(self.image.id,
+                                    tkp.db.quality.reason['rms'].id,
                                     "10 times too high")
-        self.database.execute("select count(*) from rejection where image=%s" %
-                              self.image.id)
-        self.assertEqual(self.database.fetchone()[0], 1)
+        query = "select count(*) from rejection where image=%s"
+        args = (self.image.id,)
+        cursor = tkp.db.execute(query, args)
+        self.assertEqual(cursor.fetchone()[0], 1)
 
     def test_unreject(self):
-        tkp.database.quality.unreject(self.image.id)
-        self.database.execute("select count(*) from rejection where image=%s" %
-                              self.image.id)
-        self.assertEqual(self.database.fetchone()[0], 0)
+        tkp.db.quality.unreject(self.image.id)
+        query = "select count(*) from rejection where image=%s"
+        args = (self.image.id,)
+        cursor = tkp.db.execute(query, args)
+        self.assertEqual(cursor.fetchone()[0], 0)
 
     def test_unknownreason(self):
         self.assertRaises(monetdb.exceptions.OperationalError,
-              tkp.database.quality.reject,self.image.id, 666666, "bad reason")
+              tkp.db.quality.reject, self.image.id, 666666, "bad reason")
+        tkp.db.rollback()
 
     def test_isrejected(self):
-        tkp.database.quality.unreject(self.image.id)
-        self.assertFalse(tkp.database.quality.isrejected(self.image.id))
-        tkp.database.quality.reject(self.image.id,
-                                    tkp.database.quality.reason['rms'].id,
+        tkp.db.quality.unreject(self.image.id)
+        self.assertFalse(tkp.db.quality.isrejected(self.image.id))
+        tkp.db.quality.reject(self.image.id,
+                                    tkp.db.quality.reason['rms'].id,
                                     "10 times too high")
-        self.assertEqual(tkp.database.quality.isrejected(self.image.id),
-                         [tkp.database.quality.reason['rms'].desc +
+        self.assertEqual(tkp.db.quality.isrejected(self.image.id),
+                         [tkp.db.quality.reason['rms'].desc +
                           ': 10 times too high', ])
 
 if __name__ == '__main__':

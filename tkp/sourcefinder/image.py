@@ -687,6 +687,9 @@ class ImageData(object):
             if fitme.size < 1:
                 raise IndexError("Fit region too close to edge or too small")
 
+        if not fitme.compressed().all():
+            logger.error("All data is masked: cannot fit")
+            return None
 
         # set argument for fixed parameters based on input string
         if fixed == 'position':
@@ -758,10 +761,13 @@ class ImageData(object):
                     raise
             else:
                 try:
-                    fit_results = self.fit_to_point(x, y, 
-                                                boxsize=boxsize, 
+                    fit_results = self.fit_to_point(x, y,
+                                                boxsize=boxsize,
                                                 threshold=threshold,
                                                 fixed=fixed)
+                    if not fit_results:
+                        # We were unable to get a good fit
+                        continue
                     if ( fit_results.ra.error == float('inf') or
                           fit_results.dec.error == float('inf')):
                         logging.warning("position errors extend outside image")

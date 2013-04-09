@@ -687,7 +687,7 @@ class ImageData(object):
             if fitme.size < 1:
                 raise IndexError("Fit region too close to edge or too small")
 
-        if not fitme.compressed():
+        if not len(fitme.compressed()):
             logger.error("All data is masked: cannot fit")
             return None
 

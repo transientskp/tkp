@@ -21,7 +21,6 @@ logger = logging.getLogger(__name__)
 
 AUTOCOMMIT = config['database']['autocommit']
 
-
 def associate_extracted_sources(image_id, deRuiter_r):
     """Associate extracted sources with sources detected in the running
     catalog.
@@ -43,7 +42,8 @@ def associate_extracted_sources(image_id, deRuiter_r):
     #| which may be matching one of the following cases:    |
     #| many-to-many, many-to-one, one-to-many, one-to-many  |
     #+------------------------------------------------------+
-    _insert_temprunningcatalog(conn, image_id, deRuiter_r)
+    mw = _check_meridian_wrap(conn, image_id)
+    _insert_temprunningcatalog(conn, image_id, deRuiter_r, mw)
     #+------------------------------------------------------+
     #| Here we process (flag) the many-to-many associations.|
     #+------------------------------------------------------+
@@ -77,7 +77,8 @@ def associate_extracted_sources(image_id, deRuiter_r):
     # _process_1_to_1()
     _insert_1_to_1_assoc(conn)
     _update_1_to_1_runcat(conn)
-    _select_for_update_1_to_1_runcat_flux(conn)
+    _update_1_to_1_runcat_flux(conn) # update flux in existing band
+    _insert_1_to_1_runcat_flux(conn) # insert flux for new band
     #+-------------------------------------------------------+
     #| Here we take care of the extracted sources that could |
     #| not be associated with any runningcatalog source      |
@@ -88,7 +89,6 @@ def associate_extracted_sources(image_id, deRuiter_r):
     _insert_new_assoc(conn, image_id)
     _insert_new_monitoringlist(conn, image_id)
     _insert_new_transient(conn, image_id)
-
     #+-------------------------------------------------------+
     #| New sources are added to transient table as well, but |
     #| that is done in the transient_search recipe.          |
@@ -96,6 +96,10 @@ def associate_extracted_sources(image_id, deRuiter_r):
     # TODO: Is it? -> Check
     _empty_temprunningcatalog(conn)
     _delete_inactive_runcat(conn)
+    #+-------------------------------------------------------+
+    #| Associate with catalogedsource                        |
+    #+-------------------------------------------------------+
+    #_insert_cat_assocs(conn, image_id, deRuiter_r, mw)
 
 def associate_with_catalogedsources(conn, image_id, radius, deRuiter_r):
     """Associate extracted sources in specified image with known sources
@@ -177,7 +181,7 @@ WHERE image = %(imgid)s
         if not AUTOCOMMIT:
             conn.commit()
     except db.Error as e:
-        logger.warn("Failed on query:\n" + (qry % qry_params))
+        logger.error("Failed on query:\n" + (qry % qry_params))
         raise
     finally:
         curs.close()
@@ -318,7 +322,7 @@ SELECT CASE WHEN s.centre_ra - alpha(s.xtr_radius, s.centre_decl) < 0 OR
         raise
 
 
-def _insert_temprunningcatalog(conn, image_id, deRuiter_r):
+def _insert_temprunningcatalog(conn, image_id, deRuiter_r, mw):
     """Select matched sources
 
     Here we select the extractedsource that have a positional match
@@ -747,7 +751,7 @@ INSERT INTO temprunningcatalog
          AND t0.band = rf0.band
          AND t0.stokes = rf0.stokes
 """
-    mw =_check_meridian_wrap(conn, image_id)
+    #mw = _check_meridian_wrap(conn, image_id)
     if mw['q_across'] == True:
         logger.info("Search across 0/360 meridian: %s" % mw)
         query = q_across_ra0
@@ -759,7 +763,7 @@ INSERT INTO temprunningcatalog
             conn.commit()
     except db.Error, e:
         q = query % (image_id, image_id, deRuiter_red)
-        logger.warn("Failed on query: \n%s" % q)
+        logger.error("Failed on query: \n%s" % q)
         raise
     finally:
         cursor.close()
@@ -841,7 +845,7 @@ UPDATE temprunningcatalog
             conn.commit()
         cursor.close()
     except db.Error, e:
-        logger.warn("Failed on query nr %s." % query)
+        logger.error("Failed on query nr %s." % query)
         raise
 
 def _insert_1_to_many_runcat(conn):
@@ -909,7 +913,7 @@ def _insert_1_to_many_runcat(conn):
         if not AUTOCOMMIT:
             conn.commit()
     except db.Error, e:
-        logger.warn("Failed on query:\n%s" % query)
+        logger.error("Failed on query:\n%s" % query)
         raise
     finally:
         cursor.close()
@@ -970,7 +974,7 @@ def _insert_1_to_many_runcat_flux(conn):
         if not AUTOCOMMIT:
             conn.commit()
     except db.Error, e:
-        logger.warn("Failed on query nr %s." % query)
+        logger.error("Failed on query nr %s." % query)
         raise
     finally:
         cursor.close()
@@ -1013,7 +1017,7 @@ def _insert_1_to_many_basepoint_assoc(conn):
         if not AUTOCOMMIT:
             conn.commit()
     except db.Error, e:
-        logger.warn("Failed on query:\n%s" % query)
+        logger.error("Failed on query:\n%s" % query)
         raise
     finally:
         cursor.close()
@@ -1070,7 +1074,7 @@ def _insert_1_to_many_assoc(conn):
         if not AUTOCOMMIT:
             conn.commit()
     except db.Error, e:
-        logger.warn("Failed on query:\n%s" % query)
+        logger.error("Failed on query:\n%s" % query)
         raise
     finally:
         cursor.close()
@@ -1105,7 +1109,7 @@ def _insert_1_to_many_skyrgn(conn):
         if not AUTOCOMMIT:
             conn.commit()
     except db.Error, e:
-        logger.warn("Failed on query:\n%s" % query)
+        logger.error("Failed on query:\n%s" % query)
         raise
     finally:
         cursor.close()
@@ -1150,7 +1154,7 @@ def _insert_1_to_many_monitoringlist(conn):
         if not AUTOCOMMIT:
             conn.commit()
     except db.Error, e:
-        logger.warn("Failed on query:\n%s" % query)
+        logger.error("Failed on query:\n%s" % query)
         raise
     finally:
         cursor.close()
@@ -1208,7 +1212,7 @@ def _insert_1_to_many_transient(conn):
         if not AUTOCOMMIT:
             conn.commit()
     except db.Error, e:
-        logger.warn("Failed on query:\n%s" % query)
+        logger.error("Failed on query:\n%s" % query)
         raise
     finally:
         cursor.close()
@@ -1239,7 +1243,7 @@ def _delete_1_to_many_inactive_monitoringlist(conn):
         if not AUTOCOMMIT:
             conn.commit()
     except db.Error, e:
-        logger.warn("Failed on query:\n%s" % query)
+        logger.error("Failed on query:\n%s" % query)
         raise
     finally:
         cursor.close()
@@ -1266,7 +1270,7 @@ def _delete_1_to_many_inactive_assocskyrgn(conn):
         if not AUTOCOMMIT:
             conn.commit()
     except db.Error, e:
-        logger.warn("Failed on query:\n%s" % query)
+        logger.error("Failed on query:\n%s" % query)
         raise
     finally:
         cursor.close()
@@ -1295,7 +1299,7 @@ def _delete_1_to_many_inactive_transient(conn):
         if not AUTOCOMMIT:
             conn.commit()
     except db.Error, e:
-        logger.warn("Failed on query:\n%s" % query)
+        logger.error("Failed on query:\n%s" % query)
         raise
     finally:
         cursor.close()
@@ -1331,7 +1335,7 @@ def _delete_1_to_many_inactive_assoc(conn):
         if not AUTOCOMMIT:
             conn.commit()
     except db.Error, e:
-        logger.warn("Failed on query nr %s." % query)
+        logger.error("Failed on query nr %s." % query)
         raise
     finally:
         cursor.close()
@@ -1360,7 +1364,7 @@ def _delete_1_to_many_inactive_runcat_flux(conn):
         if not AUTOCOMMIT:
             conn.commit()
     except db.Error, e:
-        logger.warn("Failed on query nr %s." % query)
+        logger.error("Failed on query nr %s." % query)
         raise
     finally:
         cursor.close()
@@ -1389,7 +1393,7 @@ def _flag_1_to_many_inactive_runcat(conn):
         if not AUTOCOMMIT:
             conn.commit()
     except db.Error, e:
-        logger.warn("Failed on query:\n%s." % query)
+        logger.error("Failed on query:\n%s." % query)
         raise
     finally:
         cursor.close()
@@ -1426,7 +1430,7 @@ def _flag_1_to_many_inactive_tempruncat(conn):
         if not AUTOCOMMIT:
             conn.commit()
     except db.Error, e:
-        logger.warn("Failed on query:\n%s" % query)
+        logger.error("Failed on query:\n%s" % query)
         raise
     finally:
         cursor.close()
@@ -1462,7 +1466,7 @@ def _insert_1_to_1_assoc(conn):
         if not AUTOCOMMIT:
             conn.commit()
     except db.Error, e:
-        logger.warn("Failed on query:\n%s." % query)
+        logger.error("Failed on query:\n%s." % query)
         raise
     finally:
         cursor.close()
@@ -1550,132 +1554,196 @@ def _update_1_to_1_runcat(conn):
         if not AUTOCOMMIT:
             conn.commit()
     except db.Error, e:
-        logger.warn("Failed on query:\n%s" % query)
+        logger.error("Failed on query:\n%s" % query)
         raise
     finally:
         cursor.close()
 
-def _select_for_update_1_to_1_runcat_flux(conn):
-    """Update the runningcatalog_flux
+def _update_1_to_1_runcat_flux(conn):
+    """Updates the fluxes in runningcatalog_flux of an existing band 
+    for an existing runcat source.
 
-    Based on the runcat ids in tempruncat, the fluxes of the corresponding
-    entries in runcat_flux should be updated.
-    If they do not exist yet, they will be inserted
+    If the runcat, band, stokes entry does exist in runcat_flux,
+    it will be updated with the values from tempruncat.
 
-    """
-
-    # TODO: Change this to a single bulk update query
-    try:
-        cursor = conn.cursor()
-        query = """\
-        SELECT f_datapoints
-              ,avg_f_peak
-              ,avg_f_peak_sq
-              ,avg_f_peak_weight
-              ,avg_weighted_f_peak
-              ,avg_weighted_f_peak_sq
-              ,avg_f_int
-              ,avg_f_int_sq
-              ,avg_f_int_weight
-              ,avg_weighted_f_int
-              ,avg_weighted_f_int_sq
-              ,runcat
-              ,band
-              ,stokes
-          FROM temprunningcatalog
-         WHERE inactive = FALSE
-        """
-        cursor.execute(query)
-        results = cursor.fetchall()
-        cursor.close()
-        if len(results) > 0:
-            for result in results:
-                _insert_or_update_1_to_1_runcat_flux(conn, tuple(result))
-    except db.Error, e:
-        logger.warn("Failed on query:\n%s" % query)
-        raise
-
-def _insert_or_update_1_to_1_runcat_flux(conn, result):
-    """Insert or update the runningcatalog_flux, depending on existing entries
-
-    If the runcat,band,stokes entry does not exist in runcat_flux,
-    we need to do an insert, otherwise an update
-
-    NOTE: Together with previous query this should be optimised,
-          in order to reduce data I/O
+    NOTE: It is important to guarantee the sequence:
+          First update the existing entries, 
+          then the insert the new entries (next function).
     """
 
     try:
         cursor = conn.cursor()
         query = """\
-        SELECT COUNT(*)
-          FROM runningcatalog_flux
-         WHERE runcat = %s
-           AND band = %s
-           AND stokes = %s
+UPDATE runningcatalog_flux
+   SET f_datapoints = (SELECT f_datapoints
+                         FROM temprunningcatalog 
+                        WHERE temprunningcatalog.runcat = runningcatalog_flux.runcat
+                          AND temprunningcatalog.band = runningcatalog_flux.band
+                          AND temprunningcatalog.stokes = runningcatalog_flux.stokes
+                          AND temprunningcatalog.inactive = FALSE
+                      )
+      ,avg_f_peak = (SELECT avg_f_peak
+                       FROM temprunningcatalog 
+                      WHERE temprunningcatalog.runcat = runningcatalog_flux.runcat
+                        AND temprunningcatalog.band = runningcatalog_flux.band
+                        AND temprunningcatalog.stokes = runningcatalog_flux.stokes
+                        AND temprunningcatalog.inactive = FALSE
+                    )
+      ,avg_f_peak_sq = (SELECT avg_f_peak_sq
+                          FROM temprunningcatalog 
+                         WHERE temprunningcatalog.runcat = runningcatalog_flux.runcat
+                           AND temprunningcatalog.band = runningcatalog_flux.band
+                           AND temprunningcatalog.stokes = runningcatalog_flux.stokes
+                           AND temprunningcatalog.inactive = FALSE
+                       )
+      ,avg_f_peak_weight = (SELECT avg_f_peak_weight
+                              FROM temprunningcatalog 
+                             WHERE temprunningcatalog.runcat = runningcatalog_flux.runcat
+                               AND temprunningcatalog.band = runningcatalog_flux.band
+                               AND temprunningcatalog.stokes = runningcatalog_flux.stokes
+                               AND temprunningcatalog.inactive = FALSE
+                           )
+      ,avg_weighted_f_peak = (SELECT avg_weighted_f_peak
+                                FROM temprunningcatalog 
+                               WHERE temprunningcatalog.runcat = runningcatalog_flux.runcat
+                                 AND temprunningcatalog.band = runningcatalog_flux.band
+                                 AND temprunningcatalog.stokes = runningcatalog_flux.stokes
+                                 AND temprunningcatalog.inactive = FALSE
+                             )
+      ,avg_weighted_f_peak_sq = (SELECT avg_weighted_f_peak_sq
+                                   FROM temprunningcatalog 
+                                  WHERE temprunningcatalog.runcat = runningcatalog_flux.runcat
+                                    AND temprunningcatalog.band = runningcatalog_flux.band
+                                    AND temprunningcatalog.stokes = runningcatalog_flux.stokes
+                                    AND temprunningcatalog.inactive = FALSE
+                                )
+      ,avg_f_int = (SELECT avg_f_int
+                      FROM temprunningcatalog 
+                     WHERE temprunningcatalog.runcat = runningcatalog_flux.runcat
+                       AND temprunningcatalog.band = runningcatalog_flux.band
+                       AND temprunningcatalog.stokes = runningcatalog_flux.stokes
+                       AND temprunningcatalog.inactive = FALSE
+                   )
+      ,avg_f_int_sq = (SELECT avg_f_int_sq
+                         FROM temprunningcatalog 
+                        WHERE temprunningcatalog.runcat = runningcatalog_flux.runcat
+                          AND temprunningcatalog.band = runningcatalog_flux.band
+                          AND temprunningcatalog.stokes = runningcatalog_flux.stokes
+                          AND temprunningcatalog.inactive = FALSE
+                      )
+      ,avg_f_int_weight = (SELECT avg_f_int_weight
+                             FROM temprunningcatalog 
+                             WHERE temprunningcatalog.runcat = runningcatalog_flux.runcat
+                               AND temprunningcatalog.band = runningcatalog_flux.band
+                               AND temprunningcatalog.stokes = runningcatalog_flux.stokes
+                               AND temprunningcatalog.inactive = FALSE
+                          )
+      ,avg_weighted_f_int = (SELECT avg_weighted_f_int
+                               FROM temprunningcatalog 
+                              WHERE temprunningcatalog.runcat = runningcatalog_flux.runcat
+                                AND temprunningcatalog.band = runningcatalog_flux.band
+                                AND temprunningcatalog.stokes = runningcatalog_flux.stokes
+                                AND temprunningcatalog.inactive = FALSE
+                            )
+      ,avg_weighted_f_int_sq = (SELECT avg_weighted_f_int_sq
+                                  FROM temprunningcatalog 
+                                 WHERE temprunningcatalog.runcat = runningcatalog_flux.runcat
+                                   AND temprunningcatalog.band = runningcatalog_flux.band
+                                   AND temprunningcatalog.stokes = runningcatalog_flux.stokes
+                                   AND temprunningcatalog.inactive = FALSE
+                               )
+ WHERE EXISTS (SELECT runcat
+                 FROM temprunningcatalog 
+                WHERE temprunningcatalog.runcat = runningcatalog_flux.runcat
+                  AND temprunningcatalog.band = runningcatalog_flux.band
+                  AND temprunningcatalog.stokes = runningcatalog_flux.stokes
+                  AND temprunningcatalog.inactive = FALSE
+              )
         """
-        # Be aware that the last items must correspond to the query
-        # in _select_for_update_1_to_1_runcat_flux()
-        cursor.execute(query, (result[-3], result[-2], result[-1]))
-        cnt = cursor.fetchone()[0]
-        if cnt == 0:
-            query = """\
-            INSERT INTO runningcatalog_flux
-              (f_datapoints
-              ,avg_f_peak
-              ,avg_f_peak_sq
-              ,avg_f_peak_weight
-              ,avg_weighted_f_peak
-              ,avg_weighted_f_peak_sq
-              ,avg_f_int
-              ,avg_f_int_sq
-              ,avg_f_int_weight
-              ,avg_weighted_f_int
-              ,avg_weighted_f_int_sq
-              ,runcat
-              ,band
-              ,stokes
-              )
-            VALUES
-              (%s
-              ,%s
-              ,%s
-              ,%s
-              ,%s
-              ,%s
-              ,%s
-              ,%s
-              ,%s
-              ,%s
-              ,%s
-              ,%s
-              ,%s
-              ,%s
-              )
-            """
-        else:
-            query = """\
-            UPDATE runningcatalog_flux
-               SET f_datapoints = %s
-                  ,avg_f_peak = %s
-                  ,avg_f_peak_sq = %s
-                  ,avg_f_peak_weight = %s
-                  ,avg_weighted_f_peak = %s
-                  ,avg_weighted_f_peak_sq = %s
-                  ,avg_f_int = %s
-                  ,avg_f_int_sq = %s
-                  ,avg_f_int_weight = %s
-                  ,avg_weighted_f_int = %s
-                  ,avg_weighted_f_int_sq = %s
-             WHERE runcat = %s
-               AND band = %s
-               AND stokes = %s
-            """
-        cursor.execute(query, tuple(result))
+        #answer=str(raw_input('Continue at update (y/n)? '))
+        #if answer != 'y':
+        #    sys.exit()
+
+        upd = cursor.execute(query)
         if not AUTOCOMMIT:
             conn.commit()
+        if upd > 0:
+            logger.info("Updated flux for %s sources" % (upd,))
     except db.Error, e:
-        logger.warn("Failed on query:\n%s" % query)
+        logger.error("Failed on query:\n%s" % query)
+        raise
+    finally:
+        cursor.close()
+
+def _insert_1_to_1_runcat_flux(conn):
+    """Insert the fluxes in runningcatalog_flux of a new band 
+    for an existing runcat source.
+
+    If the runcat, band, stokes entry does not exist (yet) in runcat_flux,
+    we need to insert the new values from tempruncat.
+    This might be the case if a source has been observed at other frequencies, 
+    but not in the current band, so there does not exist an entry 
+    for this band.
+
+    NOTE: It is important to guarantee the sequence:
+          First do the update (previous function), then the insert.
+    """
+
+    try:
+        cursor = conn.cursor()
+        query = """\
+INSERT INTO runningcatalog_flux
+  (runcat
+  ,band
+  ,stokes
+  ,f_datapoints
+  ,avg_f_peak
+  ,avg_f_peak_sq
+  ,avg_f_peak_weight
+  ,avg_weighted_f_peak
+  ,avg_weighted_f_peak_sq
+  ,avg_f_int
+  ,avg_f_int_sq
+  ,avg_f_int_weight
+  ,avg_weighted_f_int
+  ,avg_weighted_f_int_sq
+  )
+  SELECT runcat
+        ,band
+        ,stokes
+        ,f_datapoints
+        ,avg_f_peak
+        ,avg_f_peak_sq
+        ,avg_f_peak_weight
+        ,avg_weighted_f_peak
+        ,avg_weighted_f_peak_sq
+        ,avg_f_int
+        ,avg_f_int_sq
+        ,avg_f_int_weight
+        ,avg_weighted_f_int
+        ,avg_weighted_f_int_sq
+    FROM temprunningcatalog
+   WHERE inactive = FALSE
+     AND NOT EXISTS (SELECT rf.runcat
+                       FROM runningcatalog_flux rf
+                           ,temprunningcatalog tr
+                      WHERE rf.runcat = tr.runcat
+                        AND rf.band = tr.band
+                        AND rf.stokes = tr.stokes
+                        AND tr.inactive = FALSE
+                    )
+        """
+        #answer=str(raw_input('Continue at insert (y/n)? '))
+        #if answer != 'y':
+        #    sys.exit()
+
+        ins = cursor.execute(query)
+        if not AUTOCOMMIT:
+            conn.commit()
+        if ins > 0:
+            logger.info("Inserted new fluxes for %s sources" % (ins,))
+    except db.Error, e:
+        logger.error("Failed on query:\n%s" % query)
         raise
     finally:
         cursor.close()
@@ -1768,7 +1836,7 @@ def _insert_new_runcat(conn, image_id):
             logger.info("Added %s new sources to runningcatalog" % (ins,))
     except db.Error, e:
         q = query % (image_id,)
-        logger.warn("Failed on query:\n%s." % q)
+        logger.error("Failed on query:\n%s." % q)
         raise
     finally:
         cursor.close()
@@ -1838,7 +1906,7 @@ def _insert_new_runcat_flux(conn, image_id):
             conn.commit()
     except db.Error, e:
         q = query % (image_id,)
-        logger.warn("Failed on query:\n%s" % q)
+        logger.error("Failed on query:\n%s" % q)
         raise
     finally:
         cursor.close()
@@ -1896,7 +1964,7 @@ def _insert_new_runcat_skyrgn_assocs(conn, image_id):
                 conn.commit()
     except db.Error, e:
         q = assocskyrgn_parent_qry, {'img_id':image_id}
-        logger.warn("Failed on query:\n%s" % q)
+        logger.error("Failed on query:\n%s" % q)
         raise
     finally:
         cursor.close()
@@ -1948,7 +2016,7 @@ def _insert_new_runcat_skyrgn_assocs(conn, image_id):
                 conn.commit()
     except db.Error, e:
         q = assocskyrgn_parent_qry, {'img_id':image_id}
-        logger.warn("Failed on query:\n%s" % q)
+        logger.error("Failed on query:\n%s" % q)
         raise
     finally:
         cursor.close()
@@ -2006,7 +2074,7 @@ def _insert_new_assoc(conn, image_id):
             conn.commit()
     except db.Error, e:
         q = query % (image_id,)
-        logger.warn("Failed on query:\n%s" % q)
+        logger.error("Failed on query:\n%s" % q)
         raise
     finally:
         cursor.close()
@@ -2086,7 +2154,7 @@ def _insert_new_monitoringlist(conn, image_id):
             logger.info("Added %s new sources to monitoringlist table" % (ins,))
     except db.Error, e:
         q = query % (image_id, image_id)
-        logger.warn("Failed on query:\n%s" % q)
+        logger.error("Failed on query:\n%s" % q)
         raise
     finally:
         cursor.close()
@@ -2162,66 +2230,10 @@ def _insert_new_transient(conn, image_id):
             logger.info("Added %s new sources to transient table" % (ins,))
     except db.Error, e:
         q = query % (image_id, image_id)
-        logger.warn("Failed on query:\n%s" % q)
+        logger.error("Failed on query:\n%s" % q)
         raise
     finally:
         cursor.close()
-
-
-
-def _go_back_to_other_images_and_do_a_forcedfit_in_non_rejected_images(conn, image_id):
-    """Return a list of previous image ids and urls in which
-    the new sources were not detected
-    
-    """
-
-    try:
-        cursor = conn.cursor()
-        query = """\
-        SELECT id
-              ,url
-          FROM image
-         WHERE id <> %(image_id)s
-           AND id not in (SELECT image
-                            FROM rejection
-                           WHERE image=%(image_id)s
-                         )
-           AND dataset = (SELECT dataset 
-                            FROM image i 
-                           WHERE i.id = %(image_id)s
-                         )
-           AND EXISTS (SELECT t0.xtrsrc
-                         FROM (SELECT x1.id AS xtrsrc
-                                 FROM extractedsource x1
-                                     ,image i1
-                                WHERE x1.image = i1.id
-                                  AND i1.id = %(image_id)s
-                              ) t0
-                              LEFT OUTER JOIN temprunningcatalog trc1
-                              ON t0.xtrsrc = trc1.xtrsrc
-                        WHERE trc1.xtrsrc IS NULL
-                      )
-        """
-        cursor.execute(query, {'image_id': image_id})
-        results = zip(*cursor.fetchall())
-        if not AUTOCOMMIT:
-            conn.commit()
-        cursor.close()
-
-        validurls = []
-        if len(results) != 0:
-            imageids = results[0]
-            urls = results[1]
-            # Check if the urls are still available
-            for url in urls:
-                if os.path.exists(url):
-                    validurls.append(url)
-                    logger.info("Image %s still available for forced fit" % (os.path.basename(url),))
-        return validurls
-    except db.Error, e:
-        q = query % {'image_id': image_id}
-        logger.warn("Failed on query:\n%s" % q)
-        raise
 
 def _delete_inactive_runcat(conn):
     """Delete the one-to-many associations from temprunningcatalog,
@@ -2244,12 +2256,12 @@ def _delete_inactive_runcat(conn):
         if not AUTOCOMMIT:
             conn.commit()
     except db.Error, e:
-        logger.warn("Failed on query:\n%s" % query)
+        logger.error("Failed on query:\n%s" % query)
         raise
     finally:
         cursor.close()
 
-def _insert_cat_assocs(conn, image_id, radius, deRuiter_r):
+def _insert_cat_assocs(conn, image_id, deRuiter_r, mw):
     """Insert found xtrsrc--catsrc associations into assoccatsource table.
 
     The search for cataloged counterpart sources is done in the catalogedsource
@@ -2257,71 +2269,85 @@ def _insert_cat_assocs(conn, image_id, radius, deRuiter_r):
     the catalogedsources, depending on the expected field of view.
 
     """
-
-    try:
-        cursor = conn.cursor()
-        query = """\
-        INSERT INTO assoccatsource
-          (xtrsrc
-          ,catsrc
-          ,distance_arcsec
-          ,type
-          ,r
-          ,loglr
-          )
-          SELECT x0.id AS xtrsrc
-                ,c0.id AS catsrc
-                ,3600 * DEGREES(2 * ASIN(SQRT((x0.x - c0.x) * (x0.x - c0.x)
-                                          + (x0.y - c0.y) * (x0.y - c0.y)
-                                          + (x0.z - c0.z) * (x0.z - c0.z)
-                                          ) / 2) ) AS distance_arcsec
-                ,3
-                ,3600 * sqrt( ((x0.ra * cos(RADIANS(x0.decl)) - c0.ra * cos(RADIANS(c0.decl)))
-                             * (x0.ra * cos(RADIANS(x0.decl)) - c0.ra * cos(RADIANS(c0.decl))))
-                             / (x0.ra_err * x0.ra_err + c0.ra_err*c0.ra_err)
-                            +
-                              ((x0.decl - c0.decl) * (x0.decl - c0.decl))
-                             / (x0.decl_err * x0.decl_err + c0.decl_err*c0.decl_err)
-                            ) as r
-                ,LOG10(EXP((   (x0.ra * COS(RADIANS(x0.decl)) - c0.ra * COS(RADIANS(c0.decl)))
-                             * (x0.ra * COS(RADIANS(x0.decl)) - c0.ra * COS(RADIANS(x0.decl)))
-                             / (x0.ra_err * x0.ra_err + c0.ra_err * c0.ra_err)
-                            +  (x0.decl - c0.decl) * (x0.decl - c0.decl)
-                             / (x0.decl_err * x0.decl_err + c0.decl_err * c0.decl_err)
-                           ) / 2
-                          )
-                      /
-                      (2 * PI() * SQRT(x0.ra_err * x0.ra_err + c0.ra_err * c0.ra_err)
-                                * SQRT(x0.decl_err * x0.decl_err + c0.decl_err * c0.decl_err) * %s)
-                      ) AS loglr
-            FROM extractedsource x0
-                ,image i0
-                ,catalogedsource c0
-           WHERE x0.image = %s
-             AND x0.image = i0.id
-             AND i0.id = %s
-             AND c0.zone BETWEEN CAST(FLOOR(x0.decl - i0.rb_smaj) AS INTEGER)
-                             AND CAST(FLOOR(x0.decl + i0.rb_smaj) AS INTEGER)
-             AND c0.decl BETWEEN x0.decl - i0.rb_smaj
-                             AND x0.decl + i0.rb_smaj
-             AND c0.ra BETWEEN x0.ra - alpha(i0.rb_smaj, x0.decl)
-                           AND x0.ra + alpha(i0.rb_smaj, x0.decl)
-             AND SQRT(  (x0.ra * COS(RADIANS(x0.decl)) - c0.ra * COS(RADIANS(c0.decl)))
-                      * (x0.ra * COS(RADIANS(x0.decl)) - c0.ra * COS(RADIANS(c0.decl)))
-                      / (x0.ra_err * x0.ra_err + c0.ra_err * c0.ra_err)
-                     + (x0.decl - c0.decl) * (x0.decl - c0.decl)
-                      / (x0.decl_err * x0.decl_err + c0.decl_err * c0.decl_err)
-                     ) < %s
-        """
-        cursor.execute(query, (BG_DENSITY, image_id, image_id, deRuiter_r / 3600.))
-        if not AUTOCOMMIT:
-            conn.commit()
-    except db.Error, e:
-        q = query % (BG_DENSITY, image_id, image_id, deRuiter_r / 3600.)
-        logger.warn("Query failed:\n%s" % q)
-        raise
-    finally:
-        cursor.close()
-
-
+    
+    query = """\
+INSERT INTO assoccatsource
+  (xtrsrc
+  ,catsrc
+  ,distance_arcsec
+  ,type
+  ,r
+  ,loglr
+  )
+  SELECT x0.id AS xtrsrc
+        ,c0.id AS catsrc
+        ,3600 * DEGREES(2 * ASIN(SQRT((x0.x - c0.x) * (x0.x - c0.x)
+                                  + (x0.y - c0.y) * (x0.y - c0.y)
+                                  + (x0.z - c0.z) * (x0.z - c0.z)
+                                  ) / 2) ) AS distance_arcsec
+        ,3
+        ,3600 * sqrt( ((x0.ra * cos(RADIANS(x0.decl)) - c0.ra * cos(RADIANS(c0.decl)))
+                     * (x0.ra * cos(RADIANS(x0.decl)) - c0.ra * cos(RADIANS(c0.decl))))
+                     / (x0.ra_err * x0.ra_err + c0.ra_err*c0.ra_err)
+                    +
+                      ((x0.decl - c0.decl) * (x0.decl - c0.decl))
+                     / (x0.decl_err * x0.decl_err + c0.decl_err*c0.decl_err)
+                    ) as r
+        ,LOG10(EXP((   (x0.ra * COS(RADIANS(x0.decl)) - c0.ra * COS(RADIANS(c0.decl)))
+                     * (x0.ra * COS(RADIANS(x0.decl)) - c0.ra * COS(RADIANS(x0.decl)))
+                     / (x0.ra_err * x0.ra_err + c0.ra_err * c0.ra_err)
+                    +  (x0.decl - c0.decl) * (x0.decl - c0.decl)
+                     / (x0.decl_err * x0.decl_err + c0.decl_err * c0.decl_err)
+                   ) / 2
+                  )
+              /
+              (2 * PI() * SQRT(x0.ra_err * x0.ra_err + c0.ra_err * c0.ra_err)
+                        * SQRT(x0.decl_err * x0.decl_err + c0.decl_err * c0.decl_err) * %s)
+              ) AS loglr
+    FROM extractedsource x0
+        ,image i0
+        ,catalogedsource c0
+   WHERE x0.image = %s
+     AND x0.image = i0.id
+     AND i0.id = %s
+     AND c0.zone BETWEEN CAST(FLOOR(x0.decl - i0.rb_smaj) AS INTEGER)
+                     AND CAST(FLOOR(x0.decl + i0.rb_smaj) AS INTEGER)
+     AND c0.decl BETWEEN x0.decl - i0.rb_smaj
+                     AND x0.decl + i0.rb_smaj
+     /*AND c0.ra BETWEEN x0.ra - alpha(i0.rb_smaj, x0.decl)
+                   AND x0.ra + alpha(i0.rb_smaj, x0.decl)*/
+     AND c0.x*x0.x + c0.y*x0.y + c0.z*x0.z > cos(radians(i0.rb_smaj))
+     AND SQRT(  (x0.ra * COS(RADIANS(x0.decl)) - c0.ra * COS(RADIANS(c0.decl)))
+              * (x0.ra * COS(RADIANS(x0.decl)) - c0.ra * COS(RADIANS(c0.decl)))
+              / (x0.ra_err * x0.ra_err + c0.ra_err * c0.ra_err)
+             + (x0.decl - c0.decl) * (x0.decl - c0.decl)
+              / (x0.decl_err * x0.decl_err + c0.decl_err * c0.decl_err)
+             ) < %s
+"""
+    
+    #mw = _check_meridian_wrap(conn, image_id)
+    if mw['q_across'] == True:
+        logger.warn("Search across 0/360 meridian: %s" % mw)
+        logger.warn("Meridian wrapping not implemented yet for catalogue associations")
+        logger.warn("Skipped catalogue association for sources near 0/360 meridian")
+        #raise NotImplementedError("Meridian wrapping not implemented yet for catalogue associations")
+    else:
+        # should be read from parset, but short-cut here
+        bg_density = 4.02439375e-06
+        qu = query % (bg_density, image_id, image_id, deRuiter_r / 3600.)
+        print "qu:\n",qu
+        sys.exit()
+        try:
+            cursor = conn.cursor()
+            #cursor.execute(query, (BG_DENSITY, image_id, image_id, deRuiter_r / 3600.))
+            cursor.execute(query, (bg_density, image_id, image_id, deRuiter_r / 3600.))
+            if not AUTOCOMMIT:
+                conn.commit()
+        except db.Error, e:
+            #q = query % (BG_DENSITY, image_id, image_id, deRuiter_r / 3600.)
+            q = query % (bg_density, image_id, image_id, deRuiter_r / 3600.)
+            logger.error("Query failed:\n%s" % q)
+            raise
+        finally:
+            cursor.close()
 

@@ -16,7 +16,7 @@ def execute(query, parameters=(), commit=False):
 
     :returns: a database cursor object
     """
-    #logger.debug('executing query\n%s' % query % parameters)
+    logger.info('executing query\n%s' % query % parameters)
     database = Database()
     cursor = database.connection.cursor()
     try:
@@ -48,3 +48,7 @@ def rollback():
 def connect():
     database = Database()
     return database.connect()
+
+def connection():
+    database = Database()
+    return database.connection

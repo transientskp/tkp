@@ -3,6 +3,7 @@ import monetdb
 import tkp.quality
 import tkp.db
 import tkp.db.quality
+import tkp.db.database
 from tkp.testutil.decorators import requires_database
 from tkp.testutil import db_subs
 
@@ -37,9 +38,8 @@ class TestReject(unittest.TestCase):
         self.assertEqual(cursor.fetchone()[0], 0)
 
     def test_unknownreason(self):
-        self.assertRaises(monetdb.exceptions.OperationalError,
+        self.assertRaises(tkp.db.database.Database().connection.DatabaseError,
               tkp.db.quality.reject, self.image.id, 666666, "bad reason")
-        tkp.db.rollback()
 
     def test_isrejected(self):
         tkp.db.quality.unreject(self.image.id)

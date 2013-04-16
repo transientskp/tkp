@@ -116,10 +116,7 @@ If an ``id`` is supplied, ``data`` is ignored.
 """
 
 import logging
-
 import monetdb.sql as db
-
-#from tkp.database.database import ENGINE
 from tkp.db.generic import columns_from_table, set_columns_for_table
 from tkp.db.general import insert_dataset, insert_image,\
     insert_extracted_sources, lightcurve
@@ -187,8 +184,11 @@ class DBObject(object):
 
     def __getattr__(self, name):
         """Obtain the 'name' attribute, where 'name' is a database column name"""
-        # Get here when 'name' is not found as attribute
-        # That likely means it is stored in self._data
+        #DEVELOPERS NOTE: if this property fails for some reason, python will
+        #ignore it, and continue using the __getattr__ method. This is very
+        #confusing. So if for any reason you are getting 'attribute not found'
+        #errors while you don't expect it, I suggest temporarily disabling the
+        #__getattr__ method until you located the problem.
 
         if name in self._data:
             return self._data[name]
@@ -204,26 +204,27 @@ class DBObject(object):
 
         Several containers have their specific SQL function to create
         a new object, so this property will need to overridden.
+
+
         """
         if self._id is None:
             query = ("INSERT INTO " + self.TABLE + " (" +
                      ", ".join(self._data.iterkeys()) + ") VALUES (" +
                      ", ".join(["%s"] * len(self._data)) + ")")
-            #if ENGINE == 'postgresql':
-            #    query += " RETURNING " + self.ID
             values = tuple(self._data.itervalues())
             cursor = self.database.cursor
             try:
                 # Insert a default source
                 cursor.execute(query, values)
-                if not self.database.autocommit:
+                if not self.database.connection.autocommit:
                     self.database.connection.commit()
                 self._id = cursor.lastrowid
-                #if ENGINE == 'postgresql':
-                #    self._id = cursor.fetchone()[0]
-            except self.database.Error:
+            except self.database.connection.Error:
                 logger.warn("insertion into database failed: %s",
                              (query % values))
+                raise
+            except Exception as e:
+                logging.error("ORM failed: %s" % str(e))
                 raise
         return self._id
 
@@ -308,7 +309,7 @@ class DataSet(DBObject):
         if self._id is None:
             try:
                 self._id = insert_dataset(self._data['description'])
-            except self.database.Error, e:
+            except self.database.connection.Error, e:
                 logger.error("insert dataset failed: %s" % e)
                 raise
         return self._id

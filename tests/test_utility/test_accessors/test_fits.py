@@ -20,6 +20,9 @@ DATAPATH = tkp.config.config['test']['datapath']
 
 class PyfitsFitsImage(unittest.TestCase):
 
+    def tearDown(self):
+        tkp.db.rollback()
+
     @requires_data(os.path.join(DATAPATH, 'L15_12h_const/observed-all.fits'))
     @requires_data(os.path.join(DATAPATH, 'CORRELATED_NOISE.FITS'))
     def testOpen(self):

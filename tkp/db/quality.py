@@ -4,15 +4,14 @@ import tkp.db
 
 logger = logging.getLogger(__name__)
 
-# todo: need to think of a way to sync this with tkp/db/tables/rejection.sql
-
+# TODO: need to think of a way to sync this with tkp/db/tables/rejection.sql
 RejectReason = namedtuple('RejectReason', 'id desc')
 
 reason = {
     'rms': RejectReason(id=0, desc='RMS too high'),
     'beam': RejectReason(id=1, desc='beam invalid'),
     'bright_source': RejectReason(id=2, desc='bright source near'),
-    }
+}
 
 query_reject = """\
 INSERT INTO rejection
@@ -43,11 +42,9 @@ SELECT rejectreason.description, rejection.comment
 
 def reject(imageid, reason, comment):
     """ Add a reject intro to the db for a given image
-    Args:
-        connection: A db connection object
-        image: The image ID of the image to reject
-        reason: why is the image rejected, a defined in tkp.db.quality.reason
-        comment: an optional comment with details about the reason
+    :param imageid: The image ID of the image to reject
+    :param reason: why is the image rejected, a defined in 'reason'
+    :param comment: an optional comment with details about the reason
     """
     args = {'imageid': imageid, 'reason': reason, 'comment': comment}
     query = query_reject % args
@@ -56,9 +53,7 @@ def reject(imageid, reason, comment):
 
 def unreject(imageid):
     """ Remove all rejection of a given imageid
-    Args:
-        connection: A db connection object
-        image: The image ID of the image to reject
+    :param imageid: The image ID of the image to reject
     """
     query = query_unreject % {'image': imageid}
     tkp.db.execute(query, commit=True)
@@ -66,11 +61,8 @@ def unreject(imageid):
 
 def isrejected(imageid):
     """ Find out if an image is rejected or not
-    Args:
-        connection: A db connection object
-        image: The image ID of the image to reject
-    returns:
-        False if not rejected, a list of reason id's if rejected
+    :param  imageid: The image ID of the image to reject
+    :returns:  False if not rejected, a list of reason id's if rejected
     """
     query = query_isrejected % {'imageid': imageid}
     cursor = tkp.db.execute(query)

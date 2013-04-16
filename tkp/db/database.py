@@ -51,16 +51,25 @@ class Database(object):
         self.host = host or e.get('TKP_DBHOST', False)
         self.port = port or int(e.get('TKP_DBPORT', False))
 
+        self.engine = 'postgresql'
+        self.database = username
+        self.user = username
+        self.password = username
+        self.host = 'localhost'
+        self.port = 5432
+
         logger.info("Database config: %s://%s@%s:%s/%s" % (self.engine,
                                                            self.user,
                                                            self.host,
                                                            self.port,
                                                            self.database))
 
-        # reset connection
-        self._connection = False
+        self.connect()
 
     def connect(self):
+        """
+        connect to the configured database
+        """
         logger.info("connecting to database...")
 
         kwargs = {}
@@ -89,8 +98,8 @@ class Database(object):
         # I don't like this but it is used in some parts of TKP
         self.cursor = self._connection.cursor()
 
-        logger.info("connected to database %s at %s" % (self.database, self.host))
-
+        logger.info("connected to database %s at %s" % (self.database,
+                                                        self.host))
 
     @property
     def connection(self):
@@ -110,4 +119,9 @@ class Database(object):
         return self._connection
 
     def close(self):
-        return self.connection.close()
+        """
+        close the connection if open
+        """
+        if self._connection:
+            self._connection.close()
+        self._connection = False

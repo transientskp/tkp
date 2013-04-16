@@ -78,7 +78,7 @@ def convert_db_rows_to_dicts(results, cursor_description, alias_map=None):
     """Takes a list of rows as returned by cursor.fetchall(),
         converts to a list of dictionaries."""
     col_names = [d[0] for d in cursor_description]
-    if alias_map is not None: #Replace column names with chosen alias
+    if alias_map is not None:  # Replace column names with chosen alias
         for index, k in enumerate(col_names):
             if k in alias_map:
                 col_names[index] = alias_map[k]

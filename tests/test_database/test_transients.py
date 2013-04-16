@@ -7,9 +7,11 @@ from tkp.testutil.decorators import requires_database
 
 
 class TestTransientBasics(unittest.TestCase):
+
     @requires_database()
     def setUp(self):
         self.database = tkp.db.Database()
+
     def tearDown(self):
         tkp.db.rollback()
 

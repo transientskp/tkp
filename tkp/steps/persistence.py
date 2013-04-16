@@ -7,8 +7,8 @@ from lofarpipe.support.parset import parameterset
 from pyrap.images import image as pyrap_image
 
 import tkp.utility.accessors
-from tkp.database.database import DataBase
-from tkp.database.orm import DataSet, Image
+from tkp.db.database import Database
+from tkp.db.orm import DataSet, Image
 from tkp.utility.accessors.dataaccessor import extract_metadata
 
 
@@ -82,7 +82,7 @@ def create_dataset(dataset_id, description):
     Returns:
       the database ID of this dataset
     """
-    database = DataBase()
+    database = Database()
     if dataset_id == -1:
         dataset = DataSet({'description': description}, database)
     else:
@@ -115,7 +115,7 @@ def store_images(images_metadata, extraction_radius_pix, dataset_id):
     Returns:
         the database ID of this dataset
     """
-    database = DataBase()
+    database = Database()
     dataset = DataSet(id=dataset_id, database=database)
     image_ids = []
 

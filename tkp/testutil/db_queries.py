@@ -2,13 +2,13 @@
 """
 A collection of back end db query subroutines used for unittesting 
 """
-from tkp.database import query
+from tkp.db import execute
 
 
 def dataset_images(dataset_id, database=None):
     q = "SELECT id FROM image WHERE dataset=%(dataset)s LIMIT 1"
     args = {'dataset': dataset_id}
-    cursor = query(q, args)
+    cursor = execute(q, args)
     image_ids = [x[0] for x in cursor.fetchall()]
     return image_ids
 

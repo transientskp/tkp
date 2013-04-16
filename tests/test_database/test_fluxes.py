@@ -1,10 +1,7 @@
-import unittest
-if not  hasattr(unittest.TestCase, 'assertIsInstance'):
-    import unittest2 as unittest
-import math
-import tkp.database as tkpdb
-import tkp.database.utils.general as dbgen
-import tkp.database.utils as dbutils
+import unittest2 as unittest
+import tkp.db
+import tkp.db.general as dbgen
+from tkp.db.associations import associate_extracted_sources
 from tkp.testutil import db_subs
 from tkp.testutil.decorators import requires_database
 
@@ -16,14 +13,14 @@ class TestOne2OneFlux(unittest.TestCase):
     @requires_database()
     def setUp(self):
 
-        self.database = tkpdb.DataBase()
+        self.database = tkp.db.Database()
 
     def tearDown(self):
         """remove all stuff after the test has been run"""
         self.database.close()
 
     def test_one2oneflux(self):
-        dataset = tkpdb.DataSet(database=self.database, data={'description': 'flux test set: 1-1'})
+        dataset = tkp.db.DataSet(database=self.database, data={'description': 'flux test set: 1-1'})
         n_images = 3
         im_params = db_subs.example_dbimage_datasets(n_images)
 
@@ -37,9 +34,9 @@ class TestOne2OneFlux(unittest.TestCase):
         src_list.append(src2)
 
         for idx, im in enumerate(im_params):
-            image = tkpdb.Image(database=self.database, dataset=dataset, data=im)
+            image = tkp.db.Image(database=self.database, dataset=dataset, data=im)
             image.insert_extracted_sources([src_list[idx]])
-            tkpdb.utils.associate_extracted_sources(image.id, deRuiter_r=3.717)
+            associate_extracted_sources(image.id, deRuiter_r=3.717)
         
         query = """\
         SELECT rf.avg_f_int
@@ -62,19 +59,19 @@ class TestOne2ManyFlux(unittest.TestCase):
     @requires_database()
     def setUp(self):
 
-        self.database = tkpdb.DataBase()
+        self.database = tkp.db.Database()
 
     def tearDown(self):
         """remove all stuff after the test has been run"""
         self.database.close()
 
     def test_one2manyflux(self):
-        dataset = tkpdb.DataSet(database=self.database, data={'description': 'flux test set: 1-n'})
+        dataset = tkp.db.DataSet(database=self.database, data={'description': 'flux test set: 1-n'})
         n_images = 2
         im_params = db_subs.example_dbimage_datasets(n_images)
 
         # image 1
-        image = tkpdb.Image(database=self.database, dataset=dataset, data=im_params[0])
+        image = tkp.db.Image(database=self.database, dataset=dataset, data=im_params[0])
         imageid1 = image.id
         src = []
         # 1 source
@@ -89,10 +86,10 @@ class TestOne2ManyFlux(unittest.TestCase):
         results = []
         results.append(src[-1])
         dbgen.insert_extracted_sources(imageid1, results, 'blind')
-        tkpdb.utils.associate_extracted_sources(imageid1, deRuiter_r = 3.717)
+        associate_extracted_sources(imageid1, deRuiter_r = 3.717)
         
         # image 2
-        image = tkpdb.Image(database=self.database, dataset=dataset, data=im_params[1])
+        image = tkp.db.Image(database=self.database, dataset=dataset, data=im_params[1])
         imageid2 = image.id
         src = []
         # 2 sources (located close to source 1, catching the 1-to-many case
@@ -116,7 +113,7 @@ class TestOne2ManyFlux(unittest.TestCase):
         results.append(src[0])
         results.append(src[1])
         dbgen.insert_extracted_sources(imageid2, results, 'blind')
-        tkpdb.utils.associate_extracted_sources(imageid2, deRuiter_r = 3.717)
+        associate_extracted_sources(imageid2, deRuiter_r = 3.717)
 
         query = """\
         SELECT rf.avg_f_int
@@ -150,19 +147,19 @@ class TestMany2OneFlux(unittest.TestCase):
     @requires_database()
     def setUp(self):
 
-        self.database = tkpdb.DataBase()
+        self.database = tkp.db.Database()
 
     def tearDown(self):
         """remove all stuff after the test has been run"""
         self.database.close()
 
     def test_many2oneflux(self):
-        dataset = tkpdb.DataSet(database=self.database, data={'description': 'flux test set: n-1'})
+        dataset = tkp.db.DataSet(database=self.database, data={'description': 'flux test set: n-1'})
         n_images = 2
         im_params = db_subs.example_dbimage_datasets(n_images)
 
         # image 1
-        image = tkpdb.Image(database=self.database, dataset=dataset, data=im_params[0])
+        image = tkp.db.Image(database=self.database, dataset=dataset, data=im_params[0])
         imageid1 = image.id
         src = []
         # 2 sources (located close together, so the catching the many-to-1 case in next image
@@ -186,10 +183,10 @@ class TestMany2OneFlux(unittest.TestCase):
         results.append(src[0])
         results.append(src[1])
         dbgen.insert_extracted_sources(imageid1, results, 'blind')
-        tkpdb.utils.associate_extracted_sources(imageid1, deRuiter_r = 3.717)
+        associate_extracted_sources(imageid1, deRuiter_r = 3.717)
 
         # image 2
-        image = tkpdb.Image(database=self.database, dataset=dataset, data=im_params[1])
+        image = tkp.db.Image(database=self.database, dataset=dataset, data=im_params[1])
         imageid2 = image.id
         src = []
         # 1 source
@@ -204,7 +201,7 @@ class TestMany2OneFlux(unittest.TestCase):
         results = []
         results.append(src[-1])
         dbgen.insert_extracted_sources(imageid2, results, 'blind')
-        tkpdb.utils.associate_extracted_sources(imageid2, deRuiter_r = 3.717)
+        associate_extracted_sources(imageid2, deRuiter_r = 3.717)
         
         query = """\
         SELECT rf.avg_f_int
@@ -239,19 +236,19 @@ class TestMany2Many(unittest.TestCase):
     @requires_database()
     def setUp(self):
 
-        self.database = tkpdb.DataBase()
+        self.database = tkp.db.Database()
 
     def tearDown(self):
         """remove all stuff after the test has been run"""
         self.database.close()
 
     def test_many2manyflux(self):
-        dataset = tkpdb.DataSet(database=self.database, data={'description': 'flux test set: n-m'})
+        dataset = tkp.db.DataSet(database=self.database, data={'description': 'flux test set: n-m'})
         n_images = 2
         im_params = db_subs.example_dbimage_datasets(n_images)
 
         # image 1
-        image = tkpdb.Image(database=self.database, dataset=dataset, data=im_params[0])
+        image = tkp.db.Image(database=self.database, dataset=dataset, data=im_params[0])
         imageid1 = image.id
         src1 = []
         # 2 sources (located relatively close together, so the catching the many-to-1 case in next image
@@ -276,10 +273,10 @@ class TestMany2Many(unittest.TestCase):
         results.append(src1[1])
         dbgen.insert_extracted_sources(imageid1, results, 'blind')
         # We use a default value of 3.717
-        tkpdb.utils.associate_extracted_sources(imageid1, deRuiter_r = 3.717)
+        associate_extracted_sources(imageid1, deRuiter_r = 3.717)
 
         # image 2
-        image = tkpdb.Image(database=self.database, dataset=dataset, data=im_params[1])
+        image = tkp.db.Image(database=self.database, dataset=dataset, data=im_params[1])
         imageid2 = image.id
         src2 = []
         # 2 sources, where both can be associated with both from image 1
@@ -303,7 +300,7 @@ class TestMany2Many(unittest.TestCase):
         results.append(src2[0])
         results.append(src2[1])
         dbgen.insert_extracted_sources(imageid2, results, 'blind')
-        tkpdb.utils.associate_extracted_sources(imageid2, deRuiter_r = 3.717)
+        associate_extracted_sources(imageid2, deRuiter_r = 3.717)
         
         query = """\
         SELECT rf.avg_f_int

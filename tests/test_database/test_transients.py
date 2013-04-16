@@ -1,17 +1,19 @@
 import unittest2 as unittest
-import tkp.database as tkpdb
-from tkp.database.transients import multi_epoch_transient_search
-from tkp.database.generic import get_db_rows_as_dicts
+import tkp.db
+from tkp.db.transients import multi_epoch_transient_search
+from tkp.db.generic import get_db_rows_as_dicts
 from tkp.testutil import db_subs
 from tkp.testutil.decorators import requires_database
 
 
 class TestTransientBasics(unittest.TestCase):
+
     @requires_database()
     def setUp(self):
-        self.database = tkpdb.DataBase()
+        self.database = tkp.db.Database()
+
     def tearDown(self):
-        self.database.close()
+        tkp.db.rollback()
 
     def test_single_band_transient_search(self):
         """test_single_band_transient_search
@@ -22,7 +24,7 @@ class TestTransientBasics(unittest.TestCase):
         """
         # We have to add a dataset, some images all with some measurements
         # After insertion, and source association, we run the transient search.
-        dataset = tkpdb.DataSet(database=self.database,
+        dataset = tkp.db.DataSet(database=self.database,
                                 data={'description':"Trans:"
                                         + self._testMethodName})
         n_images = 4
@@ -42,7 +44,7 @@ class TestTransientBasics(unittest.TestCase):
 
         images = []
         for idx in range(len(im_params)):
-            image = tkpdb.Image(dataset=dataset, data=im_params[idx])
+            image = tkp.db.Image(dataset=dataset, data=im_params[idx])
             images.append(image)
             if measurements[idx] is not None:
                 image.insert_extracted_sources([ measurements[idx] ])
@@ -116,8 +118,8 @@ class TestTransientBasics(unittest.TestCase):
 class TestTransientRoutines(unittest.TestCase):
     @requires_database()
     def setUp(self):
-        self.database = tkpdb.DataBase()
-        self.dataset = tkpdb.DataSet(data={'description':"Trans:" +
+        self.database = tkp.db.Database()
+        self.dataset = tkp.db.DataSet(data={'description':"Trans:" +
                                                         self._testMethodName},
                                     database=self.database)
 
@@ -131,7 +133,7 @@ class TestTransientRoutines(unittest.TestCase):
                                                   include_non_detections=True)
         for i in xrange(self.n_images):
             self.db_imgs.append(
-                        tkpdb.Image(data=self.im_params[i],
+                        tkp.db.Image(data=self.im_params[i],
                                             dataset=self.dataset)
                                 )
 
@@ -139,7 +141,7 @@ class TestTransientRoutines(unittest.TestCase):
             self.db_imgs[i].associate_extracted_sources(deRuiter_r=3.7)
 
     def tearDown(self):
-        self.database.close()
+        tkp.db.rollback()
 
     def test_full_transient_search_routine(self):
         bands = self.dataset.frequency_bands()
@@ -163,7 +165,6 @@ class TestTransientRoutines(unittest.TestCase):
         cursor = self.database.connection.cursor()
         cursor.execute(qry, {'dsid':self.dataset.id})
         transient_table_entries = get_db_rows_as_dicts(cursor)
-        cursor.close()
         self.assertEqual(len(transient_table_entries), len(transients))
 #        for t in all_transients:    
 #            print "V_int:", t['v_int'], "  eta_int:", t['eta_int']

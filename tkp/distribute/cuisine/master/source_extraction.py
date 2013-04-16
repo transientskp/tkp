@@ -2,7 +2,7 @@ from __future__ import with_statement
 import itertools
 import lofarpipe.support.lofaringredient as ingredient
 from lofarpipe.support.remotecommand import ComputeJob
-from tkp.database.orm import Image
+from tkp.db.orm import Image
 from tkp.distribute.cuisine.common import TrapMaster, nodes_available
 from tkp.steps.source_extraction import parse_parset
 

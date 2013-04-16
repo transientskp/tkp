@@ -44,7 +44,7 @@ class LightCurve(object):
 
         Example::
 
-            >>> with closing(DataBase()) as database:
+            >>> with closing(Database()) as database:
             ...     lightcurve = LightCurve.from_database(database.cursor, 1)
 
         """

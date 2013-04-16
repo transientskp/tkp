@@ -1,4 +1,4 @@
-import tkp.database.general as dbgen
+import tkp.db.general as dbgen
 from tkp.distribute.cuisine.common import TrapMaster
 
 class insert_sources(TrapMaster):

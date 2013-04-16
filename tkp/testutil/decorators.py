@@ -9,9 +9,8 @@ if not  hasattr(unittest.TestCase, 'assertIsInstance'):
     import unittest2 as unittest
 
 def requires_database():
-    if tkp.config.config['database']['enabled']:
-        db_subs.use_test_database_by_default()
-        return lambda func: func
+    db_subs.use_test_database_by_default()
+    return lambda func: func
     return unittest.skip("Database functionality disabled in configuration")
 
 def requires_mongodb():

@@ -3,9 +3,14 @@ import tempfile
 import tkp.steps.transient_search
 from tkp.testutil import db_subs, db_queries
 from tkp.testutil.decorators import requires_database
+import tkp.db
 
 @requires_database()
 class TestTransientSearch(unittest.TestCase):
+
+    def tearDown(self):
+        tkp.db.rollback()
+
     @classmethod
     def setUpClass(cls):
         cls.dataset_id = db_subs.create_dataset_8images(extract_sources=True)

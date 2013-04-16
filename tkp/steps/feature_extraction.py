@@ -10,15 +10,15 @@ To do:
 """
 import logging
 import numpy
-from tkp.database.database import DataBase
+from tkp.db.database import Database
 from tkp.classification.features import lightcurve as lcmod
 from tkp.classification.features import catalogs as catmod
-from tkp.database.orm import ExtractedSource
+from tkp.db.orm import ExtractedSource
 
 logger = logging.getLogger(__name__)
 
 def extract_features(transient):
-    database = DataBase()
+    database = Database()
     source = ExtractedSource(id=transient['trigger_xtrsrc'], database=database)
     # NOTE: The light curve is based on peak fluxes, while
     #       transients were found using the integrated fluxes (and errors).

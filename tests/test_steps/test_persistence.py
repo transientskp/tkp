@@ -6,9 +6,14 @@ from tkp.testutil.decorators import requires_mongodb
 import tkp.testutil.data as testdata
 from tkp.config import config as tkpconfig
 from tkp.testutil.decorators import requires_database
+import tkp.db
 
 @requires_database()
 class TestPersistence(unittest.TestCase):
+
+    def tearDown(self):
+        tkp.db.rollback()
+
     @classmethod
     def setUpClass(cls):
         cls.dataset_id = db_subs.create_dataset_8images()

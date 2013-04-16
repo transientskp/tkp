@@ -1,10 +1,10 @@
 import unittest2 as unittest
-import tkp.database as tkpdb
-from tkp.database import monitoringlist
+import tkp.db
+from tkp.db import monitoringlist
 from tkp.testutil import db_subs
 from tkp.testutil.decorators import requires_database
-from tkp.database import associations as dbass
-from tkp.database import transients as tr_search
+from tkp.db import associations as dbass
+from tkp.db import transients as tr_search
 
 
 class TestIntermittentToMonitorlist(unittest.TestCase):
@@ -15,14 +15,13 @@ class TestIntermittentToMonitorlist(unittest.TestCase):
     """
     @requires_database()
     def setUp(self):
-
-        self.database = tkpdb.DataBase()
+        self.database = tkp.db.Database()
 
     def tearDown(self):
-        self.database.close()
+        tkp.db.rollback()
 
     def test_intermittentToMonitorlist(self):
-        dataset = tkpdb.DataSet(database=self.database, data={'description': "Monlist:" + self._testMethodName})
+        dataset = tkp.db.DataSet(database=self.database, data={'description': "Monlist:" + self._testMethodName})
         n_images = 3
         im_params = db_subs.example_dbimage_datasets(n_images)
 
@@ -38,7 +37,7 @@ class TestIntermittentToMonitorlist(unittest.TestCase):
             steady_srcs.append(src)
 
         for idx, im in enumerate(im_params):
-            image = tkpdb.Image(database=self.database, dataset=dataset, data=im)
+            image = tkp.db.Image(database=self.database, dataset=dataset, data=im)
 
             if idx == 1:
                 # The second image has a null detection, so only the first source is detected

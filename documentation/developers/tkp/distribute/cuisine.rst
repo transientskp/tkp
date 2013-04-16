@@ -94,6 +94,6 @@ done on the compute nodes as follows::
     from contextlib import closing
     def run(self, *args):
         with log_time(self.logger):
-            with closing(DataBase()) as database:
+            with closing(Database()) as database:
 	        pass
 

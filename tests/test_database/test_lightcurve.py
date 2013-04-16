@@ -4,18 +4,19 @@ from operator import attrgetter, itemgetter
 import unittest2 as unittest
 
 from tkp.testutil.decorators import requires_database
-from tkp.database.orm import DataSet
-from tkp.database.orm import Image
-import tkp.database
-import tkp.database.transients as dbtransients
+from tkp.db.orm import DataSet
+from tkp.db.orm import Image
+import tkp.db
+import tkp.db.transients as dbtransients
 
 
 class TestLightCurve(unittest.TestCase):
     def setUp(self):
-        self.database = tkp.database.DataBase()
+        self.database = tkp.db.Database()
         self.dataset = DataSet(data={'description': 'dataset with images'}, database=self.database)
+
     def tearDown(self):
-        self.database.close()
+        tkp.db.rollback()
 
     @requires_database()
     def test_lightcurve(self):

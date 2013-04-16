@@ -3,6 +3,7 @@ import os
 import sys
 import shutil
 import tempfile
+import argparse
 
 import tkp.management
 
@@ -24,20 +25,25 @@ class TestManagement(unittest.TestCase):
 
         # test with target
         os.mkdir(target)
-        tkp.management.init_project(project_name, target)
+
+        namespace = argparse.Namespace()
+        namespace.name = project_name
+        namespace.target = target
+        tkp.management.init_project(namespace)
         self.assertTrue(os.access(target, os.W_OK))
 
         # test called from current working dir
         shutil.rmtree(target)
         os.chdir(parent)
-        tkp.management.init_project(project_name)
+        namespace.target = None
+        tkp.management.init_project(namespace)
         self.assertTrue(os.access(target, os.W_OK))
 
         self.assertRaises(tkp.management.CommandError,
-                            tkp.management.init_project, project_name, target)
-
+                            tkp.management.init_project, namespace)
+        namespace.target = "DOESNOTEXISTS"
         self.assertRaises(tkp.management.CommandError,
-                    tkp.management.init_project, job_name, "DOESNOTEXISTS")
+                    tkp.management.init_project, namespace)
 
 
     def test_init_job(self):
@@ -48,16 +54,21 @@ class TestManagement(unittest.TestCase):
         if os.access(target, os.X_OK):
             shutil.rmtree(target)
         os.chdir(parent)
-        tkp.management.init_project(project_name)
+        namespace = argparse.Namespace()
+        namespace.name = project_name
+        namespace.target = None
+        tkp.management.init_project(namespace)
         os.chdir(target)
 
         # test called from current working dir
-        tkp.management.init_job(job_name)
-        tkp.management.clean_job(job_name)
-        tkp.management.info_job(job_name)
+        tkp.management.init_job(namespace)
+        tkp.management.clean_job(namespace)
+        tkp.management.info_job(namespace)
+
+        namespace.target = "DOESNOTEXISTS"
 
         self.assertRaises(tkp.management.CommandError, tkp.management.init_job,
-                                                job_name, "DOESNOTEXISTS")
+                          namespace)
 
     @unittest.skip("dont work yet somehow")
     def test_run_job(self):
@@ -126,13 +137,20 @@ class TestManagement(unittest.TestCase):
         #tkp.management.runlocal_job(job_name, debug=True)
 
     def test_clean_job(self):
-        tkp.management.clean_job(job_name)
+        namespace = argparse.Namespace()
+        namespace.name = job_name
+        tkp.management.clean_job(namespace)
 
     def test_info_job(self):
         t = tempfile.mkdtemp()
         os.chdir(t)
-        tkp.management.init_job(job_name)
-        tkp.management.info_job(job_name)
+
+        namespace = argparse.Namespace()
+        namespace.name = project_name
+        namespace.target = None
+
+        tkp.management.init_job(namespace)
+        tkp.management.info_job(namespace)
 
     def test_main(self):
         # should raise exception when no arguments

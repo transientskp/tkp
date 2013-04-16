@@ -3,8 +3,8 @@ import logging
 from lofarpipe.support.control import control
 import lofarpipe.support.lofaringredient as ingredient
 from tkp.steps.monitoringlist import add_manual_monitoringlist_entries
-from tkp.database import DataSet
-from tkp.database import general as dbgen
+from tkp.db import DataSet
+from tkp.db import general as dbgen
 from tkp import steps
 
 

@@ -197,7 +197,7 @@ class TestOne2One(unittest.TestCase):
             associate_extracted_sources(image.id, deRuiter_r=3.717)
         runcat = columns_from_table('runningcatalog', ['datapoints', 'wm_ra'],
                                    where={'dataset':dataset.id})
-        print "***\nRESULTS:", runcat, "\n*****"
+#        print "***\nRESULTS:", runcat, "\n*****"
         self.assertEqual(len(runcat), 1)
         self.assertEqual(runcat[0]['datapoints'], 3)
         avg_ra = ((src0.ra+180)%360 + (src1.ra+180)%360 + (src2.ra+180)%360)/3 - 180
@@ -227,7 +227,7 @@ class TestOne2One(unittest.TestCase):
             associate_extracted_sources(image.id, deRuiter_r=3.717)
         runcat = columns_from_table('runningcatalog', ['datapoints', 'wm_ra'],
                                    where={'dataset':dataset.id})
-        print "***\nRESULTS:", runcat, "\n*****"
+#        print "***\nRESULTS:", runcat, "\n*****"
         self.assertEqual(len(runcat), 1)
         self.assertEqual(runcat[0]['datapoints'], 3)
         avg_ra = (src0.ra + src1.ra +src2.ra)/3 
@@ -257,7 +257,7 @@ class TestOne2One(unittest.TestCase):
             associate_extracted_sources(image.id, deRuiter_r=3.717)
         runcat = columns_from_table('runningcatalog', ['datapoints', 'wm_ra'],
                                    where={'dataset':dataset.id})
-        print "***\nRESULTS:", runcat, "\n*****"
+#        print "***\nRESULTS:", runcat, "\n*****"
         self.assertEqual(len(runcat), 1)
         self.assertEqual(runcat[0]['datapoints'], 3)
         avg_ra = (src0.ra + src1.ra +src2.ra)/3 

@@ -86,7 +86,7 @@ class TestOne2ManyFlux(unittest.TestCase):
         results = []
         results.append(src[-1])
         dbgen.insert_extracted_sources(imageid1, results, 'blind')
-        associate_extracted_sources(imageid1, deRuiter_r = 3.717)
+        associate_extracted_sources(imageid1, deRuiter_r=3.717)
         
         # image 2
         image = tkp.db.Image(database=self.database, dataset=dataset, data=im_params[1])
@@ -113,7 +113,7 @@ class TestOne2ManyFlux(unittest.TestCase):
         results.append(src[0])
         results.append(src[1])
         dbgen.insert_extracted_sources(imageid2, results, 'blind')
-        associate_extracted_sources(imageid2, deRuiter_r = 3.717)
+        associate_extracted_sources(imageid2, deRuiter_r=3.717)
 
         query = """\
         SELECT rf.avg_f_int

@@ -1851,7 +1851,7 @@ INSERT INTO monitoringlist
      AND r0.id = tstamps.ts_runcat
      AND i0.taustart_ts > tstamps.ts_min
 """
-    cursor = tkp.db.execute(query, (image_id, image_id))
+    cursor = tkp.db.execute(query, (image_id, image_id), commit=True))
     ins = cursor.rowcount
     if ins > 0:
         logger.info("Added %s new sources to monitoringlist table" % (ins,))
@@ -1915,7 +1915,7 @@ INSERT INTO transient
      AND r0.id = tstamps.ts_runcat
      AND i0.taustart_ts > tstamps.ts_min
 """
-    cursor = tkp.db.execute(query, (image_id, image_id))
+    cursor = tkp.db.execute(query, (image_id, image_id), commit=True))
     ins = cursor.rowcount
     if ins > 0:
         logger.info("Added %s new sources to transient table" % (ins,))

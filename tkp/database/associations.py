@@ -29,7 +29,8 @@ def associate_extracted_sources(image_id, deRuiter_r):
     #| which may be matching one of the following cases:    |
     #| many-to-many, many-to-one, one-to-many, one-to-many  |
     #+------------------------------------------------------+
-    _insert_temprunningcatalog(image_id, deRuiter_r)
+    mw = _check_meridian_wrap(image_id)
+    _insert_temprunningcatalog(image_id, deRuiter_r, mw)
     #+------------------------------------------------------+
     #| Here we process (flag) the many-to-many associations.|
     #+------------------------------------------------------+
@@ -63,7 +64,8 @@ def associate_extracted_sources(image_id, deRuiter_r):
     # _process_1_to_1()
     _insert_1_to_1_assoc()
     _update_1_to_1_runcat()
-    _select_for_update_1_to_1_runcat_flux()
+    _update_1_to_1_runcat_flux()  # update flux in existing band
+    _insert_1_to_1_runcat_flux()  # insert flux for new band
     #+-------------------------------------------------------+
     #| Here we take care of the extracted sources that could |
     #| not be associated with any runningcatalog source      |
@@ -83,10 +85,10 @@ def associate_extracted_sources(image_id, deRuiter_r):
     _empty_temprunningcatalog()
     _delete_inactive_runcat()
 
-###############################################################################################
+##############################################################################
 # Subroutines...
 # Here be SQL dragons.
-###############################################################################################
+##############################################################################
 def _delete_bad_blind_extractions(image_id):
     """Remove blind extractions centred outside designated extract region.
 
@@ -262,7 +264,7 @@ SELECT CASE WHEN s.centre_ra - alpha(s.xtr_radius, s.centre_decl) < 0 OR
     }
 
 
-def _insert_temprunningcatalog(image_id, deRuiter_r):
+def _insert_temprunningcatalog(image_id, deRuiter_r, mw):
     """Select matched sources
 
     Here we select the extractedsource that have a positional match
@@ -691,7 +693,7 @@ INSERT INTO temprunningcatalog
          AND t0.band = rf0.band
          AND t0.stokes = rf0.stokes
 """
-    mw =_check_meridian_wrap(image_id)
+    #mw = _check_meridian_wrap(conn, image_id)
     if mw['q_across'] == True:
         logger.info("Search across 0/360 meridian: %s" % mw)
         query = q_across_ra0
@@ -1257,142 +1259,208 @@ INSERT INTO assocxtrsource
     tkp.database.query(query, commit=True)
 
 
+
 def _update_1_to_1_runcat():
     """Update the running catalog with the values in temprunningcatalog"""
     query = """\
-UPDATE runningcatalog
-   SET datapoints = (SELECT datapoints
-                       FROM temprunningcatalog
-                      WHERE temprunningcatalog.runcat = runningcatalog.id
-                  AND temprunningcatalog.inactive = FALSE
-                    )
-      ,zone = (SELECT zone
-                 FROM temprunningcatalog
-                WHERE temprunningcatalog.runcat = runningcatalog.id
-                  AND temprunningcatalog.inactive = FALSE
-              )
-      ,wm_ra = (SELECT wm_ra
-                  FROM temprunningcatalog
-                 WHERE temprunningcatalog.runcat = runningcatalog.id
-                  AND temprunningcatalog.inactive = FALSE
-               )
-      ,wm_decl = (SELECT wm_decl
-                    FROM temprunningcatalog
-                   WHERE temprunningcatalog.runcat = runningcatalog.id
-                  AND temprunningcatalog.inactive = FALSE
-                 )
-      ,wm_ra_err = (SELECT wm_ra_err
-                      FROM temprunningcatalog
-                     WHERE temprunningcatalog.runcat = runningcatalog.id
-                  AND temprunningcatalog.inactive = FALSE
-                   )
-      ,wm_decl_err = (SELECT wm_decl_err
-                        FROM temprunningcatalog
-                       WHERE temprunningcatalog.runcat = runningcatalog.id
-                  AND temprunningcatalog.inactive = FALSE
-                     )
-      ,avg_wra = (SELECT avg_wra
-                    FROM temprunningcatalog
-                   WHERE temprunningcatalog.runcat = runningcatalog.id
-                  AND temprunningcatalog.inactive = FALSE
-                 )
-      ,avg_wdecl = (SELECT avg_wdecl
-                      FROM temprunningcatalog
-                     WHERE temprunningcatalog.runcat = runningcatalog.id
-                  AND temprunningcatalog.inactive = FALSE
-                   )
-      ,avg_weight_ra = (SELECT avg_weight_ra
+        UPDATE runningcatalog
+           SET datapoints = (SELECT datapoints
+                               FROM temprunningcatalog
+                              WHERE temprunningcatalog.runcat = runningcatalog.id
+                          AND temprunningcatalog.inactive = FALSE
+                            )
+              ,zone = (SELECT zone
+                         FROM temprunningcatalog
+                        WHERE temprunningcatalog.runcat = runningcatalog.id
+                          AND temprunningcatalog.inactive = FALSE
+                      )
+              ,wm_ra = (SELECT wm_ra
                           FROM temprunningcatalog
                          WHERE temprunningcatalog.runcat = runningcatalog.id
-                  AND temprunningcatalog.inactive = FALSE
+                          AND temprunningcatalog.inactive = FALSE
                        )
-      ,avg_weight_decl = (SELECT avg_weight_decl
+              ,wm_decl = (SELECT wm_decl
                             FROM temprunningcatalog
                            WHERE temprunningcatalog.runcat = runningcatalog.id
-                  AND temprunningcatalog.inactive = FALSE
+                          AND temprunningcatalog.inactive = FALSE
                          )
-      ,x = (SELECT x
-              FROM temprunningcatalog
-             WHERE temprunningcatalog.runcat = runningcatalog.id
-                  AND temprunningcatalog.inactive = FALSE
-           )
-      ,y = (SELECT y
-              FROM temprunningcatalog
-             WHERE temprunningcatalog.runcat = runningcatalog.id
-                  AND temprunningcatalog.inactive = FALSE
-           )
-      ,z = (SELECT z
-              FROM temprunningcatalog
-             WHERE temprunningcatalog.runcat = runningcatalog.id
-                  AND temprunningcatalog.inactive = FALSE
-           )
- WHERE EXISTS (SELECT runcat
-                 FROM temprunningcatalog
-                WHERE temprunningcatalog.runcat = runningcatalog.id
-                  AND temprunningcatalog.inactive = FALSE
-              )
+              ,wm_ra_err = (SELECT wm_ra_err
+                              FROM temprunningcatalog
+                             WHERE temprunningcatalog.runcat = runningcatalog.id
+                          AND temprunningcatalog.inactive = FALSE
+                           )
+              ,wm_decl_err = (SELECT wm_decl_err
+                                FROM temprunningcatalog
+                               WHERE temprunningcatalog.runcat = runningcatalog.id
+                          AND temprunningcatalog.inactive = FALSE
+                             )
+              ,avg_wra = (SELECT avg_wra
+                            FROM temprunningcatalog
+                           WHERE temprunningcatalog.runcat = runningcatalog.id
+                          AND temprunningcatalog.inactive = FALSE
+                         )
+              ,avg_wdecl = (SELECT avg_wdecl
+                              FROM temprunningcatalog
+                             WHERE temprunningcatalog.runcat = runningcatalog.id
+                          AND temprunningcatalog.inactive = FALSE
+                           )
+              ,avg_weight_ra = (SELECT avg_weight_ra
+                                  FROM temprunningcatalog
+                                 WHERE temprunningcatalog.runcat = runningcatalog.id
+                          AND temprunningcatalog.inactive = FALSE
+                               )
+              ,avg_weight_decl = (SELECT avg_weight_decl
+                                    FROM temprunningcatalog
+                                   WHERE temprunningcatalog.runcat = runningcatalog.id
+                          AND temprunningcatalog.inactive = FALSE
+                                 )
+              ,x = (SELECT x
+                      FROM temprunningcatalog
+                     WHERE temprunningcatalog.runcat = runningcatalog.id
+                          AND temprunningcatalog.inactive = FALSE
+                   )
+              ,y = (SELECT y
+                      FROM temprunningcatalog
+                     WHERE temprunningcatalog.runcat = runningcatalog.id
+                          AND temprunningcatalog.inactive = FALSE
+                   )
+              ,z = (SELECT z
+                      FROM temprunningcatalog
+                     WHERE temprunningcatalog.runcat = runningcatalog.id
+                          AND temprunningcatalog.inactive = FALSE
+                   )
+         WHERE EXISTS (SELECT runcat
+                         FROM temprunningcatalog
+                        WHERE temprunningcatalog.runcat = runningcatalog.id
+                          AND temprunningcatalog.inactive = FALSE
+                      )
 """
     tkp.database.query(query, commit=True)
 
+def _update_1_to_1_runcat_flux():
+    """Updates the fluxes in runningcatalog_flux of an existing band 
+    for an existing runcat source.
 
-def _select_for_update_1_to_1_runcat_flux():
-    """Update the runningcatalog_flux
+    If the runcat, band, stokes entry does exist in runcat_flux,
+    it will be updated with the values from tempruncat.
 
-    Based on the runcat ids in tempruncat, the fluxes of the corresponding
-    entries in runcat_flux should be updated.
-    If they do not exist yet, they will be inserted
+    NOTE: It is important to guarantee the sequence:
+          First update the existing entries, 
+          then the insert the new entries (next function).
     """
-
-    # TODO: Change this to a single bulk update query
     query = """\
-SELECT f_datapoints
-      ,avg_f_peak
-      ,avg_f_peak_sq
-      ,avg_f_peak_weight
-      ,avg_weighted_f_peak
-      ,avg_weighted_f_peak_sq
-      ,avg_f_int
-      ,avg_f_int_sq
-      ,avg_f_int_weight
-      ,avg_weighted_f_int
-      ,avg_weighted_f_int_sq
-      ,runcat
-      ,band
-      ,stokes
-  FROM temprunningcatalog
- WHERE inactive = FALSE
+UPDATE runningcatalog_flux
+   SET f_datapoints = (SELECT f_datapoints
+                         FROM temprunningcatalog 
+                        WHERE temprunningcatalog.runcat = runningcatalog_flux.runcat
+                          AND temprunningcatalog.band = runningcatalog_flux.band
+                          AND temprunningcatalog.stokes = runningcatalog_flux.stokes
+                          AND temprunningcatalog.inactive = FALSE
+                      )
+      ,avg_f_peak = (SELECT avg_f_peak
+                       FROM temprunningcatalog 
+                      WHERE temprunningcatalog.runcat = runningcatalog_flux.runcat
+                        AND temprunningcatalog.band = runningcatalog_flux.band
+                        AND temprunningcatalog.stokes = runningcatalog_flux.stokes
+                        AND temprunningcatalog.inactive = FALSE
+                    )
+      ,avg_f_peak_sq = (SELECT avg_f_peak_sq
+                          FROM temprunningcatalog 
+                         WHERE temprunningcatalog.runcat = runningcatalog_flux.runcat
+                           AND temprunningcatalog.band = runningcatalog_flux.band
+                           AND temprunningcatalog.stokes = runningcatalog_flux.stokes
+                           AND temprunningcatalog.inactive = FALSE
+                       )
+      ,avg_f_peak_weight = (SELECT avg_f_peak_weight
+                              FROM temprunningcatalog 
+                             WHERE temprunningcatalog.runcat = runningcatalog_flux.runcat
+                               AND temprunningcatalog.band = runningcatalog_flux.band
+                               AND temprunningcatalog.stokes = runningcatalog_flux.stokes
+                               AND temprunningcatalog.inactive = FALSE
+                           )
+      ,avg_weighted_f_peak = (SELECT avg_weighted_f_peak
+                                FROM temprunningcatalog 
+                               WHERE temprunningcatalog.runcat = runningcatalog_flux.runcat
+                                 AND temprunningcatalog.band = runningcatalog_flux.band
+                                 AND temprunningcatalog.stokes = runningcatalog_flux.stokes
+                                 AND temprunningcatalog.inactive = FALSE
+                             )
+      ,avg_weighted_f_peak_sq = (SELECT avg_weighted_f_peak_sq
+                                   FROM temprunningcatalog 
+                                  WHERE temprunningcatalog.runcat = runningcatalog_flux.runcat
+                                    AND temprunningcatalog.band = runningcatalog_flux.band
+                                    AND temprunningcatalog.stokes = runningcatalog_flux.stokes
+                                    AND temprunningcatalog.inactive = FALSE
+                                )
+      ,avg_f_int = (SELECT avg_f_int
+                      FROM temprunningcatalog 
+                     WHERE temprunningcatalog.runcat = runningcatalog_flux.runcat
+                       AND temprunningcatalog.band = runningcatalog_flux.band
+                       AND temprunningcatalog.stokes = runningcatalog_flux.stokes
+                       AND temprunningcatalog.inactive = FALSE
+                   )
+      ,avg_f_int_sq = (SELECT avg_f_int_sq
+                         FROM temprunningcatalog 
+                        WHERE temprunningcatalog.runcat = runningcatalog_flux.runcat
+                          AND temprunningcatalog.band = runningcatalog_flux.band
+                          AND temprunningcatalog.stokes = runningcatalog_flux.stokes
+                          AND temprunningcatalog.inactive = FALSE
+                      )
+      ,avg_f_int_weight = (SELECT avg_f_int_weight
+                             FROM temprunningcatalog 
+                             WHERE temprunningcatalog.runcat = runningcatalog_flux.runcat
+                               AND temprunningcatalog.band = runningcatalog_flux.band
+                               AND temprunningcatalog.stokes = runningcatalog_flux.stokes
+                               AND temprunningcatalog.inactive = FALSE
+                          )
+      ,avg_weighted_f_int = (SELECT avg_weighted_f_int
+                               FROM temprunningcatalog 
+                              WHERE temprunningcatalog.runcat = runningcatalog_flux.runcat
+                                AND temprunningcatalog.band = runningcatalog_flux.band
+                                AND temprunningcatalog.stokes = runningcatalog_flux.stokes
+                                AND temprunningcatalog.inactive = FALSE
+                            )
+      ,avg_weighted_f_int_sq = (SELECT avg_weighted_f_int_sq
+                                  FROM temprunningcatalog 
+                                 WHERE temprunningcatalog.runcat = runningcatalog_flux.runcat
+                                   AND temprunningcatalog.band = runningcatalog_flux.band
+                                   AND temprunningcatalog.stokes = runningcatalog_flux.stokes
+                                   AND temprunningcatalog.inactive = FALSE
+                               )
+ WHERE EXISTS (SELECT runcat
+                 FROM temprunningcatalog 
+                WHERE temprunningcatalog.runcat = runningcatalog_flux.runcat
+                  AND temprunningcatalog.band = runningcatalog_flux.band
+                  AND temprunningcatalog.stokes = runningcatalog_flux.stokes
+                  AND temprunningcatalog.inactive = FALSE
+              )
 """
     cursor = tkp.database.query(query, commit=True)
-    results = cursor.fetchall()
-    for result in results:
-        _insert_or_update_1_to_1_runcat_flux(tuple(result))
+    cnt = cursor.rowcount
+    if cnt > 0:
+        logger.info("Updated flux for %s sources" % cnt)
 
 
-def _insert_or_update_1_to_1_runcat_flux(result):
-    """Insert or update the runningcatalog_flux, depending on existing entries
+def _insert_1_to_1_runcat_flux():
+    """Insert the fluxes in runningcatalog_flux of a new band 
+    for an existing runcat source.
 
-    If the runcat,band,stokes entry does not exist in runcat_flux,
-    we need to do an insert, otherwise an update
+    If the runcat, band, stokes entry does not exist (yet) in runcat_flux,
+    we need to insert the new values from tempruncat.
+    This might be the case if a source has been observed at other frequencies, 
+    but not in the current band, so there does not exist an entry 
+    for this band.
 
-    NOTE: Together with previous query this should be optimised,
-          in order to reduce data I/O
+    NOTE: It is important to guarantee the sequence:
+          First do the update (previous function), then the insert.
     """
 
     query = """\
-SELECT COUNT(*)
-  FROM runningcatalog_flux
- WHERE runcat = %s
-   AND band = %s
-   AND stokes = %s
-"""
-    # Be aware that the last items must correspond to the query
-    # in _select_for_update_1_to_1_runcat_flux()
-    cursor = tkp.database.query(query, (result[-3], result[-2], result[-1]))
-    cnt = cursor.fetchone()[0]
-    if cnt == 0:
-        query = """\
 INSERT INTO runningcatalog_flux
-  (f_datapoints
+  (runcat
+  ,band
+  ,stokes
+  ,f_datapoints
   ,avg_f_peak
   ,avg_f_peak_sq
   ,avg_f_peak_weight
@@ -1403,46 +1471,36 @@ INSERT INTO runningcatalog_flux
   ,avg_f_int_weight
   ,avg_weighted_f_int
   ,avg_weighted_f_int_sq
-  ,runcat
-  ,band
-  ,stokes
   )
-VALUES
-  (%s
-  ,%s
-  ,%s
-  ,%s
-  ,%s
-  ,%s
-  ,%s
-  ,%s
-  ,%s
-  ,%s
-  ,%s
-  ,%s
-  ,%s
-  ,%s
-  )
+  SELECT runcat
+        ,band
+        ,stokes
+        ,f_datapoints
+        ,avg_f_peak
+        ,avg_f_peak_sq
+        ,avg_f_peak_weight
+        ,avg_weighted_f_peak
+        ,avg_weighted_f_peak_sq
+        ,avg_f_int
+        ,avg_f_int_sq
+        ,avg_f_int_weight
+        ,avg_weighted_f_int
+        ,avg_weighted_f_int_sq
+    FROM temprunningcatalog
+   WHERE inactive = FALSE
+     AND NOT EXISTS (SELECT rf.runcat
+                       FROM runningcatalog_flux rf
+                           ,temprunningcatalog tr
+                      WHERE rf.runcat = tr.runcat
+                        AND rf.band = tr.band
+                        AND rf.stokes = tr.stokes
+                        AND tr.inactive = FALSE
+                    )
 """
-    else:
-        query = """\
-UPDATE runningcatalog_flux
-   SET f_datapoints = %s
-      ,avg_f_peak = %s
-      ,avg_f_peak_sq = %s
-      ,avg_f_peak_weight = %s
-      ,avg_weighted_f_peak = %s
-      ,avg_weighted_f_peak_sq = %s
-      ,avg_f_int = %s
-      ,avg_f_int_sq = %s
-      ,avg_f_int_weight = %s
-      ,avg_weighted_f_int = %s
-      ,avg_weighted_f_int_sq = %s
- WHERE runcat = %s
-   AND band = %s
-   AND stokes = %s
-"""
-    tkp.database.query(query, tuple(result), commit=True)
+    cursor = tkp.database.query(query, commit=True)
+    cnt = cursor.rowcount
+    if cnt > 0:
+        logger.info("Inserted new fluxes for %s sources" % cnt)
 
 
 def _insert_new_runcat(image_id):
@@ -1456,7 +1514,6 @@ def _insert_new_runcat(image_id):
     where xtrsrc is the id of the new extractedsource.
     This is the first of the series, since the other insertions have
     references to the runningcatalog table.
-    :param image_id:
     """
     # Unfortunately, this does not work,
     # since we previous deleted the extractedsources from the

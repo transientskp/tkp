@@ -3,8 +3,7 @@ if not  hasattr(unittest.TestCase, 'assertIsInstance'):
     import unittest2 as unittest
 import math
 import tkp.database as tkpdb
-import tkp.database.utils.general as dbgen
-import tkp.database.utils as dbutils
+import tkp.database.general as dbgen
 from tkp.testutil import db_subs
 from tkp.testutil.decorators import requires_database
 
@@ -39,7 +38,7 @@ class TestOne2OneFlux(unittest.TestCase):
         for idx, im in enumerate(im_params):
             image = tkpdb.Image(database=self.database, dataset=dataset, data=im)
             image.insert_extracted_sources([src_list[idx]])
-            tkpdb.utils.associate_extracted_sources(image.id, deRuiter_r=3.717)
+            tkpdb.associations.associate_extracted_sources(image.id, deRuiter_r=3.717)
         
         query = """\
         SELECT rf.avg_f_int
@@ -89,7 +88,7 @@ class TestOne2ManyFlux(unittest.TestCase):
         results = []
         results.append(src[-1])
         dbgen.insert_extracted_sources(imageid1, results, 'blind')
-        tkpdb.utils.associate_extracted_sources(imageid1, deRuiter_r = 3.717)
+        tkpdb.associations.associate_extracted_sources(imageid1, deRuiter_r=3.717)
         
         # image 2
         image = tkpdb.Image(database=self.database, dataset=dataset, data=im_params[1])
@@ -116,7 +115,7 @@ class TestOne2ManyFlux(unittest.TestCase):
         results.append(src[0])
         results.append(src[1])
         dbgen.insert_extracted_sources(imageid2, results, 'blind')
-        tkpdb.utils.associate_extracted_sources(imageid2, deRuiter_r = 3.717)
+        tkpdb.associations.associate_extracted_sources(imageid2, deRuiter_r=3.717)
 
         query = """\
         SELECT rf.avg_f_int
@@ -186,7 +185,7 @@ class TestMany2OneFlux(unittest.TestCase):
         results.append(src[0])
         results.append(src[1])
         dbgen.insert_extracted_sources(imageid1, results, 'blind')
-        tkpdb.utils.associate_extracted_sources(imageid1, deRuiter_r = 3.717)
+        tkpdb.associations.associate_extracted_sources(imageid1, deRuiter_r=3.717)
 
         # image 2
         image = tkpdb.Image(database=self.database, dataset=dataset, data=im_params[1])
@@ -204,7 +203,7 @@ class TestMany2OneFlux(unittest.TestCase):
         results = []
         results.append(src[-1])
         dbgen.insert_extracted_sources(imageid2, results, 'blind')
-        tkpdb.utils.associate_extracted_sources(imageid2, deRuiter_r = 3.717)
+        tkpdb.associations.associate_extracted_sources(imageid2, deRuiter_r=3.717)
         
         query = """\
         SELECT rf.avg_f_int
@@ -276,7 +275,7 @@ class TestMany2Many(unittest.TestCase):
         results.append(src1[1])
         dbgen.insert_extracted_sources(imageid1, results, 'blind')
         # We use a default value of 3.717
-        tkpdb.utils.associate_extracted_sources(imageid1, deRuiter_r = 3.717)
+        tkpdb.associations.associate_extracted_sources(imageid1, deRuiter_r=3.717)
 
         # image 2
         image = tkpdb.Image(database=self.database, dataset=dataset, data=im_params[1])
@@ -303,7 +302,7 @@ class TestMany2Many(unittest.TestCase):
         results.append(src2[0])
         results.append(src2[1])
         dbgen.insert_extracted_sources(imageid2, results, 'blind')
-        tkpdb.utils.associate_extracted_sources(imageid2, deRuiter_r = 3.717)
+        tkpdb.associations.associate_extracted_sources(imageid2, deRuiter_r=3.717)
         
         query = """\
         SELECT rf.avg_f_int

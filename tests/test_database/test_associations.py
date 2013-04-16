@@ -16,6 +16,9 @@ class TestOne2One(unittest.TestCase):
     These tests will check the 1-to-1 source associations, i.e. an extractedsource
     has exactly one counterpart in the runningcatalog
     """
+    def shortDescription(self):
+        """http://www.saltycrane.com/blog/2012/07/how-prevent-nose-unittest-using-docstring-when-verbosity-2/"""
+        return None
 
     def test_one2one(self):
         dataset = tkpdb.DataSet(data={'description': 'assoc test set: 1-1'})
@@ -197,7 +200,7 @@ class TestOne2One(unittest.TestCase):
             associate_extracted_sources(image.id, deRuiter_r=3.717)
         runcat = columns_from_table('runningcatalog', ['datapoints', 'wm_ra'],
                                    where={'dataset':dataset.id})
-        print "***\nRESULTS:", runcat, "\n*****"
+#        print "***\nRESULTS:", runcat, "\n*****"
         self.assertEqual(len(runcat), 1)
         self.assertEqual(runcat[0]['datapoints'], 3)
         avg_ra = ((src0.ra+180)%360 + (src1.ra+180)%360 + (src2.ra+180)%360)/3 - 180
@@ -227,7 +230,7 @@ class TestOne2One(unittest.TestCase):
             associate_extracted_sources(image.id, deRuiter_r=3.717)
         runcat = columns_from_table('runningcatalog', ['datapoints', 'wm_ra'],
                                    where={'dataset':dataset.id})
-        print "***\nRESULTS:", runcat, "\n*****"
+#        print "***\nRESULTS:", runcat, "\n*****"
         self.assertEqual(len(runcat), 1)
         self.assertEqual(runcat[0]['datapoints'], 3)
         avg_ra = (src0.ra + src1.ra +src2.ra)/3 
@@ -257,7 +260,7 @@ class TestOne2One(unittest.TestCase):
             associate_extracted_sources(image.id, deRuiter_r=3.717)
         runcat = columns_from_table('runningcatalog', ['datapoints', 'wm_ra'],
                                    where={'dataset':dataset.id})
-        print "***\nRESULTS:", runcat, "\n*****"
+#        print "***\nRESULTS:", runcat, "\n*****"
         self.assertEqual(len(runcat), 1)
         self.assertEqual(runcat[0]['datapoints'], 3)
         avg_ra = (src0.ra + src1.ra +src2.ra)/3 

@@ -51,13 +51,6 @@ class Database(object):
         self.host = host or e.get('TKP_DBHOST', False)
         self.port = port or int(e.get('TKP_DBPORT', False))
 
-        self.engine = 'postgresql'
-        self.database = username
-        self.user = username
-        self.password = username
-        self.host = 'localhost'
-        self.port = 5432
-
         logger.info("Database config: %s://%s@%s:%s/%s" % (self.engine,
                                                            self.user,
                                                            self.host,

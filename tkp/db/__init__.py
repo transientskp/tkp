@@ -16,7 +16,7 @@ def execute(query, parameters=(), commit=False):
 
     :returns: a database cursor object
     """
-    logger.info('executing query\n%s' % query % parameters)
+    #logger.info('executing query\n%s' % query % parameters)
     database = Database()
     cursor = database.connection.cursor()
     try:

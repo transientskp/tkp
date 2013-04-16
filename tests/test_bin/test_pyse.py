@@ -67,7 +67,7 @@ class TestPyse(unittest.TestCase):
     def test_summary(self):
         tkp.bin.pyse.summary(self.filename, self.sourcelist)
 
-    unittest.skip("make jenkins happy")
+    @unittest.skip("make jenkins (and Tim) happy")
     def test_handle_args(self):
         tkp.bin.pyse.handle_args()
 

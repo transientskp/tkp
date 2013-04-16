@@ -62,6 +62,9 @@ class PyfitsFitsImage(unittest.TestCase):
 
 class TestFitsImage(unittest.TestCase):
 
+    def tearDown(self):
+        tkp.db.rollback()
+
     @requires_data(os.path.join(DATAPATH, 'L15_12h_const/observed-all.fits'))
     @requires_data(os.path.join(DATAPATH, 'CORRELATED_NOISE.FITS'))
     def testOpen(self):
@@ -101,6 +104,10 @@ class TestFitsImage(unittest.TestCase):
 class DataBaseImage(unittest.TestCase):
     """TO DO: split this into an accessor test and a database test.
                 Move the database part to the database unit-tests"""
+
+    def tearDown(self):
+        tkp.db.rollback()
+
     @requires_database()
     @requires_data(os.path.join(DATAPATH, 'L15_12h_const/observed-all.fits'))
     def testDBImageFromAccessor(self):
@@ -118,6 +125,10 @@ class DataBaseImage(unittest.TestCase):
 class FrequencyInformation(unittest.TestCase):
     """TO DO: split this into an accessor test and a database test.
                 Move the database part to the database unit-tests"""
+
+    def tearDown(self):
+        tkp.db.rollback()
+
     @requires_database()
     @requires_data(os.path.join(DATAPATH, 'VLSS.fits'))
     def testFreqinfo(self):

@@ -16,6 +16,9 @@ class TestOne2One(unittest.TestCase):
     These tests will check the 1-to-1 source associations, i.e. an extractedsource
     has exactly one counterpart in the runningcatalog
     """
+    def shortDescription(self):
+        """http://www.saltycrane.com/blog/2012/07/how-prevent-nose-unittest-using-docstring-when-verbosity-2/"""
+        return None
 
     def test_one2one(self):
         dataset = tkpdb.DataSet(data={'description': 'assoc test set: 1-1'})

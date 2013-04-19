@@ -42,9 +42,17 @@ class Database(object):
         """
         e = os.environ
 
-        # defaults settings
+        # default settings
         username = getpass.getuser()
         self.engine = engine or e.get('TKP_DBENGINE', 'monetdb')
+        #If only TKP_DBNAME is defined as an environment variable,
+        #default to that for the DBUSER and DBPASS also.
+        if 'TKP_DBNAME' in e and not database:
+            if 'TKP_DBUSER' not in e and not user:
+                user = e['TKP_DBNAME']
+            if 'TKP_DBPASS' not in e and not password:
+                password = e['TKP_DBNAME']
+
         self.database = database or e.get('TKP_DBNAME', username)
         self.user = user or e.get('TKP_DBUSER', username)
         self.password = password or e.get('TKP_DBPASS', username)

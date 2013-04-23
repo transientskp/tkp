@@ -41,8 +41,8 @@ init/tables.sql
 #
 # catalogs
 #
-load/vlss.sql
-load/wenss.sql
-load/nvss.sql
+#load/vlss.sql
+#load/wenss.sql
+#load/nvss.sql
 #load/exo.sql
 

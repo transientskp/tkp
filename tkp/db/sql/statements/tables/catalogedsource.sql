@@ -43,3 +43,7 @@ CREATE TABLE catalogedsource
   )
 ;
 
+{% ifdb postgresql %}
+CREATE INDEX "catalogedsource_catalog" ON "catalogedsource" ("catalog");
+CREATE INDEX "catalogedsource_band" ON "catalogedsource" ("band");
+{% endifdb %}

@@ -33,3 +33,7 @@ CREATE TABLE extractedsource
   )
 ;
 
+{% ifdb postgresql %}
+CREATE INDEX "extractedsource_image" ON "extractedsource" ("image");
+{% endifdb %}
+

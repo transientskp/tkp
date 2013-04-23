@@ -10,3 +10,6 @@ CREATE TABLE assocxtrsource
   ,FOREIGN KEY (xtrsrc) REFERENCES extractedsource (id)
 );
 
+{% ifdb postgresql %}
+CREATE INDEX "assocxtrsource_xtrsrc" ON "assocxtrsource" ("xtrsrc");
+{% endifdb %}

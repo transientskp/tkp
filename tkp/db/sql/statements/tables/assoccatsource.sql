@@ -10,3 +10,6 @@ CREATE TABLE assoccatsource
   ,FOREIGN KEY (catsrc) REFERENCES catalogedsource (id)
 );
 
+{% ifdb postgresql %}
+CREATE INDEX "assoccatsource_catsrc" ON "assoccatsource" ("catsrc");
+{% endifdb %}

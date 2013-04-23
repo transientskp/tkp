@@ -10,3 +10,7 @@ CREATE TABLE assocskyrgn
   ,FOREIGN KEY (skyrgn) REFERENCES skyregion (id)
 );
 
+{% ifdb postgresql %}
+CREATE INDEX "assocskyrgn_runcat" ON "assocskyrgn" ("runcat");
+CREATE INDEX "assocskyrgn_skyrgn" ON "assocskyrgn" ("skyrgn");
+{% endifdb %}

@@ -36,3 +36,9 @@ CREATE TABLE image
   ,FOREIGN KEY (skyrgn) REFERENCES skyregion (id)
   );
 
+{% ifdb postgresql %}
+CREATE INDEX "image_dataset" ON "image" ("dataset");
+CREATE INDEX "image_band" ON "image" ("band");
+CREATE INDEX "image_skyrgn" ON "image" ("skyrgn");
+{% endifdb %}
+

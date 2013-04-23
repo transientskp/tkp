@@ -17,3 +17,8 @@ CREATE TABLE transient
   ,FOREIGN KEY (trigger_xtrsrc) REFERENCES extractedsource (id)
 );
 
+{% ifdb postgresql %}
+CREATE INDEX "transient_runcat" ON "transient" ("runcat");
+CREATE INDEX "transient_band" ON "transient" ("band");
+CREATE INDEX "transient_trigger_xtrsrc" ON "transient" ("trigger_xtrsrc");
+{% endifdb %}

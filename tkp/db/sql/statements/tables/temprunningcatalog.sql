@@ -46,3 +46,10 @@ CREATE TABLE temprunningcatalog
 
 ;
 
+{% ifdb postgresql %}
+CREATE INDEX "temprunningcatalog_runcat" ON "temprunningcatalog" ("runcat");
+CREATE INDEX "temprunningcatalog_xtrsrc" ON "temprunningcatalog" ("xtrsrc");
+CREATE INDEX "temprunningcatalog_dataset" ON "temprunningcatalog" ("dataset");
+CREATE INDEX "temprunningcatalog_band" ON "temprunningcatalog" ("band");
+{% endifdb %}
+

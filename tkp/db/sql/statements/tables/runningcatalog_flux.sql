@@ -23,3 +23,6 @@ CREATE TABLE runningcatalog_flux
   )
 ;
 
+{% ifdb postgresql %}
+CREATE INDEX "runningcatalog_flux_band" ON "runningcatalog_flux" ("band");
+{% endifdb %}

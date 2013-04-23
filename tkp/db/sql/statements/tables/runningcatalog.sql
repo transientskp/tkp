@@ -30,3 +30,7 @@ CREATE TABLE runningcatalog
   )
 ;
 
+{% ifdb postgresql %}
+CREATE INDEX "runningcatalog_xtrsrc" ON "runningcatalog" ("xtrsrc");
+CREATE INDEX "runningcatalog_dataset" ON "runningcatalog" ("dataset");
+{% endifdb %}

@@ -12,3 +12,9 @@ CREATE TABLE monitoringlist
   ,FOREIGN KEY (dataset) REFERENCES dataset (id)
   )
 ;
+
+{% ifdb postgresql %}
+CREATE INDEX "monitoringlist_runcat" ON "monitoringlist" ("runcat");
+CREATE INDEX "monitoringlist_dataset" ON "monitoringlist" ("dataset")
+{% endifdb %}
+

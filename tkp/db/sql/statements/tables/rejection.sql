@@ -9,3 +9,8 @@ CREATE TABLE rejection
   ,FOREIGN KEY (image) REFERENCES image(id)
   ,FOREIGN KEY (rejectreason) REFERENCES rejectreason(id)
 );
+
+{% ifdb postgresql %}
+CREATE INDEX "rejection_image" ON "rejection" ("image");
+CREATE INDEX "rejection_rejectreason" ON "rejection" ("rejectreason");
+{% endifdb %}

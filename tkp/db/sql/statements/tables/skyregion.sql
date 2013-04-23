@@ -29,3 +29,6 @@ CREATE TABLE skyregion
   )
 ;
 
+{% ifdb postgresql %}
+CREATE INDEX "skyregion_dataset" ON "skyregion" ("dataset");
+{% endifdb %}

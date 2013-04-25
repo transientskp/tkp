@@ -276,6 +276,7 @@ class TestMaskedSource(unittest.TestCase):
         results = self.image.extract(det=5, anl=3)
         self.assertFalse(results)
 
+
 class TestMaskedBackground(unittest.TestCase):
     @requires_data(os.path.join(DATAPATH, "L41391_0.img.restored.corr.fits"))
     def testMaskedBackground(self):

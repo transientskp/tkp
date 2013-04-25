@@ -9,9 +9,6 @@ import tkp.utility.accessors
 
 logger = logging.getLogger(__name__)
 
-# TODO:  FIXME! (see also 'image' unit test)
-BOX_IN_BEAMPIX = 10
-
 
 def parse_parset(parset_file):
     parset = parameterset(parset_file)
@@ -26,7 +23,8 @@ def parse_parset(parset_file):
         'dec_sys_err': parset.getFloat('dec_sys_err'),
         'detection_threshold': parset.getFloat('detection_threshold'),
         'analysis_threshold': parset.getFloat('analysis_threshold'),
-        'force_beam': parset.getBool('force_beam', False)
+        'force_beam': parset.getBool('force_beam', False),
+        'box_in_beampix': parset.getBool('box_in_beampix', 10),
     }
 
 
@@ -65,7 +63,7 @@ def extract_sources(image_path, parset):
     return [r.serialize() for r in results]
 
 
-def forced_fits(image_path, positions, parset_file):
+def forced_fits(image_path, positions, parset):
     """Force fit ?? What does this do
     Args:
         - image_path: path to image
@@ -73,8 +71,7 @@ def forced_fits(image_path, positions, parset_file):
     """
     logger.info("Forced fitting in image: %s" % (image_path))
     fitsimage = tkp.utility.accessors.open(image_path)
-    parset = parse_parset(parset_file)
-    
+
     data_image = sourcefinder_image_from_accessor(fitsimage,
                             margin=parset['margin'], radius=parset['radius'],
                             detection_threshold=parset['detection_threshold'],
@@ -82,9 +79,9 @@ def forced_fits(image_path, positions, parset_file):
                             ra_sys_err=parset['ra_sys_err'],
                             dec_sys_err=parset['dec_sys_err'])
 
-
     if len(positions):
-        boxsize = BOX_IN_BEAMPIX * max(data_image.beam[0],data_image.beam[1])
+        boxsize = parset['box_in_beampix'] * max(data_image.beam[0],
+                                                 data_image.beam[1])
         forced_fits = data_image.fit_fixed_positions(positions, boxsize)
         return [forced_fit.serialize() for forced_fit in forced_fits]
     else:

@@ -3,7 +3,6 @@
 # See Dario Carbone's presentation at TKP Meeting 20121204
 detection_threshold = 15
 analysis_threshold = 5
-#association_radius = 1  # TODO: not used?
 backsize_x = 32
 backsize_y = 32
 margin = 10
@@ -14,3 +13,4 @@ ra_sys_err = 20
 dec_sys_err = 20
 max_degradation = 0.2
 force_beam = False
+box_in_beampix = 10

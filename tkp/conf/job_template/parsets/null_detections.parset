@@ -15,4 +15,4 @@ deblend_nthresh = 32
 radius = 280
 ra_sys_err = 20
 dec_sys_err = 20
-
+box_in_beampix = 10

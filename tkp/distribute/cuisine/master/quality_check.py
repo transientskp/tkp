@@ -40,6 +40,8 @@ class quality_check(TrapMaster):
     def trapstep(self):
         self.logger.info("Performing quality checks")
         image_ids = self.inputs['args']
+        parset_file = self.inputs['parset']
+        self.parset = steps.quality.parse_parset(parset_file)
         urls = [Image(id=id).url for id in image_ids]
         rejected_images = self.distributed(image_ids, urls)
         for image_id, (reason, comment) in rejected_images:
@@ -64,7 +66,7 @@ class quality_check(TrapMaster):
                     arguments=[
                         image_id,
                         image_url,
-                        self.inputs['parset'],
+                        self.parset,
                     ]
                 )
             )

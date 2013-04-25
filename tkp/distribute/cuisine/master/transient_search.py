@@ -20,7 +20,8 @@ class transient_search(TrapMaster):
 
     def go(self):
         image_id = self.inputs['args'][0]
-        parset = self.inputs['parset']
+        parset_file = self.inputs['parset']
+        parset = steps.transient_search.parse_parset(parset_file)
         transients = steps.transient_search.search_transients(image_id, parset)
         adjust_transients_in_monitoringlist(image_id, transients)
         self.outputs['transients'] = transients

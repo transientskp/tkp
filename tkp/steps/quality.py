@@ -29,7 +29,7 @@ def parse_parset(parset_file):
     return result
 
 
-def reject_check(image_path, parset_file):
+def reject_check(image_path, parset):
     """ checks if an image passes the quality check. If not, a rejection
         tuple is returned.
 
@@ -45,8 +45,7 @@ def reject_check(image_path, parset_file):
     """
 
     accessor = tkp.utility.accessors.open(image_path)
-    parset = parse_parset(parset_file)
-    
+
     sigma = parset['sigma']
     f = parset['f']
     low_bound = parset['low_bound']

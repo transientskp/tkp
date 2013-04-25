@@ -1,11 +1,12 @@
 import itertools
 import lofarpipe.support.lofaringredient as ingredient
-from lofarpipe.support.parset import parameterset
 from lofarpipe.support.remotecommand import ComputeJob
 from tkp.db import monitoringlist as dbmon
 from tkp.db import general as dbgen
 from tkp.db.orm import Image
 from tkp.distribute.cuisine.common import TrapMaster, nodes_available
+from tkp import steps
+
 
 class null_detections(TrapMaster):
     """Get the null detections in an image, do a forced fit and 
@@ -26,15 +27,11 @@ class null_detections(TrapMaster):
 
     def trapstep(self):
         parset_file = self.inputs['parset']
-        parset = parameterset(parset_file)
-        deRuiter_radius = parset.getFloat('deRuiter_radius', 3.717)
-
+        self.parset = steps.null_detections.parse_parset(parset_file)
         image_ids = self.inputs['args']
-        image_paths = [Image(id=id).url for id in image_ids]
-
         self.logger.info("starting null_detections for images %s" % image_ids)
-
-        image_nds = [dbmon.get_nulldetections(image_id, deRuiter_radius) for image_id in image_ids]
+        image_paths = [Image(id=id).url for id in image_ids]
+        image_nds = [dbmon.get_nulldetections(image_id, self.parset['deRuiter_radius']) for image_id in image_ids]
         ff_nds = self.distributed(image_ids, image_paths, image_nds)
 
         for image_id, ff_nd in ff_nds:
@@ -56,7 +53,7 @@ class null_detections(TrapMaster):
                         image_id,
                         image_path,
                         image_nd,
-                        self.inputs['parset']
+                        self.parset
                     ]
                 )
         )

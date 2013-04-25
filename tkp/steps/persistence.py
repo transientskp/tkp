@@ -131,16 +131,15 @@ def store_images(images_metadata, extraction_radius_pix, dataset_id):
     return image_ids
 
 
-def node_steps(images, parset_file):
+def node_steps(images, parset):
     """
     this function executes all persistence steps that should be executed on a node.
     Note: Should only be used in a node recipe
     """
-    persistence_parset = parse_parset(parset_file)
-    mongohost = persistence_parset['mongo_host']
-    mongoport = persistence_parset['mongo_port']
-    mongodb = persistence_parset['mongo_db']
-    copy_images = persistence_parset['copy_images']
+    mongohost = parset['mongo_host']
+    mongoport = parset['mongo_port']
+    mongodb = parset['mongo_db']
+    copy_images = parset['copy_images']
 
     if copy_images:
         for image in images:
@@ -152,7 +151,7 @@ def node_steps(images, parset_file):
     return metadatas
 
 
-def master_steps(metadatas, extraction_radius_pix, parset_file):
+def master_steps(metadatas, extraction_radius_pix, parset):
     """this function executes all persistence steps that should be executed on
         a master.
     Args:
@@ -160,21 +159,13 @@ def master_steps(metadatas, extraction_radius_pix, parset_file):
         metadatas: a list of dicts containing info from Image Accessors. This
                    is returned by the node recipe
     """
-    persistence_parset = parse_parset(parset_file)
     logger.info("creating dataset in database ...")
     dataset_id = create_dataset(
-        persistence_parset['dataset_id'],
-        persistence_parset['description'])
+        parset['dataset_id'],
+        parset['description'])
     logger.info("added dataset with ID %s" % dataset_id)
 
     logger.info("Storing images")
     image_ids = store_images(metadatas, extraction_radius_pix, dataset_id)
     return dataset_id, image_ids
 
-
-def all(images, extraction_radius_pix, parset_file):
-    """
-    execute node and then master code, should be used in local run only!
-    """
-    metadatas = node_steps(images, parset_file)
-    return master_steps(metadatas, extraction_radius_pix, parset_file)

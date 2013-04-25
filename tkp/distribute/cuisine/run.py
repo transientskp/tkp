@@ -30,7 +30,13 @@ class Trap(control):
             ,
             optional=True
         ),
-        }
+        # we need to add the TKP flags here also, otherwise LOFAR pipeline
+        # will barf
+        'distribute': ingredient.StringField(
+            '-f', '--method',
+            optional=True
+        )
+    }
 
     def pipeline_logic(self):
         from images_to_process import images

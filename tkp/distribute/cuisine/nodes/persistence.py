@@ -3,7 +3,8 @@ import tkp.steps.persistence
 
 
 class persistence(TrapNode):
-    def trapstep(self, image,  parset_file):
-        self.outputs['metadatas'] = tkp.steps.persistence.node_steps([image], parset_file)
+    def trapstep(self, image,  parset):
+        self.outputs['metadatas'] = tkp.steps.persistence.node_steps([image],
+                                                                     parset)
 
 node_run(__name__, persistence)

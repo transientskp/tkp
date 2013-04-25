@@ -1,5 +1,5 @@
 # set the probability threshold (0 to 1) that a source is a transient (i.e. not a constant flux)
-probability.threshold = 0.5
-probability.minpoints = 1
-probability.eta_lim = 0.0
-probability.V_lim = 0.00
+threshold = 0.5
+minpoints = 1
+eta_lim = 0.0
+V_lim = 0.00

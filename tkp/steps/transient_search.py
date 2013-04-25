@@ -5,20 +5,23 @@ from lofar.parameterset import parameterset
 logger = logging.getLogger(__name__)
 
 
+def parse_parset(parset_file):
+    parset = parameterset(parset_file)
+    return {
+        'eta_lim': parset.getFloat('eta_lim'),
+        'V_lim': parset.getFloat('V_lim'),
+        'threshold': parset.getFloat('threshold'),
+        'minpoints': parset.getInt('minpoints'),
+    }
+
+
 def search_transients(image_id, parset):
-    logger.info("Finding transient sources...")
-    parset = parameterset(parset)
-    eta_lim = parset.getFloat('probability.eta_lim')
-    V_lim= parset.getFloat('probability.V_lim')
-    prob_threshold = parset.getFloat('probability.threshold')
-    minpoints = parset.getInt('probability.minpoints')
-
-    transients = multi_epoch_transient_search(image_id=image_id,
-                                      eta_lim = eta_lim,
-                                      V_lim = V_lim,
-                                      probability_threshold = prob_threshold,
-                                      minpoints = minpoints)
-
-    return transients
+   logger.info("Finding transient sources...")
+   transients = multi_epoch_transient_search(image_id=image_id,
+                                             eta_lim=parset['eta_lim'],
+                                             V_lim=parset['V_lim'],
+                                             probability_threshold=parset['threshold'],
+                                             minpoints=parset['minpoints'])
+   return transients
 
 

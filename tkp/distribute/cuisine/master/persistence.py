@@ -2,7 +2,7 @@ from __future__ import with_statement
 import itertools
 import lofarpipe.support.lofaringredient as ingredient
 from lofarpipe.support.remotecommand import ComputeJob
-from tkp.steps.persistence import master_steps
+from tkp.steps.persistence import master_steps, parse_parset
 from tkp.distribute.cuisine.common import TrapMaster, nodes_available
 
 
@@ -32,10 +32,13 @@ class persistence(TrapMaster):
 
     def trapstep(self):
         images = self.inputs['args']
+        parset_file = self.inputs['parset']
+        self.parset = parse_parset(parset_file)
+
         metadatas = self.distributed(images)
         dataset_id, image_ids = master_steps(metadatas,
                                              self.inputs['extraction_radius_pix'],
-                                             self.inputs['parset'])
+                                             self.parset)
         self.outputs['dataset_id'] = dataset_id
 
     def distributed(self, images):
@@ -51,7 +54,7 @@ class persistence(TrapMaster):
                     host, command,
                     arguments=[
                         image,
-                        self.inputs['parset'],
+                        self.parset,
                     ]
                 )
             )

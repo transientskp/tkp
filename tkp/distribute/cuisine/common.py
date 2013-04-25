@@ -45,8 +45,11 @@ class TrapNode(LOFARnodeTCP):
         try:
             self.trapstep(*args, **kwargs)
             return 0
-        except Exception,e:
+        except Exception, e:
+            import traceback
+            tb = traceback.format_exc()
             self.logger.error(e)
+            self.logger.error(tb)
             return 1
 
 

@@ -1,5 +1,7 @@
 import logging
 import datetime
+import os
+import imp
 import lofarpipe.support.lofaringredient as ingredient
 from tkp.steps.monitoringlist import add_manual_monitoringlist_entries
 from tkp import steps
@@ -8,7 +10,6 @@ from tkp.db import general as dbgen
 from tkp.db import monitoringlist as dbmon
 from tkp.db import associations as dbass
 from lofarpipe.support.control import control
-from images_to_process import images
 
 
 class MonetFilter(logging.Filter):
@@ -47,6 +48,10 @@ class TrapLocal(control):
         se_parset_file = self.task_definitions.get("source_extraction", "parset")
         nd_parset_file = self.task_definitions.get("null_detections", "parset")
         tr_parset_file = self.task_definitions.get("transient_search", "parset")
+
+        job_dir = self.config.get('layout', 'job_directory')
+        images = imp.load_source('images_to_process', os.path.join(job_dir,
+                                 'images_to_process.py')).images
 
 
         p_parset = steps.persistence.parse_parset(p_parset_file)

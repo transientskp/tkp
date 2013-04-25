@@ -1,5 +1,7 @@
 import datetime
 import logging
+import os
+import imp
 from lofarpipe.support.control import control
 import lofarpipe.support.lofaringredient as ingredient
 from tkp.steps.monitoringlist import add_manual_monitoringlist_entries
@@ -39,7 +41,9 @@ class Trap(control):
     }
 
     def pipeline_logic(self):
-        from images_to_process import images
+        job_dir = self.config.get('layout', 'job_directory')
+        images = imp.load_source('images_to_process', os.path.join(job_dir,
+                                 'images_to_process.py')).images
 
         # capture all logging and sent it to the master
         logdrain = logging.getLogger()

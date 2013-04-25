@@ -247,14 +247,27 @@ def parse_arguments():
     initproject_parser.set_defaults(func=init_job)
 
     # runjob
-    run_parser = parser_subparsers.add_parser('run')
+    run_help = """Run a specific job.
+
+For now, use these environment variables to configure the database:
+
+  * TKP_DBENGINE
+  * TKP_DBNAME
+  * TKP_DBUSER
+  * TKP_DBPASS
+  * TKP_DBHOST
+  * TKP_DBPORT
+
+"""
+    run_parser = parser_subparsers.add_parser('run', description=run_help,
+                              formatter_class=argparse.RawTextHelpFormatter)
+
     run_parser.add_argument('name', help='Name of job to run')
     run_parser.add_argument('-d', '--debug', help='enable debug logging',
                             action='store_true')
     m_help = 'Specify a list of RA,DEC co-ordinate pairs to monitor (decimal' \
              ' degrees, no spaces)'
-    run_parser.add_argument('-m', '--monitor-coords',
-                            help=m_help)
+    run_parser.add_argument('-m', '--monitor-coords', help=m_help)
     run_parser.add_argument('-l', '--monitor-list',
                             help='Specify a file containing a list of RA,DEC')
     run_parser.add_argument('-f', '--method', choices=['cuisine',

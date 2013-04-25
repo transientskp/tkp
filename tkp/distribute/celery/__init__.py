@@ -50,10 +50,8 @@ def run():
     tr_parset = steps.transient_search.parse_parset(tr_parset_file)
 
     # persistence
-    s1 = tasks.persistence_node_step.s(images[0], p_parset)
-    res = s1.delay()
-    res.get()
-    #metadatas = group(tasks.persistence_node_step.s(img, p_parset) for img in images)().get()
+    metadatas = group(tasks.persistence_node_step.s([img], p_parset) for img in images)().get()
+    metadatas = [m[0] for m in metadatas]
 
     #metadatas = tasks.persistence_node_steps(images, p_parset)
     dataset_id, image_ids = steps.persistence.master_steps(metadatas,

@@ -203,7 +203,8 @@ def run_job(args):
         import tkp.distribute.local.run
         sys.exit(tkp.distribute.local.run.TrapLocal().main())
     elif args.method == 'celery':
-        raise NotImplementedError("be patient, it is comming ;)")
+        import tkp.distribute.celery
+        tkp.distribute.celery.run()
     else:
         sys.stderr.write("I don't know what is a %s" % args.method)
         sys.exit(1)

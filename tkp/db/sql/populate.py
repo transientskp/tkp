@@ -44,7 +44,7 @@ def verify(parsed):
     print("")
     answer = raw_input("Do you want to continue? [y/N]: ")
     if answer.lower() != 'y':
-        print("Aborting.")
+        sys.stderr.write("Aborting.")
         sys.exit(1)
 
 
@@ -65,6 +65,9 @@ def connect(parsed):
         return monetdb.sql.connect(database=parsed.database, user=parsed.user,
                                    password=parsed.password, host=parsed.host,
                                    port=parsed.port, autocommit=True)
+    else:
+        sys.stderr.write("backend %s is not implemented" % parsed.backend)
+        raise NotImplementedError
 
 auth_query = """
 ALTER USER "monetdb" RENAME TO "%(username)s";
@@ -164,5 +167,5 @@ def populate(options):
             except Exception as e:
                 sys.stderr.write("\nproblem with file \"%s\"\n\n" % sql_file)
                 raise
-    #conn.commit()
+    conn.commit()
     conn.close()

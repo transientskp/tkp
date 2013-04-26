@@ -174,7 +174,7 @@ def init_project(args):
 
 def init_job(args):
     print "creating job '%s'" % args.name
-    return copy_template("job", args.name, args.target)
+    return copy_template("job", args.name)
 
 
 def prepare_job(jobname, debug=False):

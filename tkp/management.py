@@ -245,7 +245,7 @@ def parse_arguments():
     # initjob
     initjob_parser = parser_subparsers.add_parser('initjob')
     initjob_parser.add_argument('name', help='Name of new job')
-    initproject_parser.set_defaults(func=init_job)
+    initjob_parser.set_defaults(func=init_job)
 
     # runjob
     run_help = """Run a specific job.

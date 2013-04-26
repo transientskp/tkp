@@ -14,3 +14,13 @@ def persistence_node_step(images, p_parset):
 @celery.task
 def quality_reject_check(url, q_parset):
     return tkp.steps.quality.reject_check(url, q_parset)
+
+
+@celery.task
+def extract_sources(url, se_parset):
+    return tkp.steps.source_extraction.extract_sources(url, se_parset)
+
+
+@celery.task
+def forced_fits(url, detections, parset):
+    return tkp.steps.source_extraction.forced_fits(url, detections, parset)

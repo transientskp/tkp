@@ -167,5 +167,6 @@ def populate(options):
             except Exception as e:
                 sys.stderr.write("\nproblem with file \"%s\"\n\n" % sql_file)
                 raise
-    conn.commit()
+    if options.backend == 'postgresql':
+        conn.commit()
     conn.close()

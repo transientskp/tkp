@@ -204,7 +204,7 @@ def run_job(args):
         sys.exit(tkp.distribute.local.run.TrapLocal().main())
     elif args.method == 'celery':
         import tkp.distribute.celery
-        tkp.distribute.celery.run()
+        tkp.distribute.celery.run(args.name)
     else:
         sys.stderr.write("I don't know what is a %s" % args.method)
         sys.exit(1)

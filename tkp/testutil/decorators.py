@@ -1,7 +1,5 @@
 import os
 import unittest
-
-import tkp.config
 from tkp.testutil import db_subs
 
 
@@ -9,14 +7,14 @@ if not  hasattr(unittest.TestCase, 'assertIsInstance'):
     import unittest2 as unittest
 
 def requires_database():
-    db_subs.use_test_database_by_default()
+    if os.environ.get("TKP_DISABLEDB", False):
+        return unittest.skip("Database functionality disabled in configuration")
     return lambda func: func
-    return unittest.skip("Database functionality disabled in configuration")
 
 def requires_mongodb():
-    if tkp.config.config['mongodb']['enabled']:
-        return lambda func: func
-    return unittest.skip("mongodb functionality disabled in configuration")
+    if os.environ.get("TKP_DISABLEMONGODB", False):
+        return unittest.skip("mongodb functionality disabled in configuration")
+    return lambda func: func
 
 def requires_data(*args):
     for filename in args:
@@ -32,9 +30,10 @@ def requires_module(module_name):
     return lambda func: func
 
 def duration(test_duration):
-    if tkp.config.config['test']['max_duration']:
-        if tkp.config.config['test']['max_duration'] < test_duration:
+    max_duration = os.environ.get("TKP_MAXTESTDURATION", False)
+    if max_duration:
+        if max_duration < test_duration:
             return unittest.skip(
-             "Tests of duration > %s disabled in tkp.config['test'] section." %
-                tkp.config.config['test']['max_duration'])
+             "Tests of duration > %s disabled with TKP_MAXTESTDURATION" %
+                max_duration)
     return lambda func: func

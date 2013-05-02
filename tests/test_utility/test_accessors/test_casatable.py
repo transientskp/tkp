@@ -3,11 +3,10 @@ import os
 import unittest2 as unittest
 
 from tkp.utility.accessors.casaimage import CasaImage
-import tkp.config
+from tkp.testutil.data import DATAPATH
 from tkp.testutil.decorators import requires_data
 
 
-DATAPATH = tkp.config.config['test']['datapath']
 
 casatable =  os.path.join(DATAPATH, 'L21641_SB098.restored.image')
 

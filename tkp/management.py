@@ -205,6 +205,9 @@ def run_job(args):
     elif args.method == 'celery':
         import tkp.distribute.celery
         tkp.distribute.celery.run(args.name)
+    elif args.method == 'celerylocal':
+        import tkp.distribute.celery
+        tkp.distribute.celery.run(args.name, local=True)
     else:
         sys.stderr.write("I don't know what is a %s" % args.method)
         sys.exit(1)
@@ -273,7 +276,8 @@ For now, use these environment variables to configure the database:
                             help='Specify a file containing a list of RA,DEC')
     run_parser.add_argument('-f', '--method', choices=['cuisine',
                                                        'local',
-                                                       'celery'],
+                                                       'celery',
+                                                       'celerylocal'],
                             default="cuisine",
                             help="what distribution method to use")
     run_parser.set_defaults(func=run_job)

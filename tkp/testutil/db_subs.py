@@ -1,7 +1,6 @@
 import datetime
 import logging
 from collections import namedtuple
-from tkp.config import config as tkp_conf
 from tkp.db.database import Database
 from tkp.db.orm import DataSet, Image
 import tkp.testutil.data as testdata
@@ -16,11 +15,7 @@ ExtractedSourceTuple = namedtuple("ExtractedSourceTuple",
                                  'ra_sys_err', 'dec_sys_err'
                                 ])
 
-def use_test_database_by_default():
-    test_db_name = tkp_conf['test']['test_database_name']
-    tkp_conf['database']['name'] = test_db_name
-    tkp_conf['database']['user'] = test_db_name
-    tkp_conf['database']['password'] = test_db_name
+
 
 def delete_test_database(database):
     """
@@ -57,8 +52,7 @@ def delete_test_database(database):
         cursor.execute(query)
         query = "DELETE from dataset"
         cursor.execute(query)
-        if not tkp_conf['database']['autocommit']:
-            database.connection.commit()
+
     except monetdb.sql.Error:
         logging.warn("Query failed when trying to blank database\n"
                      "Query: " + query)
@@ -74,11 +68,11 @@ def example_dbimage_datasets(n_images, **kwargs):
 
     A subset of the defaults may be overridden by passing the relevant
     dictionary values as keyword args.
-    
-    Note that while RA and Dec and extraction radius are arbitrary, 
-    they should (usually) be close enough and large enough to enclose 
-    the RA and Dec of any fake source extractions inserted, since the 
-    association routines reject sources outside of designated extraction 
+
+    Note that while RA and Dec and extraction radius are arbitrary,
+    they should (usually) be close enough and large enough to enclose
+    the RA and Dec of any fake source extractions inserted, since the
+    association routines reject sources outside of designated extraction
     regions.
     """
     starttime = datetime.datetime(2012, 1, 1) #Happy new year
@@ -115,8 +109,8 @@ def example_extractedsource_tuple(ra=123.123, dec=10.5, #Arbitrarily picked defa
                                   beam_maj=100, beam_min=100, beam_angle=45,
                                   ra_sys_err=20, dec_sys_err=20):
     """Generates an example 'fake extraction' for unit testing.
-     
-    Note that while RA and Dec are arbitrary, they should (usually) be close 
+
+    Note that while RA and Dec are arbitrary, they should (usually) be close
     to the RA and Dec of any fake images used, since the association routines
     reject sources outside of designated extraction regions.
     """
@@ -134,7 +128,7 @@ def example_extractedsource_tuple(ra=123.123, dec=10.5, #Arbitrarily picked defa
                                )
 
 
-#Used to record the significance levels on a lightcurve.    
+#Used to record the significance levels on a lightcurve.
 MockLCPoint = namedtuple('MockLightCurvePoint',
                                  'index peak flux sigma')
 

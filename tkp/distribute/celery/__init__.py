@@ -15,6 +15,7 @@ from tkp.distribute.celery import tasks
 
 logger = logging.getLogger(__name__)
 
+
 def string_to_list(my_string):
     """
     Convert a list-like string (as in pipeline.cfg) to a list of values.
@@ -22,7 +23,9 @@ def string_to_list(my_string):
     return [x.strip() for x in my_string.strip('[] ').split(',') if x.strip()]
 
 
-def run(job_name):
+
+
+def run(job_name, local=False):
     here = os.getcwd()
     pipeline_file = os.path.join(here, "pipeline.cfg")
     start_time = datetime.datetime.utcnow().replace(microsecond=0).isoformat()

@@ -6,12 +6,11 @@ import unittest2 as unittest
 from tkp.testutil.decorators import requires_data
 import tkp.sourcefinder
 from tkp.sourcefinder import image as sfimage
-import tkp.config
 from tkp.utility import accessors
 from tkp.utility.uncertain import Uncertain
+from tkp.testutil.data import DATAPATH
 
 
-DATAPATH = tkp.config.config['test']['datapath']
 
 BOX_IN_BEAMPIX = 10 #HARDCODING - FIXME! (see also monitoringlist recipe)
 

@@ -6,10 +6,9 @@ import unittest2 as unittest
 from tkp.testutil.decorators import requires_data
 import tkp.quality.brightsource
 import tkp.utility.accessors
-import tkp.config
+from tkp.testutil.data import DATAPATH
 
 
-DATAPATH = tkp.config.config['test']['datapath']
 testimage = os.path.join(DATAPATH,
     'casatable/L55614_020TO029_skymodellsc_wmax6000_noise_mult10_cell40_npix512_wplanes215.img.restored.corr')
 

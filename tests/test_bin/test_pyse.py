@@ -5,13 +5,12 @@ import shutil
 import unittest2 as unittest
 
 import tkp.bin.pyse
-import tkp.config
 from tkp.utility.accessors import FitsImage
 from tkp.utility.accessors import sourcefinder_image_from_accessor
+from tkp.testutil.data import DATAPATH
 
 
-data_path = tkp.config.config['test']['datapath']
-orig_fits_file = os.path.join(data_path, 'L15_12h_const/observed-all.fits')
+orig_fits_file = os.path.join(DATAPATH, 'L15_12h_const/observed-all.fits')
 
 
 class AttributeDict(dict):

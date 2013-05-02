@@ -1,7 +1,12 @@
 import os
-import tkp.config
+import warnings
 
-DATAPATH = tkp.config.config['test']['datapath']
+HERE = os.path.dirname(__file__)
+DEFAULT = os.path.abspath(os.path.join(HERE, '../../tests/data'))
+DATAPATH = os.environ.get('TKP_TESTPATH', DEFAULT)
+
+if not os.access(DATAPATH, os.X_OK):
+    warnings.warn("can't access " + DATAPATH)
 
 # A arbitrary fits file which can be used for playing around
 fits_file = os.path.join(DATAPATH,

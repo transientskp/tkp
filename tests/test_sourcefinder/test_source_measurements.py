@@ -20,11 +20,10 @@ import unittest2 as unittest
 
 import tkp.utility.accessors
 from tkp.sourcefinder import image
-import tkp.config
+from tkp.testutil.data import DATAPATH
 from tkp.testutil.decorators import requires_data
 
 
-DATAPATH = tkp.config.config['test']['datapath']
 MAX_BIAS = 5.0
 NUMBER_INSERTED = 3969
 TRUE_PEAK_FLUX = 1063.67945065

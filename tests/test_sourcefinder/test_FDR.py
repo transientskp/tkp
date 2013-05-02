@@ -41,11 +41,10 @@ import unittest2 as unittest
 
 from tkp.utility import accessors
 from tkp.sourcefinder import image
-import tkp.config
 from tkp.testutil.decorators import requires_data, duration
+from tkp.testutil.data import DATAPATH
 
 
-DATAPATH = tkp.config.config['test']['datapath']
 NUMBER_INSERTED = float(3969)
 
 

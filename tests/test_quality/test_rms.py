@@ -9,12 +9,10 @@ from tkp.utility import accessors
 import tkp.quality
 from tkp.quality import statistics
 import tkp.lofar.noise
-import tkp.config
 import tkp.lofar.antennaarrays
 from tkp.testutil.decorators import requires_data
+from tkp.testutil.data import DATAPATH
 
-
-DATAPATH = tkp.config.config['test']['datapath']
 
 core_antennas = os.path.join(DATAPATH, 'lofar/CS001-AntennaArrays.conf')
 intl_antennas = os.path.join(DATAPATH, 'lofar/DE601-AntennaArrays.conf')

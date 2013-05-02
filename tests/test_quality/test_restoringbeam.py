@@ -5,12 +5,9 @@ from tkp.quality.restoringbeam import beam_invalid
 
 from tkp.testutil.decorators import requires_data
 from tkp.utility import accessors
-import tkp.quality.restoringbeam
-import tkp.lofar.beam
-import tkp.config
+from tkp.testutil.data import DATAPATH
 
 
-DATAPATH = tkp.config.config['test']['datapath']
 fits_file = os.path.join(DATAPATH,
     'quality/noise/bad/home-pcarrol-msss-3C196a-analysis-band6.corr.fits')
 

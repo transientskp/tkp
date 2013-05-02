@@ -6,7 +6,7 @@ import os
 
 import unittest2 as unittest
 
-import tkp.config
+from tkp.testutil.data import DATAPATH
 from tkp.utility import accessors
 from tkp.utility.accessors.fitsimage import FitsImage
 from tkp.db.orm import DataSet
@@ -16,7 +16,6 @@ from tkp.testutil.decorators import requires_data
 from tkp.testutil.decorators import requires_database
 
 
-DATAPATH = tkp.config.config['test']['datapath']
 
 class PyfitsFitsImage(unittest.TestCase):
 

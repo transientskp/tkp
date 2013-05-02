@@ -5,8 +5,8 @@ import shutil
 import tkp
 import tkp.utility.accessors
 import tkp.inject
+from tkp.testutil.data import DATAPATH
 
-DATAPATH = tkp.config.config['test']['datapath']
 fits_file = os.path.join(DATAPATH, 'missingheaders.fits')
 
 class TestInject(unittest.TestCase):

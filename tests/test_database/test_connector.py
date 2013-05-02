@@ -11,13 +11,6 @@ class TestDatabaseConnection(unittest.TestCase):
         # reset database config
         tkp.db.configure()
 
-    @unittest.skip("disable this for now since it doesn't make sense")
-    @requires_database()
-    def test_using_testdb(self):
-        import tkp.config
-        self.assertEquals(self.database.database,
-                          tkp.config.config['test']['test_database_name'])
-        
     @requires_database()
     def test_basics(self):
         self.assertIsInstance(self.database, tkp.db.database.Database)

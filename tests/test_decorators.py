@@ -1,9 +1,8 @@
 import os
 
 import unittest2 as unittest
-
-import tkp.config
 from tkp.testutil.decorators import requires_database, requires_data, duration
+from tkp.testutil.data import DATAPATH
 
 
 def debug_print(*args):
@@ -26,9 +25,8 @@ class TestDatabaseDecorators(unittest.TestCase):
 
 class TestDataDecorators(unittest.TestCase):
     def test_datapath_defined(self):
-        self.assertNotEqual(tkp.config.config['test']['datapath'], None)
-        debug_print("Test data path:",
-                     tkp.config.config['test']['datapath'])
+        self.assertNotEqual(DATAPATH, None)
+        debug_print("Test data path:", DATAPATH)
 
     @requires_data(testfile1, testfile2)
     def test_requires_data_decorator(self):
@@ -46,9 +44,7 @@ class TestDataDecorators(unittest.TestCase):
 
 class TestDurationDecorator(unittest.TestCase):
     def test_max_duration_defined(self):
-        debug_print("Max_duration:", tkp.config.config['test']['max_duration'])
-        debug_print("Max_duration type:",
-                    type(tkp.config.config['test']['max_duration']))
+        debug_print("Max_duration:", os.environ.get("TKP_MAXTESTDURATION", False))
 
     @duration(5)
     def test_short(self):

@@ -82,3 +82,7 @@ the monetdb-python package.
 
 
 
+Test suite
+----------
+
+Set TKP_TESTPATH to overwrite the path to the test data.

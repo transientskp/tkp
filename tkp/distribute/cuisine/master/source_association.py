@@ -1,5 +1,5 @@
 import lofarpipe.support.lofaringredient as ingredient
-from lofarpipe.support.parset import parameterset
+from tkp.utility.parset import Parset as parameterset
 from tkp.db import monitoringlist as dbmon
 from tkp.db import associations as dbass
 from tkp.distribute.cuisine.common import TrapMaster
@@ -7,7 +7,7 @@ from tkp.distribute.cuisine.common import TrapMaster
 
 class source_association(TrapMaster):
     """
-    Associate extracted sources in current image with known catalogued sources 
+    Associate extracted sources in current image with known catalogued sources
     """
 
     inputs = {
@@ -17,7 +17,7 @@ class source_association(TrapMaster):
             help="Source association configuration parset"
         ),
     }
-    
+
     def trapstep(self):
         self.logger.info("Associating sources")
         image_ids = self.inputs['args']

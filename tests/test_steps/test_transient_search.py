@@ -31,7 +31,7 @@ V_lim = 0.00
         }
 
     def test_parse_parset(self):
-        tkp.steps.transient_search.parse_parset(self.fake_parset)
+        tkp.steps.transient_search.parse_parset(self.fake_parset.name)
 
     def test_search_transients(self):
         image_ids = db_queries.dataset_images(self.dataset_id)

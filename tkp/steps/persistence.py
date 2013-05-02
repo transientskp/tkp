@@ -3,7 +3,7 @@ import logging
 import warnings
 from tempfile import NamedTemporaryFile
 
-from lofarpipe.support.parset import parameterset
+from tkp.utility.parset import Parset as parameterset
 from pyrap.images import image as pyrap_image
 
 import tkp.utility.accessors

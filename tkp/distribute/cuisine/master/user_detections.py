@@ -1,6 +1,6 @@
 import itertools
 import lofarpipe.support.lofaringredient as ingredient
-from lofarpipe.support.parset import parameterset
+from tkp.utility.parset import Parset as parameterset
 from lofarpipe.support.remotecommand import ComputeJob
 from tkp.db import monitoringlist as dbmon
 from tkp.db import general as dbgen
@@ -9,7 +9,7 @@ from tkp.distribute.cuisine.common import TrapMaster, nodes_available
 
 
 class user_detections(TrapMaster):
-    """Get the user entries in an image (ie user detections), do a forced fit and 
+    """Get the user entries in an image (ie user detections), do a forced fit and
     append the results to extractedsources into the database"""
 
     inputs = {

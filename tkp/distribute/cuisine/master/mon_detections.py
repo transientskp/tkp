@@ -1,7 +1,7 @@
 from __future__ import with_statement
 import itertools
 import lofarpipe.support.lofaringredient as ingredient
-from lofarpipe.support.parset import parameterset
+from tkp.utility.parset import Parset as parameterset
 from lofarpipe.support.remotecommand import ComputeJob
 from tkp.db import monitoringlist as dbmon
 from tkp.db import general as dbgen
@@ -10,7 +10,7 @@ from tkp.distribute.cuisine.common import TrapMaster, nodes_available
 
 
 class mon_detections(TrapMaster):
-    """Get the monitoring sources that weren't found by the sourcefinder nor 
+    """Get the monitoring sources that weren't found by the sourcefinder nor
     were added as null detections to extractedsource. Do a forced fit
     at the positions and append the results to extractedsources into the database"""
     inputs = {

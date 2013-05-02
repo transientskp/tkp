@@ -1,5 +1,5 @@
 import logging
-from lofar.parameterset import parameterset
+from tkp.utility.parset import Parset as parameterset
 from tkp.classification.manual.classifier import Classifier
 
 logger = logging.getLogger(__name__)

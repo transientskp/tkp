@@ -5,7 +5,7 @@ table. his can be useful to make your data processable by the TRAP pipeline.
 
 import os.path
 import argparse
-from lofarpipe.support.parset import parameterset
+from tkp.utility.parset import Parset as parameterset
 import pyfits
 from pyrap.tables import table as pyrap_table
 import tkp.utility.accessors.detection

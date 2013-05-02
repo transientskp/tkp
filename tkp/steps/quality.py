@@ -1,5 +1,5 @@
 import logging
-from lofarpipe.support.parset import parameterset
+from tkp.utility.parset import Parset as parameterset
 from tkp.db.database import Database
 from tkp.quality.restoringbeam import beam_invalid
 from tkp.quality.rms import rms_invalid

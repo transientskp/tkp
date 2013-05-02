@@ -1,7 +1,5 @@
 import logging
-
-from lofar.parameterset import parameterset
-
+from tkp.utility.parset import Parset as parameterset
 import tkp.utility.accessors
 from tkp.utility.accessors import sourcefinder_image_from_accessor
 import tkp.utility.accessors

@@ -1,6 +1,6 @@
 import logging
 from tkp.db.transients import multi_epoch_transient_search
-from lofar.parameterset import parameterset
+from tkp.utility.parset import Parset as parameterset
 
 logger = logging.getLogger(__name__)
 

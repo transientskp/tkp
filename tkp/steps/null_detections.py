@@ -1,6 +1,6 @@
 
 
-from lofarpipe.support.parset import parameterset
+from tkp.utility.parset import Parset as parameterset
 
 
 def parse_parset(parset_file):

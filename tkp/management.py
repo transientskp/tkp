@@ -283,11 +283,15 @@ For now, use these environment variables to configure the database:
     run_parser.set_defaults(func=run_job)
 
     #initdb
+    username = getpass.getuser()
     initdb_parser = parser_subparsers.add_parser('initdb')
-    initdb_parser.add_argument('-d', '--database', help='what database to use',
-                               default=getpass.getuser())
-    initdb_parser.add_argument('-u', '--user', type=str, help='user')
-    initdb_parser.add_argument('-p', '--password', type=str, help='password')
+    initdb_parser.add_argument('-d', '--database',
+                               help='database name, (default: %s)' % username,
+                               default=username)
+    initdb_parser.add_argument('-u', '--user', type=str,
+                               help='user, (default: %s)' % username)
+    initdb_parser.add_argument('-p', '--password', type=str,
+                               help='password, (default: %s)' % username)
     initdb_parser.add_argument('-H', '--host', type=str, help='host')
     initdb_parser.add_argument('-P', '--port', type=int, help='port',
                                default=0)
@@ -295,7 +299,8 @@ For now, use these environment variables to configure the database:
                                                            'postgresql'],
                                default="postgresql",
                                help="what database backend to use")
-    initdb_parser.add_argument('-y', '--yes', help="don't ask for confirmation",
+    initdb_parser.add_argument('-y', '--yes',
+                               help="don't ask for confirmation",
                                action="store_true")
     initdb_parser.set_defaults(func=init_db)
 

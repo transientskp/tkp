@@ -14,6 +14,7 @@ Transient Key Project
    usage/index
    overview/index
    developers/index
+   tools/index
 
 
 ++++++++++++++++++

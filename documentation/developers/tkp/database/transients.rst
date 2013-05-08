@@ -4,6 +4,6 @@
 :mod:`tkp.database.transients` -- transients database functions
 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-.. automodule:: tkp.database.transients
+.. automodule:: tkp.db.transients
    :synopsis: transients database stuff
        :members:

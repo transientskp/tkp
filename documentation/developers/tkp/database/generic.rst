@@ -4,6 +4,6 @@
 :mod:`tkp.database.generic` -- generic database functions
 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-.. automodule:: tkp.database.generic
+.. automodule:: tkp.db.generic
    :synopsis: generic database stuff
        :members:

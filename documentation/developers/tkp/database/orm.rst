@@ -5,5 +5,5 @@
 +++++++++++++++++++++++++++++++++++++++++++++++++
 
 .. automodule:: tkp.database.orm
-:synopsis: orm database stuff
+   :synopsis: orm database stuff
        :members:

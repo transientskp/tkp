@@ -120,14 +120,8 @@ are under development.
   just loop over this list of images.
 
 
-
-##############################
 Steps and their parameters
-##############################
-
-.. |last_updated| last_updated::
-
-:Last updated: |last_updated|
+--------------------------
 
 This page gives a very brief description of each script / recipe used in the
 TraP workflow, and details the parameters supplied

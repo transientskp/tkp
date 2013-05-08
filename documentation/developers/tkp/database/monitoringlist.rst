@@ -4,6 +4,6 @@
 :mod:`tkp.database.monitoringlist` -- monitoringlist database functions
 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-.. automodule:: tkp.database.monitoringlist
+.. automodule:: tkp.db.monitoringlist
    :synopsis: monitoringlist database stuff
        :members:

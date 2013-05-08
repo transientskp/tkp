@@ -18,12 +18,16 @@ from tkp.utility.accessors.casaimage import CasaImage
 
 def dbimage_from_accessor(dataset, dataccessor, extraction_radius):
     """Create an entry in the database image table from an image 'accessor'
+
     Args:
+
         - dataset (dataset.DataSet): DataSet for the image. Also
           provides the database connection.
         - image (DataAccessor): FITS/AIPS/HDF5 image available through
           an accessor
+
     Returns:
+
         (dataset.Image): a dataset.Image instance.
     """
     if dataccessor.freq_eff is None or dataccessor.freq_bw is None:
@@ -36,10 +40,14 @@ def dbimage_from_accessor(dataset, dataccessor, extraction_radius):
 
 def sourcefinder_image_from_accessor(image, **args):
     """Create a source finder ImageData object from an image 'accessor'
+
     Args:
+
         - image (DataAccessor): FITS/AIPS/HDF5 image available through
           an accessor.
+
     Returns:
+
         (sourcefinder.ImageData): a source finder image.
     """
     image = ImageData(image.data, image.beam, image.wcs, **args)

@@ -4,6 +4,6 @@
 :mod:`tkp.database.orm` -- orm database functions
 +++++++++++++++++++++++++++++++++++++++++++++++++
 
-.. automodule:: tkp.database.orm
+.. automodule:: tkp.db.orm
    :synopsis: orm database stuff
        :members:

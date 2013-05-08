@@ -5,5 +5,5 @@
 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 .. automodule:: tkp.database.generic
-:synopsis: generic database stuff
+   :synopsis: generic database stuff
        :members:

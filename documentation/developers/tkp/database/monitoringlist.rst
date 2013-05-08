@@ -5,5 +5,5 @@
 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 .. automodule:: tkp.database.monitoringlist
-:synopsis: monitoringlist database stuff
+   :synopsis: monitoringlist database stuff
        :members:

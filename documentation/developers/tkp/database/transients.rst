@@ -5,5 +5,5 @@
 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 .. automodule:: tkp.database.transients
-:synopsis: transients database stuff
+   :synopsis: transients database stuff
        :members:

@@ -23,8 +23,6 @@ def string_to_list(my_string):
     return [x.strip() for x in my_string.strip('[] ').split(',') if x.strip()]
 
 
-
-
 def run(job_name, local=False):
     here = os.getcwd()
     pipeline_file = os.path.join(here, "pipeline.cfg")
@@ -57,10 +55,10 @@ def run(job_name, local=False):
     tr_parset = steps.transient_search.parse_parset(tr_parset_file)
 
     # persistence
-    metadatas = group(tasks.persistence_node_step.s([img], p_parset) for img in images)().get()
+    metadatas = group(tasks.persistence_node_step.s([img], p_parset)
+                      for img in images)().get()
     metadatas = [m[0] for m in metadatas]
 
-    #metadatas = tasks.persistence_node_steps(images, p_parset)
     dataset_id, image_ids = steps.persistence.master_steps(metadatas,
                                                            se_parset['radius'],
                                                            p_parset)
@@ -72,7 +70,8 @@ def run(job_name, local=False):
     images = [Image(id=image_id) for image_id in image_ids]
 
     # quality_check
-    rejecteds = group(tasks.quality_reject_check.s(img.url, q_parset) for img in images)().get()
+    rejecteds = group(tasks.quality_reject_check.s(img.url, q_parset)
+                      for img in images)().get()
     good_images = []
     for image, rejected in zip(images, rejecteds):
         if rejected:
@@ -82,7 +81,8 @@ def run(job_name, local=False):
             good_images.append(image)
 
     # Sourcefinding
-    extract_sources = group(tasks.extract_sources.s(img.url, se_parset) for img in good_images)().get()
+    extract_sources = group(tasks.extract_sources.s(img.url, se_parset)
+                            for img in good_images)().get()
 
     for image, sources in zip(good_images, extract_sources):
         dbgen.insert_extracted_sources(image.id, sources, 'blind')
@@ -90,24 +90,24 @@ def run(job_name, local=False):
 
     # null_detections
     deRuiter_radius = nd_parset['deRuiter_radius']
-    null_detectionss = [dbmon.get_nulldetections(image.id, deRuiter_radius) for image in good_images]
-    ff_nds = group(tasks.forced_fits.s(img.url, null_detections, nd_parset) for img, null_detections  in zip(good_images, null_detectionss))().get()
+    null_detectionss = [dbmon.get_nulldetections(image.id, deRuiter_radius)
+                        for image in good_images]
+    ff_nds = group(tasks.forced_fits.s(img.url, null_detections, nd_parset)
+                   for img, null_detections in zip(good_images,
+                                                   null_detectionss))().get()
 
     for image, ff_nd in zip(good_images, ff_nds):
         dbgen.insert_extracted_sources(image.id, ff_nd, 'ff_nd')
 
     for image in good_images:
-        # Source_association
+        logger.info("performing DB operations for image %s" % image.id)
         dbass.associate_extracted_sources(image.id,
                                           deRuiter_r=deRuiter_radius)
         dbmon.add_nulldetections(image.id)
-
-        # Transient_search
         transients = steps.transient_search.search_transients(image.id,
                                                               tr_parset)
         dbmon.adjust_transients_in_monitoringlist(image.id, transients)
 
-    # Classification
     for transient in transients:
         steps.feature_extraction.extract_features(transient)
 #            ingred.classification.classify(transient, cl_parset)

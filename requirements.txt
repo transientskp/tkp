@@ -10,3 +10,4 @@ pytz
 pywcs
 pymongo
 pyrap>=1.1.0
+celery

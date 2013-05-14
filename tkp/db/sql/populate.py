@@ -87,6 +87,13 @@ def recreate(options):
     Note: this will raise an Exception ONLY when the creation of the database
           fails
     """
+
+    params = {'username': options.user,
+              'password': options.password,
+              'database': options.database,
+              'host':options.host
+              }
+
     if options.backend == 'monetdb':
         import monetdb.sql
         monetdb_cmd = lambda cmd: call('monetdb %s %s' % (cmd, options.database),
@@ -102,18 +109,15 @@ def recreate(options):
                                   hostname=options.host, port=options.port,
                                   database=options.database)
         cur = con.cursor()
-        params = {
-            'username': options.user,
-            'password': options.password,
-            'database': options.database,
-        }
         cur.execute(auth_query % params)
         con.commit()
         con.close()
 
     elif options.backend == 'postgresql':
-        call('dropdb %s' % options.database, shell=True)
-        if call('createdb %s' % options.database, shell=True) != 0:
+        call('dropdb -h %(host)s -U %(username)s %(database)s' % params,
+             shell=True)
+        if call('createdb -h %(host)s -U %(username)s %(database)s' % params,
+                shell=True) != 0:
             raise Exception("can't create a new postgresql database!")
     else:
         raise NotImplementedError
@@ -133,18 +137,16 @@ def populate(options):
     if not options.user:
         options.user = options.database
 
-    if options.backend == 'monetdb':
-        if not options.password:
-            options.password = options.database
-        # TODO: sockets still need to be implemented for MonetDB...
-        if not options.host:
-            options.host = 'localhost'
+    if not options.password:
+        options.password = options.database
+
+    if not options.host:
+        options.host = 'localhost'
 
     if not options.yes:
         verify(options)
 
     recreate(options)
-
     conn = connect(options)
     cur = conn.cursor()
 

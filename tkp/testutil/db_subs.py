@@ -24,8 +24,7 @@ def delete_test_database(database):
     NB. Not the same as a freshly initialised database.
         All the sequence counters are offset.
     """
-    import monetdb.sql
-    if database.name.lower().find("test") != 0:
+    if database.database.lower().find("test") != 0:
         raise ValueError("You tried to delete a database not prefixed with 'test'.\n"
                          "Not recommended!")
     try:
@@ -53,7 +52,7 @@ def delete_test_database(database):
         query = "DELETE from dataset"
         cursor.execute(query)
 
-    except monetdb.sql.Error:
+    except database.connection.Error:
         logging.warn("Query failed when trying to blank database\n"
                      "Query: " + query)
         raise

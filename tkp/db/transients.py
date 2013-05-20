@@ -245,7 +245,8 @@ def multi_epoch_transient_search(image_id,
         if candidate['v_int'] > V_lim:
             if candidate['eta_int'] > eta_lim:
                 if candidate['siglevel'] > probability_threshold:
-                    filtered_transients.append(candidate)
+                    if candidate['f_datapoints'] > minpoints:
+                        filtered_transients.append(candidate)
 
     new_transients = [entry for entry in filtered_transients if entry['new_transient']]
     _insert_transients(new_transients)

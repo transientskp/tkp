@@ -37,6 +37,7 @@ def run(job_name, local=False):
     config.read(task_files)
 
     job_dir = config.get('layout', 'job_directory')
+    logger.info("Job dir: %s", job_dir)
     images = imp.load_source('images_to_process', os.path.join(job_dir,
                              'images_to_process.py')).images
 
@@ -79,6 +80,10 @@ def run(job_name, local=False):
             steps.quality.reject_image(image.id, reason, comment)
         else:
             good_images.append(image)
+
+    if not good_images:
+        logger.warn("No good images under these quality checking criteria")
+        return
 
     # Sourcefinding
     extract_sources = group(tasks.extract_sources.s(img.url, se_parset)

@@ -216,8 +216,7 @@ class DBObject(object):
             try:
                 # Insert a default source
                 cursor.execute(query, values)
-                if not self.database.connection.autocommit:
-                    self.database.connection.commit()
+                self.database.connection.commit()
                 self._id = cursor.lastrowid
             except self.database.connection.Error:
                 logger.warn("insertion into database failed: %s",

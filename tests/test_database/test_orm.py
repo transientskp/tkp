@@ -197,6 +197,8 @@ class TestExtractedSource(unittest.TestCase):
                     racosdecl=0.44, det_sigma=10.)
         src1 = ExtractedSource(data=data, image=image)
         src2 = ExtractedSource(data=data, image=image, database=self.database)
+        self.assertNotEqual(src1.id, src2.id)
+
         data['image'] = image.id
         src3 = ExtractedSource(data=data, database=self.database)
         data['ra'] = 23.23

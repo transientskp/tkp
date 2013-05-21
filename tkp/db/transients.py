@@ -141,8 +141,8 @@ SELECT t1.runcat
                     ELSE avg_f_int
                END AS avg_f_int
               ,avg_f_int_weight
-              ,CASE WHEN rf0.f_datapoints = 1
-                    THEN 0
+              ,CASE WHEN rf0.f_datapoints = 1 THEN 0
+                    WHEN avg_f_int_sq - avg_f_int * avg_f_int < 0 THEN 0
                     ELSE SQRT(CAST(rf0.f_datapoints AS DOUBLE PRECISION) * (avg_f_int_sq - avg_f_int * avg_f_int)
                              / (CAST(rf0.f_datapoints AS DOUBLE PRECISION) - 1.0)
                              )

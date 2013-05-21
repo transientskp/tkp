@@ -92,8 +92,8 @@ BEGIN
       ,ifreq_eff - (ibandwidth / 2)
       ,ifreq_eff + (ibandwidth / 2)
       )
+    RETURNING id into ifreqbandid
     ;
-    ifreqbandid := lastval();
   END IF;
 
   RETURN ifreqbandid;

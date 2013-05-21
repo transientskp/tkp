@@ -62,8 +62,8 @@ BEGIN
     FROM (SELECT *
 		  FROM cartesian(icentre_ra,icentre_decl)
 		  ) cart
+  	RETURNING id into oskyrgnid
     ;
-  oskyrgnid := lastval();
 
   SELECT updateSkyRgnMembers(oskyrgnid)
   	INTO dummy;

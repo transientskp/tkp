@@ -76,9 +76,10 @@ BEGIN
     ,ideltay
     ,iurl
     )
+    RETURNING id INTO oimageid
   ;
 
-  RETURN lastval();
+  RETURN oimageid;
 
 END;
 

@@ -1,6 +1,7 @@
 import datetime
 import logging
 from collections import namedtuple
+import tkp.db
 from tkp.db.database import Database
 from tkp.db.orm import DataSet, Image
 import tkp.testutil.data as testdata
@@ -28,36 +29,34 @@ def delete_test_database(database):
         raise ValueError("You tried to delete a database not prefixed with 'test'.\n"
                          "Not recommended!")
     try:
-        cursor = database.connection.cursor()
+        #cursor = database.connection.cursor()
         query = "DELETE from monitoringlist"
-        cursor.execute(query)
+        tkp.db.execute(query, commit=True)
         query = "DELETE from runningcatalog_flux"
-        cursor.execute(query)
+        tkp.db.execute(query, commit=True)
         query = "DELETE from assocxtrsource"
-        cursor.execute(query)
+        tkp.db.execute(query, commit=True)
         query = "DELETE from assocskyrgn"
-        cursor.execute(query)
+        tkp.db.execute(query, commit=True)
         query = "DELETE from temprunningcatalog"
-        cursor.execute(query)
+        tkp.db.execute(query, commit=True)
         query = "DELETE from transient"
-        cursor.execute(query)
+        tkp.db.execute(query, commit=True)
         query = "DELETE from runningcatalog"
-        cursor.execute(query)
+        tkp.db.execute(query, commit=True)
         query = "DELETE from extractedsource"
-        cursor.execute(query)
+        tkp.db.execute(query, commit=True)
         query = "DELETE from image"
-        cursor.execute(query)
+        tkp.db.execute(query, commit=True)
         query = "DELETE from skyregion"
-        cursor.execute(query)
+        tkp.db.execute(query, commit=True)
         query = "DELETE from dataset"
-        cursor.execute(query)
+        tkp.db.execute(query, commit=True)
 
     except database.connection.Error:
         logging.warn("Query failed when trying to blank database\n"
                      "Query: " + query)
         raise
-    finally:
-        cursor.close()
 
 
 def example_dbimage_datasets(n_images, **kwargs):

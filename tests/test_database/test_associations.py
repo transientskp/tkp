@@ -148,6 +148,16 @@ class TestOne2One(unittest.TestCase):
         self.assertEqual(avg_f_int[0], steady_srcs[0].flux)
         self.assertEqual(avg_f_int_weight[0], 1./steady_srcs[0].flux_err**2)
 
+
+#@unittest.skip
+@requires_database()
+class TestMeridianOne2One(unittest.TestCase):
+    """
+    These tests will check the 1-to-1 source associations, i.e. an extractedsource
+    has exactly one counterpart in the runningcatalog
+    """
+    def shortDescription(self):
+        return None
     def TestMeridianCrossLowHighEdgeCase(self):
         """What happens if a source is right on the meridian?"""
 

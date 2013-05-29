@@ -834,8 +834,6 @@ class ImageData(object):
 
         # Map our chunks onto a list of islands.
         island_list = []
-        # This map can be used for analysis of the islands.
-        self.islands_map = numpy.zeros(self.data_bgsubbed.shape)
 
         if sci_num > 0:
             # Select the labels of the islands with a maximum pixel
@@ -885,7 +883,6 @@ class ImageData(object):
                 selected_data = numpy.ma.where(
                     sci_labels[chunk] == label, self.data_bgsubbed[chunk],
                     0.0).filled(fill_value=0.)
-                self.islands_map[chunk] += selected_data
                 island_list.append(
                     extract.Island(
                         selected_data,

@@ -782,10 +782,9 @@ class ImageData(object):
 
     def dump_islands(self, det, anl, minsize=4):
         """Identify potential islands.
-        
-            (This is effectively a deprecated function - 
-            it was written for testing external pieces of code.
-            -TS, 2012-05-21)
+
+            (This is effectively a deprecated function - it was written for
+            testing external pieces of code.  -TS, 2012-05-21)
 
         """
 
@@ -823,14 +822,13 @@ class ImageData(object):
         This is described in detail in the "Source Extraction System" document
         by John Swinbank, available from TKP svn.
         """
-
-        structuring_element = self.structuring_element
         # Make sure to set sci_clip to zero where either the
         # analysisthresholdmap or self.data_bgsubbed are masked.
         # That is why we use numpy.ma.where and the filling.
-        sci_clip = numpy.ma.where(self.data_bgsubbed > analysisthresholdmap,
-                                  1, 0).filled(fill_value=0)
-        sci_labels, sci_num = ndimage.label(sci_clip, structuring_element)
+        sci_clip = numpy.ma.where(
+            self.data_bgsubbed > analysisthresholdmap, 1, 0
+        ).filled(fill_value=0)
+        sci_labels, sci_num = ndimage.label(sci_clip, self.structuring_element)
 
         # Map our chunks onto a list of islands.
         island_list = []
@@ -847,10 +845,11 @@ class ImageData(object):
             # We fill these pixels in above_det_thr with -1 to make sure
             # its labels will not be in labels_above_det_thr.
             above_det_thr = (
-                self.data_bgsubbed - detectionthresholdmap).filled(
-                fill_value=-1)
+                self.data_bgsubbed - detectionthresholdmap
+            ).filled(fill_value=-1)
             maximum_values = ndimage.maximum(above_det_thr, sci_labels,
                                            numpy.arange(sci_num + 1)[1:])
+
             # The "+1" in the statement above may seem a bit awkward, but
             # accounts for label=0 which is the background, which we do not
             # want.
@@ -862,16 +861,14 @@ class ImageData(object):
                 maximum_values = [maximum_values]
 
             labels_above_det_thr = (
-                numpy.array(maximum_values) >= 0.0).nonzero()[0] + 1
+                numpy.array(maximum_values) >= 0.0
+            ).nonzero()[0] + 1
             # The "+1" in the statement above may seem a bit awkward, but
             # accounts for the mapping from index of maximum values-->label
             # number.
 
             for label in labels_above_det_thr:
                 chunk = slices[label-1]
-                ##detection_threshold is not used anywhere
-                ##detection_threshold = (detectionthresholdmap[chunk] /
-                ##                       self.rmsmap[chunk]).max()
                 analysis_threshold = (analysisthresholdmap[chunk] /
                                       self.rmsmap[chunk]).max()
                 # In selected_data only the pixels with the "correct"
@@ -881,8 +878,9 @@ class ImageData(object):
                 # slices around islands (paricularly the large ones) do
                 # not affect the source measurements.
                 selected_data = numpy.ma.where(
-                    sci_labels[chunk] == label, self.data_bgsubbed[chunk],
-                    0.0).filled(fill_value=0.)
+                    sci_labels[chunk] == label, self.data_bgsubbed[chunk], 0.0
+                ).filled(fill_value=0.)
+
                 island_list.append(
                     extract.Island(
                         selected_data,

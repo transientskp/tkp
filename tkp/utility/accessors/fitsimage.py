@@ -249,7 +249,7 @@ class FitsImage(DataAccessor):
 
         # this may have been set already by _timeparse, but if defined here
         # it is set by our inject script and should be used
-        if hdu.header.has_key('TAU_TIME'):
+        if 'TAU_TIME' in header:
             self.tau_time = header['TAU_TIME']
 
         self.antenna_set = header.get('ANTENNA', None)

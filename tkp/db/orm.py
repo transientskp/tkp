@@ -118,8 +118,8 @@ If an ``id`` is supplied, ``data`` is ignored.
 import logging
 import monetdb.sql as db
 from tkp.db.generic import columns_from_table, set_columns_for_table
-from tkp.db.general import insert_dataset, insert_image,\
-    insert_extracted_sources, lightcurve
+from tkp.db.general import (insert_dataset, insert_image,
+                            insert_extracted_sources, lightcurve)
 from tkp.db.monitoringlist import add_manual_entry_to_monitoringlist
 from tkp.db.associations import associate_extracted_sources
 import tkp.db
@@ -194,7 +194,7 @@ class DBObject(object):
             return self._data[name]
         else:
             raise AttributeError("attribute '%s' not found" % name)
-        
+
     @property
     def id(self):
         """Add or obtain an id to/from the table
@@ -210,7 +210,10 @@ class DBObject(object):
         if self._id is None:
             query = ("INSERT INTO " + self.TABLE + " (" +
                      ", ".join(self._data.iterkeys()) + ") VALUES (" +
-                     ", ".join(["%s"] * len(self._data)) + ")")
+                     ", ".join(["%s"] * len(self._data)) + ")"
+                     )
+            if self.database.engine == "postgresql":
+                query = query + "RETURNING ID"
             values = tuple(self._data.itervalues())
             cursor = self.database.cursor
             try:
@@ -218,7 +221,13 @@ class DBObject(object):
                 cursor.execute(query, values)
                 if not self.database.connection.autocommit:
                     self.database.connection.commit()
-                self._id = cursor.lastrowid
+                if self.database.engine == "monetdb":
+                    self._id = cursor.lastrowid
+                elif self.database.engine == "postgresql":
+                    self._id = cursor.fetchone()[0]
+                else:
+                    raise self.database.connection.Error(
+                         "Database engine not implemented in ORM.")
             except self.database.connection.Error:
                 logger.warn("insertion into database failed: %s",
                              (query % values))
@@ -276,7 +285,7 @@ class DBObject(object):
         set_columns_for_table(self.TABLE, data=kwargs,
                                   where={self.ID: self._id})
         self._data.update(kwargs)
-        
+
 
 class DataSet(DBObject):
     """Class corresponding to the dataset table in the database"""
@@ -284,7 +293,7 @@ class DataSet(DBObject):
     TABLE = 'dataset'
     ID = 'id'
     REQUIRED = ('description',)
-    
+
     def __init__(self, data=None, database=None, id=None):
         """If id is supplied, the data and image arguments are ignored."""
         super(DataSet, self).__init__(
@@ -340,7 +349,7 @@ class DataSet(DBObject):
                                       keywords=['id', 'xtrsrc', 'datapoints'],
                                       alias={'id':'runcat'},
                                       where={'dataset':self.id})
-        
+
 
     def add_manual_entry_to_monitoringlist(self, ra, dec):
         add_manual_entry_to_monitoringlist(self.id, ra, dec)
@@ -412,8 +421,8 @@ class Image(DBObject):
                 # Insert a default image
                 self._id = insert_image(self.dataset.id,
                     self._data['freq_eff'], self._data['freq_bw'],
-                    self._data['taustart_ts'],self._data['tau_time'],
-                    self._data['beam_smaj_pix'],self._data['beam_smin_pix'],  
+                    self._data['taustart_ts'], self._data['tau_time'],
+                    self._data['beam_smaj_pix'], self._data['beam_smin_pix'],
                     self._data['beam_pa_rad'],
                     self._data['deltax'],
                     self._data['deltay'],
@@ -475,9 +484,9 @@ class Image(DBObject):
        """
        #To do: Figure out a saner method of passing the results around
        # (Namedtuple, for starters?)
-       
+
         insert_extracted_sources(self._id, results=results, extract='blind')
-        
+
     def associate_extracted_sources(self, deRuiter_r):
         """Associate sources from the last images with previously
         extracted sources within the same dataset
@@ -489,7 +498,7 @@ class Image(DBObject):
                 tkp.config module
         """
         associate_extracted_sources(self._id, deRuiter_r)
-        
+
 
 class ExtractedSource(DBObject):
     """Class corresponding to the extractedsource table in the database"""

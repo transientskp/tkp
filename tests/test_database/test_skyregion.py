@@ -142,19 +142,19 @@ class TestSkyRegionAssociation(unittest.TestCase):
         image0 = tkp.db.Image(dataset=self.dataset, data=im_params[idx])
         image0.update()
 
-        idx = 1
-        im_params[idx]['centre_decl'] += im_params[idx]['xtr_radius']
+        #Bump up the centre of img1 to higher declination
+        im_params[1]['centre_decl'] += im_params[1]['xtr_radius']
         #We place one source half-way between the field centres (i.e. in both)
         src_in_imgs_0_1 = db_subs.example_extractedsource_tuple(
-                                    ra=im_params[idx]['centre_ra'],
-                                    dec=im_params[idx]['centre_decl'] -
-                                            im_params[idx]['xtr_radius'] * 0.5)
+                                    ra=im_params[1]['centre_ra'],
+                                    dec=im_params[1]['centre_decl'] -
+                                            im_params[1]['xtr_radius'] * 0.5)
 
         #And one source only in field 1
         src_in_img_1_only = db_subs.example_extractedsource_tuple(
-                        ra=im_params[idx]['centre_ra'],
-                        dec=im_params[idx]['centre_decl'] +
-                            im_params[idx]['xtr_radius'] * 0.5)
+                        ra=im_params[1]['centre_ra'],
+                        dec=im_params[1]['centre_decl'] +
+                            im_params[1]['xtr_radius'] * 0.5)
 
         ##First insert new sources in img1 and check association to parent field:
         ## (This is always asserted without calculation, for efficiency)
@@ -169,18 +169,23 @@ class TestSkyRegionAssociation(unittest.TestCase):
         #We now expect to see both runcat entries in the field of im1 
         im1_assocs = columns_from_table('assocskyrgn',
                                     where={'skyrgn':image1._data['skyrgn']})
-
         self.assertEqual(len(im1_assocs), 2)
         runcat_ids = [r['id'] for r in  runcats]
         for assoc in im1_assocs:
             self.assertTrue(assoc['runcat'] in runcat_ids)
 
-        #But only one in field of im0 ( the first source).
+        #The new sources are *also checked against previous regions*
+        #Only expect one in field of im0 ( the first source).
         im0_assocs = columns_from_table('assocskyrgn',
                                     where={'skyrgn':image0._data['skyrgn']})
 
+        runcats_only_in_im0 = columns_from_table('runningcatalog',
+                                        where={'dataset':self.dataset.id,
+                                               'wm_decl':15})
+
         self.assertEqual(len(im0_assocs), 1)
-        self.assertEqual(im0_assocs[0]['runcat'], runcats[0]['id'])
+        self.assertEqual(len(runcats_only_in_im0), 1)
+        self.assertEqual(im0_assocs[0]['runcat'], runcats_only_in_im0[0]['id'])
 
 
 class TestOneToManyAssocUpdates(unittest.TestCase):

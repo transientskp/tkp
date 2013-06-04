@@ -83,6 +83,7 @@ class FitsImage(DataAccessor):
 
         timezone = pytz.utc
         try:
+            #First parse the timestamp
             try:
                 timestamp = dateutil.parser.parse(hdu.header['date-obs'])
             except AttributeError:
@@ -95,17 +96,20 @@ class FitsImage(DataAccessor):
                     timestamp += delta
                 else:
                     raise KeyError("Timestamp in fits file unreadable")
+            #Now try and figure out the timezone
             try:
                 timezone = pytz.timezone(hdu.header['timesys'])
             except (pytz.UnknownTimeZoneError, KeyError):
                 logger.debug(
-                    "Timezone not specified in FITS file: assuming UTC")
+                    "Timezone not specified in FITS file: assuming UTC already")
             timestamp = timestamp.replace(tzinfo=timezone)
             self.utc = pytz.utc.normalize(timestamp.astimezone(pytz.utc))
         except KeyError:
             logger.warn("Timestamp not specified in FITS file; using now")
             self.utc = datetime.datetime.now().replace(tzinfo=pytz.utc)
-        self.taustart_ts = self.utc
+        #For simplicity, the database requires naive datetimes, we assume these
+        # all refer implicitly to UTC:
+        self.taustart_ts = self.utc.replace(tzinfo=None)
         try:
             endtime = dateutil.parser.parse(hdu.header['end_utc'])
             endtime = endtime.replace(tzinfo=timezone)

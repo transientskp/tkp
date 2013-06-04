@@ -80,9 +80,8 @@ class FitsImage(DataAccessor):
 
     def _timeparse(self, hdu):
         # Attempt to do something sane with timestamps.
-
-        timezone = pytz.utc
         try:
+            #First parse the timestamp
             try:
                 timestamp = dateutil.parser.parse(hdu.header['date-obs'])
             except AttributeError:
@@ -95,25 +94,30 @@ class FitsImage(DataAccessor):
                     timestamp += delta
                 else:
                     raise KeyError("Timestamp in fits file unreadable")
-            try:
-                timezone = pytz.timezone(hdu.header['timesys'])
-            except (pytz.UnknownTimeZoneError, KeyError):
-                logger.debug(
-                    "Timezone not specified in FITS file: assuming UTC")
-            timestamp = timestamp.replace(tzinfo=timezone)
-            self.utc = pytz.utc.normalize(timestamp.astimezone(pytz.utc))
         except KeyError:
             logger.warn("Timestamp not specified in FITS file; using now")
             self.utc = datetime.datetime.now().replace(tzinfo=pytz.utc)
-        self.taustart_ts = self.utc
+
+        #Now try and figure out the timezone
+        timezone = pytz.utc
+        try:
+            timezone = pytz.timezone(hdu.header['timesys'])
+        except (pytz.UnknownTimeZoneError, KeyError):
+            logger.debug(
+                "Timezone not specified in FITS file: assuming UTC already")
+        timestamp = timestamp.replace(tzinfo=timezone)
+        self.utc = pytz.utc.normalize(timestamp.astimezone(pytz.utc))
+        #For simplicity, the database requires naive datetimes, we assume these
+        # all refer implicitly to UTC:
+        self.taustart_ts = self.utc.replace(tzinfo=None)
         try:
             endtime = dateutil.parser.parse(hdu.header['end_utc'])
             endtime = endtime.replace(tzinfo=timezone)
             self.utc_end = pytz.utc.normalize(endtime.astimezone(pytz.utc))
             delta = self.utc_end - self.utc
             # In Python 2.7, we can use delta.total_seconds instead
-            self.tau_time = (delta.days*86400 + delta.seconds +
-                            delta.microseconds/1e6)
+            self.tau_time = (delta.days * 86400 + delta.seconds +
+                            delta.microseconds / 1e6)
         except KeyError:
             logger.warn("End time not specified or unreadable")
             self.tau_time = 0.
@@ -155,7 +159,7 @@ class FitsImage(DataAccessor):
         self.wcs.wcsset()
 
         x, y = self.data.shape
-        self.centre_ra, self.centre_decl = self.wcs.p2s((x/2, y/2))
+        self.centre_ra, self.centre_decl = self.wcs.p2s((x / 2, y / 2))
 
 
 
@@ -202,7 +206,7 @@ class FitsImage(DataAccessor):
         planes = len(data.shape)
         if planes != 2:
             logger.warn("received datacube with %s planes, assuming Stokes I and taking plane 0" % planes)
-            data=data[0,:,:]
+            data = data[0, :, :]
         self.data = data.transpose()
 
 

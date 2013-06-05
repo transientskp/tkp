@@ -10,7 +10,7 @@ from tkp.db import general as dbgen
 from tkp.db import monitoringlist as dbmon
 from tkp.db import associations as dbass
 from lofarpipe.support.control import control
-from tkp.distribute.common import load_job_config
+from tkp.distribute.common import load_job_config, dump_job_config_to_logdir
 import tkp.utility.parset as parset
 
 
@@ -46,7 +46,7 @@ class TrapLocal(control):
         self.logger = logdrain
 
         job_config = load_job_config(self.task_definitions)
-
+        dump_job_config_to_logdir(self.config, job_config)
         job_dir = self.config.get('layout', 'job_directory')
         images = imp.load_source('images_to_process', os.path.join(job_dir,
                                  'images_to_process.py')).images

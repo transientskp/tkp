@@ -11,7 +11,7 @@ from tkp.db import general as dbgen
 from tkp.db import monitoringlist as dbmon
 from tkp.db import associations as dbass
 from tkp.distribute.celery import tasks
-from tkp.distribute.common import load_job_config
+from tkp.distribute.common import load_job_config, dump_job_config_to_logdir
 import tkp.utility.parset as parset
 import sys
 
@@ -49,6 +49,7 @@ def run(job_name, local=False):
                              job_name)
 
     job_dir = pipe_config.get('layout', 'job_directory')
+
     logger.info("Job dir: %s", job_dir)
     images = imp.load_source('images_to_process', os.path.join(job_dir,
                              'images_to_process.py')).images
@@ -56,11 +57,14 @@ def run(job_name, local=False):
     logger.info("dataset %s containts %s images" % (job_name, len(images)))
 
     job_config = load_job_config(pipe_config)
+    dump_job_config_to_logdir(pipe_config, job_config)
+
     p_parset = parset.load_section(job_config, 'persistence')
     q_lofar_parset = parset.load_section(job_config, 'quality_lofar')
     se_parset = parset.load_section(job_config, 'source_extraction')
     nd_parset = parset.load_section(job_config, 'null_detections')
     tr_parset = parset.load_section(job_config, 'transient_search')
+
 
     # persistence
     metadatas = group(tasks.persistence_node_step.s([img], p_parset)

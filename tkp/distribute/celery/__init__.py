@@ -26,16 +26,16 @@ def string_to_list(my_string):
     return [x.strip() for x in my_string.strip('[] ').split(',') if x.strip()]
 
 def initialize_pipeline_config(pipe_cfg_file, job_name):
+    """Replaces the sort of background bookkeeping that cuisine would do"""
     start_time = datetime.datetime.utcnow().replace(microsecond=0).isoformat()
-    if not os.path.isfile(pipe_cfg_file):
-            logger.warn("Could not find pipeline config at: %s", pipe_cfg_file)
-            sys.exit(1)
     config = ConfigParser.SafeConfigParser({
         "job_name": job_name,
         "start_time": start_time,
         "cwd": os.getcwd(),
     })
-    config.read(pipe_cfg_file)
+    #NB we force sensible errors by attempting to open the pipeline.cfg file:
+    with open(pipe_cfg_file) as f:
+        config.readfp(f)
     task_files = string_to_list(config.get('DEFAULT', "task_files"))
     for f in task_files:
         if not os.path.isfile(f):

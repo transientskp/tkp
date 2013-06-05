@@ -13,7 +13,7 @@ class null_detections(TrapMaster):
     append the results to extractedsources into the database"""
 
     inputs = {
-        'parset': ingredient.FileField(
+        'parset': ingredient.DictField(
             '-p', '--parset',
             dest='parset',
             help="null_detection configuration parset"
@@ -26,12 +26,11 @@ class null_detections(TrapMaster):
     }
 
     def trapstep(self):
-        parset_file = self.inputs['parset']
-        self.parset = steps.null_detections.parse_parset(parset_file)
+        self.parset = self.inputs['parset']
         image_ids = self.inputs['args']
         self.logger.info("starting null_detections for images %s" % image_ids)
         image_paths = [Image(id=id).url for id in image_ids]
-        image_nds = [dbmon.get_nulldetections(image_id, self.parset['deRuiter_radius']) for image_id in image_ids]
+        image_nds = [dbmon.get_nulldetections(image_id, self.parset['deruiter_radius']) for image_id in image_ids]
         ff_nds = self.distributed(image_ids, image_paths, image_nds)
 
         for image_id, ff_nd in ff_nds:

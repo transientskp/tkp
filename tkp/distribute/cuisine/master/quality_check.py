@@ -21,7 +21,7 @@ from tkp.distribute.cuisine.common import TrapMaster, nodes_available
 
 class quality_check(TrapMaster):
     inputs = {
-        'parset': ingredient.FileField(
+        'parset': ingredient.DictField(
             '-p', '--parset',
             dest='parset',
             help="Quality check configuration parset"
@@ -40,8 +40,7 @@ class quality_check(TrapMaster):
     def trapstep(self):
         self.logger.info("Performing quality checks")
         image_ids = self.inputs['args']
-        parset_file = self.inputs['parset']
-        self.parset = steps.quality.parse_parset(parset_file)
+        self.parset = self.inputs['parset']
         urls = [Image(id=id).url for id in image_ids]
         rejected_images = self.distributed(image_ids, urls)
         for image_id, (reason, comment) in rejected_images:

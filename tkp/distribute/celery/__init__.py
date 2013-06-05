@@ -11,6 +11,7 @@ from tkp.db import general as dbgen
 from tkp.db import monitoringlist as dbmon
 from tkp.db import associations as dbass
 from tkp.distribute.celery import tasks
+import sys
 
 
 logger = logging.getLogger(__name__)
@@ -22,26 +23,34 @@ def string_to_list(my_string):
     """
     return [x.strip() for x in my_string.strip('[] ').split(',') if x.strip()]
 
-
-def run(job_name):
-    here = os.getcwd()
-    pipeline_file = os.path.join(here, "pipeline.cfg")
+def initialize_config(pipeline_file, job_name):
     start_time = datetime.datetime.utcnow().replace(microsecond=0).isoformat()
+    if not os.path.isfile(pipeline_file):
+            logger.warn("Could not find pipeline file at: %s", pipeline_file)
+            sys.exit(1)
     config = ConfigParser.SafeConfigParser({
         "job_name": job_name,
         "start_time": start_time,
-        "cwd": here,
+        "cwd": os.getcwd(),
     })
     config.read(pipeline_file)
     task_files = string_to_list(config.get('DEFAULT', "task_files"))
+    for f in task_files:
+        if not os.path.isfile(f):
+            logger.warn("Could not find task file: %s", f)
     config.read(task_files)
+    return config
+
+def run(job_name, local=False):
+    config = initialize_config(os.path.join(os.getcwd(), "pipeline.cfg"),
+                               job_name)
 
     job_dir = config.get('layout', 'job_directory')
     logger.info("Job dir: %s", job_dir)
     images = imp.load_source('images_to_process', os.path.join(job_dir,
                              'images_to_process.py')).images
 
-    logging.info("dataset %s containts %s images" % (job_name, len(images)))
+    logger.info("dataset %s containts %s images" % (job_name, len(images)))
 
     p_parset_file = config.get("persistence", "parset")
     q_parset_file = config.get("quality_check", "parset")

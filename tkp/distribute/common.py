@@ -1,4 +1,6 @@
 import ConfigParser
+import os
+
 def load_job_config(pipe_config):
     """Pulls the parset filenames as defined in the tasks.cfg config file.
 
@@ -17,3 +19,10 @@ def load_job_config(pipe_config):
     job_config = ConfigParser.SafeConfigParser()
     job_config.read(parset_files_to_read)
     return job_config
+
+def dump_job_config_to_logdir(pipe_config, job_config):
+    log_dir = os.path.dirname(pipe_config.get('logging', 'log_file'))
+    if not os.path.isdir(log_dir):
+        os.makedirs(log_dir)
+    with open(os.path.join(log_dir, 'jobpars.parset'), 'w') as f:
+        job_config.write(f)

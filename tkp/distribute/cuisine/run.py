@@ -8,7 +8,7 @@ from tkp.steps.monitoringlist import add_manual_monitoringlist_entries
 from tkp.db import DataSet
 from tkp.db import general as dbgen
 from tkp import steps
-from tkp.distribute.common import load_job_config
+from tkp.distribute.common import load_job_config, dump_job_config_to_logdir
 import tkp.utility.parset as parset
 
 
@@ -60,6 +60,7 @@ class Trap(control):
             return 1
 
         job_config = load_job_config(self.task_definitions)
+        dump_job_config_to_logdir(self.config, job_config)
         p_parset = parset.load_section(job_config, 'persistence')
         q_lofar_parset = parset.load_section(job_config, 'quality_lofar')
         se_parset = parset.load_section(job_config, 'source_extraction')

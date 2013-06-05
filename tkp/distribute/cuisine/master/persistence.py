@@ -2,7 +2,7 @@ from __future__ import with_statement
 import itertools
 import lofarpipe.support.lofaringredient as ingredient
 from lofarpipe.support.remotecommand import ComputeJob
-from tkp.steps.persistence import master_steps, parse_parset
+from tkp.steps.persistence import master_steps
 from tkp.distribute.cuisine.common import TrapMaster, nodes_available
 
 
@@ -15,7 +15,7 @@ class persistence(TrapMaster):
             dest='extraction_radius_pix',
             help="Source extraction radius (in pixels)"
         ),
-        'parset': ingredient.FileField(
+        'parset': ingredient.DictField(
             '-p', '--parset',
             dest='parset',
             help="persistence configuration parset"
@@ -32,8 +32,7 @@ class persistence(TrapMaster):
 
     def trapstep(self):
         images = self.inputs['args']
-        parset_file = self.inputs['parset']
-        self.parset = parse_parset(parset_file)
+        self.parset = self.inputs['parset']
 
         metadatas = self.distributed(images)
         dataset_id, image_ids = master_steps(metadatas,

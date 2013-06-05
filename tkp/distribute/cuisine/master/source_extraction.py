@@ -4,14 +4,13 @@ import lofarpipe.support.lofaringredient as ingredient
 from lofarpipe.support.remotecommand import ComputeJob
 from tkp.db.orm import Image
 from tkp.distribute.cuisine.common import TrapMaster, nodes_available
-from tkp.steps.source_extraction import parse_parset
 
 
 class source_extraction(TrapMaster):
     """Extract sources from a FITS image"""
 
     inputs = {
-        'parset': ingredient.FileField(
+        'parset': ingredient.DictField(
             '-p', '--parset',
             dest='parset',
             help="Source finder configuration parset"
@@ -30,8 +29,7 @@ class source_extraction(TrapMaster):
         self.logger.info("Extracting sources...")
         image_ids = self.inputs['args']
         image_paths = [Image(id=id).url for id in image_ids]
-
-        parset = parse_parset(self.inputs['parset'])
+        parset = self.inputs['parset']
         sources_sets = self.distributed(image_ids, image_paths, parset)
         self.outputs['sources_sets'] = sources_sets
 

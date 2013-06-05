@@ -29,7 +29,7 @@ class mon_detections(TrapMaster):
     def trapstep(self):
         parset_file = self.inputs['parset']
         parset = parameterset(parset_file)
-        deRuiter_radius = parset.getFloat('deRuiter_radius', 3.717)
+        deRuiter_radius = parset.getFloat('deruiter_radius', 3.717)
 
         image_ids = self.inputs['args']
         image_paths = [Image(id=id).url for id in image_ids]

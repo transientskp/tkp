@@ -6,6 +6,8 @@ import tkp
 import tkp.utility.accessors
 import tkp.inject
 from tkp.testutil.data import DATAPATH
+import tkp.utility.parset
+from tkp.conf.job_template import default_parset_paths
 
 fits_file = os.path.join(DATAPATH, 'missingheaders.fits')
 
@@ -23,23 +25,8 @@ class TestInject(unittest.TestCase):
         self.assertTrue(missing_fits.not_set() != [])
 
     def test_injection(self):
-        parset = {
-            'taustart_ts': '2007-07-20T14:18:09.909001',
-            'freq_eff': 1000000.0,
-            'freq_bw': 50.0,
-            'tau_time': 1000.0,
-            'antenna_set': 'HBA',
-            'subbands': 40,
-            'channels': 40,
-            'ncore': 1000,
-            'nremote': 10000,
-            'nintl': 3,
-            'position': 10,
-            'subbandwidth': 10,
-            'bmaj': 0.4,
-            'bmin': 0.4,
-            'bpa': 0.4,
-        }
+        with open(default_parset_paths['inject.parset']) as f:
+            parset = tkp.utility.parset.read_config_section(f, 'inject')
 
         tkp.inject.modify_fits_headers(parset, self.fixed_file)
         fixed_fits = tkp.utility.accessors.open(self.fixed_file)

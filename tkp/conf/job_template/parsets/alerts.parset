@@ -1,9 +1,0 @@
-people = [p1, p2]
-
-p1.email = evert.rol@gmail.com
-p2.email = evert.astro@gmail.com
-p3.email = evert@dds.nl
-
-p1.criterion.classification = [short, grb]
-
-p2.criterion.position = [52.70, 57.05, 10]

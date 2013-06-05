@@ -3,7 +3,6 @@ import logging
 import warnings
 from tempfile import NamedTemporaryFile
 
-from tkp.utility.parset import Parset as parameterset
 from pyrap.images import image as pyrap_image
 
 import tkp.utility.accessors
@@ -13,20 +12,6 @@ from tkp.utility.accessors.dataaccessor import extract_metadata
 
 
 logger = logging.getLogger(__name__)
-
-
-def parse_parset(parset_file):
-    """parse a persistence recipe specific parset file
-    """
-    parset = parameterset(parset_file)
-    result = {}
-    result['description'] = parset.getString('description', 'TRAP dataset')
-    result['dataset_id'] = parset.getInt('dataset_id', -1)
-    result['copy_images'] = parset.getBool('copy_images', False)
-    result['mongo_host'] = parset.getString('mongo_host', 'localhost')
-    result['mongo_port'] = parset.getInt('mongo_port', 27017)
-    result['mongo_db'] = parset.getString('mongo_db', 'tkp')
-    return result
 
 
 def image_to_mongodb(filename, hostname, port, db):

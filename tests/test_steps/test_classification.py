@@ -2,6 +2,8 @@ import unittest
 import tempfile
 import tkp.steps.classification
 from tkp.testutil.decorators import requires_database
+import tkp.utility.parset as parset
+from tkp.conf.job_template import default_parset_paths
 
 
 @requires_database()
@@ -11,11 +13,10 @@ class TestClassification(unittest.TestCase):
         # non-functional library...
         self.transients = [{'runcat':'1', 'band':'1'}]
 
-        self.parset = tempfile.NamedTemporaryFile()
-        self.parset.write("weighting.cutoff = 0.2\n")
-        self.parset.flush()
+        with open(default_parset_paths['classification.parset']) as f:
+            self.parset = parset.read_config_section(f, 'classification')
 
     def runTest(self):
         for t in self.transients:
-            tkp.steps.classification.classify(t, self.parset.name)
+            tkp.steps.classification.classify(t, self.parset)
 

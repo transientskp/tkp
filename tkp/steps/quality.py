@@ -1,5 +1,4 @@
 import logging
-from tkp.utility.parset import Parset as parameterset
 from tkp.db.database import Database
 from tkp.quality.restoringbeam import beam_invalid
 from tkp.quality.rms import rms_invalid
@@ -13,20 +12,6 @@ import tkp.quality
 
 
 logger = logging.getLogger(__name__)
-
-
-def parse_parset(parset_file):
-    """parse the quality parset file."""
-    parset = parameterset(parset_file)
-    result = {}
-    result['sigma'] = parset.getInt('sigma', 3)
-    result['f'] = parset.getInt('f', 4)
-    result['low_bound'] = parset.getFloat('low_bound', 1)
-    result['high_bound'] = parset.getInt('high_bound', 50)
-    result['oversampled_x'] = parset.getInt('oversampled_x', 30)
-    result['elliptical_x'] = parset.getFloat('elliptical_x', 2.0)
-    result['min_separation'] = parset.getFloat('min_separation', 20)
-    return result
 
 
 def reject_check(image_path, parset):
@@ -64,7 +49,7 @@ def reject_check(image_path, parset):
                         (image_path, nice_format(rms),
                          nice_format(noise)))
     else:
-        logger.info("image %s REJECTED: %s " % (image_path, rms_check) )
+        logger.info("image %s REJECTED: %s " % (image_path, rms_check))
         return (tkp.db.quality.reason['rms'].id, rms_check)
 
     # beam shape check
@@ -76,13 +61,13 @@ def reject_check(image_path, parset):
                                              nice_format(semimaj),
                                              nice_format(semimin)))
     else:
-        logger.info("image %s REJECTED: %s " % (image_path, beam_check) )
+        logger.info("image %s REJECTED: %s " % (image_path, beam_check))
         return (tkp.db.quality.reason['beam'].id, beam_check)
 
     # Bright source check
     bright = tkp.quality.brightsource.is_bright_source_near(accessor, min_separation)
     if bright:
-        logger.info("image %s REJECTED: %s " % (image_path, bright) )
+        logger.info("image %s REJECTED: %s " % (image_path, bright))
         return (tkp.db.quality.reason['bright_source'].id, bright)
 
 

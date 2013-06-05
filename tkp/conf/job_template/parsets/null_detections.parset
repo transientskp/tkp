@@ -1,4 +1,5 @@
-deRuiter_radius = 5.68
+[null_detections]
+deruiter_radius = 5.68
 bg-density = 4.02439375e-06
 # extraction threshold (basically S/N) and associetion radius (in units of the default De Ruiter radius) 
 # Systematic errors on ra & decl (units in arcsec)

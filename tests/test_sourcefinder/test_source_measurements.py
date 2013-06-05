@@ -21,7 +21,7 @@ import unittest2 as unittest
 import tkp.utility.accessors
 from tkp.sourcefinder import image
 from tkp.testutil.data import DATAPATH
-from tkp.testutil.decorators import requires_data
+from tkp.testutil.decorators import requires_data, duration
 
 
 MAX_BIAS = 5.0
@@ -76,7 +76,7 @@ class SourceParameters(unittest.TestCase):
         self.deconv_smajaxes = np.array(deconv_smajaxes)
         self.deconv_sminaxes = np.array(deconv_sminaxes)
         self.deconv_bpas = np.array(deconv_bpas)
-
+    @duration(100)
     @requires_data(os.path.join(DATAPATH, 'TEST_DECONV.FITS'))
     def testAllParameters(self):
         # Test all deconvolved

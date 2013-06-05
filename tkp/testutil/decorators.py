@@ -30,7 +30,7 @@ def requires_module(module_name):
     return lambda func: func
 
 def duration(test_duration):
-    max_duration = os.environ.get("TKP_MAXTESTDURATION", False)
+    max_duration = float(os.environ.get("TKP_MAXTESTDURATION", False))
     if max_duration:
         if max_duration < test_duration:
             return unittest.skip(

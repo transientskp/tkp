@@ -48,34 +48,47 @@ from tkp.testutil.data import DATAPATH
 NUMBER_INSERTED = float(3969)
 
 
-
+@requires_data(os.path.join(DATAPATH, 'UNCORRELATED_NOISE.FITS'))
+@requires_data(os.path.join(DATAPATH, 'CORRELATED_NOISE.FITS'))
+@requires_data(os.path.join(DATAPATH, 'TEST_DECONV.FITS'))
 class test_maps(unittest.TestCase):
     def setUp(self):
-        uncorr_map = accessors.open(os.path.join(DATAPATH, 'UNCORRELATED_NOISE.FITS'))
-        corr_map = accessors.open(os.path.join(DATAPATH, 'CORRELATED_NOISE.FITS'))
-        map_with_sources = accessors.open(os.path.join(DATAPATH, 'TEST_DECONV.FITS'))
+        uncorr_map = accessors.open(os.path.join(DATAPATH,
+                                                 'UNCORRELATED_NOISE.FITS'))
+        corr_map = accessors.open(os.path.join(DATAPATH,
+                                               'CORRELATED_NOISE.FITS'))
+        map_with_sources = accessors.open(os.path.join(DATAPATH,
+                                                       'TEST_DECONV.FITS'))
 
-        uncorr_image = image.ImageData(uncorr_map.data, uncorr_map.beam, uncorr_map.wcs)
-        corr_image = image.ImageData(corr_map.data, uncorr_map.beam, uncorr_map.wcs)
-        image_with_sources = image.ImageData(map_with_sources.data, map_with_sources.beam, map_with_sources.wcs)
+        self.uncorr_image = image.ImageData(uncorr_map.data, uncorr_map.beam,
+                                            uncorr_map.wcs)
+        self.corr_image = image.ImageData(corr_map.data, uncorr_map.beam,
+                                          uncorr_map.wcs)
+        self.image_with_sources = image.ImageData(map_with_sources.data,
+                                                  map_with_sources.beam,
+                                                  map_with_sources.wcs)
 
-        self.number_detections_uncorr = len(uncorr_image.fd_extract())
-        self.number_detections_corr = len(corr_image.fd_extract())
-        self.number_alpha_10pc = len(image_with_sources.fd_extract(alpha=0.1))
-        self.number_alpha_1pc = len(image_with_sources.fd_extract(alpha=0.01))
-        self.number_alpha_point1pc = len(image_with_sources.fd_extract(alpha=0.001))
-
-    @requires_data(os.path.join(DATAPATH, 'UNCORRELATED_NOISE.FITS'))
-    @requires_data(os.path.join(DATAPATH, 'CORRELATED_NOISE.FITS'))
-    @requires_data(os.path.join(DATAPATH, 'TEST_DECONV.FITS'))
     @duration(100)
-    def testNumSources(self):
+    def test_normal(self):
+        self.number_detections_uncorr = len(self.uncorr_image.fd_extract())
+        self.number_detections_corr = len(self.corr_image.fd_extract())
         self.assertEqual(self.number_detections_uncorr, 0)
         self.assertEqual(self.number_detections_corr, 0)
 
-        self.assertTrue((self.number_alpha_10pc-NUMBER_INSERTED)/NUMBER_INSERTED < 0.1)
-        self.assertTrue((self.number_alpha_1pc-NUMBER_INSERTED)/NUMBER_INSERTED < 0.01)
-        self.assertTrue((self.number_alpha_point1pc-NUMBER_INSERTED)/NUMBER_INSERTED < 0.001)
+    def test_alpha0_1(self):
+        self.number_alpha_10pc = len(self.image_with_sources.fd_extract(alpha=0.1))
+        self.assertTrue((self.number_alpha_10pc - NUMBER_INSERTED) /
+                        NUMBER_INSERTED < 0.1)
+
+    def test_alpha0_01(self):
+        self.number_alpha_1pc = len(self.image_with_sources.fd_extract(alpha=0.01))
+        self.assertTrue((self.number_alpha_1pc - NUMBER_INSERTED) /
+                        NUMBER_INSERTED < 0.01)
+
+    def test_alpha0_001(self):
+        self.number_alpha_point1pc = len(self.image_with_sources.fd_extract(alpha=0.001))
+        self.assertTrue((self.number_alpha_point1pc - NUMBER_INSERTED) /
+                        NUMBER_INSERTED < 0.001)
 
 
 if __name__ == '__main__':

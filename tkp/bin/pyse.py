@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 """
 Simple interface to TKP source identification & measurement code.
 John Sanders & John Swinbank, 2011.

@@ -23,7 +23,7 @@ def string_to_list(my_string):
     return [x.strip() for x in my_string.strip('[] ').split(',') if x.strip()]
 
 
-def run(job_name, local=False):
+def run(job_name):
     here = os.getcwd()
     pipeline_file = os.path.join(here, "pipeline.cfg")
     start_time = datetime.datetime.utcnow().replace(microsecond=0).isoformat()

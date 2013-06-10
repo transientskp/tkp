@@ -830,7 +830,7 @@ class ImageData(object):
         """
         # Make sure to set sci_clip to zero where either the
         # analysisthresholdmap or self.data_bgsubbed are masked.
-        # That is why we use numpy.ma.where and the filling.
+        # That is why we use numpy.ma.where() and the filling.
         clipped_data = numpy.ma.where(
             self.data_bgsubbed > analysisthresholdmap, 1, 0
         ).filled(fill_value=0)
@@ -921,8 +921,8 @@ class ImageData(object):
             # slices around islands (paricularly the large ones) do
             # not affect the source measurements.
             selected_data = numpy.ma.where(
-                labelled_data[chunk] == label, self.data_bgsubbed[chunk], 0.0
-            ).filled(fill_value=0.)
+                labelled_data[chunk] == label, self.data_bgsubbed[chunk], -99999.0
+            ).filled(fill_value=-99999.0)
 
             island_list.append(
                 extract.Island(

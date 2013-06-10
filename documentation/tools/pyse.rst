@@ -90,6 +90,9 @@ A list of available command line option may be obtained with the
                           TopCat
     --rmsmap              Generate RMS map
     --sigmap              Generate significance map
+    --force-beam          Force fit axis lengths to beam size
+    --detection-image=DETECTION_IMAGE
+                            Find islands on different image
 
 By default, source extraction is carried out by thresholding: that is,
 identifying islands of pixels which exceed a particular multiple of the RMS
@@ -169,6 +172,19 @@ all portions of the image within the given distance of the edge before
 processing. The ``--radius`` argument is similar, but rather masks off all
 parts of the image more than the given distance from the centre. This options
 are cumulative.
+
+If the ``--force-beam`` option is given, PySE will insist that all sources
+have axis lengths and position angles equal to the restoring beam parameters.
+This is (might be...) a good assumption if you are observing only point
+sources.
+
+If the ``--detection-image`` option is specified, PySE will identify sources
+and the positions of pixels which comprise them on the deteciton image, but
+then use the corresponding pixels on the target images to perform
+measurements. Of course, the detection image and the target image(s) must have
+the same pixel dimensions. Note that only a single detection image may be
+specified, and the same pixels are then used on all target images. Note
+further that this ``--detection-image`` option is incompatible with ``--fdr``.
 
 All of these arguments are optional (with the caveat that the beam shape must
 be provided if not included with the image).

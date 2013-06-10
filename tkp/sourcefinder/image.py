@@ -486,7 +486,7 @@ class ImageData(object):
     # extraction systems.                                                     #
     #                                                                         #
     ###########################################################################
-    def extract(self, det=None, anl=None, noisemap=None, bgmap=None):
+    def extract(self, det=None, anl=None, noisemap=None, bgmap=None, labelled_data=None, labels=None):
         """
         Kick off conventional (ie, RMS island finding) source extraction.
 
@@ -532,7 +532,13 @@ class ImageData(object):
                 raise ValueError("RMS noise cannot be negative")
             else:
                 self.rmsmap = noisemap
-        return self._pyse(det * self.rmsmap, anl * self.rmsmap)
+
+        if labelled_data is not None and labelled_data.shape != self.data.shape:
+                raise ValueError("Labelled map is wrong shape")
+
+        return self._pyse(
+            det * self.rmsmap, anl * self.rmsmap, labelled_data=labelled_data, labels=labels
+        )
 
     def reverse_se(self, det=None):
         """Run source extraction on the negative of this image.
@@ -806,9 +812,9 @@ class ImageData(object):
 
         return sci_labels
 
-    def _pyse(self, detectionthresholdmap, analysisthresholdmap):
+    def label_islands(self, detectionthresholdmap, analysisthresholdmap):
         """
-        Run Python-based source extraction on this image.
+        Return a lablled array of pixels for fitting.
 
         Args:
 
@@ -818,42 +824,34 @@ class ImageData(object):
 
         Returns:
 
-            (..utility.containers.ExtractionResults):
+            list of valid islands (list of int)
 
-        This is described in detail in the "Source Extraction System" document
-        by John Swinbank, available from TKP svn.
+            labelled islands (numpy.ndarray)
         """
         # Make sure to set sci_clip to zero where either the
         # analysisthresholdmap or self.data_bgsubbed are masked.
         # That is why we use numpy.ma.where and the filling.
-        sci_clip = numpy.ma.where(
+        clipped_data = numpy.ma.where(
             self.data_bgsubbed > analysisthresholdmap, 1, 0
         ).filled(fill_value=0)
-        sci_labels, sci_num = ndimage.label(sci_clip, self.structuring_element)
+        labelled_data, num_labels = ndimage.label(clipped_data, self.structuring_element)
 
-        # Map our chunks onto a list of islands.
-        island_list = []
-
-        if sci_num > 0:
-            # Select the labels of the islands with a maximum pixel
-            # value above the (local) detection threshold.
-            slices = ndimage.find_objects(sci_labels)
-
+        if num_labels > 0:
             # Select the labels of the islands above the analysis threshold
             # that have maximum values values above the detection threshold.
             # Like above we make sure not to select anything where either
             # the data or the noise map are masked.
             # We fill these pixels in above_det_thr with -1 to make sure
             # its labels will not be in labels_above_det_thr.
+            # NB data_bgsubbed, and hence above_det_thr, is a masked array;
+            # filled() sets all mased values equal to -1.
             above_det_thr = (
                 self.data_bgsubbed - detectionthresholdmap
             ).filled(fill_value=-1)
-            maximum_values = ndimage.maximum(above_det_thr, sci_labels,
-                                           numpy.arange(sci_num + 1)[1:])
-
-            # The "+1" in the statement above may seem a bit awkward, but
-            # accounts for label=0 which is the background, which we do not
-            # want.
+            # Note that we avoid label 0 (the background).
+            maximum_values = ndimage.maximum(
+                above_det_thr, labelled_data, numpy.arange(1, num_labels + 1)
+            )
 
             # If there's only one island, ndimage.maximum will return a float,
             # rather than a list. The rest of this function assumes that it's
@@ -861,37 +859,81 @@ class ImageData(object):
             if isinstance(maximum_values, float):
                 maximum_values = [maximum_values]
 
-            labels_above_det_thr = (
-                numpy.array(maximum_values) >= 0.0
-            ).nonzero()[0] + 1
-            # The "+1" in the statement above may seem a bit awkward, but
-            # accounts for the mapping from index of maximum values-->label
-            # number.
+            # We'll filter out the insignificant islands
+            labels_below_det_thr, labels_above_det_thr = [], []
+            for i, x in enumerate(maximum_values, 1):
+                if x < 0:
+                    labels_below_det_thr.append(i)
+                else:
+                    labels_above_det_thr.append(i)
+            labelled_data = numpy.where(
+                numpy.in1d(labelled_data.ravel(), labels_above_det_thr).reshape(labelled_data.shape),
+                labelled_data, 0
+            )
 
-            for label in labels_above_det_thr:
-                chunk = slices[label-1]
-                analysis_threshold = (analysisthresholdmap[chunk] /
-                                      self.rmsmap[chunk]).max()
-                # In selected_data only the pixels with the "correct"
-                # (see above) labels are retained. Other pixel values are
-                # set to zero.
-                # In this way, disconnected pixels within (rectangular)
-                # slices around islands (paricularly the large ones) do
-                # not affect the source measurements.
-                selected_data = numpy.ma.where(
-                    sci_labels[chunk] == label, self.data_bgsubbed[chunk], 0.0
-                ).filled(fill_value=0.)
+        return labels_above_det_thr, labelled_data
 
-                island_list.append(
-                    extract.Island(
-                        selected_data,
-                        self.rmsmap[chunk],
-                        chunk,
-                        analysis_threshold,
-                        detectionthresholdmap[chunk],
-                        self.beam
-                    )
+
+    def _pyse(
+        self, detectionthresholdmap, analysisthresholdmap,
+        labelled_data=None, labels=[]
+    ):
+        """
+        Run Python-based source extraction on this image.
+
+        Args:
+
+            detectionthresholdmap (numpy.ndarray):
+
+            analysisthresholdmap (numpy.ndarray):
+
+            labelled_data (numpy.ndarray): labelled island map (output of
+            numpy.ndimage.label()). Will be calculated automatically if not
+            provided.
+
+            labels (list): list of labels in the island map to use for
+            fitting.
+
+        Returns:
+
+            (..utility.containers.ExtractionResults):
+
+        This is described in detail in the "Source Extraction System" document
+        by John Swinbank, available from TKP svn.
+        """
+        # Map our chunks onto a list of islands.
+        island_list = []
+        if labelled_data is None:
+            labels, labelled_data = self.label_islands(
+                detectionthresholdmap, analysisthresholdmap
+            )
+
+        slices = ndimage.find_objects(labelled_data)
+
+        for label in labels:
+            chunk = slices[label-1]
+            analysis_threshold = (analysisthresholdmap[chunk] /
+                                  self.rmsmap[chunk]).max()
+            # In selected_data only the pixels with the "correct"
+            # (see above) labels are retained. Other pixel values are
+            # set to zero.
+            # In this way, disconnected pixels within (rectangular)
+            # slices around islands (paricularly the large ones) do
+            # not affect the source measurements.
+            selected_data = numpy.ma.where(
+                labelled_data[chunk] == label, self.data_bgsubbed[chunk], 0.0
+            ).filled(fill_value=0.)
+
+            island_list.append(
+                extract.Island(
+                    selected_data,
+                    self.rmsmap[chunk],
+                    chunk,
+                    analysis_threshold,
+                    detectionthresholdmap[chunk],
+                    self.beam
                 )
+            )
 
         # If required, we can save the 'left overs' from the deblending and
         # fitting processes for later analysis. This needs setting up here:

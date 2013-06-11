@@ -319,7 +319,6 @@ For now, use these environment variables to configure the database:
 
     # celery
     celery_parser = parser_subparsers.add_parser('celery')
-    celery_parser.add_argument('command')
     celery_parser.add_argument('rest', nargs=argparse.REMAINDER)
     celery_parser.set_defaults(func=celery_cmd)
 

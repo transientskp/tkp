@@ -4,9 +4,20 @@ all functions should be a wrapper around the code in tkp.steps.
 """
 from celery import Celery
 import tkp.steps
+import warnings
+import logging
+
+logger = logging.getLogger(__name__)
 
 celery = Celery('tkp')
-celery.config_from_object('celeryconfig')
+config_module = 'celeryconfig'
+
+try:
+    celery.config_from_object(config_module)
+except ImportError:
+    msg = "can't find '%s' in your python path, using default config" % config_module
+    warnings.warn(msg)
+    logger.warn(msg)
 
 @celery.task
 def persistence_node_step(images, p_parset):

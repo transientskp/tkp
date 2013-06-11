@@ -193,6 +193,12 @@ def prepare_job(jobname, debug=False):
     sys.argv += ["-c", pipelinefile, "-t", tasksfile, "-j", jobname]
 
 
+def celery_cmd(args):
+    from celery.bin import celery
+    base = celery.CeleryCommand(app='tkp.distribute.celery.tasks')
+    base.execute_from_commandline(sys.argv[1:])
+
+
 def run_job(args):
     print "running job '%s'" % args.name
     prepare_job(args.name, args.debug)
@@ -310,6 +316,12 @@ For now, use these environment variables to configure the database:
     info_parser = parser_subparsers.add_parser('info')
     info_parser.add_argument('infojobname', help='Name of job to print info of')
     info_parser.set_defaults(func=info_job)
+
+    # celery
+    celery_parser = parser_subparsers.add_parser('celery')
+    celery_parser.add_argument('command')
+    celery_parser.add_argument('rest', nargs=argparse.REMAINDER)
+    celery_parser.set_defaults(func=celery_cmd)
 
     return parser.parse_args()
 

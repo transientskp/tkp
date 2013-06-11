@@ -99,8 +99,12 @@ class Database(object):
         # I don't like this but it is used in some parts of TKP
         self.cursor = self._connection.cursor()
 
-        logger.info("connected to database %s at %s" % (self.database,
-                                                        self.host))
+        logger.info("connected to: %s://%s@%s:%s/%s" % (self.engine,
+                                                           self.user,
+                                                           self.host,
+                                                           self.port,
+                                                           self.database))
+
 
     @property
     def connection(self):

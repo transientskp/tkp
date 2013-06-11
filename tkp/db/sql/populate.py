@@ -91,13 +91,14 @@ def recreate(options):
     params = {'username': options.user,
               'password': options.password,
               'database': options.database,
-              'host':options.host
+              'host': options.host
               }
 
     if options.backend == 'monetdb':
         import monetdb.sql
-        monetdb_cmd = lambda cmd: call('monetdb %s %s' % (cmd, options.database),
-                                   shell=True)
+        monetdb_cmd = lambda cmd: call('monetdb %s %s' % (cmd,
+                                                          options.database),
+                                       shell=True)
         monetdb_cmd('stop')
         monetdb_cmd('destroy -f')
         monetdb_cmd('create')
@@ -114,10 +115,15 @@ def recreate(options):
         con.close()
 
     elif options.backend == 'postgresql':
-        call('dropdb -h %(host)s -U %(username)s %(database)s' % params,
-             shell=True)
-        if call('createdb -h %(host)s -U %(username)s %(database)s' % params,
-                shell=True) != 0:
+        if params['host'] == 'localhost':
+            drop_cmd = 'dropdb %(database)s'
+            create_cmd = 'createdb %(database)s'
+        else:
+            drop_cmd = 'dropdb -h %(host)s -U %(username)s %(database)s'
+            create_cmd = 'createdb -h %(host)s -U %(username)s %(database)s'
+
+        call(drop_cmd % params, shell=True)
+        if call(create_cmd % params, shell=True) != 0:
             raise Exception("can't create a new postgresql database!")
     else:
         raise NotImplementedError

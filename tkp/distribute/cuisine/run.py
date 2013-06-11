@@ -6,6 +6,7 @@ from lofarpipe.support.control import control
 import lofarpipe.support.lofaringredient as ingredient
 from tkp.steps.monitoringlist import add_manual_monitoringlist_entries
 from tkp.db import DataSet
+from tkp.db import execute as dbexecute
 from tkp.db import general as dbgen
 from tkp import steps
 
@@ -41,6 +42,10 @@ class Trap(control):
     }
 
     def pipeline_logic(self):
+
+        #db test
+        dbexecute("select 1;")
+
         job_dir = self.config.get('layout', 'job_directory')
         images = imp.load_source('images_to_process', os.path.join(job_dir,
                                  'images_to_process.py')).images
@@ -85,7 +90,7 @@ class Trap(control):
             good_image_ids,
         ))
 
-        
+
         sources_sets = self.outputs['sources_sets']
         for (image_id, sources) in sources_sets:
 
@@ -94,23 +99,12 @@ class Trap(control):
                 [image_id, sources],
             ))
 
-            self.outputs.update(self.run_task(
-                "null_detections",
-                [image_id],
-            ))
+        self.outputs.update(self.run_task(
+            "null_detections",
+            good_image_ids,
+        ))
 
-##            This is currently just duplicating the 'null_detections' recipe.
-#            self.outputs.update(self.run_task(
-#                "mon_detections",
-#                [image_id],
-#            ))
-
-##        User detections currently unsupported.
-#            self.outputs.update(self.run_task(
-#                "user_detections",
-#                [image_id],
-#            ))
-
+        for (image_id, sources) in sources_sets:
             self.outputs.update(self.run_task(
                 "source_association",
                 [image_id],
@@ -125,13 +119,6 @@ class Trap(control):
             "feature_extraction",
             self.outputs['transients']
         ))
-
-#        self.outputs.update(self.run_task(
-#            "classification",
-#            self.outputs['transients']
-#        ))
-
-        #self.run_task("prettyprint", self.outputs['transients'])
 
         now = datetime.datetime.utcnow()
         dbgen.update_dataset_process_ts(dataset.id, now)

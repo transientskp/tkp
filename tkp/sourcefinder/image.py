@@ -935,7 +935,7 @@ class ImageData(object):
             # slices around islands (paricularly the large ones) do
             # not affect the source measurements.
             selected_data = numpy.ma.where(
-                labelled_data[chunk] == label, self.data_bgsubbed[chunk], -99999.0
+                labelled_data[chunk] == label, self.data_bgsubbed[chunk].data, -99999.0
             ).filled(fill_value=-99999.0)
 
             island_list.append(

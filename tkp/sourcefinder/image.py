@@ -827,11 +827,26 @@ class ImageData(object):
 
             labelled islands (numpy.ndarray)
         """
-        # Make sure to set sci_clip to zero where either the
-        # analysisthresholdmap or self.data_bgsubbed are masked.
-        # That is why we use numpy.ma.where() and the filling.
+        # At this point, we select all the data which is eligible for
+        # sourcefitting. We are actually using three separate filters, which
+        # exclude:
+        #
+        # 1. Anything which has been masked before we reach this point (eg by
+        #    reliable_window(), etc);
+        # 2. Any pixels which fall below the analysis threshold at that pixel
+        #    position;
+        # 3. Any pixels corresponding to a position where the RMS noise is
+        #    less than RMS_FILTER (default 0.001) times the median RMS across
+        #    the whole image.
+        #
+        # The third filter attempts to exclude those regions of the image
+        # which contain no usable data; for example, the parts of the image
+        # falling outside the circular region produced by awimager.
+        RMS_FILTER = 0.001
         clipped_data = numpy.ma.where(
-            self.data_bgsubbed > analysisthresholdmap, 1, 0
+            (self.data_bgsubbed > analysisthresholdmap) &
+            (self.rmsmap >= (RMS_FILTER * numpy.median(self.rmsmap))),
+            1, 0
         ).filled(fill_value=0)
         labelled_data, num_labels = ndimage.label(clipped_data, self.structuring_element)
 

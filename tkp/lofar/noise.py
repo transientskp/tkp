@@ -125,9 +125,23 @@ def system_sensitivity(freq_eff, Aeff):
     Tsky = Ts0 * wavelength ** 2.55
 
     #The instrumental noise temperature follows from measurements or simulations
-    # TODO: we can try to mimic the results in Fig 5 here
+    # This is a quick & dirty approach based roughly on Fig 5 here
     #  <http://www.skatelescope.org/uploaded/59513_113_Memo_Nijboer.pdf>
-    Tinst = 1
+    sensitivities = [
+        (20e6, 0.2 * Tsky),
+        (30e6, 0.4 * Tsky),
+        (40e6, 0.5 * Tsky),
+        (50e6, 0.75 * Tsky),
+        (60e6, 0.9 * Tsky),
+        (70e6, 0.8 * Tsky),
+        (80e6, 0.5 * Tsky),
+        (90e6, 0.15 * Tsky),
+        (110e6, 0 * Tsky),
+        (300e6, 200)
+    ]
+    for freq, value in sensitivities:
+        if freq_eff < freq:
+            Tinst = value
 
     Tsys = Tsky + Tinst
 

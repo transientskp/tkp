@@ -8,12 +8,11 @@ These can be used to populate ImageData objects based on some data source
 import os
 import pyfits
 from tkp.db.orm import Image as DBImage
-from tkp.utility.accessors.dataaccessor import extract_metadata
 from tkp.sourcefinder.image import ImageData
-import tkp.utility.accessors.detection
 from tkp.utility.accessors.dataaccessor import DataAccessor
 from tkp.utility.accessors.fitsimage import FitsImage
 from tkp.utility.accessors.casaimage import CasaImage
+import tkp.utility.accessors.detection
 
 
 def dbimage_from_accessor(dataset, dataccessor, extraction_radius):
@@ -32,7 +31,7 @@ def dbimage_from_accessor(dataset, dataccessor, extraction_radius):
     """
     if dataccessor.freq_eff is None or dataccessor.freq_bw is None:
         raise ValueError("cannot create database image: frequency information missing")
-    data = extract_metadata(dataccessor)
+    data = dataccessor.extract_metadata()
     data['xtr_radius'] = extraction_radius
     image = DBImage(data=data, dataset=dataset)
     return image

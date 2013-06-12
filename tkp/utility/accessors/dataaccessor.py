@@ -1,56 +1,8 @@
 import logging
 import warnings
-
-from tkp.utility.coordinates import WCS
-
-
 logger = logging.getLogger(__name__)
 
 time_format = "%Y-%m-%d %H:%M:%S.%f"
-
-def extract_metadata(dataaccessor):
-    return {
-        'tau_time': dataaccessor.tau_time,
-        'freq_eff': dataaccessor.freq_eff,
-        'freq_bw': dataaccessor.freq_bw,
-        'taustart_ts': dataaccessor.taustart_ts,
-        'url': dataaccessor.url,
-        'beam_smaj_pix': float(dataaccessor.beam[0]), ## NB We must cast to a standard python float
-        'beam_smin_pix': float(dataaccessor.beam[1]), ## as Monetdb converter cannot handle numpy.float64
-        'beam_pa_rad': float(dataaccessor.beam[2]),
-        'centre_ra': dataaccessor.centre_ra, #J2000 Degrees
-        'centre_decl': dataaccessor.centre_decl, #J2000 Degrees
-        'pixel_scale': dataaccessor.pixel_scale, #In degrees per x/y increment
-        'subbandwidth': dataaccessor.subbandwidth,
-        'antenna_set': dataaccessor.antenna_set,
-        'subbands': dataaccessor.subbands,
-        'channels': dataaccessor.channels,
-        'ncore': dataaccessor.ncore,
-        'nremote': dataaccessor.nremote,
-        'nintl': dataaccessor.nintl,
-        'position': dataaccessor.position,
-        'deltax': dataaccessor.pixelsize[0],
-        'deltay': dataaccessor.pixelsize[1],
-    }
-
-def parse_pixel_scale(wcs):
-    """Returns pixel width in degrees.
-
-    Valid for both 'lofarcasaimage' and 'fitsimage'.
-
-    Checks that we have square pixels and that the wcs units are degrees-
-    If this is not the case, this must be non-standard (non-LOFAR?) data,
-    so we can safely throw an exception and tell the user to add handling logic.
-    """
-    if wcs.cunit != ('deg', 'deg'):
-        raise ValueError("Image WCS header info not in degrees "
-                         "- unsupported use case")
-    #NB. What's a reasonable epsilon here?
-    eps = 1e-7
-    if abs(abs(wcs.cdelt[0]) - abs(wcs.cdelt[1])) > eps:
-        raise ValueError("Image WCS header suggests non-square pixels "
-                         "- unsupported use case")
-    return abs(wcs.cdelt[0])
 
 class DataAccessor(object):
     """
@@ -59,30 +11,26 @@ class DataAccessor(object):
     Data accessors provide a uniform way for the ImageData class (ie, generic
     image representation) to access the various ways in which images may be
     stored (FITS files, arrays in memory, potentially HDF5, etc).
+    
+    The list of attributes represents the minimum working set we expect from 
+    input images.
     """
 
     def __init__(self):
-        self.wcs = WCS()
-        self.data = None
-
+        ## Note, these get shipped off to the database insertion routine directly,
+        ## hence their units should match the database schema.
+        self.wcs = None #tkp.coordinates.WCS object
+        self.data = None #Data array
+        self.url = None #e.g. Filename
+        self.pixelsize = None # (x,y) tuple, units of degrees
+        self.tau_time = None  # integration time in seconds
+        self.taustart_ts = None #observation start time
+        self.centre_ra = None #Degrees (J2000)
+        self.centre_decl = None #Degrees (J2000)
+        self.freq_eff = None  # Hertz
+        self.freq_bw = None # Hertz
         self.beam = None # (bmaj (px), bmin (px), bpa (rad))
-        self.tau_time = None  # integration seconds
-        self.taustart_ts = None
-        self.freq_bw = None
-        self.freq_eff = None  # Hertz (? MHz?)
-        self.subbandwidth = None
-        self.url = None
-        self.centre_ra = None
-        self.centre_decl = None
-        self.pixel_scale = None
-        self.antenna_set = None
-        self.subbands = None
-        self.channels = None
-        self.ncore = None
-        self.nremote = None
-        self.nintl = None
-        self.position = None
-        self.pixelsize = None
+
 
     def not_set(self):
         """returns list of all params that are not set"""
@@ -99,4 +47,27 @@ class DataAccessor(object):
             return False
         return True
 
+    def extract_metadata(self):
+        """Massage the class attributes into a flat dictionary with 
+        database-friendly values. 
+
+        While rather tedious, this is easy to 
+        serialize and store separately to the actual image data.
+        
+        NB. Gets extended by subclasses to return additional data.
+        """
+        return {
+            'tau_time': self.tau_time,
+            'freq_eff': self.freq_eff,
+            'freq_bw': self.freq_bw,
+            'taustart_ts': self.taustart_ts,
+            'url': self.url,
+            'beam_smaj_pix': float(self.beam[0]), ## NB We must cast to a standard python float
+            'beam_smin_pix': float(self.beam[1]), ## as Monetdb converter cannot handle numpy.float64
+            'beam_pa_rad': float(self.beam[2]),
+            'centre_ra': self.centre_ra, #J2000 Degrees
+            'centre_decl': self.centre_decl, #J2000 Degrees
+            'deltax': self.pixelsize[0],
+            'deltay': self.pixelsize[1],
+        }
 

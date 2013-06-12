@@ -28,10 +28,10 @@ def is_bright_source_near(accessor, distance=20):
     """
 
     #TODO: this function should be split up and tested more atomically
-
-    if accessor.position == None:
-        msg = "image doesn't have position metadata. " \
-                "can't check if bright source is near"
+    metadata = accessor.extract_metadata()
+    if 'position' not in metadata:
+        msg = ("image doesn't have position metadata. "
+                "can't check if bright source is near")
         logger.warning(msg)
         warnings.warn(msg)
         return False
@@ -45,9 +45,10 @@ def is_bright_source_near(accessor, distance=20):
     starttime_mjd = unix2julian(starttime)
     m.do_frame(m.epoch("UTC", "%ss" % starttime_mjd))
 
-    x = qa.quantity(accessor.position[0], 'm')
-    y = qa.quantity(accessor.position[1], 'm')
-    z = qa.quantity(accessor.position[2], 'm')
+    position_md = metadata['position']
+    x = qa.quantity(position_md[0], 'm')
+    y = qa.quantity(position_md[1], 'm')
+    z = qa.quantity(position_md[2], 'm')
     position = m.position('ITRF', x, y, z)
     m.doframe(position)
 

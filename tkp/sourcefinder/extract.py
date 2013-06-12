@@ -922,10 +922,14 @@ class Detection(object):
                       self.smin.value)
 
 
-        end_smaj_ra, end_smaj_dec = self.imagedata.wcs.p2s(
-            [self.end_smaj_x, self.end_smaj_y])
-        end_smin_ra, end_smin_dec = self.imagedata.wcs.p2s(
-            [self.end_smin_x, self.end_smin_y])
+        def pixel_to_spatial(x, y):
+            try:
+                return self.imagedata.wcs.p2s([x, y])
+            except RuntimeError:
+                logger.debug("pixel_to_spatial failed at %f, %f" % (x, y))
+                return numpy.nan, numpy.nan
+        end_smaj_ra, end_smaj_dec = pixel_to_spatial(self.end_smaj_x, self.end_smaj_y)
+        end_smin_ra, end_smin_dec = pixel_to_spatial(self.end_smin_x, self.end_smin_y)
 
         smaj_asec = coordinates.angsep(self.ra.value, self.dec.value,
                                        end_smaj_ra, end_smaj_dec)

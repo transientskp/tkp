@@ -127,21 +127,10 @@ def system_sensitivity(freq_eff, Aeff):
     #The instrumental noise temperature follows from measurements or simulations
     # This is a quick & dirty approach based roughly on Fig 5 here
     #  <http://www.skatelescope.org/uploaded/59513_113_Memo_Nijboer.pdf>
-    sensitivities = [
-        (20e6, 0.2 * Tsky),
-        (30e6, 0.4 * Tsky),
-        (40e6, 0.5 * Tsky),
-        (50e6, 0.75 * Tsky),
-        (60e6, 0.9 * Tsky),
-        (70e6, 0.8 * Tsky),
-        (80e6, 0.5 * Tsky),
-        (90e6, 0.15 * Tsky),
-        (110e6, 0 * Tsky),
-        (300e6, 200)
-    ]
-    for freq, value in sensitivities:
-        if freq_eff < freq:
-            Tinst = value
+    x = [0, 10e6, 20e6, 30e6, 40e6, 50e6, 60e6, 70e6, 80e6, 90e6, 110e6]
+    y = [i * Tsky for i in [0, 0.1, 0.2, 0.4, 0.5, 0.75, 0.9, 0.8, 0.5, 0.15, 0]]
+    sensitivity = scipy.interpolate.interp1d(x, y, kind='linear')
+    Tinst = sensitivity(freq_eff)
 
     Tsys = Tsky + Tinst
 

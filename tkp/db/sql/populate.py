@@ -115,15 +115,10 @@ def recreate(options):
         con.close()
 
     elif options.backend == 'postgresql':
-        if params['host'] == 'localhost':
-            drop_cmd = 'dropdb %(database)s'
-            create_cmd = 'createdb %(database)s'
-        else:
-            drop_cmd = 'dropdb -h %(host)s -U %(username)s %(database)s'
-            create_cmd = 'createdb -h %(host)s -U %(username)s %(database)s'
-
-        call(drop_cmd % params, shell=True)
-        if call(create_cmd % params, shell=True) != 0:
+        call('dropdb -h %(host)s -U %(username)s %(database)s' % params,
+             shell=True)
+        if call('createdb -h %(host)s -U %(username)s %(database)s' % params,
+                shell=True) != 0:
             raise Exception("can't create a new postgresql database!")
     else:
         raise NotImplementedError

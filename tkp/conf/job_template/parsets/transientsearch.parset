@@ -1,3 +1,4 @@
+[transient_search]
 threshold = 0.9
 minpoints = 1
 eta_lim = 8.0

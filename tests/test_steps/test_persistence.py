@@ -6,6 +6,8 @@ from tkp.testutil.decorators import requires_mongodb
 import tkp.testutil.data as testdata
 from tkp.testutil.decorators import requires_database
 import tkp.db
+import tkp.utility.parset as parset
+from tkp.conf.job_template import default_parset_paths
 
 @requires_database()
 class TestPersistence(unittest.TestCase):
@@ -14,23 +16,13 @@ class TestPersistence(unittest.TestCase):
         tkp.db.rollback()
 
     @classmethod
-    def setUpClass(cls):
-        cls.dataset_id = db_subs.create_dataset_8images()
-        cls.fake_parset = tempfile.NamedTemporaryFile()
-        cls.fake_parset.flush()
-        cls.images = [testdata.fits_file]
-        cls.extraction_radius = 256
-        cls.parset = {
-            'mongo_host': 'localhost',
-            'description': 'TRAP dataset',
-            'dataset_id': -1,
-            'copy_images': True,
-            'mongo_port': 27017,
-            'mongo_db': 'tkp',
-        }
+    def setUpClass(self):
+        self.dataset_id = db_subs.create_dataset_8images()
+        self.images = [testdata.fits_file]
+        self.extraction_radius = 256
+        with open(default_parset_paths['persistence.parset']) as f:
+            self.parset = parset.read_config_section(f, 'persistence')
 
-    def test_parse_parset(self):
-        tkp.steps.persistence.parse_parset(self.fake_parset.name)
 
     def test_create_dataset(self):
         dataset_id = tkp.steps.persistence.create_dataset(-1, "test")
@@ -58,10 +50,10 @@ class TestPersistence(unittest.TestCase):
 @requires_mongodb()
 class TestMongoDb(unittest.TestCase):
     @classmethod
-    def setUpClass(cls):
-        cls.images = [testdata.fits_file]
+    def setUpClass(self):
+        self.images = [testdata.fits_file]
 
     @unittest.skip("disabled for now since no proper way to configure (yet)")
     def test_image_to_mongodb(self):
         self.assertTrue(tkp.steps.persistence.image_to_mongodb(self.images[0],
-                                                    hostname,  port, database))
+                                                    hostname, port, database))

@@ -10,6 +10,8 @@ from tkp.db import general as dbgen
 from tkp.db import monitoringlist as dbmon
 from tkp.db import associations as dbass
 from lofarpipe.support.control import control
+from tkp.distribute.common import load_job_config, dump_job_config_to_logdir
+import tkp.utility.parset as parset
 
 
 class MonetFilter(logging.Filter):
@@ -43,22 +45,18 @@ class TrapLocal(control):
         [h.addFilter(MonetFilter()) for h in logdrain.handlers]
         self.logger = logdrain
 
-        p_parset_file = self.task_definitions.get("persistence", "parset")
-        q_parset_file = self.task_definitions.get("quality_check", "parset")
-        se_parset_file = self.task_definitions.get("source_extraction", "parset")
-        nd_parset_file = self.task_definitions.get("null_detections", "parset")
-        tr_parset_file = self.task_definitions.get("transient_search", "parset")
-
+        job_config = load_job_config(self.task_definitions)
+        dump_job_config_to_logdir(self.config, job_config)
         job_dir = self.config.get('layout', 'job_directory')
         images = imp.load_source('images_to_process', os.path.join(job_dir,
                                  'images_to_process.py')).images
 
 
-        p_parset = steps.persistence.parse_parset(p_parset_file)
-        q_parset = steps.quality.parse_parset(q_parset_file)
-        se_parset = steps.source_extraction.parse_parset(se_parset_file)
-        nd_parset = steps.null_detections.parse_parset(nd_parset_file)
-        tr_parset = steps.transient_search.parse_parset(tr_parset_file)
+        p_parset = parset.load_section(job_config, 'persistence')
+        q_lofar_parset = parset.load_section(job_config, 'quality_lofar')
+        se_parset = parset.load_section(job_config, 'source_extraction')
+        nd_parset = parset.load_section(job_config, 'null_detections')
+        tr_parset = parset.load_section(job_config, 'transient_search')
 
 
         # persistence
@@ -75,7 +73,7 @@ class TrapLocal(control):
         good_image_ids = []
         for image_id in image_ids:
             image = Image(id=image_id)
-            rejected = steps.quality.reject_check(image.url, q_parset)
+            rejected = steps.quality.reject_check(image.url, q_lofar_parset)
             if rejected:
                 reason, comment = rejected
                 steps.quality.reject_image(image_id, reason, comment)
@@ -94,7 +92,7 @@ class TrapLocal(control):
                                            'blind')
 
             # null_detections
-            deRuiter_radius = nd_parset['deRuiter_radius']
+            deRuiter_radius = nd_parset['deruiter_radius']
 
             #for image in good_images:
             image_id = image.id
@@ -116,11 +114,11 @@ class TrapLocal(control):
             transients = steps.transient_search.search_transients(image_id,
                                                                   tr_parset)
             dbmon.adjust_transients_in_monitoringlist(image_id, transients)
-        
+
         # Classification
         for transient in transients:
             steps.feature_extraction.extract_features(transient)
 #            ingred.classification.classify(transient, cl_parset)
-        
+
         now = datetime.datetime.utcnow()
         dbgen.update_dataset_process_ts(dataset_id, now)

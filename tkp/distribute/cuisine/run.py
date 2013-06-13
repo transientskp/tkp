@@ -6,9 +6,10 @@ from lofarpipe.support.control import control
 import lofarpipe.support.lofaringredient as ingredient
 from tkp.steps.monitoringlist import add_manual_monitoringlist_entries
 from tkp.db import DataSet
-from tkp.db import execute as dbexecute
 from tkp.db import general as dbgen
 from tkp import steps
+from tkp.distribute.common import load_job_config, dump_job_config_to_logdir
+import tkp.utility.parset as parset
 
 
 class Trap(control):
@@ -43,9 +44,6 @@ class Trap(control):
 
     def pipeline_logic(self):
 
-        #db test
-        dbexecute("select 1;")
-
         job_dir = self.config.get('layout', 'job_directory')
         images = imp.load_source('images_to_process', os.path.join(job_dir,
                                  'images_to_process.py')).images
@@ -61,11 +59,19 @@ class Trap(control):
             self.logger.warn("No images found, check parameter files.")
             return 1
 
-        se_parset_file = self.task_definitions.get("source_extraction", "parset")
-        se_parset = steps.source_extraction.parse_parset(se_parset_file)
+        job_config = load_job_config(self.task_definitions)
+        dump_job_config_to_logdir(self.config, job_config)
+        p_parset = parset.load_section(job_config, 'persistence')
+        q_lofar_parset = parset.load_section(job_config, 'quality_lofar')
+        se_parset = parset.load_section(job_config, 'source_extraction')
+        nd_parset = parset.load_section(job_config, 'null_detections')
+        tr_parset = parset.load_section(job_config, 'transient_search')
+        assoc_parset = parset.load_section(job_config, 'association')
+
         self.outputs.update(self.run_task(
             "persistence",
             images,
+            parset=p_parset,
             extraction_radius_pix=se_parset['radius']
         ))
 
@@ -79,7 +85,8 @@ class Trap(control):
         image_ids = [i.id for i in dataset.images]
         self.outputs.update(self.run_task(
             "quality_check",
-            image_ids
+            image_ids,
+            parset=q_lofar_parset
         ))
 
 
@@ -88,6 +95,7 @@ class Trap(control):
         self.outputs.update(self.run_task(
             "source_extraction",
             good_image_ids,
+            parset=se_parset
         ))
 
 
@@ -102,17 +110,20 @@ class Trap(control):
         self.outputs.update(self.run_task(
             "null_detections",
             good_image_ids,
+            parset=nd_parset
         ))
 
         for (image_id, sources) in sources_sets:
             self.outputs.update(self.run_task(
                 "source_association",
                 [image_id],
+                parset=assoc_parset
             ))
 
             self.outputs.update(self.run_task(
                 "transient_search",
                 [image_id],
+                parset=tr_parset
             ))
 
         self.outputs.update(self.run_task(

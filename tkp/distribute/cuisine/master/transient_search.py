@@ -8,7 +8,7 @@ class transient_search(TrapMaster):
     """Search for transients in the database"""
 
     inputs = {
-        'parset': lofaringredient.FileField(
+        'parset': lofaringredient.DictField(
             '-p', '--parset',
             dest='parset',
             help="Transient search configuration parset"
@@ -20,8 +20,7 @@ class transient_search(TrapMaster):
 
     def go(self):
         image_id = self.inputs['args'][0]
-        parset_file = self.inputs['parset']
-        parset = steps.transient_search.parse_parset(parset_file)
+        parset = self.inputs['parset']
         transients = steps.transient_search.search_transients(image_id, parset)
         adjust_transients_in_monitoringlist(image_id, transients)
         self.outputs['transients'] = transients

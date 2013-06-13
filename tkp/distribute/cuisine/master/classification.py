@@ -25,8 +25,8 @@ follow from a combination of 'fast transient' and an external trigger).
 """
 from lofarpipe.support import lofaringredient
 from tkp.distribute.cuisine.common import TrapMaster
-from tkp.steps.classification import classify, parse_parset
-
+from tkp.steps.classification import classify
+import tkp.utility.parset as parset
 
 class classification(TrapMaster):
 
@@ -48,9 +48,8 @@ class classification(TrapMaster):
 
     def trapstep(self):
         transients = self.inputs['args']
-        parset_file = self.inputs['parset']
-
-        parset = parse_parset(parset_file)
+        with open(self.inputs['parset']) as f:
+            parset = parset.read_config_section(f, 'classification')
         # Classification
         for transient in transients:
             self.logger.info("Classifying transient #%d", transient.runcatid)

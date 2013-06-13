@@ -1,14 +1,15 @@
-taustart_ts = 2007-07-20T14:18:09.909001 # start time
-freq_eff = 128613281.25                  # frequency in Hz
-freq_bw = 1940917.96875                  # bandwidth in Hz
-tau_time = 58141509.156864166            # integration time
-antenna_set = HBA_DUAL                   # which antenna set is used
+[inject]
+taustart_ts = "2007-07-20T14:18:09.909001" ; start time
+freq_eff = 128613281.25                  ; frequency in Hz
+freq_bw = 1940917.96875                  ; bandwidth in Hz
+tau_time = 58141509.156864166            ; integration time
+antenna_set = "HBA_DUAL"                   ; which antenna set is used
 subbands = 10
 channels = 60
-ncore = 41                               # number of core stations
-nremote = 0                                # number of remote stations
-nintl = 0                                # number of international stations
-position = 0                             # 3d coordinate of antenna (TODO)
+ncore = 41                               ; number of core stations
+nremote = 0                                ; number of remote stations
+nintl = 0                                ; number of international stations
+position = 0                             ; 3d coordinate of antenna (TODO)
 subbandwidth = 128613281.25
 bmaj = 1.9211971282958984
 bmin = 1.7578132629394532

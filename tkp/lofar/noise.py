@@ -9,14 +9,12 @@ To check the values calculated here one can use this `LOFAR image noise
 calculator <http://www.astron.nl/~heald/test/sens.php>`_.
 
 """
-import os
 import math
 import logging
 import warnings
 import scipy.constants
 import scipy.interpolate
-import tkp
-import tkp.lofar.antennaarrays
+from tkp.lofar import antennaarrays
 
 logger = logging.getLogger(__name__)
 
@@ -25,9 +23,10 @@ TILES_PER_CORE_STATION = 24
 TILES_PER_REMOTE_STATION = 48
 TILES_PER_INTL_STATION = 96
 
+
 def noise_level(freq_eff, bandwidth, tau_time, antenna_set, Ncore, Nremote, Nintl):
     """
-    Returns the theoretical noise level given the supplied array antenna_set
+    Returns the theoretical noise level (in Jy) given the supplied array antenna_set
 
     :param bandwidth: in Hz
     :param tau_time: in seconds
@@ -35,16 +34,16 @@ def noise_level(freq_eff, bandwidth, tau_time, antenna_set, Ncore, Nremote, Nint
     :param antenna_set: LBA_INNER, LBA_OUTER, LBA_SPARSE, LBA or HBA
     """
     if antenna_set.startswith("LBA"):
-        ds_core = tkp.lofar.antennaarrays.core_dipole_distances[antenna_set]
-        Aeff_core = sum([tkp.lofar.noise.Aeff_dipole(freq_eff, x) for x in ds_core])
-        ds_remote = tkp.lofar.antennaarrays.remote_dipole_distances[antenna_set]
-        Aeff_remote = sum([tkp.lofar.noise.Aeff_dipole(freq_eff, x) for x in ds_remote])
-        ds_intl = tkp.lofar.antennaarrays.intl_dipole_distances[antenna_set]
-        Aeff_intl = sum([tkp.lofar.noise.Aeff_dipole(freq_eff, x) for x in ds_intl])
+        ds_core = antennaarrays.core_dipole_distances[antenna_set]
+        Aeff_core = sum([Aeff_dipole(freq_eff, x) for x in ds_core])
+        ds_remote = antennaarrays.remote_dipole_distances[antenna_set]
+        Aeff_remote = sum([Aeff_dipole(freq_eff, x) for x in ds_remote])
+        ds_intl = antennaarrays.intl_dipole_distances[antenna_set]
+        Aeff_intl = sum([Aeff_dipole(freq_eff, x) for x in ds_intl])
     else:
-        Aeff_core = ANTENNAE_PER_TILE * TILES_PER_CORE_STATION * tkp.lofar.noise.Aeff_dipole(freq_eff)
-        Aeff_remote = ANTENNAE_PER_TILE * TILES_PER_REMOTE_STATION * tkp.lofar.noise.Aeff_dipole(freq_eff)
-        Aeff_intl = ANTENNAE_PER_TILE * TILES_PER_INTL_STATION * tkp.lofar.noise.Aeff_dipole(freq_eff)
+        Aeff_core = ANTENNAE_PER_TILE * TILES_PER_CORE_STATION * Aeff_dipole(freq_eff)
+        Aeff_remote = ANTENNAE_PER_TILE * TILES_PER_REMOTE_STATION * Aeff_dipole(freq_eff)
+        Aeff_intl = ANTENNAE_PER_TILE * TILES_PER_INTL_STATION * Aeff_dipole(freq_eff)
 
     # c = core, r = remote, i = international
     # so for example cc is core-core baseline

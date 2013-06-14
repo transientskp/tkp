@@ -7,7 +7,7 @@ import tkp.testutil.data as testdata
 from tkp.testutil.decorators import requires_database
 import tkp.db
 import tkp.utility.parset as parset
-from tkp.testutil import default_parset_paths
+from tkp.testutil.data import default_parset_paths
 
 @requires_database()
 class TestPersistence(unittest.TestCase):

@@ -3,7 +3,7 @@ import tempfile
 from tkp.steps.source_extraction import extract_sources
 from tkp.testutil import db_subs, data
 import tkp.utility.parset as parset
-from tkp.testutil import default_parset_paths
+from tkp.testutil.data import default_parset_paths
 
 class TestSourceExtraction(unittest.TestCase):
     @classmethod

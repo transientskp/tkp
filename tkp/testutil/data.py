@@ -1,5 +1,8 @@
 import os
 import warnings
+import glob
+import tkp
+
 
 HERE = os.path.dirname(__file__)
 DEFAULT = os.path.abspath(os.path.join(HERE, '../../tests/data'))
@@ -15,3 +18,9 @@ fits_file = os.path.join(DATAPATH,
 # A arbitrary casa table which can be used for playing around
 casa_table = os.path.join(DATAPATH,
 'casatable/L55614_020TO029_skymodellsc_wmax6000_noise_mult10_cell40_npix512_wplanes215.img.restored.corr')
+
+job_template_dir = os.path.join(tkp.__path__[0], 'conf/job_template')
+default_parset_paths = dict([(os.path.basename(f), f) for f in
+                            glob.glob(os.path.join(job_template_dir,
+                                                   'parsets',
+                                                   '*.parset'))])

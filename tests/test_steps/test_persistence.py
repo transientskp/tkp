@@ -16,12 +16,12 @@ class TestPersistence(unittest.TestCase):
         tkp.db.rollback()
 
     @classmethod
-    def setUpClass(self):
-        self.dataset_id = db_subs.create_dataset_8images()
-        self.images = [testdata.fits_file]
-        self.extraction_radius = 256
+    def setUpClass(cls):
+        cls.dataset_id = db_subs.create_dataset_8images()
+        cls.images = [testdata.fits_file]
+        cls.extraction_radius = 256
         with open(default_parset_paths['persistence.parset']) as f:
-            self.parset = parset.read_config_section(f, 'persistence')
+            cls.parset = parset.read_config_section(f, 'persistence')
 
 
     def test_create_dataset(self):
@@ -50,8 +50,8 @@ class TestPersistence(unittest.TestCase):
 @requires_mongodb()
 class TestMongoDb(unittest.TestCase):
     @classmethod
-    def setUpClass(self):
-        self.images = [testdata.fits_file]
+    def setUpClass(cls):
+        cls.images = [testdata.fits_file]
 
     @unittest.skip("disabled for now since no proper way to configure (yet)")
     def test_image_to_mongodb(self):

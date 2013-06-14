@@ -1,6 +1,9 @@
 """
 All Celery worker tasks are defined here. No logic should be implemented here,
 all functions should be a wrapper around the code in tkp.steps.
+
+convention here is func(iter, *arguments). So the iter element as first
+argument
 """
 from celery import Celery
 import tkp.steps
@@ -32,5 +35,12 @@ def extract_sources(url, se_parset):
     return tkp.steps.source_extraction.extract_sources(url, se_parset)
 
 @celery.task
-def forced_fits(url, detections, parset):
+def forced_fits(detection_set, parset):
+    """
+
+    :param detection_set: should be (url, detections) tuple
+    :param parset: null detections parset
+    :return:
+    """
+    url, detections = detection_set
     return tkp.steps.source_extraction.forced_fits(url, detections, parset)

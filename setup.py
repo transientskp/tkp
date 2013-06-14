@@ -40,8 +40,7 @@ if root_dir != '':
 
 for dirpath, dirnames, filenames in os.walk('tkp'):
     # Ignore dirnames that start with '.'
-    for i, dirname in enumerate(dirnames):
-        if dirname.startswith('.'): del dirnames[i]
+    dirnames[:] = [d for d in dirnames if not d.startswith('.') and d != '__pycache__']
     if '__init__.py' in filenames:
         tkp_packages.append('.'.join(fullsplit(dirpath)))
     elif filenames:

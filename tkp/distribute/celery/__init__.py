@@ -13,10 +13,25 @@ from tkp.db import associations as dbass
 from tkp.distribute.celery import tasks
 from tkp.distribute.common import load_job_config, dump_job_config_to_logdir
 import tkp.utility.parset as parset
-import sys
 
 
 logger = logging.getLogger(__name__)
+
+
+def runner(func, iterable, arguments, local=False):
+    """
+
+    :param func: The function to be called, should have task decorator
+    :param iterable: a list of objects to iterate over
+    :param arguments: list of arguments to give to the function
+    :param local: False if you want to use celery, True if local run
+    :return: the result of the func mapped
+    """
+    if local:
+        return [func(i, *arguments) for i in iterable]
+    else:
+        return group(func.s(i, *arguments) for i in iterable)().get()
+
 
 
 def string_to_list(my_string):
@@ -24,6 +39,7 @@ def string_to_list(my_string):
     Convert a list-like string (as in pipeline.cfg) to a list of values.
     """
     return [x.strip() for x in my_string.strip('[] ').split(',') if x.strip()]
+
 
 def initialize_pipeline_config(pipe_cfg_file, job_name):
     """Replaces the sort of background bookkeeping that cuisine would do"""
@@ -42,6 +58,7 @@ def initialize_pipeline_config(pipe_cfg_file, job_name):
             logger.warn("Could not find task file: %s", f)
     config.read(task_files)
     return config
+
 
 def run(job_name, local=False):
     pipe_config = initialize_pipeline_config(
@@ -67,8 +84,9 @@ def run(job_name, local=False):
 
 
     # persistence
-    metadatas = group(tasks.persistence_node_step.s([img], p_parset)
-                      for img in images)().get()
+    imgs = [[img] for img in images]
+    arguments = [p_parset]
+    metadatas = runner(tasks.persistence_node_step, imgs, arguments, local)
     metadatas = [m[0] for m in metadatas]
 
     dataset_id, image_ids = steps.persistence.master_steps(metadatas,
@@ -82,8 +100,10 @@ def run(job_name, local=False):
     images = [Image(id=image_id) for image_id in image_ids]
 
     # quality_check
-    rejecteds = group(tasks.quality_reject_check.s(img.url, q_lofar_parset)
-                      for img in images)().get()
+    urls = [img.url for img in images]
+    arguments = [q_lofar_parset]
+    rejecteds = runner(tasks.quality_reject_check, urls, arguments, local)
+
     good_images = []
     for image, rejected in zip(images, rejecteds):
         if rejected:
@@ -97,8 +117,9 @@ def run(job_name, local=False):
         return
 
     # Sourcefinding
-    extract_sources = group(tasks.extract_sources.s(img.url, se_parset)
-                            for img in good_images)().get()
+    urls = [img.url for img in good_images]
+    arguments = [se_parset]
+    extract_sources = runner(tasks.extract_sources, urls, arguments, local)
 
     for image, sources in zip(good_images, extract_sources):
         dbgen.insert_extracted_sources(image.id, sources, 'blind')
@@ -108,9 +129,10 @@ def run(job_name, local=False):
     deRuiter_radius = nd_parset['deruiter_radius']
     null_detectionss = [dbmon.get_nulldetections(image.id, deRuiter_radius)
                         for image in good_images]
-    ff_nds = group(tasks.forced_fits.s(img.url, null_detections, nd_parset)
-                   for img, null_detections in zip(good_images,
-                                                   null_detectionss))().get()
+
+    iters = zip([i.url for i in good_images], null_detectionss)
+    arguments = [nd_parset]
+    ff_nds = runner(tasks.forced_fits, iters, arguments, local)
 
     for image, ff_nd in zip(good_images, ff_nds):
         dbgen.insert_extracted_sources(image.id, ff_nd, 'ff_nd')

@@ -14,7 +14,8 @@ def load_job_config(pipe_config):
                             'source_extraction',
                             'null_detections',
                             'transient_search']
-    parset_files_to_read = [pipe_config.get(taskname, 'parset')
+    parset_directory = pipe_config.get('layout', 'parset_directory')
+    parset_files_to_read = [os.path.join(parset_directory, taskname + '.parset')
                                 for taskname in task_parsets_to_read]
     job_config = ConfigParser.SafeConfigParser()
     job_config.read(parset_files_to_read)

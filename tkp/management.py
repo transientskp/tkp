@@ -162,7 +162,7 @@ def copy_template(job_or_project, name, target=None, **options):
                 shutil.copymode(old_path, new_path)
                 make_writeable(new_path)
             except OSError:
-                print >> stderr, ("Notice: Couldn't set permission bits on %s. You're "
+                sys.stderr.write("Notice: Couldn't set permission bits on %s. You're "
                                   "probably using an uncommon filesystem setup. No "
                                   "problem.\n" % new_path)
 
@@ -202,12 +202,9 @@ def celery_cmd(args):
 def run_job(args):
     print "running job '%s'" % args.name
     prepare_job(args.name, args.debug)
-    if args.method == 'cuisine':
-        import tkp.distribute.cuisine.run
-        sys.exit(tkp.distribute.cuisine.run.Trap().main())
-    elif args.method == 'local':
-        import tkp.distribute.local.run
-        sys.exit(tkp.distribute.local.run.TrapLocal().main())
+    if args.method == 'local':
+        import tkp.distribute.celery
+        tkp.distribute.celery.run(args.name, local=True)
     elif args.method == 'celery':
         import tkp.distribute.celery
         tkp.distribute.celery.run(args.name)
@@ -277,11 +274,10 @@ For now, use these environment variables to configure the database:
     run_parser.add_argument('-m', '--monitor-coords', help=m_help)
     run_parser.add_argument('-l', '--monitor-list',
                             help='Specify a file containing a list of RA,DEC')
-    run_parser.add_argument('-f', '--method', choices=['cuisine',
-                                                       'local',
+    run_parser.add_argument('-f', '--method', choices=['local',
                                                        'celery',
                                                        ],
-                            default="cuisine",
+                            default="celery",
                             help="what distribution method to use")
     run_parser.set_defaults(func=run_job)
 

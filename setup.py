@@ -37,18 +37,19 @@ tkp_data_files = []
 root_dir = os.path.dirname(__file__)
 if root_dir != '':
     os.chdir(root_dir)
-    for dirpath, dirnames, filenames in os.walk('tkp'):
-        # Ignore dirnames that start with '.'
-        for i, dirname in enumerate(dirnames):
-            if dirname.startswith('.'): del dirnames[i]
-        if '__init__.py' in filenames:
-            tkp_packages.append('.'.join(fullsplit(dirpath)))
-        elif filenames:
-            tkp_data_files.append([dirpath, [os.path.join(dirpath, f) for f in filenames]])
+
+for dirpath, dirnames, filenames in os.walk('tkp'):
+    # Ignore dirnames that start with '.'
+    for i, dirname in enumerate(dirnames):
+        if dirname.startswith('.'): del dirnames[i]
+    if '__init__.py' in filenames:
+        tkp_packages.append('.'.join(fullsplit(dirpath)))
+    elif filenames:
+        tkp_data_files.append([dirpath, [os.path.join(dirpath, f) for f in filenames]])
 
 setup(
     name = "tkp",
-    version = "0.1",
+    version = "0.2-DEV",
     packages = tkp_packages,
     scripts = tkp_scripts,
     data_files=tkp_data_files,

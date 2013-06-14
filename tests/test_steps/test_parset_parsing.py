@@ -1,7 +1,7 @@
 import unittest
 import tempfile
 import datetime
-from tkp.conf.job_template import default_parset_paths
+from tkp.testutil import default_parset_paths
 import tkp.utility.parset as parset
 import StringIO
 import ConfigParser

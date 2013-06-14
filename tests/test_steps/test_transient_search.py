@@ -4,7 +4,7 @@ from tkp.testutil import db_subs, db_queries
 from tkp.testutil.decorators import requires_database
 import tkp.db
 import tkp.utility.parset as parset
-from tkp.conf.job_template import default_parset_paths
+from tkp.testutil import default_parset_paths
 
 @requires_database()
 class TestTransientSearch(unittest.TestCase):

@@ -7,7 +7,7 @@ import tkp.utility.accessors
 import tkp.inject
 from tkp.testutil.data import DATAPATH
 import tkp.utility.parset
-from tkp.conf.job_template import default_parset_paths
+from tkp.testutil import default_parset_paths
 
 fits_file = os.path.join(DATAPATH, 'missingheaders.fits')
 

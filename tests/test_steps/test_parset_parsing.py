@@ -9,9 +9,9 @@ import ConfigParser
 
 class TestParsingCode(unittest.TestCase):
     @classmethod
-    def setUpClass(self):
-        self.section = 'test'
-        self.parset = {
+    def setUpClass(cls):
+        cls.section = 'test'
+        cls.parset = {
                'float':0.5,
                'int':1,
                'string1':'bob',

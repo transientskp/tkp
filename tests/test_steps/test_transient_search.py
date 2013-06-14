@@ -13,10 +13,10 @@ class TestTransientSearch(unittest.TestCase):
         tkp.db.rollback()
 
     @classmethod
-    def setUpClass(self):
-        self.dataset_id = db_subs.create_dataset_8images(extract_sources=True)
+    def setUpClass(cls):
+        cls.dataset_id = db_subs.create_dataset_8images(extract_sources=True)
         with open(default_parset_paths['transientsearch.parset']) as f:
-            self.parset = parset.read_config_section(f, 'transient_search')
+            cls.parset = parset.read_config_section(f, 'transient_search')
 
     def test_search_transients(self):
         image_ids = db_queries.dataset_images(self.dataset_id)

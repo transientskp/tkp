@@ -7,10 +7,10 @@ from tkp.conf.job_template import default_parset_paths
 
 class TestSourceExtraction(unittest.TestCase):
     @classmethod
-    def setUpClass(self):
-        self.dataset_id = db_subs.create_dataset_8images()
+    def setUpClass(cls):
+        cls.dataset_id = db_subs.create_dataset_8images()
         with open(default_parset_paths['sourcefinder.parset']) as f:
-            self.parset = parset.read_config_section(f, 'source_extraction')
+            cls.parset = parset.read_config_section(f, 'source_extraction')
 
     def test_extract_sources(self):
         image_path = data.fits_file

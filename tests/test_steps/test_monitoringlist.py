@@ -7,6 +7,6 @@ from tkp.testutil.decorators import requires_database
 @requires_database()
 class TestMonitoringlist(unittest.TestCase):
     @classmethod
-    def setUpClass(self):
+    def setUpClass(cls):
         pass
 

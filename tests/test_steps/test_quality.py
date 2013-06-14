@@ -10,10 +10,10 @@ from tkp.conf.job_template import default_parset_paths
 @requires_database()
 class TestQuality(unittest.TestCase):
     @classmethod
-    def setUpClass(self):
-        self.accessor = tkp.utility.accessors.open(testdata.casa_table)
+    def setUpClass(cls):
+        cls.accessor = tkp.utility.accessors.open(testdata.casa_table)
         with open(default_parset_paths['quality_check.parset']) as f:
-            self.parset = parset.read_config_section(f, 'quality_lofar')
+            cls.parset = parset.read_config_section(f, 'quality_lofar')
 
     def test_check(self):
         tkp.steps.quality.reject_check(self.accessor.url, self.parset)

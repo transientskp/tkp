@@ -1,11 +1,18 @@
 # please refer to the url below for documentation:
 # http://docs.celeryproject.org/en/latest/configuration.html
 
-BROKER_URL = "redis://localhost:6379/0"
+# This is used when you run a worker:
 CELERY_IMPORTS = ("tkp.distribute.celery.tasks", )
+
+# What is the broker client and workers should register to
+BROKER_URL = "redis://localhost:6379/0"
+
+# where to store the results from the workers
 CELERY_RESULT_BACKEND = "redis://localhost:6379/0"
+
+# don't reconfigure the logger, important for a worker
 CELERYD_HIJACK_ROOT_LOGGER = False
 
-
-# TODO: This is supposed to make celery run local, but I don't get it to work
-# CELERY_ALWAYS_EAGER = CELERY_EAGER_PROPAGATES_EXCEPTIONS = True
+# when incommented, you will run the pipeline locally
+# no broker or workers are required
+#CELERY_ALWAYS_EAGER = CELERY_EAGER_PROPAGATES_EXCEPTIONS = True

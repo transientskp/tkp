@@ -24,9 +24,11 @@ TILES_PER_REMOTE_STATION = 48
 TILES_PER_INTL_STATION = 96
 
 
-def noise_level(freq_eff, bandwidth, tau_time, antenna_set, Ncore, Nremote, Nintl):
+def noise_level(freq_eff, bandwidth, tau_time, antenna_set, Ncore, Nremote,
+                Nintl):
     """
-    Returns the theoretical noise level (in Jy) given the supplied array antenna_set
+    Returns the theoretical noise level (in Jy) given the supplied array
+    antenna_set.
 
     :param bandwidth: in Hz
     :param tau_time: in seconds
@@ -41,23 +43,18 @@ def noise_level(freq_eff, bandwidth, tau_time, antenna_set, Ncore, Nremote, Nint
         ds_intl = antennaarrays.intl_dipole_distances[antenna_set]
         Aeff_intl = sum([Aeff_dipole(freq_eff, x) for x in ds_intl])
     else:
-        Aeff_core = ANTENNAE_PER_TILE * TILES_PER_CORE_STATION * Aeff_dipole(freq_eff)
-        Aeff_remote = ANTENNAE_PER_TILE * TILES_PER_REMOTE_STATION * Aeff_dipole(freq_eff)
-        Aeff_intl = ANTENNAE_PER_TILE * TILES_PER_INTL_STATION * Aeff_dipole(freq_eff)
+        Aeff_core = ANTENNAE_PER_TILE * TILES_PER_CORE_STATION * \
+                                                        Aeff_dipole(freq_eff)
+        Aeff_remote = ANTENNAE_PER_TILE * TILES_PER_REMOTE_STATION * \
+                                                        Aeff_dipole(freq_eff)
+        Aeff_intl = ANTENNAE_PER_TILE * TILES_PER_INTL_STATION * \
+                                                        Aeff_dipole(freq_eff)
 
     # c = core, r = remote, i = international
     # so for example cc is core-core baseline
-    Ssys_cc = system_sensitivity(freq_eff, Aeff_core)
-    Ssys_rr = system_sensitivity(freq_eff, Aeff_remote)
-    Ssys_ii = system_sensitivity(freq_eff, Aeff_intl)
-
-    SEFD_cc = Ssys_cc
-    SEFD_rr = Ssys_rr
-    SEFD_ii = Ssys_ii
-
-    SEFD_cr = math.sqrt(SEFD_cc) * math.sqrt(SEFD_rr)
-    SEFD_ci = math.sqrt(SEFD_cc) * math.sqrt(SEFD_ii)
-    SEFD_ri = math.sqrt(SEFD_rr) * math.sqrt(SEFD_ii)
+    Ssys_c = system_sensitivity(freq_eff, Aeff_core)
+    Ssys_r = system_sensitivity(freq_eff, Aeff_remote)
+    Ssys_i = system_sensitivity(freq_eff, Aeff_intl)
 
     baselines_cc = (Ncore * (Ncore - 1)) / 2
     baselines_rr = (Nremote * (Nremote - 1)) / 2
@@ -69,16 +66,25 @@ def noise_level(freq_eff, bandwidth, tau_time, antenna_set, Ncore, Nremote, Nint
     #baselines_total = baselines_cc + baselines_rr + baselines_ii +\
     #                    baselines_cr + baselines_ci + baselines_ri
 
-    # factor for increase of noise due to the weighting scheme
-    W = 1  # taken from PHP script
+    # baseline noise, for example cc is core-core
+    temp_cc = Ssys_c
+    temp_rr = Ssys_r
+    temp_ii = Ssys_i
+
+    #temp_cr = math.sqrt(SEFD_cc) * math.sqrt(SEFD_rr)
+    #temp_ci = math.sqrt(SEFD_cc) * math.sqrt(SEFD_ii)
+    #temp_ri = math.sqrt(SEFD_rr) * math.sqrt(SEFD_ii)
 
     # The noise level in a LOFAR image
-    t_cc = baselines_cc / pow(SEFD_cc, 2)
-    t_rr = baselines_rr / pow(SEFD_rr, 2)
-    t_ii = baselines_ii / pow(SEFD_ii, 2)
-    t_cr = baselines_cr / pow(SEFD_cr, 2)
-    t_ci = baselines_ci / pow(SEFD_ci, 2)
-    t_ri = baselines_ri / pow(SEFD_ri, 2)
+    t_cc = baselines_cc / (temp_cc * temp_cc)
+    t_rr = baselines_rr / (temp_rr * temp_cc)
+    t_ii = baselines_ii / (temp_ii * temp_ii)
+    t_cr = baselines_cr / (temp_cc * temp_rr)
+    t_ci = baselines_ci / (temp_cc * temp_ii)
+    t_ri = baselines_ri / (temp_rr * temp_ii)
+
+    # factor for increase of noise due to the weighting scheme
+    W = 1  # taken from PHP script
 
     image_sens = W / math.sqrt(4 * bandwidth * tau_time *
                                (t_cc + t_rr + t_ii + t_cr + t_ci + t_ri))
@@ -95,7 +101,7 @@ def Aeff_dipole(freq_eff, distance=None):
     :param distance: Distance to nearest dipole, only required for LBA.
     """
     wavelength = scipy.constants.c/freq_eff
-    if wavelength > 3: # LBA dipole
+    if wavelength > 3:  # LBA dipole
         if not distance:
             msg = "Distance to nearest dipole required for LBA noise calculation"
             logger.error(msg)

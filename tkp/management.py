@@ -1,12 +1,16 @@
 """
-This is a tool for managing a TRAP project. It can be used to initialize a
-TKP project and manage (init, clean, remove) its containing jobs.
+This is a tool for managing a TKP project. It can be used to initialize a TKP
+project and the jobs inside a project. To start using this tool you first
+create a TRAP project by running:
 
-To start using this tool you first create a TRAP project by running:
+  $ tkp-manage.py initproject <projectname>
 
- $ trap-manage.py initproject <projectname>
+In the folder where you want to put the TRAP project. To learn more about a
+specific `tkp-manage.py` subcommand, run:
 
- In the folder where you want to put the TRAP project.
+  $ tkp-manage.py <subcommand> -h
+
+Have a nice day!
 """
 import argparse
 import os
@@ -118,8 +122,8 @@ def copy_template(job_or_project, name, target=None, **options):
 
     # these are used for string replacement in templates
     substitutes = (
-        ("default_username", getpass.getuser()),
-        ("runtime_directory", top_dir)
+        ("user_name", getpass.getuser()),
+        #("runtime_directory", top_dir)
         )
 
     for root, dirs, files in os.walk(template_dir):
@@ -202,30 +206,11 @@ def celery_cmd(args):
 def run_job(args):
     print "running job '%s'" % args.name
     prepare_job(args.name, args.debug)
-    if args.method == 'local':
-        import tkp.distribute.celery
-        tkp.distribute.celery.run(args.name, local=True)
-    elif args.method == 'celery':
+    if args.method == 'celery':
         import tkp.distribute.celery
         tkp.distribute.celery.run(args.name)
-    else:
         sys.stderr.write("I don't know what is a %s" % args.method)
         sys.exit(1)
-
-
-def clean_job(namespace):
-    jobname = namespace.name
-    here = os.getcwd()
-    statefile = os.path.join(here, jobname, "statefile")
-    if os.access(statefile, os.R_OK):
-        print "Removing state file for job %s" % jobname
-        os.unlink(statefile)
-    else:
-        print "no statefile for job %s" % jobname
-
-
-def info_job(jobname):
-    print "TODO: print info about job %s" % jobname
 
 
 def init_db(options):
@@ -234,7 +219,8 @@ def init_db(options):
 
 def parse_arguments():
     parser = argparse.ArgumentParser(
-        description='This is a tool for managing a TRAP project',
+        description='A tool for managing TKP projects',
+        formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog=__doc__)
     parser_subparsers = parser.add_subparsers()
 
@@ -253,7 +239,8 @@ def parse_arguments():
     # runjob
     run_help = """Run a specific job.
 
-For now, use these environment variables to configure the database:
+To overwrite the database settings in pipeline.cfg you can use these
+environment variables to configure the connection:
 
   * TKP_DBENGINE
   * TKP_DBNAME
@@ -274,9 +261,7 @@ For now, use these environment variables to configure the database:
     run_parser.add_argument('-m', '--monitor-coords', help=m_help)
     run_parser.add_argument('-l', '--monitor-list',
                             help='Specify a file containing a list of RA,DEC')
-    run_parser.add_argument('-f', '--method', choices=['local',
-                                                       'celery',
-                                                       ],
+    run_parser.add_argument('-f', '--method', choices=['celery', ],
                             default="celery",
                             help="what distribution method to use")
     run_parser.set_defaults(func=run_job)
@@ -303,19 +288,12 @@ For now, use these environment variables to configure the database:
                                action="store_true")
     initdb_parser.set_defaults(func=init_db)
 
-    # clean
-    clean_parser = parser_subparsers.add_parser('clean')
-    clean_parser.add_argument('cleanjobname', help='Name of job to clean')
-    clean_parser.set_defaults(func=clean_job)
-
-    # info
-    info_parser = parser_subparsers.add_parser('info')
-    info_parser.add_argument('infojobname', help='Name of job to print info of')
-    info_parser.set_defaults(func=info_job)
-
     # celery
-    celery_parser = parser_subparsers.add_parser('celery')
-    celery_parser.add_argument('rest', nargs=argparse.REMAINDER)
+    description = 'shortcut for access to celery sub commands'
+    celery_parser = parser_subparsers.add_parser('celery',
+                                                 description=description)
+    celery_parser.add_argument('rest', nargs=argparse.REMAINDER,
+                               help='A celery subcommand')
     celery_parser.set_defaults(func=celery_cmd)
 
     return parser.parse_args()

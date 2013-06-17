@@ -62,8 +62,6 @@ class TestManagement(unittest.TestCase):
 
         # test called from current working dir
         tkp.management.init_job(namespace)
-        tkp.management.clean_job(namespace)
-        tkp.management.info_job(namespace)
 
         namespace.target = "DOESNOTEXISTS"
 
@@ -136,21 +134,6 @@ class TestManagement(unittest.TestCase):
         tkp.management.runlocal_job(job_name)
         #tkp.management.runlocal_job(job_name, debug=True)
 
-    def test_clean_job(self):
-        namespace = argparse.Namespace()
-        namespace.name = job_name
-        tkp.management.clean_job(namespace)
-
-    def test_info_job(self):
-        t = tempfile.mkdtemp()
-        os.chdir(t)
-
-        namespace = argparse.Namespace()
-        namespace.name = project_name
-        namespace.target = None
-
-        tkp.management.init_job(namespace)
-        tkp.management.info_job(namespace)
 
     def test_main(self):
         # should raise exception when no arguments

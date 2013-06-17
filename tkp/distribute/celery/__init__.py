@@ -7,6 +7,8 @@ from celery import group
 from tkp.steps.monitoringlist import add_manual_monitoringlist_entries
 from tkp import steps
 from tkp.db.orm import Image
+from tkp.db import configure as dbconf
+from tkp.db import execute as dbexec
 from tkp.db import general as dbgen
 from tkp.db import monitoringlist as dbmon
 from tkp.db import associations as dbass
@@ -52,12 +54,23 @@ def initialize_pipeline_config(pipe_cfg_file, job_name):
     #NB we force sensible errors by attempting to open the pipeline.cfg file:
     with open(pipe_cfg_file) as f:
         config.readfp(f)
-    task_files = string_to_list(config.get('DEFAULT', "task_files"))
-    for f in task_files:
-        if not os.path.isfile(f):
-            logger.warn("Could not find task file: %s", f)
-    config.read(task_files)
     return config
+
+
+def database_config(pipe_config):
+    """
+    sets up a database configuration using the settings defined in a pipeline.cfg
+
+    :param pipe_config: a ConfigParser object
+    :return:
+    """
+    kwargs = {}
+    interests = ['engine', 'database', 'user', 'password', 'host', 'port']
+    for key, value in pipe_config.items('database'):
+        if key in interests:
+            kwargs[key] = value
+    dbconf(**kwargs)
+    dbexec('select 1')
 
 
 def run(job_name, local=False):
@@ -65,7 +78,15 @@ def run(job_name, local=False):
                              os.path.join(os.getcwd(), "pipeline.cfg"),
                              job_name)
 
+
+    database_config(pipe_config)
+
     job_dir = pipe_config.get('layout', 'job_directory')
+
+    if not os.access(job_dir, os.X_OK):
+        msg = "can't access job folder %s" % job_dir
+        logger.error(msg)
+        raise IOError(msg)
 
     logger.info("Job dir: %s", job_dir)
     images = imp.load_source('images_to_process', os.path.join(job_dir,

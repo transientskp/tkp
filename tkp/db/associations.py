@@ -432,8 +432,8 @@ INSERT INTO temprunningcatalog
                                              + (rc0.z - x0.z) * (rc0.z - x0.z)
                                              ) / 2)
                                ) AS distance_arcsec
-                ,3600 * SQRT(  (MOD(CAST(rc0.wm_ra AS INT) + 180, 360) * COS(RADIANS(rc0.wm_decl)) - MOD(CAST(x0.ra AS INT) + 180, 360) * COS(RADIANS(x0.decl)))
-                             * (MOD(CAST(rc0.wm_ra AS INT)+ 180, 360) * COS(RADIANS(rc0.wm_decl)) - MOD(CAST(x0.ra AS INT) + 180, 360) * COS(RADIANS(x0.decl)))
+                ,3600 * SQRT(  (MOD(CAST(rc0.wm_ra + 180 AS NUMERIC(11,8)), 360) * COS(RADIANS(rc0.wm_decl)) - MOD(CAST(x0.ra + 180 AS NUMERIC(11,8)), 360) * COS(RADIANS(x0.decl)))
+                             * (MOD(CAST(rc0.wm_ra + 180 AS NUMERIC(11,8)), 360) * COS(RADIANS(rc0.wm_decl)) - MOD(CAST(x0.ra + 180 AS NUMERIC(11,8)), 360) * COS(RADIANS(x0.decl)))
                                / (rc0.wm_ra_err * rc0.wm_ra_err + x0.ra_err * x0.ra_err)
                             + (rc0.wm_decl - x0.decl) * (rc0.wm_decl - x0.decl)
                               / (rc0.wm_decl_err * rc0.wm_decl_err + x0.decl_err * x0.decl_err)
@@ -446,7 +446,7 @@ INSERT INTO temprunningcatalog
                 ,i0.band
                 ,i0.stokes
                 ,rc0.datapoints + 1 AS datapoints
-                ,(datapoints * rc0.avg_weight_ra * MOD(CAST(rc0.wm_ra AS INT) + 180, 360) + MOD(CAST(x0.ra AS INT) + 180, 360) / (x0.ra_err * x0.ra_err) )
+                ,(datapoints * rc0.avg_weight_ra * MOD(CAST(rc0.wm_ra + 180 AS NUMERIC(11,8)), 360) + MOD(CAST(x0.ra + 180 AS NUMERIC(11,8)), 360) / (x0.ra_err * x0.ra_err) )
                  /
                  (datapoints * rc0.avg_weight_ra + 1 / (x0.ra_err * x0.ra_err) ) - 180
                  AS wm_ra
@@ -464,7 +464,7 @@ INSERT INTO temprunningcatalog
                     1 / (x0.decl_err * x0.decl_err)) / (datapoints + 1))
                           )
                      ) AS wm_decl_err
-                ,(datapoints * avg_weight_ra * MOD(CAST(rc0.wm_ra AS INT) + 180, 360) + MOD(CAST(x0.ra AS INT) + 180, 360) / (x0.ra_err * x0.ra_err) )
+                ,(datapoints * avg_weight_ra * MOD(CAST(rc0.wm_ra + 180 AS NUMERIC(11,8)), 360) + MOD(CAST(x0.ra + 180 AS NUMERIC(11,8)), 360) / (x0.ra_err * x0.ra_err) )
                  / (datapoints + 1) AS avg_wra
                 ,(datapoints * rc0.avg_wdecl + x0.decl /
                   (x0.decl_err * x0.decl_err))
@@ -487,8 +487,8 @@ INSERT INTO temprunningcatalog
              AND rc0.wm_decl BETWEEN x0.decl - i0.rb_smaj
                                  AND x0.decl + i0.rb_smaj
              AND rc0.x*x0.x + rc0.y*x0.y + rc0.z*x0.z > cos(radians(i0.rb_smaj))
-             AND SQRT(  (MOD(CAST(x0.ra AS INT) + 180, 360) * COS(RADIANS(x0.decl)) - MOD(CAST(rc0.wm_ra AS INT) + 180, 360) * COS(RADIANS(rc0.wm_decl)))
-                      * (MOD(CAST(x0.ra AS INT) + 180, 360) * COS(RADIANS(x0.decl)) - MOD(CAST(rc0.wm_ra AS INT) + 180, 360) * COS(RADIANS(rc0.wm_decl)))
+             AND SQRT(  (MOD(CAST(x0.ra + 180 AS NUMERIC(11,8)), 360) * COS(RADIANS(x0.decl)) - MOD(CAST(rc0.wm_ra + 180 AS NUMERIC(11,8)), 360) * COS(RADIANS(rc0.wm_decl)))
+                      * (MOD(CAST(x0.ra + 180 AS NUMERIC(11,8)), 360) * COS(RADIANS(x0.decl)) - MOD(CAST(rc0.wm_ra + 180 AS NUMERIC(11,8)), 360) * COS(RADIANS(rc0.wm_decl)))
                       / (x0.ra_err * x0.ra_err + rc0.wm_ra_err * rc0.wm_ra_err)
                      + (x0.decl - rc0.wm_decl) * (x0.decl - rc0.wm_decl)
                       / (x0.decl_err * x0.decl_err + rc0.wm_decl_err * rc0.wm_decl_err)

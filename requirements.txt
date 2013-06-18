@@ -5,7 +5,7 @@ pyfits>=2.3.1
 python-dateutil>=1.4.1
 pytz
 pyrap>=1.1.0
-celery
+celery>=3.0
 
 ## if you want to genere the doc
 # sphinx  # only for documentation

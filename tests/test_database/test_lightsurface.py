@@ -1,8 +1,8 @@
-import datetime
 from operator import attrgetter
 
 import unittest2 as unittest
 
+import datetime
 from tkp.testutil.decorators import requires_database
 from tkp.db.orm import DataSet
 from tkp.db.orm import Image

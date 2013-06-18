@@ -5,10 +5,13 @@ all functions should be a wrapper around the code in tkp.steps.
 convention here is func(iter, *arguments). So the iter element as first
 argument
 """
-from celery import Celery
-import tkp.steps
 import warnings
 import logging
+
+from celery import Celery
+
+import tkp.steps
+
 
 logger = logging.getLogger(__name__)
 

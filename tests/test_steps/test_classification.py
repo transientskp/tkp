@@ -1,5 +1,4 @@
 import unittest
-import tempfile
 import tkp.steps.classification
 from tkp.testutil.decorators import requires_database
 import tkp.utility.parset as parset

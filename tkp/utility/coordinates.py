@@ -7,10 +7,12 @@ General purpose astronomical coordinate handling routines.
 import math
 import wcslib
 import logging
-import datetime
 import pytz
 
 from pyrap.measures import measures
+
+import datetime
+
 
 logger = logging.getLogger(__name__)
 

@@ -1,5 +1,4 @@
 import unittest2 as unittest
-import monetdb
 import tkp.quality
 import tkp.db
 import tkp.db.quality

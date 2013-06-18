@@ -1,7 +1,6 @@
-import datetime
-
 import unittest2 as unittest
 
+import datetime
 from tkp.testutil.decorators import requires_database
 import tkp.db
 from tkp.db.orm import DataSet, Image

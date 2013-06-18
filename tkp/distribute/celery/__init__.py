@@ -1,9 +1,11 @@
 import ConfigParser
 import os
-import datetime
 import imp
 import logging
+
 from celery import group
+
+import datetime
 from tkp.steps.monitoringlist import add_manual_monitoringlist_entries
 from tkp import steps
 from tkp.db.orm import Image

@@ -2,12 +2,12 @@
 Test functions used for manipulating coordinates in the TKP pipeline.
 """
 
-import datetime
 import pytz
 
 import unittest2 as unittest
 from pyrap.measures import measures
 
+import datetime
 from tkp.utility import coordinates
 
 

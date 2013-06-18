@@ -8,11 +8,12 @@
 
 """
 
-
-from datetime import timedelta
 import logging
 import numpy
+
 import pygsl.statistics
+
+from datetime import timedelta
 from tkp.utility.sigmaclip import calcsigma
 from tkp.classification.transient.utils import DateTime
 from .sql import lightcurve as sql_lightcurve

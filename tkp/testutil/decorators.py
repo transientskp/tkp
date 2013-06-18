@@ -1,6 +1,5 @@
 import os
 import unittest
-from tkp.testutil import db_subs
 
 
 if not  hasattr(unittest.TestCase, 'assertIsInstance'):

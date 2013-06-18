@@ -1,5 +1,4 @@
 import unittest
-import tempfile
 import tkp.steps.quality
 import tkp.utility.accessors
 import tkp.testutil.data as testdata

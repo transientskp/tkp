@@ -1,5 +1,4 @@
 import unittest
-import tempfile
 import tkp.steps.persistence
 from tkp.testutil import db_subs
 from tkp.testutil.decorators import requires_mongodb

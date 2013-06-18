@@ -15,11 +15,11 @@ number. Multiplying by the order of magnitude ascertains the
 comparison is more approritate.
 """
 import numpy
-from datetime import datetime
-from datetime import timedelta
 
 import unittest2 as unittest
 
+from datetime import datetime
+from datetime import timedelta
 from tkp.classification.features import lightcurve as lcmod
 from tkp.classification.transient import DateTime
 

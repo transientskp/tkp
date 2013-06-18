@@ -5,7 +5,6 @@ this is otherwise disruptive when viewing error messages.
 """
 import sys
 import nose
-import os
 
 if __name__ == "__main__":
     import logging

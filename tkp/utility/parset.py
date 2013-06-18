@@ -1,8 +1,9 @@
 import ConfigParser
 import ast
+import logging
+
 import datetime
 
-import logging
 logger = logging.getLogger(__name__)
 
 dt_w_microsecond_format = '%Y-%m-%dT%H:%M:%S.%f'

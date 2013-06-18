@@ -1,10 +1,10 @@
 import unittest
-import tempfile
+import StringIO
+import ConfigParser
+
 import datetime
 from tkp.testutil.data import default_parset_paths
 import tkp.utility.parset as parset
-import StringIO
-import ConfigParser
 
 
 class TestParsingCode(unittest.TestCase):

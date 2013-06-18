@@ -1,7 +1,6 @@
 import logging
 from tkp.db.transients import multi_epoch_transient_search
-import tkp.utility.parset as parset
-import ConfigParser
+
 logger = logging.getLogger(__name__)
 
 

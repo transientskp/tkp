@@ -1,11 +1,13 @@
 import os
-import datetime
 import math
 import shutil
+
 import pyrap
 import pyrap.images
 import pyrap.tables
 import pyfits
+
+import datetime
 
 
 MJD0 = datetime.datetime(1858, 11, 17, 0, 0, 0)

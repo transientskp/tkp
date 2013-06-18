@@ -1,5 +1,6 @@
-import datetime
 import math
+
+import datetime
 
 
 class Position(object):

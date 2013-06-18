@@ -1,7 +1,7 @@
 """
 A collection of back end subroutines (mostly SQL queries).
 
-This module contains the routines to deal with flagging and monitoring 
+This module contains the routines to deal with flagging and monitoring
 of transient candidates, mostly involving the monitoringlist.
 """
 import logging
@@ -13,7 +13,7 @@ import tkp.db
 
 logger = logging.getLogger(__name__)
 
-MonitorTuple = namedtuple('MonitorTuple', 
+MonitorTuple = namedtuple('MonitorTuple',
                           ('ra', 'decl', 'runcat','monitorid')
                           )
 
@@ -22,7 +22,7 @@ MonitorTuple = namedtuple('MonitorTuple',
 def get_userdetections(image_id):
     """Returns the monitoringlist user-entry sources for a forced fit
     in the current image
-    
+
     Output: list of tuples: [ (monlist.id, ra, decl)]
     """
     query = """\
@@ -47,13 +47,13 @@ SELECT m.id
 
 
 def get_nulldetections(image_id, deRuiter_r):
-    """Returns the runcat sources that do not have a counterpart in the 
+    """Returns the runcat sources that do not have a counterpart in the
     extractedsources of the current image.
 
     NB This is run *prior* to source association.
 
-    We do not have to take into account associations with monitoringlist 
-    sources, since they have been added to extractedsources at the beginning 
+    We do not have to take into account associations with monitoringlist
+    sources, since they have been added to extractedsources at the beginning
     of the association procedures (marked as extract_type=1 sources), and so
     they must have an occurence in extractedsource and runcat.
 
@@ -97,7 +97,7 @@ SELECT r1.id
                                ,image im2
                           WHERE im2.id = %(imgid)s
                             AND asr2.skyrgn = im2.skyrgn
-                            AND asr2.runcat = rc2.id 
+                            AND asr2.runcat = rc2.id
                         )
 """
     deRuiter_red = deRuiter_r / 3600.
@@ -112,13 +112,13 @@ SELECT r1.id
 
 
 def get_monsources(image_id, deRuiter_r):
-    """Returns the user-entry sources and no-counterpart sources from 
+    """Returns the user-entry sources and no-counterpart sources from
     monitoringlist
-    
+
     Sources in monitoringlist that originate from a user entry and
-    those that do not have a counterpart in extractedsource need to be 
+    those that do not have a counterpart in extractedsource need to be
     passed on to sourcefinder for a forced fit.
-    
+
     Output: list of tuples [(runcatid, ra, decl)]
     """
     query = """\
@@ -176,7 +176,7 @@ def insert_forcedfits_into_extractedsource(image_id, results, extract):
 def adjust_transients_in_monitoringlist(image_id, transients):
     """Adjust transients in monitoringlist, by either adding or
     updating them
-    
+
     """
     _update_known_transients_in_monitoringlist(transients)
     _insert_new_transients_in_monitoringlist(image_id)
@@ -202,7 +202,7 @@ def _insert_new_transients_in_monitoringlist(image_id):
     """
     Copy newly identified transients from transients table into monitoringlist.
 
-    We grab the transients and check that their runcat ids are not in the 
+    We grab the transients and check that their runcat ids are not in the
     monitoringlist.
     """
     query = """\
@@ -215,19 +215,19 @@ INSERT INTO monitoringlist
   SELECT t.runcat
         ,r.wm_ra
         ,r.wm_decl
-        ,r.dataset 
+        ,r.dataset
     FROM transient t
         ,runningcatalog r
-        ,image i 
-   WHERE t.runcat = r.id 
-     AND r.dataset = i.dataset 
+        ,image i
+   WHERE t.runcat = r.id
+     AND r.dataset = i.dataset
      AND i.id = %(image_id)s
-     AND t.runcat NOT IN (SELECT m0.runcat 
+     AND t.runcat NOT IN (SELECT m0.runcat
                             FROM monitoringlist m0
                                 ,runningcatalog r0
                                 ,image i0
-                           WHERE m0.runcat = r0.id 
-                             AND r0.dataset = i0.dataset 
+                           WHERE m0.runcat = r0.id
+                             AND r0.dataset = i0.dataset
                              AND i0.id = %(image_id)s
                          )
 """
@@ -242,13 +242,13 @@ INSERT INTO monitoringlist
 def add_nulldetections(image_id):
     """
     Add null detections (intermittent) sources to monitoringlist.
-     
+
     Null detections are picked up by the source association and
     added to extractedsource table to undergo normal processing.
-   
-    Variable or not, intermittent sources are interesting enough 
+
+    Variable or not, intermittent sources are interesting enough
     to be added to the monitoringlist.
-    
+
     Insert checks whether runcat ref of source exists
     """
 
@@ -306,11 +306,11 @@ INSERT INTO monitoringlist
 def add_manual_entry_to_monitoringlist(dataset_id, ra, dec):
     """
     Add manual entry to monitoringlist.
-    
-    In this case, the runcat_id defaults to null initially, 
+
+    In this case, the runcat_id defaults to null initially,
     since there is no associated source yet.
-    (This is updated when we perform our first forced extraction 
-    at these co-ordinates.) 
+    (This is updated when we perform our first forced extraction
+    at these co-ordinates.)
     """
     query = """\
 INSERT INTO monitoringlist

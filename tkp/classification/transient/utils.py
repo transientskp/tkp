@@ -43,7 +43,7 @@ class Position(object):
 
         Returns:
             (bool): whether the positions match within the precision
-        
+
         The parameter precision is combined with the errors on both positions;
         it has the same unit as the error (and ra & dec).
         """
@@ -79,7 +79,7 @@ class DateTime(datetime.datetime):
         super(DateTime, self).__init__()
         self.error = error
         self.datetime = datetime.datetime.combine(self.date(), self.time())
-        
+
     def __reduce__(self):
         """Override this function to pickle correctly
 
@@ -126,7 +126,7 @@ class DateTime(datetime.datetime):
 
             (bool): whether the dates match within their uncertainty
                 and accuracy.
-            
+
         The parameter `precision` is combined with the errors on both
         datetime objects (`self` and `other`).
         """

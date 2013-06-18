@@ -735,7 +735,7 @@ class ImageData(object):
 
         return extract.Detection(measurement, self)
 
-    def fit_fixed_positions(self, sources, boxsize, threshold=None, 
+    def fit_fixed_positions(self, sources, boxsize, threshold=None,
                             fixed='position+error'):
         """Convenience function to fit a list of sources at the given positions
 
@@ -782,8 +782,8 @@ class ImageData(object):
 
     def dump_islands(self, det, anl, minsize=4):
         """Identify potential islands.
-        
-            (This is effectively a deprecated function - 
+
+            (This is effectively a deprecated function -
             it was written for testing external pieces of code.
             -TS, 2012-05-21)
 

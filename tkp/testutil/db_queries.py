@@ -1,6 +1,6 @@
 
 """
-A collection of back end db query subroutines used for unittesting 
+A collection of back end db query subroutines used for unittesting
 """
 from tkp.db import execute
 

@@ -14,7 +14,7 @@ def deconv(fmaj, fmin, fpa, cmaj, cmin, cpa):
     theta = (lfpa - lcpa) / HALF_RAD
     cos_theta = math.cos(theta)
     sin_theta = math.sin(theta)
-    
+
     rhoc = (fmaj2 - fmin2) * cos_theta - (cmaj2 - cmin2)
     if abs(rhoc) < precision:
         sigic2 = 0.0

@@ -21,7 +21,7 @@ class TestCircularMask(unittest.TestCase):
         ]
         for parameters, result in known_results:
             assert_array_equal(circular_mask(*parameters), result)
-            
+
 class UtilsTest(unittest.TestCase):
     # format: semimajor, semiminor, theta, correction, variance
     def setUp(self):

@@ -7,7 +7,7 @@ from tkp.utility import sigmaclip
 
 class TestSigma(unittest.TestCase):
     """Verify calculation of standard deviation"""
-    
+
     def setUp(self):
         self.data = numpy.array([22., 24., 23., 31., 22., 21., 22.])
         self.errors = numpy.array([2., 2., 2., 10., 1.5, 2.5, 1.5])
@@ -15,7 +15,7 @@ class TestSigma(unittest.TestCase):
         self.errors2d = numpy.array([0.25, 0.75]*3).reshape(self.data2d.shape)
         self.data3d = numpy.arange(24).reshape((2,3,4))
         self.errors3d = numpy.array([0.25, 0.75]*12).reshape(self.data3d.shape)
-        
+
     def test_unweighted(self):
         """Calculate unweighted mean and sample standard deviation"""
 
@@ -53,7 +53,7 @@ class TestSigma(unittest.TestCase):
 
         self.mean, self.sigma =  sigmaclip.calcsigma(self.data3d, self.errors3d, axis=0, errors_as_weight=True)
         mean = numpy.array([[6., 7., 8., 9.], [10., 11., 12., 13.], [14., 15., 16., 17.]])
-        sigma = numpy.array([[8.48528137, 8.48528137, 8.48528137, 8.48528137], 
+        sigma = numpy.array([[8.48528137, 8.48528137, 8.48528137, 8.48528137],
                              [8.48528137, 8.48528137, 8.48528137, 8.48528137],
                              [8.48528137, 8.48528137, 8.48528137, 8.48528137]])
         self.assertEqual((abs(self.mean - mean) < 1e-7).all(), True)
@@ -70,7 +70,7 @@ class TestSigma(unittest.TestCase):
         sigma = numpy.array([[1.31425748, 1.31425748, 1.31425748], [1.31425748, 1.31425748, 1.31425748]])
         self.assertEqual((abs(self.mean - mean) < 1e-7).all(), True)
         self.assertEqual((abs(self.sigma - sigma) < 1e-7).all(), True)
-        
+
 
 class TestClip(unittest.TestCase):
     """Verify sigma-clip algorithm"""
@@ -149,7 +149,7 @@ class TestClip(unittest.TestCase):
         self.assertEqual((indices == INDICES).all(), True)
         self.assertEqual(niter, 1)
 
-#    # This test is only to demonstrate that 
+#    # This test is only to demonstrate that
 #    def test_temp(self):
 #        data = numpy.ones(40) * 1e-6
 #        errors = numpy.array(
@@ -170,17 +170,17 @@ class TestClip(unittest.TestCase):
 #            data=data, errors=errors, niter=-50, siglow=3., sighigh=3.,
 #            use_median=True)
 #        print indices, niter
-            
-        
-        
+
+
+
 #     def test_median(self):
 #         """Perform weighted clipping, using the median instead of the mean
-# 
+#
 #         This test serves more as an example when use_median=True is useful,
 #         instead of being an actual test
-# 
+#
 #         """
-# 
+#
 #         data = numpy.array([  1.00050253e-07, 9.94556560e-08, 9.98087079e-08, 1.00385932e-07,
 #                               1.00588676e-07, 9.93362336e-08, 1.01789316e-07, 9.78764861e-08,
 #                               1.00247563e-07, 1.06498718e-07, 1.25108083e-07, 1.68517930e-07,
@@ -203,8 +203,8 @@ class TestClip(unittest.TestCase):
 #         print indices
 #         print numpy.median(data), avg, std
 #         self.assertEqual(1, 1)
-#         
+#
 
-    
+
 if __name__ == "__main__":
     unittest.main()

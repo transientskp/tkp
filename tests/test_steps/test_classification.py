@@ -9,7 +9,7 @@ from tkp.testutil.data import default_parset_paths
 @requires_database()
 class TestClassification(unittest.TestCase):
     def setUp(self):
-        #Clearly this is nonsense, but we're just testing syntax in a 
+        #Clearly this is nonsense, but we're just testing syntax in a
         # non-functional library...
         self.transients = [{'runcat':'1', 'band':'1'}]
 

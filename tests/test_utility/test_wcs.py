@@ -17,14 +17,14 @@ class Sanity(unittest.TestCase):
     pixel <-> sky conversion, resulting in positions
     being one pixel off in both x and y
     """
-    
+
     def setUp(self):
         self.wcs = wcslib.wcs()
         self.wcs.crota = [0, 0]
         self.wcs.cdelt = [1, 1]
         self.wcs.crpix = [10, 10]
         self.wcs.crval = [10, 10]
-        
+
     def tests2p(self):
         x, y = self.wcs.s2p([10, 10])
         self.assertAlmostEqual(x, 10)
@@ -203,7 +203,7 @@ class wcsDetectionEquinox(unittest.TestCase):
         self.wcs.outputsys = 'fk5'
         # Do this ourselves, since louie has been taken out
         self.det._physical_coordinates()
-        
+
         final_ra = self.det.ra
         final_errra = self.det.errra
 

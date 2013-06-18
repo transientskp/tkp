@@ -111,7 +111,7 @@ database, using the ``id`` in the initializer::
     >>> image3 = Image(imageid=image2.id, database=database)
     >>> image3.tau_time
     2000
-    
+
 If an ``id`` is supplied, ``data`` is ignored.
 """
 
@@ -170,7 +170,7 @@ class DBObject(object):
         Raises:
 
             AttributeError if a required data keyword is missing.
-            
+
         """
         if self._id is not None:
             # object created using an existing table row
@@ -339,9 +339,9 @@ class DataSet(DBObject):
             a list of dictionarys:
             representing rows in runningcatalog,
             for all sources belonging to this dataset
-            
+
             Column 'id' is returned with the key 'runcat'
-            
+
             Currently only returns 3 columns:
             [{'runcat,'xtrsrc','datapoints'}]
         """
@@ -401,7 +401,7 @@ class Image(DBObject):
 
 
     # Inserting images is handled a little different than normal inserts
-    # -- We call an SQL function 'insertImage' which takes care of  
+    # -- We call an SQL function 'insertImage' which takes care of
     #    assigning a new image id.
     @property
     def id(self):
@@ -447,7 +447,7 @@ class Image(DBObject):
 
         This method is separately implemented, because it's not always necessary
         and potentially (for an image with dozens or more sources) time & memory
-        consuming. 
+        consuming.
         """
 
         query = "SELECT id FROM extractedsource WHERE image = %s"
@@ -474,8 +474,8 @@ class Image(DBObject):
                 sourcefinder.image.ImageData().extract()), or a list
                 of data tuples with the source information as follows:
                 (ra, dec,
-                ra_fit_err, dec_fit_err, 
-                peak, peak_err, 
+                ra_fit_err, dec_fit_err,
+                peak, peak_err,
                 flux, flux_err,
                 significance level,
                 beam major width (as), beam minor width(as),

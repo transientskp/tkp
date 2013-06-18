@@ -24,7 +24,7 @@ def match_catalogs(transient):
     a source as the corresponding value.
     """
     # Hardcode the catalogs for now
-    #catalogs = {3: 'NVSS', 4: 'VLSS', 5: 'WENSS', 6: 'WENSS'} 
+    #catalogs = {3: 'NVSS', 4: 'VLSS', 5: 'WENSS', 6: 'WENSS'}
     # We check for all catalogs in the db (VLSS, WENSSm, WENSSp, NVSS, EXO)
     database = Database()
     results = {}

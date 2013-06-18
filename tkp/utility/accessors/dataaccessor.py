@@ -45,7 +45,7 @@ def parse_pixel_scale(wcs):
     if wcs.cunit != ('deg', 'deg'):
         raise ValueError("Image WCS header info not in degrees "
                          "- unsupported use case")
-    #NB. What's a reasonable epsilon here? 
+    #NB. What's a reasonable epsilon here?
     eps = 1e-7
     if abs(abs(wcs.cdelt[0]) - abs(wcs.cdelt[1])) > eps:
         raise ValueError("Image WCS header suggests non-square pixels "

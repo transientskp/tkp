@@ -83,10 +83,10 @@ class TestIntermittentToMonitorlist(unittest.TestCase):
         # Get the null detection in extractedsource
         # These are of extract_type = 1
         query = """\
-        select x.id 
+        select x.id
           from extractedsource x
-              ,image i 
-         where x.image = i.id 
+              ,image i
+         where x.image = i.id
            and i.dataset = %s
            and x.extract_type = 1
         """

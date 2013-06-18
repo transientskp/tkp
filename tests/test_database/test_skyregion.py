@@ -10,7 +10,7 @@ from tkp.db.generic import columns_from_table, get_db_rows_as_dicts
 @duration(10) # requires deletion of the database for a clean test, which takes time.
 class TestSkyRegionBasics(unittest.TestCase):
     def shortDescription(self):
-        return None #(Why define this? See http://goo.gl/xChvh )    
+        return None #(Why define this? See http://goo.gl/xChvh )
     @requires_database()
     def test_basic_insertion(self):
         """Here we begin with a single insertion, and check a relevant entry
@@ -76,15 +76,15 @@ class TestSkyRegionAssociation(unittest.TestCase):
 
 
     def test_new_skyregion_insertion(self):
-        """Here we test the association logic executed upon insertion of a 
-        new skyregion. 
+        """Here we test the association logic executed upon insertion of a
+        new skyregion.
 
         We expect that any pre-existing entries in the runningcatalog
-        which lie within the field of view will be marked as 
-        'within this region', through the presence of an entry in table 
-        ``assocskyrgn``. 
+        which lie within the field of view will be marked as
+        'within this region', through the presence of an entry in table
+        ``assocskyrgn``.
         Conversely sources outside the FoV should not be marked as related.
-        
+
         We begin with img0, with a source at centre.
         Then we add 2 more (empty) images/fields at varying positions.
         """
@@ -125,10 +125,10 @@ class TestSkyRegionAssociation(unittest.TestCase):
         self.assertEqual(len(assocs), 0)
 
     def test_new_runcat_insertion(self):
-        """Here we test the association logic executed upon insertion of a 
-        new runningcatalog source. 
-        
-        We add an empty image0, then proceed to image1, 
+        """Here we test the association logic executed upon insertion of a
+        new runningcatalog source.
+
+        We add an empty image0, then proceed to image1,
         which is partially overlapping.
         We add one new overlapping source, and one source only in image1's skyrgn.
         Then we check that the back-associations to image0 are correct.
@@ -136,7 +136,7 @@ class TestSkyRegionAssociation(unittest.TestCase):
         n_images = 6
         im_params = db_subs.example_dbimage_datasets(n_images)
 
-        #We first create 2 overlapping images, 
+        #We first create 2 overlapping images,
         #one above the other in dec by 1.0*xtr_radius
         idx = 0
         image0 = tkp.db.Image(dataset=self.dataset, data=im_params[idx])
@@ -166,7 +166,7 @@ class TestSkyRegionAssociation(unittest.TestCase):
         runcats = columns_from_table('runningcatalog',
                         where={'dataset':self.dataset.id})
 
-        #We now expect to see both runcat entries in the field of im1 
+        #We now expect to see both runcat entries in the field of im1
         im1_assocs = columns_from_table('assocskyrgn',
                                     where={'skyrgn':image1._data['skyrgn']})
         self.assertEqual(len(im1_assocs), 2)
@@ -202,8 +202,8 @@ class TestOneToManyAssocUpdates(unittest.TestCase):
 #    @unittest.skip("Skipping")
     def test_basic_same_field_case(self):
         """ Here we start with 1 source in image0.
-        We then add image1 (same field as image0), with a double association 
-        for the source, and check assocskyrgn updates correctly. 
+        We then add image1 (same field as image0), with a double association
+        for the source, and check assocskyrgn updates correctly.
        """
         n_images = 2
         im_params = db_subs.example_dbimage_datasets(n_images)
@@ -283,7 +283,7 @@ class TestTransientExclusion(unittest.TestCase):
 
     def test_two_field_overlap_new_transient(self):
         """Now for something more interesting - two overlapping fields, 4 sources:
-        one steady source only in lower field, 
+        one steady source only in lower field,
         one steady source in both fields,
         one steady source only in upper field,
         one transient source in both fields but only at 2nd timestep.
@@ -345,7 +345,7 @@ class TestTransientExclusion(unittest.TestCase):
     def test_two_field_overlap_nulling_src(self):
         """Similar to above, but one source disappears:
         Two overlapping fields, 4 sources:
-        one steady source only in lower field, 
+        one steady source only in lower field,
         one steady source in both fields,
         one steady source only in upper field,
         one transient source in both fields but only at *1st* timestep.

@@ -73,7 +73,7 @@ def writefits(data, filename, header = {}):
 def open(path):
     """
     Returns an accessor object (if available) for the file or directory 'path'.
-    
+
     Will raise an exception if something went wrong.
     """
     if not os.access(path, os. F_OK):

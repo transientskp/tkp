@@ -53,7 +53,7 @@ class ClassifiedObject(object):
 
     def __getattr__(self, name):
         return getattr(self.obj, name)
-        
+
     def classify(self):
         """Obtain and run the test for this specific classification"""
 
@@ -85,7 +85,7 @@ class Branch(ClassifiedObject):
 
     def __getattr__(self, name):
         return getattr(self.obj, name)
-        
+
     def classify(self):
         """Classify the obj by stepping through the classification
         tree"""

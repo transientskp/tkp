@@ -461,7 +461,7 @@ def gal_to_eq(lon_l, lat_b):
 
 def eq_to_cart(ra, dec):
     """Find the cartesian co-ordinates on the unit sphere given the eq. co-ords.
-        
+
         ra, dec should be in degrees.
     """
     return (math.cos(math.radians(dec)) * math.cos(math.radians(ra)), # Cartesian x

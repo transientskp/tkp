@@ -11,7 +11,7 @@
 import logging
 import numpy
 
-import pygsl.statistics
+#import pygsl.statistics
 
 from datetime import timedelta
 from tkp.utility.sigmaclip import calcsigma
@@ -425,12 +425,12 @@ class LightCurve(object):
             self.stats['max'] = self.fluxes[indices].max()
         except ValueError:
             raise
-        self.stats['wmean'] = pygsl.statistics.wmean(weights, self.fluxes[indices])
+        #self.stats['wmean'] = pygsl.statistics.wmean(weights, self.fluxes[indices])
         self.stats['median'] = numpy.median(self.fluxes[indices])
-        self.stats['wstddev'] = pygsl.statistics.wsd_m(
-            weights, self.fluxes[indices], self.stats['wmean'])
-        self.stats['wskew'] = pygsl.statistics.wskew_m_sd(
-            weights, self.fluxes[indices], self.stats['wmean'], self.stats['wstddev'])
-        self.stats['wkurtosis'] = pygsl.statistics.wkurtosis_m_sd(
-            weights, self.fluxes[indices], self.stats['wmean'], self.stats['wstddev'])
+        #self.stats['wstddev'] = pygsl.statistics.wsd_m(
+        #    weights, self.fluxes[indices], self.stats['wmean'])
+        #self.stats['wskew'] = pygsl.statistics.wskew_m_sd(
+        #    weights, self.fluxes[indices], self.stats['wmean'], self.stats['wstddev'])
+        #self.stats['wkurtosis'] = pygsl.statistics.wkurtosis_m_sd(
+        #    weights, self.fluxes[indices], self.stats['wmean'], self.stats['wstddev'])
         return self.stats

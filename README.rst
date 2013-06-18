@@ -23,9 +23,6 @@ You can use CMake to build this project::
   $ make
   $ make install
 
-Don't forget that you need to populate a database also. see the database
-subdirectory for details.
-
 You can also use the setup.py script, but this will not build the required
 wcslib shared object.
 
@@ -38,7 +35,6 @@ Build
 
 - GCC & GFortran <http://gcc.gnu.org/>
 - CMake <http://www.cmake.org/>
-- F2PY <http://www.scipy.org/F2py>
 
 Runtime
 -------
@@ -53,36 +49,37 @@ For core functionality:
 - Boost::Python <http://www.boost.org/>
 - wcslib <http://www.atnf.csiro.au/people/mcalabre/WCS/>
 - pyrap <http://code.google.com/p/pyrap/>
-- pygsl <http://pygsl.sourceforge.net/>
+- celery <http://www.celeryproject.org/>
+
+
+For storage you can choose one of the following:
+
 - MonetDB <http://www.monetdb.org/>
-
-
-For running the TKP pipeline you need to in stall the Lofar User Software:
-
-- LUS <http://lus.lofar.org/documentation/pipeline/>
+- PostgreSQL <http://www.postgresql.org/>
 
 
 Installation for Ubuntu
 -----------------------
 
-All packages above (except pyrap and pygsl) are available in debian/ubuntu::
+All packages above (except pyrap) are available in debian/ubuntu::
 
     $ sudo apt-get install build-essential cmake python-numpy python-scipy \
         python-dateutil python-pyfits libboost-python-dev libwcs4 wcslib-dev \
         python-tz gfortran python-pymongo python-gridfs mongodb-server
 
-Most of the python packages are also available in pypi.
+Most of the python packages are also available in pypi::
 
-To install pyrap and pygsl download the source from the website and follow the
+    $ pip install -r requirements.txt
+
+To install pyrap download the source from the website and follow the
 instructions in the README.
 
-There are ubuntu and Debian packages available. To install them follow the
-instructions here: <http://dev.monetdb.org/downloads/deb/>. Don't forget
-the monetdb-python package.
-
+For monetdb there are ubuntu and Debian packages available. To install them
+follow the instructions here: <http://dev.monetdb.org/downloads/deb/>. 
 
 
 Test suite
 ----------
 
-Set TKP_TESTPATH to overwrite the path to the test data.
+You can run the python unittests in the test subfolder to verify everything
+is working for you. Set TKP_TESTPATH to overwrite the path to the test data.

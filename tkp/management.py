@@ -214,7 +214,46 @@ def run_job(args):
 
 
 def init_db(options):
-    populate(options)
+    from tkp.config import initialize_pipeline_config, database_config
+    pipe_config = initialize_pipeline_config(
+                         os.path.join(os.getcwd(), "pipeline.cfg"),
+                         "notset")
+    dbconfig = database_config(pipe_config, apply=False)
+
+
+    for field in ['engine', 'database', 'user', 'password', 'host', 'port',
+                  'passphrase']:
+        value = getattr(options, field)
+        if value:
+            dbconfig[field] = value
+
+    if 'engine' not in dbconfig or not dbconfig['engine']:
+        dbconfig['engine'] = 'postgresql'
+
+    if 'port' not in dbconfig or not dbconfig['port']:
+        if dbconfig['engine'] == 'monetdb':
+            dbconfig['port'] = 50000
+        else:
+            dbconfig['port'] = 5432
+
+    if 'database' not in dbconfig or not dbconfig['database']:
+        dbconfig['database'] = getpass.getuser()
+
+    if 'user' not in dbconfig or not dbconfig['user']:
+        dbconfig['user'] = dbconfig['database']
+
+    if 'password' not in dbconfig or not dbconfig['password']:
+        dbconfig['password'] = dbconfig['user']
+
+    if 'host' not in dbconfig or not dbconfig['host']:
+        dbconfig['host'] = 'localhost'
+
+    dbconfig['yes'] = options.yes
+
+    if 'passphrase' not in dbconfig:
+        dbconfig['passphrase'] = ""
+
+    populate(dbconfig)
 
 
 def parse_arguments():
@@ -269,19 +308,15 @@ environment variables to configure the connection:
     #initdb
     username = getpass.getuser()
     initdb_parser = parser_subparsers.add_parser('initdb')
-    initdb_parser.add_argument('-d', '--database',
-                               help='database name, (default: %s)' % username,
-                               default=username)
-    initdb_parser.add_argument('-u', '--user', type=str,
-                               help='user, (default: %s)' % username)
-    initdb_parser.add_argument('-p', '--password', type=str,
-                               help='password, (default: %s)' % username)
+    initdb_parser.add_argument('-d', '--database', help='database name')
+    initdb_parser.add_argument('-u', '--user', type=str, help='user')
+    initdb_parser.add_argument('-p', '--password', type=str, help='password')
     initdb_parser.add_argument('-H', '--host', type=str, help='host')
-    initdb_parser.add_argument('-P', '--port', type=int, help='port',
-                               default=0)
-    initdb_parser.add_argument('-b', '--backend', choices=["monetdb",
+    initdb_parser.add_argument('-P', '--port', type=int, help='port')
+    initdb_parser.add_argument('-s', '--passphrase', type=str,
+                               help='database management passphrase')
+    initdb_parser.add_argument('-e', '--engine', choices=["monetdb",
                                                            'postgresql'],
-                               default="postgresql",
                                help="what database backend to use")
     initdb_parser.add_argument('-y', '--yes',
                                help="don't ask for confirmation",

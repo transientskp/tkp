@@ -1,4 +1,3 @@
-import ConfigParser
 import os
 import imp
 import logging
@@ -6,11 +5,10 @@ import logging
 from celery import group
 
 import datetime
+from tkp.config import initialize_pipeline_config, database_config
 from tkp.steps.monitoringlist import add_manual_monitoringlist_entries
 from tkp import steps
 from tkp.db.orm import Image
-from tkp.db import configure as dbconf
-from tkp.db import execute as dbexec
 from tkp.db import general as dbgen
 from tkp.db import monitoringlist as dbmon
 from tkp.db import associations as dbass
@@ -37,42 +35,11 @@ def runner(func, iterable, arguments, local=False):
         return group(func.s(i, *arguments) for i in iterable)().get()
 
 
-
 def string_to_list(my_string):
     """
     Convert a list-like string (as in pipeline.cfg) to a list of values.
     """
     return [x.strip() for x in my_string.strip('[] ').split(',') if x.strip()]
-
-
-def initialize_pipeline_config(pipe_cfg_file, job_name):
-    """Replaces the sort of background bookkeeping that cuisine would do"""
-    start_time = datetime.datetime.utcnow().replace(microsecond=0).isoformat()
-    config = ConfigParser.SafeConfigParser({
-        "job_name": job_name,
-        "start_time": start_time,
-        "cwd": os.getcwd(),
-    })
-    #NB we force sensible errors by attempting to open the pipeline.cfg file:
-    with open(pipe_cfg_file) as f:
-        config.readfp(f)
-    return config
-
-
-def database_config(pipe_config):
-    """
-    sets up a database configuration using the settings defined in a pipeline.cfg
-
-    :param pipe_config: a ConfigParser object
-    :return:
-    """
-    kwargs = {}
-    interests = ['engine', 'database', 'user', 'password', 'host', 'port']
-    for key, value in pipe_config.items('database'):
-        if key in interests:
-            kwargs[key] = value
-    dbconf(**kwargs)
-    dbexec('select 1')
 
 
 def run(job_name, local=False):

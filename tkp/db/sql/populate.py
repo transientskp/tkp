@@ -25,7 +25,7 @@ tokens = (
 )
 
 
-def verify(parsed):
+def verify(dbconfig):
     """
     Verify with the user if he wants to continue with the given settings.
 
@@ -33,14 +33,15 @@ def verify(parsed):
     """
     print("This script will populate a database with these settings:")
     print("")
-    print("\tbackend:  " + parsed.backend)
-    print("\tdatabase: " + parsed.database)
-    print("\tuser:     " + parsed.user)
-    print("\tpassword: " + (parsed.password or ""))
-    print("\thost:     " + (parsed.host or ""))
-    print("\tport:     " + str(parsed.port))
+    print("\tengine:    " + (dbconfig['engine'] or ""))
+    print("\tdatabase:   " + (dbconfig['database'] or ""))
+    print("\tuser:       " + (dbconfig['user'] or ""))
+    print("\tpassword:   " + (dbconfig['password'] or ""))
+    print("\thost:       " + (dbconfig['host'] or ""))
+    print("\tport:       " + str(dbconfig['port']))
+    print("\tpassphrase: " + (dbconfig['passphrase'] or ""))
     print("")
-    print("!!! WARNING !!! This will REMOVE all data in '%s'" % parsed.database)
+    print("!!! WARNING !!! This will REMOVE all data in '%s'" % dbconfig['database'])
     print("")
     answer = raw_input("Do you want to continue? [y/N]: ")
     if answer.lower() != 'y':
@@ -48,25 +49,25 @@ def verify(parsed):
         sys.exit(1)
 
 
-def connect(parsed):
+def connect(dbconfig):
     """
     Connect to the database
 
     :param parsed: an argparse namespace
     :returns: a database connection
     """
-    if parsed.backend == "postgresql":
+    if dbconfig['engine'] == "postgresql":
         import psycopg2
-        return psycopg2.connect(database=parsed.database, user=parsed.user,
-                                password=parsed.password, host=parsed.host,
-                                port=parsed.port)
-    elif parsed.backend == "monetdb":
+        return psycopg2.connect(database=dbconfig['database'], user=dbconfig['user'],
+                                password=dbconfig['password'], host=dbconfig['host'],
+                                port=dbconfig['port'])
+    elif dbconfig['engine'] == "monetdb":
         import monetdb
-        return monetdb.sql.connect(database=parsed.database, user=parsed.user,
-                                   password=parsed.password, host=parsed.host,
-                                   port=parsed.port, autocommit=True)
+        return monetdb.sql.connect(database=dbconfig['database'], user=dbconfig['user'],
+                                   password=dbconfig['password'], host=dbconfig['host'],
+                                   port=dbconfig['port'], autocommit=True)
     else:
-        sys.stderr.write("backend %s is not implemented" % parsed.backend)
+        sys.stderr.write("engine %s is not implemented" % dbconfig['engine'])
         raise NotImplementedError
 
 auth_query = """
@@ -76,7 +77,7 @@ CREATE SCHEMA "%(database)s" AUTHORIZATION "%(username)s";
 ALTER USER "%(username)s" SET SCHEMA "%(database)s";
 """
 
-def recreate(options):
+def recreate(dbconfig):
     """
     Destroys and creates a new database.
 
@@ -87,34 +88,42 @@ def recreate(options):
     Note: this will raise an Exception ONLY when the creation of the database
           fails
     """
-
-    params = {'username': options.user,
-              'password': options.password,
-              'database': options.database,
-              'host': options.host
+    params = {'username': dbconfig['user'],
+              'password': dbconfig['password'],
+              'database': dbconfig['database'],
+              'host': dbconfig['host']
               }
-
-    if options.backend == 'monetdb':
+    if dbconfig['engine'] == 'monetdb':
         import monetdb.sql
-        monetdb_cmd = lambda cmd: call('monetdb %s %s' % (cmd,
-                                                          options.database),
-                                       shell=True)
-        monetdb_cmd('stop')
-        monetdb_cmd('destroy -f')
-        monetdb_cmd('create')
-        monetdb_cmd('release')
-        if monetdb_cmd('start') != 0:
-            raise Exception("can't create a new monetdb database!")
+        import monetdb.control
+        control = monetdb.control.Control(dbconfig['host'], dbconfig['port'],
+                                          dbconfig['passphrase'])
+
+        database = dbconfig['database']
+        print("stopping %s" % database)
+        try:
+            control.stop(database)
+        except monetdb.sql.OperationalError, e:
+            print("database not running")
+        print "destroying %s" % database
+        try:
+            control.destroy(database)
+        except monetdb.sql.OperationalError, e:
+            print("can't destroy database: %s" % str(e))
+
+        control.create(database)
+        control.release(database)
+        control.start(database)
 
         con = monetdb.sql.connect(username='monetdb', password='monetdb',
-                                  hostname=options.host, port=options.port,
-                                  database=options.database)
+                                  hostname=dbconfig['host'], port=dbconfig['port'],
+                                  database=dbconfig['database'])
         cur = con.cursor()
         cur.execute(auth_query % params)
         con.commit()
         con.close()
 
-    elif options.backend == 'postgresql':
+    elif dbconfig['engine'] == 'postgresql':
         call('dropdb -h %(host)s -U %(username)s %(database)s' % params,
              shell=True)
         if call('createdb -h %(host)s -U %(username)s %(database)s' % params,
@@ -124,31 +133,17 @@ def recreate(options):
         raise NotImplementedError
 
 
-def populate(options):
+def populate(dbconfig):
     """
     Populates a database
-    :param options: a argparse namespace generated with tkp.management
+    :param dbconfig: a dict containing db connection settings
     """
-    if options.port == 0:
-        if options.backend == 'monetdb':
-            options.port = 50000
-        else:
-            options.port = 5432
 
-    if not options.user:
-        options.user = options.database
+    if not dbconfig['yes']:
+        verify(dbconfig)
 
-    if not options.password:
-        options.password = options.database
-
-    if not options.host:
-        options.host = 'localhost'
-
-    if not options.yes:
-        verify(options)
-
-    recreate(options)
-    conn = connect(options)
+    recreate(dbconfig)
+    conn = connect(dbconfig)
     cur = conn.cursor()
 
     batch_file = os.path.join(sql_repo, 'batch')
@@ -160,7 +155,7 @@ def populate(options):
         sql_file = os.path.join(sql_repo, line)
         with open(sql_file) as sql_handler:
             sql = sql_handler.read()
-            dialected = dialectise(sql, options.backend, tokens).strip()
+            dialected = dialectise(sql, dbconfig['engine'], tokens).strip()
 
             if not dialected:  # empty query, can happen
                 continue
@@ -170,6 +165,6 @@ def populate(options):
             except Exception as e:
                 sys.stderr.write("\nproblem with file \"%s\"\n\n" % sql_file)
                 raise
-    if options.backend == 'postgresql':
+    if dbconfig['engine'] == 'postgresql':
         conn.commit()
     conn.close()

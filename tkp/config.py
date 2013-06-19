@@ -2,7 +2,7 @@ import ConfigParser
 import os
 import datetime
 import tkp.db
-
+import tkp.utility.parset as parset
 
 def initialize_pipeline_config(pipe_cfg_file, job_name):
     """Replaces the sort of background bookkeeping that cuisine would do"""
@@ -27,10 +27,10 @@ def database_config(pipe_config, apply=False):
     :return:
     """
     kwargs = {}
-    if not pipe_config.has_section('database'):
-        return {}
-    interests = ['engine', 'database', 'user', 'password', 'host', 'port']
-    for key, value in pipe_config.items('database'):
+    db_parset = parset.load_section(pipe_config, 'database')
+    interests = ('engine', 'database', 'user', 'password', 'host', 'port',
+                 'passphrase')
+    for key, value in db_parset.iteritems():
         if key in interests:
             kwargs[key] = value
     if apply:

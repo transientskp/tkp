@@ -9,7 +9,7 @@ class TestSourceExtraction(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         cls.dataset_id = db_subs.create_dataset_8images()
-        with open(default_parset_paths['sourcefinder.parset']) as f:
+        with open(default_parset_paths['source_extraction.parset']) as f:
             cls.parset = parset.read_config_section(f, 'source_extraction')
 
     def test_extract_sources(self):

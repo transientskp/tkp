@@ -29,10 +29,14 @@ def database_config(pipe_config, apply=False):
     kwargs = {}
     if not pipe_config.has_section('database'):
         return {}
-    interests = ['engine', 'database', 'user', 'password', 'host', 'port']
+    interests = [
+        'engine', 'database', 'user', 'password', 'host', 'port', 'passphrase'
+    ]
     for key, value in pipe_config.items('database'):
         if key in interests:
             kwargs[key] = value
+    if 'port' in kwargs:
+        kwargs['port'] = int(kwargs['port']) # TCP/IP ports are integers
     if apply:
         tkp.db.configure(**kwargs)
         tkp.db.execute('select 1')

@@ -152,6 +152,57 @@ class TestOne2One(unittest.TestCase):
         self.assertEqual(avg_f_int_weight[0], 1./steady_srcs[0].flux_err**2)
 
 
+@requires_database()
+class TestMixedSkyregions(unittest.TestCase):
+    """
+    Tests that association and related calculations happen correctly when a
+    source is seen in multiple skyregions.
+    """
+    def shortDescription(self):
+        return None
+
+    def tearDown(self):
+        tkp.db.rollback()
+
+    def TestCrossMeridian(self):
+        """
+        A source is observed in two skyregions: one which crosses the
+        meridian, and one which does not. We check that the associated source
+        has the correct weighted mean RA.
+
+        See also #4497.
+        """
+        dataset = DataSet(data={'description': "Test:" + self._testMethodName})
+
+        im_list = [
+            db_subs.example_dbimage_datasets(
+                n_images=1, centre_ra=0, centre_decl=0, xtr_radius=10
+            )[0],
+            db_subs.example_dbimage_datasets(
+                n_images=1, centre_ra=0, centre_decl=0, xtr_radius=10
+            )[0],
+            db_subs.example_dbimage_datasets(
+                n_images=1, centre_ra=15, centre_decl=0, xtr_radius=10
+            )[0],
+            db_subs.example_dbimage_datasets(
+                n_images=1, centre_ra=15, centre_decl=0, xtr_radius=10
+            )[0],
+        ]
+
+        source_ra = 7.5
+        src = db_subs.example_extractedsource_tuple(ra=source_ra, dec=0)
+
+        for im in im_list:
+            image = tkp.db.Image(dataset=dataset, data=im)
+            image.insert_extracted_sources([src])
+            associate_extracted_sources(image.id, deRuiter_r=3.717)
+
+        runcat = columns_from_table('runningcatalog', ['wm_ra'],
+            where={'dataset': dataset.id}
+        )
+        self.assertAlmostEqual(runcat[0]['wm_ra'], source_ra)
+
+
 #@unittest.skip
 @requires_database()
 class TestMeridianOne2One(unittest.TestCase):

@@ -15,7 +15,7 @@ class TestTransientSearch(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         cls.dataset_id = db_subs.create_dataset_8images(extract_sources=True)
-        with open(default_parset_paths['transientsearch.parset']) as f:
+        with open(default_parset_paths['transient_search.parset']) as f:
             cls.parset = parset.read_config_section(f, 'transient_search')
 
     def test_search_transients(self):

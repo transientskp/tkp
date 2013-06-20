@@ -49,8 +49,7 @@ class TestPyse(unittest.TestCase):
         os.chdir(temp_dir)
         cls.filename = os.path.join(temp_dir, 'playground.fits')
         shutil.copy(orig_fits_file, cls.filename)
-        cls.fits = FitsImage(cls.filename)
-        cls.fits.beam = (.5, .5, .5)
+        cls.fits = FitsImage(cls.filename, beam=(.5, .5, .5))
         cls.imagedata = sourcefinder_image_from_accessor(cls.fits)
         cls.sourcelist = cls.imagedata.extract()
 

@@ -4,13 +4,12 @@ import unittest2 as unittest
 
 from tkp.utility import accessors
 from tkp.utility.accessors.lofarcasaimage import LofarCasaImage
-from tkp.utility.accessors.dataaccessor import extract_metadata
 from tkp.testutil.decorators import requires_data
 from tkp.utility.coordinates import angsep
 from tkp.testutil.data import DATAPATH
 
 
-casatable =  os.path.join(DATAPATH, 'casatable/L55596_000TO009_skymodellsc_wmax6000_noise_mult10_cell40_npix512_wplanes215.img.restored.corr')
+casatable = os.path.join(DATAPATH, 'casatable/L55596_000TO009_skymodellsc_wmax6000_noise_mult10_cell40_npix512_wplanes215.img.restored.corr')
 
 @requires_data(casatable)
 class TestLofarCasaImage(unittest.TestCase):
@@ -19,7 +18,8 @@ class TestLofarCasaImage(unittest.TestCase):
         cls.accessor = LofarCasaImage(casatable)
 
     def test_casaimage(self):
-        results = extract_metadata(self.accessor)
+        self.assertEqual(self.accessor.telescope, 'LOFAR')
+        results = self.accessor.extract_metadata()
         sfimage = accessors.sourcefinder_image_from_accessor(self.accessor)
 
         known_bmaj, known_bmin, known_bpa = 2.64, 1.85, 1.11
@@ -53,7 +53,7 @@ class TestLofarCasaImage(unittest.TestCase):
         p2_sky = self.accessor.wcs.p2s(p2_pix)
 
         coord_dist_deg = angsep(p1_sky[0], p1_sky[1], p2_sky[0], p2_sky[1]) / 3600.0
-        pix_dist_deg = pixel_sep * self.accessor.pixel_scale
+        pix_dist_deg = pixel_sep * self.accessor.pixelsize[1]
 
         #6 decimal places => 1e-6*degree / 10pix => 1e-7*degree / 1pix
         #  => Approx 0.15 arcseconds drift across 512 pixels
@@ -61,6 +61,6 @@ class TestLofarCasaImage(unittest.TestCase):
         self.assertAlmostEqual(abs(coord_dist_deg), abs(pix_dist_deg), places=6)
 
     def test_stations(self):
-        self.assertEqual(self.accessor.ncore, 42)
-        self.assertEqual(self.accessor.nremote, 3)
-        self.assertEqual(self.accessor.nintl, 0)
+        self.assertEqual(self.accessor.extra_metadata['ncore'], 42)
+        self.assertEqual(self.accessor.extra_metadata['nremote'], 3)
+        self.assertEqual(self.accessor.extra_metadata['nintl'], 0)

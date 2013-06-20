@@ -51,6 +51,7 @@ NUMBER_INSERTED = float(3969)
 @requires_data(os.path.join(DATAPATH, 'UNCORRELATED_NOISE.FITS'))
 @requires_data(os.path.join(DATAPATH, 'CORRELATED_NOISE.FITS'))
 @requires_data(os.path.join(DATAPATH, 'TEST_DECONV.FITS'))
+@duration(100)
 class test_maps(unittest.TestCase):
     def setUp(self):
         uncorr_map = accessors.open(os.path.join(DATAPATH,
@@ -68,7 +69,6 @@ class test_maps(unittest.TestCase):
                                                   map_with_sources.beam,
                                                   map_with_sources.wcs)
 
-    @duration(100)
     def test_normal(self):
         self.number_detections_uncorr = len(self.uncorr_image.fd_extract())
         self.number_detections_corr = len(self.corr_image.fd_extract())

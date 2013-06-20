@@ -3,7 +3,7 @@ import os
 import unittest2 as unittest
 
 
-from tkp.utility.accessors.detection import isfits, islofarcasa, islofarhdf5, detect, iscasa
+from tkp.utility.accessors.detection import isfits, islofarhdf5, detect, iscasa
 from tkp.utility.accessors.lofarcasaimage import LofarCasaImage
 from tkp.utility.accessors.casaimage import CasaImage
 from tkp.utility.accessors.fitsimage import FitsImage
@@ -21,7 +21,6 @@ antennafile = os.path.join(DATAPATH, 'lofar/CS001-AntennaArrays.conf')
 class TestAutodetect(unittest.TestCase):
     @requires_data(lofarcasatable)
     def test_islofarcasa(self):
-        self.assertTrue(islofarcasa(lofarcasatable))
         self.assertTrue(iscasa(lofarcasatable))
         self.assertFalse(islofarhdf5(lofarcasatable))
         self.assertFalse(isfits(lofarcasatable))
@@ -29,7 +28,6 @@ class TestAutodetect(unittest.TestCase):
 
     @requires_data(casatable)
     def test_iscasa(self):
-        self.assertFalse(islofarcasa(casatable))
         self.assertTrue(iscasa(casatable))
         self.assertFalse(islofarhdf5(casatable))
         self.assertFalse(isfits(casatable))
@@ -39,7 +37,6 @@ class TestAutodetect(unittest.TestCase):
     def test_ishdf5(self):
         # TODO: disable this for now, since pyrap can't parse LOFAR hdf5
         #self.assertTrue(islofarhdf5(hdf5file))
-        self.assertFalse(islofarcasa(hdf5file))
         self.assertFalse(isfits(hdf5file))
         self.assertFalse(iscasa(hdf5file))
         #self.assertEqual(detect(hdf5file), LofarHdf5Image)
@@ -48,7 +45,6 @@ class TestAutodetect(unittest.TestCase):
     def test_isfits(self):
         self.assertTrue(isfits(fitsfile))
         self.assertFalse(islofarhdf5(fitsfile))
-        self.assertFalse(islofarcasa(fitsfile))
         self.assertFalse(iscasa(fitsfile))
         self.assertEqual(detect(fitsfile), FitsImage)
 

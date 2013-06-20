@@ -41,8 +41,10 @@ def reject_check(image_path, parset):
 
     # RMS value check
     rms = rms_with_clipped_subregion(accessor.data, sigma, f)
+    lofar_metadata = accessor.extra_metadata
     noise = noise_level(accessor.freq_eff, accessor.freq_bw, accessor.tau_time,
-        accessor.antenna_set, accessor.ncore, accessor.nremote, accessor.nintl)
+                    lofar_metadata['antenna_set'], lofar_metadata['ncore'],
+                    lofar_metadata['nremote'], lofar_metadata['nintl'])
     rms_check = rms_invalid(rms, noise, low_bound, high_bound)
     if not rms_check:
         logger.info("image %s accepted: rms: %s, theoretical noise: %s" % \

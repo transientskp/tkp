@@ -8,7 +8,6 @@ from pyrap.images import image as pyrap_image
 import tkp.utility.accessors
 from tkp.db.database import Database
 from tkp.db.orm import DataSet, Image
-from tkp.utility.accessors.dataaccessor import extract_metadata
 
 
 logger = logging.getLogger(__name__)
@@ -80,7 +79,7 @@ def extract_metadatas(images):
     for image in images:
         logger.info("Extracting metadata from %s" % image)
         accessor = tkp.utility.accessors.open(image)
-        results.append(extract_metadata(accessor))
+        results.append(accessor.extract_metadata())
     return results
 
 
@@ -108,7 +107,7 @@ def store_images(images_metadata, extraction_radius_pix, dataset_id):
     images_metadata.sort(key=lambda m: m['taustart_ts'])
 
     for metadata in images_metadata:
-        metadata['xtr_radius'] = extraction_radius_pix * metadata['pixel_scale']
+        metadata['xtr_radius'] = extraction_radius_pix * metadata['deltax']
         filename = metadata['url']
         db_image = Image(data=metadata, dataset=dataset)
         image_ids.append(db_image.id)

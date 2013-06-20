@@ -70,6 +70,7 @@ class TestFitsImage(unittest.TestCase):
         # Beam specified by user
         fits_file = os.path.join(DATAPATH, 'L15_12h_const/observed-all.fits')
         image = FitsImage(fits_file, beam=(54./3600, 54./3600, 0.))
+        self.assertEqual(image.telescope, 'LOFAR20') #God knows why it's 'LOFAR20'
         self.assertAlmostEqual(image.beam[0], 0.225)
         self.assertAlmostEqual(image.beam[1], 0.225)
         self.assertAlmostEqual(image.beam[2], 0.)

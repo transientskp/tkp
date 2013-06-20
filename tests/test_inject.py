@@ -20,14 +20,11 @@ class TestInject(unittest.TestCase):
 
     def test_no_injection(self):
         # stuff should be missing here
-
-        missing_fits = tkp.utility.accessors.open(fits_file)
-        self.assertTrue(missing_fits.not_set() != [])
+        self.assertRaises(IOError, tkp.utility.accessors.open, fits_file)
 
     def test_injection(self):
         with open(default_parset_paths['inject.parset']) as f:
             parset = tkp.utility.parset.read_config_section(f, 'inject')
 
-        tkp.inject.modify_fits_headers(parset, self.fixed_file)
+        tkp.inject.modify_fits_headers(parset, self.fixed_file, overwrite=True)
         fixed_fits = tkp.utility.accessors.open(self.fixed_file)
-        self.assertTrue(fixed_fits.not_set() == [])

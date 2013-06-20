@@ -30,8 +30,8 @@ def persistence_node_step(images, p_parset):
     return tkp.steps.persistence.node_steps(images, p_parset)
 
 @celery.task
-def quality_reject_check(url, q_parset):
-    return tkp.steps.quality.reject_check(url, q_parset)
+def quality_reject_check(url, job_config):
+    return tkp.steps.quality.reject_check(url, job_config)
 
 @celery.task
 def extract_sources(url, se_parset):

@@ -12,6 +12,8 @@ from tkp.sourcefinder.image import ImageData
 from tkp.utility.accessors.dataaccessor import DataAccessor
 from tkp.utility.accessors.fitsimage import FitsImage
 from tkp.utility.accessors.casaimage import CasaImage
+from tkp.utility.accessors.lofarfitsimage import LofarFitsImage
+from tkp.utility.accessors.lofarcasaimage import LofarCasaImage
 import tkp.utility.accessors.detection
 
 

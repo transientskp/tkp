@@ -1,6 +1,6 @@
 """
 This script is used to inject missing header info into a FITS file or CASA
-table. his can be useful to make your data processable by the TRAP pipeline.
+table. This can be useful to make your data processable by the TRAP pipeline.
 """
 
 import os.path
@@ -8,8 +8,8 @@ import argparse
 import pyfits
 from pyrap.tables import table as pyrap_table
 import tkp.utility.accessors.detection
-from tkp.utility.accessors.lofarcasaimage import LofarCasaImage
-from tkp.utility.accessors.fitsimage import FitsImage
+from tkp.utility.accessors import LofarFitsImage, LofarCasaImage
+from  tkp.utility.parset import read_config_section
 
 type_mapping = {
     str: 'getString',
@@ -42,21 +42,28 @@ def parse_arguments():
     parser = argparse.ArgumentParser(description=__doc__ + extra_doc)
     parser.add_argument('parsetfile', help='path to parset file')
     parser.add_argument('targetfile', help='path to FITS/CASA file to manipulate', nargs='+')
+    parser.add_argument('--over', action='store_true', default=False,
+                        help='Overwrite header values even if already present. '
+                        '(Only applies to FITS files - for CASA tables we always '
+                        'set/overwrite tau_time only.)')
     parsed = parser.parse_args()
     parsetfile = os.path.expanduser(parsed.parsetfile)
     targetfiles = map(os.path.expanduser, parsed.targetfile)
-    return parsetfile, targetfiles
+    overwrite = parsed.over
+    return parsetfile, targetfiles, overwrite
 
 
-def modify_fits_headers(parset, fits_file):
+def modify_fits_headers(parset, fits_file, overwrite):
     hdu = 0 # Header Data Unit, usually 0
     fits_file = pyfits.open(fits_file, mode='update')
     header = fits_file[0].header
+    already_present = header.keys()
     for parset_field, (type_, fits_field) in parset_fields.items():
         if parset.has_key(parset_field):
-            value = parset[parset_field]
-            print "setting %s (%s) to %s" % (parset_field, fits_field, value)
-            header.update(fits_field, value)
+            if (fits_field not in already_present) or overwrite:
+                value = parset[parset_field]
+                print "setting %s (%s) to %s" % (parset_field, fits_field, value)
+                header.update(fits_field, value)
     fits_file.flush()
     fits_file.close()
 
@@ -78,15 +85,21 @@ def modify_casa_headers(parset, casa_file):
     table.close()
 
 def main():
-    parset_file, target_files = parse_arguments()
-    parset = parse_parset(parset_file)
+    parset_file, target_files, overwrite = parse_arguments()
+    with open(parset_file) as fp:
+        parset = read_config_section(fp, 'inject')
 
     for target_file in target_files:
+        #Normally accessors.open checks this, but we're going straight 
+        #to detect here because we don't want to actually open it:
+        if not os.path.isfile(target_file) or os.path.isdir(target_file):
+            print "File not found: %s (check path is correct?)" % target_file
+            continue
         print "injecting data into %s" % target_file
         accessor_class = tkp.utility.accessors.detection.detect(target_file)
 
-        if accessor_class == FitsImage:
-            modify_fits_headers(parset, target_file)
+        if accessor_class == LofarFitsImage:
+            modify_fits_headers(parset, target_file, overwrite)
         elif accessor_class == LofarCasaImage:
             modify_casa_headers(parset, target_file)
         else:

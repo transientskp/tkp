@@ -26,5 +26,5 @@ class TestInject(unittest.TestCase):
         with open(default_parset_paths['inject.parset']) as f:
             parset = tkp.utility.parset.read_config_section(f, 'inject')
 
-        tkp.inject.modify_fits_headers(parset, self.fixed_file)
+        tkp.inject.modify_fits_headers(parset, self.fixed_file, overwrite=True)
         fixed_fits = tkp.utility.accessors.open(self.fixed_file)

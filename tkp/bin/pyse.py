@@ -138,6 +138,7 @@ def handle_args():
     parser.add_option("--rmsmap", action="store_true", help="Generate RMS map")
     parser.add_option("--sigmap", action="store_true", help="Generate significance map")
     parser.add_option("--force-beam", action="store_true", help="Force fit axis lengths to beam size")
+    parser.add_option("--detection-image", type="string", help="Find islands on different image")
     return parser.parse_args()
 
 def writefits(filename, data, header={}):
@@ -167,6 +168,26 @@ def run_sourcefinder(files, options):
     }
     if options.residuals or options.islands:
         configuration['residuals'] = True
+    if options.detection_image:
+        if options.fdr:
+            print "WARNING: --detection-image not supported with --fdr; ignored"
+        else:
+            print "Detecting islands in %s" % (options.detection_image)
+            print "Thresholding with det = %f sigma, analysis = %f sigma" % (options.detection, options.analysis)
+            if (
+                isinstance(options.bmaj, float)
+                and isinstance(options.bmin, float)
+                and isinstance(options.bpa, float)
+            ):
+                ff = FitsImage(options.detection_image, beam=(options.bmaj, options.bmin, options.bpa), plane=0)
+            else:
+                ff = FitsImage(options.detection_image, plane=0)
+            imagedata = sourcefinder_image_from_accessor(ff, **configuration)
+            labels, labelled_data = imagedata.label_islands(
+                options.detection * imagedata.rmsmap, options.analysis * imagedata.rmsmap
+            )
+    else:
+        labels, labelled_data = [], None
     for counter, filename in enumerate(files):
         print "Processing %s (file %d of %d)." % (filename, counter+1, len(files))
         if (
@@ -182,8 +203,9 @@ def run_sourcefinder(files, options):
             print "Using False Detection Rate algorithm with alpha = %f" % (options.alpha,)
             sr = imagedata.fd_extract(options.alpha)
         else:
-            print "Thresholding with det = %f sigma, analysis = %f sigma" % (options.detection, options.analysis)
-            sr = imagedata.extract(options.detection, options.analysis)
+            if labelled_data is None:
+                print "Thresholding with det = %f sigma, analysis = %f sigma" % (options.detection, options.analysis)
+            sr = imagedata.extract(options.detection, options.analysis, labelled_data=labelled_data, labels=labels)
         if options.regions:
             regionfile = os.path.splitext(os.path.basename(filename))[0] + ".reg"
             regionfile = open(regionfile, 'w')

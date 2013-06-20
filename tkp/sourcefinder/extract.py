@@ -54,9 +54,9 @@ class Island(object):
             logger.warn("Limiting to 300 deblending subtresholds")
             self.deblend_nthresh = 300
 
-
-
-        mask = numpy.where(data >= rms * analysis_threshold, 0, 1)
+        # NB we have set all unused data to -(lots) before passing it to
+        # Island().
+        mask = numpy.where(data > -9999, 0, 1)
         self.data = numpy.ma.array(data, mask=mask)
         self.rms = rms
         self.chunk = chunk
@@ -79,12 +79,13 @@ class Island(object):
             self.subthrrange = subthrrange
         else:
             self.subthrrange = numpy.logspace(
-                numpy.log(self.data.min()),
-                numpy.log(self.data.max()),
+                1.0,
+                numpy.log(self.data.max() + 1 - self.data.min()),
                 num=deblend_nthresh+1, # first value == min_orig
                 base=numpy.e,
                 endpoint=False
             )[1:]
+            self.subthrrange += (self.data.min() - 1)
 
     def deblend(self, niter=0):
         """Return a decomposed numpy array of all the subislands.
@@ -921,10 +922,14 @@ class Detection(object):
                       self.smin.value)
 
 
-        end_smaj_ra, end_smaj_dec = self.imagedata.wcs.p2s(
-            [self.end_smaj_x, self.end_smaj_y])
-        end_smin_ra, end_smin_dec = self.imagedata.wcs.p2s(
-            [self.end_smin_x, self.end_smin_y])
+        def pixel_to_spatial(x, y):
+            try:
+                return self.imagedata.wcs.p2s([x, y])
+            except RuntimeError:
+                logger.debug("pixel_to_spatial failed at %f, %f" % (x, y))
+                return numpy.nan, numpy.nan
+        end_smaj_ra, end_smaj_dec = pixel_to_spatial(self.end_smaj_x, self.end_smaj_y)
+        end_smin_ra, end_smin_dec = pixel_to_spatial(self.end_smin_x, self.end_smin_y)
 
         smaj_asec = coordinates.angsep(self.ra.value, self.dec.value,
                                        end_smaj_ra, end_smaj_dec)

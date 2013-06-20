@@ -464,8 +464,9 @@ INSERT INTO temprunningcatalog
                     1 / (x0.decl_err * x0.decl_err)) / (datapoints + 1))
                           )
                      ) AS wm_decl_err
-                ,(datapoints * avg_weight_ra * MOD(CAST(rc0.wm_ra + 180 AS NUMERIC(11,8)), 360) + MOD(CAST(x0.ra + 180 AS NUMERIC(11,8)), 360) / (x0.ra_err * x0.ra_err) )
-                 / (datapoints + 1) AS avg_wra
+                ,(datapoints * avg_weight_ra * MOD(CAST(rc0.wm_ra + 180 AS NUMERIC(11,8)), 360) + MOD(CAST(x0.ra + 180 AS NUMERIC(11,8)), 360) / (x0.ra_err * x0.ra_err)
+                  - datapoints * avg_weight_ra * 180 - 180 / (x0.ra_err * x0.ra_err))
+                  / (datapoints + 1) AS avg_wra
                 ,(datapoints * rc0.avg_wdecl + x0.decl /
                   (x0.decl_err * x0.decl_err))
                  / (datapoints + 1) AS avg_wdecl

@@ -1,30 +1,10 @@
 import logging
-from tkp.utility.parset import Parset as parameterset
 import tkp.utility.accessors
 from tkp.utility.accessors import sourcefinder_image_from_accessor
 import tkp.utility.accessors
 
 
 logger = logging.getLogger(__name__)
-
-
-def parse_parset(parset_file):
-    parset = parameterset(parset_file)
-    return {
-        'backsize_x': parset.getInt('backsize_x'),
-        'backsize_y': parset.getInt('backsize_y'),
-        'margin': parset.getFloat('margin'),
-        'deblend': parset.getBool('deblend'),
-        'deblend_nthresh': parset.getInt('deblend_nthresh'),
-        'radius': parset.getFloat('radius'),
-        'ra_sys_err': parset.getFloat('ra_sys_err'),
-        'dec_sys_err': parset.getFloat('dec_sys_err'),
-        'detection_threshold': parset.getFloat('detection_threshold'),
-        'analysis_threshold': parset.getFloat('analysis_threshold'),
-        'force_beam': parset.getBool('force_beam', False),
-        'box_in_beampix': parset.getBool('box_in_beampix', 10),
-    }
-
 
 def extract_sources(image_path, parset):
     """

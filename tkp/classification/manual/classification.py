@@ -70,7 +70,7 @@ class RapidTransient(ClassifiedObject):
         if self.activity > 0.5:
             return 0.9
 
-        
+
 class SlowTransient(ClassifiedObject):
     """Low activity transient"""
 
@@ -78,7 +78,7 @@ class SlowTransient(ClassifiedObject):
         if self.activity > 0.5:
             return 0.9
 
-        
+
 class ShortDurationBranch(Branch):
     """Branch on short transients"""
 

@@ -80,8 +80,8 @@ def sigma_clip(data, beam, sigma=unbiased_sigma, max_iter=100,
     array and can calculate a clipping limit. See, for e.g., unbiased_sigma()
     defined above. However, if it isn't callable, sigma is assumed to just set
     a hard limit.
-    
-    To do: Improve documentation 
+
+    To do: Improve documentation
             -Returns???
             -How does it make use of the beam? (It estimates the noise correlation)
     """

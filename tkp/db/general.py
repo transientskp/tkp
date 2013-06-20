@@ -55,7 +55,7 @@ def filter_userdetections_extracted_sources(image_id, deRuiter_r, assoc_theta=0.
 
     """
     filter_ud_xtrsrcs_query = """\
-DELETE 
+DELETE
   FROM extractedsource
  WHERE id IN (SELECT x0.id
                 FROM extractedsource x0
@@ -123,7 +123,7 @@ def insert_image(dataset, freq_eff, freq_bw, taustart_ts, tau_time,
      - restoring beam: beam_smaj_pix, beam_smin_pix are the semimajor and
        semiminor axes in pixel values; beam_pa_rad is the position angle
        in radians.
-       They all will be converted to degrees, because that is unit used in 
+       They all will be converted to degrees, because that is unit used in
        the database.
      - centre_ra, centre_decl, xtr_radius:
        These define the region within ``xtr_radius`` degrees of the
@@ -150,14 +150,14 @@ def insert_image(dataset, freq_eff, freq_bw, taustart_ts, tau_time,
                       ,%(xtr_radius)s
                       )
     """
-    arguments = {'dataset': dataset, 'tau_time': tau_time, 'freq_eff': freq_eff, 
+    arguments = {'dataset': dataset, 'tau_time': tau_time, 'freq_eff': freq_eff,
                  'freq_bw': freq_bw, 'taustart_ts': taustart_ts,
                  'rb_smaj': beam_smaj_pix * math.fabs(deltax),
                  'rb_smin': beam_smin_pix * math.fabs(deltay),
-                 'rb_pa': 180 * beam_pa_rad / math.pi, 
-                 'deltax': deltax, 'deltay': deltay, 
+                 'rb_pa': 180 * beam_pa_rad / math.pi,
+                 'deltax': deltax, 'deltay': deltay,
                  'url': url,
-                 'centre_ra': centre_ra, 'centre_decl': centre_decl, 
+                 'centre_ra': centre_ra, 'centre_decl': centre_decl,
                  'xtr_radius': xtr_radius}
     cursor = tkp.db.execute(query, arguments, commit=True)
     image_id = cursor.fetchone()[0]
@@ -184,27 +184,27 @@ def insert_extracted_sources(image_id, results, extract):
     2: from forced fits for monitoringlist sources
 
     The content of results is in the following sequence:
-    (ra, dec, ra_fit_err, dec_fit_err, peak_flux, peak_flux_err, 
+    (ra, dec, ra_fit_err, dec_fit_err, peak_flux, peak_flux_err,
     int_flux, int_flux_err, significance level,
     beam major width (as), beam minor width(as), beam parallactic angle,
     ra_sys_err, dec_sys_err).
     See insert_extracted_sources() for a description of extract.
-    
+
     ra_fit_err & dec_fit_err are the 1-sigma errors from the gaussian fit,
     in degrees.
-    ra_sys_err and dec_sys_err represent the systematic errors in ra and declination, 
+    ra_sys_err and dec_sys_err represent the systematic errors in ra and declination,
     and are in arcsec!
     ra_err^2 = ra_sys_err^2 + ra_fit_err^2, idem for decl_err.
 
     For all extracted sources additional parameters are calculated,
     and appended to the sourcefinder data. Appended and converted are:
-    - the image id to which the extracted sources belong to 
-    - the zone in which an extracted source falls is calculated, based 
+    - the image id to which the extracted sources belong to
+    - the zone in which an extracted source falls is calculated, based
       on its declination. We adopt a zoneheight of 1 degree, so
       the floor of the declination represents the zone.
     - the positional errors are converted from degrees to arcsecs
     - the Cartesian coordinates of the source position
-    - ra * cos(radians(decl)), this is very often being used in 
+    - ra * cos(radians(decl)), this is very often being used in
       source-distance calculations
     """
     if not len(results):
@@ -218,7 +218,7 @@ def insert_extracted_sources(image_id, results, extract):
         r[2] = r[2] * 3600. # ra_fit_err converted to arcsec
         r[3] = r[3] * 3600. # decl_fit_err converted to arcsec
         # ra_err: sqrt of quadratic sum of sys and fit errors, in arcsec
-        r.append(math.sqrt(r[12]**2 + r[2]**2)) 
+        r.append(math.sqrt(r[12]**2 + r[2]**2))
         # decl_err: sqrt of quadratic sum of sys and fit errors, in arcsec
         r.append(math.sqrt(r[13]**2 + r[3]**2))
         r.append(image_id) # id of the image
@@ -315,7 +315,7 @@ def match_nearests_in_catalogs(runcatid, radius, deRuiter_r):
 
     One can limit the list of matches using assoc_r for a
     goodness-of-match measure.
-    
+
     Args:
         runcatid: id of source in runningcatalog
 
@@ -325,7 +325,7 @@ def match_nearests_in_catalogs(runcatid, radius, deRuiter_r):
         deRuiter_r (float): the De Ruiter radius, a dimensionless search radius.
         Source pairs with a De Ruiter radius that falls outside the cut-off
         are discarded as genuine association.
-        
+
     The return values are ordered first by catalog, then by
     assoc_r. So the first source in the list is the closest match for
     a catalog.

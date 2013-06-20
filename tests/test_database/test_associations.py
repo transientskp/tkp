@@ -21,6 +21,9 @@ class TestOne2One(unittest.TestCase):
         """http://www.saltycrane.com/blog/2012/07/how-prevent-nose-unittest-using-docstring-when-verbosity-2/"""
         return None
 
+    def tearDown(self):
+        tkp.db.rollback()
+
     def test_one2one(self):
         dataset = DataSet(data={'description': 'assoc test set: 1-1'})
         n_images = 8
@@ -70,17 +73,17 @@ class TestOne2One(unittest.TestCase):
         self.assertEqual(dp[0], n_images)
         self.assertAlmostEqual(wm_ra[0], steady_srcs[0].ra)
         self.assertAlmostEqual(wm_decl[0], steady_srcs[0].dec)
-        self.assertAlmostEqual(wm_ra_err[0], math.sqrt( 
-                           1./ (n_images / ( (steady_srcs[0].ra_fit_err*3600.)**2 + (steady_srcs[0].ra_sys_err)**2)) 
+        self.assertAlmostEqual(wm_ra_err[0], math.sqrt(
+                           1./ (n_images / ( (steady_srcs[0].ra_fit_err*3600.)**2 + (steady_srcs[0].ra_sys_err)**2))
                                ))
-        self.assertAlmostEqual(wm_decl_err[0], math.sqrt( 
-                           1./ (n_images / ((steady_srcs[0].dec_fit_err*3600.)**2 + (steady_srcs[0].dec_sys_err)**2 )) 
-                               )) 
+        self.assertAlmostEqual(wm_decl_err[0], math.sqrt(
+                           1./ (n_images / ((steady_srcs[0].dec_fit_err*3600.)**2 + (steady_srcs[0].dec_sys_err)**2 ))
+                               ))
 
-        self.assertAlmostEqual(x[0], 
+        self.assertAlmostEqual(x[0],
                     math.cos(math.radians(steady_srcs[0].dec))*
                         math.cos(math.radians(steady_srcs[0].ra)))
-        self.assertAlmostEqual(y[0], 
+        self.assertAlmostEqual(y[0],
                    math.cos(math.radians(steady_srcs[0].dec))*
                         math.sin(math.radians(steady_srcs[0].ra)))
         self.assertAlmostEqual(z[0], math.sin(math.radians(steady_srcs[0].dec)))
@@ -90,8 +93,8 @@ class TestOne2One(unittest.TestCase):
         SELECT a.runcat
               ,a.xtrsrc
           FROM assocxtrsource a
-              ,runningcatalog r 
-         WHERE a.runcat = r.id 
+              ,runningcatalog r
+         WHERE a.runcat = r.id
            AND r.dataset = %s
         ORDER BY a.xtrsrc
         """
@@ -101,12 +104,12 @@ class TestOne2One(unittest.TestCase):
         aruncat = assoc[0]
         axtrsrc = assoc[1]
         self.assertEqual(len(axtrsrc), n_images * n_steady_srcs)
-        
+
         query = """\
-        SELECT x.id 
+        SELECT x.id
           FROM extractedsource x
-              ,image i 
-         WHERE x.image = i.id 
+              ,image i
+         WHERE x.image = i.id
            AND i.dataset = %s
         ORDER BY x.id
         """
@@ -115,7 +118,7 @@ class TestOne2One(unittest.TestCase):
         self.assertNotEqual(len(xtrsrcs), 0)
         xtrsrc = xtrsrcs[0]
         self.assertEqual(len(xtrsrc), n_images * n_steady_srcs)
-        
+
         for i in range(len(xtrsrc)):
             self.assertEqual(axtrsrc[i], xtrsrc[i])
 
@@ -129,8 +132,8 @@ class TestOne2One(unittest.TestCase):
               ,rf.avg_f_int
               ,rf.avg_f_int_weight
           FROM runningcatalog_flux rf
-              ,runningcatalog r 
-         WHERE r.id = rf.runcat 
+              ,runningcatalog r
+         WHERE r.id = rf.runcat
            AND r.dataset = %s
         """
         cursor = tkp.db.execute(query, (dataset.id,))
@@ -158,6 +161,10 @@ class TestMeridianOne2One(unittest.TestCase):
     """
     def shortDescription(self):
         return None
+
+    def tearDown(self):
+        tkp.db.rollback()
+
     def TestMeridianCrossLowHighEdgeCase(self):
         """What happens if a source is right on the meridian?"""
 
@@ -169,10 +176,10 @@ class TestMeridianOne2One(unittest.TestCase):
         src0 = db_subs.example_extractedsource_tuple(ra=0.0001, dec=10.5,
                                              ra_fit_err=0.01, dec_fit_err=0.01)
         src_list.append(src0)
-        src1 = src0._replace(ra=0.0003) 
-        src_list.append(src1) 
-        src2 = src0._replace(ra=359.9999) 
-        src_list.append(src2) 
+        src1 = src0._replace(ra=0.0003)
+        src_list.append(src1)
+        src2 = src0._replace(ra=359.9999)
+        src_list.append(src2)
 
         for idx, im in enumerate(im_params):
             im['centre_ra'] = 359.9
@@ -198,10 +205,10 @@ class TestMeridianOne2One(unittest.TestCase):
         src0 = db_subs.example_extractedsource_tuple(ra=359.9999, dec=10.5,
                                              ra_fit_err=0.01, dec_fit_err=0.01)
         src_list.append(src0)
-        src1 = src0._replace(ra=0.0003) 
-        src_list.append(src1) 
-        src2 = src0._replace(ra=0.0001) 
-        src_list.append(src2) 
+        src1 = src0._replace(ra=0.0003)
+        src_list.append(src1)
+        src2 = src0._replace(ra=0.0001)
+        src_list.append(src2)
 
         for idx, im in enumerate(im_params):
             im['centre_ra'] = 359.9
@@ -228,10 +235,10 @@ class TestMeridianOne2One(unittest.TestCase):
         src0 = db_subs.example_extractedsource_tuple(ra=359.9983, dec=10.5,
                                              ra_fit_err=0.01, dec_fit_err=0.01)
         src_list.append(src0)
-        src1 = src0._replace(ra=359.9986) 
-        src_list.append(src1) 
-        src2 = src0._replace(ra=359.9989) 
-        src_list.append(src2) 
+        src1 = src0._replace(ra=359.9986)
+        src_list.append(src1)
+        src2 = src0._replace(ra=359.9989)
+        src_list.append(src2)
 
         for idx, im in enumerate(im_params):
             im['centre_ra'] = 359.9
@@ -243,7 +250,7 @@ class TestMeridianOne2One(unittest.TestCase):
 #        print "***\nRESULTS:", runcat, "\n*****"
         self.assertEqual(len(runcat), 1)
         self.assertEqual(runcat[0]['datapoints'], 3)
-        avg_ra = (src0.ra + src1.ra +src2.ra)/3 
+        avg_ra = (src0.ra + src1.ra +src2.ra)/3
         self.assertAlmostEqual(runcat[0]['wm_ra'], avg_ra)
 
     def TestMeridianLowerEdgeCase(self):
@@ -258,10 +265,10 @@ class TestMeridianOne2One(unittest.TestCase):
         src0 = db_subs.example_extractedsource_tuple(ra=0.0002, dec=10.5,
                                              ra_fit_err=0.01, dec_fit_err=0.01)
         src_list.append(src0)
-        src1 = src0._replace(ra=0.0003) 
-        src_list.append(src1) 
-        src2 = src0._replace(ra=0.0004) 
-        src_list.append(src2) 
+        src1 = src0._replace(ra=0.0003)
+        src_list.append(src1)
+        src2 = src0._replace(ra=0.0004)
+        src_list.append(src2)
 
         for idx, im in enumerate(im_params):
             im['centre_ra'] = 359.9
@@ -273,7 +280,7 @@ class TestMeridianOne2One(unittest.TestCase):
 #        print "***\nRESULTS:", runcat, "\n*****"
         self.assertEqual(len(runcat), 1)
         self.assertEqual(runcat[0]['datapoints'], 3)
-        avg_ra = (src0.ra + src1.ra +src2.ra)/3 
+        avg_ra = (src0.ra + src1.ra +src2.ra)/3
         self.assertAlmostEqual(runcat[0]['wm_ra'], avg_ra)
 
     def TestDeRuiterCalculation(self):
@@ -287,8 +294,8 @@ class TestMeridianOne2One(unittest.TestCase):
         #Note ra / ra_fit_err are in degrees.
         # ra_sys_err is in arcseconds, but we set it = 0 so doesn't matter.
         #ra_fit_err cannot be zero or we get div by zero errors.
-        #Also, there is a hard limit on association radii: 
-        #currently this defaults to 0.03 degrees== 108 arcseconds 
+        #Also, there is a hard limit on association radii:
+        #currently this defaults to 0.03 degrees== 108 arcseconds
         src0 = db_subs.example_extractedsource_tuple(ra=10.00, dec=0.0,
                                              ra_fit_err=0.1, dec_fit_err=1.00,
                                              ra_sys_err=0.0, dec_sys_err=0.0)
@@ -325,7 +332,6 @@ class TestOne2Many(unittest.TestCase):
     """
     @requires_database()
     def setUp(self):
-
         self.database = tkp.db.Database()
 
     def tearDown(self):
@@ -343,7 +349,7 @@ class TestOne2Many(unittest.TestCase):
         src = []
         # 1 source
         src.append(db_subs.example_extractedsource_tuple(ra=123.1235, dec=10.55,
-                                                     ra_fit_err=5./3600, dec_fit_err=6./3600, 
+                                                     ra_fit_err=5./3600, dec_fit_err=6./3600,
                                                      peak = 15e-3, peak_err = 5e-4,
                                                      flux = 15e-3, flux_err = 5e-4,
                                                      sigma = 15,
@@ -354,10 +360,10 @@ class TestOne2Many(unittest.TestCase):
         results.append(src[-1])
         dbgen.insert_extracted_sources(imageid1, results, 'blind')
         associate_extracted_sources(imageid1, deRuiter_r = 3.717)
-        
+
         query = """\
         SELECT id
-          FROM extractedsource 
+          FROM extractedsource
          WHERE image = %s
         """
         self.database.cursor.execute(query, (imageid1,))
@@ -379,7 +385,7 @@ class TestOne2Many(unittest.TestCase):
         xtrsrc1 = rc1[1]
         self.assertEqual(len(runcat1), len(src))
         self.assertEqual(xtrsrc1[0], im1src1[0])
-        
+
         query = """\
         SELECT a.runcat
               ,a.xtrsrc
@@ -407,7 +413,7 @@ class TestOne2Many(unittest.TestCase):
         src = []
         # 2 sources (located close to source 1, catching the 1-to-many case
         src.append(db_subs.example_extractedsource_tuple(ra=123.12349, dec=10.549,
-                                                     ra_fit_err=5./3600, dec_fit_err=6./3600, 
+                                                     ra_fit_err=5./3600, dec_fit_err=6./3600,
                                                      peak = 15e-3, peak_err = 5e-4,
                                                      flux = 15e-3, flux_err = 5e-4,
                                                      sigma = 15,
@@ -415,7 +421,7 @@ class TestOne2Many(unittest.TestCase):
                                                      ra_sys_err=20, dec_sys_err=20
                                                         ))
         src.append(db_subs.example_extractedsource_tuple(ra=123.12351, dec=10.551,
-                                                     ra_fit_err=5./3600, dec_fit_err=6./3600, 
+                                                     ra_fit_err=5./3600, dec_fit_err=6./3600,
                                                      peak = 15e-3, peak_err = 5e-4,
                                                      flux = 15e-3, flux_err = 5e-4,
                                                      sigma = 15,
@@ -430,7 +436,7 @@ class TestOne2Many(unittest.TestCase):
 
         query = """\
         SELECT id
-          FROM extractedsource 
+          FROM extractedsource
          WHERE image = %s
         ORDER BY id
         """
@@ -439,7 +445,7 @@ class TestOne2Many(unittest.TestCase):
         self.assertNotEqual(len(im2), 0)
         im2src = im2[0]
         self.assertEqual(len(im2src), len(src))
-        
+
         query = """\
         SELECT r.id
               ,r.xtrsrc
@@ -465,17 +471,17 @@ class TestOne2Many(unittest.TestCase):
         self.assertNotEqual(xtrsrc2[0], xtrsrc2[1])
         self.assertEqual(image2[0], image2[1])
         self.assertEqual(image2[0], imageid2)
-        
+
         query = """\
         SELECT a.runcat
               ,a.xtrsrc
               ,a.type
-              ,x.image 
+              ,x.image
           FROM assocxtrsource a
               ,runningcatalog r
-              ,extractedsource x 
-         WHERE a.runcat = r.id 
-           AND a.xtrsrc = x.id 
+              ,extractedsource x
+         WHERE a.runcat = r.id
+           AND a.xtrsrc = x.id
            AND r.dataset = %s
         ORDER BY a.xtrsrc
                 ,a.runcat
@@ -499,21 +505,22 @@ class TestOne2Many(unittest.TestCase):
         self.assertEqual(atype2[3], 2)
         self.assertEqual(aruncat2[0], runcat2[0])
         self.assertEqual(aruncat2[1], runcat2[1])
-        
+
         query = """\
-        SELECT COUNT(*) 
-          FROM runningcatalog 
+        SELECT COUNT(*)
+          FROM runningcatalog
          WHERE dataset = %s
-           AND xtrsrc IN (SELECT id 
-                            FROM extractedsource 
+           AND xtrsrc IN (SELECT id
+                            FROM extractedsource
                            WHERE image = %s
                          )
         """
         self.database.cursor.execute(query, (dataset.id, imageid1))
         count = zip(*self.database.cursor.fetchall())
         self.assertEqual(count[0][0], 0)
-        
+
         #TODO: Add runcat_flux test
+
 
 class TestMany2One(unittest.TestCase):
     """
@@ -523,7 +530,6 @@ class TestMany2One(unittest.TestCase):
     """
     @requires_database()
     def setUp(self):
-
         self.database = tkp.db.Database()
 
     def tearDown(self):
@@ -541,7 +547,7 @@ class TestMany2One(unittest.TestCase):
         src = []
         # 2 sources (located close together, so the catching the many-to-1 case in next image
         src.append(db_subs.example_extractedsource_tuple(ra=122.985, dec=10.5,
-                                                     ra_fit_err=5./3600, dec_fit_err=6./3600, 
+                                                     ra_fit_err=5./3600, dec_fit_err=6./3600,
                                                      peak = 15e-3, peak_err = 5e-4,
                                                      flux = 15e-3, flux_err = 5e-4,
                                                      sigma = 15,
@@ -549,7 +555,7 @@ class TestMany2One(unittest.TestCase):
                                                      ra_sys_err=20, dec_sys_err=20
                                                         ))
         src.append(db_subs.example_extractedsource_tuple(ra=123.015, dec=10.5,
-                                                     ra_fit_err=5./3600, dec_fit_err=6./3600, 
+                                                     ra_fit_err=5./3600, dec_fit_err=6./3600,
                                                      peak = 15e-3, peak_err = 5e-4,
                                                      flux = 15e-3, flux_err = 5e-4,
                                                      sigma = 15,
@@ -564,7 +570,7 @@ class TestMany2One(unittest.TestCase):
 
         query = """\
         SELECT id
-          FROM extractedsource 
+          FROM extractedsource
          WHERE image = %s
         ORDER BY id
         """
@@ -573,14 +579,14 @@ class TestMany2One(unittest.TestCase):
         self.assertNotEqual(len(im1), 0)
         im1src = im1[0]
         self.assertEqual(len(im1src), len(src))
-        
+
         # image 2
         image = tkp.db.Image(dataset=dataset, data=im_params[1])
         imageid2 = image.id
         src = []
         # 1 source
         src.append(db_subs.example_extractedsource_tuple(ra=123.0, dec=10.5,
-                                                     ra_fit_err=5./3600, dec_fit_err=6./3600, 
+                                                     ra_fit_err=5./3600, dec_fit_err=6./3600,
                                                      peak = 15e-3, peak_err = 5e-4,
                                                      flux = 15e-3, flux_err = 5e-4,
                                                      sigma = 15,
@@ -591,10 +597,10 @@ class TestMany2One(unittest.TestCase):
         results.append(src[-1])
         dbgen.insert_extracted_sources(imageid2, results, 'blind')
         associate_extracted_sources(imageid2, deRuiter_r = 3.717)
-        
+
         query = """\
         SELECT id
-          FROM extractedsource 
+          FROM extractedsource
          WHERE image = %s
         """
         self.database.cursor.execute(query, (imageid2,))
@@ -622,19 +628,19 @@ class TestMany2One(unittest.TestCase):
         self.assertEqual(xtrsrc2[1], im1src[1])
         self.assertEqual(datapoints[0], datapoints[1])
         self.assertEqual(datapoints[0], 2)
-        
+
         query = """\
         SELECT a.runcat
               ,r.xtrsrc as rxtrsrc
               ,a.xtrsrc as axtrsrc
               ,a.type
-              ,x.image 
+              ,x.image
           FROM assocxtrsource a
               ,runningcatalog r
-              ,extractedsource x 
-         WHERE a.runcat = r.id 
-           AND a.xtrsrc = x.id 
-           AND r.dataset = %s 
+              ,extractedsource x
+         WHERE a.runcat = r.id
+           AND a.xtrsrc = x.id
+           AND r.dataset = %s
         ORDER BY r.xtrsrc
                 ,a.xtrsrc
         """
@@ -671,6 +677,7 @@ class TestMany2One(unittest.TestCase):
         self.assertEqual(aimage2[3], imageid2)
         #TODO: Add runcat_flux test
 
+
 class TestMany2Many(unittest.TestCase):
     """
     These tests will check the many-to-many source associations, i.e. many extractedsources
@@ -679,7 +686,6 @@ class TestMany2Many(unittest.TestCase):
     """
     @requires_database()
     def setUp(self):
-
         self.database = tkp.db.Database()
 
     def tearDown(self):
@@ -697,7 +703,7 @@ class TestMany2Many(unittest.TestCase):
         src1 = []
         # 2 sources (located relatively close together, so the catching the many-to-1 case in next image
         src1.append(db_subs.example_extractedsource_tuple(ra=122.985, dec=10.5,
-                                                     ra_fit_err=5./3600, dec_fit_err=6./3600, 
+                                                     ra_fit_err=5./3600, dec_fit_err=6./3600,
                                                      peak = 15e-3, peak_err = 5e-4,
                                                      flux = 15e-3, flux_err = 5e-4,
                                                      sigma = 15,
@@ -705,7 +711,7 @@ class TestMany2Many(unittest.TestCase):
                                                      ra_sys_err=20, dec_sys_err=20
                                                         ))
         src1.append(db_subs.example_extractedsource_tuple(ra=123.015, dec=10.5,
-                                                     ra_fit_err=5./3600, dec_fit_err=6./3600, 
+                                                     ra_fit_err=5./3600, dec_fit_err=6./3600,
                                                      peak = 15e-3, peak_err = 5e-4,
                                                      flux = 15e-3, flux_err = 5e-4,
                                                      sigma = 15,
@@ -721,7 +727,7 @@ class TestMany2Many(unittest.TestCase):
 
         query = """\
         SELECT id
-          FROM extractedsource 
+          FROM extractedsource
          WHERE image = %s
         ORDER BY id
         """
@@ -730,14 +736,14 @@ class TestMany2Many(unittest.TestCase):
         self.assertNotEqual(len(im1), 0)
         im1src = im1[0]
         self.assertEqual(len(im1src), len(src1))
-        
+
         # image 2
         image = tkp.db.Image(dataset=dataset, data=im_params[1])
         imageid2 = image.id
         src2 = []
         # 2 sources, where both can be associated with both from image 1
         src2.append(db_subs.example_extractedsource_tuple(ra=123.0, dec=10.485,
-                                                     ra_fit_err=5./3600, dec_fit_err=6./3600, 
+                                                     ra_fit_err=5./3600, dec_fit_err=6./3600,
                                                      peak = 15e-3, peak_err = 5e-4,
                                                      flux = 15e-3, flux_err = 5e-4,
                                                      sigma = 15,
@@ -745,7 +751,7 @@ class TestMany2Many(unittest.TestCase):
                                                      ra_sys_err=20, dec_sys_err=20
                                                         ))
         src2.append(db_subs.example_extractedsource_tuple(ra=123.0, dec=10.515,
-                                                     ra_fit_err=5./3600, dec_fit_err=6./3600, 
+                                                     ra_fit_err=5./3600, dec_fit_err=6./3600,
                                                      peak = 15e-3, peak_err = 5e-4,
                                                      flux = 15e-3, flux_err = 5e-4,
                                                      sigma = 15,
@@ -757,10 +763,10 @@ class TestMany2Many(unittest.TestCase):
         results.append(src2[1])
         dbgen.insert_extracted_sources(imageid2, results, 'blind')
         associate_extracted_sources(imageid2, deRuiter_r = 3.717)
-        
+
         query = """\
         SELECT id
-          FROM extractedsource 
+          FROM extractedsource
          WHERE image = %s
         ORDER BY id
         """
@@ -789,19 +795,19 @@ class TestMany2Many(unittest.TestCase):
         self.assertEqual(xtrsrc2[1], im1src[1])
         self.assertEqual(datapoints[0], datapoints[1])
         self.assertEqual(datapoints[0], 2)
-        
+
         query = """\
         SELECT a.runcat
               ,r.xtrsrc as rxtrsrc
               ,a.xtrsrc as axtrsrc
               ,a.type
-              ,x.image 
+              ,x.image
           FROM assocxtrsource a
               ,runningcatalog r
-              ,extractedsource x 
-         WHERE a.runcat = r.id 
-           AND a.xtrsrc = x.id 
-           AND r.dataset = %s 
+              ,extractedsource x
+         WHERE a.runcat = r.id
+           AND a.xtrsrc = x.id
+           AND r.dataset = %s
         ORDER BY r.xtrsrc
                 ,a.xtrsrc
         """

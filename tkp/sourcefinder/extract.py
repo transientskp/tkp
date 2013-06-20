@@ -207,7 +207,7 @@ class Island(object):
             # Fitting failed
             logger.error("Moments & Gaussian fitting failed at %s" % (str(self.position)))
             return None
-        measurement["xbar"] += self.position[0] + 1 # address + offset  = address but not address + address 
+        measurement["xbar"] += self.position[0] + 1 # address + offset  = address but not address + address
         measurement["ybar"] += self.position[1] + 1 # because addresses start at 0
         measurement.sig = self.sig()
         return measurement, gauss_residual
@@ -463,7 +463,7 @@ class ParamSet(DictMixin):
 
     def deconvolve_from_clean_beam(self, beam):
         """Deconvolve with the clean beam"""
-        
+
         # If the fitted axes are smaller than the clean beam
         # (=restoring beam) axes, the axes and position angle
         # can be deconvolved from it.
@@ -596,7 +596,7 @@ def source_profile_and_errors(data, threshold, noise, beam, fixed=None, residual
         noise (float): Noise level in data
 
         beam (3-tuple of float): beam parameters
-        
+
     Kwargs:
 
         fixed (dict): parameters to keep fixed while fitting. passed
@@ -618,7 +618,7 @@ def source_profile_and_errors(data, threshold, noise, beam, fixed=None, residual
         moments_threshold = threshold
 
     try:
-        param.update(fitting.moments(data, beam, moments_threshold)) 
+        param.update(fitting.moments(data, beam, moments_threshold))
         param.moments = True
     except ValueError:
         # If this happens, we have two choices:
@@ -762,7 +762,7 @@ class Detection(object):
 
     def __repr__(self):
         return str(self)
-    
+
     def printob(self, output=None):
         if output is None:
             import sys
@@ -783,7 +783,7 @@ class Detection(object):
             str(self.y.value) +"," + str(self.smaj.value *2) + "," +
             str(self.smin.value*2) + "," + str(self.theta.value
             -pi/2.0 ) + "r ) #color=white")
-             
+
     def _physical_coordinates(self):
         """Convert the pixel parameters for this object into something
         physical."""
@@ -876,12 +876,12 @@ class Detection(object):
                 numpy.fabs(self.dec.value - end_dec1),
                 numpy.fabs(self.dec.value - end_dec2))
         except RuntimeError:
-            #We get a runtime error from wcs.p2s if the errors place the 
+            #We get a runtime error from wcs.p2s if the errors place the
             #limits outside of the image.
             #In which case we set the RA / DEC uncertainties to infinity
             self.ra.error = float('inf')
             self.dec.error = float('inf')
-            
+
 
         # Now we can compute the BPA, east from local north.
         # That these angles can simply be added is not completely trivial.

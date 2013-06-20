@@ -6,12 +6,12 @@ http://www.lofar.org/operations/lib/exe/fetch.php?media=:public:documents:casa_i
 """
 import logging
 import warnings
-import datetime
 import numpy
 from math import degrees
 
 from pyrap.tables import table as pyrap_table
 
+import datetime
 from tkp.utility.accessors.beam import degrees2pixels
 from tkp.utility.accessors.dataaccessor import DataAccessor, parse_pixel_scale
 from tkp.utility.coordinates import julian2unix

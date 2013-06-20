@@ -5,7 +5,6 @@ table. his can be useful to make your data processable by the TRAP pipeline.
 
 import os.path
 import argparse
-from tkp.utility.parset import Parset as parameterset
 import pyfits
 from pyrap.tables import table as pyrap_table
 import tkp.utility.accessors.detection
@@ -36,7 +35,7 @@ parset_fields = {
     'bpa': (float, 'BPA'),
 }
 
-extra_doc = " Properties which can be overwritten or set in the parset file are: " +\
+extra_doc = " Properties which can be overwritten or set in the parset file are: " + \
     ", ".join(parset_fields.keys())
 
 def parse_arguments():
@@ -48,17 +47,6 @@ def parse_arguments():
     targetfiles = map(os.path.expanduser, parsed.targetfile)
     return parsetfile, targetfiles
 
-def parse_parset(path):
-    parsed = {}
-    parset = parameterset(path)
-    for name, (type_, fits_field) in parset_fields.items():
-        getter = getattr(parset, type_mapping[type_])
-        try:
-            value = getter(name)
-            parsed[name] = value
-        except RuntimeError:
-            pass # value not defined in parset file, continue
-    return parsed
 
 def modify_fits_headers(parset, fits_file):
     hdu = 0 # Header Data Unit, usually 0

@@ -1,7 +1,6 @@
-import datetime
-
 import unittest2 as unittest
 
+import datetime
 from tkp.testutil.decorators import requires_database
 import tkp.db
 from tkp.db.orm import DataSet, Image
@@ -98,12 +97,12 @@ class TestImage(unittest.TestCase):
         # because dataset2.images are newly created Python objects,
         # with different ids
         #self.assertEqual(len(dataset2.images), 2)
-        
+
         ##Now, update and try it again:
         image1.update()
         self.assertEqual(image1.tau_time, 0)
-        
-        ##Uh oh. I don't think this is caused by the update 
+
+        ##Uh oh. I don't think this is caused by the update
         #- I noticed it in the database without any updates being called.
         # Rather, the tau (exposure time) is not being inserted properly.
 
@@ -157,9 +156,9 @@ class TestImage(unittest.TestCase):
         image1.update()
         self.assertEqual(image1.taustart_ts, datetime.datetime(2010, 3, 3))
 
-    
+
 class TestExtractedSource(unittest.TestCase):
-    
+
     def setUp(self):
         import tkp.db.database
         self.database = tkp.db.database.Database()
@@ -169,7 +168,7 @@ class TestExtractedSource(unittest.TestCase):
 
     @requires_database()
     def test_create(self):
-        
+
         dataset = DataSet(data={'description': 'dataset with images'},
                           database=self.database)
         # create 4 images, separated by one day each
@@ -189,7 +188,7 @@ class TestExtractedSource(unittest.TestCase):
                       'centre_decl': 0,
                       'xtr_radius' : 3
 				})
-        data = dict(zone=13, 
+        data = dict(zone=13,
                     ra=12.12, decl=13.13, ra_err=21.1, decl_err=21.09,
                     ra_fit_err=1.12, decl_fit_err=1.23,
                     ra_sys_err=20, decl_sys_err=20,
@@ -321,6 +320,6 @@ class TestExtractedSource(unittest.TestCase):
         self.assertAlmostEqual(source1.decl, 23.23)
         self.assertAlmostEqual(source2.decl, 44.44)
 
-        
+
 if __name__ == "__main__":
     unittest.main()

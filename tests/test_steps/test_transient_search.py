@@ -1,9 +1,10 @@
 import unittest
-import tempfile
 import tkp.steps.transient_search
 from tkp.testutil import db_subs, db_queries
 from tkp.testutil.decorators import requires_database
 import tkp.db
+import tkp.utility.parset as parset
+from tkp.testutil.data import default_parset_paths
 
 @requires_database()
 class TestTransientSearch(unittest.TestCase):
@@ -14,24 +15,8 @@ class TestTransientSearch(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         cls.dataset_id = db_subs.create_dataset_8images(extract_sources=True)
-        cls.fake_parset = tempfile.NamedTemporaryFile()
-        parset_text = """\
-threshold = 0.5
-minpoints = 1
-eta_lim = 0.0
-V_lim = 0.00
-"""
-        cls.fake_parset.write(parset_text)
-        cls.fake_parset.flush()
-        cls.parset = {
-            'threshold': 0.5,
-            'minpoints': 1,
-            'eta_lim': 0.0,
-            'V_lim': 0.00,
-        }
-
-    def test_parse_parset(self):
-        tkp.steps.transient_search.parse_parset(self.fake_parset.name)
+        with open(default_parset_paths['transient_search.parset']) as f:
+            cls.parset = parset.read_config_section(f, 'transient_search')
 
     def test_search_transients(self):
         image_ids = db_queries.dataset_images(self.dataset_id)

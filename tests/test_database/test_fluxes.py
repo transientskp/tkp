@@ -37,7 +37,7 @@ class TestOne2OneFlux(unittest.TestCase):
             image = tkp.db.Image(database=self.database, dataset=dataset, data=im)
             image.insert_extracted_sources([src_list[idx]])
             associate_extracted_sources(image.id, deRuiter_r=3.717)
-        
+
         query = """\
         SELECT rf.avg_f_int
           FROM runningcatalog r
@@ -76,7 +76,7 @@ class TestOne2ManyFlux(unittest.TestCase):
         src = []
         # 1 source
         src.append(db_subs.example_extractedsource_tuple(ra=123.1235, dec=10.55,
-                                                     ra_fit_err=5./3600, dec_fit_err=6./3600, 
+                                                     ra_fit_err=5./3600, dec_fit_err=6./3600,
                                                      peak = 1.5, peak_err = 5e-1,
                                                      flux = 3.0, flux_err = 5e-1,
                                                      sigma = 15,
@@ -87,14 +87,14 @@ class TestOne2ManyFlux(unittest.TestCase):
         results.append(src[-1])
         dbgen.insert_extracted_sources(imageid1, results, 'blind')
         associate_extracted_sources(imageid1, deRuiter_r=3.717)
-        
+
         # image 2
         image = tkp.db.Image(database=self.database, dataset=dataset, data=im_params[1])
         imageid2 = image.id
         src = []
         # 2 sources (located close to source 1, catching the 1-to-many case
         src.append(db_subs.example_extractedsource_tuple(ra=123.12349, dec=10.549,
-                                                     ra_fit_err=5./3600, dec_fit_err=6./3600, 
+                                                     ra_fit_err=5./3600, dec_fit_err=6./3600,
                                                      peak = 1.6, peak_err = 5e-1,
                                                      flux = 3.2, flux_err = 5e-1,
                                                      sigma = 15,
@@ -102,7 +102,7 @@ class TestOne2ManyFlux(unittest.TestCase):
                                                      ra_sys_err=20, dec_sys_err=20
                                                         ))
         src.append(db_subs.example_extractedsource_tuple(ra=123.12351, dec=10.551,
-                                                     ra_fit_err=5./3600, dec_fit_err=6./3600, 
+                                                     ra_fit_err=5./3600, dec_fit_err=6./3600,
                                                      peak = 1.9, peak_err = 5e-1,
                                                      flux = 3.4, flux_err = 5e-1,
                                                      sigma = 15,
@@ -164,7 +164,7 @@ class TestMany2OneFlux(unittest.TestCase):
         src = []
         # 2 sources (located close together, so the catching the many-to-1 case in next image
         src.append(db_subs.example_extractedsource_tuple(ra=122.985, dec=10.5,
-                                                     ra_fit_err=5./3600, dec_fit_err=6./3600, 
+                                                     ra_fit_err=5./3600, dec_fit_err=6./3600,
                                                      peak = 1.6, peak_err = 5e-1,
                                                      flux = 3.2, flux_err = 5e-1,
                                                      sigma = 15,
@@ -172,7 +172,7 @@ class TestMany2OneFlux(unittest.TestCase):
                                                      ra_sys_err=20, dec_sys_err=20
                                                         ))
         src.append(db_subs.example_extractedsource_tuple(ra=123.015, dec=10.5,
-                                                     ra_fit_err=5./3600, dec_fit_err=6./3600, 
+                                                     ra_fit_err=5./3600, dec_fit_err=6./3600,
                                                      peak = 1.9, peak_err = 5e-1,
                                                      flux = 3.4, flux_err = 5e-1,
                                                      sigma = 15,
@@ -191,7 +191,7 @@ class TestMany2OneFlux(unittest.TestCase):
         src = []
         # 1 source
         src.append(db_subs.example_extractedsource_tuple(ra=123.0, dec=10.5,
-                                                     ra_fit_err=5./3600, dec_fit_err=6./3600, 
+                                                     ra_fit_err=5./3600, dec_fit_err=6./3600,
                                                      peak = 1.5, peak_err = 5e-1,
                                                      flux = 3.0, flux_err = 5e-1,
                                                      sigma = 15,
@@ -202,7 +202,7 @@ class TestMany2OneFlux(unittest.TestCase):
         results.append(src[-1])
         dbgen.insert_extracted_sources(imageid2, results, 'blind')
         associate_extracted_sources(imageid2, deRuiter_r = 3.717)
-        
+
         query = """\
         SELECT rf.avg_f_int
               ,rf.avg_f_int_sq
@@ -253,7 +253,7 @@ class TestMany2Many(unittest.TestCase):
         src1 = []
         # 2 sources (located relatively close together, so the catching the many-to-1 case in next image
         src1.append(db_subs.example_extractedsource_tuple(ra=122.985, dec=10.5,
-                                                     ra_fit_err=5./3600, dec_fit_err=6./3600, 
+                                                     ra_fit_err=5./3600, dec_fit_err=6./3600,
                                                      peak = 1.5, peak_err = 1e-1,
                                                      flux = 3.0, flux_err = 1e-1,
                                                      sigma = 15,
@@ -261,7 +261,7 @@ class TestMany2Many(unittest.TestCase):
                                                      ra_sys_err=20, dec_sys_err=20
                                                         ))
         src1.append(db_subs.example_extractedsource_tuple(ra=123.015, dec=10.5,
-                                                     ra_fit_err=5./3600, dec_fit_err=6./3600, 
+                                                     ra_fit_err=5./3600, dec_fit_err=6./3600,
                                                      peak = 1.7, peak_err = 1e-1,
                                                      flux = 3.2, flux_err = 1e-1,
                                                      sigma = 15,
@@ -281,7 +281,7 @@ class TestMany2Many(unittest.TestCase):
         src2 = []
         # 2 sources, where both can be associated with both from image 1
         src2.append(db_subs.example_extractedsource_tuple(ra=123.0, dec=10.485,
-                                                     ra_fit_err=5./3600, dec_fit_err=6./3600, 
+                                                     ra_fit_err=5./3600, dec_fit_err=6./3600,
                                                      peak = 1.8, peak_err = 1e-1,
                                                      flux = 3.3, flux_err = 1e-1,
                                                      sigma = 15,
@@ -289,7 +289,7 @@ class TestMany2Many(unittest.TestCase):
                                                      ra_sys_err=20, dec_sys_err=20
                                                         ))
         src2.append(db_subs.example_extractedsource_tuple(ra=123.0, dec=10.515,
-                                                     ra_fit_err=5./3600, dec_fit_err=6./3600, 
+                                                     ra_fit_err=5./3600, dec_fit_err=6./3600,
                                                      peak = 1.4, peak_err = 1e-1,
                                                      flux = 2.9, flux_err = 1e-1,
                                                      sigma = 15,
@@ -301,7 +301,7 @@ class TestMany2Many(unittest.TestCase):
         results.append(src2[1])
         dbgen.insert_extracted_sources(imageid2, results, 'blind')
         associate_extracted_sources(imageid2, deRuiter_r = 3.717)
-        
+
         query = """\
         SELECT rf.avg_f_int
               ,rf.avg_f_int_sq

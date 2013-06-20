@@ -1,29 +1,18 @@
 import unittest
-import tempfile
 import tkp.steps.quality
 import tkp.utility.accessors
 import tkp.testutil.data as testdata
 from tkp.testutil.decorators import requires_database
+import tkp.utility.parset as parset
+from tkp.testutil.data import default_parset_paths
 
 @requires_database()
 class TestQuality(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         cls.accessor = tkp.utility.accessors.open(testdata.casa_table)
-
-    def test_parse_parset(self):
-        parset = tempfile.NamedTemporaryFile()
-        parset.flush()
-        tkp.steps.quality.parse_parset(parset.name)
+        with open(default_parset_paths['quality_check.parset']) as f:
+            cls.parset = parset.read_config_section(f, 'quality_lofar')
 
     def test_check(self):
-        parset = {
-            'sigma': 3,
-            'f': 4,
-            'low_bound': 1,
-            'high_bound': 200,
-            'oversampled_x': 30,
-            'elliptical_x': 2.0,
-            'min_separation': 20,
-        }
-        tkp.steps.quality.reject_check(self.accessor.url, parset)
+        tkp.steps.quality.reject_check(self.accessor.url, self.parset)

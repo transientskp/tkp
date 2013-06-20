@@ -24,7 +24,7 @@ def _update_known_transients(transients):
        - list of dictionaries representing transient entries.
 
      *Returns:*
-     Number of entries updated. 
+     Number of entries updated.
     """
     query = """\
 UPDATE transient
@@ -47,10 +47,10 @@ def _insert_transients(transients):
     """Insert newly identified transient sources into the transients table.
 
     *Args*:
-      - transients: list of dictionaries representing new transient entries. 
+      - transients: list of dictionaries representing new transient entries.
 
      *Returns:*
-     Number of entries inserted. 
+     Number of entries inserted.
     """
     query = """\
 INSERT INTO transient
@@ -83,8 +83,8 @@ def _select_updated_variability_indices(image_id):
     have had an extra datapoint added by the specified image.
 
     As part of the results we return a field 'new_transient' which is TRUE
-    if the runcat-source/band combination does not yet have an entry in the 
-    transient table.  
+    if the runcat-source/band combination does not yet have an entry in the
+    transient table.
 
     NB Variability index  = std.dev(flux) / mean(flux).
     In the pathological case where mean(flux)==0.0, we simply substitute
@@ -108,8 +108,8 @@ def _select_updated_variability_indices(image_id):
 #        and selecting it from transients gives the *old* value.
 #        So; we recalculate it later, (using scipy.stats),
 #        and apply a threshold there.
-    #  NB We also perform a left outer join with the transient table, 
-    #  to determine if the source has been inserted into that table yet. 
+    #  NB We also perform a left outer join with the transient table,
+    #  to determine if the source has been inserted into that table yet.
     #  This allows us to distinguish newly identified transients.
     query = """\
 SELECT t1.runcat
@@ -122,8 +122,8 @@ SELECT t1.runcat
       ,t1.V_int_inter / t1.avg_f_int AS v_int
       ,t1.eta_int_inter / t1.avg_f_int_weight AS eta_int
       ,CASE WHEN tr0.trigger_xtrsrc IS NULL
-            THEN t1.xtrsrc 
-            ELSE tr0.trigger_xtrsrc 
+            THEN t1.xtrsrc
+            ELSE tr0.trigger_xtrsrc
        END AS trigger_xtrsrc
       ,CASE WHEN tr0.trigger_xtrsrc IS NULL
             THEN TRUE
@@ -184,32 +184,32 @@ def multi_epoch_transient_search(image_id,
                      probability_threshold,
                      minpoints):
     """
-    Updates transients table and returns a list of all currently valid 
+    Updates transients table and returns a list of all currently valid
     multiple-epoch transients.
 
-    (Be aware of the difference between a newly detected source at 
+    (Be aware of the difference between a newly detected source at
     some epoch and a source turning into a variable/transient due
     to significant flux changes. The former is identified in the
-    association procedure, while the latter is identified inspecting the 
+    association procedure, while the latter is identified inspecting the
     variability indices, here.)
 
     Transients are stored in the transient table,
     as well as in the monitoringlist (done by the association recipe),
     to ensure it is measured even when it drops below the threshold.
-    
+
     Transient behaviour is checked per frequency band,
     because we assume that fluxes are not comparable across bands.
-    
+
     *Returns*:
-    A list of dicts representing currently valid transients, i.e. those that 
+    A list of dicts representing currently valid transients, i.e. those that
     satisfy the variability criteria given,
     with keys as follows:
         [{ runcat, band, f_datapoints,
         wm_ra, wm_decl, wm_ra_err, wm_decl_err,
-        v_int, eta_int, 'siglevel', 
+        v_int, eta_int, 'siglevel',
         trigger_xtrsrc, new_transient }]
     """
-    # TODO: 
+    # TODO:
     # What do we do with transients that start as transient, but as
     # more data is collected the siglevel decreases below the threshold?
     # Should they get removed from the transient table?
@@ -220,8 +220,8 @@ def multi_epoch_transient_search(image_id,
     ## Since the updating is done in a separate query anyway, we might as well just
     ## select all variability indices, and filter the results in python.
 
-    ## NB we cannot even sensibly limit our indices query by minpoints, 
-    ## since we must update old entries which only just received their 
+    ## NB we cannot even sensibly limit our indices query by minpoints,
+    ## since we must update old entries which only just received their
     ## second datapoint (i.e. transients in last timestep).
 
 

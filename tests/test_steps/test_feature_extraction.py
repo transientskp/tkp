@@ -10,7 +10,7 @@ class TestFeatureExtraction(unittest.TestCase):
     def setUpClass(cls):
         #NB This is basically nonsense, we're just selecting any old
         #extracted source so we can check the feature extraction syntax.
-        xtrsrc_qry = """SELECT id as trigger_xtrsrc 
+        xtrsrc_qry = """SELECT id as trigger_xtrsrc
                           FROM extractedsource"""
         cursor = execute(xtrsrc_qry)
         cls.transients = get_db_rows_as_dicts(cursor)

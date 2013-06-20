@@ -7,10 +7,11 @@
 
 import subprocess
 from email.utils import parsedate_tz
-import datetime
 
 from docutils import nodes
 from sphinx.util.compat import Directive
+
+import datetime
 
 
 def setup(app):

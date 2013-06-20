@@ -93,10 +93,10 @@ class TestTransientBasics(unittest.TestCase):
 
         # Check the variability indices, first eta_int:
         #query = """\
-        #select sum((f_int - 0.06) * (f_int-0.06) / (f_int_err * f_int_err)) / 3 
+        #select sum((f_int - 0.06) * (f_int-0.06) / (f_int_err * f_int_err)) / 3
         #  from assocxtrsource a
-        #      ,extractedsource x 
-        # where a.xtrsrc = x.id 
+        #      ,extractedsource x
+        # where a.xtrsrc = x.id
         #   and a.runcat = 7
         #"""
 
@@ -127,7 +127,7 @@ class TestTransientRoutines(unittest.TestCase):
         self.im_params = db_subs.example_dbimage_datasets(self.n_images)
         self.db_imgs = []
 
-        #Insert transient source extractions, 
+        #Insert transient source extractions,
         #Include the non-detection points we expect from using monitoringlist:
         source_lists = db_subs.example_source_lists(n_images=8,
                                                   include_non_detections=True)
@@ -166,7 +166,7 @@ class TestTransientRoutines(unittest.TestCase):
         cursor.execute(qry, {'dsid':self.dataset.id})
         transient_table_entries = get_db_rows_as_dicts(cursor)
         self.assertEqual(len(transient_table_entries), len(transients))
-#        for t in all_transients:    
+#        for t in all_transients:
 #            print "V_int:", t['v_int'], "  eta_int:", t['eta_int']
         #Now test thresholding:
         more_highly_variable = sum(t['v_int'] > 2.0 for t in transients)

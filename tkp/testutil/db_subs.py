@@ -1,10 +1,12 @@
-import datetime
 import logging
 from collections import namedtuple
+
+import datetime
 import tkp.db
 from tkp.db.database import Database
 from tkp.db.orm import DataSet, Image
 import tkp.testutil.data as testdata
+
 
 ExtractedSourceTuple = namedtuple("ExtractedSourceTuple",
                                 ['ra', 'dec' ,

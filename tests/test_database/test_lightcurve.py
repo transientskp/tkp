@@ -1,8 +1,8 @@
-import datetime
 from operator import attrgetter, itemgetter
 
 import unittest2 as unittest
 
+import datetime
 from tkp.testutil.decorators import requires_database
 from tkp.db.orm import DataSet
 from tkp.db.orm import Image
@@ -13,7 +13,8 @@ import tkp.db.transients as dbtransients
 class TestLightCurve(unittest.TestCase):
     def setUp(self):
         self.database = tkp.db.Database()
-        self.dataset = DataSet(data={'description': 'dataset with images'}, database=self.database)
+        self.dataset = DataSet(data={'description': 'dataset with images'},
+                               database=self.database)
 
     def tearDown(self):
         tkp.db.rollback()
@@ -61,12 +62,12 @@ class TestLightCurve(unittest.TestCase):
             sources = []
             for data in data_list:
                 source = (data['ra'], data['decl'],
-                     data['ra_fit_err'], data['decl_fit_err'], # Gaussian fit errors
-                     data['i_peak'] * (1 + i), data['i_peak_err'], # Peak
-                     data['i_peak'] * (1 + i), data['i_peak_err'], # Integrated
-                     10., # Significance level
-                     1, 1, 0, # Beam params (width arcsec major, width arcsec minor, parallactic angle)
-                     data['ra_sys_err'], data['decl_sys_err']) # Systematic errors
+                     data['ra_fit_err'], data['decl_fit_err'],  # Gaussian fit errors
+                     data['i_peak'] * (1 + i), data['i_peak_err'],  # Peak
+                     data['i_peak'] * (1 + i), data['i_peak_err'],  # Integrated
+                     10.,  # Significance level
+                     1, 1,  0, # Beam params (width arcsec major, width arcsec minor, parallactic angle)
+                     data['ra_sys_err'], data['decl_sys_err'])  # Systematic errors
                 sources.append(source)
 
             # Insert the sources

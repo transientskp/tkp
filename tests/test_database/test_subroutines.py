@@ -16,8 +16,8 @@ class TestCartesianConversions(unittest.TestCase):
     but it's worth a quick check for numerical consistency,
     since we are utilising two different functions to give the same thing.
     (And if nothing else it enforces a check on future code alterations ).
-    
-    For known results, we use pairs of tuples; structure is: 
+
+    For known results, we use pairs of tuples; structure is:
         ( (ra, decl), (x,y,z) )
     """
     def setUp(self):
@@ -37,8 +37,8 @@ class TestCartesianConversions(unittest.TestCase):
         fortyfive_eq = ((45, 0.0),
                      (1.0 / math.sqrt(2), 1.0 / math.sqrt(2), 0))
         fortyfive_fortyfive = ((45, 45.0),
-                     (math.sin(math.radians(45)) / math.sqrt(2), 
-                      math.sin(math.radians(45)) / math.sqrt(2), 
+                     (math.sin(math.radians(45)) / math.sqrt(2),
+                      math.sin(math.radians(45)) / math.sqrt(2),
                       math.cos(math.radians(45))))
 
         def check_known_result(kr):

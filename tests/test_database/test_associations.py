@@ -315,6 +315,59 @@ class TestOne2One(unittest.TestCase):
         self.assertEqual(len(assoc), 2)
         self.assertAlmostEqual(assoc[1]['r'], expected_DR_radius)
 
+@requires_database()
+class TestMixedSkyregions(unittest.TestCase):
+    """
+    Tests that association and related calculations happen correctly when a
+    source is seen in multiple skyregions.
+    """
+    def setUp(self):
+        self.database = tkpdb.DataBase()
+
+    def tearDown(self):
+        """remove all stuff after the test has been run"""
+        self.database.close()
+
+    def shortDescription(self):
+        return None
+
+    def TestCrossMeridian(self):
+        """
+        A source is observed in two skyregions: one which crosses the
+        meridian, and one which does not. We check that the associated source
+        has the correct weighted mean RA.
+
+        See also #4497.
+        """
+        dataset = tkpdb.DataSet(data={'description': "Test:" + self._testMethodName})
+
+        im_list = [
+            db_subs.example_dbimage_datasets(
+                n_images=1, centre_ra=0, centre_decl=0, xtr_radius=10
+            )[0],
+            db_subs.example_dbimage_datasets(
+                n_images=1, centre_ra=0, centre_decl=0, xtr_radius=10
+            )[0],
+            db_subs.example_dbimage_datasets(
+                n_images=1, centre_ra=15, centre_decl=0, xtr_radius=10
+            )[0],
+            db_subs.example_dbimage_datasets(
+                n_images=1, centre_ra=15, centre_decl=0, xtr_radius=10
+            )[0],
+        ]
+
+        source_ra = 7.5
+        src = db_subs.example_extractedsource_tuple(ra=source_ra, dec=0)
+
+        for im in im_list:
+            image = tkpdb.Image(dataset=dataset, data=im)
+            image.insert_extracted_sources([src])
+            tkpdb.utils.associate_extracted_sources(image.id, deRuiter_r=3.717)
+
+        runcat = tkpdb.utils.columns_from_table(self.database.connection,'runningcatalog', ['wm_ra'],
+            where={'dataset': dataset.id}
+        )
+        self.assertAlmostEqual(runcat[0]['wm_ra'], source_ra)
 
 class TestOne2Many(unittest.TestCase):
     """

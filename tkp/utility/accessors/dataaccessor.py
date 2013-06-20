@@ -19,6 +19,7 @@ class DataAccessor(object):
     def __init__(self):
         ## Note, these get shipped off to the database insertion routine directly,
         ## hence their units should match the database schema.
+        self.telescope = None #Telescope name
         self.wcs = None #tkp.coordinates.WCS object
         self.data = None #Data array
         self.url = None #e.g. Filename

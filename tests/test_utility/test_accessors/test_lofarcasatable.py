@@ -18,6 +18,7 @@ class TestLofarCasaImage(unittest.TestCase):
         cls.accessor = LofarCasaImage(casatable)
 
     def test_casaimage(self):
+        self.assertEqual(self.accessor.telescope, 'LOFAR')
         results = self.accessor.extract_metadata()
         sfimage = accessors.sourcefinder_image_from_accessor(self.accessor)
 

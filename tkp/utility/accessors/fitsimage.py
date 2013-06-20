@@ -45,6 +45,7 @@ class FitsImage(DataAccessor):
         hdulist = pyfits.open(url)
         hdu = hdulist[hdu]
         self.header = hdu.header.copy()
+        self.telescope = self.header['TELESCOP']
         self.data = read_data(hdu, plane)
         hdulist.close()
 

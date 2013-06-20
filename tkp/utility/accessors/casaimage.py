@@ -15,6 +15,7 @@ class CasaImage(DataAccessor):
         self.url = url
 
         self.table = pyrap_table(self.url.encode(), ack=False)
+        self.telescope = self.table.getkeyword('coords')['telescope']
         self.data = parse_data(self.table, plane)
         self.wcs = parse_coordinates(self.table)
         self.pixelsize = parse_pixelsize(self.wcs)

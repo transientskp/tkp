@@ -1,4 +1,4 @@
-/* 
+/*
  * TODO: The resolution element (from images table) is not implemented yet
 */
 
@@ -33,4 +33,15 @@ CREATE TABLE runningcatalog
 {% ifdb postgresql %}
 CREATE INDEX "runningcatalog_xtrsrc" ON "runningcatalog" ("xtrsrc");
 CREATE INDEX "runningcatalog_dataset" ON "runningcatalog" ("dataset");
+
+CREATE INDEX "runningcatalog_zone" ON "runningcatalog" ("zone");
+CREATE INDEX "runningcatalog_wm_ra" ON "runningcatalog" ("wm_ra");
+CREATE INDEX "runningcatalog_wm_decl" ON "runningcatalog" ("wm_decl");
+CREATE INDEX "runningcatalog_x" ON "runningcatalog" ("x");
+CREATE INDEX "runningcatalog_y" ON "runningcatalog" ("y");
+CREATE INDEX "runningcatalog_z" ON "runningcatalog" ("z");
+CREATE INDEX "runningcatalog_wm_ra_err" ON "runningcatalog" ("wm_ra_err");
+CREATE INDEX "runningcatalog_wm_decl_err" ON "runningcatalog" ("wm_decl_err");
 {% endifdb %}
+
+

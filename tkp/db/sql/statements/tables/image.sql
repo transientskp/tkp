@@ -40,5 +40,6 @@ CREATE TABLE image
 CREATE INDEX "image_dataset" ON "image" ("dataset");
 CREATE INDEX "image_band" ON "image" ("band");
 CREATE INDEX "image_skyrgn" ON "image" ("skyrgn");
+CREATE INDEX "image_taustart_ts" ON "image" ("taustart_ts");
 {% endifdb %}
 

@@ -35,5 +35,12 @@ CREATE TABLE extractedsource
 
 {% ifdb postgresql %}
 CREATE INDEX "extractedsource_image" ON "extractedsource" ("image");
+CREATE INDEX "extractedsource_decl" ON "extractedsource" ("decl");
+CREATE INDEX "extractedsource_ra" ON "extractedsource" ("ra");
+CREATE INDEX "extractedsource_x" ON "extractedsource" ("x");
+CREATE INDEX "extractedsource_y" ON "extractedsource" ("y");
+CREATE INDEX "extractedsource_z" ON "extractedsource" ("z");
+CREATE INDEX "extractedsource_ra_err" ON "extractedsource" ("ra_err");
+CREATE INDEX "extractedsource_decl_err" ON "extractedsource" ("decl_err");
 {% endifdb %}
 

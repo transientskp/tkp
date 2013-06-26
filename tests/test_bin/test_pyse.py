@@ -39,6 +39,7 @@ options = AttributeDict({
     'csv': True,
     'force_beam': True,
     'alpha': .1,
+    'detection_image': False
 })
 
 

@@ -467,11 +467,14 @@ class ImageData(object):
         my_map[useful_chunk[0]] = ndimage.map_coordinates(
             grid, numpy.mgrid[slicex, slicey],
             mode='nearest', order=interpolate_order)
+        my_map = numpy.ma.array(my_map)
 
         # In some cases, the spline interpolation may produce values lower
         # than the minimum value in the map. If required, these can be trimmed
         # off.
-        if roundup:
+        if numpy.ma.getmask(grid).all():
+            my_map.mask = True
+        elif roundup:
             my_map = numpy.where(
                 my_map >= numpy.min(grid), my_map, numpy.min(grid)
             )

@@ -261,6 +261,7 @@ class TestMaskedSource(unittest.TestCase):
         results = self.image.extract(det=5, anl=3)
         self.assertFalse(results)
 
+    @requires_data(os.path.join(DATAPATH, 'GRB120422A/GRB120422A-120429.fits'))
     def testWholeSourceMasked(self):
         """
         Part of source masked

@@ -469,12 +469,18 @@ class ImageData(object):
             mode='nearest', order=interpolate_order)
         my_map = numpy.ma.array(my_map)
 
-        # In some cases, the spline interpolation may produce values lower
-        # than the minimum value in the map. If required, these can be trimmed
-        # off.
+        
+        # If the input grid was entirely masked, then the output map must
+        # also be masked: there's no useful data here. We don't search for
+        # sources on a masked background/RMS, so this data will be cleanly
+        # skipped by the rest of the sourcefinder
         if numpy.ma.getmask(grid).all():
             my_map.mask = True
         elif roundup:
+            # In some cases, the spline interpolation may produce values
+            # lower than the minimum value in the map. If required, these
+            # can be trimmed off. No point doing this if the map is already
+            # fully masked, though.
             my_map = numpy.where(
                 my_map >= numpy.min(grid), my_map, numpy.min(grid)
             )

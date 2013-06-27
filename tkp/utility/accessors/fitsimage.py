@@ -141,7 +141,7 @@ def parse_frequency(header):
         try:
             if header['TELESCOP'] == 'LOFAR':
                 freq_eff = header['RESTFRQ']
-                freq_bw = 0.0 # TODO: We need this in the header as well...
+                freq_bw = header['RESTBW']
             else:
                 if header['ctype3'] in ('FREQ', 'VOPT'):
                     freq_eff = header['crval3']

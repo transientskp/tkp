@@ -412,6 +412,11 @@ class ImageData(object):
         bggrid = numpy.ma.array(
             bggrid, mask=numpy.where(numpy.array(bggrid) == False, 1, 0))
 
+        if rmsgrid.mask.all() == True:
+            raise ValueError("Failed to generate valid RMS map for image.\n "
+                             "Beam size used (pix): %s\n"
+                             "Backsize used (pix): %s, %s\n"
+                             % (str(self.beam), self.back_sizex, self.back_sizey))
         return {'rms': rmsgrid, 'bg': bggrid}
 
     def _interpolate(self, grid, roundup=False):

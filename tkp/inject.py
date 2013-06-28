@@ -28,11 +28,13 @@ parset_fields = {
     'ncore': (int, 'NCORE'),
     'nremote': (int, 'NREMOTE'),
     'nintl': (int, 'NINTL'),
-    'position': (int, 'POSITION'),
     'subbandwidth': (float, 'SUBBANDW'),
     'bmaj': (float, 'BMAJ'),
     'bmin': (float, 'BMIN'),
     'bpa': (float, 'BPA'),
+    'itrf_position_x': (float, 'ITRFPOSX'),
+    'itrf_position_y': (float, 'ITRFPOSY'),
+    'itrf_position_z': (float, 'ITRFPOSZ'),
 }
 
 extra_doc = " Properties which can be overwritten or set in the parset file are: " + \

@@ -67,7 +67,6 @@ def run(job_name, local=False):
     dump_job_config_to_logdir(pipe_config, job_config)
 
     p_parset = parset.load_section(job_config, 'persistence')
-    q_lofar_parset = parset.load_section(job_config, 'quality_lofar')
     se_parset = parset.load_section(job_config, 'source_extraction')
     nd_parset = parset.load_section(job_config, 'null_detections')
     tr_parset = parset.load_section(job_config, 'transient_search')
@@ -91,7 +90,7 @@ def run(job_name, local=False):
 
     # quality_check
     urls = [img.url for img in images]
-    arguments = [q_lofar_parset]
+    arguments = [job_config]
     rejecteds = runner(tasks.quality_reject_check, urls, arguments, local)
 
     good_images = []

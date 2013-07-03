@@ -28,29 +28,14 @@ def is_bright_source_near(accessor, distance=20):
     """
 
     #TODO: this function should be split up and tested more atomically
-    metadata = accessor.extract_metadata()
-    if 'position' not in metadata:
-        msg = ("image doesn't have position metadata. "
-                "can't check if bright source is near")
-        logger.warning(msg)
-        warnings.warn(msg)
-        return False
-
     # The measures object is our interface to pyrap
     m = measures()
 
-    # First, you need to set the reference frame -- ie, the time and the
-    # position -- used for the calculations to come. Time as MJD in seconds.
+    # First, you need to set the reference frame -- ie, the time
+    # -- used for the calculations to come. Time as MJD in seconds.
     starttime = int(accessor.taustart_ts.strftime("%s"))
     starttime_mjd = unix2julian(starttime)
     m.do_frame(m.epoch("UTC", "%ss" % starttime_mjd))
-
-    position_md = metadata['position']
-    x = qa.quantity(position_md[0], 'm')
-    y = qa.quantity(position_md[1], 'm')
-    z = qa.quantity(position_md[2], 'm')
-    position = m.position('ITRF', x, y, z)
-    m.doframe(position)
 
     # Second, you need to set your image pointing.
     pointing = m.direction(

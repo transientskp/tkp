@@ -164,6 +164,32 @@ class TestMixedSkyregions(unittest.TestCase):
     def tearDown(self):
         tkp.db.rollback()
 
+    def Test4640(self):
+        dataset = DataSet(data={'description': "Test:" + self._testMethodName})
+        im_list = db_subs.example_dbimage_datasets(
+            n_images=2, centre_ra=358.125, centre_decl=50.941028000000003, xtr_radius=1.38888888889
+        )
+        im_list.extend(
+            db_subs.example_dbimage_datasets(
+                n_images=1, centre_ra=354.375, centre_decl=50.941028000000003, xtr_radius=1.38888888889
+            )
+        )
+
+        source_ra = 356.33840829988583
+        src = db_subs.example_extractedsource_tuple(ra=source_ra, dec=50.516)
+
+        for im in im_list:
+            image = tkp.db.Image(dataset=dataset, data=im)
+            image.insert_extracted_sources([src])
+            associate_extracted_sources(image.id, deRuiter_r=3.717)
+
+        runcat = columns_from_table('runningcatalog', ['wm_ra'],
+            where={'dataset': dataset.id}
+        )
+        self.assertAlmostEqual(runcat[0]['wm_ra'], source_ra)
+
+
+
     def TestCrossMeridian(self):
         """
         A source is observed in two skyregions: one which crosses the

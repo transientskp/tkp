@@ -164,7 +164,16 @@ class TestMixedSkyregions(unittest.TestCase):
     def tearDown(self):
         tkp.db.rollback()
 
-    def Test4640(self):
+    def TestSubZeroAvgWra(self):
+        """
+        Check that we properly take the modulus of avg_wra in cases where it
+        falls below zero.
+
+        See https://support.astron.nl/lofar_issuetracker/issues/4640 for
+        details. The detailed numbers in this test (RA, dec, etc) come from
+        the data involved in that bug report and have no other special
+        meaning.
+        """
         dataset = DataSet(data={'description': "Test:" + self._testMethodName})
         im_list = db_subs.example_dbimage_datasets(
             n_images=2, centre_ra=358.125, centre_decl=50.941028000000003, xtr_radius=1.38888888889
@@ -175,8 +184,8 @@ class TestMixedSkyregions(unittest.TestCase):
             )
         )
 
-        source_ra = 356.33840829988583
-        src = db_subs.example_extractedsource_tuple(ra=source_ra, dec=50.516)
+        source_ra, source_dec = 356.33840829988583, 50.516
+        src = db_subs.example_extractedsource_tuple(ra=source_ra, dec=source_dec)
 
         for im in im_list:
             image = tkp.db.Image(dataset=dataset, data=im)
@@ -187,7 +196,6 @@ class TestMixedSkyregions(unittest.TestCase):
             where={'dataset': dataset.id}
         )
         self.assertAlmostEqual(runcat[0]['wm_ra'], source_ra)
-
 
 
     def TestCrossMeridian(self):

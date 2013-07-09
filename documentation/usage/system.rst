@@ -86,10 +86,7 @@ recipes for the TRAP; these are in the master and nodes subdirectories
 some of these have a slightly adjusted variant in the TKP recipes directory.
 
 It is assumed you know how to edit the :file:`trap.cfg` and :file:`tasks.cfg`
-files, as well as set up parset and other files. For simplicity,
-however, the example files mentioned in the :ref:`recipes section
-<recipes-section>` can be used.
-
+files, as well as set up parset and other files.
 
 .. _heastro-simple-way:
 

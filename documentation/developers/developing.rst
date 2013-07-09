@@ -98,29 +98,6 @@ task follows:
   - exceptions: a few (rarely used) TKP exception classes
 
 
-Builds
-======
-
-The installation procedure is described in :ref:`the TRAP installation
-documentation <trap:installation>`. This section summarizes the nightly build
-procedure on the ``heastro`` system in Amsterdam.
-
-A build is performed at 04:30 every morning. This build is currently performed
-by the script ``/zfs/heastro-plex/scratch/swinbank/build/build-tkp.sh``. It
-builds and installs the HEAD of the ``master`` branch of both the
-`transientskp/tkp <https://github.com/transientskp/tkp/>`_ and
-`transientskp/trap <https://github.com/transientskp/trap>`_ repositories.
-Files are installed under ``/opt/tkp/${BUILD_DATE}`` and, after successful
-installation, the symlink ``/opt/tkp/latest`` is pointed at that location.
-Thus, end-users can always access the latest successful build as
-``/opt/tkp/latest/``.
-
-The file ``/opt/tkp/init.sh`` may be sourced (ie, run ``. /opt/tkp/init.sh``
-at your prompt) by ``bash`` shell users to set all the necessary environment
-variables to run the TKP code.
-
-Logs of all build attempts are available under ``/opt/tkp/logs``.
-
 Coding guidelines
 =================
 

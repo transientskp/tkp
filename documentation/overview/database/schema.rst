@@ -932,7 +932,7 @@ This table contains all rejected images and a reference to the reason.
 **comment**
     A textfield with more details about the rejectedreason. For example in the
     case of a rejection because of RMS value to high, this field will contain
-    the theoretic noise value and the calculated RMS value of the image.
+    the theoretical noise value and the calculated RMS value of the image.
 
 
 ++++++++++

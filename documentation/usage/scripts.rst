@@ -47,26 +47,17 @@ Run will start a job. It needs a job name as argument.
 
 .. program-output:: python ../tkp/bin/tkp-manage.py run -h
 
-runlocal
---------
+initdb
+------
 
-This command will run the pipeline in a non-distributed way. This is mainly
-intended for development purposes but may speedup your pipeline if you use
-it on a single machine.
+Initialise a database with the TKP schema.
 
-.. program-output:: python ../tkp/bin/tkp-manage.py run -h
-
-clean
------
-
-Will cleanup a job.
-
-.. program-output:: python ../tkp/bin/tkp-manage.py clean -h
+.. program-output:: python ../tkp/bin/tkp-manage.py initdb -h
 
 
-info
-----
+celery
+------
 
-Will print some info/statistics about a job.
+Shortcut access to celery subcommands.
 
-.. program-output:: python ../tkp/bin/tkp-manage.py info -h
+.. program-output:: python ../tkp/bin/tkp-manage.py celery -h

@@ -72,6 +72,8 @@ necessary information (again, see the :ref:`database documentation
 Utils
 =====
 
+note: this probably has been depricated.
+
 The utils module contains the actual SQL queries used for the various database
 routines, such as source insertion, source association, keeping track of the
 monitoring list, etcetera. All functions and queries within each function
@@ -87,5 +89,3 @@ to provide a hopefully clearer interface, but can of course be called directly
 as well. Finally, a number of functions are private to the module, and their
 name is therefore preceded with an underscore. These functions tend to be
 called from another funtion within utils, and should only be used as such. 
-
-For details, see the :ref:`module documentation <database-utils>`.

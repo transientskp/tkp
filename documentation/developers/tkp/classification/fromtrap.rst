@@ -1,5 +1,12 @@
 .. _classification:
 
+Introduction
+============
+
+This documentation comes from the TRAP documentation. The TRAP tree
+has been merged into the TKP tree.
+
+
 Classification
 ==============
 
@@ -18,7 +25,7 @@ parset = %(runtime_directory)s/jobs/%(job_name)s/parsets/classification.parset
 - outputs:
 
   - transients: list of :ref:`Transient
-    <tkpapi:classification-transient-transient>` objects,
+    <classification-transient-transient>` objects,
     amended with their classification.
 
 
@@ -28,7 +35,7 @@ Creating your own manual classification
 
 By default, the classification recipe takes its classification (a
 simple decision tree) from the :ref:`classification module
-<tkpapi:classification-manual-classification>`. To create your own
+<classification-manual-classification>`. To create your own
 decision tree, you have to create a simple Python file named
 :file:`classification.py` in the default TKP configuration directory
 (:file:`$HOME/.transientskp/`).
@@ -132,7 +139,7 @@ Available features
 In the above classification module, features are accessible as
 attributes of `self`, like `self.duration` and `self.variability`. The
 TKP library tries to extract such features in the
-:ref:`tkpapi:features` module. The following features are available:
+:ref:`features` module. The following features are available:
 
 `duration`
   full duration of the transient

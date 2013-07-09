@@ -14,3 +14,4 @@ Modules from ``tkp.classification``
    features/index
    transient/index
    manual/index
+   fromtrap

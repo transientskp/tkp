@@ -22,3 +22,4 @@ database used by the TKP library and :ref:`associated pipeline <trap:front>`.
    schema
    assoc
    upgrading
+   makeschema

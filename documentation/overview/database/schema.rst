@@ -903,6 +903,38 @@ upgrade will increment the value by 1.
     The version number, which increments after every database change
 
 
+rejectreason
+============
+
+This table contains all the possible reasons for rejecting an image.
+
+**id**
+    The database ID of the rejectreason
+
+**description**
+    An description of the rejection
+
+
+rejection
+=========
+
+This table contains all rejected images and a reference to the reason.
+
+**id**
+    The database ID of the rejection
+
+**image**
+    A foreign key relationship to the image ID of the rejected image
+
+**rejectreason**
+    A foreign key relationship to the ID of the rejectreason
+
+**comment**
+    A textfield with more details about the rejectedreason. For example in the
+    case of a rejection because of RMS value to high, this field will contain
+    the theoretic noise value and the calculated RMS value of the image.
+
+
 ++++++++++
 Appendices
 ++++++++++

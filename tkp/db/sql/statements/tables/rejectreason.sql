@@ -1,9 +1,7 @@
 CREATE TABLE rejectreason
-  (id SERIAL
+  (id INT
 	,description VARCHAR(512)
-{% ifdb postgresql %}
 	,PRIMARY KEY (id)
-{% endifdb %}
 );
 
 INSERT INTO rejectreason VALUES (0, 'RMS too high');

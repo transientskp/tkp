@@ -232,6 +232,5 @@ autoclass_content = 'both'
 
 # Example configuration for intersphinx: refer to the Python standard library.
 intersphinx_mapping = {
-    'python': ('http://docs.python.org/', None),
-    'trap': ('http://docs.transientskp.org/trap', None),
+    'python': ('http://docs.python.org/', None)
     }

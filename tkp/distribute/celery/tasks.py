@@ -13,8 +13,16 @@ from celery import Celery
 import tkp.steps
 
 
-logger = logging.getLogger(__name__)
+class EventHandler(logging.Handler):
+    def emit(self, record):
+        with celery.events.default_dispatcher() as d:
+            d.send('task-log', msg=record.message, levelno=record.levelno,
+                   filename=record.filename)
 
+logging.basicConfig()
+root_logger = logging.getLogger()
+logger = logging.getLogger(__name__)
+root_logger.addHandler(EventHandler())
 celery = Celery('tkp')
 config_module = 'celeryconfig'
 

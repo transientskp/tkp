@@ -1,10 +1,12 @@
 import os
 import imp
 import logging
+import datetime
+import threading
+import time
 
 from celery import group
 
-import datetime
 from tkp.config import initialize_pipeline_config, database_config
 from tkp.steps.monitoringlist import add_manual_monitoringlist_entries
 from tkp import steps
@@ -18,6 +20,15 @@ import tkp.utility.parset as parset
 
 
 logger = logging.getLogger(__name__)
+
+
+def monitor_events(app):
+    def on_event(event):
+        logger = logging.getLogger(event['filename'])
+        logger.log(event['levelno'], event['msg'])
+    with app.connection() as connection:
+        recv = app.events.Receiver(connection, handlers={'task-log': on_event})
+        recv.capture(limit=None, timeout=None, wakeup=True)
 
 
 def runner(func, iterable, arguments, local=False):
@@ -48,10 +59,18 @@ def string_to_list(my_string):
 
 
 def run(job_name, local=False):
+    # capture celery log events in the background
+    monitoring_thread = threading.Thread(target=monitor_events,
+                                         args=[tasks.celery])
+    monitoring_thread.daemon = True
+    monitoring_thread.start()
+
+    # we need to wait for the thread to release the import lock
+    time.sleep(2)
+
     pipe_config = initialize_pipeline_config(
                              os.path.join(os.getcwd(), "pipeline.cfg"),
                              job_name)
-
 
     database_config(pipe_config)
 

@@ -5,10 +5,12 @@
 CELERY_IMPORTS = ("tkp.distribute.celery.tasks", )
 
 # What is the broker client and workers should register to
-BROKER_URL = "redis://localhost:6379/0"
+#BROKER_URL = "redis://localhost:6379/0"
+BROKER_URL = 'amqp://guest@localhost//'
 
 # where to store the results from the workers
-CELERY_RESULT_BACKEND = "redis://localhost:6379/0"
+#CELERY_RESULT_BACKEND = "redis://localhost:6379/0"
+CELERY_RESULT_BACKEND = 'amqp://guest@localhost//'
 
 # don't reconfigure the logger, important for a worker
 CELERYD_HIJACK_ROOT_LOGGER = False

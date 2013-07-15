@@ -61,7 +61,7 @@ def run(job_name, local=False):
     images = imp.load_source('images_to_process', os.path.join(job_dir,
                              'images_to_process.py')).images
 
-    logger.info("dataset %s containts %s images" % (job_name, len(images)))
+    logger.info("dataset %s contains %s images" % (job_name, len(images)))
 
     job_config = load_job_config(pipe_config)
     dump_job_config_to_logdir(pipe_config, job_config)

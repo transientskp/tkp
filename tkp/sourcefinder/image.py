@@ -837,6 +837,11 @@ class ImageData(object):
 
             labelled islands (numpy.ndarray)
         """
+        # If there is no usable data, we return an empty set of islands.
+        if not len(self.rmsmap.compressed()):
+            logging.warning("RMS map masked; sourcefinding skipped")
+            return [], numpy.zeros(self.data_bgsubbed.shape, dtype=numpy.int)
+
         # At this point, we select all the data which is eligible for
         # sourcefitting. We are actually using three separate filters, which
         # exclude:

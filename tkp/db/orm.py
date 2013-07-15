@@ -116,7 +116,6 @@ If an ``id`` is supplied, ``data`` is ignored.
 """
 
 import logging
-import monetdb.sql as db
 from tkp.db.generic import columns_from_table, set_columns_for_table
 from tkp.db.general import (insert_dataset, insert_image,
                             insert_extracted_sources, lightcurve)
@@ -454,7 +453,7 @@ class Image(DBObject):
         try:
             self.database.cursor.execute(query, (self._id,))
             results = self.database.cursor.fetchall()
-        except db.Error, e:
+        except self.database.connection.Error, e:
             query = query % self._id
             logger.warn("database failed on query: %s", query)
             raise

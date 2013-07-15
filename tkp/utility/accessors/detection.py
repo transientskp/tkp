@@ -7,6 +7,7 @@ from tkp.utility.accessors.casaimage import CasaImage
 from tkp.utility.accessors.lofarhdf5image import LofarHdf5Image
 from tkp.utility.accessors.fitsimage import FitsImage
 from tkp.utility.accessors.lofarfitsimage import LofarFitsImage
+from tkp.utility.accessors.kat7casaimage import Kat7CasaImage
 
 # files that should be contained by a casa table
 casafiles = ("table.dat", "table.f0", "table.f0_TSM0", "table.info", "table.lock")
@@ -50,8 +51,11 @@ def islofarhdf5(filename):
         return False
     return True
 
-fits_telescope_keyword_mapping = {'LOFAR':LofarFitsImage}
-casa_telescope_keyword_mapping = {'LOFAR':LofarCasaImage}
+fits_telescope_keyword_mapping = {'LOFAR': LofarFitsImage}
+casa_telescope_keyword_mapping = {
+    'LOFAR': LofarCasaImage,
+    'KAT7': Kat7CasaImage,
+}
 
 def detect(filename):
     """returns the accessor class that should be used to process filename"""

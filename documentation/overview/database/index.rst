@@ -13,7 +13,7 @@ The TKP Database
    Not all material linked from here has been checked for correctness.
 
 This section presents material related to the structure and maintenance of the
-database used by the TKP library and :ref:`associated pipeline <trap:front>`.
+database used by the TKP library and associated pipeline.
 
 .. toctree::
    :maxdepth: 2

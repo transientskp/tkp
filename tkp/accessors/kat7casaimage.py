@@ -2,13 +2,8 @@
 This module implements the CASA kat7 data container format.
 """
 import logging
-import warnings
-import numpy
-import datetime
-from pyrap.tables import table as pyrap_table
-from tkp.accessors.dataaccessor import DataAccessor
 from tkp.accessors.casaimage import CasaImage
-from tkp.utility.coordinates import julian2unix
+from tkp.utility.coordinates import mjd2datetime
 
 logger = logging.getLogger(__name__)
 
@@ -35,10 +30,8 @@ class Kat7CasaImage(CasaImage):
 def parse_taustartts(table):
     """ extract observation time from CASA table header
     """
-    julianstart = table.getkeyword('coords')['obsdate']['m0']['value']
-    unixstart = julian2unix(julianstart)
-    taustart_ts = datetime.datetime.fromtimestamp(unixstart)
-    return taustart_ts
+    obsdate = table.getkeyword('coords')['obsdate']['m0']['value']
+    return mjd2datetime(obsdate)
 
 
 def parse_tautime(table):

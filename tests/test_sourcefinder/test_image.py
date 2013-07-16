@@ -278,16 +278,24 @@ class TestMaskedSource(unittest.TestCase):
 
 
 class TestMaskedBackground(unittest.TestCase):
+    # We force the mask by setting the usable region << grid size.
     @requires_data(os.path.join(DATAPATH, "L41391_0.img.restored.corr.fits"))
-    def testMaskedBackground(self):
+    def testMaskedBackgroundForcedFit(self):
         """
         Background at forced fit is masked
-
-        We force the mask by setting the usable region << grid size.
         """
         self.image = accessors.sourcefinder_image_from_accessor(
             accessors.open(os.path.join(DATAPATH, "L41391_0.img.restored.corr.fits")),
             radius=1.0,
         )
         result = self.image.fit_to_point(256, 256, 10, 0, None)
+        self.assertFalse(result)
+
+    @requires_data(os.path.join(DATAPATH, "L41391_0.img.restored.corr.fits"))
+    def testMaskedBackgroundBlind(self):
+        self.image = accessors.sourcefinder_image_from_accessor(
+            accessors.open(os.path.join(DATAPATH, "L41391_0.img.restored.corr.fits")),
+            radius=1.0,
+        )
+        result = self.image.extract()
         self.assertFalse(result)

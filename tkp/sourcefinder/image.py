@@ -795,32 +795,6 @@ class ImageData(object):
 
         return detections
 
-    def dump_islands(self, det, anl, minsize=4):
-        """Identify potential islands.
-
-            (This is effectively a deprecated function -
-            it was written for testing external pieces of code.
-            -TS, 2012-05-21)
-
-        """
-
-        sci_clip = numpy.where(self.data_bgsubbed > anl * self.rmsmap, 1, 0)
-        sci_labels, sci_num = ndimage.label(sci_clip,
-                                            self.structuring_element)
-        chunks = ndimage.find_objects(sci_labels)
-
-        # Good islands meet the detection threshold and contain enough pixels
-        subtracted_map = self.data_bgsubbed - det * self.rmsmap
-        for isl, chunk in enumerate(chunks, 1):
-            if not (numpy.where(sci_labels[chunk] == isl)[0].shape[0] >
-                    minsize and
-                    numpy.where(sci_labels[chunk] == isl,
-                                subtracted_map[chunk], -999).max() >= 0):
-                sci_labels[chunk] = numpy.where(sci_labels[chunk] == isl,
-                                                0, sci_labels[chunk])
-
-        return sci_labels
-
     def label_islands(self, detectionthresholdmap, analysisthresholdmap):
         """
         Return a lablled array of pixels for fitting.

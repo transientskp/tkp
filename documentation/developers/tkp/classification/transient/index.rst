@@ -10,6 +10,4 @@ Modules from ``tkp.classification.transient``
 .. toctree::
    :maxdepth: 2
 
-   transient
    utils
-

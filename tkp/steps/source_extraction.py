@@ -14,7 +14,7 @@ def extract_sources(image_path, parset):
     :param parset: parameter set *filename* containing at least the
                 detection and analysis threshold and the association radius,
                 the last one a multiplication factor of the de Ruiter radius.
-    :returns: a list of
+    :returns: list of source measurements
     """
     logger.info("Extracting image: %s" % image_path)
     accessor = tkp.utility.accessors.open(image_path)
@@ -42,10 +42,13 @@ def extract_sources(image_path, parset):
 
 
 def forced_fits(image_path, positions, parset):
-    """Force fit ?? What does this do
-    Args:
-        - image_path: path to image
-        - positions: ?
+    """
+    Perform forced source measurements on an image based on a list of
+    positions.
+
+    :param image_path: path to image for measurements
+    :param positions: list of (ra, dec) pairs for measurement
+    :param parset: configuration parameterset
     """
     logger.info("Forced fitting in image: %s" % (image_path))
     fitsimage = tkp.utility.accessors.open(image_path)

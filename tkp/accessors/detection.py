@@ -2,12 +2,12 @@ import os.path
 import pyfits
 from pyrap.tables import table as pyrap_table
 from pyrap.images import image as pyrap_image
-from tkp.utility.accessors.lofarcasaimage import LofarCasaImage, subtable_names
-from tkp.utility.accessors.casaimage import CasaImage
-from tkp.utility.accessors.lofarhdf5image import LofarHdf5Image
-from tkp.utility.accessors.fitsimage import FitsImage
-from tkp.utility.accessors.lofarfitsimage import LofarFitsImage
-from tkp.utility.accessors.kat7casaimage import Kat7CasaImage
+from tkp.accessors.lofarcasaimage import LofarCasaImage, subtable_names
+from tkp.accessors.casaimage import CasaImage
+from tkp.accessors.lofarhdf5image import LofarHdf5Image
+from tkp.accessors.fitsimage import FitsImage
+from tkp.accessors.lofarfitsimage import LofarFitsImage
+from tkp.accessors.kat7casaimage import Kat7CasaImage
 
 # files that should be contained by a casa table
 casafiles = ("table.dat", "table.f0", "table.f0_TSM0", "table.info", "table.lock")

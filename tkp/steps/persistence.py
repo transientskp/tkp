@@ -5,7 +5,7 @@ from tempfile import NamedTemporaryFile
 
 from pyrap.images import image as pyrap_image
 
-import tkp.utility.accessors
+import tkp.accessors
 from tkp.db.database import Database
 from tkp.db.orm import DataSet, Image
 
@@ -78,7 +78,7 @@ def extract_metadatas(images):
     results = []
     for image in images:
         logger.info("Extracting metadata from %s" % image)
-        accessor = tkp.utility.accessors.open(image)
+        accessor = tkp.accessors.open(image)
         results.append(accessor.extract_metadata())
     return results
 

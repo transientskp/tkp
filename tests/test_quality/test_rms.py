@@ -5,7 +5,7 @@ from numpy.testing import assert_array_equal, assert_array_almost_equal
 import unittest2 as unittest
 from tkp.quality.rms import rms_invalid
 
-from tkp.utility import accessors
+from tkp import accessors
 import tkp.quality
 from tkp.quality import statistics
 import tkp.lofar.noise

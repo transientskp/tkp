@@ -6,7 +6,7 @@ import unittest2 as unittest
 from tkp.testutil.decorators import requires_data
 import tkp.sourcefinder
 from tkp.sourcefinder import image as sfimage
-from tkp.utility import accessors
+from tkp import accessors
 from tkp.utility.uncertain import Uncertain
 from tkp.testutil.data import DATAPATH
 

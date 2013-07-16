@@ -7,8 +7,8 @@ import os
 import unittest2 as unittest
 
 from tkp.testutil.data import DATAPATH
-from tkp.utility import accessors
-from tkp.utility.accessors.fitsimage import FitsImage
+from tkp import accessors
+from tkp.accessors.fitsimage import FitsImage
 from tkp.db.orm import DataSet
 from tkp.db.database import Database
 import tkp.db

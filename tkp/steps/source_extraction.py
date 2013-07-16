@@ -1,7 +1,7 @@
 import logging
-import tkp.utility.accessors
-from tkp.utility.accessors import sourcefinder_image_from_accessor
-import tkp.utility.accessors
+import tkp.accessors
+from tkp.accessors import sourcefinder_image_from_accessor
+import tkp.accessors
 
 
 logger = logging.getLogger(__name__)
@@ -17,7 +17,7 @@ def extract_sources(image_path, parset):
     :returns: a list of
     """
     logger.info("Extracting image: %s" % image_path)
-    accessor = tkp.utility.accessors.open(image_path)
+    accessor = tkp.accessors.open(image_path)
     logger.debug("Detecting sources in image %s at detection threshold %s",
                  image_path, parset['detection_threshold'])
     data_image = sourcefinder_image_from_accessor(accessor,
@@ -48,7 +48,7 @@ def forced_fits(image_path, positions, parset):
         - positions: ?
     """
     logger.info("Forced fitting in image: %s" % (image_path))
-    fitsimage = tkp.utility.accessors.open(image_path)
+    fitsimage = tkp.accessors.open(image_path)
 
     data_image = sourcefinder_image_from_accessor(fitsimage,
                             margin=parset['margin'], radius=parset['radius'],

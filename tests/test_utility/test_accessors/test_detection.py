@@ -3,11 +3,11 @@ import os
 import unittest2 as unittest
 
 
-from tkp.utility.accessors.detection import isfits, islofarhdf5, detect, iscasa
-from tkp.utility.accessors.lofarcasaimage import LofarCasaImage
-from tkp.utility.accessors.casaimage import CasaImage
-from tkp.utility.accessors.fitsimage import FitsImage
-import tkp.utility.accessors
+from tkp.accessors.detection import isfits, islofarhdf5, detect, iscasa
+from tkp.accessors.lofarcasaimage import LofarCasaImage
+from tkp.accessors.casaimage import CasaImage
+from tkp.accessors.fitsimage import FitsImage
+import tkp.accessors
 from tkp.testutil.decorators import requires_data
 from tkp.testutil.data import DATAPATH
 
@@ -50,7 +50,7 @@ class TestAutodetect(unittest.TestCase):
 
     @requires_data(lofarcasatable, antennafile)
     def test_open(self):
-        accessor = tkp.utility.accessors.open(lofarcasatable)
+        accessor = tkp.accessors.open(lofarcasatable)
         self.assertEqual(accessor.__class__, LofarCasaImage)
-        self.assertRaises(IOError, tkp.utility.accessors.open, antennafile)
-        self.assertRaises(IOError, tkp.utility.accessors.open, 'doesntexists')
+        self.assertRaises(IOError, tkp.accessors.open, antennafile)
+        self.assertRaises(IOError, tkp.accessors.open, 'doesntexists')

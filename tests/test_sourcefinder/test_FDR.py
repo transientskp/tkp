@@ -39,7 +39,7 @@ import os
 
 import unittest2 as unittest
 
-from tkp.utility import accessors
+from tkp import accessors
 from tkp.sourcefinder import image
 from tkp.testutil.decorators import requires_data, duration
 from tkp.testutil.data import DATAPATH

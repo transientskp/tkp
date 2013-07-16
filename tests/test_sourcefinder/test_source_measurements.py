@@ -18,7 +18,7 @@ import numpy as np
 
 import unittest2 as unittest
 
-import tkp.utility.accessors
+import tkp.accessors
 from tkp.sourcefinder import image
 from tkp.testutil.data import DATAPATH
 from tkp.testutil.decorators import requires_data, duration
@@ -40,7 +40,7 @@ BG_STD = 5.3480336747739079
 class SourceParameters(unittest.TestCase):
 
     def setUp(self):
-        fitsfile = tkp.utility.accessors.open(os.path.join(DATAPATH, 'TEST_DECONV.FITS'))
+        fitsfile = tkp.accessors.open(os.path.join(DATAPATH, 'TEST_DECONV.FITS'))
         img = image.ImageData(fitsfile.data, fitsfile.beam,
                               fitsfile.wcs)
 

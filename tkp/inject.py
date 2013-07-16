@@ -7,8 +7,8 @@ import os.path
 import argparse
 import pyfits
 from pyrap.tables import table as pyrap_table
-import tkp.utility.accessors.detection
-from tkp.utility.accessors import LofarFitsImage, LofarCasaImage
+import tkp.accessors.detection
+from tkp.accessors import LofarFitsImage, LofarCasaImage
 from  tkp.utility.parset import read_config_section
 
 type_mapping = {
@@ -98,7 +98,7 @@ def main():
             print "File not found: %s (check path is correct?)" % target_file
             continue
         print "injecting data into %s" % target_file
-        accessor_class = tkp.utility.accessors.detection.detect(target_file)
+        accessor_class = tkp.accessors.detection.detect(target_file)
 
         if accessor_class == LofarFitsImage:
             modify_fits_headers(parset, target_file, overwrite)

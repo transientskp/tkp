@@ -4,7 +4,7 @@ import unittest2 as unittest
 from tkp.quality.restoringbeam import beam_invalid
 
 from tkp.testutil.decorators import requires_data
-from tkp.utility import accessors
+from tkp import accessors
 from tkp.testutil.data import DATAPATH
 
 

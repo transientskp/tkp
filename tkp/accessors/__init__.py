@@ -9,12 +9,12 @@ import os
 import pyfits
 from tkp.db.orm import Image as DBImage
 from tkp.sourcefinder.image import ImageData
-from tkp.utility.accessors.dataaccessor import DataAccessor
-from tkp.utility.accessors.fitsimage import FitsImage
-from tkp.utility.accessors.casaimage import CasaImage
-from tkp.utility.accessors.lofarfitsimage import LofarFitsImage
-from tkp.utility.accessors.lofarcasaimage import LofarCasaImage
-import tkp.utility.accessors.detection
+from tkp.accessors.dataaccessor import DataAccessor
+from tkp.accessors.fitsimage import FitsImage
+from tkp.accessors.casaimage import CasaImage
+from tkp.accessors.lofarfitsimage import LofarFitsImage
+from tkp.accessors.lofarcasaimage import LofarCasaImage
+import tkp.accessors.detection
 
 
 def dbimage_from_accessor(dataset, dataccessor, extraction_radius):
@@ -81,7 +81,7 @@ def open(path):
         raise IOError("%s does not exist!" % path)
     if not os.access(path, os. R_OK):
         raise IOError("Don't have permission to read %s!" % path)
-    Accessor = tkp.utility.accessors.detection.detect(path)
+    Accessor = tkp.accessors.detection.detect(path)
     if not Accessor:
         raise IOError("no accessor found for %s" % path)
     return Accessor(path)

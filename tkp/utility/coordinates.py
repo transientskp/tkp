@@ -11,6 +11,7 @@ import datetime
 import pytz
 
 from pyrap.measures import measures
+from pyrap.quanta import quantity
 
 logger = logging.getLogger(__name__)
 
@@ -45,6 +46,11 @@ def julian_date(time=None, modified=False):
     if modified:
         return mjd_daynumber
     return 2400000.5 + mjd_daynumber
+
+
+def mjd2datetime(mjd):
+    q = quantity("%sd" % mjd)
+    return datetime.datetime.fromtimestamp(q.to_unix_time())
 
 
 def mjd2lst(mjd, position=None):

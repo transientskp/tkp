@@ -2,14 +2,23 @@ import os.path
 import pyfits
 from pyrap.tables import table as pyrap_table
 from pyrap.images import image as pyrap_image
-from tkp.utility.accessors.lofarcasaimage import LofarCasaImage, subtable_names
-from tkp.utility.accessors.casaimage import CasaImage
-from tkp.utility.accessors.lofarhdf5image import LofarHdf5Image
-from tkp.utility.accessors.fitsimage import FitsImage
-from tkp.utility.accessors.lofarfitsimage import LofarFitsImage
+from tkp.accessors.lofarcasaimage import LofarCasaImage, subtable_names
+from tkp.accessors.casaimage import CasaImage
+from tkp.accessors.lofarhdf5image import LofarHdf5Image
+from tkp.accessors.fitsimage import FitsImage
+from tkp.accessors.lofarfitsimage import LofarFitsImage
+from tkp.accessors.kat7casaimage import Kat7CasaImage
 
 # files that should be contained by a casa table
-casafiles = ("table.dat", "table.f0", "table.f0_TSM0", "table.info", "table.lock")
+casafiles = ("table.dat", "table.f0", "table.f0_TSM0", "table.info",
+             "table.lock")
+
+fits_telescope_keyword_mapping = {'LOFAR': LofarFitsImage}
+casa_telescope_keyword_mapping = {
+    'LOFAR': LofarCasaImage,
+    'KAT-7': Kat7CasaImage,
+}
+
 
 def isfits(filename):
     """returns True if filename is a fits file"""
@@ -22,6 +31,7 @@ def isfits(filename):
     except IOError:
         return False
     return True
+
 
 def iscasa(filename):
     """returns True if filename is a lofar casa directory"""
@@ -50,20 +60,6 @@ def islofarhdf5(filename):
         return False
     return True
 
-fits_telescope_keyword_mapping = {'LOFAR':LofarFitsImage}
-casa_telescope_keyword_mapping = {'LOFAR':LofarCasaImage}
-
-def detect(filename):
-    """returns the accessor class that should be used to process filename"""
-    if isfits(filename):
-        return fits_detect(filename)
-    elif iscasa(filename):
-        return casa_detect(filename)
-    elif islofarhdf5(filename):
-        return LofarHdf5Image
-    else:
-        raise IOError("This data appears to be in unsupported format:\n%s",
-                           filename)
 
 def fits_detect(filename):
     """
@@ -77,6 +73,7 @@ def fits_detect(filename):
     telescope = hdr.get('TELESCOP')
     return fits_telescope_keyword_mapping.get(telescope, FitsImage)
 
+
 def casa_detect(filename):
     """
     Detect which telescope produced CASA data, return corresponding accessor.
@@ -87,3 +84,17 @@ def casa_detect(filename):
     table = pyrap_table(filename.encode(), ack=False)
     telescope = table.getkeyword('coords')['telescope']
     return casa_telescope_keyword_mapping.get(telescope, CasaImage)
+
+
+def detect(filename):
+    """returns the accessor class that should be used to process filename"""
+    if isfits(filename):
+        return fits_detect(filename)
+    elif iscasa(filename):
+        return casa_detect(filename)
+    elif islofarhdf5(filename):
+        return LofarHdf5Image
+    else:
+        raise IOError("This data appears to be in unsupported format:\n%s",
+                           filename)
+

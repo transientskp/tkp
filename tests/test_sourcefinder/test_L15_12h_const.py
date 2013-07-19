@@ -6,7 +6,7 @@ import os
 
 import unittest2 as unittest
 
-import tkp.utility.accessors.fitsimage
+import tkp.accessors.fitsimage
 import tkp.sourcefinder.image as image
 import tkp.utility.coordinates as coords
 from tkp.testutil.decorators import requires_data
@@ -29,7 +29,7 @@ class L15_12hConstObs(unittest.TestCase):
     def setUp(self):
         # Beam here is a random beam, in this case the WENSS beam
         # without the declination dependence.
-        fitsfile = tkp.utility.accessors.fitsimage.FitsImage(observed_fits,
+        fitsfile = tkp.accessors.fitsimage.FitsImage(observed_fits,
                                     beam=(54./3600, 54./3600, 0.))
         self.image = image.ImageData(fitsfile.data, fitsfile.beam, fitsfile.wcs)
         self.results = self.image.extract(det=10)
@@ -54,7 +54,7 @@ class L15_12hConstCor(unittest.TestCase):
     def setUp(self):
         # Beam here is a random beam, in this case the WENSS beam
         # without the declination dependence.
-        fitsfile = tkp.utility.accessors.fitsimage.FitsImage(corrected_fits,
+        fitsfile = tkp.accessors.fitsimage.FitsImage(corrected_fits,
             beam=(54./3600, 54./3600, 0.))
         self.image = image.ImageData(fitsfile.data, fitsfile.beam, fitsfile.wcs)
         self.results  = self.image.extract(det=10)
@@ -95,7 +95,7 @@ class L15_12hConstMod(unittest.TestCase):
         # all.
         # Beam here is a random beam, in this case the WENSS beam
         # without the declination dependence.
-        fitsfile = tkp.utility.accessors.fitsimage.FitsImage(all_fits,
+        fitsfile = tkp.accessors.fitsimage.FitsImage(all_fits,
             beam=(54./3600, 54./3600, 0.))
         self.image = image.ImageData(fitsfile.data, fitsfile.beam, fitsfile.wcs)
         self.results  = self.image.extract(det=5)
@@ -118,7 +118,7 @@ class FitToPointTestCase(unittest.TestCase):
     def setUp(self):
         # Beam here is a random beam, in this case the WENSS beam
         # without the declination dependence.
-        fitsfile = tkp.utility.accessors.fitsimage.FitsImage(corrected_fits,
+        fitsfile = tkp.accessors.fitsimage.FitsImage(corrected_fits,
             beam=(54./3600, 54./3600, 0.))
         self.my_im = image.ImageData(fitsfile.data, fitsfile.beam,
                                      fitsfile.wcs)

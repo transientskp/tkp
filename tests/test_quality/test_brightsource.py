@@ -5,7 +5,7 @@ import unittest2 as unittest
 
 from tkp.testutil.decorators import requires_data
 import tkp.quality.brightsource
-import tkp.utility.accessors
+import tkp.accessors
 from tkp.testutil.data import DATAPATH
 
 
@@ -15,7 +15,7 @@ testimage = os.path.join(DATAPATH,
 class TestBrightsource(unittest.TestCase):
     @requires_data(testimage)
     def test_brightsource(self):
-        image = tkp.utility.accessors.open(testimage)
+        image = tkp.accessors.open(testimage)
 
         # this image is not near any bright sources
         result = tkp.quality.brightsource.is_bright_source_near(image)

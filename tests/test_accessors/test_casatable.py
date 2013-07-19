@@ -2,7 +2,7 @@ import os
 
 import unittest2 as unittest
 
-import tkp.utility.accessors as accessors
+import tkp.accessors as accessors
 from tkp.testutil.data import DATAPATH
 from tkp.testutil.decorators import requires_data
 

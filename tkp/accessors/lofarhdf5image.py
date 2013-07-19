@@ -1,6 +1,6 @@
 import numpy
 
-from tkp.utility.accessors.dataaccessor import DataAccessor
+from tkp.accessors.dataaccessor import DataAccessor
 
 
 class LofarHdf5Image(DataAccessor):

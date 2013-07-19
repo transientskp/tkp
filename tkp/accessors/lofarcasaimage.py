@@ -9,8 +9,8 @@ import warnings
 import numpy
 import datetime
 from pyrap.tables import table as pyrap_table
-from tkp.utility.accessors.dataaccessor import DataAccessor
-from tkp.utility.accessors.casaimage import CasaImage
+from tkp.accessors.dataaccessor import DataAccessor
+from tkp.accessors.casaimage import CasaImage
 from tkp.utility.coordinates import julian2unix
 
 

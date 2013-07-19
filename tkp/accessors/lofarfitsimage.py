@@ -1,4 +1,4 @@
-from tkp.utility.accessors import FitsImage
+from tkp.accessors import FitsImage
 
 def parse_additional_lofar_metadata(header):
     """Parse missing stuff from headers that should be injected by trap-inject"""

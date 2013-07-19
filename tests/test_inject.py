@@ -3,7 +3,7 @@ import os
 import tempfile
 import shutil
 import tkp
-import tkp.utility.accessors
+import tkp.accessors
 import tkp.inject
 from tkp.testutil.data import DATAPATH
 import tkp.utility.parset
@@ -20,11 +20,11 @@ class TestInject(unittest.TestCase):
 
     def test_no_injection(self):
         # stuff should be missing here
-        self.assertRaises(IOError, tkp.utility.accessors.open, fits_file)
+        self.assertRaises(IOError, tkp.accessors.open, fits_file)
 
     def test_injection(self):
         with open(default_parset_paths['inject.parset']) as f:
             parset = tkp.utility.parset.read_config_section(f, 'inject')
 
         tkp.inject.modify_fits_headers(parset, self.fixed_file, overwrite=True)
-        fixed_fits = tkp.utility.accessors.open(self.fixed_file)
+        fixed_fits = tkp.accessors.open(self.fixed_file)

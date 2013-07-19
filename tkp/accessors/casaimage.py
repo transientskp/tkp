@@ -2,10 +2,9 @@ import logging
 import warnings
 from pyrap.tables import table as pyrap_table
 from math import degrees
-from tkp.utility.accessors.dataaccessor import DataAccessor
+from tkp.accessors.dataaccessor import DataAccessor
 from tkp.utility.coordinates import WCS
-from tkp.utility.accessors.beam import degrees2pixels
-from tkp.utility.accessors.common import parse_pixelsize
+from tkp.accessors.common import parse_pixelsize, degrees2pixels
 
 logger = logging.getLogger(__name__)
 

@@ -9,9 +9,8 @@ import re
 
 import pyfits
 
-from tkp.utility.accessors.beam import degrees2pixels
-from tkp.utility.accessors.common import parse_pixelsize
-from tkp.utility.accessors.dataaccessor import DataAccessor
+from tkp.accessors.common import parse_pixelsize, degrees2pixels
+from tkp.accessors.dataaccessor import DataAccessor
 from tkp.utility.coordinates import WCS
 
 

@@ -5,7 +5,7 @@ from tkp.quality.rms import rms_invalid
 from tkp.quality.statistics import rms_with_clipped_subregion
 from tkp.lofar.noise import noise_level
 from tkp.utility import nice_format
-import tkp.utility.accessors
+import tkp.accessors
 import tkp.db.quality
 import tkp.quality.brightsource
 import tkp.quality
@@ -29,7 +29,7 @@ def reject_check(image_path, job_config):
         (rejection ID, description) if rejected, else None
     """
 
-    accessor = tkp.utility.accessors.open(image_path)
+    accessor = tkp.accessors.open(image_path)
     #NB could also check type, but would have to check against LofarFits, 
     #LofarCasa, LofarHDF...
     if accessor.telescope is "LOFAR":

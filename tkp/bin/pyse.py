@@ -26,9 +26,9 @@ import numpy
 
 import pyfits
 
-from tkp.utility.accessors import FitsImage
-from tkp.utility.accessors import sourcefinder_image_from_accessor
-from tkp.utility.accessors import writefits as tkp_writefits
+from tkp.accessors import FitsImage
+from tkp.accessors import sourcefinder_image_from_accessor
+from tkp.accessors import writefits as tkp_writefits
 from tkp.sourcefinder.utils import generate_result_maps
 
 

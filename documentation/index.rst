@@ -11,6 +11,7 @@ Transient Key Project
    :maxdepth: 2
 
    introduction
+   installation/index
    usage/index
    overview/index
    developers/index

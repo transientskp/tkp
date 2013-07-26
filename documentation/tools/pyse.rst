@@ -8,7 +8,7 @@ Preamble
 --------
 
 This document briefly describes the means by which the Transients Project
-source extraction & measurement code (henceforth ``pyse``) may be used to
+source extraction & measurement code (henceforth ``pyse.py``) may be used to
 obtain a list of sources found in a collection of images stored as FITS files.
 It does not attempt to act as a complete reference to the TKP codebase.
 
@@ -40,7 +40,7 @@ thesis by `Spreeuw <http://dare.uva.nl/en/record/340633>`_ (University of
 Amsterdam, 2010).
 
 It is worth emphasizing that there are a number of differences compared to
-projects such as, for example, BDSM. In particular, the ``pyse`` code is made
+projects such as, for example, BDSM. In particular, the ``pyse.py`` code is made
 available in the form or Python modules, primarily designed for integration
 into a pipeline or other script, rather than for use as an interactive
 analysis environment. Further, it is reasonable to assume that astronomical
@@ -51,12 +51,12 @@ Command Line Usage
 ------------------
 
 A script is available to make it possible to test the basic functionality of
-the ``pyse`` code. It does not make all the features listed above available.
+the ``pyse.py`` code. It does not make all the features listed above available.
 
-Assuming ``pyse`` exists on your ``$PATH``, it is involed by simply providing
+Assuming ``pyse.py`` exists on your ``$PATH``, it is involed by simply providing
 a list of filenames::
 
-  $ pyse file1.fits ... fileN.fits
+  $ pyse.py file1.fits ... fileN.fits
 
 For each file specified, a list of sources identified is printed to the
 screen.
@@ -148,7 +148,7 @@ significance of each pixel: that is, the background-subtracted image pixel
 value divided by the RMS noise at that pixel. It is named according to the
 input filename with ``.sigmap`` inserted before the extension.
 
-If the ``--deblend`` option is specified, ``pyse`` will attempt to separate
+If the ``--deblend`` option is specified, ``pyse.py`` will attempt to separate
 composite sources into multiple components and fit each one independently. The
 number of subthresholds used in this process can be specified using the
 ``--deblend-thresholds`` argument. Refer to Spreeuw's thesis for a detailed

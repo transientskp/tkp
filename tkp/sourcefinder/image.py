@@ -133,16 +133,25 @@ class ImageData(object):
     @Memoize
     def _get_data(self):
         """Masked image data"""
-        margin = self.margin
+        # We will ignore all the data which is masked for the rest of the
+        # sourcefinding process. We build up the mask by stacking ("or-ing
+        # together") a number of different effects:
+        #
+        # * self.reliable_window() which masks data which is distored by
+        #   projection effects;
+        # * A margin from the edge of the image;
+        # * Any data outside a given radius from the centre of the image;
+        # * Data which is "obviously" bad (equal to 0 or NaN).
         mask = self.reliable_window()
         if self.margin:
             margin_mask = numpy.ones((self.xdim, self.ydim))
-            margin_mask[margin:-margin, margin:-margin] = 0
+            margin_mask[self.margin:-self.margin, self.margin:-self.margin] = 0
             mask = numpy.logical_or(mask, margin_mask)
         if self.radius:
             radius_mask = utils.circular_mask(self.xdim, self.ydim, self.radius)
             mask = numpy.logical_or(mask, radius_mask)
         mask = numpy.logical_or(mask, numpy.where(self.rawdata == 0, 1, 0))
+        mask = numpy.logical_or(mask, numpy.isnan(self.rawdata))
         return numpy.ma.array(self.rawdata, mask=mask)
     data = property(fget=_get_data, fdel=_get_data.delete)
 

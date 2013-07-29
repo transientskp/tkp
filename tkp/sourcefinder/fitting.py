@@ -96,7 +96,8 @@ def moments(data, beam, threshold=0):
         numpy.isnan(semimajor) or numpy.isnan(semiminor)):
         raise ValueError("Unable to estimate Gauss shape")
 
-    # Not sure if theta is affected in any way by the cutoff at the threshold.
+    # Theta is not affected by the cut-off at the threshold (see Spreeuw 2010,
+    # page 45).
     if abs(semimajor - semiminor) < 0.01:
         # short circuit!
         theta = 0.

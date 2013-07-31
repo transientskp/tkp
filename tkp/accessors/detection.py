@@ -64,7 +64,7 @@ def islofarhdf5(filename):
 def fits_detect(filename):
     """
     Detect which telescope produced FITS data, return corresponding accessor.
-    
+
     Checks for known FITS image types where we expect additional metadata.
     If the telescope is unknown we default to a regular FitsImage.
     """
@@ -77,7 +77,7 @@ def fits_detect(filename):
 def casa_detect(filename):
     """
     Detect which telescope produced CASA data, return corresponding accessor.
-    
+
     Checks for known CASA table types where we expect additional metadata.
     If the telescope is unknown we default to a regular CasaImage.
     """
@@ -97,4 +97,3 @@ def detect(filename):
     else:
         raise IOError("This data appears to be in unsupported format:\n%s",
                            filename)
-

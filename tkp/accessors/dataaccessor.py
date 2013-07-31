@@ -11,8 +11,8 @@ class DataAccessor(object):
     Data accessors provide a uniform way for the ImageData class (ie, generic
     image representation) to access the various ways in which images may be
     stored (FITS files, arrays in memory, potentially HDF5, etc).
-    
-    The list of attributes represents the minimum working set we expect from 
+
+    The list of attributes represents the minimum working set we expect from
     input images.
     """
 
@@ -49,12 +49,12 @@ class DataAccessor(object):
         return True
 
     def extract_metadata(self):
-        """Massage the class attributes into a flat dictionary with 
-        database-friendly values. 
+        """Massage the class attributes into a flat dictionary with
+        database-friendly values.
 
-        While rather tedious, this is easy to 
+        While rather tedious, this is easy to
         serialize and store separately to the actual image data.
-        
+
         NB. Gets extended by subclasses to return additional data.
         """
         return {

@@ -30,7 +30,7 @@ class FitsImage(DataAccessor):
         """
         Args:
           - url: location of FITS file
-          - beam: (optional) beam parameters in degrees, in the form 
+          - beam: (optional) beam parameters in degrees, in the form
             (bmaj, bmin, bpa). Will attempt to read from header if
             not supplied.
         """
@@ -44,7 +44,9 @@ class FitsImage(DataAccessor):
         hdulist = pyfits.open(url)
         hdu = hdulist[hdu]
         self.header = hdu.header.copy()
-        self.telescope = self.header['TELESCOP']
+        if 'TELESCOP' in self.header:
+            # Otherwise, it defaults to None.
+            self.telescope = self.header['TELESCOP']
         self.data = read_data(hdu, plane)
         hdulist.close()
 

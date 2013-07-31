@@ -30,7 +30,7 @@ def reject_check(image_path, job_config):
     """
 
     accessor = tkp.accessors.open(image_path)
-    #NB could also check type, but would have to check against LofarFits, 
+    #NB could also check type, but would have to check against LofarFits,
     #LofarCasa, LofarHDF...
     if accessor.telescope is "LOFAR":
         return reject_check_lofar(accessor,

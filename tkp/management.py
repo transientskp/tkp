@@ -83,7 +83,8 @@ def line_replace(substitutes, line):
 
 def copy_template(job_or_project, name, target=None, **options):
     """
-    this is taken from django/core/management/templates.py and modified to fit our needs
+    this is taken from django/core/management/templates.py and modified to fit
+    our needs
     """
     # If it's not a valid directory name.
     if not re.search(r'^[_a-zA-Z][\w\-]*$', name):
@@ -169,6 +170,7 @@ def copy_template(job_or_project, name, target=None, **options):
                 sys.stderr.write("Notice: Couldn't set permission bits on %s. You're "
                                   "probably using an uncommon filesystem setup. No "
                                   "problem.\n" % new_path)
+    return top_dir
 
 
 def init_project(args):

@@ -17,9 +17,11 @@ class TestManagement(unittest.TestCase):
     def setUp(self):
         self.parent = tempfile.mkdtemp()
         self.target = os.path.join(self.parent, project_name)
+        self.startdir = os.getcwd()
 
     def tearDown(self):
         shutil.rmtree(self.parent, ignore_errors=True)
+        os.chdir(self.startdir)
 
     def test_init_project(self):
         """

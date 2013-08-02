@@ -47,6 +47,7 @@ class TestPyse(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         cls.temp_dir = tempfile.mkdtemp()
+        cls.start_dir = os.getcwd()
         os.chdir(cls.temp_dir)
         cls.filename = os.path.join(cls.temp_dir, 'playground.fits')
         shutil.copy(orig_fits_file, cls.filename)
@@ -56,6 +57,7 @@ class TestPyse(unittest.TestCase):
 
     @classmethod
     def tearDownClass(cls):
+        os.chdir(cls.start_dir)
         shutil.rmtree(cls.temp_dir)
 
     def test_regions(self):

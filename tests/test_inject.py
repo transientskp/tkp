@@ -14,12 +14,14 @@ fits_file = os.path.join(DATAPATH, 'missingheaders.fits')
 class TestInject(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
+        cls.start_dir = os.getcwd()
         cls.temp_dir = tempfile.mkdtemp()
         cls.fixed_file = os.path.join(cls.temp_dir, 'fixed.fits')
         shutil.copy(fits_file, cls.fixed_file)
 
     @classmethod
     def tearDownClass(cls):
+        os.chdir(cls.start_dir)
         shutil.rmtree(cls.temp_dir)
 
     def test_no_injection(self):

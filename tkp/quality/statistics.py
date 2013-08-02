@@ -27,8 +27,9 @@ def clip(data, sigma=3):
         return newdata
 
 def subregion(data, f=4):
-    """returns the inner region of a image, according to f.
-    if f is for example 4, the returned region will be 1/4th of the total.
+    """Returns the inner region of a image, according to f.
+
+    Resulting area is 4/(f*f) of the original.
     Args:
         data: a numpy array
     """

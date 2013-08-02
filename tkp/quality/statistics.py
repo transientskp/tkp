@@ -4,7 +4,7 @@ functions for calculating statistical properties of LOFAR images
 import numpy
 
 def rms(data):
-    """returns the clipped RMS of an image
+    """Returns the RMS of the data about the median.
     Args:
         data: a numpy array
     """
@@ -12,8 +12,8 @@ def rms(data):
     return numpy.sqrt(numpy.power(data, 2).sum()/len(data))
 
 def clip(data, sigma=3):
-    """remove all values above a threshold from the array.
-    uses iterative clipping at sigma value until nothing more is getting clipped.
+    """Remove all values above a threshold from the array.
+    Uses iterative clipping at sigma value until nothing more is getting clipped.
     Args:
         data: a numpy array
     """

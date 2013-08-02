@@ -46,13 +46,17 @@ options = AttributeDict({
 class TestPyse(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        temp_dir = tempfile.mkdtemp()
-        os.chdir(temp_dir)
-        cls.filename = os.path.join(temp_dir, 'playground.fits')
+        cls.temp_dir = tempfile.mkdtemp()
+        os.chdir(cls.temp_dir)
+        cls.filename = os.path.join(cls.temp_dir, 'playground.fits')
         shutil.copy(orig_fits_file, cls.filename)
         cls.fits = FitsImage(cls.filename, beam=(.5, .5, .5))
         cls.imagedata = sourcefinder_image_from_accessor(cls.fits)
         cls.sourcelist = cls.imagedata.extract()
+
+    @classmethod
+    def tearDownClass(cls):
+        shutil.rmtree(cls.temp_dir)
 
     def test_regions(self):
         tkp.bin.pyse.regions(self.sourcelist)
@@ -66,7 +70,7 @@ class TestPyse(unittest.TestCase):
     def test_summary(self):
         tkp.bin.pyse.summary(self.filename, self.sourcelist)
 
-    @unittest.skip("make jenkins (and Tim) happy")
+    @unittest.skip("TODO: disabled since clashes with nosetest arguments.")
     def test_handle_args(self):
         tkp.bin.pyse.handle_args()
 

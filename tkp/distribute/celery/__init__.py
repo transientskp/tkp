@@ -32,7 +32,12 @@ def runner(func, iterable, arguments, local=False):
     if local:
         return [func(i, *arguments) for i in iterable]
     else:
-        return group(func.s(i, *arguments) for i in iterable)().get()
+        if iterable:
+            return group(func.s(i, *arguments) for i in iterable)().get()
+        else:
+            # group()() returns None if group is called with no arguments,
+            # leading to an AttributeError with get().
+            return []
 
 
 def string_to_list(my_string):

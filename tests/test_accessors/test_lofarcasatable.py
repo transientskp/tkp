@@ -3,7 +3,7 @@ import os
 import unittest2 as unittest
 
 from tkp import accessors
-from tkp.accessors.lofarcasaimage import LofarCasaImage
+from tkp.accessors.lofarcasaimage import LofarCasaImage, parse_tautime
 from tkp.testutil.decorators import requires_data
 from tkp.utility.coordinates import angsep
 from tkp.testutil.data import DATAPATH
@@ -64,3 +64,11 @@ class TestLofarCasaImage(unittest.TestCase):
         self.assertEqual(self.accessor.extra_metadata['ncore'], 42)
         self.assertEqual(self.accessor.extra_metadata['nremote'], 3)
         self.assertEqual(self.accessor.extra_metadata['nintl'], 0)
+
+    def test_parse_tautime(self):
+        class MockOriginTable:
+            def col(self, name):
+                if name == 'START': return [100, 100, 200]
+                elif name == 'END': return [150, 175, 300]
+        subtables = {'LOFAR_ORIGIN': MockOriginTable()}
+        self.assertEqual(parse_tautime(subtables), 175)

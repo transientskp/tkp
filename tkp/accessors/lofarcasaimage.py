@@ -37,7 +37,7 @@ class LofarCasaImage(CasaImage):
     Args:
       - url: location of CASA table
       - plane: if datacube, what plane to use
-      - beam: (optional) beam parameters in degrees, in the form 
+      - beam: (optional) beam parameters in degrees, in the form
         (bmaj, bmin, bpa). Will attempt to read from header if
         not supplied.
     """
@@ -60,13 +60,6 @@ class LofarCasaImage(CasaImage):
         md.update(self.extra_metadata)
         return md
 
-#------------------------------------------------------------------------------
-# The following functions are all fairly class-specific in practice, 
-# but can be defined simply, without state, so we might as well:
-# It's slightly easier to test this way, we might end up re-using them,
-# and it makes explicit that they are not overridden by some child class.
-# It's also, arguably, easier to follow.
-#------------------------------------------------------------------------------  
 
 def open_subtables(table):
     """open all subtables defined in the LOFAR format
@@ -80,18 +73,6 @@ def open_subtables(table):
         subtable_location = table.getkeyword("ATTRGROUPS")[subtable]
         subtables[subtable] = pyrap_table(subtable_location, ack=False)
     return subtables
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 def parse_taustartts(subtables):
@@ -108,7 +89,9 @@ def parse_tautime(subtables):
     origin_table = subtables['LOFAR_ORIGIN']
     startcol = origin_table.col('START')
     endcol = origin_table.col('END')
-    tau_time = endcol[0] - startcol[0]
+    tau_time = len(set.union(*[set(range(int(start), int(end)))
+                               for start, end
+                               in zip(startcol, endcol)]))
     return tau_time
 
 
@@ -174,6 +157,7 @@ def parse_position(subtables):
     position = antenna_table.getcol('POSITION')[0]
     return position
 
+
 def parse_additional_lofar_metadata(subtables):
     ncore, nremote, nintl = parse_stations(subtables)
     metadata = {
@@ -187,4 +171,3 @@ def parse_additional_lofar_metadata(subtables):
             'subbands': parse_subbands(subtables)
         }
     return metadata
-

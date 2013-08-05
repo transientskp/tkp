@@ -77,10 +77,10 @@ class TestPyse(unittest.TestCase):
         tkp.bin.pyse.handle_args()
 
     def test_writefites(self):
-        t = tempfile.NamedTemporaryFile(delete=False)
-        f = t.name
+        temp_file = tempfile.NamedTemporaryFile(delete=False)
         data = self.fits.data
-        tkp.bin.pyse.writefits(f, data, header={})
+        tkp.bin.pyse.writefits(temp_file.name, data, header={})
+        os.unlink(temp_file.name)
 
     def test_run_sourcefinder(self):
         # no options and files

@@ -8,6 +8,7 @@ Library & API
 
    config
    steps
+   accessors
    database/index
    sourcefinder/index
    utility/index

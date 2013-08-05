@@ -10,7 +10,6 @@ Modules from ``tkp.utility``
 .. toctree::
    :maxdepth: 2
 
-   accessors
    containers
    coordinates
    uncertain

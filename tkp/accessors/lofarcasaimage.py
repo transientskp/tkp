@@ -150,14 +150,6 @@ def parse_stations(subtables):
     return ncore, nremote, nintl
 
 
-def parse_position(subtables):
-    antenna_table = subtables['LOFAR_ANTENNA']
-    """extract the position in ITRF (ie, Earth-centred Cartesian) coordinates.
-    """
-    position = antenna_table.getcol('POSITION')[0]
-    return position
-
-
 def parse_additional_lofar_metadata(subtables):
     ncore, nremote, nintl = parse_stations(subtables)
     metadata = {
@@ -166,7 +158,6 @@ def parse_additional_lofar_metadata(subtables):
             'ncore': ncore,
             'nremote': nremote,
             'nintl': nintl,
-            'position': parse_position(subtables),
             'subbandwidth': parse_subbandwidth(subtables),
             'subbands': parse_subbands(subtables)
         }

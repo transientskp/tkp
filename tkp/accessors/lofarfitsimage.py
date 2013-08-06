@@ -8,7 +8,6 @@ def parse_additional_lofar_metadata(header):
         'ncore': header['NCORE'],
         'nintl': header['NINTL'],
         'nremote': header['NREMOTE'],
-        'position': [header['ITRFPOSX'], header['ITRFPOSY'], header['ITRFPOSZ'] ],
         'subbands': header['SUBBANDS'],
         'subbandwidth': header['SUBBANDW'],
         }

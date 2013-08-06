@@ -9,8 +9,10 @@ import warnings
 import numpy
 import datetime
 from pyrap.tables import table as pyrap_table
-from tkp.accessors.dataaccessor import DataAccessor
 from tkp.accessors.casaimage import CasaImage
+from tkp.accessors.lofaraccessor import LofarAccessor
+from tkp.accessors.lofaraccessor import LofarAccessorProperties
+
 from tkp.utility.coordinates import julian2unix
 
 
@@ -27,7 +29,7 @@ subtable_names = (
     'LOFAR_OBSERVATION'
 )
 
-class LofarCasaImage(CasaImage):
+class LofarCasaImage(CasaImage, LofarImage, LofarAccessorProperties):
     """
     Use pyrap to pull image data out of an Casa table.
 
@@ -44,21 +46,23 @@ class LofarCasaImage(CasaImage):
     def __init__(self, url, plane=0, beam=None):
         super(LofarCasaImage, self).__init__(url, plane, beam)
 
-        self.subtables = open_subtables(self.table)
-        self.taustart_ts = parse_taustartts(self.subtables)
-        self.tau_time = parse_tautime(self.subtables)
+        subtables = open_subtables(self.table)
+        self._taustart_ts = parse_taustartts(self.subtables)
+        self._tau_time = parse_tautime(self.subtables)
+
+        # Additional, LOFAR-specific metadata
+        self._antenna_set = parse_antennaset(subtables),
+        self._channels = parse_channels(subtables),
+        self._ncore, self._nremote, self._nintl =  parse_stations(subtables)
+        self._subbandwidth = parse_subbandwidth(subtables),
+        self._subbands = parse_subbands(subtables)
+
         try:
-            self.extra_metadata = parse_additional_lofar_metadata(self.subtables)
+            self.extra_metadata = parse_additional_lofar_metadata(subtables)
         except KeyError as e:
             raise IOError("Problem loading additional metadata from "
                           "LofarCasaImage at %s, error reads: %s" %
                           (self.url, e))
-
-    def extract_metadata(self):
-        """Add additional lofar metadata to returned dict."""
-        md = super(LofarCasaImage, self).extract_metadata()
-        md.update(self.extra_metadata)
-        return md
 
 
 def open_subtables(table):
@@ -148,17 +152,3 @@ def parse_stations(subtables):
         else:
             nintl += 1
     return ncore, nremote, nintl
-
-
-def parse_additional_lofar_metadata(subtables):
-    ncore, nremote, nintl = parse_stations(subtables)
-    metadata = {
-            'antenna_set': parse_antennaset(subtables),
-            'channels': parse_channels(subtables),
-            'ncore': ncore,
-            'nremote': nremote,
-            'nintl': nintl,
-            'subbandwidth': parse_subbandwidth(subtables),
-            'subbands': parse_subbands(subtables)
-        }
-    return metadata

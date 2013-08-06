@@ -1,10 +1,11 @@
+import abc
 import logging
 import warnings
+
 logger = logging.getLogger(__name__)
 
-time_format = "%Y-%m-%d %H:%M:%S.%f"
-
 class DataAccessor(object):
+    __metaclass__ = abc.ABCMeta
     """
     Base class for accessors used with :class:`..sourcefinder.image.ImageData`.
 
@@ -12,50 +13,95 @@ class DataAccessor(object):
     image representation) to access the various ways in which images may be
     stored (FITS files, arrays in memory, potentially HDF5, etc).
 
-    The list of attributes represents the minimum working set we expect from
-    input images.
+    This class cannot be instantiated directly, but should be subclassed and
+    the abstract proeprties provided. Note that all abstract properties are
+    required to provide a valid accessor.
+
+    Additional properties may also be provided by subclasses. However, Trap
+    components are required to degrade gracefully in the absence of this
+    optional properties.
     """
-
-    def __init__(self):
-        ## Note, these get shipped off to the database insertion routine directly,
-        ## hence their units should match the database schema.
-        self.telescope = None #Telescope name
-        self.wcs = None #tkp.coordinates.WCS object
-        self.data = None #Data array
-        self.url = None #e.g. Filename
-        self.pixelsize = None # (x,y) tuple, units of degrees
-        self.tau_time = None  # integration time in seconds
-        self.taustart_ts = None #observation start time
-        self.centre_ra = None #Degrees (J2000)
-        self.centre_decl = None #Degrees (J2000)
-        self.freq_eff = None  # Hertz
-        self.freq_bw = None # Hertz
-        self.beam = None # (bmaj (px), bmin (px), bpa (rad))
-
-
-    def not_set(self):
-        """returns list of all params that are not set"""
-        return [x for x in dir(self) if  not x.startswith('_') and getattr(self, x) == None]
-
-    def ready(self):
-        """checks if this accessor if ready for everything, if not give warning
+    @abc.abstractproperty
+    def wcs(self):
         """
-        not_set = self.not_set()
-        if not_set:
-            msg = "%s not set for image %s" % (", ".join(not_set), self.url)
-            logging.error(msg)
-            warnings.warn(msg)
-            return False
-        return True
+        An instance of tkp.coordinates.WCS.
+        """
+
+    @abc.abstractproperty
+    def data(self):
+        """
+        Two dimensional numpy.ndarray of pixel values.
+        """
+
+    @abc.abstractproperty
+    def url(self):
+        """
+        A (string) URL representing the location of the image at time of
+        processing.
+        """
+
+    @abc.abstractproperty
+    def pixelsize(self):
+        """
+        (x, y) tuple representing the size of a pixel along each axis in units
+        of degrees.
+        """
+
+    @abc.abstractproperty
+    def tau_time(self):
+        """
+        Total time on sky in seconds.
+        """
+
+    @abc.abstractproperty
+    def taustart_ts(self):
+        """
+        Timestamp of the first integration which constitutes part of this
+        image. MJD in seconds.
+        """
+
+    @abc.abstractproperty
+    def centre_ra(self):
+        """
+        Right ascension at the central pixel of the image. J2000 decimal
+        degrees.
+        """
+
+    @abc.abstractproperty
+    def centre_decl(self):
+        """
+        Declination at the central pixel of the image. J2000 decimal degrees.
+        """
+
+    @abc.abstractproperty
+    def freq_eff(self):
+        """
+        Effective frequency of the image in Hz. That is, the mean frequency of
+        all the visibility data which comprises this image.
+        """
+
+    @abc.abstractproperty
+    def freq_bw(self):
+        """
+        The frequency bandwidth of this image in Hz.
+        """
+
+    @abc.abstractproperty
+    def beam(self):
+        """
+        Restoring beam. Tuple of three floats: semi-major axis (in pixels),
+        semi-minor axis (pixels) and position angle (radians).
+        """
 
     def extract_metadata(self):
-        """Massage the class attributes into a flat dictionary with
+        """
+        Massage the class attributes into a flat dictionary with
         database-friendly values.
 
-        While rather tedious, this is easy to
-        serialize and store separately to the actual image data.
+        While rather tedious, this is easy to serialize and store separately
+        to the actual image data.
 
-        NB. Gets extended by subclasses to return additional data.
+        May be extended by subclasses to return additional data.
         """
         return {
             'tau_time': self.tau_time,
@@ -66,9 +112,57 @@ class DataAccessor(object):
             'beam_smaj_pix': float(self.beam[0]), ## NB We must cast to a standard python float
             'beam_smin_pix': float(self.beam[1]), ## as Monetdb converter cannot handle numpy.float64
             'beam_pa_rad': float(self.beam[2]),
-            'centre_ra': self.centre_ra, #J2000 Degrees
-            'centre_decl': self.centre_decl, #J2000 Degrees
+            'centre_ra': self.centre_ra,
+            'centre_decl': self.centre_decl,
             'deltax': self.pixelsize[0],
             'deltay': self.pixelsize[1],
         }
 
+
+class BasicAccessorProperties(object):
+    #
+    # Required attributes for data accessors
+    #
+    @property
+    def wcs(self)
+        return self._wcs
+
+    @property
+    def data(self):
+        return self._data
+
+    @property
+    def url(self):
+        return self._url
+
+    @property
+    def pixelsize(self):
+        return self._pixelsize
+
+    @property
+    def tau_time(self)
+        return self._tau_time
+
+    @property
+    def taustart_ts(self):
+        return self._taustart_ts
+
+    @property
+    def centre_ra(self):
+        return self._centre_ra
+
+    @property
+    def centre_decl(self):
+        return self._centre_decl
+
+    @property
+    def freq_eff(self):
+        return self._freq_eff
+
+    @property
+    def freq_bw(self):
+        return self._freq_bw
+
+    @property
+    def beam(self):
+        return self._beam

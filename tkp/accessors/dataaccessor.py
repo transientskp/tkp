@@ -14,7 +14,7 @@ class DataAccessor(object):
     stored (FITS files, arrays in memory, potentially HDF5, etc).
 
     This class cannot be instantiated directly, but should be subclassed and
-    the abstract proeprties provided. Note that all abstract properties are
+    the abstract properties provided. Note that all abstract properties are
     required to provide a valid accessor.
 
     Additional properties may also be provided by subclasses. However, Trap
@@ -124,7 +124,7 @@ class BasicAccessorProperties(object):
     # Required attributes for data accessors
     #
     @property
-    def wcs(self)
+    def wcs(self):
         return self._wcs
 
     @property
@@ -140,7 +140,7 @@ class BasicAccessorProperties(object):
         return self._pixelsize
 
     @property
-    def tau_time(self)
+    def tau_time(self):
         return self._tau_time
 
     @property

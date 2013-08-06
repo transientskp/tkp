@@ -3,6 +3,7 @@ import os
 import unittest2 as unittest
 
 from tkp import accessors
+from tkp.accessors.lofaraccessor import LofarAccessor
 from tkp.accessors.lofarcasaimage import LofarCasaImage, parse_tautime
 from tkp.testutil.decorators import requires_data
 from tkp.utility.coordinates import angsep
@@ -18,7 +19,7 @@ class TestLofarCasaImage(unittest.TestCase):
         cls.accessor = LofarCasaImage(casatable)
 
     def test_casaimage(self):
-        self.assertEqual(self.accessor.telescope, 'LOFAR')
+        self.assertTrue(isinstance(self.accessor, LofarAccessor))
         results = self.accessor.extract_metadata()
         sfimage = accessors.sourcefinder_image_from_accessor(self.accessor)
 
@@ -61,9 +62,9 @@ class TestLofarCasaImage(unittest.TestCase):
         self.assertAlmostEqual(abs(coord_dist_deg), abs(pix_dist_deg), places=6)
 
     def test_stations(self):
-        self.assertEqual(self.accessor.extra_metadata['ncore'], 42)
-        self.assertEqual(self.accessor.extra_metadata['nremote'], 3)
-        self.assertEqual(self.accessor.extra_metadata['nintl'], 0)
+        self.assertEqual(self.accessor.ncore, 42)
+        self.assertEqual(self.accessor.nremote, 3)
+        self.assertEqual(self.accessor.nintl, 0)
 
     def test_parse_tautime(self):
         class MockOriginTable:

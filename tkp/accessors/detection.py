@@ -70,7 +70,10 @@ def fits_detect(filename):
     """
     hdu = pyfits.open(filename)
     hdr = hdu[0].header
-    telescope = hdr.get('TELESCOP')
+    if 'TELESCOP' in hdr:
+        telescope = hdr.get('TELESCOP')
+    else:
+        telescope = None
     return fits_telescope_keyword_mapping.get(telescope, FitsImage)
 
 

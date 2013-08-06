@@ -9,7 +9,7 @@ from tkp.utility.coordinates import mjd2datetime
 logger = logging.getLogger(__name__)
 
 
-class Kat7CasaImage(CasaImage, BasicAccessorProperties):
+class Kat7CasaImage(BasicAccessorProperties, CasaImage):
     """
     Use pyrap to pull image data out of an Casa table.
 
@@ -24,8 +24,8 @@ class Kat7CasaImage(CasaImage, BasicAccessorProperties):
     def __init__(self, url, plane=0, beam=None):
         super(Kat7CasaImage, self).__init__(url, plane, beam)
 
-        self._taustart_ts = parse_taustartts(self.table)
-        self._tau_time = parse_tautime(self.table)
+        self._taustart_ts = parse_taustartts(self._table)
+        self._tau_time = parse_tautime(self._table)
 
 
 def parse_taustartts(table):

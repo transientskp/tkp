@@ -15,7 +15,7 @@ from tkp.utility.coordinates import WCS
 
 logger = logging.getLogger(__name__)
 
-class FitsImage(DataAccessor, BasicAccessorProperties):
+class FitsImage(BasicAccessorProperties, DataAccessor):
     """
     Use PyFITS to pull image data out of a FITS file.
 
@@ -25,12 +25,10 @@ class FitsImage(DataAccessor, BasicAccessorProperties):
     """
     def __init__(self, url, plane=None, beam=None, hdu=0):
         self._url = url
-        hdulist = pyfits.open(url)
-        hdu = hdulist[hdu]
-        header = hdu.header.copy()
+        header = self._get_header(hdu)
         self._wcs = parse_coordinates(header)
         self._pixelsize = parse_pixelsize(self.wcs)
-        self._data = read_data(hdu, plane)
+        self._data = read_data(pyfits.open(self.url)[hdu], plane)
         self._taustart_ts, self._tau_time = parse_times(header)
         self._centre_ra, self._centre_decl = calculate_phase_centre(
             self.data.shape, self.wcs
@@ -46,7 +44,12 @@ class FitsImage(DataAccessor, BasicAccessorProperties):
         # Bonus attribute
         if 'TELESCOP' in header:
             # Otherwise, it defaults to None.
-            self.telescope = self.header['TELESCOP']
+            self.telescope = header['TELESCOP']
+
+    def _get_header(self, hdu):
+        hdulist = pyfits.open(self.url)
+        hdu = hdulist[hdu]
+        return hdu.header.copy()
 
 
 def read_data(hdu, plane):

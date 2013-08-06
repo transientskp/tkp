@@ -14,12 +14,11 @@ class CasaImage(DataAccessor):
     def __init__(self, url, plane=0, beam=None):
         self._url = url
         self._table = pyrap_table(self.url.encode(), ack=False)
-        self._telescope = self.table.getkeyword('coords')['telescope']
-        self._data = parse_data(self.table, plane)
-        self._wcs = parse_coordinates(self.table)
+        self._data = parse_data(self._table, plane)
+        self._wcs = parse_coordinates(self._table)
         self._pixelsize = parse_pixelsize(self.wcs)
-        self._centre_ra, self.centre_decl = parse_phase_centre(self.table)
-        self._freq_eff, self.freq_bw = parse_frequency(self.table)
+        self._centre_ra, self._centre_decl = parse_phase_centre(self._table)
+        self._freq_eff, self._freq_bw = parse_frequency(self._table)
 
         if beam:
             (bmaj, bmin, bpa) = beam
@@ -27,7 +26,7 @@ class CasaImage(DataAccessor):
                 bmaj, bmin, bpa, self.pixelsize[0], self.pixelsize[1]
             )
         else:
-            self._beam = parse_beam(self.table, self.pixelsize)
+            self._beam = parse_beam(self._table, self.pixelsize)
 
 
 def parse_data(table, plane=0):

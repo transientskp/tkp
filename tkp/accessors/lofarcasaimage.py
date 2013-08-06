@@ -29,7 +29,7 @@ subtable_names = (
     'LOFAR_OBSERVATION'
 )
 
-class LofarCasaImage(CasaImage, LofarImage, LofarAccessorProperties):
+class LofarCasaImage(LofarAccessorProperties, CasaImage, LofarAccessor):
     """
     Use pyrap to pull image data out of an Casa table.
 
@@ -46,23 +46,16 @@ class LofarCasaImage(CasaImage, LofarImage, LofarAccessorProperties):
     def __init__(self, url, plane=0, beam=None):
         super(LofarCasaImage, self).__init__(url, plane, beam)
 
-        subtables = open_subtables(self.table)
-        self._taustart_ts = parse_taustartts(self.subtables)
-        self._tau_time = parse_tautime(self.subtables)
+        subtables = open_subtables(self._table)
+        self._taustart_ts = parse_taustartts(subtables)
+        self._tau_time = parse_tautime(subtables)
 
         # Additional, LOFAR-specific metadata
-        self._antenna_set = parse_antennaset(subtables),
+        self._antenna_set = parse_antennaset(subtables)
         self._channels = parse_channels(subtables),
         self._ncore, self._nremote, self._nintl =  parse_stations(subtables)
-        self._subbandwidth = parse_subbandwidth(subtables),
+        self._subbandwidth = parse_subbandwidth(subtables)
         self._subbands = parse_subbands(subtables)
-
-        try:
-            self.extra_metadata = parse_additional_lofar_metadata(subtables)
-        except KeyError as e:
-            raise IOError("Problem loading additional metadata from "
-                          "LofarCasaImage at %s, error reads: %s" %
-                          (self.url, e))
 
 
 def open_subtables(table):

@@ -74,7 +74,7 @@ class LofarAccessorProperties(BasicAccessorProperties):
     def nremote(self):
         return self._nremote
 
-    @proeprty
+    @property
     def nintl(self):
         return self._nintl
 

@@ -32,7 +32,7 @@ def reject_check(image_path, job_config):
 
     accessor = tkp.accessors.open(image_path)
     # Only run LOFAR-specific QC checks on LOFAR images.
-    if issubclass(LofarAccessor, accessor):
+    if isinstance(accessor, LofarAccessor):
         return reject_check_lofar(
             accessor, load_section(job_config, 'quality_lofar')
         )
@@ -55,8 +55,6 @@ def reject_check_lofar(accessor, parset):
 
     # RMS value check
     rms = rms_with_clipped_subregion(accessor.data, sigma, f)
-    lofar_metadata = accessor.extra_metadata
-
 
     noise = noise_level(accessor.freq_eff, accessor.freq_bw, accessor.tau_time,
         accessor.antenna_set, accessor.ncore, accessor.nremote, accessor.nintl

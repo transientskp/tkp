@@ -42,7 +42,14 @@ class Kat7CasaImage(CasaImage):
 
 
 def parse_taustartts(table):
-    """ extract observation time from CASA table header
+    """
+    Extract image time from CASA table header.
+
+    Arguments:
+      - MAIN table of CASA image.
+
+    Returns:
+      - Time of image start as a instance of ``datetime.datetime``
     """
     obsdate = table.getkeyword('coords')['obsdate']['m0']['value']
     return mjd2datetime(obsdate)

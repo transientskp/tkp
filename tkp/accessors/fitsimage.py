@@ -257,6 +257,13 @@ def parse_times(header):
 
 
 def parse_start_time(header):
+    """
+    Arguments:
+      - header: ``pyfits.header.Header``
+
+    Returns:
+      - start time of image as an instance of ``datetime.datetime``
+    """
     try:
         start = dateutil.parser.parse(header['date-obs'])
     except AttributeError:

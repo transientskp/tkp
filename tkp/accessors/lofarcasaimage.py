@@ -117,6 +117,9 @@ def parse_taustartts(subtables):
 
 
 def parse_tautime(subtables):
+    """
+    Returns the total on-sky time for this image.
+    """
     origin_table = subtables['LOFAR_ORIGIN']
     startcol = origin_table.col('START')
     endcol = origin_table.col('END')

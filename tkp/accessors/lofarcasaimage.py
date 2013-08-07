@@ -103,11 +103,15 @@ def open_subtables(table):
 
 
 def parse_taustartts(subtables):
-    """ extract observation time from CASA table header
+    """ extract image start time from CASA table header
     """
-    # TODO: order by time to ensure we select the earliest
+    # Note that we sort the table in order of ascending start time then choose
+    # the first value to ensure we get the earliest possible starting time.
     observation_table = subtables['LOFAR_OBSERVATION']
-    julianstart = observation_table.getcol('OBSERVATION_START')[0]
+    julianstart = observation_table.query(
+        sortlist="OBSERVATION_START", limit=1).getcell(
+        "OBSERVATION_START", 0
+    )
     unixstart = julian2unix(julianstart)
     taustart_ts = datetime.datetime.fromtimestamp(unixstart)
     return taustart_ts

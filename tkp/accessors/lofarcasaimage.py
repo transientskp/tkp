@@ -50,7 +50,6 @@ class LofarCasaImage(CasaImage, LofarAccessor):
 
         # Additional, LOFAR-specific metadata
         self._antenna_set = parse_antennaset(subtables)
-        self._channels = parse_channels(subtables),
         self._ncore, self._nremote, self._nintl =  parse_stations(subtables)
         self._subbandwidth = parse_subbandwidth(subtables)
         self._subbands = parse_subbands(subtables)
@@ -66,10 +65,6 @@ class LofarCasaImage(CasaImage, LofarAccessor):
     @property
     def antenna_set(self):
         return self._antenna_set
-
-    @property
-    def channels(self):
-        return self._channels
 
     @property
     def ncore(self):
@@ -155,11 +150,6 @@ def parse_subbandwidth(subtables):
     trueclock = freq_units[unit] * clock
     subbandwidth = trueclock / 1024
     return subbandwidth
-
-
-def parse_channels(subtables):
-    origin_table = subtables['LOFAR_ORIGIN']
-    return origin_table.getcol('NCHAN_AVG')[0]
 
 
 def parse_stations(subtables):

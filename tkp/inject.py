@@ -24,7 +24,6 @@ parset_fields = {
     'tau_time': (float, 'TAU_TIME'),
     'antenna_set': (str, 'ANTENNA'),
     'subbands': (int, 'SUBBANDS'),
-    'channels': (int, 'CHANNELS'),
     'ncore': (int, 'NCORE'),
     'nremote': (int, 'NREMOTE'),
     'nintl': (int, 'NINTL'),

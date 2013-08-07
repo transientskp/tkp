@@ -7,7 +7,6 @@ class LofarFitsImage(FitsImage, LofarAccessor):
         super(LofarFitsImage, self).__init__(url, plane, beam, hdu)
         header = self._get_header(hdu)
         self._antenna_set = header['ANTENNA']
-        self._channels = header['CHANNELS']
         self._ncore = header['NCORE']
         self._nintl = header['NINTL']
         self._nremote = header['NREMOTE']
@@ -21,10 +20,6 @@ class LofarFitsImage(FitsImage, LofarAccessor):
     @property
     def antenna_set(self):
         return self._antenna_set
-
-    @property
-    def channels(self):
-        return self._channels
 
     @property
     def ncore(self):

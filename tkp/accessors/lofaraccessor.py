@@ -14,14 +14,6 @@ class LofarAccessor(object):
         """
 
     @abc.abstractproperty
-    def channels(self):
-        """
-        Number of channels per subband in the first MS in the LOFAR_ORIGIN
-        table.
-        TODO: Check.
-        """
-
-    @abc.abstractproperty
     def ncore(self):
         """
         Number of core stations in use during observation. Integer.

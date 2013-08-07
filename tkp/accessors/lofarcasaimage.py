@@ -11,10 +11,7 @@ import datetime
 from pyrap.tables import table as pyrap_table
 from tkp.accessors.casaimage import CasaImage
 from tkp.accessors.lofaraccessor import LofarAccessor
-from tkp.accessors.lofaraccessor import LofarAccessorProperties
-
 from tkp.utility.coordinates import julian2unix
-
 
 logger = logging.getLogger(__name__)
 
@@ -29,7 +26,7 @@ subtable_names = (
     'LOFAR_OBSERVATION'
 )
 
-class LofarCasaImage(LofarAccessorProperties, CasaImage, LofarAccessor):
+class LofarCasaImage(CasaImage, LofarAccessor):
     """
     Use pyrap to pull image data out of an Casa table.
 
@@ -46,7 +43,8 @@ class LofarCasaImage(LofarAccessorProperties, CasaImage, LofarAccessor):
     def __init__(self, url, plane=0, beam=None):
         super(LofarCasaImage, self).__init__(url, plane, beam)
 
-        subtables = open_subtables(self._table)
+        table = pyrap_table(self.url.encode(), ack=False)
+        subtables = open_subtables(table)
         self._taustart_ts = parse_taustartts(subtables)
         self._tau_time = parse_tautime(subtables)
 
@@ -56,6 +54,42 @@ class LofarCasaImage(LofarAccessorProperties, CasaImage, LofarAccessor):
         self._ncore, self._nremote, self._nintl =  parse_stations(subtables)
         self._subbandwidth = parse_subbandwidth(subtables)
         self._subbands = parse_subbands(subtables)
+
+    @property
+    def tau_time(self):
+        return self._tau_time
+
+    @property
+    def taustart_ts(self):
+        return self._taustart_ts
+
+    @property
+    def antenna_set(self):
+        return self._antenna_set
+
+    @property
+    def channels(self):
+        return self._channels
+
+    @property
+    def ncore(self):
+        return self._ncore
+
+    @property
+    def nremote(self):
+        return self._nremote
+
+    @property
+    def nintl(self):
+        return self._nintl
+
+    @property
+    def subbandwidth(self):
+        return self._subbandwidth
+
+    @property
+    def subbands(self):
+        return self._subbands
 
 
 def open_subtables(table):

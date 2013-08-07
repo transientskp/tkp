@@ -30,7 +30,8 @@ class DataAccessor(object):
     @abc.abstractproperty
     def data(self):
         """
-        Two dimensional numpy.ndarray of pixel values.
+        Two dimensional numpy.ndarray of floating point pixel values.
+        TODO: Definitive statement on orientation/transposing.
         """
 
     @abc.abstractproperty
@@ -117,52 +118,3 @@ class DataAccessor(object):
             'deltax': self.pixelsize[0],
             'deltay': self.pixelsize[1],
         }
-
-
-class BasicAccessorProperties(object):
-    #
-    # Required attributes for data accessors
-    #
-    @property
-    def wcs(self):
-        return self._wcs
-
-    @property
-    def data(self):
-        return self._data
-
-    @property
-    def url(self):
-        return self._url
-
-    @property
-    def pixelsize(self):
-        return self._pixelsize
-
-    @property
-    def tau_time(self):
-        return self._tau_time
-
-    @property
-    def taustart_ts(self):
-        return self._taustart_ts
-
-    @property
-    def centre_ra(self):
-        return self._centre_ra
-
-    @property
-    def centre_decl(self):
-        return self._centre_decl
-
-    @property
-    def freq_eff(self):
-        return self._freq_eff
-
-    @property
-    def freq_bw(self):
-        return self._freq_bw
-
-    @property
-    def beam(self):
-        return self._beam

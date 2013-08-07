@@ -13,12 +13,11 @@ class CasaImage(DataAccessor):
     # instantiated.
     def __init__(self, url, plane=0, beam=None):
         self._url = url
-        self._table = pyrap_table(self.url.encode(), ack=False)
-        self._data = parse_data(self._table, plane)
-        self._wcs = parse_coordinates(self._table)
-        self._pixelsize = parse_pixelsize(self.wcs)
-        self._centre_ra, self._centre_decl = parse_phase_centre(self._table)
-        self._freq_eff, self._freq_bw = parse_frequency(self._table)
+        table = pyrap_table(self.url.encode(), ack=False)
+        self._data = parse_data(table, plane)
+        self._wcs = parse_coordinates(table)
+        self._centre_ra, self._centre_decl = parse_phase_centre(table)
+        self._freq_eff, self._freq_bw = parse_frequency(table)
 
         if beam:
             (bmaj, bmin, bpa) = beam
@@ -26,7 +25,43 @@ class CasaImage(DataAccessor):
                 bmaj, bmin, bpa, self.pixelsize[0], self.pixelsize[1]
             )
         else:
-            self._beam = parse_beam(self._table, self.pixelsize)
+            self._beam = parse_beam(table, self.pixelsize)
+
+    @property
+    def wcs(self):
+        return self._wcs
+
+    @property
+    def data(self):
+        return self._data
+
+    @property
+    def url(self):
+        return self._url
+
+    @property
+    def pixelsize(self):
+        return parse_pixelsize(self.wcs)
+
+    @property
+    def centre_ra(self):
+        return self._centre_ra
+
+    @property
+    def centre_decl(self):
+        return self._centre_decl
+
+    @property
+    def freq_eff(self):
+        return self._freq_eff
+
+    @property
+    def freq_bw(self):
+        return self._freq_bw
+
+    @property
+    def beam(self):
+        return self._beam
 
 
 def parse_data(table, plane=0):

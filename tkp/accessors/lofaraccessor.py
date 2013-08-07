@@ -1,5 +1,4 @@
 import abc
-from tkp.accessors.dataaccessor import BasicAccessorProperties
 
 class LofarAccessor(object):
     __metaclass__ = abc.ABCMeta
@@ -53,35 +52,3 @@ class LofarAccessor(object):
         Number of subbands in the first MS in the LOFAR_ORIRIN table.
         TODO: Check.
         """
-
-class LofarAccessorProperties(BasicAccessorProperties):
-    #
-    # Required attributes for images expected to undergo LOFAR QC.
-    #
-    @property
-    def antenna_set(self):
-        return self._antenna_set
-
-    @property
-    def channels(self):
-        return self._channels
-
-    @property
-    def ncore(self):
-        return self._ncore
-
-    @property
-    def nremote(self):
-        return self._nremote
-
-    @property
-    def nintl(self):
-        return self._nintl
-
-    @property
-    def subbandwidth(self):
-        return self._subbandwidth
-
-    @property
-    def subbands(self):
-        return self._subbands

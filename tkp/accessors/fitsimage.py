@@ -10,12 +10,12 @@ import re
 import pyfits
 
 from tkp.accessors.common import parse_pixelsize, degrees2pixels
-from tkp.accessors.dataaccessor import DataAccessor, BasicAccessorProperties
+from tkp.accessors.dataaccessor import DataAccessor
 from tkp.utility.coordinates import WCS
 
 logger = logging.getLogger(__name__)
 
-class FitsImage(BasicAccessorProperties, DataAccessor):
+class FitsImage(DataAccessor):
     """
     Use PyFITS to pull image data out of a FITS file.
 
@@ -27,17 +27,14 @@ class FitsImage(BasicAccessorProperties, DataAccessor):
         self._url = url
         header = self._get_header(hdu)
         self._wcs = parse_coordinates(header)
-        self._pixelsize = parse_pixelsize(self.wcs)
         self._data = read_data(pyfits.open(self.url)[hdu], plane)
         self._taustart_ts, self._tau_time = parse_times(header)
-        self._centre_ra, self._centre_decl = calculate_phase_centre(
-            self.data.shape, self.wcs
-        )
         self._freq_eff, self._freq_bw = parse_frequency(header)
         if beam:
             (bmaj, bmin, bpa) = beam
-            self._beam = degrees2pixels(bmaj, bmin, bpa,
-                                       self.pixelsize[0], self.pixelsize[1])
+            self._beam = degrees2pixels(
+                bmaj, bmin, bpa, self.pixelsize[0], self.pixelsize[1]
+            )
         else:
             self._beam = parse_beam(header, self.pixelsize)
 
@@ -50,6 +47,50 @@ class FitsImage(BasicAccessorProperties, DataAccessor):
         hdulist = pyfits.open(self.url)
         hdu = hdulist[hdu]
         return hdu.header.copy()
+
+    @property
+    def wcs(self):
+        return self._wcs
+
+    @property
+    def data(self):
+        return self._data
+
+    @property
+    def url(self):
+        return self._url
+
+    @property
+    def pixelsize(self):
+        return parse_pixelsize(self.wcs)
+
+    @property
+    def tau_time(self):
+        return self._tau_time
+
+    @property
+    def taustart_ts(self):
+        return self._taustart_ts
+
+    @property
+    def centre_ra(self):
+        return calculate_phase_centre(self.data.shape, self.wcs)[0]
+
+    @property
+    def centre_decl(self):
+        return calculate_phase_centre(self.data.shape, self.wcs)[1]
+
+    @property
+    def freq_eff(self):
+        return self._freq_eff
+
+    @property
+    def freq_bw(self):
+        return self._freq_bw
+
+    @property
+    def beam(self):
+        return self._beam
 
 
 def read_data(hdu, plane):

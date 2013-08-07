@@ -78,3 +78,19 @@ def arcsec2degrees(bmaj, bmin, bpa):
       - tuple of (semi-major in degrees, semi-minor in degrees, bpa as above)
     """
     return (bmaj / 3600, bmin / 3600, bpa)
+
+
+def unique_column_values(table, column_name):
+    """
+    Find all the unique values in a particular column of a CASA table.
+
+    Arguments:
+      - table:       ``pyrap.tables.table``
+      - column_name: ``str``
+
+    Returns:
+      - ``numpy.ndarray`` containing unique values in column.
+    """
+    return table.query(
+        columns=column_name, sortlist="unique %s" % (column_name)
+    ).getcol(column_name)

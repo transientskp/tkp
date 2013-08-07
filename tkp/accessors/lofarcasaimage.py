@@ -12,6 +12,7 @@ from pyrap.tables import table as pyrap_table
 from tkp.accessors.casaimage import CasaImage
 from tkp.accessors.lofaraccessor import LofarAccessor
 from tkp.utility.coordinates import julian2unix
+from tkp.accessors.common import unique_column_values
 
 logger = logging.getLogger(__name__)
 
@@ -104,6 +105,7 @@ def open_subtables(table):
 def parse_taustartts(subtables):
     """ extract observation time from CASA table header
     """
+    # TODO: order by time to ensure we select the earliest
     observation_table = subtables['LOFAR_OBSERVATION']
     julianstart = observation_table.getcol('OBSERVATION_START')[0]
     unixstart = julian2unix(julianstart)
@@ -126,12 +128,20 @@ def parse_tautime(subtables):
 
 def parse_antennaset(subtables):
     observation_table = subtables['LOFAR_OBSERVATION']
-    return observation_table.getcol('ANTENNA_SET')[0]
+    antennasets = unique_column_values(observation_table, "ANTENNA_SET")
+    if len(antennasets) == 1:
+        return antennasets[0]
+    else:
+        raise Exception("Cannot handle multiple antenna sets in image")
 
 
 def parse_subbands(subtables):
     origin_table = subtables['LOFAR_ORIGIN']
-    return origin_table.getcol('NUM_CHAN')[0]
+    num_chans = unique_column_values(origin_table, "NUM_CHAN")
+    if len(num_chans) == 1:
+        return num_chans[0]
+    else:
+        raise Exception("Cannot handle varying numbers of channels in image")
 
 
 def parse_subbandwidth(subtables):
@@ -145,11 +155,15 @@ def parse_subbandwidth(subtables):
     }
     observation_table = subtables['LOFAR_OBSERVATION']
     clockcol = observation_table.col('CLOCK_FREQUENCY')
-    clock = clockcol.getcol()[0]
-    unit = clockcol.getkeyword('QuantumUnits')[0]
-    trueclock = freq_units[unit] * clock
-    subbandwidth = trueclock / 1024
-    return subbandwidth
+    clock_values = unique_column_values(observation_table, "CLOCK_FREQUENCY")
+    if len(clock_values) == 1:
+        clock = clock_values[0]
+        unit = clockcol.getkeyword('QuantumUnits')[0]
+        trueclock = freq_units[unit] * clock
+        subbandwidth = trueclock / 1024
+        return subbandwidth
+    else:
+        raise Exception("Cannot handle varying clocks in image")
 
 
 def parse_stations(subtables):

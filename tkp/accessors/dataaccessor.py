@@ -22,9 +22,23 @@ class DataAccessor(object):
     optional properties.
     """
     @abc.abstractproperty
-    def wcs(self):
+    def beam(self):
         """
-        An instance of tkp.coordinates.WCS.
+        Restoring beam. Tuple of three floats: semi-major axis (in pixels),
+        semi-minor axis (pixels) and position angle (radians).
+        """
+
+    @abc.abstractproperty
+    def centre_ra(self):
+        """
+        Right ascension at the central pixel of the image. J2000 decimal
+        degrees.
+        """
+
+    @abc.abstractproperty
+    def centre_decl(self):
+        """
+        Declination at the central pixel of the image. J2000 decimal degrees.
         """
 
     @abc.abstractproperty
@@ -35,10 +49,16 @@ class DataAccessor(object):
         """
 
     @abc.abstractproperty
-    def url(self):
+    def freq_bw(self):
         """
-        A (string) URL representing the location of the image at time of
-        processing.
+        The frequency bandwidth of this image in Hz.
+        """
+
+    @abc.abstractproperty
+    def freq_eff(self):
+        """
+        Effective frequency of the image in Hz. That is, the mean frequency of
+        all the visibility data which comprises this image.
         """
 
     @abc.abstractproperty
@@ -62,36 +82,16 @@ class DataAccessor(object):
         """
 
     @abc.abstractproperty
-    def centre_ra(self):
+    def url(self):
         """
-        Right ascension at the central pixel of the image. J2000 decimal
-        degrees.
-        """
-
-    @abc.abstractproperty
-    def centre_decl(self):
-        """
-        Declination at the central pixel of the image. J2000 decimal degrees.
+        A (string) URL representing the location of the image at time of
+        processing.
         """
 
     @abc.abstractproperty
-    def freq_eff(self):
+    def wcs(self):
         """
-        Effective frequency of the image in Hz. That is, the mean frequency of
-        all the visibility data which comprises this image.
-        """
-
-    @abc.abstractproperty
-    def freq_bw(self):
-        """
-        The frequency bandwidth of this image in Hz.
-        """
-
-    @abc.abstractproperty
-    def beam(self):
-        """
-        Restoring beam. Tuple of three floats: semi-major axis (in pixels),
-        semi-minor axis (pixels) and position angle (radians).
+        An instance of tkp.coordinates.WCS.
         """
 
     def extract_metadata(self):

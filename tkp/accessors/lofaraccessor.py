@@ -35,12 +35,10 @@ class LofarAccessor(object):
     def subbandwidth(self):
         """
         Width of a subband in Hz.
-        TODO: Check.
         """
 
     @abc.abstractproperty
     def subbands(self):
         """
-        Number of subbands in the first MS in the LOFAR_ORIRIN table.
-        TODO: Check.
+        Number of subbands.
         """

@@ -22,19 +22,19 @@ class TestBrightsource(unittest.TestCase):
         self.assertFalse(result)
 
         # there is nothing bright here
-        image.centre_ra = 90
-        image.centre_decl = 0
+        image._centre_ra = 90
+        image._centre_decl = 0
         result = tkp.quality.brightsource.is_bright_source_near(image)
         self.assertFalse(result)
 
         # this is near the sun
-        image.centre_ra = 0
-        image.centre_decl = 0
+        image._centre_ra = 0
+        image._centre_decl = 0
         result = tkp.quality.brightsource.is_bright_source_near(image)
         self.assertTrue(result)
 
         # this is near CasA
-        image.centre_ra = degrees(6.123487680622104)
-        image.centre_decl = degrees(1.0265153995604648)
+        image._centre_ra = degrees(6.123487680622104)
+        image._centre_decl = degrees(1.0265153995604648)
         result = tkp.quality.brightsource.is_bright_source_near(image)
         self.assertTrue(result)

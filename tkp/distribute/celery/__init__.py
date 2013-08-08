@@ -23,6 +23,10 @@ logger = logging.getLogger(__name__)
 
 
 def monitor_events(app):
+    """
+    This will add a 'task-log' event listener to the celery app, which will
+    log these worker event as python log messages.
+    """
     def on_event(event):
         logger = logging.getLogger(event['filename'])
         logger.log(event['levelno'], event['msg'])
@@ -33,6 +37,8 @@ def monitor_events(app):
 
 def runner(func, iterable, arguments, local=False):
     """
+    A wrapper for mapping your iterable over a function. If local if False,
+    the mapping is performed using celery, else it will be performed locally.
 
     :param func: The function to be called, should have task decorator
     :param iterable: a list of objects to iterate over
@@ -96,6 +102,7 @@ def run(job_name, local=False):
     tr_parset = parset.load_section(job_config, 'transient_search')
 
 
+    logger.info("performing persistence step")
     # persistence
     imgs = [[img] for img in images]
     arguments = [p_parset]
@@ -106,12 +113,14 @@ def run(job_name, local=False):
                                                            se_parset['radius'],
                                                            p_parset)
 
+
     # manual monitoringlist entries
     if not add_manual_monitoringlist_entries(dataset_id, []):
         return 1
 
     images = [Image(id=image_id) for image_id in image_ids]
 
+    logger.info("performing quality check")
     # quality_check
     urls = [img.url for img in images]
     arguments = [job_config]
@@ -129,27 +138,33 @@ def run(job_name, local=False):
         logger.warn("No good images under these quality checking criteria")
         return
 
+    logger.info("performing source extraction")
     # Sourcefinding
     urls = [img.url for img in good_images]
     arguments = [se_parset]
     extract_sources = runner(tasks.extract_sources, urls, arguments, local)
 
+    logger.info("storing extracted to database")
     for image, sources in zip(good_images, extract_sources):
         dbgen.insert_extracted_sources(image.id, sources, 'blind')
 
 
+    logger.info("performing null detections")
     # null_detections
     deRuiter_radius = nd_parset['deruiter_radius']
     null_detectionss = [dbmon.get_nulldetections(image.id, deRuiter_radius)
                         for image in good_images]
 
+    logger.info("performing forced fits")
     iters = zip([i.url for i in good_images], null_detectionss)
     arguments = [nd_parset]
     ff_nds = runner(tasks.forced_fits, iters, arguments, local)
 
+    logger.info("inserting forced fits to database")
     for image, ff_nd in zip(good_images, ff_nds):
         dbgen.insert_extracted_sources(image.id, ff_nd, 'ff_nd')
 
+    logger.info("performing database operations")
     for image in good_images:
         logger.info("performing DB operations for image %s" % image.id)
         dbass.associate_extracted_sources(image.id,
@@ -159,6 +174,7 @@ def run(job_name, local=False):
                                                               tr_parset)
         dbmon.adjust_transients_in_monitoringlist(image.id, transients)
 
+    logger.info("extracting features for transients")
     for transient in transients:
         steps.feature_extraction.extract_features(transient)
 #            ingred.classification.classify(transient, cl_parset)

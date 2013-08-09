@@ -5,7 +5,6 @@ freq_bw = 1940917.96875                  ; bandwidth in Hz
 tau_time = 58141509.156864166            ; integration time
 antenna_set = "HBA_DUAL"                   ; which antenna set is used
 subbands = 10
-channels = 60
 ncore = 41                               ; number of core stations
 nremote = 0                                ; number of remote stations
 nintl = 0                                ; number of international stations

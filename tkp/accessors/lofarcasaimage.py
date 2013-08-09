@@ -9,10 +9,10 @@ import warnings
 import numpy
 import datetime
 from pyrap.tables import table as pyrap_table
-from tkp.accessors.dataaccessor import DataAccessor
 from tkp.accessors.casaimage import CasaImage
+from tkp.accessors.lofaraccessor import LofarAccessor
 from tkp.utility.coordinates import julian2unix
-
+from tkp.accessors.common import unique_column_values
 
 logger = logging.getLogger(__name__)
 
@@ -27,7 +27,7 @@ subtable_names = (
     'LOFAR_OBSERVATION'
 )
 
-class LofarCasaImage(CasaImage):
+class LofarCasaImage(CasaImage, LofarAccessor):
     """
     Use pyrap to pull image data out of an Casa table.
 
@@ -44,21 +44,48 @@ class LofarCasaImage(CasaImage):
     def __init__(self, url, plane=0, beam=None):
         super(LofarCasaImage, self).__init__(url, plane, beam)
 
-        self.subtables = open_subtables(self.table)
-        self.taustart_ts = parse_taustartts(self.subtables)
-        self.tau_time = parse_tautime(self.subtables)
-        try:
-            self.extra_metadata = parse_additional_lofar_metadata(self.subtables)
-        except KeyError as e:
-            raise IOError("Problem loading additional metadata from "
-                          "LofarCasaImage at %s, error reads: %s" %
-                          (self.url, e))
+        table = pyrap_table(self.url.encode(), ack=False)
+        subtables = open_subtables(table)
+        self._taustart_ts = parse_taustartts(subtables)
+        self._tau_time = parse_tautime(subtables)
 
-    def extract_metadata(self):
-        """Add additional lofar metadata to returned dict."""
-        md = super(LofarCasaImage, self).extract_metadata()
-        md.update(self.extra_metadata)
-        return md
+        # Additional, LOFAR-specific metadata
+        self._antenna_set = parse_antennaset(subtables)
+        self._ncore, self._nremote, self._nintl =  parse_stations(subtables)
+        self._subbandwidth = parse_subbandwidth(subtables)
+        self._subbands = parse_subbands(subtables)
+
+    @property
+    def tau_time(self):
+        return self._tau_time
+
+    @property
+    def taustart_ts(self):
+        return self._taustart_ts
+
+    @property
+    def antenna_set(self):
+        return self._antenna_set
+
+    @property
+    def ncore(self):
+        return self._ncore
+
+    @property
+    def nremote(self):
+        return self._nremote
+
+    @property
+    def nintl(self):
+        return self._nintl
+
+    @property
+    def subbandwidth(self):
+        return self._subbandwidth
+
+    @property
+    def subbands(self):
+        return self._subbands
 
 
 def open_subtables(table):
@@ -76,16 +103,24 @@ def open_subtables(table):
 
 
 def parse_taustartts(subtables):
-    """ extract observation time from CASA table header
+    """ extract image start time from CASA table header
     """
+    # Note that we sort the table in order of ascending start time then choose
+    # the first value to ensure we get the earliest possible starting time.
     observation_table = subtables['LOFAR_OBSERVATION']
-    julianstart = observation_table.getcol('OBSERVATION_START')[0]
+    julianstart = observation_table.query(
+        sortlist="OBSERVATION_START", limit=1).getcell(
+        "OBSERVATION_START", 0
+    )
     unixstart = julian2unix(julianstart)
     taustart_ts = datetime.datetime.fromtimestamp(unixstart)
     return taustart_ts
 
 
 def parse_tautime(subtables):
+    """
+    Returns the total on-sky time for this image.
+    """
     origin_table = subtables['LOFAR_ORIGIN']
     startcol = origin_table.col('START')
     endcol = origin_table.col('END')
@@ -97,12 +132,20 @@ def parse_tautime(subtables):
 
 def parse_antennaset(subtables):
     observation_table = subtables['LOFAR_OBSERVATION']
-    return observation_table.getcol('ANTENNA_SET')[0]
+    antennasets = unique_column_values(observation_table, "ANTENNA_SET")
+    if len(antennasets) == 1:
+        return antennasets[0]
+    else:
+        raise Exception("Cannot handle multiple antenna sets in image")
 
 
 def parse_subbands(subtables):
     origin_table = subtables['LOFAR_ORIGIN']
-    return origin_table.getcol('NUM_CHAN')[0]
+    num_chans = unique_column_values(origin_table, "NUM_CHAN")
+    if len(num_chans) == 1:
+        return num_chans[0]
+    else:
+        raise Exception("Cannot handle varying numbers of channels in image")
 
 
 def parse_subbandwidth(subtables):
@@ -116,16 +159,15 @@ def parse_subbandwidth(subtables):
     }
     observation_table = subtables['LOFAR_OBSERVATION']
     clockcol = observation_table.col('CLOCK_FREQUENCY')
-    clock = clockcol.getcol()[0]
-    unit = clockcol.getkeyword('QuantumUnits')[0]
-    trueclock = freq_units[unit] * clock
-    subbandwidth = trueclock / 1024
-    return subbandwidth
-
-
-def parse_channels(subtables):
-    origin_table = subtables['LOFAR_ORIGIN']
-    return origin_table.getcol('NCHAN_AVG')[0]
+    clock_values = unique_column_values(observation_table, "CLOCK_FREQUENCY")
+    if len(clock_values) == 1:
+        clock = clock_values[0]
+        unit = clockcol.getkeyword('QuantumUnits')[0]
+        trueclock = freq_units[unit] * clock
+        subbandwidth = trueclock / 1024
+        return subbandwidth
+    else:
+        raise Exception("Cannot handle varying clocks in image")
 
 
 def parse_stations(subtables):
@@ -148,26 +190,3 @@ def parse_stations(subtables):
         else:
             nintl += 1
     return ncore, nremote, nintl
-
-
-def parse_position(subtables):
-    antenna_table = subtables['LOFAR_ANTENNA']
-    """extract the position in ITRF (ie, Earth-centred Cartesian) coordinates.
-    """
-    position = antenna_table.getcol('POSITION')[0]
-    return position
-
-
-def parse_additional_lofar_metadata(subtables):
-    ncore, nremote, nintl = parse_stations(subtables)
-    metadata = {
-            'antenna_set': parse_antennaset(subtables),
-            'channels': parse_channels(subtables),
-            'ncore': ncore,
-            'nremote': nremote,
-            'nintl': nintl,
-            'position': parse_position(subtables),
-            'subbandwidth': parse_subbandwidth(subtables),
-            'subbands': parse_subbands(subtables)
-        }
-    return metadata

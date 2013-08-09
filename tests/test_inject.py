@@ -26,7 +26,7 @@ class TestInject(unittest.TestCase):
 
     def test_no_injection(self):
         # stuff should be missing here
-        self.assertRaises(IOError, tkp.accessors.open, fits_file)
+        self.assertRaises(KeyError, tkp.accessors.open, fits_file)
 
     def test_injection(self):
         with open(default_parset_paths['inject.parset']) as f:

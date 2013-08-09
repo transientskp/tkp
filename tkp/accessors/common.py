@@ -7,11 +7,12 @@ from math import degrees, sqrt, sin, pi, cos
 
 def parse_pixelsize(wcs):
     """
-    Args:
+    Arguments:
       - wcs: A tkp.coordinates.wcs.WCS object
 
-    Returns: 
-        pixelsize, as an (x,y) tuple, in units of degrees
+    Returns:
+      - deltax: pixel size along the x axis in degrees
+      - deltay: pixel size along the x axis in degrees
 
     """
     #Would have to be pretty strange data for this not to be the case
@@ -25,7 +26,7 @@ def parse_pixelsize(wcs):
     else:
         raise ValueError("Unrecognised WCS co-ordinate system")
 
-    #NB. What's a reasonable epsilon here? 
+    #NB. What's a reasonable epsilon here?
     eps = 1e-7
     if abs(abs(deltax) - abs(deltay)) > eps:
         raise ValueError("Image WCS header suggests non-square pixels."
@@ -35,8 +36,22 @@ def parse_pixelsize(wcs):
 
 
 def degrees2pixels(bmaj, bmin, bpa, deltax, deltay):
-    """convert beam in degrees to beam in pixels and radians.
-    For example Fits beam parameters are in degrees."""
+    """
+    Convert beam in degrees to beam in pixels and radians.
+    For example Fits beam parameters are in degrees.
+
+    Arguments:
+      - bmaj:   Beam semi-major axis in degrees
+      - bmin:   Beam semi-minor axis in degrees
+      - bpa:    Beam position angle in degrees
+      - deltax: Pixel size along the x axis in degrees
+      - deltay: Pixel size along the y axis in degrees
+
+    Returns:
+      - semimaj: Beam semi-major axis in pixels
+      - semimin: Beam semi-minor axis in pixels
+      - theta:   Beam position angle in radians
+    """
     semimaj = (bmaj / 2.) * (sqrt(
         (sin(pi * bpa / 180.)**2) / (deltax**2) +
         (cos(pi * bpa / 180.)**2) / (deltay**2))
@@ -50,6 +65,32 @@ def degrees2pixels(bmaj, bmin, bpa, deltax, deltay):
 
 
 def arcsec2degrees(bmaj, bmin, bpa):
-    """converts beam paramets from arcsec to degrees.
-    For example CASAtable beam parameters are in arcsec"""
+    """
+    Converts beam parameters from arcsec to degrees.
+    For example CASAtable beam parameters are in arcsec.
+
+    Arguments:
+      - bmaj: Beam semi-major axis in arcsec
+      - bmin: Beam semi-minor axis in arcsec
+      - bpa:  Beam position angle in arbitrary units
+
+    Returns:
+      - tuple of (semi-major in degrees, semi-minor in degrees, bpa as above)
+    """
     return (bmaj / 3600, bmin / 3600, bpa)
+
+
+def unique_column_values(table, column_name):
+    """
+    Find all the unique values in a particular column of a CASA table.
+
+    Arguments:
+      - table:       ``pyrap.tables.table``
+      - column_name: ``str``
+
+    Returns:
+      - ``numpy.ndarray`` containing unique values in column.
+    """
+    return table.query(
+        columns=column_name, sortlist="unique %s" % (column_name)
+    ).getcol(column_name)

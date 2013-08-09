@@ -9,32 +9,61 @@ from tkp.accessors.common import parse_pixelsize, degrees2pixels
 logger = logging.getLogger(__name__)
 
 class CasaImage(DataAccessor):
+    # NB CasaImage does not provide tau_time or taustart_ts, so cannot be
+    # instantiated.
     def __init__(self, url, plane=0, beam=None):
-        super(CasaImage, self).__init__()  # Set defaults
-        self.url = url
-
-        self.table = pyrap_table(self.url.encode(), ack=False)
-        self.telescope = self.table.getkeyword('coords')['telescope']
-        self.data = parse_data(self.table, plane)
-        self.wcs = parse_coordinates(self.table)
-        self.pixelsize = parse_pixelsize(self.wcs)
-        self.centre_ra, self.centre_decl = parse_phase_centre(self.table)
-        self.freq_eff, self.freq_bw = parse_frequency(self.table)
+        self._url = url
+        table = pyrap_table(self.url.encode(), ack=False)
+        self._data = parse_data(table, plane)
+        self._wcs = parse_coordinates(table)
+        self._centre_ra, self._centre_decl = parse_phase_centre(table)
+        self._freq_eff, self._freq_bw = parse_frequency(table)
 
         if beam:
             (bmaj, bmin, bpa) = beam
-            self.beam = degrees2pixels(bmaj, bmin, bpa,
-                                       self.pixelsize[0], self.pixelsize[1])
+            self._beam = degrees2pixels(
+                bmaj, bmin, bpa, self.pixelsize[0], self.pixelsize[1]
+            )
         else:
-            self.beam = parse_beam(self.table, self.pixelsize)
+            self._beam = parse_beam(table, self.pixelsize)
 
-#------------------------------------------------------------------------------
-# The following functions are all fairly class-specific in practice, 
-# but can be defined simply, without state, so we might as well:
-# It's slightly easier to test this way, we might end up re-using them,
-# and it makes explicit that they are not overridden by some child class.
-# It's also, arguably, easier to follow.
-#------------------------------------------------------------------------------  
+    @property
+    def wcs(self):
+        return self._wcs
+
+    @property
+    def data(self):
+        return self._data
+
+    @property
+    def url(self):
+        return self._url
+
+    @property
+    def pixelsize(self):
+        return parse_pixelsize(self.wcs)
+
+    @property
+    def centre_ra(self):
+        return self._centre_ra
+
+    @property
+    def centre_decl(self):
+        return self._centre_decl
+
+    @property
+    def freq_eff(self):
+        return self._freq_eff
+
+    @property
+    def freq_bw(self):
+        return self._freq_bw
+
+    @property
+    def beam(self):
+        return self._beam
+
+
 def parse_data(table, plane=0):
     """extract and massage data from CASA table"""
     data = table[0]['map'].squeeze()
@@ -79,7 +108,7 @@ def parse_frequency(table):
 def parse_beam(table, pixelsize):
     """
     Returns:
-      - Beam parameters, (semimajor, semiminor, parallactic angle) in 
+      - Beam parameters, (semimajor, semiminor, parallactic angle) in
         (pixels,pixels, radians).
     """
     def ensure_degrees(quantity):

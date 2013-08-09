@@ -18,7 +18,6 @@ class TestKat7CasaImage(unittest.TestCase):
         cls.accessor = Kat7CasaImage(casatable)
 
     def test_casaimage(self):
-        self.assertEqual(self.accessor.telescope, 'KAT-7')
         results = self.accessor.extract_metadata()
         sfimage = accessors.sourcefinder_image_from_accessor(self.accessor)
 

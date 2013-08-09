@@ -1,8 +1,8 @@
 .. _accessors:
 
-+++++++++++++++++++++++++++++++++++++++++++++++++++++++
-:mod:`tkp.utility.accessors` -- Image container classes
-+++++++++++++++++++++++++++++++++++++++++++++++++++++++
++++++++++++++++++++++++++++++++++++++++++++++++
+:mod:`tkp.accessors` -- Image container classes
++++++++++++++++++++++++++++++++++++++++++++++++
 .. |last_updated| last_updated::
 
 *This document last updated:* |last_updated|.
@@ -96,6 +96,6 @@ metadata which must be provided for LOFAR quality control:
 API Documentation
 -----------------
 
-.. automodule:: tkp.utility.accessors
+.. automodule:: tkp.accessors
    :synopsis: Accessor (image container) classes
    :members:

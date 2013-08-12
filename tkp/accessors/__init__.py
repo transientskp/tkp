@@ -75,7 +75,13 @@ def open(path, *args, **kwargs):
     """
     Returns an accessor object (if available) for the file or directory 'path'.
 
-    Will raise an exception if something went wrong.
+    We try all the possible accessors in order from most specific to least
+    specific. That is, if possible, we prefer an accessor providing
+    LofarAccessor to one providing DataAccessor, but we accept the latter if
+    that's the only possible match.
+
+    Will raise an exception if something went wrong or no matching accessor
+    class is found.
     """
     if not os.access(path, os.F_OK):
         raise IOError("%s does not exist!" % path)

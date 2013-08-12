@@ -1,5 +1,6 @@
 import os.path
 import pyfits
+from collections import namedtuple
 from pyrap.tables import table as pyrap_table
 from pyrap.images import image as pyrap_image
 from tkp.accessors.lofarcasaimage import LofarCasaImage, subtable_names
@@ -13,7 +14,15 @@ from tkp.accessors.kat7casaimage import Kat7CasaImage
 casafiles = ("table.dat", "table.f0", "table.f0_TSM0", "table.info",
              "table.lock")
 
-fits_telescope_keyword_mapping = {'LOFAR': LofarFitsImage}
+# We will take the first accessor for which the test returns True.
+FitsTest  = namedtuple('FitsTest', ['accessor', 'test'])
+fits_type_mapping = [
+    FitsTest(
+        accessor=LofarFitsImage,
+        test=lambda hdr: 'TELESCOP' in hdr and 'ANTENNA' in hdr and hdr.get('TELESCOP') == "LOFAR"
+    )
+]
+
 casa_telescope_keyword_mapping = {
     'LOFAR': LofarCasaImage,
     'KAT-7': Kat7CasaImage,
@@ -70,11 +79,10 @@ def fits_detect(filename):
     """
     hdu = pyfits.open(filename)
     hdr = hdu[0].header
-    if 'TELESCOP' in hdr:
-        telescope = hdr.get('TELESCOP')
-    else:
-        telescope = None
-    return fits_telescope_keyword_mapping.get(telescope, FitsImage)
+    for fits_test in fits_type_mapping:
+        if fits_test.test(hdr):
+            return fits_test.accessor
+    return FitsImage
 
 
 def casa_detect(filename):

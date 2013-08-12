@@ -27,7 +27,7 @@ import pyfits
 
 import logging
 
-from tkp.accessors import FitsImage
+from tkp.accessors import open as open_accessor
 from tkp.accessors import sourcefinder_image_from_accessor
 from tkp.accessors import writefits as tkp_writefits
 from tkp.sourcefinder.utils import generate_result_maps
@@ -153,7 +153,7 @@ def writefits(filename, data, header={}):
 def get_detection_labels(filename, det, anl, beam, plane=0):
     print "Detecting islands in %s" % (filename,)
     print "Thresholding with det = %f sigma, analysis = %f sigma" % (det, anl)
-    ff = FitsImage(options.detection_image, beam=beam, plane=plane)
+    ff = open_accessor(options.detection_image, beam=beam, plane=plane)
     imagedata = sourcefinder_image_from_accessor(ff, **configuration)
     labels, labelled_data = imagedata.label_islands(
         options.detection * imagedata.rmsmap, options.analysis * imagedata.rmsmap
@@ -203,7 +203,7 @@ def run_sourcefinder(files, options):
         labels, labelled_data = [], None
     for counter, filename in enumerate(files):
         print "Processing %s (file %d of %d)." % (filename, counter+1, len(files))
-        ff = FitsImage(filename, beam=beam, plane=0)
+        ff = open_accessor(filename, beam=beam, plane=0)
         imagedata = sourcefinder_image_from_accessor(ff, **configuration)
         if options.fdr:
             print "Using False Detection Rate algorithm with alpha = %f" % (options.alpha,)

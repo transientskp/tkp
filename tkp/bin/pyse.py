@@ -23,8 +23,9 @@ import os.path
 from cStringIO import StringIO
 from optparse import OptionParser
 import numpy
-
 import pyfits
+
+import logging
 
 from tkp.accessors import FitsImage
 from tkp.accessors import sourcefinder_image_from_accessor
@@ -244,6 +245,7 @@ def run_sourcefinder(files, options):
 
 
 if __name__ == "__main__":
+    logging.basicConfig()
     options, files = handle_args()
     if files:
         print run_sourcefinder(files, options),

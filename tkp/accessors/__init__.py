@@ -71,7 +71,7 @@ def writefits(data, filename, header = {}):
         hdu.writeto(filename)
 
 
-def open(path):
+def open(path, *args, **kwargs):
     """
     Returns an accessor object (if available) for the file or directory 'path'.
 
@@ -84,4 +84,4 @@ def open(path):
     Accessor = tkp.accessors.detection.detect(path)
     if not Accessor:
         raise IOError("no accessor found for %s" % path)
-    return Accessor(path)
+    return Accessor(path, *args, **kwargs)

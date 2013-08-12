@@ -55,7 +55,6 @@ class FitsImage(DataAccessor):
         self._read_data(hdu)
         self._coordparse(hdu)
         self.pixel_scale = parse_pixel_scale(self.wcs)
-        self._othersparse(hdu)
         self._freqparse(hdu)
 
         if not beam:
@@ -66,8 +65,8 @@ class FitsImage(DataAccessor):
             deltay = self.wcs.cdelt[1]
             self.beam = degrees2pixels(bmaj, bmin, bpa, deltax, deltay)
             self.pixelsize = (deltax, deltay)
-
         self._timeparse(hdu)
+        self._othersparse(hdu)
 
         hdulist.close()
 
@@ -115,9 +114,6 @@ class FitsImage(DataAccessor):
             logger.warn("End time not specified or unreadable")
             self.tau_time = 0.
 
-
-        # check if everything is okay!
-        self.ready()
 
     def _coordparse(self, hdu):
         """Set some 'shortcut' variables for access to the coordinate
@@ -244,16 +240,18 @@ class FitsImage(DataAccessor):
         """
         header = hdu.header
 
-        # this may have been set already by _timeparse, but if defined here
-        # it is set by our inject script and should be used
-        if hdu.header.has_key('TAU_TIME'):
-            self.tau_time = header['TAU_TIME']
-
-        self.antenna_set = header.get('ANTENNA', None)
-        self.subbands = header.get('SUBBANDS', None)
-        self.channels = header.get('CHANNELS', None)
-        self.ncore = header.get('NCORE', None)
-        self.nremote = header.get('NREMOTE', None)
-        self.nintl = header.get('NINTL', None)
-        self.position = header.get('POSITION', None)
-        self.subbandwidth = header.get('SUBBANDW', None)
+        # Assume the headers are user set, and therefore override metadata
+        # which was intrinsic to the image.
+        for key, attrname in {
+            "TAU_TIME": "tau_time",
+            "ANTENNA": "antenna_set",
+            "SUBBANDS": "subbands",
+            "CHANNELS": "channels",
+            "NCORE": "ncore",
+            "NREMOTE": "nremote",
+            "NINTL": "nintl",
+            "POSITION": "position",
+            "SUBBANDW": "subbandwidth"
+        }.iteritems():
+            if header.has_key(key):
+                setattr(self, attrname, header.get(key))

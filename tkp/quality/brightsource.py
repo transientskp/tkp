@@ -27,7 +27,7 @@ def check_for_valid_ephemeris(measures):
     # Note that we need to catch and parse the standard error produced by
     # pyrap: there doesn't seem to be any other way of figuring this out.
     pyrap_stderr = BytesIO()
-    with redirect_stream(sys.stderr, pyrap_stderr):
+    with redirect_stream(sys.__stderr__, pyrap_stderr):
         # We assume the ephemeris is valid if it has position of the sun.
         measures.separation(
             measures.direction("SUN"), measures.direction("SUN")

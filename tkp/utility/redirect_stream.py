@@ -10,11 +10,6 @@ def redirect_stream(output_stream, destination):
 
     ``destination`` must provide a ``write()`` method.
     """
-    # Workaround for XUnit "Tee" objects.
-    if hasattr(output_stream, "_streams"):
-        while not isinstance(output_stream, file):
-            output_stream = output_stream._streams[-1]
-
     old_stream = os.dup(output_stream.fileno())
     with SpooledTemporaryFile() as s:
         os.dup2(s.fileno(), output_stream.fileno())

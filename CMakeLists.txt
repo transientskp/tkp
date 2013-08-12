@@ -1,6 +1,8 @@
 project (TKP)
 cmake_minimum_required (VERSION 2.8)
 
+set(Python_ADDITIONAL_VERSIONS 2.7 2.6)
+
 foreach (_syslib dl m pthread util z)
     string (TOUPPER ${_syslib} _syslibVar)
     find_library (${_syslibVar}_LIBRARY
@@ -27,12 +29,16 @@ include (${PROJECT_SOURCE_DIR}/cmake/FindWCSLIB.cmake)
 
 add_subdirectory (external)
 
-install (CODE
-    "execute_process(
-        COMMAND ${PYTHON_EXECUTABLE} ./setup.py install
-                --install-lib=${PYTHON_PACKAGES_DIR}
-                --install-scripts=${CMAKE_INSTALL_PREFIX}/bin
-                --install-data=${PYTHON_PACKAGES_DIR}
-        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-    )"
-)
+set(INSTALL_TKP ON CACHE BOOL "install TKP python lib")
+
+if(INSTALL_TKP)
+    install (CODE
+        "execute_process(
+            COMMAND ${PYTHON_EXECUTABLE} ./setup.py install
+                    --install-lib=${PYTHON_PACKAGES_DIR}
+                    --install-scripts=${CMAKE_INSTALL_PREFIX}/bin
+                    --install-data=${PYTHON_PACKAGES_DIR}
+            WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+        )"
+    )
+endif()

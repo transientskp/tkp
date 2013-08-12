@@ -19,10 +19,29 @@ include (FindPythonLibs)
 include(${PROJECT_SOURCE_DIR}/cmake/FindPythonVersion.cmake)
 
 
-set(PYTHON_PACKAGES_DIR
-    ${CMAKE_INSTALL_PREFIX}/lib/python${PYTHON_VERSION_MAJOR}.${PYTHON_VERSION_MINOR}/site-packages
-    CACHE PATH "location of where you want your python modules installed"
-)
+# check if we are inside a virtualenv 
+execute_process(
+    COMMAND python -c "import sys; print hasattr(sys, 'real_prefix')"
+    OUTPUT_VARIABLE INSIDE_VIRTUALENV
+    )
+STRING(REGEX REPLACE "(\r?\n)+$" "" INSIDE_VIRTUALENV "${INSIDE_VIRTUALENV}")
+message (STATUS "INSIDE_VIRTUALENV = " ${INSIDE_VIRTUALENV})
+
+IF (${INSIDE_VIRTUALENV} MATCHES "True")
+    execute_process(
+        COMMAND python -c "from distutils.sysconfig import get_python_lib; print get_python_lib()"
+        OUTPUT_VARIABLE PYTHON_PACKAGES_DIR
+        )
+else()
+    execute_process(
+        COMMAND python -c "import site; print site.getsitepackages()[0]"
+        OUTPUT_VARIABLE PYTHON_PACKAGES_DIR
+        )
+endif()
+
+STRING(REGEX REPLACE "(\r?\n)+$" "" PYTHON_PACKAGES_DIR "${PYTHON_PACKAGES_DIR}")
+message (STATUS "PYTHON_PACKAGES_DIR = " ${PYTHON_PACKAGES_DIR})
+
 
 # this is included later since it needs PYTHON_PACKAGES_DIR
 include (${PROJECT_SOURCE_DIR}/cmake/FindWCSLIB.cmake)

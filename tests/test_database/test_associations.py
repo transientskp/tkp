@@ -375,46 +375,7 @@ class TestMeridianOne2One(unittest.TestCase):
         avg_ra = (src0.ra + src1.ra +src2.ra)/3
         self.assertAlmostEqual(runcat[0]['wm_ra'], avg_ra)
 
-    def TestDeRuiterCalculation(self):
-        """Check all the unit conversions are correct"""
-        dataset = DataSet(data={'description':"Assoc 1-to-1:" + self._testMethodName})
-        n_images = 2
-        im_params = db_subs.example_dbimage_datasets(n_images, centre_ra=10,
-                                                     centre_decl=0)
 
-
-        #Note ra / ra_fit_err are in degrees.
-        # ra_sys_err is in arcseconds, but we set it = 0 so doesn't matter.
-        #ra_fit_err cannot be zero or we get div by zero errors.
-        #Also, there is a hard limit on association radii:
-        #currently this defaults to 0.03 degrees== 108 arcseconds
-        src0 = db_subs.example_extractedsource_tuple(ra=10.00, dec=0.0,
-                                             ra_fit_err=0.1, dec_fit_err=1.00,
-                                             ra_sys_err=0.0, dec_sys_err=0.0)
-        src1 = db_subs.example_extractedsource_tuple(ra=10.02, dec=0.0,
-                                             ra_fit_err=0.1, dec_fit_err=1.00,
-                                             ra_sys_err=0.0, dec_sys_err=0.0)
-        src_list = [src0, src1]
-        #NB dec_fit_err nonzero, but since delta_dec==0 this simplifies to:
-        expected_DR_radius = math.sqrt((src1.ra - src0.ra) ** 2 /
-                               (src0.ra_fit_err ** 2 + src1.ra_fit_err ** 2))
-#        print "Expected DR", expected_DR_radius
-
-        for idx in [0, 1]:
-            image = tkp.db.Image(dataset=dataset,
-                                data=im_params[idx])
-            image.insert_extracted_sources([src_list[idx]])
-            #Peform very loose association since we just want to store DR value.
-            associate_extracted_sources(image.id, deRuiter_r=100)
-        runcat = columns_from_table('runningcatalog', ['id'],
-                                   where={'dataset':dataset.id})
-#        print "***\nRESULTS:", runcat, "\n*****"
-        self.assertEqual(len(runcat), 1)
-        assoc = columns_from_table('assocxtrsource', ['r'],
-                                   where={'runcat':runcat[0]['id']})
-#        print "Got assocs:", assoc
-        self.assertEqual(len(assoc), 2)
-        self.assertAlmostEqual(assoc[1]['r'], expected_DR_radius)
 
 
 class TestOne2Many(unittest.TestCase):

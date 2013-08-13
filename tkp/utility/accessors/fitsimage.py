@@ -163,7 +163,7 @@ class FitsImage(DataAccessor):
         try:
             if hdu.header['TELESCOP'] == 'LOFAR':
                 self.freq_eff = hdu.header['RESTFRQ']
-                self.freq_bw = 0.0 # TODO: We need this in the header as well...
+                self.freq_bw = hdu.header['RESTBW']
             else:
                 if hdu.header['ctype3'] in ('FREQ', 'VOPT'):
                     self.freq_eff = hdu.header['crval3']
@@ -250,7 +250,6 @@ class FitsImage(DataAccessor):
             "NCORE": "ncore",
             "NREMOTE": "nremote",
             "NINTL": "nintl",
-            "POSITION": "position",
             "SUBBANDW": "subbandwidth"
         }.iteritems():
             if header.has_key(key):

@@ -26,6 +26,10 @@ class TestRestoringBeam(unittest.TestCase):
         #fwhm = tkp.lofar.beam.fwhm(wavelength, d)
         #fov = tkp.lofar.beam.fov(fwhm)
 
+    def test_infinite(self):
+        smaj, smin, theta = float('inf'), float('inf'), float('inf')
+        self.assertTrue(beam_invalid(smaj, smin, theta))
+
 
 if __name__ == '__main__':
     unittest.main()

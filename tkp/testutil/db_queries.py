@@ -46,18 +46,22 @@ def position_to_extractedsource(posn):
                          ra_sys_err=0, dec_sys_err=0)
 
 
-def deruiter(connection, pos1, pos2):
+def deruiter(connection, pos1, pos2, cross_meridian):
     """pos1,2 should be of type ``Position``"""
+#     if cross_meridian:
+#         qry = """SELECT deruiter_meridian(%(ra1)s,%(dec1)s,%(ra1_err)s,%(dec1_err)s,
+#                                 %(ra2)s,%(dec2)s,%(ra2_err)s,%(dec2_err)s)"""
+#     else:
     qry = """SELECT deruiter(%(ra1)s,%(dec1)s,%(ra1_err)s,%(dec1_err)s,
-                            %(ra2)s,%(dec2)s,%(ra2_err)s,%(dec2_err)s)"""
+                            %(ra2)s,%(dec2)s,%(ra2_err)s,%(dec2_err)s,
+                            %(xmerid)s)"""
+    qry_args = {'ra1':pos1.ra, 'dec1':pos1.dec,
+                'ra1_err':pos1.ra_err, 'dec1_err':pos1.dec_err,
+                'ra2':pos2.ra, 'dec2':pos2.dec,
+                'ra2_err':pos2.ra_err, 'dec2_err':pos2.dec_err,
+                'xmerid':cross_meridian
+                }
     curs = connection.cursor()
-    curs.execute(qry, {'ra1':pos1.ra, 'dec1':pos1.dec,
-                       'ra1_err':pos1.ra_err, 'dec1_err':pos1.dec_err,
-                       'ra2':pos2.ra, 'dec2':pos2.dec,
-                       'ra2_err':pos2.ra_err, 'dec2_err':pos2.dec_err,
-                       })
+    curs.execute(qry, qry_args)
     return curs.fetchone()[0]
-
-
-
 

@@ -1,6 +1,7 @@
 import math
 
 import unittest2 as unittest
+from copy import copy
 
 import tkp.db
 from tkp.testutil.decorators import requires_database
@@ -11,34 +12,80 @@ from tkp.testutil.db_queries import (Position,
                                      extractedsource_to_position,
                                      position_to_extractedsource)
 from tkp.testutil.db_queries import deruiter as db_deruiter
-from tkp.testutil.calculations import deruiter_current as py_deruiter
-from tkp.testutil.calculations import deruiter as py_deruiter_correct
+from tkp.testutil.calculations import deruiter as py_deruiter
+from tkp.testutil.calculations import (cross_meridian_predicate 
+                                       as py_cross_meridian_predicate)
 from tkp.db.orm import DataSet
 from tkp.db.generic import columns_from_table
+
+def py_dr(pair):
+    return py_deruiter(pair[0], pair[1])
 
 
 @requires_database()
 class TestDeruiter(unittest.TestCase):
+    """
+    The general strategy here is as follows:
+    
+      - Come up with a bunch of test cases
+      - Check that the python version passes in all cases
+      - Check that the SQL version produces same result as python version in 
+        all cases.
+    """
     def setUp(self):
         self.db = tkp.db.Database()
         self.conn = self.db.connection
 
-
-        self.pair1 = (Position(ra=5, dec=45, 
+        # Separated in both RA and dec, away from the equator.
+        self.pair1 = [Position(ra=5, dec=45,
                                ra_err=5/3600., dec_err=5/3600.),
                      Position(ra=5+3/3600., dec=45+3/3600., 
-                              ra_err=5/3600., dec_err=5/3600.),)
-        self.pair2 = (self.pair1[0]._replace(ra=self.pair1[0].ra + 270),
-                     self.pair1[1]._replace(ra=self.pair1[1].ra + 270),)
+                              ra_err=5 / 3600., dec_err=5 / 3600.), ]
+        # Same as pair1 but rotated 270 degrees
+        self.pair2 = [self.pair1[0]._replace(ra=self.pair1[0].ra + 270),
+                     self.pair1[1]._replace(ra=self.pair1[1].ra + 270), ]
         
-        self.pair3 = (Position(ra=10., dec=0.,
+        # Same as pair 1, but one position rotated full circle 
+        # so ra1=5, ra2=365 (+ 3arcseconds)
+        self.pair3 = copy(self.pair1)
+        self.pair3[1] = self.pair3[1]._replace(ra=self.pair3[1].ra + 360.)
+
+        # A nice simple case on the equator
+        self.pair4 = [Position(ra=10., dec=0.,
                                 ra_err=20 / 3600., dec_err=1.00,),
                       Position(ra=10. + 5 / 3600., dec=0.,
-                                 ra_err=20 / 3600., dec_err=1.00,))
+                                 ra_err=20 / 3600., dec_err=1.00,)]
+
+        # Same as pair4 but with error increased 10-fold
+        self.pair5 = [posn._replace(ra_err=posn.ra_err * 10, dec_err=posn.dec_err * 10)
+                      for posn in self.pair4]
+
+        # More basic meridian testing:
+        # RA 1,359
+        self.pair6 = [Position(ra=1, dec=0,
+                               ra_err=1 , dec_err=1),
+                     Position(ra=359.0 , dec=0,
+                              ra_err=1, dec_err=1), ]
+        #Is RA -1 same as RA 359?
+        # RA 1,-1
+        self.pair7 = copy(self.pair6)
+        self.pair7[1] = self.pair7[1]._replace(ra=-1)
+
+        # And when we cycle by 180?
+        # RA 181, 539
+        self.pair8 = [posn._replace(ra=posn.ra + 180) for posn in self.pair6]
+        # RA 181, 179
+        self.pair9 = [posn._replace(ra=posn.ra + 180) for posn in self.pair7]
 
         self.all_pairs = [self.pair1,
                           self.pair2,
                           self.pair3,
+                          self.pair4,
+                          self.pair5,
+                          self.pair6,
+                          self.pair7,
+                          self.pair8,
+                          self.pair9,
                           ]
 
     def test_python_formulae(self):
@@ -48,15 +95,51 @@ class TestDeruiter(unittest.TestCase):
         This is a good place to start, being easiest to implement 
         and understand. We can then use it as a reference implementation.
         """
-        print "Current"
-        print "DR1", py_deruiter(self.pair1[0], self.pair1[1])
-        print "DR2", py_deruiter(self.pair2[0], self.pair2[1])
-        print "Uh oh!"
 
-        print "Fixed"
-        print "DR1", py_deruiter_correct(self.pair1[0], self.pair1[1])
-        print "DR2", py_deruiter_correct(self.pair2[0], self.pair2[1])
+#         print "\n****"
+#         for i, p in enumerate(self.all_pairs):
+#             print "Pair", i, p
+#             print "DR", py_deruiter(p[0], p[1])
+#
+#         print "\n****"
 
+
+        # Ok, check we get the same results when we rotate RA by 270
+        self.assertAlmostEqual(py_dr(self.pair1), py_dr(self.pair2))
+
+        # And cycle one RA value by 360
+        self.assertAlmostEqual(py_dr(self.pair1), py_dr(self.pair3))
+        
+        # R5 has 10 times error, -> 10 times smaller DR
+        self.assertAlmostEqual(py_dr(self.pair4), 10 * py_dr(self.pair5))
+        
+        # OK meridian testing, e.g. RA 1, 359
+        # RA 359 == RA -1 ?
+        self.assertAlmostEqual(py_dr(self.pair6), py_dr(self.pair7))
+        # Cycle by +180, all OK?
+        # RA 181, 539
+        self.assertAlmostEqual(py_dr(self.pair6), py_dr(self.pair8))
+        # RA 179,181
+        self.assertAlmostEqual(py_dr(self.pair6), py_dr(self.pair9))
+        
+        #Sanity check that it's commutative
+        #(Something would have to be pretty wrong if this were not the 
+        # case, but you never know)
+        for test_pair in self.all_pairs:
+            reversed = (test_pair[1], test_pair[0])
+            self.assertEqual(py_dr(test_pair), py_dr(reversed))
+
+
+    def test_sql_formulae(self):
+        for pair in self.all_pairs:
+            py_result = py_dr(pair)
+            cm = py_cross_meridian_predicate(pair[0].ra, pair[1].ra)
+            db_result = db_deruiter(self.conn, pair[0], pair[1], cm)
+            db_result_rev = db_deruiter(self.conn, pair[1], pair[0], cm)
+#             print "\nPAIR:", pair
+#             print "PY, DB: ", py_result, db_result
+            self.assertAlmostEqual(py_result, db_result, places=5)
+            self.assertEqual(db_result, db_result_rev)
 
 #     def test_basic_interface(self):
 #         p1 = Position(ra=0, dec=0, ra_err=0.01, dec_err=0.01)
@@ -64,7 +147,7 @@ class TestDeruiter(unittest.TestCase):
 #         print "Result:", result
 #         self.assertEqual(result, -2)
 
-
+    @unittest.skip("Need to replace full sequence SQL DR calcs")
     def TestFullSequence(self):
         """
         Try the full works, from source insertion --> association.

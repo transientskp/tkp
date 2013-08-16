@@ -41,7 +41,7 @@ def extractedsource_to_position(ex):
 
 def position_to_extractedsource(posn):
     p = posn
-    return example_extractedsource_tuple(ra=p.ra, dec=p.ra,
+    return example_extractedsource_tuple(ra=p.ra, dec=p.dec,
                          ra_fit_err=p.ra_err, dec_fit_err=p.dec_err,
                          ra_sys_err=0, dec_sys_err=0)
 

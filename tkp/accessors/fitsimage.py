@@ -118,7 +118,7 @@ def parse_coordinates(header):
     wcs = WCS()
     try:
         wcs.crval = header['crval1'], header['crval2']
-        wcs.crpix = header['crpix1'], header['crpix2']
+        wcs.crpix = header['crpix1'] - 1, header['crpix2'] - 1
         wcs.cdelt = header['cdelt1'], header['cdelt2']
     except KeyError:
         logger.warn("Coordinate system not specified in FITS")

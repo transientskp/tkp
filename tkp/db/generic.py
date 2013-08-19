@@ -9,7 +9,8 @@ import tkp.db
 logger = logging.getLogger(__name__)
 
 
-def columns_from_table(table, keywords=None, alias=None, where=None):
+def columns_from_table(table, keywords=None, alias=None, where=None,
+                       order=None):
     """Obtain specific column (keywords) values from 'table', with
     kwargs limitations.
 
@@ -49,6 +50,8 @@ def columns_from_table(table, keywords=None, alias=None, where=None):
 
         alias (dict): Chosen aliases for the column names,
                     used when constructing the returned list of dictionaries
+                    
+        order (string): ORDER BY key.
 
     Returns:
 
@@ -67,6 +70,8 @@ def columns_from_table(table, keywords=None, alias=None, where=None):
     where = " AND ".join(["%s=%%s" % key for key in where.iterkeys()])
     if where:
         query += " WHERE " + where
+    if order:
+        query += "ORDER BY " + order
 
     cursor = tkp.db.execute(query, where_args)
     results = cursor.fetchall()

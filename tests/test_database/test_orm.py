@@ -29,11 +29,6 @@ class TestDataSet(unittest.TestCase):
         dataset2.update()
         self.assertEqual(dataset2.description, "dataset 1")
         self.assertEqual(dataset2.id, dataset1.id)
-        #dataset2.update(dsoutname='output.ms',
-        #                description='testing of dataset',
-        #                process_ts=datetime.datetime(1970, 1, 1))
-        dataset2.update(type=2,
-                        process_ts=datetime.datetime(1970, 1, 1))
         self.assertEqual(dataset2.description, "dataset 1")
         self.assertEqual(dataset2.id, dataset1.id)
         # 'data' is ignored if dsid is given:
@@ -54,6 +49,10 @@ class TestDataSet(unittest.TestCase):
         self.assertEqual(results[1], "new dataset")
         self.assertEqual(dataset1.description, "new dataset")
         self.assertEqual(dataset1.rerun, 5)
+        dataset1.update(process_end_ts=datetime.datetime(1970, 1, 1))
+        self.assertEqual(
+            dataset1.process_end_ts, datetime.datetime(1970, 1, 1)
+        )
 
 
 class TestImage(unittest.TestCase):

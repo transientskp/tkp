@@ -107,6 +107,38 @@ class TestImage(unittest.TestCase):
         # Rather, the tau (exposure time) is not being inserted properly.
 
     @requires_database()
+    def test_infinite(self):
+        # Check that database insertion doesn't choke on infinite beam
+        # parameters.
+        data = {
+            'freq_eff': 80e6,
+            'freq_bw': 1e6,
+            'taustart_ts': datetime.datetime(1999, 9, 9),
+            'url': '/path/to/image',
+            'tau_time': 0,
+            'beam_smaj_pix': float('inf'),
+            'beam_smin_pix': float('inf'),
+            'beam_pa_rad': float('inf'),
+            'deltax': float(-0.01111),
+            'deltay': float(0.01111),
+            'centre_ra': 0,
+            'centre_decl': 0,
+            'xtr_radius' : 3
+            }
+        dataset1 = DataSet(data={'description': 'dataset with images'},
+                           database=self.database)
+        image1 = Image(dataset=dataset1, data=data)
+        bmaj, bmin, bpa = tkp.db.execute("""
+            SELECT rb_smaj, rb_smin, rb_pa
+            FROM image
+            WHERE image.id = %(id)s
+        """, {"id": image1.id}).fetchone()
+        self.assertEqual(bmaj, float('inf'))
+        self.assertEqual(bmin, float('inf'))
+        self.assertEqual(bpa, float('inf'))
+
+
+    @requires_database()
     def test_update(self):
         dataset1 = DataSet(data={'description':
                                   'dataset with changing images'},

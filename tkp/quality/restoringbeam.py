@@ -50,7 +50,19 @@ def not_full_fieldofview(nx, ny, cellsize, fov):
     return nx * ny * (cellsize/3600) * (cellsize/3600) < fov
 
 
-def beam_invalid(semibmaj, semibmin, oversampled_x=30, elliptical_x=2.0):
+def infinite(smaj, smin, bpa):
+    """
+    If the beam is not correctly fitted by AWimager, one or more parameters
+    will be recorded as infinite.
+
+    :param smaj: Semi-major axis (arbitrary units)
+    :param smin: Semi-minor axis
+    :param bpa: Postion angle
+    """
+    return smaj == float('inf') or smin == float('inf') or bpa == float('inf')
+
+
+def beam_invalid(semibmaj, semibmin, theta, oversampled_x=30, elliptical_x=2.0):
     """ Are the beam shape properties ok?
 
     :param semibmaj/semibmin: size of the beam in pixels
@@ -61,6 +73,8 @@ def beam_invalid(semibmaj, semibmin, oversampled_x=30, elliptical_x=2.0):
     formatted = "bmaj=%s and bmin=%s (pixels)" % (nice_format(semibmaj),
                                                  nice_format(semibmin))
 
+    if tkp.quality.restoringbeam.infinite(semibmaj, semibmin, theta):
+        return "Beam infinte. %s" % formatted
     if tkp.quality.restoringbeam.undersampled(semibmaj, semibmin):
         return "Beam undersampled. %s" % formatted
     elif tkp.quality.restoringbeam.oversampled(semibmaj, semibmin,

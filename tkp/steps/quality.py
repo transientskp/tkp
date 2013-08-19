@@ -70,7 +70,7 @@ def reject_check_lofar(accessor, parset):
 
     # beam shape check
     (semimaj, semimin, theta) = accessor.beam
-    beam_check = beam_invalid(semimaj, semimin, oversampled_x, elliptical_x)
+    beam_check = beam_invalid(semimaj, semimin, theta, oversampled_x, elliptical_x)
 
     if not beam_check:
         logger.info("image %s accepted: semimaj: %s, semimin: %s" % (accessor.url,

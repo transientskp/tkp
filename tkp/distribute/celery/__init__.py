@@ -1,13 +1,14 @@
 import os
 import imp
-import logging
 import datetime
 import threading
 import time
 
 from celery import group
 
+import logging
 from tkp.config import initialize_pipeline_config, database_config
+from tkp.distribute.celery.logging import monitor_events
 from tkp.steps.monitoringlist import add_manual_monitoringlist_entries
 from tkp import steps
 from tkp.db.orm import Image
@@ -20,19 +21,6 @@ import tkp.utility.parset as parset
 
 
 logger = logging.getLogger(__name__)
-
-
-def monitor_events(app):
-    """
-    This will add a 'task-log' event listener to the celery app, which will
-    log these worker event as python log messages.
-    """
-    def on_event(event):
-        logger = logging.getLogger(event['filename'])
-        logger.log(event['levelno'], event['msg'])
-    with app.connection() as connection:
-        recv = app.events.Receiver(connection, handlers={'task-log': on_event})
-        recv.capture(limit=None, timeout=None, wakeup=True)
 
 
 def runner(func, iterable, arguments, local=False):

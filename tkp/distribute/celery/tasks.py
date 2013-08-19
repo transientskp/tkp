@@ -6,6 +6,7 @@ import warnings
 import logging
 from celery import Celery
 from celery.signals import after_setup_logger, after_setup_task_logger
+from tkp.distribute.celery.logging import EventHandler
 import tkp.steps
 
 
@@ -23,17 +24,6 @@ except ImportError:
     local_logger.warn(msg)
 
 
-class EventHandler(logging.Handler):
-    """
-    This log handler will emit talk-log events, which a client can listen to
-    to rebroadcast the logging event.
-    """
-    def emit(self, record):
-        with celery.events.default_dispatcher() as d:
-            d.send('task-log', msg=record.getMessage(), levelno=record.levelno,
-                   filename=record.filename)
-
-
 @after_setup_logger.connect
 @after_setup_task_logger.connect
 def configure_logging(sender=None, logger=None, loglevel=None, logfile=None,
@@ -42,7 +32,6 @@ def configure_logging(sender=None, logger=None, loglevel=None, logfile=None,
     """
     handler = EventHandler()
     logger.addHandler(handler)
-    #local_logger.addHandler(handler)
 
 
 @celery.task

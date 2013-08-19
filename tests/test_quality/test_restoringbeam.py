@@ -16,7 +16,7 @@ class TestRestoringBeam(unittest.TestCase):
     def test_header(self):
         image = accessors.open(fits_file)
         (semimaj, semimin, theta) = image.beam
-        self.assertFalse(beam_invalid(semimaj, semimin))
+        self.assertFalse(beam_invalid(semimaj, semimin, theta))
 
         # TODO: this is for FOV calculation and checking
         #data = tkp.quality.restoringbeam.parse_fits(image)
@@ -25,6 +25,10 @@ class TestRestoringBeam(unittest.TestCase):
         #d = 32.25
         #fwhm = tkp.lofar.beam.fwhm(wavelength, d)
         #fov = tkp.lofar.beam.fov(fwhm)
+
+    def test_infinite(self):
+        smaj, smin, theta = float('inf'), float('inf'), float('inf')
+        self.assertTrue(beam_invalid(smaj, smin, theta))
 
 
 if __name__ == '__main__':

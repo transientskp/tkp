@@ -41,9 +41,9 @@ SELECT im.taustart_ts
 ORDER BY im.taustart_ts
 """
 
-update_dataset_process_ts_query = """
+update_dataset_process_end_ts_query = """
 UPDATE dataset
-   SET process_ts = %(process_ts)s
+   SET process_end_ts = NOW()
  WHERE id = %(dataset_id)s
 """
 
@@ -91,12 +91,12 @@ DELETE
                     (cursor.rowcount, image_id))
 
 
-def update_dataset_process_ts(dataset_id, process_ts):
+def update_dataset_process_end_ts(dataset_id):
     """Update dataset start-of-processing timestamp.
 
     """
-    args = {'dataset_id': dataset_id, 'process_ts': process_ts}
-    tkp.db.execute(update_dataset_process_ts_query, args, commit=True)
+    args = {'dataset_id': dataset_id}
+    tkp.db.execute(update_dataset_process_end_ts_query, args, commit=True)
     return dataset_id
 
 

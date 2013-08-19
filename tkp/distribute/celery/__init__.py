@@ -144,5 +144,4 @@ def run(job_name, local=False):
         steps.feature_extraction.extract_features(transient)
 #            ingred.classification.classify(transient, cl_parset)
 
-    now = datetime.datetime.utcnow()
-    dbgen.update_dataset_process_ts(dataset_id, now)
+    dbgen.update_dataset_process_end_ts(dataset_id)

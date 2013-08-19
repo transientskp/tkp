@@ -929,7 +929,8 @@ class TestMany2Many(unittest.TestCase):
         for results in (both_offset_results, single_offset_results,
 #                         neither_offset_results
                         ):
-            summarise_associations(*results)
+#             summarise_associations(*results)
+            pass
 
         # In the case that both secondary sources are offset,
         # both extractedsources have a preferred runcat,
@@ -961,13 +962,13 @@ class TestMany2Many(unittest.TestCase):
         for ex in extracted:
             if abs(ex['ra'] - p2_only_second_offset[1].ra) < 1e-5:
                 offset_secondary_src_id = ex['id']
-        print "OFFSET ID", offset_secondary_src_id
+#         print "OFFSET ID", offset_secondary_src_id
         # So, we only expect to see this ID once in the runningcatalog results:
         ex_ids_in_runcat = []
         for rc_entry in runcat:
             ex_ids_in_runcat.extend([a['extraction_id']
                                      for a in rc_entry['assoc']])
-        print "EX IDS:", ex_ids_in_runcat
+#         print "EX IDS:", ex_ids_in_runcat
         self.assertEqual(ex_ids_in_runcat.count(offset_secondary_src_id), 1)
 
         # If neither secondary is offset: Boom!

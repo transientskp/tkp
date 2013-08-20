@@ -138,7 +138,6 @@ def non_overlapping_time(series):
     return total - overlap
 
 
-
 def parse_tautime(subtables):
     """
     Returns the total on-sky time for this image.
@@ -148,9 +147,6 @@ def parse_tautime(subtables):
     endcol = origin_table.col('END')
     series = [(int(start), int(end)) for start, end in zip(startcol, endcol)]
     tau_time = non_overlapping_time(series)
-    #tau_time = len(set.union(*[set(range(int(start), int(end)))
-    #                           for start, end
-    #                           in zip(startcol, endcol)]))
     return tau_time
 
 

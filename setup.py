@@ -58,10 +58,3 @@ setup(
     url = "http://www.transientskp.org/",
 )
 
-# use numpy to compile fortran stuff into python module
-from numpy.distutils.core import Extension, setup
-setup(
-  name="deconv",
-  version="1.0",
-  ext_modules = [Extension( 'deconv', ['external/deconv/deconv.f'] )],
-)

@@ -20,7 +20,7 @@ class Database(object):
     def __new__(cls, *args, **kwargs):
         if not cls._instance:
             cls._instance = object.__new__(cls)
-            cls._instance.configure()
+            #cls._instance.configure()
         return cls._instance
 
     def configure(self, engine=None, database=None, user=None, password=None,

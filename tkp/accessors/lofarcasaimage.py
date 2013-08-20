@@ -117,6 +117,28 @@ def parse_taustartts(subtables):
     return taustart_ts
 
 
+
+def non_overlapping_time(series):
+    """
+    Returns the sum of total ranges without overlap.
+
+    series: a list of 2 item tuples representing ranges.
+    """
+    series.sort()
+    overlap = total = 0
+    for n, (start, end) in enumerate(series):
+        total += end - start
+        for (nextstart, nextend) in series[n+1:]:
+            if nextstart >= end:
+                break
+            overlapstart = max(nextstart, start)
+            overlapend = min(nextend, end)
+            overlap += overlapend - overlapstart
+            start = overlapend
+    return total - overlap
+
+
+
 def parse_tautime(subtables):
     """
     Returns the total on-sky time for this image.
@@ -124,9 +146,11 @@ def parse_tautime(subtables):
     origin_table = subtables['LOFAR_ORIGIN']
     startcol = origin_table.col('START')
     endcol = origin_table.col('END')
-    tau_time = len(set.union(*[set(range(int(start), int(end)))
-                               for start, end
-                               in zip(startcol, endcol)]))
+    series = [(int(start), int(end)) for start, end in zip(startcol, endcol)]
+    tau_time = non_overlapping_time(series)
+    #tau_time = len(set.union(*[set(range(int(start), int(end)))
+    #                           for start, end
+    #                           in zip(startcol, endcol)]))
     return tau_time
 
 

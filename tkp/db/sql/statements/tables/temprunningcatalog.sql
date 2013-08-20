@@ -1,8 +1,9 @@
 /* TODO: The resolution element (from images table) is not implemented yet
 */
 
-CREATE TABLE temprunningcatalog 
-  (runcat INT NOT NULL
+CREATE TABLE temprunningcatalog
+  (id SERIAL
+  ,runcat INT NOT NULL
   ,xtrsrc INT NOT NULL
   ,distance_arcsec DOUBLE PRECISION NOT NULL
   ,r DOUBLE PRECISION NOT NULL
@@ -42,6 +43,10 @@ CREATE TABLE temprunningcatalog
   ,FOREIGN KEY (xtrsrc) REFERENCES extractedsource (id)
   ,FOREIGN KEY (dataset) REFERENCES dataset (id)
   ,FOREIGN KEY (band) REFERENCES frequencyband (id)
+
+{% ifdb postgresql %}
+  ,PRIMARY KEY (id)
+{% endifdb %}
   )
 
 ;

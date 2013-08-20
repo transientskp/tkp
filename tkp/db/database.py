@@ -65,6 +65,7 @@ class Database(object):
                                                            self.port,
                                                            self.database))
 
+        self._configured = True
 
     def connect(self):
         """

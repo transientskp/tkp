@@ -4,7 +4,6 @@ import logging
 
 from celery import group
 
-import datetime
 from tkp.config import initialize_pipeline_config, database_config
 from tkp.steps.monitoringlist import add_manual_monitoringlist_entries
 from tkp import steps
@@ -139,9 +138,5 @@ def run(job_name, local=False):
         transients = steps.transient_search.search_transients(image.id,
                                                               tr_parset)
         dbmon.adjust_transients_in_monitoringlist(image.id, transients)
-
-    for transient in transients:
-        steps.feature_extraction.extract_features(transient)
-#            ingred.classification.classify(transient, cl_parset)
 
     dbgen.update_dataset_process_end_ts(dataset_id)

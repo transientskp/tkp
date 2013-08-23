@@ -52,7 +52,7 @@ def run(job_name, local=False):
                              job_name)
 
 
-    database_config(pipe_config)
+    database_config(pipe_config, apply=True)
 
     job_dir = pipe_config.get('layout', 'job_directory')
 

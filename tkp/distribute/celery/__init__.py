@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import os
 import imp
 import datetime
@@ -8,7 +9,7 @@ from celery import group
 
 import logging
 from tkp.config import initialize_pipeline_config, database_config
-from tkp.distribute.celery.logging import monitor_events
+from tkp.distribute.celery.tasklog import setup_task_log_emitter, monitor_events
 from tkp.steps.monitoringlist import add_manual_monitoringlist_entries
 from tkp import steps
 from tkp.db.orm import Image
@@ -19,6 +20,7 @@ from tkp.distribute.celery import tasks
 from tkp.distribute.common import load_job_config, dump_job_config_to_logdir
 import tkp.utility.parset as parset
 
+from celery.signals import after_setup_logger, after_setup_task_logger
 
 logger = logging.getLogger(__name__)
 
@@ -51,17 +53,21 @@ def string_to_list(my_string):
     """
     return [x.strip() for x in my_string.strip('[] ').split(',') if x.strip()]
 
-
-def run(job_name, local=False):
+def setup_log_broadcasting():
     # capture celery log events in the background
+    after_setup_logger.connect(setup_task_log_emitter)
+    after_setup_task_logger.connect(setup_task_log_emitter)
     monitoring_thread = threading.Thread(target=monitor_events,
-                                         args=[tasks.celery])
+                                         args=[tasks.trap])
     monitoring_thread.daemon = True
     monitoring_thread.start()
 
     # we need to wait for the thread to release the import lock
     time.sleep(2)
 
+def run(job_name, local=False):
+
+    setup_log_broadcasting()
     pipe_config = initialize_pipeline_config(
                              os.path.join(os.getcwd(), "pipeline.cfg"),
                              job_name)

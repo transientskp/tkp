@@ -12,6 +12,7 @@ Transient Key Project
 
    introduction
    installation/index
+   getstart
    usage/index
    overview/index
    developers/index

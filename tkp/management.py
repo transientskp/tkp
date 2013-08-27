@@ -201,7 +201,7 @@ def prepare_job(jobname, debug=False):
 
 def celery_cmd(args):
     from celery.bin import celery
-    base = celery.CeleryCommand(app='tkp.distribute.celery.tasks')
+    base = celery.CeleryCommand(app='tkp.distribute.celery.tasks.trap')
     base.execute_from_commandline(sys.argv[1:])
 
 

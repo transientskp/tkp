@@ -46,6 +46,24 @@ def string_to_list(my_string):
     return [x.strip() for x in my_string.strip('[] ').split(',') if x.strip()]
 
 
+def group_per_timestep(images):
+    """
+    groups a list of TRAP images per timestep
+    """
+    img_dict = {}
+    for image in images:
+        t = image.taustart_ts
+        if t in img_dict:
+            img_dict[t].append(image)
+        else:
+            img_dict[t] = [image]
+
+    grouped_images = img_dict.items()
+    grouped_images.sort()
+    return grouped_images
+
+
+
 def run(job_name, local=False):
     pipe_config = initialize_pipeline_config(
                              os.path.join(os.getcwd(), "pipeline.cfg"),
@@ -62,10 +80,10 @@ def run(job_name, local=False):
         raise IOError(msg)
 
     logger.info("Job dir: %s", job_dir)
-    images = imp.load_source('images_to_process', os.path.join(job_dir,
+    all_images = imp.load_source('images_to_process', os.path.join(job_dir,
                              'images_to_process.py')).images
 
-    logger.info("dataset %s contains %s images" % (job_name, len(images)))
+    logger.info("dataset %s contains %s images" % (job_name, len(all_images)))
 
     job_config = load_job_config(pipe_config)
     dump_job_config_to_logdir(pipe_config, job_config)
@@ -77,7 +95,7 @@ def run(job_name, local=False):
 
 
     # persistence
-    imgs = [[img] for img in images]
+    imgs = [[img] for img in all_images]
     arguments = [p_parset]
     metadatas = runner(tasks.persistence_node_step, imgs, arguments, local)
     metadatas = [m[0] for m in metadatas]
@@ -90,15 +108,15 @@ def run(job_name, local=False):
     if not add_manual_monitoringlist_entries(dataset_id, []):
         return 1
 
-    images = [Image(id=image_id) for image_id in image_ids]
+    db_images = [Image(id=image_id) for image_id in image_ids]
 
     # quality_check
-    urls = [img.url for img in images]
+    urls = [img.url for img in db_images]
     arguments = [job_config]
     rejecteds = runner(tasks.quality_reject_check, urls, arguments, local)
 
     good_images = []
-    for image, rejected in zip(images, rejecteds):
+    for image, rejected in zip(db_images, rejecteds):
         if rejected:
             reason, comment = rejected
             steps.quality.reject_image(image.id, reason, comment)
@@ -109,34 +127,41 @@ def run(job_name, local=False):
         logger.warn("No good images under these quality checking criteria")
         return
 
-    # Sourcefinding
-    urls = [img.url for img in good_images]
-    arguments = [se_parset]
-    extract_sources = runner(tasks.extract_sources, urls, arguments, local)
+    grouped_images = group_per_timestep(good_images)
 
-    for image, sources in zip(good_images, extract_sources):
-        dbgen.insert_extracted_sources(image.id, sources, 'blind')
+    timestep_num = len(grouped_images)
+    for n, (timestep, images) in enumerate(grouped_images):
+        logging.info("processing %s images in timestep %s (%s/%s)" % (len(images),
+                                                              timestep, n+1,
+                                                              timestep_num))
 
+        # Sourcefinding
+        urls = [img.url for img in images]
+        arguments = [se_parset]
+        extract_sources = runner(tasks.extract_sources, urls, arguments, local)
 
-    # null_detections
-    deRuiter_radius = nd_parset['deruiter_radius']
-    null_detectionss = [dbmon.get_nulldetections(image.id, deRuiter_radius)
-                        for image in good_images]
+        for image, sources in zip(images, extract_sources):
+            dbgen.insert_extracted_sources(image.id, sources, 'blind')
 
-    iters = zip([i.url for i in good_images], null_detectionss)
-    arguments = [nd_parset]
-    ff_nds = runner(tasks.forced_fits, iters, arguments, local)
+        # null_detections
+        deRuiter_radius = nd_parset['deruiter_radius']
+        null_detectionss = [dbmon.get_nulldetections(image.id, deRuiter_radius)
+                            for image in images]
 
-    for image, ff_nd in zip(good_images, ff_nds):
-        dbgen.insert_extracted_sources(image.id, ff_nd, 'ff_nd')
+        iters = zip([i.url for i in images], null_detectionss)
+        arguments = [nd_parset]
+        ff_nds = runner(tasks.forced_fits, iters, arguments, local)
 
-    for image in good_images:
-        logger.info("performing DB operations for image %s" % image.id)
-        dbass.associate_extracted_sources(image.id,
-                                          deRuiter_r=deRuiter_radius)
-        dbmon.add_nulldetections(image.id)
-        transients = steps.transient_search.search_transients(image.id,
-                                                              tr_parset)
-        dbmon.adjust_transients_in_monitoringlist(image.id, transients)
+        for image, ff_nd in zip(images, ff_nds):
+            dbgen.insert_extracted_sources(image.id, ff_nd, 'ff_nd')
 
-    dbgen.update_dataset_process_end_ts(dataset_id)
+        for image in images:
+            logger.info("performing DB operations for image %s" % image.id)
+            dbass.associate_extracted_sources(image.id,
+                                              deRuiter_r=deRuiter_radius)
+            dbmon.add_nulldetections(image.id)
+            transients = steps.transient_search.search_transients(image.id,
+                                                                  tr_parset)
+            dbmon.adjust_transients_in_monitoringlist(image.id, transients)
+
+        dbgen.update_dataset_process_end_ts(dataset_id)

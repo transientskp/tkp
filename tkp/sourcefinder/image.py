@@ -848,6 +848,7 @@ class ImageData(object):
         ).filled(fill_value=0)
         labelled_data, num_labels = ndimage.label(clipped_data, self.structuring_element)
 
+        labels_below_det_thr, labels_above_det_thr = [], []
         if num_labels > 0:
             # Select the labels of the islands above the analysis threshold
             # that have maximum values values above the detection threshold.
@@ -872,7 +873,6 @@ class ImageData(object):
                 maximum_values = [maximum_values]
 
             # We'll filter out the insignificant islands
-            labels_below_det_thr, labels_above_det_thr = [], []
             for i, x in enumerate(maximum_values, 1):
                 if x < 0:
                     labels_below_det_thr.append(i)

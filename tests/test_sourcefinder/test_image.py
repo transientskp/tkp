@@ -240,6 +240,25 @@ class TestSimpleImageSourceFind(unittest.TestCase):
         self.assertEqual(results[0].smin.value, self.image.beam[1])
 
 
+    @requires_data(os.path.join(DATAPATH, 'GRB120422A/GRB120422A-120429.fits'))
+    def testNoLabelledIslandsCase(self):
+        """
+        If an image is in fact very boring and flat/empty, then we may not even
+        locate any labelled islands, if the analysis threshold is set high enough.
+
+        (We reproduce this test case, even though GRB120422A-120429 has a
+        source in the image, just by setting the thresholds very high -
+        this avoids requiring additional data).
+        """
+        self.image = accessors.sourcefinder_image_from_accessor(
+                       accessors.FitsImage(os.path.join(DATAPATH,
+                                        'GRB120422A/GRB120422A-120429.fits')))
+
+        results = self.image.extract(det=5e10, anl=5e10)
+        results = [result.serialize() for result in results]
+        self.assertEqual(len(results), 0)
+
+
 class TestMaskedSource(unittest.TestCase):
     """
     Source is masked

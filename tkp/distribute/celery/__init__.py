@@ -1,12 +1,11 @@
 import os
 import imp
-import datetime
 import threading
 import time
 
 from celery import group
 
-import datetime
+import logging
 from tkp.config import initialize_pipeline_config, database_config
 from tkp.distribute.celery.tasklog import setup_task_log_emitter, monitor_events
 from tkp.steps.monitoringlist import add_manual_monitoringlist_entries

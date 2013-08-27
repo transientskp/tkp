@@ -4,6 +4,7 @@ from tkp.accessors.dataaccessor import DataAccessor
 
 
 class LofarHdf5Image(DataAccessor):
+    # Not currently instantiable; LOFAR HDF5 images are not in use
     def __init__(self, source, plane=False, beam=False):
         super(LofarHdf5Image, self).__init__()  # Set defaults
 

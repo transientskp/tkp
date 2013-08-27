@@ -41,9 +41,9 @@ SELECT im.taustart_ts
 ORDER BY im.taustart_ts
 """
 
-update_dataset_process_ts_query = """
+update_dataset_process_end_ts_query = """
 UPDATE dataset
-   SET process_ts = %(process_ts)s
+   SET process_end_ts = NOW()
  WHERE id = %(dataset_id)s
 """
 
@@ -91,12 +91,12 @@ DELETE
                     (cursor.rowcount, image_id))
 
 
-def update_dataset_process_ts(dataset_id, process_ts):
+def update_dataset_process_end_ts(dataset_id):
     """Update dataset start-of-processing timestamp.
 
     """
-    args = {'dataset_id': dataset_id, 'process_ts': process_ts}
-    tkp.db.execute(update_dataset_process_ts_query, args, commit=True)
+    args = {'dataset_id': dataset_id}
+    tkp.db.execute(update_dataset_process_end_ts_query, args, commit=True)
     return dataset_id
 
 
@@ -152,9 +152,9 @@ def insert_image(dataset, freq_eff, freq_bw, taustart_ts, tau_time,
     """
     arguments = {'dataset': dataset, 'tau_time': tau_time, 'freq_eff': freq_eff,
                  'freq_bw': freq_bw, 'taustart_ts': taustart_ts,
-                 'rb_smaj': beam_smaj_pix * math.fabs(deltax),
-                 'rb_smin': beam_smin_pix * math.fabs(deltay),
-                 'rb_pa': 180 * beam_pa_rad / math.pi,
+                 'rb_smaj': beam_smaj_pix * math.fabs(deltax) if not beam_smaj_pix == float('inf') else 'Infinity',
+                 'rb_smin': beam_smin_pix * math.fabs(deltay) if not beam_smin_pix == float('inf') else 'Infinity',
+                 'rb_pa': 180 * beam_pa_rad / math.pi if not beam_pa_rad == float('inf') else 'Infinity',
                  'deltax': deltax, 'deltay': deltay,
                  'url': url,
                  'centre_ra': centre_ra, 'centre_decl': centre_decl,

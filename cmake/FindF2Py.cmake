@@ -27,23 +27,17 @@
 #  F2PY_EXECUTABLE = Path to the f2py executable
 
 if (NOT F2PY_FOUND)
-    
-  if (NOT F2PY_ROOT_DIR)
-    set (F2PY_ROOT_DIR ${CMAKE_INSTALL_PREFIX})
-  endif (NOT F2PY_ROOT_DIR)
-  
+
   ##_____________________________________________________________________________
   ## Check for the executable
-  
+
   find_program (F2PY_EXECUTABLE f2py
     HINTS ${F2PY_ROOT_DIR}
-    PATHS /sw /usr /usr/local /opt/local
-    PATH_SUFFIXES bin
     )
-  
+
   ##_____________________________________________________________________________
   ## Actions taken when all components have been found
-  
+
   if (F2PY_EXECUTABLE)
     set (F2PY_FOUND TRUE)
   else (F2PY_EXECUTABLE)
@@ -52,11 +46,10 @@ if (NOT F2PY_FOUND)
       message (STATUS "Unable to find f2py executable!")
     endif (NOT F2PY_FIND_QUIETLY)
   endif (F2PY_EXECUTABLE)
-  
+
   if (F2PY_FOUND)
     if (NOT F2PY_FIND_QUIETLY)
       message (STATUS "Found components for F2PY")
-      message (STATUS "F2PY_ROOT_DIR   = ${F2PY_ROOT_DIR}")
       message (STATUS "F2PY_EXECUTABLE = ${F2PY_EXECUTABLE}")
     endif (NOT F2PY_FIND_QUIETLY)
   else (F2PY_FOUND)
@@ -64,13 +57,13 @@ if (NOT F2PY_FOUND)
       message (FATAL_ERROR "Could not find F2PY!")
     endif (F2PY_FIND_REQUIRED)
   endif (F2PY_FOUND)
-  
+
   ##_____________________________________________________________________________
   ## Mark advanced variables
-  
+
   mark_as_advanced (
     F2PY_ROOT_DIR
     F2PY_EXECUTABLE
     )
-  
+
 endif (NOT F2PY_FOUND)

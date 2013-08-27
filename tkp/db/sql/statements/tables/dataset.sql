@@ -12,7 +12,8 @@ CREATE TABLE dataset
 
   ,rerun INT NOT NULL DEFAULT '0'
   ,"type" SMALLINT NOT NULL DEFAULT 1
-  ,process_ts TIMESTAMP NOT NULL
+  ,process_start_ts TIMESTAMP NOT NULL
+  ,process_end_ts TIMESTAMP NULL
   ,detection_threshold DOUBLE PRECISION NULL
   ,analysis_threshold DOUBLE PRECISION NULL
   ,assoc_radius DOUBLE PRECISION NULL

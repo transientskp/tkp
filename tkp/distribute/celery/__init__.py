@@ -1,4 +1,3 @@
-from __future__ import absolute_import
 import os
 import imp
 import datetime
@@ -7,7 +6,7 @@ import time
 
 from celery import group
 
-import logging
+import datetime
 from tkp.config import initialize_pipeline_config, database_config
 from tkp.distribute.celery.tasklog import setup_task_log_emitter, monitor_events
 from tkp.steps.monitoringlist import add_manual_monitoringlist_entries
@@ -72,7 +71,8 @@ def run(job_name, local=False):
                              os.path.join(os.getcwd(), "pipeline.cfg"),
                              job_name)
 
-    database_config(pipe_config)
+
+    database_config(pipe_config, apply=True)
 
     job_dir = pipe_config.get('layout', 'job_directory')
 
@@ -168,10 +168,4 @@ def run(job_name, local=False):
                                                               tr_parset)
         dbmon.adjust_transients_in_monitoringlist(image.id, transients)
 
-    logger.info("extracting features for transients")
-    for transient in transients:
-        steps.feature_extraction.extract_features(transient)
-#            ingred.classification.classify(transient, cl_parset)
-
-    now = datetime.datetime.utcnow()
-    dbgen.update_dataset_process_ts(dataset_id, now)
+    dbgen.update_dataset_process_end_ts(dataset_id)

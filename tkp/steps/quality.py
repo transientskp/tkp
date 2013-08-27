@@ -5,6 +5,7 @@ from tkp.quality.rms import rms_invalid
 from tkp.quality.statistics import rms_with_clipped_subregion
 from tkp.lofar.noise import noise_level
 from tkp.utility import nice_format
+from tkp.accessors.lofaraccessor import LofarAccessor
 import tkp.accessors
 import tkp.db.quality
 import tkp.quality.brightsource
@@ -30,16 +31,17 @@ def reject_check(image_path, job_config):
     """
 
     accessor = tkp.accessors.open(image_path)
-    #NB could also check type, but would have to check against LofarFits,
-    #LofarCasa, LofarHDF...
-    if accessor.telescope is "LOFAR":
-        return reject_check_lofar(accessor,
-                                  load_section(job_config, 'quality_lofar'))
+    # Only run LOFAR-specific QC checks on LOFAR images.
+    if isinstance(accessor, LofarAccessor):
+        return reject_check_lofar(
+            accessor, load_section(job_config, 'quality_lofar')
+        )
     else:
-        logger.warn("Unrecognised telescope %s for file %s, no quality checks.",
-                    accessor.telescope, image_path)
+        logger.warn(
+            "Unrecognised telescope %s for file %s, no quality checks.",
+            accessor.telescope, image_path
+        )
         return None
-
 
 
 def reject_check_lofar(accessor, parset):
@@ -53,10 +55,10 @@ def reject_check_lofar(accessor, parset):
 
     # RMS value check
     rms = rms_with_clipped_subregion(accessor.data, sigma, f)
-    lofar_metadata = accessor.extra_metadata
+
     noise = noise_level(accessor.freq_eff, accessor.freq_bw, accessor.tau_time,
-                    lofar_metadata['antenna_set'], lofar_metadata['ncore'],
-                    lofar_metadata['nremote'], lofar_metadata['nintl'])
+        accessor.antenna_set, accessor.ncore, accessor.nremote, accessor.nintl
+    )
     rms_check = rms_invalid(rms, noise, low_bound, high_bound)
     if not rms_check:
         logger.info("image %s accepted: rms: %s, theoretical noise: %s" % \
@@ -68,7 +70,7 @@ def reject_check_lofar(accessor, parset):
 
     # beam shape check
     (semimaj, semimin, theta) = accessor.beam
-    beam_check = beam_invalid(semimaj, semimin, oversampled_x, elliptical_x)
+    beam_check = beam_invalid(semimaj, semimin, theta, oversampled_x, elliptical_x)
 
     if not beam_check:
         logger.info("image %s accepted: semimaj: %s, semimin: %s" % (accessor.url,
@@ -92,5 +94,3 @@ def reject_image(image_id, reason, comment):
     NOTE: should only be used on a MASTER node
     """
     tkp.db.quality.reject(image_id, reason, comment)
-
-

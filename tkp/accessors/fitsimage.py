@@ -13,66 +13,85 @@ from tkp.accessors.common import parse_pixelsize, degrees2pixels
 from tkp.accessors.dataaccessor import DataAccessor
 from tkp.utility.coordinates import WCS
 
-
 logger = logging.getLogger(__name__)
 
 class FitsImage(DataAccessor):
     """
     Use PyFITS to pull image data out of a FITS file.
 
-    Provide standard attributes, as per :class:`DataAccessor`. Also, if we're
-    passed a request for an unknown attribute, we try to pull it out of the
-    FITS header.
-    If beam info is not present in the header, it HAS to be provided as a
-    tuple: (bmaj, bmin, bpa) in degrees.
+    Provide standard attributes, as per :class:`DataAccessor`. In addition, we
+    provide a ``telescope`` attribute if the FITS file has a ``TELESCOP``
+    header.
     """
     def __init__(self, url, plane=None, beam=None, hdu=0):
-        """
-        Args:
-          - url: location of FITS file
-          - beam: (optional) beam parameters in degrees, in the form
-            (bmaj, bmin, bpa). Will attempt to read from header if
-            not supplied.
-        """
-        # NB: pyfits bogs down reading parameters from FITS files with very
-        # long headers. This code should run in a fraction of a second on most
-        # files, but can take several seconds given a huge header.
-        super(FitsImage, self).__init__()  # Set defaults
-        self.url = url
-        self.beam = beam
-
-        hdulist = pyfits.open(url)
-        hdu = hdulist[hdu]
-        self.header = hdu.header.copy()
-        if 'TELESCOP' in self.header:
-            # Otherwise, it defaults to None.
-            self.telescope = self.header['TELESCOP']
-        self.data = read_data(hdu, plane)
-        hdulist.close()
-
-        self.wcs = parse_coordinates(self.header)
-        self.pixelsize = parse_pixelsize(self.wcs)
-        self.centre_ra, self.centre_decl = calculate_phase_centre(self.data.shape,
-                                                                  self.wcs)
-        self.freq_eff, self.freq_bw = parse_frequency(self.header)
-
+        self._url = url
+        header = self._get_header(hdu)
+        self._wcs = parse_coordinates(header)
+        self._data = read_data(pyfits.open(self.url)[hdu], plane)
+        self._taustart_ts, self._tau_time = parse_times(header)
+        self._freq_eff, self._freq_bw = parse_frequency(header)
         if beam:
             (bmaj, bmin, bpa) = beam
-            self.beam = degrees2pixels(bmaj, bmin, bpa,
-                                       self.pixelsize[0], self.pixelsize[1])
+            self._beam = degrees2pixels(
+                bmaj, bmin, bpa, self.pixelsize[0], self.pixelsize[1]
+            )
         else:
-            self.beam = parse_beam(self.header, self.pixelsize)
+            self._beam = parse_beam(header, self.pixelsize)
 
-        self.taustart_ts, self.tau_time = parse_times(self.header)
+        # Bonus attribute
+        if 'TELESCOP' in header:
+            # Otherwise, it defaults to None.
+            self.telescope = header['TELESCOP']
 
+    def _get_header(self, hdu):
+        hdulist = pyfits.open(self.url)
+        hdu = hdulist[hdu]
+        return hdu.header.copy()
 
-#------------------------------------------------------------------------------
-# The following functions are all fairly class-specific in practice, 
-# but can be defined simply, without state, so we might as well:
-# It's slightly easier to test this way, we might end up re-using them,
-# and it makes explicit that they are not overridden by some child class.
-# It's also, arguably, easier to follow.
-#------------------------------------------------------------------------------
+    @property
+    def wcs(self):
+        return self._wcs
+
+    @property
+    def data(self):
+        return self._data
+
+    @property
+    def url(self):
+        return self._url
+
+    @property
+    def pixelsize(self):
+        return parse_pixelsize(self.wcs)
+
+    @property
+    def tau_time(self):
+        return self._tau_time
+
+    @property
+    def taustart_ts(self):
+        return self._taustart_ts
+
+    @property
+    def centre_ra(self):
+        return calculate_phase_centre(self.data.shape, self.wcs)[0]
+
+    @property
+    def centre_decl(self):
+        return calculate_phase_centre(self.data.shape, self.wcs)[1]
+
+    @property
+    def freq_eff(self):
+        return self._freq_eff
+
+    @property
+    def freq_bw(self):
+        return self._freq_bw
+
+    @property
+    def beam(self):
+        return self._beam
+
 
 def read_data(hdu, plane):
     """
@@ -175,10 +194,10 @@ beam_regex = re.compile(r'''
 def parse_beam(header, pixelsize):
     """Read and return the beam properties bmaj, bmin and bpa values from
     the fits header.
-    
-    Returns: 
-      - Beam parameters, (semimajor, semiminor, parallactic angle) 
-        in (pixels,pixels, radians)  
+
+    Returns:
+      - Beam parameters, (semimajor, semiminor, position angle)
+        in (pixels, pixels, radians)
     """
     bmaj, bmin, bpa = None, None, None
     try:
@@ -200,7 +219,7 @@ def parse_beam(header, pixelsize):
     return beam
 
 def parse_times(header):
-    """Returns: 
+    """Returns:
       - taustart_ts: tz naive (implicit UTC) datetime at start of observation.
       - tau_time: Integration time, in seconds
     """
@@ -238,6 +257,13 @@ def parse_times(header):
 
 
 def parse_start_time(header):
+    """
+    Arguments:
+      - header: ``pyfits.header.Header``
+
+    Returns:
+      - start time of image as an instance of ``datetime.datetime``
+    """
     try:
         start = dateutil.parser.parse(header['date-obs'])
     except AttributeError:

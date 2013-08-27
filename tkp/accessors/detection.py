@@ -70,7 +70,10 @@ def fits_detect(filename):
     """
     hdu = pyfits.open(filename)
     hdr = hdu[0].header
-    telescope = hdr.get('TELESCOP')
+    if 'TELESCOP' in hdr:
+        telescope = hdr.get('TELESCOP')
+    else:
+        telescope = None
     return fits_telescope_keyword_mapping.get(telescope, FitsImage)
 
 
@@ -79,11 +82,11 @@ def casa_detect(filename):
     Detect which telescope produced CASA data, return corresponding accessor.
 
     Checks for known CASA table types where we expect additional metadata.
-    If the telescope is unknown we default to a regular CasaImage.
+    If the telescope is unknown we return nothing.
     """
     table = pyrap_table(filename.encode(), ack=False)
     telescope = table.getkeyword('coords')['telescope']
-    return casa_telescope_keyword_mapping.get(telescope, CasaImage)
+    return casa_telescope_keyword_mapping.get(telescope, None)
 
 
 def detect(filename):

@@ -164,6 +164,47 @@ class TestMixedSkyregions(unittest.TestCase):
     def tearDown(self):
         tkp.db.rollback()
 
+    def TestSubZeroAvgWra(self):
+        """
+        Check that we properly take the modulus of avg_wra in cases where it
+        falls below zero.
+
+        See https://support.astron.nl/lofar_issuetracker/issues/4640 for
+        details. The detailed numbers in this test (RA, dec, etc) come from
+        the data involved in that bug report and have no other special
+        meaning.
+        """
+        dataset = DataSet(data={'description': "Test:" + self._testMethodName})
+        im_list = db_subs.example_dbimage_datasets(
+            n_images=10, centre_ra=358.125, centre_decl=50.941028000000003, xtr_radius=1.38888888889
+        )
+        im_list.extend(
+            db_subs.example_dbimage_datasets(
+                n_images=1, centre_ra=354.375, centre_decl=50.941028000000003, xtr_radius=1.38888888889
+            )
+        )
+
+        posns = [(356.33840829988583, 50.516),
+                 (0.33840829988583, 50.516), ]
+        sorted_src_ras = sorted([p[0] for p in posns])
+        srcs = [db_subs.example_extractedsource_tuple(ra=p[0], dec=p[1]) for p
+                in posns]
+
+        for im in im_list:
+            image = tkp.db.Image(dataset=dataset, data=im)
+            image.insert_extracted_sources(srcs)
+            associate_extracted_sources(image.id, deRuiter_r=3.717)
+
+            runcat = columns_from_table('runningcatalog', ['wm_ra'],
+                where={'dataset': dataset.id}
+            )
+            self.assertEqual(len(runcat), 2)
+            wm_ras = [ r['wm_ra'] for r in runcat]
+#            print "WM_RA:", sorted(wm_ras)
+            for known, calc in zip(sorted_src_ras, sorted(wm_ras)):
+                self.assertAlmostEqual(known, calc)
+
+
     def TestCrossMeridian(self):
         """
         A source is observed in two skyregions: one which crosses the

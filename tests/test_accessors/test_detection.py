@@ -28,10 +28,12 @@ class TestAutodetect(unittest.TestCase):
 
     @requires_data(casatable)
     def test_iscasa(self):
+        # CasaImages are not directly instantiable, since they don't provide
+        # the basic DataAcessor interface.
         self.assertTrue(iscasa(casatable))
         self.assertFalse(islofarhdf5(casatable))
         self.assertFalse(isfits(casatable))
-        self.assertEqual(detect(casatable), CasaImage)
+        self.assertEqual(detect(casatable), None)
 
     @requires_data(hdf5file)
     def test_ishdf5(self):

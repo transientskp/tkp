@@ -38,9 +38,9 @@ BEGIN
   INSERT INTO dataset
     (id
     ,rerun
-    ,process_ts
+    ,process_start_ts
     ,description
-    ) 
+    )
   VALUES
     (idsid
     ,irerun
@@ -76,7 +76,7 @@ BEGIN
 
   INSERT INTO dataset
     (rerun
-    ,process_ts
+    ,process_start_ts
     ,description
     )
   VALUES

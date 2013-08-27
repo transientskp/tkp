@@ -14,13 +14,13 @@ class Database(object):
     An object representing a database connection.
     """
     _connection = None
+    _configured = False
 
     # this makes this class a singleton
     _instance = None
     def __new__(cls, *args, **kwargs):
         if not cls._instance:
             cls._instance = object.__new__(cls)
-            cls._instance.configure()
         return cls._instance
 
     def configure(self, engine=None, database=None, user=None, password=None,
@@ -65,13 +65,16 @@ class Database(object):
                                                            self.port,
                                                            self.database))
 
-        self.connect()
+        self._configured = True
 
     def connect(self):
         """
         connect to the configured database
         """
         logger.info("connecting to database...")
+
+        if not self._configured:
+            self.configure()
 
         kwargs = {}
         if self.user:

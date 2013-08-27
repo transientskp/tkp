@@ -1,8 +1,11 @@
+import sys
 import logging
 import warnings
 import pyrap.quanta as qa
+from io import BytesIO
 from pyrap.measures import measures
 from tkp.utility.coordinates import unix2julian
+from tkp.utility.redirect_stream import redirect_stream
 
 logger = logging.getLogger(__name__)
 
@@ -15,6 +18,25 @@ targets = { 'CasA': {'ra' : 6.123487680622104,  'dec' : 1.0265153995604648},
             'SUN': None,
             'JUPITER': None,
         }
+
+def check_for_valid_ephemeris(measures):
+    """
+    Checks whether the ephemeris data in use by ``measures`` is valid.
+    ``measures`` should already have a valid reference frame.
+    """
+    # Note that we need to catch and parse the standard error produced by
+    # pyrap: there doesn't seem to be any other way of figuring this out.
+    pyrap_stderr = BytesIO()
+    with redirect_stream(sys.__stderr__, pyrap_stderr):
+        # We assume the ephemeris is valid if it has position of the sun.
+        measures.separation(
+            measures.direction("SUN"), measures.direction("SUN")
+        )
+    if "WARN" in pyrap_stderr.getvalue():
+        # pyrap sends a warning to stderr if the ephemeris is invalid
+        return False
+    else:
+        return True
 
 def is_bright_source_near(accessor, distance=20):
     """
@@ -36,6 +58,12 @@ def is_bright_source_near(accessor, distance=20):
     starttime = int(accessor.taustart_ts.strftime("%s"))
     starttime_mjd = unix2julian(starttime)
     m.do_frame(m.epoch("UTC", "%ss" % starttime_mjd))
+
+    # Now check and ensure the ephemeris in use is actually valid for this
+    # data.
+    if not check_for_valid_ephemeris(m):
+        logger.warn("Bright source check failed due to invalid ephemeris")
+        return "Invalid ephemeris"
 
     # Second, you need to set your image pointing.
     pointing = m.direction(

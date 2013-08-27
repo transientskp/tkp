@@ -1,5 +1,6 @@
 CREATE TABLE runningcatalog_flux
-  (runcat INT NOT NULL
+  (id SERIAL
+  ,runcat INT NOT NULL
   ,band SMALLINT NOT NULL
   ,stokes SMALLINT NOT NULL DEFAULT 1
   ,f_datapoints INT NOT NULL
@@ -14,14 +15,14 @@ CREATE TABLE runningcatalog_flux
   ,avg_f_int_weight DOUBLE PRECISION NULL
   ,avg_weighted_f_int DOUBLE PRECISION NULL
   ,avg_weighted_f_int_sq DOUBLE PRECISION NULL
-  ,PRIMARY KEY (runcat
-               ,band
-               ,stokes
-               )
+  ,UNIQUE (runcat, band, stokes)
   ,FOREIGN KEY (runcat) REFERENCES runningcatalog (id)
   ,FOREIGN KEY (band) REFERENCES frequencyband (id)
-  )
-;
+
+{% ifdb postgresql %}
+  ,PRIMARY KEY (id)
+{% endifdb %}
+);
 
 {% ifdb postgresql %}
 CREATE INDEX "runningcatalog_flux_band" ON "runningcatalog_flux" ("band");

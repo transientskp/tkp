@@ -28,8 +28,7 @@ def database_config(pipe_config, apply=False):
     """
     kwargs = {}
     db_parset = parset.load_section(pipe_config, 'database')
-    interests = ('engine', 'database', 'user', 'password', 'host', 'port',
-                 'passphrase')
+    interests = ('engine', 'database', 'user', 'password', 'host', 'port')
     for key, value in db_parset.iteritems():
         if key in interests:
             kwargs[key] = value

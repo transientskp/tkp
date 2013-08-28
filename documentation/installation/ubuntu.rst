@@ -15,8 +15,8 @@ Casacore is a collection of libraries which can be used to perform astronomical
 calculations and operations.
 
 There are two ways to install Casacore, use our precompiled binary packages or
-compile Casacore by yourself. Some people like to compile casacore them self
-to have more control over compilation flags and install location.
+compile Casacore by yourself. Some people like to compile casacore themselves
+to have more control over compilation flags and installation location.
 
 Binary packages
 ---------------
@@ -34,13 +34,13 @@ Manual casacore compilation
 
 This will compile casacore from source.
 
-install requirements::
+First, install its dependencies::
 
    $ sudo apt-get install subversion cmake build-essential flex bison   \
         libblas-dev liblapack-dev libcfitsio3-dev wcslib-dev libfftw3-dev \
         libhdf5-dev libreadline-dev libncurses5-dev wget
 
-get the casa data::
+Get the measures data::
 
    $ cd /tmp
    $ wget ftp://ftp.atnf.csiro.au/pub/software/measures_data/measures_data.tar.bz2
@@ -48,7 +48,7 @@ get the casa data::
    $ sudo tar jxvf /tmp/measures_data.tar.bz2
 
 
-install casacore::
+Finally, casacore itself::
 
    $ cd /tmp
    $ svn checkout http://casacore.googlecode.com/svn/trunk/ casacore
@@ -57,7 +57,6 @@ install casacore::
          -DUSE_HDF5=ON -DUSE_OPENMP=ON
    $ make
    $ sudo make install
-
 
 
 Pyrap
@@ -82,7 +81,7 @@ To install install Pyrap::
 Transient Pipeline
 ==================
 
-If you don't have the TRAP source code yet, you need to to fetch it::
+If you don't have the Trap source code yet, you need to to fetch it::
 
    $ sudo apt-get install git cmake build-essential python-pip python-numpy \
         python-scipy python-pygresql
@@ -96,13 +95,12 @@ If you don't have the TRAP source code yet, you need to to fetch it::
    $ pip install -r requirements.txt
 
 
-
-
 Optional dependencies
 =====================
 
 Database
 --------
+
 If you want to run the pipeline you need to store the results somewhere. TKP
 currently supports two database systems, `PostgreSQL`_ and `MonetDB`_. Pick one.
 
@@ -126,10 +124,12 @@ with prebuild binaries. To install these packages::
     $ sudo apt-get update
     $ sudo apt-get install monetdb5-sql monetdb-client
 
-To be able to manage monetDB databases you need to add yourself to the MonetDB
-group (and re-login)::
+To be able to manage MonetDB databases you need to add yourself to the MonetDB
+group::
 
     $ sudo usermod -a -G monetdb $USER
+
+When you next log in you will be a member of the appropriate group.
 
 For more information see the `MonetDB ubuntu packages manual`_.
 
@@ -138,8 +138,8 @@ Broker
 ------
 
 If you want to run `Celery`_ workers, you need a broker. There are multiple
-`brokers`_ where you can choose from. If you don't care, just install
-`RabbitMQ`_::
+`brokers`_ where you can choose from. If you do not have a compelling reason
+to choose another, we suggest `RabbitMQ`_::
 
     $ sudo apt-get install rabbitmq-server
 

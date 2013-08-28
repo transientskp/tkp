@@ -8,8 +8,8 @@ OSX
 Preamble
 ********
 
-Although there are many ways to install TKP and it dependecies, our finding is
-that using the `homebrew`_ project gives the smoothest installation experience.
+Although there are many ways to install TKP and it dependecies, we find that
+using the `Homebrew`_ gives a smooth installation experience.
 
 
 ************
@@ -21,7 +21,7 @@ Installation
     $ ruby -e "$(curl -fsSL https://raw.github.com/mxcl/homebrew/go)"
     $ brew doctor
 
-* Now install the `homebrew SKA tap`_, which contains all kind of funky (radio)
+* Now install the `Homebrew SKA tap`_, which contains all kind of radio
   astronomy software::
 
     $ brew tap ska-sa/tap
@@ -57,7 +57,7 @@ Finally start the database server::
 
     $ pg_ctl -D /usr/local/var/postgres -l /usr/local/var/postgres/server.log start
 
-If you need to know more the brew postgresql is a good place to start::
+If you need to know more the ``postgresql`` "brew" is a good place to start::
 
     $ brew info postgresql
 
@@ -80,8 +80,8 @@ Broker
 ------
 
 If you want to run `Celery`_ workers, you need a broker. There are multiple
-`brokers`_ where you can choose from. If you don't care, just install
-`RabbitMQ`_::
+`brokers`_ where you can choose from. If you do not have a compelling reason
+to choose another, we suggest `RabbitMQ`_::
 
     $ brew install rabbitmq
 

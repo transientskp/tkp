@@ -101,9 +101,6 @@ class TestImage(unittest.TestCase):
         image1.update()
         self.assertEqual(image1.tau_time, 0)
 
-        ##Uh oh. I don't think this is caused by the update
-        #- I noticed it in the database without any updates being called.
-        # Rather, the tau (exposure time) is not being inserted properly.
 
     @requires_database()
     def test_infinite(self):

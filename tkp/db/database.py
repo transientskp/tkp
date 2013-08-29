@@ -3,8 +3,7 @@ All code required for interacting with the database
 """
 
 import logging
-import os
-import getpass
+import tkp.config
 
 logger = logging.getLogger(__name__)
 
@@ -14,7 +13,6 @@ class Database(object):
     An object representing a database connection.
     """
     _connection = None
-    _configured = False
 
     # this makes this class a singleton
     _instance = None
@@ -23,58 +21,27 @@ class Database(object):
             cls._instance = object.__new__(cls)
         return cls._instance
 
-    def configure(self, engine=None, database=None, user=None, password=None,
-                  host=None, port=None, passphrase=None):
-        """
-        Configures the database with the given parameters.
+    def __init__(self, **kwargs):
+        if not kwargs:
+            kwargs = tkp.config.database_config()
 
-        If a parameter is not used these system environment variables are
-        checked::
-
-          * TKP_DBENGINE
-          * TKP_DBNAME
-          * TKP_DBUSER
-          * TKP_DBPASS
-          * TKP_DBHOST
-          * TKP_DBPORT
-
-        If these are also not set a default set of settings are used.
-        """
-        e = os.environ
-
-        # default settings
-        username = getpass.getuser()
-        self.engine = engine or e.get('TKP_DBENGINE', 'postgresql')
-        #If only TKP_DBNAME is defined as an environment variable,
-        #default to that for the DBUSER and DBPASS also.
-        if 'TKP_DBNAME' in e and not database:
-            if 'TKP_DBUSER' not in e and not user:
-                user = e['TKP_DBNAME']
-            if 'TKP_DBPASS' not in e and not password:
-                password = e['TKP_DBNAME']
-
-        self.database = database or e.get('TKP_DBNAME', username)
-        self.user = user or e.get('TKP_DBUSER', username)
-        self.password = password or e.get('TKP_DBPASS', username)
-        self.host = host or e.get('TKP_DBHOST', False)
-        self.port = port or int(e.get('TKP_DBPORT', False))
-
+        self.engine = kwargs['engine']
+        self.database = kwargs['database']
+        self.user = kwargs['user']
+        self.password = kwargs['password']
+        self.host = kwargs['host']
+        self.port = kwargs['port']
         logger.info("Database config: %s://%s@%s:%s/%s" % (self.engine,
                                                            self.user,
                                                            self.host,
                                                            self.port,
                                                            self.database))
 
-        self._configured = True
-
     def connect(self):
         """
         connect to the configured database
         """
         logger.info("connecting to database...")
-
-        if not self._configured:
-            self.configure()
 
         kwargs = {}
         if self.user:
@@ -132,4 +99,4 @@ class Database(object):
         """
         if self._connection:
             self._connection.close()
-        self._connection = False
+        self._connection = None

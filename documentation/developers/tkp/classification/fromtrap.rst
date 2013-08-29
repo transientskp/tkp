@@ -24,8 +24,7 @@ parset = %(runtime_directory)s/jobs/%(job_name)s/parsets/classification.parset
 
 - outputs:
 
-  - transients: list of :ref:`Transient
-    <classification-transient-transient>` objects,
+  - transients: list of ``Transient`` objects,
     amended with their classification.
 
 

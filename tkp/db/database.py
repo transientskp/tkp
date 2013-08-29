@@ -24,7 +24,7 @@ class Database(object):
         return cls._instance
 
     def configure(self, engine=None, database=None, user=None, password=None,
-                  host=None, port=None):
+                  host=None, port=None, passphrase=None):
         """
         Configures the database with the given parameters.
 

@@ -1,17 +1,18 @@
+import logging
 import subprocess
 import tempfile
 
 logger = logging.getLogger(__name__)
 
-def dump_db(engine, hostname, port, dbname, dbpass, dbuser, output):
+def dump_db(engine, hostname, port, dbname, dbuser, dbpass, output):
     if engine == "monetdb":
-        return dump_monetdb(hostname, port, dbname, dbpass, dbuser, output)
+        return dump_monetdb(hostname, port, dbname, dbuser, dbpass, output)
     elif engine == "postgresql":
-        return dump_pg(hostname, port, dbname, dbpass, dbuser, output)
+        return dump_pg(hostname, port, dbname, dbuser, dbpass, output)
     else:
-        raise NotImplemtedError("Not able to dump %s" % (engine,))
+        raise NotImplementedError("Not able to dump %s" % (engine,))
 
-def dump_monetdb(hostname, port, dbname, dbpass, dbuser, output_filename):
+def dump_monetdb(hostname, port, dbname, dbuser, dbpass, output_filename):
     mclient_executable = "mclient" # Should be configurable?
 
     with tempfile.NamedTemporaryFile() as dotmonetdb, \
@@ -39,5 +40,5 @@ def dump_monetdb(hostname, port, dbname, dbpass, dbuser, output_filename):
             logger.error("Failed to dump: %s" % (e,))
             raise
 
-def dump_pg(hostname, port, dbname, dbpass, dbuser, output_filename):
+def dump_pg(hostname, port, dbname, dbuser, dbpass, output_filename):
     raise NotImplementedError("pg_dump not yet available")

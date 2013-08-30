@@ -60,11 +60,11 @@ class TestFitFixedPositions(unittest.TestCase):
                        )
         self.assertListEqual(list(self.image.data.shape),[1024,1024])
         self.boxsize = BOX_IN_BEAMPIX*max(self.image.beam[0], self.image.beam[1])
-        self.bright_src_posn = (215.83993,86.307504)  #RA, DEC
+        self.bright_src_posn = (215.47544723588788, 86.3097206050665)  #RA, DEC
         self.background_posn = (186.33731,82.70002)    #RA, DEC
         ##NB These are simply plucked from a previous run,
         # so they merely ensure *consistent*, rather than *correct*, results.
-        self.known_fit_results = [215.84 , 86.31 , 9.88] #RA, DEC, PEAK
+        self.known_fit_results = [215.4752709272354, 86.31221657703863, 9.88] #RA, DEC, PEAK
 
     def testSourceAtGivenPosition(self):
         posn = self.bright_src_posn
@@ -200,12 +200,12 @@ class TestSimpleImageSourceFind(unittest.TestCase):
         at around 5 or 6 sigma detection level."""
 
         known_result = (
-            136.89603241069054, 14.022184792492785, #RA, DEC
+            136.89460076977895, 14.023573593697051, #RA, DEC
             0.0005341819139061954, 0.0013428186757078464, #Err, Err
             0.0007226590529214518, 0.00010918184742211533, #Peak flux, err
             0.0006067963179204716, 0.00017037685531724465, #Integrated flux, err
             6.192259965962862, 25.516190123153514, #Significance level, Beam semimajor-axis width (arcsec)
-            10.718798843620489, 178.62899212789304, #Beam semiminor-axis width (arcsec), Beam parallactic angle
+            10.718798843620489, 178.62864864018172, #Beam semiminor-axis width (arcsec), Beam parallactic angle
             0.0, 0.0 #ra_sys_err, dec_sys_err
         )
         self.image = accessors.sourcefinder_image_from_accessor(

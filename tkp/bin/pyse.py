@@ -23,10 +23,11 @@ import os.path
 from cStringIO import StringIO
 from optparse import OptionParser
 import numpy
-
 import pyfits
 
-from tkp.accessors import FitsImage
+import logging
+
+from tkp.accessors import open as open_accessor
 from tkp.accessors import sourcefinder_image_from_accessor
 from tkp.accessors import writefits as tkp_writefits
 from tkp.sourcefinder.utils import generate_result_maps
@@ -149,6 +150,27 @@ def writefits(filename, data, header={}):
         pass
     tkp_writefits(data, filename, header)
 
+def get_detection_labels(filename, det, anl, beam, plane=0):
+    print "Detecting islands in %s" % (filename,)
+    print "Thresholding with det = %f sigma, analysis = %f sigma" % (det, anl)
+    ff = open_accessor(options.detection_image, beam=beam, plane=plane)
+    imagedata = sourcefinder_image_from_accessor(ff, **configuration)
+    labels, labelled_data = imagedata.label_islands(
+        options.detection * imagedata.rmsmap, options.analysis * imagedata.rmsmap
+    )
+    return labels, labelled_data
+
+def get_beam(bmaj, bmin, bpa):
+    if (
+        isinstance(bmaj, float)
+        and isinstance(bmin, float)
+        and isinstance(bpa, float)
+    ):
+        return (bmaj, bmin, bpa)
+    if bmaj or bmin or bpa:
+        print "WARNING: partial beam specification ignored"
+    return None
+
 def run_sourcefinder(files, options):
     """
     Iterate over the list of files, running a sourcefinding step on each in
@@ -168,36 +190,20 @@ def run_sourcefinder(files, options):
     }
     if options.residuals or options.islands:
         configuration['residuals'] = True
+
+    beam = get_beam(options.bmaj, options.bmin, options.bpa)
+
+    if options.detection_image and not options.fdr:
+        print "WARNING: --detection-image not supported with --fdr; ignored"
     if options.detection_image:
-        if options.fdr:
-            print "WARNING: --detection-image not supported with --fdr; ignored"
-        else:
-            print "Detecting islands in %s" % (options.detection_image)
-            print "Thresholding with det = %f sigma, analysis = %f sigma" % (options.detection, options.analysis)
-            if (
-                isinstance(options.bmaj, float)
-                and isinstance(options.bmin, float)
-                and isinstance(options.bpa, float)
-            ):
-                ff = FitsImage(options.detection_image, beam=(options.bmaj, options.bmin, options.bpa), plane=0)
-            else:
-                ff = FitsImage(options.detection_image, plane=0)
-            imagedata = sourcefinder_image_from_accessor(ff, **configuration)
-            labels, labelled_data = imagedata.label_islands(
-                options.detection * imagedata.rmsmap, options.analysis * imagedata.rmsmap
-            )
+        labels, labelled_data = get_detection_labels(
+            options.detection_image, options.detection, options.analysis, beam
+        )
     else:
         labels, labelled_data = [], None
     for counter, filename in enumerate(files):
         print "Processing %s (file %d of %d)." % (filename, counter+1, len(files))
-        if (
-            isinstance(options.bmaj, float)
-            and isinstance(options.bmin, float)
-            and isinstance(options.bpa, float)
-        ):
-            ff = FitsImage(filename, beam=(options.bmaj, options.bmin, options.bpa), plane=0)
-        else:
-            ff = FitsImage(filename, plane=0)
+        ff = open_accessor(filename, beam=beam, plane=0)
         imagedata = sourcefinder_image_from_accessor(ff, **configuration)
         if options.fdr:
             print "Using False Detection Rate algorithm with alpha = %f" % (options.alpha,)
@@ -244,6 +250,7 @@ def run_sourcefinder(files, options):
 
 
 if __name__ == "__main__":
+    logging.basicConfig()
     options, files = handle_args()
     if files:
         print run_sourcefinder(files, options),

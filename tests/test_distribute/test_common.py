@@ -14,7 +14,7 @@ class TestSerialize(unittest.TestCase):
     def tearDown(self):
         shutil.rmtree(self.path, ignore_errors=True)
 
-    def test_known_values(self):
+    def test_code_decode(self):
         encoded = serialize(casa_table)
         decoded_path = deserialize(encoded, path=self.path)
         comp = filecmp.dircmp(casa_table, decoded_path)

@@ -51,8 +51,8 @@ def serialize(path):
 def deserialize(encoded, path=False):
     """
     extracts a base64 encoded tar archive in a temporary folder, and returns
-    the path. path is used for extraction location, of False a temporary folder
-    is created.
+    the path. `path` is used for extraction location, if False a temporary
+    folder is created.
     """
     if not path:
         path = tempfile.mkdtemp()
@@ -62,5 +62,7 @@ def deserialize(encoded, path=False):
     tar_buf.seek(0)
     tar = tarfile.open(fileobj=tar_buf, mode='r:')
     tar.extractall(path)
-    return path
+    dir = os.listdir(path)
+    assert(len(dir) == 1)  # we only support serialisation of one file/folder
+    return os.path.join(path, dir[0])
 

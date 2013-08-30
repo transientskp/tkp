@@ -60,9 +60,6 @@ To run a specific job run:
 Files
 =====
 
-* *tasks.cfg*
-  Generic configuration for for a job, probably no changes are required
-
 * *pipeline.cfg*
   configuration file for this pipeline. For syntax info see:
   <http://docs.python.org/library/configparser.html>

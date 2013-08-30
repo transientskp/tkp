@@ -2,9 +2,9 @@ import ConfigParser
 import os
 
 def load_job_config(pipe_config):
-    """Pulls the parset filenames as defined in the tasks.cfg config file.
+    """Adds a predefined list of config files to the pipeline configuration
 
-    Since each parset has its own section, these can all be read into a
+    Since each file has its own section, these can all be read into a
     combined ConfigParser object representing the 'job settings', i.e.
     the parameters relating to this particular data reduction run.
     """

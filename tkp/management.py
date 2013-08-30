@@ -187,7 +187,6 @@ def prepare_job(jobname, debug=False):
     here = os.getcwd()
     jobdir = os.path.join(here, jobname)
     pipelinefile = os.path.join(here, "pipeline.cfg")
-    tasksfile = os.path.join(here, "tasks.cfg")
     sys.path.append(jobdir)
     if debug:
         # show us DEBUG logging
@@ -196,7 +195,7 @@ def prepare_job(jobname, debug=False):
         # show us INFO logging
         sys.argv.append("-v")
     # the lofar pipeline utils parse sys.argv to determine some options
-    sys.argv += ["-c", pipelinefile, "-t", tasksfile, "-j", jobname]
+    sys.argv += ["-c", pipelinefile, "-j", jobname]
 
 
 def celery_cmd(args):

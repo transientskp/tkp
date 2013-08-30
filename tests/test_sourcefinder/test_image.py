@@ -242,6 +242,33 @@ class TestSimpleImageSourceFind(unittest.TestCase):
         self.assertEqual(results[0].smaj.value, self.image.beam[0])
         self.assertEqual(results[0].smin.value, self.image.beam[1])
 
+    @requires_data(os.path.join(DATAPATH, 'GRB130828A/SWIFT_554620-130504.fits'))
+    @requires_data(os.path.join(DATAPATH, 'GRB130828A/SWIFT_554620-130504.image'))
+    def testWcsConversionConsistency(self):
+        """
+        Check that extracting a source from FITS and CASA versions of the
+        same dataset gives the same results (especially, RA and Dec).
+        """
+
+        fits_image = accessors.sourcefinder_image_from_accessor(
+                       accessors.FitsImage(os.path.join(DATAPATH,
+                                        'GRB130828A/SWIFT_554620-130504.fits')))
+        # Abuse the KAT7 CasaImage class here, since we just want to access
+        # the pixel data and the WCS:
+        casa_image = accessors.sourcefinder_image_from_accessor(
+               accessors.kat7casaimage.Kat7CasaImage(
+                     os.path.join(DATAPATH,
+                                  'GRB130828A/SWIFT_554620-130504.image')))
+
+        fits_results = fits_image.extract(det=5, anl=3)
+        fits_results = [result.serialize() for result in fits_results]
+        casa_results = fits_image.extract(det=5, anl=3)
+        casa_results = [result.serialize() for result in casa_results]
+        self.assertEqual(len(fits_results), 1)
+        self.assertEqual(len(casa_results), 1)
+        fits_src = fits_results[0]
+        casa_src = casa_results[0]
+        self.assertEqual(fits_src, casa_src)
 
     @requires_data(os.path.join(DATAPATH, 'GRB120422A/GRB120422A-120429.fits'))
     def testNoLabelledIslandsCase(self):

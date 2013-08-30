@@ -86,15 +86,5 @@ class ExtractionResults(ObjectContainer):
     """Container for the results of running source extraction on an
     ImageData object"""
 
-    def regionlist(self, radius=5):
-        """Output a list of regions suitable for use in DS9.
-
-        Kwargs:
-
-            radius (float): size of DS9 marker object
-        """
-        for obj in self:
-            print "circle(%f, %f, %f)" % (obj.x, obj.y, radius)
-
     def __str__(self):
         return 'ExtractionResults: ' + str(len(self)) + ' detection(s).'

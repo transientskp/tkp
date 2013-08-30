@@ -211,8 +211,10 @@ def run_job(args):
     if args.method == 'celery':
         import tkp.distribute.celery
         tkp.distribute.celery.run(args.name)
+    elif args.method == 'test':
+        return True
     else:
-        sys.stderr.write("I don't know what is a %s" % args.method)
+        sys.stderr.write("Execution method %s unknown" % args.method)
         sys.exit(1)
 
 

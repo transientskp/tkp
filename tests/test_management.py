@@ -77,7 +77,7 @@ class TestManagement(unittest.TestCase):
         os.chdir(target)
         job_namespace = argparse.Namespace()
         job_namespace.name = job_name
-        job_namespace.method = 'celery'
+        job_namespace.method = 'test'
         job_namespace.debug = False
         tkp.management.init_job(job_namespace)
         # we don't want no images!

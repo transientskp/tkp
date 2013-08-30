@@ -12,3 +12,4 @@ import source_extraction
 import classification
 import transient_search
 import null_detections
+import consistency

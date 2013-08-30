@@ -25,7 +25,7 @@ logger = logging.getLogger(__name__)
 
 def runner(func, iterable, arguments, local=False):
     """
-    A wrapper for mapping your iterable over a function. If local if False,
+    A wrapper for mapping your iterable over a function. If local is False,
     the mapping is performed using celery, else it will be performed locally.
 
     :param func: The function to be called, should have task decorator
@@ -94,6 +94,8 @@ def run(job_name, local=False):
     nd_parset = parset.load_section(job_config, 'null_detections')
     tr_parset = parset.load_section(job_config, 'transient_search')
 
+    logger.info("performing consistency check")
+    steps.consistency.master_steps()
 
     logger.info("performing persistence step")
     # persistence

@@ -8,6 +8,8 @@ import tkp.inject
 from tkp.testutil.data import DATAPATH
 import tkp.utility.parset
 from tkp.testutil.data import default_parset_paths
+from tkp.accessors.lofaraccessor import LofarAccessor
+from tkp.accessors.dataaccessor import DataAccessor
 
 fits_file = os.path.join(DATAPATH, 'missingheaders.fits')
 
@@ -25,8 +27,11 @@ class TestInject(unittest.TestCase):
         shutil.rmtree(cls.temp_dir)
 
     def test_no_injection(self):
-        # stuff should be missing here
-        self.assertRaises(KeyError, tkp.accessors.open, fits_file)
+        # Without injection the file cannot be opened as a LOFAR image
+        # We fall back to opening it as plain DataAccessor.
+        accessor = tkp.accessors.open(fits_file)
+        self.assertTrue(isinstance(accessor, DataAccessor))
+        self.assertFalse(isinstance(accessor, LofarAccessor))
 
     def test_injection(self):
         with open(default_parset_paths['inject.parset']) as f:
@@ -34,3 +39,5 @@ class TestInject(unittest.TestCase):
 
         tkp.inject.modify_fits_headers(parset, self.fixed_file, overwrite=True)
         fixed_fits = tkp.accessors.open(self.fixed_file)
+        self.assertTrue(isinstance(fixed_fits, DataAccessor))
+        self.assertTrue(isinstance(fixed_fits, LofarAccessor))

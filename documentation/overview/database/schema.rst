@@ -85,6 +85,40 @@ or n-1.
    NULL if not calculated (Scheers thesis ch3).
 
 
+.. _schema-assocskyrgn:
+
+assocskyrgn
+===========
+(See also :ref:`skyregion table <schema-skyregion>`.)
+This table records which :ref:`runningcatalog <schema-runningcatalog>` sources
+we expect to see in any given skyregion. This serves two purposes: 
+it allows us to determine when we *do not* see previously detected sources, 
+presumably because they have dropped in flux 
+(see :py:func:`tkp.db.monitoringlist.get_nulldetections`). 
+It also allows us to determine whether a new runningcatalog entry (i.e. 
+a newly detected source without associated historical detections) is being 
+detected for the first time because it is actually a new transient, or 
+if it is simply the first time that region of sky has been surveyed
+(see :py:func:`tkp.db.associations._insert_new_transient`).
+
+This table is updated under 2 circumstances:
+
+- A new skyregion is processed, and associations must be made with pre-existing
+  runcat entries (see SQL function ``updateSkyRgnMembers``).
+- A new runningcatalog source is added, and must be associated with pre-existing
+  skyregions 
+  (see :py:func:`tkp.db.associations._insert_new_runcat_skyrgn_assocs`).
+
+**runcat**
+   References the associated runningcatalog ID.
+
+**skyrgn**
+   References the associated skyregion ID.
+
+**distance_deg**
+   Records the angular separation between the runningcatalog source and the
+   skyregion centre, at time of first association.
+
 catalogedsource
 ===============
 
@@ -540,17 +574,7 @@ dataset).
     The timestamp of the start of the observation, originating or read from 
     the CASA LOFAR_OBSERVATION table from the ``OBSERVATION_START`` data field.
 
-**centre_ra** and **centre_decl**
-    The central coordinates (J2000) (or pointing centre) of the image in
-    degrees. 
-    RA and dec values originate or are read from the CASA Main table in the
-    coords subsection from the ``pointingcenter`` record. 
-    Note the conversion from radians to degrees.
 
-**x**, **y** and **z**
-    The Cartesian coordinates of centre_ra and centre_decl. 
-    Values are calculated by the database from centre_ra and centre_decl. Not
-    yet stored in table.
 
 **rb_smaj** 
     The semi-major axis of the restoring beam, in degrees. 
@@ -801,6 +825,37 @@ indices, V and eta.
 **avg_f_int, avg_f_int_sq, avg_f_int_weight, avg_weighted_f_int, avg_weighted_f_int_sq**
    Analogous to those above, except for the *integrated* flux.
 
+
+.. _schema-skyregion:
+
+skyregion
+=========
+Entries in this table represent regions of sky which have been, or will shortly
+be, processed via the usual extract-sources-and-associate procedures.
+By listing regions of sky in a dedicated table, we de-duplicate
+information that would otherwise be repeated for many images.
+
+When an image is first inserted into the database, the SQL function
+``getSkyRgn`` is called. This first checks for the pre-existence of a 
+matching skyregion entry. If none exists, then a new entry is created and 
+the SQL function ``updateSkyRgnMembers`` is called to update the 
+:ref:`assocskyrgn <schema-assocskyrgn>` table as necessary.
+
+See also :ref:`assocskyrgn <schema-assocskyrgn>`.
+
+**dataset**
+   Reference to the ``dataset`` id, for the dataset to which the skyregion 
+   belongs. This field is needed in order to restrict association to the 
+   current dataset.
+
+**centre_ra** and **centre_decl**
+    The central coordinates (J2000) (or pointing centre) of the region, in
+    degrees. 
+    RA and Dec values are read from ``DataAccessor`` metadata. 
+
+**x**, **y** and **z**
+    The Cartesian coordinates of centre_ra and centre_decl. 
+    Values are calculated by the database from centre_ra and centre_decl.
 
 .. _database_temprunningcatalog:
 

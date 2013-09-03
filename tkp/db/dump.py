@@ -13,7 +13,7 @@ def dump_db(engine, hostname, port, dbname, dbuser, dbpass, output):
         raise NotImplementedError("Not able to dump %s" % (engine,))
 
 def dump_monetdb(hostname, port, dbname, dbuser, dbpass, output_filename):
-    mclient_executable = "mclient" # Should be configurable?
+    mclient_executable = "mclient"
 
     with tempfile.NamedTemporaryFile() as dotmonetdb, \
         open(output_filename, 'w') as output_file:
@@ -41,4 +41,20 @@ def dump_monetdb(hostname, port, dbname, dbuser, dbpass, output_filename):
             raise
 
 def dump_pg(hostname, port, dbname, dbuser, dbpass, output_filename):
-    raise NotImplementedError("pg_dump not yet available")
+    pg_dump_executable = "pg_dump"
+
+    try:
+        subprocess.check_call(
+            [
+                pg_dump_executable,
+                "-h", hostname,
+                "-p", port,
+                "-U", dbuser,
+                "-f", output_filename,
+                dbname
+            ],
+            env={"PGPASSWORD": dbpass}
+        )
+    except Exception, e:
+        logger.error("Failed to dump: %s" % (e,))
+        raise

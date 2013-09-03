@@ -4,6 +4,10 @@ import datetime
 import tkp.db
 import tkp.utility.parset as parset
 
+import logging
+
+logger = logging.getLogger(__name__)
+
 def initialize_pipeline_config(pipe_cfg_file, job_name):
     """Replaces the sort of background bookkeeping that cuisine would do"""
     start_time = datetime.datetime.utcnow().replace(microsecond=0).isoformat()
@@ -36,6 +40,7 @@ def database_config(pipe_config=None, apply=False):
     :return:
     """
     # Default values
+    logger.warning("at start")
     kwargs = {
         'engine': "postgresql", 'database': None, 'user': None,
         'password': None, 'host': None, 'port': None, 'passphrase': None
@@ -72,4 +77,5 @@ def database_config(pipe_config=None, apply=False):
         tkp.db.Database(**kwargs)
         tkp.db.execute('select 1')
 
+    logger.warning(str(kwargs))
     return kwargs

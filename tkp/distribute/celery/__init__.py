@@ -1,6 +1,7 @@
 import os
 import imp
 import threading
+import datetime
 import time
 
 from celery import group
@@ -92,7 +93,7 @@ def run(job_name, local=False):
         dump_cfg = parset.load_section(job_config, 'db_dump')
     else:
         dump_cfg = {}
-    if 'db_dump' in dump_cfg and dump_cfg[db_dump]:
+    if 'db_dump' in dump_cfg and dump_cfg['db_dump']:
         output_name = os.path.join(
             job_dir, "%s_%s_%s.dump" % (
                 db_config['host'], db_config['database'],
@@ -100,7 +101,7 @@ def run(job_name, local=False):
             )
         )
         dump_db(
-            db_config['engine'], db_config['host'], db_config['port'],
+            db_config['engine'], db_config['host'], str(db_config['port']),
             db_config['database'], db_config['user'], db_config['password'],
             output_name
         )

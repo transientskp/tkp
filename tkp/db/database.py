@@ -1,18 +1,14 @@
-"""
-All code required for interacting with the database
-"""
-
 import logging
 import tkp.config
 
 logger = logging.getLogger(__name__)
-
 
 class Database(object):
     """
     An object representing a database connection.
     """
     _connection = None
+    _configured = False
 
     # this makes this class a singleton
     _instance = None
@@ -22,7 +18,10 @@ class Database(object):
         return cls._instance
 
     def __init__(self, **kwargs):
-        if not kwargs:
+        if self._configured:
+            if kwargs: logger.warning("Not configuring pre-configured database")
+            return
+        elif not kwargs:
             kwargs = tkp.config.database_config()
 
         self.engine = kwargs['engine']
@@ -36,6 +35,7 @@ class Database(object):
                                                            self.host,
                                                            self.port,
                                                            self.database))
+        self._configured = True
 
     def connect(self):
         """

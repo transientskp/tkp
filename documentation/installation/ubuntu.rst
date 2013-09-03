@@ -111,6 +111,40 @@ PostgreSQL is included in Ubuntu::
 
     $ sudo apt-get install postgresql
 
+After package installation, you must configure access rights to your postgres
+server, by editing 
+`/etc/postgresql/9.1/main/pg_hba.conf 
+<http://www.postgresql.org/docs/9.1/static/auth-pg-hba-conf.html>`_.
+
+For a typical development (i.e. possibly insecure) installation, 
+you will probably want to edit the pre-existing entries to something along the 
+lines of::
+
+   local   all             all                                     trust
+   host    all             all             127.0.0.1/32            trust
+
+with all other lines commented out. Then restart the server::
+
+   $ sudo service postgresql restart
+
+You can check everything is working using ``psql``::
+
+   $ psql -U postgres
+
+You should now be able to run the `initdb <getstart-initdb>`_ 
+process, 
+however you should note that by default all databases must be created with 
+user `postgres` - to allow creation of databases with other user-owners, 
+you must first add a new `role 
+<http://www.postgresql.org/docs/9.1/static/sql-createrole.html>`_, e.g.::
+
+   $ psql -U postgres
+   postgres=# CREATE ROLE myuser WITH CREATEDB SUPERUSER LOGIN;
+   
+You should now be able to run ``tkp-manage.py initdb`` with the newly added
+username.
+   
+
 
 MonetDB
 ^^^^^^^

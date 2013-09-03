@@ -11,6 +11,7 @@ from tkp.distribute.celery.tasklog import setup_task_log_emitter, monitor_events
 from tkp.steps.monitoringlist import add_manual_monitoringlist_entries
 from tkp import steps
 from tkp.db.orm import Image
+from tkp.db import consistency as dbconsist
 from tkp.db import general as dbgen
 from tkp.db import monitoringlist as dbmon
 from tkp.db import associations as dbass
@@ -95,7 +96,7 @@ def run(job_name, local=False):
     tr_parset = parset.load_section(job_config, 'transient_search')
 
     logger.info("performing consistency check")
-    steps.consistency.master_steps()
+    dbconsist.check()
 
     logger.info("performing persistence step")
     # persistence

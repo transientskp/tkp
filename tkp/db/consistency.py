@@ -21,7 +21,9 @@ SELECT COUNT(*)
 query_zone0 = """\
 SELECT COUNT(*)
   FROM extractedsource
- WHERE zone = 0
+ WHERE id = 0
+   AND image = 0
+   AND zone = 0
 """
 
 

@@ -12,12 +12,6 @@ local_logger = logging.getLogger(__name__)
 
 
 @trap.task
-def db_consistency_check(db_parset):
-    local_logger.info("running database consistency task")
-    return tkp.steps.consistency.check(db_parset)
-
-
-@trap.task
 def persistence_node_step(images, p_parset):
     local_logger.info("running persistence task")
     return tkp.steps.persistence.node_steps(images, p_parset)

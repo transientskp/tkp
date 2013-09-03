@@ -8,7 +8,8 @@ def load_job_config(pipe_config):
     combined ConfigParser object representing the 'job settings', i.e.
     the parameters relating to this particular data reduction run.
     """
-    task_parsets_to_read = ['persistence',
+    task_parsets_to_read = ['db_dump',
+                            'persistence',
                             'quality_check',
                             'source_association',
                             'source_extraction',

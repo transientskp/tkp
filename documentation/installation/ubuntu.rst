@@ -131,7 +131,7 @@ You can check everything is working using ``psql``::
 
    $ psql -U postgres
 
-You should now be able to run the `initdb <getstart-initdb>`_ 
+You should now be able to run the :ref:`initdb <getstart-initdb>` 
 process, 
 however you should note that by default all databases must be created with 
 user `postgres` - to allow creation of databases with other user-owners, 

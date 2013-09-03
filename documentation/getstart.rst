@@ -19,6 +19,7 @@ files. Run these command to initialise a project directory in your home director
     $ cd ~
     $ tkp-manage.py initproject <projectname>
 
+.. _getstart-initdb:
 
 Initialize a database
 =====================

@@ -3,6 +3,7 @@ import os
 import datetime
 import tkp.db
 import tkp.utility.parset as parset
+import getpass
 
 import logging
 
@@ -42,12 +43,12 @@ def database_config(pipe_config=None, apply=False):
     # Default values
     logger.warning("at start")
     kwargs = {
-        'engine': "postgresql", 'database': None, 'user': None,
-        'password': None, 'host': None, 'port': None, 'passphrase': None
+        'engine': "postgresql", 'database': None, 'user': getpass.getuser(),
+        'password': None, 'host': "localhost", 'port': "5432", 'passphrase': None
     }
 
     # Try loading a config file, if any
-    if pipe_config:
+    if pipe_config and pipe_config.has_section('database'):
         db_parset = parset.load_section(pipe_config, 'database')
         for key, value in db_parset.iteritems():
             if key in kwargs:
@@ -58,19 +59,19 @@ def database_config(pipe_config=None, apply=False):
         ("TKP_DBNAME", 'database'),
         ("TKP_DBUSER", 'user'),
         ("TKP_DBENGINE", 'engine'),
-        ("TKP_DBPASS", "password"),
+        ("TKP_DBPASSWORD", "password"),
         ("TKP_DBHOST", "host"),
         ("TKP_DBPORT", "port")
     ]:
         if env_var in os.environ:
             kwargs[key] = os.environ.get(env_var)
 
-    # If only the database name is defined, use that as a
-    # default for the username and password.
-    if kwargs['database'] and not kwargs['user']:
-        kwargs['user'] = kwargs['database']
-    if kwargs['database'] and not kwargs['password']:
-        kwargs['password'] = kwargs['database']
+    # If only the username is defined, use that as a
+    # default for the database name and password.
+    if kwargs['user'] and not kwargs['database']:
+        kwargs['database'] = kwargs['user']
+    if kwargs['user'] and not kwargs['password']:
+        kwargs['password'] = kwargs['user']
 
     # Optionally, initiate a db connection with the settings determined
     if apply:

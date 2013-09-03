@@ -31,8 +31,8 @@ class DatabaseConfigTestCase(unittest.TestCase):
         self.assertEqual(db_config['database'], username)
         self.assertEqual(db_config['user'], username)
         self.assertEqual(db_config['password'], username)
-        self.assertEqual(db_config['host'], localhost)
-        self.assertEqual(db_config['port'], 5432)
+        self.assertEqual(db_config['host'], "localhost")
+        self.assertEqual(db_config['port'], "5432")
 
     def test_empty_pipeline_cfg(self):
         # Should not raise

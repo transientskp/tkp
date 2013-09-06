@@ -112,7 +112,7 @@ def summary(filename, sourcelist):
         print >>output, "Peak: %s\n" % (str(source.peak))
     return output.getvalue()
 
-def handle_args():
+def handle_args(args=None):
     """
     Parses command line options & arguments using OptionParser.
     Options & default values for the script are defined herein.
@@ -140,7 +140,7 @@ def handle_args():
     parser.add_option("--sigmap", action="store_true", help="Generate significance map")
     parser.add_option("--force-beam", action="store_true", help="Force fit axis lengths to beam size")
     parser.add_option("--detection-image", type="string", help="Find islands on different image")
-    return parser.parse_args()
+    return parser.parse_args(args=args)
 
 def writefits(filename, data, header={}):
     try:

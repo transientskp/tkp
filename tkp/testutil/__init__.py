@@ -11,3 +11,12 @@ def nostderr():
     sys.stderr = Devnull()
     yield
     sys.stderr = savestderr
+
+class Mock(object):
+    def __init__(self):
+        self.callcount = 0
+        self.callvalues = []
+
+    def __call__(self, *args, **kwargs):
+        self.callcount += 1
+        self.callvalues.append((args, kwargs))

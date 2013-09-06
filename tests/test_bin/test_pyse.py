@@ -8,6 +8,7 @@ import tkp.bin.pyse
 from tkp.accessors import FitsImage
 from tkp.accessors import sourcefinder_image_from_accessor
 from tkp.testutil.data import DATAPATH
+from tkp.testutil import Mock
 
 
 orig_fits_file = os.path.join(DATAPATH, 'L15_12h_const/observed-all.fits')
@@ -87,3 +88,36 @@ class TestPyse(unittest.TestCase):
         tkp.bin.pyse.run_sourcefinder([], options)
         # one file
         tkp.bin.pyse.run_sourcefinder([self.filename], options)
+
+    def test_bailout(self):
+        import sys
+        old_exit = sys.exit
+        sys.exit = Mock()
+        tkp.bin.pyse.bailout("bad stuff")
+        self.assertEqual(sys.exit.callcount, 1)
+        sys.exit = old_exit
+
+    def test_getbeam(self):
+        self.assertEqual(
+            tkp.bin.pyse.get_beam(1, 2, 3),
+            (1.0, 2.0, 3.0)
+        )
+        self.assertEqual(
+            tkp.bin.pyse.get_beam(1.0, 2.0, 3.0),
+            (1.0, 2.0, 3.0)
+        )
+        self.assertEqual(
+            tkp.bin.pyse.get_beam('a', 'b', 'c'),
+            None
+        )
+
+    def test_get_sourcefinder_configuration(self):
+        config = tkp.bin.pyse.get_sourcefinder_configuration(options)
+        self.assertFalse(config["deblend"])
+        self.assertTrue(config["residuals"])
+        self.assertTrue(config["force_beam"])
+        self.assertEqual(config['back_sizex'], options.grid)
+        self.assertEqual(config['back_sizey'], options.grid)
+        self.assertEqual(config['margin'], options.margin)
+        self.assertEqual(config['radius'], options.radius)
+        self.assertEqual(config['deblend_nthresh'], options.deblend_thresholds)

@@ -18,7 +18,9 @@ For help with command line options:
 See chapters 2 & 3 of Spreeuw, PhD Thesis, University of Amsterdam, 2010,
 <http://dare.uva.nl/en/record/340633> for details.
 """
+import sys
 import math
+import numbers
 import os.path
 from cStringIO import StringIO
 from optparse import OptionParser
@@ -160,25 +162,7 @@ def get_detection_labels(filename, det, anl, beam, configuration, plane=0):
     )
     return labels, labelled_data
 
-def get_beam(bmaj, bmin, bpa):
-    if (
-        isinstance(bmaj, float)
-        and isinstance(bmin, float)
-        and isinstance(bpa, float)
-    ):
-        return (bmaj, bmin, bpa)
-    if bmaj or bmin or bpa:
-        print "WARNING: partial beam specification ignored"
-    return None
-
-def run_sourcefinder(files, options):
-    """
-    Iterate over the list of files, running a sourcefinding step on each in
-    turn. If specified, a DS9-compatible region file and/or a FITS file
-    showing the residuals after Gaussian fitting are dumped for each file.
-    A string containing a human readable list of sources is returned.
-    """
-    output = StringIO()
+def get_sourcefinder_configuration(options):
     configuration = {
         "back_sizex": options.grid,
         "back_sizey": options.grid,
@@ -190,11 +174,40 @@ def run_sourcefinder(files, options):
     }
     if options.residuals or options.islands:
         configuration['residuals'] = True
+    return configuration
+
+def get_beam(bmaj, bmin, bpa):
+
+    if (
+        isinstance(bmaj, numbers.Real)
+        and isinstance(bmin, numbers.Real)
+        and isinstance(bpa, numbers.Real)
+    ):
+        return (float(bmaj), float(bmin), float(bpa))
+    if bmaj or bmin or bpa:
+        print "WARNING: partial beam specification ignored"
+    return None
+
+def bailout(reason):
+    # Exit with error
+    print "ERROR: %s" % (reason)
+    sys.exit(1)
+
+def run_sourcefinder(files, options):
+    """
+    Iterate over the list of files, running a sourcefinding step on each in
+    turn. If specified, a DS9-compatible region file and/or a FITS file
+    showing the residuals after Gaussian fitting are dumped for each file.
+    A string containing a human readable list of sources is returned.
+    """
+    output = StringIO()
 
     beam = get_beam(options.bmaj, options.bmin, options.bpa)
+    configuration = get_sourcefinder_configuration(options)
 
-    if options.detection_image and options.fdr:
-        print "WARNING: --detection-image not supported with --fdr; ignored"
+    if options.detection_image and not options.fdr:
+        bailout("--detection-image not suppored with --fdr")
+
     if options.detection_image:
         labels, labelled_data = get_detection_labels(
             options.detection_image, options.detection, options.analysis, beam, configuration

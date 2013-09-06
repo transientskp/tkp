@@ -150,7 +150,7 @@ def writefits(filename, data, header={}):
         pass
     tkp_writefits(data, filename, header)
 
-def get_detection_labels(filename, det, anl, beam, plane=0):
+def get_detection_labels(filename, det, anl, beam, configuration, plane=0):
     print "Detecting islands in %s" % (filename,)
     print "Thresholding with det = %f sigma, analysis = %f sigma" % (det, anl)
     ff = open_accessor(options.detection_image, beam=beam, plane=plane)
@@ -193,11 +193,11 @@ def run_sourcefinder(files, options):
 
     beam = get_beam(options.bmaj, options.bmin, options.bpa)
 
-    if options.detection_image and not options.fdr:
+    if options.detection_image and options.fdr:
         print "WARNING: --detection-image not supported with --fdr; ignored"
     if options.detection_image:
         labels, labelled_data = get_detection_labels(
-            options.detection_image, options.detection, options.analysis, beam
+            options.detection_image, options.detection, options.analysis, beam, configuration
         )
     else:
         labels, labelled_data = [], None

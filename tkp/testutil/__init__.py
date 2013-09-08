@@ -13,10 +13,12 @@ def nostderr():
     sys.stderr = savestderr
 
 class Mock(object):
-    def __init__(self):
+    def __init__(self, returnvalue=None):
         self.callcount = 0
         self.callvalues = []
+        self.returnvalue = returnvalue
 
     def __call__(self, *args, **kwargs):
         self.callcount += 1
         self.callvalues.append((args, kwargs))
+        return self.returnvalue

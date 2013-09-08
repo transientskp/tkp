@@ -155,10 +155,10 @@ def writefits(filename, data, header={}):
 def get_detection_labels(filename, det, anl, beam, configuration, plane=0):
     print "Detecting islands in %s" % (filename,)
     print "Thresholding with det = %f sigma, analysis = %f sigma" % (det, anl)
-    ff = open_accessor(options.detection_image, beam=beam, plane=plane)
+    ff = open_accessor(filename, beam=beam, plane=plane)
     imagedata = sourcefinder_image_from_accessor(ff, **configuration)
     labels, labelled_data = imagedata.label_islands(
-        options.detection * imagedata.rmsmap, options.analysis * imagedata.rmsmap
+        det * imagedata.rmsmap, anl * imagedata.rmsmap
     )
     return labels, labelled_data
 

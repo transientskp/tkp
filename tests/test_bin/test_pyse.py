@@ -11,7 +11,7 @@ from tkp.testutil.data import DATAPATH
 from tkp.testutil import Mock
 
 
-orig_fits_file = os.path.join(DATAPATH, 'L15_12h_const/observed-all.fits')
+orig_fits_file = os.path.join(DATAPATH, 'pyse-test.fits')
 
 
 class AttributeDict(dict):
@@ -121,3 +121,37 @@ class TestPyse(unittest.TestCase):
         self.assertEqual(config['margin'], options.margin)
         self.assertEqual(config['radius'], options.radius)
         self.assertEqual(config['deblend_nthresh'], options.deblend_thresholds)
+
+    def test_sourcefinder_gets_beam(self):
+        old_get_beam = tkp.bin.pyse.get_beam
+        tkp.bin.pyse.get_beam = Mock((options.bmaj, options.bmin, options.bpa))
+        tkp.bin.pyse.run_sourcefinder([self.filename], options)
+        self.assertEqual(tkp.bin.pyse.get_beam.callcount, 1)
+        tkp.bin.pyse.get_beam = old_get_beam
+
+    def test_sourcefinder_uses_detection_image(self):
+        # Be sure that get_detection_labels() is called iff
+        # options.detection_image is True.
+        config = tkp.bin.pyse.get_sourcefinder_configuration(options)
+
+        # First, get the correct answers for mocking
+        detection_labels = tkp.bin.pyse.get_detection_labels(
+            self.filename, options.detection, options.analysis,
+            (options.bmaj, options.bmin, options.bpa), config
+        )
+
+        # Now insert our mocked function
+        old_get_detection_labels = tkp.bin.pyse.get_detection_labels
+        tkp.bin.pyse.get_detection_labels = Mock(detection_labels)
+
+        # With default config, we should not run the function
+        tkp.bin.pyse.run_sourcefinder([self.filename], options)
+        self.assertEqual(tkp.bin.pyse.get_detection_labels.callcount, 0)
+
+        # But if we set options.detection_image to True, we should
+        options.detection_image = True
+        tkp.bin.pyse.run_sourcefinder([self.filename], options)
+        self.assertEqual(tkp.bin.pyse.get_detection_labels.callcount, 1)
+
+        # Restore the old function
+        tkp.bin.pyse.get_detection_labels = old_get_detection_labels

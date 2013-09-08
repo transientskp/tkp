@@ -205,7 +205,7 @@ def run_sourcefinder(files, options):
     beam = get_beam(options.bmaj, options.bmin, options.bpa)
     configuration = get_sourcefinder_configuration(options)
 
-    if options.detection_image and not options.fdr:
+    if options.detection_image and options.fdr:
         bailout("--detection-image not suppored with --fdr")
 
     if options.detection_image:

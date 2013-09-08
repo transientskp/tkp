@@ -27,7 +27,7 @@ options = AttributeDict({
     'deblend_thresholds': 32,
     'residuals': True,
     'islands': True,
-    'fdr': True,
+    'fdr': False,
     'bmaj': 0.5,
     'bmin': 0.5,
     'bpa': 0.5,

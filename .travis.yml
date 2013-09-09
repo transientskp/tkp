@@ -19,8 +19,8 @@ before_install:
  - cd /tmp
  - svn checkout http://pyrap.googlecode.com/svn/trunk/ pyrap
  - cd pyrap
- - ./batchbuild-trunk.py  --casacore-root=/usr
- - cd tests
+ - sudo ./batchbuild-trunk.py  --casacore-root=/usr
+ - cd ~/transientskp/tkp/tests
  - svn co --pasword $SVNPASS http://svn.transientskp.org/data/unittests/tkp_lib/ data
 install: 
  - pip install -r requirements.txt --use-mirrors

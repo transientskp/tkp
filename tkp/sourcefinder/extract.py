@@ -248,7 +248,10 @@ class ParamSet(DictMixin):
         # This parameter gives the number of components that could not be
         # deconvolved, IERR from deconf.f.
         self.deconv_imposs = 2
-        # Where have these parameters come from?
+
+        # These flags are used to indicate where the values stored in this
+        # parameterset have come from: we set them to True if & when moments
+        # and/or Gaussian fitting succeeds.
         self.moments = False
         self.gaussian = False
 

@@ -811,7 +811,13 @@ class Detection(object):
         # the tangent plane at center position.
         # The cross product of the local north vector and the local east
         # vector will always be aligned with the center_position vector.
-        local_north_position = numpy.array([0., 0., 1./center_position[2]])
+        if center_position[2] != 0:
+            local_north_position = numpy.array([0., 0., 1./center_position[2]])
+        else:
+            # If we are right on the equator (ie dec=0) the division above
+            # will blow up: as a workaround, we use something Really Big
+            # instead.
+            local_north_position = numpy.array([0., 0., 99e99])
         # Next, determine the orientation of the y-axis wrt local north
         # by incrementing y by a small amount and converting that
         # to celestial coordinates. That small increment is conveniently

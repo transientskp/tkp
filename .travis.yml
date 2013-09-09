@@ -12,7 +12,7 @@ notifications:
       secure: J/txhSEXTRRibmPxGQ4YtePQ5aarnCAJhHZP+NP9luW/CyhMD45Aq8PKRNgaCq8kZuVs001HePz4IPceqfJiMjts2Dv1SrJqvpPhl4xxIj8aJgH7b1vlKcSUeum3G8+7ZJrURoIxET5EZL0hDAE7ZFPogaksK0zXKlRQsuATkM0=
 before_install: 
  - sudo apt-get install software-properties-common
- - sudo add-apt-repository ppa:gijzelaar/aartfaac
+ - sudo add-apt-repository -y ppa:gijzelaar/aartfaac
  - sudo apt-get update -qq
  - sudo apt-get install -qq libcasacore-dev casacore-data scons python-numpy-dev python-dev libboost-python-dev python-setuptools subversion libblas-dev liblapack-dev gfortran wcslib-dev libcfitsio3-dev git cmake build-essential python-pip python-numpy python-scipy python-pygresql
  - psql -c 'create database trap;' -U postgres

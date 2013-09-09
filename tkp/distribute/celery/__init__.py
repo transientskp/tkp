@@ -11,6 +11,7 @@ from tkp.distribute.celery.tasklog import setup_task_log_emitter, monitor_events
 from tkp.steps.monitoringlist import add_manual_monitoringlist_entries
 from tkp import steps
 from tkp.db.orm import Image
+from tkp.db import consistency as dbconsistency
 from tkp.db import general as dbgen
 from tkp.db import monitoringlist as dbmon
 from tkp.db import associations as dbass
@@ -25,7 +26,7 @@ logger = logging.getLogger(__name__)
 
 def runner(func, iterable, arguments, local=False):
     """
-    A wrapper for mapping your iterable over a function. If local if False,
+    A wrapper for mapping your iterable over a function. If local is False,
     the mapping is performed using celery, else it will be performed locally.
 
     :param func: The function to be called, should have task decorator
@@ -94,6 +95,10 @@ def run(job_name, local=False):
     nd_parset = parset.load_section(job_config, 'null_detections')
     tr_parset = parset.load_section(job_config, 'transient_search')
 
+    logger.info("performing database consistency check")
+    if not dbconsistency.check():
+        logger.error("Inconsistent database found; aborting")
+        return 1
 
     logger.info("performing persistence step")
     # persistence

@@ -763,27 +763,6 @@ class Detection(object):
     def __repr__(self):
         return str(self)
 
-    def printob(self, output=None):
-        if output is None:
-            import sys
-            output = sys.stdout;
-        output.write("\nPeak =" + str(self.peak ) + " flux " +
-            str(self.flux) +  "\nx = "+ str(self.x )+ "\ny = " +
-            str(self.y))
-        output.write("\nsmaj = "+ str(self.smaj) + "\nsmin = " +
-            str(self.smin) + "\ntheta = " + str(self.theta) )
-        self._physical_coordinates()
-        output.write("\nRA = " + str(self.ra) + " dec = "+
-            str(self.dec) + "\n")
-
-    def printasregion(self):
-        """Output to DS9 region format"""
-        pi = math.pi
-        return ("\nellipse(" + str(self.x.value) + "," +
-            str(self.y.value) +"," + str(self.smaj.value *2) + "," +
-            str(self.smin.value*2) + "," + str(self.theta.value
-            -pi/2.0 ) + "r ) #color=white")
-
     def _physical_coordinates(self):
         """Convert the pixel parameters for this object into something
         physical."""
@@ -947,92 +926,11 @@ class Detection(object):
         """Distance from center"""
         return ((self.x - x)**2 + (self.y - y)**2)**0.5
 
-    def serialize_all(self):
-        """Return source properties suitable for database storage.
-
-        @rtype: tuple
-        """
-
-        # in order to let accept MonetDB the values we convert float64 to float
-        # by float(self.ra.value)
-        zh = 1.
-        return (int(numpy.floor(self.dec.value / zh)),
-                self.ra.value,
-                self.dec.value,
-                self.ra.error,
-                self.dec.error,
-                (numpy.cos(numpy.radians(self.dec.value)) *
-                 numpy.cos(numpy.radians(self.ra.value))),
-                (numpy.cos(numpy.radians(self.dec.value)) *
-                 numpy.sin(numpy.radians(self.ra.value))),
-                numpy.sin(numpy.radians(self.dec.value)),
-                self.sig,
-                self.peak.value,
-                self.peak.error,
-                self.flux.value,
-                self.flux.error,
-                self.smaj_asec,
-                self.smin_asec,
-                self.theta_celes
-               )
-
-    def serialize_all_floats(self):
-        """Return source properties suitable for database storage.
-
-        @rtype: tuple
-        """
-
-        # in order to let accept MonetDB the values we convert float64 to float
-        # by float(self.ra.value)
-        zh = 1.
-        return (int(numpy.floor(self.dec.value / zh)),
-                numpy.float(self.ra.value),
-                numpy.float(self.dec.value),
-                numpy.float(self.ra.error),
-                numpy.float(self.dec.error),
-                numpy.float(numpy.cos(numpy.radians(self.dec.value)) *
-                            numpy.cos(numpy.radians(self.ra.value))),
-                numpy.float(numpy.cos(numpy.radians(self.dec.value)) *
-                            numpy.sin(numpy.radians(self.ra.value))),
-                numpy.float(numpy.sin(numpy.radians(self.dec.value))),
-                numpy.float(self.sig),
-               numpy.float(self.peak.value),
-                numpy.float(self.peak.error),
-                numpy.float(self.flux.value),
-                numpy.float(self.flux.error),
-                numpy.float(self.smaj_asec),
-                numpy.float(self.smin_asec),
-                numpy.float(self.theta_celes)
-                )
-
-    def serialize_old(self):
-        """Return source properties suitable for database storage.
-
-        @rtype: tuple
-        """
-
-        # The database doesn't recognize numpy.float64 values, so
-        # in order to let the database accept the values, we convert them
-        # to float
-        return (
-            float(self.ra.value),
-            float(self.dec.value),
-            float(self.ra.error),
-            float(self.dec.error),
-            float(self.peak.value),
-            float(self.peak.error),
-            float(self.flux.value),
-            float(self.flux.error),
-            float(self.sig)
-        )
-
-
     def serialize(self):
         """Return source properties suitable for database storage.
 
         @rtype: tuple
         """
-
         # The database doesn't recognize numpy.float64 values, so
         # in order to let the database accept the values, we convert them
         # to float

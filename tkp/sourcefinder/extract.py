@@ -706,6 +706,7 @@ class Detection(object):
         self.smaj_dc = paramset['semimaj_deconv']
         self.smin_dc = paramset['semimin_deconv']
         self.theta_dc = paramset['theta_deconv']
+        self.error_radius = None
 
         self.sig = paramset.sig
 
@@ -728,7 +729,8 @@ class Detection(object):
             'smaj': self.smaj,
             'smin': self.smin,
             'theta': self.theta,
-            'sig': self.sig
+            'sig': self.sig,
+            'error_radius': self.error_radius
             }
 
     def __setstate__(self, attrdict):
@@ -743,6 +745,7 @@ class Detection(object):
         self.smin = attrdict['smin']
         self.theta = attrdict['theta']
         self.sig = attrdict['sig']
+        self.error_radius = attrdict['error_radius']
 
         try:
             self._physical_coordinates()
@@ -885,6 +888,10 @@ class Detection(object):
             self.ra.error = float('inf')
             self.dec.error = float('inf')
 
+        # Estimate an absolute angular error on our central position.
+        self.error_radius = utils.get_error_radius(
+            self.imagedata.wcs, self.x.value, self.x.error, self.y.value, self.y.error
+        )
 
         # Now we can compute the BPA, east from local north.
         # That these angles can simply be added is not completely trivial.

@@ -1,6 +1,7 @@
 import os
 import imp
 import threading
+import datetime
 import time
 
 from celery import group
@@ -15,6 +16,7 @@ from tkp.db import consistency as dbconsistency
 from tkp.db import general as dbgen
 from tkp.db import monitoringlist as dbmon
 from tkp.db import associations as dbass
+from tkp.db.dump import dump_db
 from tkp.distribute.celery import tasks
 from tkp.distribute.common import load_job_config, dump_job_config_to_logdir
 import tkp.utility.parset as parset
@@ -72,7 +74,7 @@ def run(job_name, local=False):
                              job_name)
 
 
-    database_config(pipe_config, apply=True)
+    db_config = database_config(pipe_config, apply=True)
 
     job_dir = pipe_config.get('layout', 'job_directory')
 
@@ -82,12 +84,34 @@ def run(job_name, local=False):
         raise IOError(msg)
 
     logger.info("Job dir: %s", job_dir)
+
+    job_config = load_job_config(pipe_config)
+
+    # Dump the database to the job directory if:
+    # a) we have a job config section called "db_dump", and
+    # b) that section contains a "db_dump" option which is True.
+    if job_config.has_section("db_dump"):
+        dump_cfg = parset.load_section(job_config, 'db_dump')
+    else:
+        dump_cfg = {}
+    if 'db_dump' in dump_cfg and dump_cfg['db_dump']:
+        output_name = os.path.join(
+            job_dir, "%s_%s_%s.dump" % (
+                db_config['host'], db_config['database'],
+                datetime.datetime.now().strftime("%Y-%m-%dT%H:%M:%S")
+            )
+        )
+        dump_db(
+            db_config['engine'], db_config['host'], str(db_config['port']),
+            db_config['database'], db_config['user'], db_config['password'],
+            output_name
+        )
+
     images = imp.load_source('images_to_process', os.path.join(job_dir,
                              'images_to_process.py')).images
 
     logger.info("dataset %s contains %s images" % (job_name, len(images)))
 
-    job_config = load_job_config(pipe_config)
     dump_job_config_to_logdir(pipe_config, job_config)
 
     p_parset = parset.load_section(job_config, 'persistence')

@@ -2,9 +2,7 @@ import logging
 from tkp.db.database import Database
 from tkp.db.orm import DataSet, Image, ExtractedSource
 
-
 logger = logging.getLogger(__name__)
-
 
 def execute(query, parameters=(), commit=False):
     """
@@ -30,12 +28,6 @@ def execute(query, parameters=(), commit=False):
         logger.error("Big problem here: %s" % e)
         raise
     return cursor
-
-
-def configure(*args, **kwargs):
-    database = Database()
-    return database.configure(*args, **kwargs)
-
 
 def commit():
     database = Database()

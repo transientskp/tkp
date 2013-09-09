@@ -2,6 +2,7 @@ import os
 import imp
 import threading
 import time
+from ConfigParser import NoSectionError
 
 from celery import group
 
@@ -16,10 +17,11 @@ from tkp.db import general as dbgen
 from tkp.db import monitoringlist as dbmon
 from tkp.db import associations as dbass
 from tkp.distribute.celery import tasks
-from tkp.distribute.common import load_job_config, dump_job_config_to_logdir
+from tkp.distribute.common import load_job_config, dump_job_config_to_logdir,\
+    serialize
 import tkp.utility.parset as parset
-
 from celery.signals import after_setup_logger, after_setup_task_logger
+
 
 logger = logging.getLogger(__name__)
 
@@ -71,6 +73,10 @@ def run(job_name, local=False):
                              os.path.join(os.getcwd(), "pipeline.cfg"),
                              job_name)
 
+    try:
+        serialize_it = pipe_config.getboolean('distribute', 'serialize')
+    except NoSectionError:
+        serialize_it = False
 
     database_config(pipe_config, apply=True)
 
@@ -102,8 +108,11 @@ def run(job_name, local=False):
 
     logger.info("performing persistence step")
     # persistence
-    imgs = [[img] for img in images]
-    arguments = [p_parset]
+    if serialize_it:
+        imgs = [[serialize(img)] for img in images]
+    else:
+        imgs = [[img] for img in images]
+    arguments = [p_parset, serialize_it]
     metadatas = runner(tasks.persistence_node_step, imgs, arguments, local)
     metadatas = [m[0] for m in metadatas]
 
@@ -120,8 +129,11 @@ def run(job_name, local=False):
 
     logger.info("performing quality check")
     # quality_check
-    urls = [img.url for img in images]
-    arguments = [job_config]
+    if serialize_it:
+        urls = [serialize(img.url) for img in images]
+    else:
+        urls = [img.url for img in images]
+    arguments = [job_config, serialize_it]
     rejecteds = runner(tasks.quality_reject_check, urls, arguments, local)
 
     good_images = []
@@ -138,8 +150,12 @@ def run(job_name, local=False):
 
     logger.info("performing source extraction")
     # Sourcefinding
-    urls = [img.url for img in good_images]
-    arguments = [se_parset]
+    if serialize_it:
+        urls = [serialize(img.url) for img in good_images]
+    else:
+        urls = [img.url for img in good_images]
+
+    arguments = [se_parset, serialize_it]
     extract_sources = runner(tasks.extract_sources, urls, arguments, local)
 
     logger.info("storing extracted to database")
@@ -154,8 +170,11 @@ def run(job_name, local=False):
                         for image in good_images]
 
     logger.info("performing forced fits")
-    iters = zip([i.url for i in good_images], null_detectionss)
-    arguments = [nd_parset]
+    if serialize_it:
+        iters = zip([serialize(i.url) for i in good_images], null_detectionss)
+    else:
+        iters = zip([i.url for i in good_images], null_detectionss)
+    arguments = [nd_parset, serialize_it]
     ff_nds = runner(tasks.forced_fits, iters, arguments, local)
 
     logger.info("inserting forced fits to database")

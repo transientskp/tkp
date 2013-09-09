@@ -26,30 +26,31 @@ SELECT COUNT(*)
    AND zone = 0
 """
 
-
 def check():
-    """ Checks for any inconsistent values in tables
     """
-    isconsistent(query_id0)
-    isconsistent(query_image0)
-    isconsistent(query_zone0)
+    Checks for any inconsistent values in tables.
+
+    Returns False if any inconsistency is found, otherwise True.
+    """
+    for query in (query_id0, query_image0, query_zone0):
+        if not isconsistent(query):
+            return False
+    return True
 
 def isconsistent(query):
-    """ Counting rows should return 0, otherwise database is 
-    in inconsistent state
     """
-    cursor = tkp.db.execute(query, commit=True)
-    results = zip(*cursor.fetchall())
-    
-    consistent = False
-    if len(results) != 0:
-        count = results[0][0]
-        if count == 0:
-            consistent = True
-        else:
-            raise ValueError("Inconsistent database\n %s returns %s" % (query, count))
-    else:
-        raise ValueError("No consistency check possible for database")
-    
-    return consistent
+    Counting rows should return 0, otherwise database is in an
+    inconsistent state.
 
+    If the database is consistent we return True, otherwise False.
+    """
+    try:
+        cursor = tkp.db.execute(query, commit=True)
+        result = cursor.fetchone()[0]
+        if result == 0:
+            return True
+        else:
+            logger.warning("Inconsistent database:\n %s returns %s" % (query, result))
+    except Exception, e:
+        logger.exception("No consistency check possible for database")
+    return False

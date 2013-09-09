@@ -41,7 +41,6 @@ def database_config(pipe_config=None, apply=False):
     :return:
     """
     # Default values
-    logger.warning("at start")
     kwargs = {
         'engine': "postgresql", 'database': None, 'user': getpass.getuser(),
         'password': None, 'host': "localhost", 'port': "5432", 'passphrase': None
@@ -78,5 +77,4 @@ def database_config(pipe_config=None, apply=False):
         tkp.db.Database(**kwargs)
         tkp.db.execute('select 1')
 
-    logger.warning(str(kwargs))
     return kwargs

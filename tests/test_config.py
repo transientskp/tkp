@@ -11,12 +11,12 @@ class DatabaseConfigTestCase(unittest.TestCase):
     def setUp(self):
         # Wipe out any pre-existing environment settings
         self.old_environment = os.environ.copy()
-        del os.environ["TKP_DBENGINE"]
-        del os.environ["TKP_DBNAME"]
-        del os.environ["TKP_DBUSER"]
-        del os.environ["TKP_DBPASSWORD"]
-        del os.environ["TKP_DBHOST"]
-        del os.environ["TKP_DBPORT"]
+        os.environ.pop("TKP_DBENGINE", None)
+        os.environ.pop("TKP_DBNAME", None)
+        os.environ.pop("TKP_DBUSER", None)
+        os.environ.pop("TKP_DBPASSWORD", None)
+        os.environ.pop("TKP_DBHOST", None)
+        os.environ.pop("TKP_DBPORT", None)
 
         self.pipeline_cfg = ConfigParser.ConfigParser()
 

@@ -253,20 +253,10 @@ class TestMixedSkyregions(unittest.TestCase):
         """
         dataset = DataSet(data={'description': "Test:" + self._testMethodName})
 
-        im_list = [
-            db_subs.example_dbimage_datasets(
-                n_images=1, centre_ra=0, centre_decl=90, xtr_radius=80
-            )[0],
-            db_subs.example_dbimage_datasets(
-                n_images=1, centre_ra=0, centre_decl=90, xtr_radius=80
-            )[0],
-            db_subs.example_dbimage_datasets(
-                n_images=1, centre_ra=0, centre_decl=90, xtr_radius=80
-            )[0],
-            db_subs.example_dbimage_datasets(
-                n_images=1, centre_ra=0, centre_decl=90, xtr_radius=80
-            )[0],
-        ]
+        # 4 images, all pointing at the NCP, with big extraction radii.
+        im_list = db_subs.example_dbimage_datasets(
+            n_images=4, centre_ra=0, centre_decl=90, xtr_radius=80
+        )
 
         # Let's have one source near RA=0, the other near RA=180
         ras = [0.0, 0.1, 45.0, 90.0, 179.9, 180.0, 180.1, 270.0, 359.9]

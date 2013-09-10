@@ -3,10 +3,11 @@ import imp
 import threading
 import datetime
 import time
+import logging
 
 from celery import group
+from celery.signals import after_setup_logger, after_setup_task_logger
 
-import logging
 from tkp.config import initialize_pipeline_config, database_config
 from tkp.distribute.celery.tasklog import setup_task_log_emitter, monitor_events
 from tkp.steps.monitoringlist import add_manual_monitoringlist_entries
@@ -18,10 +19,9 @@ from tkp.db import monitoringlist as dbmon
 from tkp.db import associations as dbass
 from tkp.db.dump import dump_db
 from tkp.distribute.celery import tasks
-from tkp.distribute.common import load_job_config, dump_job_config_to_logdir
+from tkp.distribute.common import load_job_config, dump_job_config_to_logdir, setup_file_logging
 import tkp.utility.parset as parset
 
-from celery.signals import after_setup_logger, after_setup_task_logger
 
 logger = logging.getLogger(__name__)
 
@@ -66,6 +66,7 @@ def setup_log_broadcasting():
     # we need to wait for the thread to release the import lock
     time.sleep(2)
 
+
 def run(job_name, local=False):
 
     setup_log_broadcasting()
@@ -73,10 +74,11 @@ def run(job_name, local=False):
                              os.path.join(os.getcwd(), "pipeline.cfg"),
                              job_name)
 
-
     db_config = database_config(pipe_config, apply=True)
-
     job_dir = pipe_config.get('layout', 'job_directory')
+    debug = pipe_config.getboolean('logging', 'debug')
+    log_dir = os.path.dirname(pipe_config.get('logging', 'log_file'))
+    setup_file_logging(log_dir, debug)
 
     if not os.access(job_dir, os.X_OK):
         msg = "can't access job folder %s" % job_dir
@@ -112,7 +114,7 @@ def run(job_name, local=False):
 
     logger.info("dataset %s contains %s images" % (job_name, len(images)))
 
-    dump_job_config_to_logdir(pipe_config, job_config)
+    dump_job_config_to_logdir(log_dir, job_config)
 
     p_parset = parset.load_section(job_config, 'persistence')
     se_parset = parset.load_section(job_config, 'source_extraction')

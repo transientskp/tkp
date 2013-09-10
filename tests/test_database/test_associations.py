@@ -244,6 +244,46 @@ class TestMixedSkyregions(unittest.TestCase):
         self.assertAlmostEqual(runcat[0]['wm_ra'], source_ra)
 
 
+    def TestNCP(self):
+        """
+        This simulates an NCP-like observation, where we point at a dec of +90
+        and thereby include sources at a wide range of RAs.
+
+        Developed for testing #4599.
+        """
+        dataset = DataSet(data={'description': "Test:" + self._testMethodName})
+
+        im_list = [
+            db_subs.example_dbimage_datasets(
+                n_images=1, centre_ra=0, centre_decl=90, xtr_radius=80
+            )[0],
+            db_subs.example_dbimage_datasets(
+                n_images=1, centre_ra=0, centre_decl=90, xtr_radius=80
+            )[0],
+            db_subs.example_dbimage_datasets(
+                n_images=1, centre_ra=0, centre_decl=90, xtr_radius=80
+            )[0],
+            db_subs.example_dbimage_datasets(
+                n_images=1, centre_ra=0, centre_decl=90, xtr_radius=80
+            )[0],
+        ]
+
+        # Let's have one source near RA=0, the other near RA=180
+        ras = [0.0, 0.1, 45.0, 90.0, 179.9, 180.0, 180.1, 270.0, 359.9]
+        sources = [db_subs.example_extractedsource_tuple(ra=ra, dec=85) for ra in ras]
+
+        for im in im_list:
+            image = tkp.db.Image(dataset=dataset, data=im)
+            image.insert_extracted_sources(sources)
+            associate_extracted_sources(image.id, deRuiter_r=3.717)
+
+        runcat = columns_from_table('runningcatalog', ['wm_ra'],
+            where={'dataset': dataset.id}
+        )
+        for ctr, ra in enumerate(ras):
+            self.assertAlmostEqual(runcat[ctr]['wm_ra'], ra)
+
+
 #@unittest.skip
 @requires_database()
 class TestMeridianOne2One(unittest.TestCase):

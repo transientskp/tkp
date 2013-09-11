@@ -4,6 +4,7 @@
 General purpose astronomical coordinate handling routines.
 """
 
+import sys
 import math
 import wcslib
 import logging
@@ -539,6 +540,12 @@ class WCS(wcslib.wcs):
             # Notify any objects which depend on this that their parameters
             # have changed.
         else:
+            # Account for arbitrary coordinate rotations in images pointing at
+            # the North Celestial Pole. We set the reference direction to
+            # infintesimally less than 90 degrees to avoid any ambiguity. See
+            # discussion at #4599.
+            if attrname == "crval" and value[1] == 90:
+                value = (value[0], value[1] * (1 - sys.float_info.epsilon))
             wcslib.wcs.__setattr__(self, attrname, value)
 
     def p2s(self, pixpos):

@@ -10,6 +10,32 @@ from tkp.utility.uncertain import Uncertain
 # Specify the number of digits you want to include when checking if positions are equal.
 nod=12
 
+class TestNCP(unittest.TestCase):
+    """
+    Check that we retrieve the correct position for objects in images centred
+    on the North Celestial Pole.
+
+    At the NCP (dec=90), our coordinate system becomes ambiguous. We avoid the
+    problem by subtracting an infintesimal quantity from the reference dec,
+    such that it is never quite 90 degrees.
+
+    See discussion at issue #4599.
+    """
+    def test_3c61(self):
+        # Coordinate system and position of 3C 61.1 based on an image of the
+        # NCP provided by Adam Stewart.
+        wcs = coordinates.WCS()
+        wcs.ctype = ('RA---SIN', 'DEC--SIN')
+        wcs.crval = (15.0, 90.0)
+        wcs.cdelt = (-0.01111111111111, 0.01111111111111)
+        wcs.crpix = (1025.0, 1025.0)
+        wcs.unit  = ("deg", "deg")
+        wcs.wcsset()
+        calculated_position = wcs.p2s([908, 715])
+        self.assertAlmostEqual(calculated_position[0], 35.7, 1)
+        self.assertAlmostEqual(calculated_position[1], 86.3, 1)
+
+
 class Sanity(unittest.TestCase):
     """Some sanity checks because of issue #2787.
 

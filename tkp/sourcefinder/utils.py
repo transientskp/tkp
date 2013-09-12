@@ -17,6 +17,37 @@ import numpy
 import math
 import scipy.integrate
 from .gaussian import gaussian
+from tkp.utility import coordinates
+
+def get_error_radius(wcs, x_value, x_error, y_value, y_error):
+    # Estimate an absolute angular error on the position (x_value, y_value)
+    # with the given errors.
+    # This is a pessimistic estimate, because we take sum of the error
+    # along the X and Y axes. Better might be to project them both back on
+    # to the major/minor axes of the elliptical fit, but this should do for
+    # now.
+    error_radius = 0
+    try:
+        centre_ra, centre_dec = wcs.p2s([x_value, y_value])
+        # We check all possible combinations in case we have a nonlinear
+        # WCS.
+        for pixpos in [
+            (x_value + x_error, y_value + y_error),
+            (x_value - x_error, y_value + y_error),
+            (x_value + x_error, y_value - y_error),
+            (x_value - x_error, y_value - y_error)
+        ]:
+            error_ra, error_dec = wcs.p2s(pixpos)
+            error_radius = max(
+                error_radius,
+                coordinates.angsep(centre_ra, centre_dec, error_ra, error_dec)
+            )
+    except RuntimeError:
+        # We get a runtime error from wcs.p2s if the errors place the
+        # limits outside of the image, in which case we set the angular
+        # uncertainty to infinity.
+        error_radius = float('inf')
+    return error_radius
 
 
 def circular_mask(xdim, ydim, radius):

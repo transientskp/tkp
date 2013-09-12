@@ -108,6 +108,7 @@ def summary(filename, sourcelist):
     print >>output, "** %s **\n" % (filename)
     for source in sourcelist:
         print >>output, "RA: %s, dec: %s" % (str(source.ra), str(source.dec))
+        print >>output, "Error radius (arcsec): %s" % (str(source.error_radius))
         print >>output, "Semi-major axis (arcsec): %s" % (str(source.smaj_asec))
         print >>output, "Semi-minor axis (arcsec): %s" % (str(source.smin_asec))
         print >>output, "Position angle: %s" % (str(source.theta_celes))

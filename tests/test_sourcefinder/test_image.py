@@ -60,11 +60,14 @@ class TestFitFixedPositions(unittest.TestCase):
                        )
         self.assertListEqual(list(self.image.data.shape),[1024,1024])
         self.boxsize = BOX_IN_BEAMPIX*max(self.image.beam[0], self.image.beam[1])
-        self.bright_src_posn = (215.83993,86.307504)  #RA, DEC
+        self.bright_src_posn = (215.76726,86.305771)  #RA, DEC
         self.background_posn = (186.33731,82.70002)    #RA, DEC
-        ##NB These are simply plucked from a previous run,
-        # so they merely ensure *consistent*, rather than *correct*, results.
-        self.known_fit_results = [215.84 , 86.31 , 9.88] #RA, DEC, PEAK
+        
+        # #NB Peak of forced gaussian fit is simply plucked from a previous run;
+        # so merely ensures *consistent*, rather than *correct*, results.
+        self.known_fit_results = (self.bright_src_posn[0],  # RA,
+                                  self.bright_src_posn[1],  # Dec
+                                  13.457697411730384)  # Peak
 
     def testSourceAtGivenPosition(self):
         posn = self.bright_src_posn
@@ -239,6 +242,33 @@ class TestSimpleImageSourceFind(unittest.TestCase):
         self.assertEqual(results[0].smaj.value, self.image.beam[0])
         self.assertEqual(results[0].smin.value, self.image.beam[1])
 
+    @requires_data(os.path.join(DATAPATH, 'GRB130828A/SWIFT_554620-130504.fits'))
+    @requires_data(os.path.join(DATAPATH, 'GRB130828A/SWIFT_554620-130504.image'))
+    def testWcsConversionConsistency(self):
+        """
+        Check that extracting a source from FITS and CASA versions of the
+        same dataset gives the same results (especially, RA and Dec).
+        """
+
+        fits_image = accessors.sourcefinder_image_from_accessor(
+                       accessors.FitsImage(os.path.join(DATAPATH,
+                                        'GRB130828A/SWIFT_554620-130504.fits')))
+        # Abuse the KAT7 CasaImage class here, since we just want to access
+        # the pixel data and the WCS:
+        casa_image = accessors.sourcefinder_image_from_accessor(
+               accessors.kat7casaimage.Kat7CasaImage(
+                     os.path.join(DATAPATH,
+                                  'GRB130828A/SWIFT_554620-130504.image')))
+
+        fits_results = fits_image.extract(det=5, anl=3)
+        fits_results = [result.serialize() for result in fits_results]
+        casa_results = fits_image.extract(det=5, anl=3)
+        casa_results = [result.serialize() for result in casa_results]
+        self.assertEqual(len(fits_results), 1)
+        self.assertEqual(len(casa_results), 1)
+        fits_src = fits_results[0]
+        casa_src = casa_results[0]
+        self.assertEqual(fits_src, casa_src)
 
     @requires_data(os.path.join(DATAPATH, 'GRB120422A/GRB120422A-120429.fits'))
     def testNoLabelledIslandsCase(self):

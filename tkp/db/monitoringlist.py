@@ -68,16 +68,22 @@ SELECT r1.id
       ,r1.wm_decl
   FROM runningcatalog r1
       ,image i1
+      ,runningcatalog_flux rf1
  WHERE i1.id = %(imgid)s
    AND i1.dataset = r1.dataset
+   AND rf1.runcat = r1.id
+   AND rf1.band = i1.band
    AND r1.id NOT IN (SELECT r.id
                        FROM runningcatalog r
                            ,extractedsource x
                            ,image i
+                           ,runningcatalog_flux rf
                       WHERE i.id = %(imgid)s
                         AND x.image = i.id
                         AND x.image = %(imgid)s
                         AND i.dataset = r.dataset
+                        AND rf.runcat = r.id
+                        AND rf.band = i.band
                         AND r.zone BETWEEN CAST(FLOOR(x.decl - i.rb_smaj) AS INTEGER)
                                          AND CAST(FLOOR(x.decl + i.rb_smaj) AS INTEGER)
                         AND r.wm_decl BETWEEN x.decl - i.rb_smaj

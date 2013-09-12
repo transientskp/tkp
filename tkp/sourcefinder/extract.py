@@ -706,6 +706,7 @@ class Detection(object):
         self.smaj_dc = paramset['semimaj_deconv']
         self.smin_dc = paramset['semimin_deconv']
         self.theta_dc = paramset['theta_deconv']
+        self.error_radius = None
 
         self.sig = paramset.sig
 
@@ -728,7 +729,8 @@ class Detection(object):
             'smaj': self.smaj,
             'smin': self.smin,
             'theta': self.theta,
-            'sig': self.sig
+            'sig': self.sig,
+            'error_radius': self.error_radius
             }
 
     def __setstate__(self, attrdict):
@@ -743,6 +745,7 @@ class Detection(object):
         self.smin = attrdict['smin']
         self.theta = attrdict['theta']
         self.sig = attrdict['sig']
+        self.error_radius = attrdict['error_radius']
 
         try:
             self._physical_coordinates()
@@ -787,7 +790,13 @@ class Detection(object):
         # the tangent plane at center position.
         # The cross product of the local north vector and the local east
         # vector will always be aligned with the center_position vector.
-        local_north_position = numpy.array([0., 0., 1./center_position[2]])
+        if center_position[2] != 0:
+            local_north_position = numpy.array([0., 0., 1./center_position[2]])
+        else:
+            # If we are right on the equator (ie dec=0) the division above
+            # will blow up: as a workaround, we use something Really Big
+            # instead.
+            local_north_position = numpy.array([0., 0., 99e99])
         # Next, determine the orientation of the y-axis wrt local north
         # by incrementing y by a small amount and converting that
         # to celestial coordinates. That small increment is conveniently
@@ -864,6 +873,10 @@ class Detection(object):
             self.ra.error = float('inf')
             self.dec.error = float('inf')
 
+        # Estimate an absolute angular error on our central position.
+        self.error_radius = utils.get_error_radius(
+            self.imagedata.wcs, self.x.value, self.x.error, self.y.value, self.y.error
+        )
 
         # Now we can compute the BPA, east from local north.
         # That these angles can simply be added is not completely trivial.

@@ -207,8 +207,8 @@ class Island(object):
             # Fitting failed
             logger.error("Moments & Gaussian fitting failed at %s" % (str(self.position)))
             return None
-        measurement["xbar"] += self.position[0] + 1 # address + offset  = address but not address + address
-        measurement["ybar"] += self.position[1] + 1 # because addresses start at 0
+        measurement["xbar"] += self.position[0]
+        measurement["ybar"] += self.position[1]
         measurement.sig = self.sig()
         return measurement, gauss_residual
 

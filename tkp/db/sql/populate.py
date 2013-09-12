@@ -131,10 +131,6 @@ def recreate(dbconfig):
         if call('createdb -h %(host)s -U %(username)s %(database)s' % params,
                 shell=True) != 0:
             raise Exception("can't create a new postgresql database!")
-        print "installing plpgsql langunage for %(database)s on %(host)s..." % params
-        if call('createlang -h %(host)s -U %(username)s plpgsql %(database)s' % params,
-                shell=True) != 0:
-            raise Exception("can't create a new postgresql database!")
     else:
         raise NotImplementedError
 
@@ -151,6 +147,13 @@ def populate(dbconfig):
     recreate(dbconfig)
     conn = connect(dbconfig)
     cur = conn.cursor()
+
+    if dbconfig['engine'] == 'postgresql':
+        # we need to manually create the plpgsql lang for postgres8
+        try:
+            cur.execute("CREATE LANGUAGE plpgsql;")
+        except conn.ProgrammingError:
+            conn.rollback()
 
     batch_file = os.path.join(sql_repo, 'batch')
 

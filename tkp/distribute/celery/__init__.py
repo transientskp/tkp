@@ -1,14 +1,19 @@
 import os
 import imp
+import threading
+import datetime
+import time
 import logging
 
 from celery import group
+from celery.signals import after_setup_logger, after_setup_task_logger
 
 from tkp.config import initialize_pipeline_config, database_config
 from tkp.distribute.celery.tasklog import setup_task_log_emitter, monitor_events
 from tkp.steps.monitoringlist import add_manual_monitoringlist_entries
 from tkp import steps
 from tkp.db.orm import Image
+from tkp.db import consistency as dbconsistency
 from tkp.db import general as dbgen
 from tkp.db import monitoringlist as dbmon
 from tkp.db import associations as dbass
@@ -141,7 +146,7 @@ def run(job_name, local=False):
         return 1
 
     logger.info("performing persistence step")
-    imgs = [[img] for img in images]
+    imgs = [[img] for img in all_images]
     arguments = [p_parset]
     metadatas = runner(tasks.persistence_node_step, imgs, arguments, local)
     metadatas = [m[0] for m in metadatas]
@@ -203,7 +208,7 @@ def run(job_name, local=False):
         for image, ff_nd in zip(images, ff_nds):
             dbgen.insert_extracted_sources(image.id, ff_nd, 'ff_nd')
 
-    logger.info("performing database operations")
+        logger.info("performing database operations")
         for image in images:
             logger.info("performing DB operations for image %s" % image.id)
             dbass.associate_extracted_sources(image.id,

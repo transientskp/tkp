@@ -124,9 +124,15 @@ def recreate(dbconfig):
         con.close()
 
     elif dbconfig['engine'] == 'postgresql':
+        print "destroying database %(database)s on %(host)s..." % params
         call('dropdb -h %(host)s -U %(username)s %(database)s' % params,
              shell=True)
+        print "creating database %(database)s on %(host)s..." % params
         if call('createdb -h %(host)s -U %(username)s %(database)s' % params,
+                shell=True) != 0:
+            raise Exception("can't create a new postgresql database!")
+        print "installing plpgsql langunage for %(database)s on %(host)s..." % params
+        if call('createlang -h %(host)s -U %(username)s plpgsql %(database)s' % params,
                 shell=True) != 0:
             raise Exception("can't create a new postgresql database!")
     else:

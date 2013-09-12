@@ -124,8 +124,10 @@ def recreate(dbconfig):
         con.close()
 
     elif dbconfig['engine'] == 'postgresql':
+        print "destroying database %(database)s on %(host)s..." % params
         call('dropdb -h %(host)s -U %(username)s %(database)s' % params,
              shell=True)
+        print "creating database %(database)s on %(host)s..." % params
         if call('createdb -h %(host)s -U %(username)s %(database)s' % params,
                 shell=True) != 0:
             raise Exception("can't create a new postgresql database!")
@@ -145,6 +147,13 @@ def populate(dbconfig):
     recreate(dbconfig)
     conn = connect(dbconfig)
     cur = conn.cursor()
+
+    if dbconfig['engine'] == 'postgresql':
+        # we need to manually create the plpgsql lang for postgres8
+        try:
+            cur.execute("CREATE LANGUAGE plpgsql;")
+        except conn.ProgrammingError:
+            conn.rollback()
 
     batch_file = os.path.join(sql_repo, 'batch')
 

@@ -74,10 +74,10 @@ class TestOne2One(unittest.TestCase):
         self.assertAlmostEqual(wm_ra[0], steady_srcs[0].ra)
         self.assertAlmostEqual(wm_decl[0], steady_srcs[0].dec)
         self.assertAlmostEqual(wm_ra_err[0], math.sqrt(
-                           1./ (n_images / ( (steady_srcs[0].ra_fit_err*3600.)**2 + (steady_srcs[0].ra_sys_err)**2))
+                           1./ (n_images / ( (steady_srcs[0].error_radius)**2 + (steady_srcs[0].ra_sys_err)**2))
                                ))
         self.assertAlmostEqual(wm_decl_err[0], math.sqrt(
-                           1./ (n_images / ((steady_srcs[0].dec_fit_err*3600.)**2 + (steady_srcs[0].dec_sys_err)**2 ))
+                           1./ (n_images / ((steady_srcs[0].error_radius)**2 + (steady_srcs[0].dec_sys_err)**2 ))
                                ))
 
         self.assertAlmostEqual(x[0],
@@ -173,6 +173,7 @@ class TestMixedSkyregions(unittest.TestCase):
         details. The detailed numbers in this test (RA, dec, etc) come from
         the data involved in that bug report and have no other special
         meaning.
+        TODO: This test takes too long...
         """
         dataset = DataSet(data={'description': "Test:" + self._testMethodName})
         im_list = db_subs.example_dbimage_datasets(
@@ -242,7 +243,6 @@ class TestMixedSkyregions(unittest.TestCase):
             where={'dataset': dataset.id}
         )
         self.assertAlmostEqual(runcat[0]['wm_ra'], source_ra)
-
 
     def TestNCP(self):
         """
@@ -408,7 +408,11 @@ class TestMeridianOne2One(unittest.TestCase):
         self.assertAlmostEqual(runcat[0]['wm_ra'], avg_ra)
 
     def TestMeridianLowerEdgeCase(self):
-        """What happens if a source is right on the meridian?"""
+        """Checking that source measurements that flip around the 
+        meridian are being associated.
+        See TestNCP for sources right on the meridian
+        TODO: This test takes a bit too long...
+        """
 
         dataset = DataSet(data={'description':"Assoc 1-to-1:" +
                                 self._testMethodName})
@@ -451,16 +455,16 @@ class TestMeridianOne2One(unittest.TestCase):
         #Also, there is a hard limit on association radii:
         #currently this defaults to 0.03 degrees== 108 arcseconds
         src0 = db_subs.example_extractedsource_tuple(ra=10.00, dec=0.0,
-                                             ra_fit_err=0.1, dec_fit_err=1.00,
+                                             error_radius=10.0,
                                              ra_sys_err=0.0, dec_sys_err=0.0)
         src1 = db_subs.example_extractedsource_tuple(ra=10.02, dec=0.0,
-                                             ra_fit_err=0.1, dec_fit_err=1.00,
+                                             error_radius=10.0,
                                              ra_sys_err=0.0, dec_sys_err=0.0)
         src_list = [src0, src1]
+        # error on ra used in DR calculation is based on error_radius and sys_err
         #NB dec_fit_err nonzero, but since delta_dec==0 this simplifies to:
-        expected_DR_radius = math.sqrt((src1.ra - src0.ra) ** 2 /
-                               (src0.ra_fit_err ** 2 + src1.ra_fit_err ** 2))
-#        print "Expected DR", expected_DR_radius
+        expected_DR_radius = 3600 * math.sqrt((src1.ra - src0.ra) ** 2 /
+                               (src0.error_radius ** 2 + src1.error_radius ** 2))
 
         for idx in [0, 1]:
             image = tkp.db.Image(dataset=dataset,

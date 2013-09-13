@@ -380,35 +380,38 @@ The TraP may add forced-fit entries to this table as well. Then
     sourcefinder procedures.
 
 **ra_err**
-    The 1-sigma error on ra [in arcsec], the square root of the quadratic sum of the
-    gaussian fit and systematic errors, calculated by the database at insertion time.
+    The 1-sigma on-sky error on ra [in arcsec], the square root of the 
+    quadratic sum of the error radius (``error_radius``) and the systematic error
+    (``ra_sys_err``), calculated by the database at insertion time.
+    Note that this error is declination independent.
 
 **decl_err**
-    The 1-sigma error on declination [in arcsec], 
-    the square root of the quadratic sum of the gaussian fit and systematic errors, 
-    calculated by the database at insertion time.
+    The 1-sigma on-sky error on declination [in arcsec], the square root of the 
+    quadratic sum of the error radius (``error_radius``) and the systematic error
+    (``ra_sys_err``), calculated by the database at insertion time.
 
 **ra_fit_err**
-    The 1-sigma error from the source fitting for ra [in arcsec], calculated by the
-    sourcefinder procedures. NOTE: the db unit is in arcsec, while the
-    sourcefinder produces degrees, so be careful with convertions.
+    The 1-sigma error on ra [in arcsec] from the source gaussian fitting, calculated by the
+    sourcefinder procedures. It is important to note that a source's fitted ra error increases
+    towards the poles, and is thus declination dependent (see also error_radius). 
+    NOTE: the db unit is in arcsec, while the sourcefinder produces degrees, so be careful with convertions.
 
 **decl_fit_err**
     The 1-sigma error from the source fitting for declination [in arcsec],
-    calculated by the sourcefinder procedures. NOTE: the db unit is in arcsec,
+    calculated by the sourcefinder procedures (see also error_radius). NOTE: the db unit is in arcsec,
     while the sourcefinder produces degrees, so be careful with convertions.
 
 **ra_sys_err**
-    The systematic error on ra, as determined after source finder testing
-    by Dario Carbone and reported at 2012-12-04 `TKP Meeting
-    <https://speakerdeck.com/transientskp/source-finder-testing-overview-and-status>`_,
-    to be set at 20 arcsec.
+    The systematic error on ra [arcsec]. It is a telescope dependent error and
+    is provided by the user in the parset file.
 
 **decl_sys_err**
-    The systematic error on decl, as determined after source finder testing
-    by Dario Carbone and reported at 2012-12-04 `TKP Meeting
-    <https://speakerdeck.com/transientskp/source-finder-testing-overview-and-status>`_,
-    to be set at 20 arcsec.
+    The systematic error on decl [arcsec]. It is a telescope dependent error and
+        is provided by the user in the parset file.
+
+**error_radius**
+    Estimate of the absolute angular error on a source's central position [arcsec]. 
+    It is a pessimistic estimate, because it takes the sum of the error along the X and Y axes.
 
 **x, y, z**
     Cartesian coordinate representation of (ra,decl), calculated by the

@@ -165,36 +165,36 @@ def insert_image(dataset, freq_eff, freq_bw, taustart_ts, tau_time,
 
 
 def insert_extracted_sources(image_id, results, extract):
-    """Insert all extracted sources with their properties that were detected by
-    the Source Extraction procedures into the extractedsources table.
+    """Insert all detections from sourcefinder into the extractedsource table.
 
-    Therefore, we use a temporary table containing the "raw" detections,
-    from which the sources will then be inserted into extractedsources.
+    Besides the source properties from sourcefinder, we calculate additional 
+    attributes that are increase performance in other tasks.
 
-    (ra , dec , [deg]
-    ra_err, dec_err, [deg, but converted to as in db]
-    peak, peak_err,  [Jy]
-    flux, flux_err,    [Jy]
-    significance level,
-    beam major width , beam minor width, [as]
-    beam parallactic angle).  [deg]
-    extract tells whether the source results are originating from:
+    The strict sequence from results (the sourcefinder detections) is given below.
+    Note the units and unit conversions between sourcefinder and database.
+    ra [deg], dec [deg],
+    ra_fit_err [deg], decl_fit_err [deg],
+    peak_flux [Jy], peak_flux_err [Jy],
+    int_flux [Jy], int_flux_err [Jy],
+    significance detection level,
+    beam major width (arcsec), - minor width (arcsec), - parallactic angle [deg],
+    ra_sys_err [arcsec], decl_sys_err [arcsec],
+    error_radius [arcsec]
+    
+    ra_fit_err and decl_fit_err are the 1-sigma errors from the gaussian fit,
+    in degrees. Not that for a source located towards the poles the ra_fit_err 
+    increases with absolute declination.
+    error_radius is a pessimistic on-sky error estimate in arcsec.
+    ra_sys_err and dec_sys_err represent the telescope dependent systematic errors 
+    and are in arcsec.
+    An on-sky error (declination independent, and used in de ruiter calculations)
+    is then:
+    ra_err^2 = ra_sys_err^2 + error_radius^2
+    decl_err^2 = decl_sys_err^2 + error_radius^2
+    
+    Input argument "extract" tells whether the source detections originate from:
     0: blind source extraction
     1: from forced fits at null detection locations
-    2: from forced fits for monitoringlist sources
-
-    The content of results is in the following sequence:
-    (ra, dec, ra_fit_err, dec_fit_err, peak_flux, peak_flux_err,
-    int_flux, int_flux_err, significance level,
-    beam major width (as), beam minor width(as), beam parallactic angle,
-    ra_sys_err, dec_sys_err).
-    See insert_extracted_sources() for a description of extract.
-
-    ra_fit_err & dec_fit_err are the 1-sigma errors from the gaussian fit,
-    in degrees.
-    ra_sys_err and dec_sys_err represent the systematic errors in ra and declination,
-    and are in arcsec!
-    ra_err^2 = ra_sys_err^2 + ra_fit_err^2, idem for decl_err.
 
     For all extracted sources additional parameters are calculated,
     and appended to the sourcefinder data. Appended and converted are:
@@ -217,22 +217,18 @@ def insert_extracted_sources(image_id, results, extract):
         r = list(src)
         r[2] = r[2] * 3600. # ra_fit_err converted to arcsec
         r[3] = r[3] * 3600. # decl_fit_err converted to arcsec
-        # ra_err: sqrt of quadratic sum of sys and fit errors, in arcsec
-        r.append(math.sqrt(r[12]**2 + r[2]**2))
-        # decl_err: sqrt of quadratic sum of sys and fit errors, in arcsec
-        r.append(math.sqrt(r[13]**2 + r[3]**2))
+        # ra_err: sqrt of quadratic sum of systematic error and error_radius
+        r.append(math.sqrt(r[12]**2 + r[14]**2))
+        # decl_err: sqrt of quadratic sum of systematic error and error_radius
+        r.append(math.sqrt(r[13]**2 + r[14]**2))
         r.append(image_id) # id of the image
         r.append(int(math.floor(r[1]))) # zone
         r.extend(eq_to_cart(r[0], r[1])) #Cartesian x,y,z
-        r.append(r[0] * math.cos(math.radians(r[1]))) # ra * cos(radias(decl))
+        r.append(r[0] * math.cos(math.radians(r[1]))) # ra * cos(radians(decl))
         if extract == 'blind':
             r.append(0)
         elif extract == 'ff_nd':
             r.append(1)
-        elif extract == 'ff_mon':
-            r.append(2)
-        elif extract == 'ff_ud':
-            r.append(3)
         else:
             raise ValueError("Not a valid extractedsource insert type: '%s'" % extract)
         xtrsrc.append(r)
@@ -254,6 +250,7 @@ INSERT INTO extractedsource
   ,pa
   ,ra_sys_err
   ,decl_sys_err
+  ,error_radius
   ,ra_err
   ,decl_err
   ,image
@@ -277,12 +274,6 @@ VALUES
     elif extract == 'ff_nd':
         logger.info("Inserted %d forced-fit null detections in extractedsource"
                     " for image %s" % (insert_num, image_id))
-    elif extract == 'ff_mon':
-        logger.info("Inserted %d forced-fit monitoringsources in "
-                    "extractedsource for image %s"  % (insert_num, image_id))
-    elif extract == 'ff_ud':
-        logger.info("Inserted %d forced-fit user entries in extractedsource "
-                    "for image %s" % (insert_num, image_id))
 
 
 def lightcurve(xtrsrcid):

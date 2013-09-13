@@ -53,6 +53,10 @@ def reject_check_lofar(accessor, parset):
     elliptical_x = parset['elliptical_x']
     min_separation = parset['min_separation']
 
+    if accessor.tau_time == 0:
+        logger.info("image %s REJECTED: tau_time is 0, should be > 0" % accessor.url)
+        return tkp.db.quality.reason['tau_time'], "tau_time is 0"
+
     # RMS value check
     rms = rms_with_clipped_subregion(accessor.data, sigma, f)
 

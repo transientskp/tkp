@@ -507,6 +507,7 @@ class ExtractedSource(DBObject):
     REQUIRED = ('image', 'zone',
                 'ra', 'decl', 'ra_err', 'decl_err',
                 'ra_fit_err', 'decl_fit_err', 'ra_sys_err', 'decl_sys_err',
+                'error_radius',
                 'x', 'y', 'z',
                 'racosdecl', 'det_sigma')
 

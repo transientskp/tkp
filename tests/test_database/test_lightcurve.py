@@ -52,7 +52,8 @@ class TestLightCurve(unittest.TestCase):
                 'ra_sys_err': 20,
                 'decl_sys_err': 20,
                 'i_peak': 10 * i ,
-                'i_peak_err': 0.1
+                'i_peak_err': 0.1,
+                'error_radius': 10.0
             #  x=0.11, y=0.22, z=0.33, det_sigma=11.1, zone=i
             })
         # Insert the 3 sources in each image, while further varying the flux
@@ -67,7 +68,8 @@ class TestLightCurve(unittest.TestCase):
                      data['i_peak'] * (1 + i), data['i_peak_err'],  # Integrated
                      10.,  # Significance level
                      1, 1,  0, # Beam params (width arcsec major, width arcsec minor, parallactic angle)
-                     data['ra_sys_err'], data['decl_sys_err'])  # Systematic errors
+                     data['ra_sys_err'], data['decl_sys_err'],  # Systematic errors
+                     data['error_radius'])
                 sources.append(source)
 
             # Insert the sources

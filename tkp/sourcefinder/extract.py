@@ -964,5 +964,6 @@ class Detection(object):
             float(self.smin_asec.value),
             float(self.theta_celes.value),
             float(self.imagedata.ra_sys_err),
-            float(self.imagedata.dec_sys_err)
+            float(self.imagedata.dec_sys_err),
+            float(self.error_radius)
         )

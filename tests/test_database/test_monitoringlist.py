@@ -137,5 +137,5 @@ class TestIntermittentToMonitorlist(unittest.TestCase):
         decl = result[2]
         self.assertEqual(len(monruncat), 1)
         self.assertEqual(monruncat[0], assocruncat[0])
-        self.assertEqual(ra[0], wm_ra[0])
+        self.assertAlmostEqual(ra[0], wm_ra[0])
         self.assertAlmostEqual(decl[0], wm_decl[0])

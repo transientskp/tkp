@@ -544,7 +544,7 @@ class WCS(wcslib.wcs):
             # the North Celestial Pole. We set the reference direction to
             # infintesimally less than 90 degrees to avoid any ambiguity. See
             # discussion at #4599.
-            if attrname == "crval" and value[1] == 90:
+            if attrname == "crval" and (value[1] == 90 or value[1] == math.pi/2):
                 value = (value[0], value[1] * (1 - sys.float_info.epsilon))
             wcslib.wcs.__setattr__(self, attrname, value)
 

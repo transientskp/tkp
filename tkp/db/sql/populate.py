@@ -149,7 +149,7 @@ def populate(dbconfig):
     cur = conn.cursor()
 
     if dbconfig['engine'] == 'postgresql':
-        # we need to manually create the plpgsql lang for postgres8
+        # make sure plpgsql is enabled
         try:
             cur.execute("CREATE LANGUAGE plpgsql;")
         except conn.ProgrammingError:

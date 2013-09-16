@@ -60,9 +60,9 @@ class TestFitFixedPositions(unittest.TestCase):
                        )
         self.assertListEqual(list(self.image.data.shape),[1024,1024])
         self.boxsize = BOX_IN_BEAMPIX*max(self.image.beam[0], self.image.beam[1])
-        self.bright_src_posn = (215.76726,86.305771)  #RA, DEC
-        self.background_posn = (186.33731,82.70002)    #RA, DEC
-        
+        self.bright_src_posn = (35.76726,86.305771)  #RA, DEC
+        self.background_posn = (6.33731,82.70002)    #RA, DEC
+
         # #NB Peak of forced gaussian fit is simply plucked from a previous run;
         # so merely ensures *consistent*, rather than *correct*, results.
         self.known_fit_results = (self.bright_src_posn[0],  # RA,

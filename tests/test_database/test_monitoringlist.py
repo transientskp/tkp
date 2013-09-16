@@ -5,6 +5,7 @@ from tkp.testutil import db_subs
 from tkp.testutil.decorators import requires_database
 from tkp.db import associations as dbass
 from tkp.db import transients as tr_search
+from tkp.db import general as dbgen
 
 
 class TestIntermittentToMonitorlist(unittest.TestCase):
@@ -58,7 +59,7 @@ class TestIntermittentToMonitorlist(unittest.TestCase):
                 self.assertEqual(nd[0][0], steady_srcs[1].ra)
                 #print "nd=",nd
                 tuple_ff_nd = steady_srcs[1:2]
-                monitoringlist.insert_forcedfits_into_extractedsource(image.id, tuple_ff_nd, 'ff_nd')
+                dbgen.insert_extracted_sources(image.id, tuple_ff_nd, 'ff_nd')
             elif idx == 2:
                 self.assertEqual(len(nd), 0)
 

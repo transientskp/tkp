@@ -287,6 +287,37 @@ class TestMeridianOne2One(unittest.TestCase):
     def tearDown(self):
         tkp.db.rollback()
 
+    def TestRoundingAroundZero(self):
+        """
+        If we have a source with an RA of exactly zero, the numerics in the
+        association procedure will eventually allocate it a weighted mean RA
+        which is infinitesimally less than zero (say, -d).
+
+        If delta is sufficiently small, dynamic range constraints on floating
+        point arithmetic means that -d+360==360. Therefore, when performing
+        cross-meridian associations, we could end up with a source at the
+        meaningless RA of 360.
+
+        Here, we ensure this doesn't happen. See the discussion at issue
+        #4599.
+        """
+        dataset = DataSet(data={'description':"Assoc rounding:" + self._testMethodName})
+
+        im_list = db_subs.example_dbimage_datasets(
+            n_images=5, centre_ra=0, centre_decl=0, xtr_radius=10
+        )
+        source = db_subs.example_extractedsource_tuple(ra=0.0, dec=0.0)
+        for im in im_list:
+            image = tkp.db.Image(dataset=dataset, data=im)
+            image.insert_extracted_sources([source])
+            associate_extracted_sources(image.id, deRuiter_r=3.717)
+
+        runcat = columns_from_table('runningcatalog', ['wm_ra'],
+            where={'dataset': dataset.id}
+        )
+        self.assertEqual(runcat[0]['wm_ra'], 0.0)
+
+
     def TestMeridianCrossLowHighEdgeCase(self):
         """What happens if a source is right on the meridian?"""
 

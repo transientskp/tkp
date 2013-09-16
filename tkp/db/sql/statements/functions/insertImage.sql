@@ -13,7 +13,8 @@
  * 
  * Note III: Two subroutines are called, getBand and getSkyRgn.
  * These return:
- *  - A matching band_id, given the freq_eff and freq_bw
+ *  - A matching band_id. Bands are always 1 MHz wide and centred on the
+ *    effective frequency rounded to the nearest MHz (see #4801).
  *  - A matching skyregion_id, given the field centre and extraction radius.
  *
  */
@@ -43,7 +44,7 @@ AS $$
   DECLARE iskyrgn INT;
 
 BEGIN
-  iband := getBand(ifreq_eff, ifreq_bw);
+  iband := getBand(1e6 * ROUND(ifreq_eff / 1e6, 0), 1e6);
   iskyrgn := getSkyRgn(idataset, icentre_ra, icentre_decl, ixtr_radius);
 
   INSERT INTO image
@@ -60,7 +61,7 @@ BEGIN
     ,deltax
     ,deltay
     ,url
-    ) 
+    )
   VALUES
     (idataset
     ,iband
@@ -69,8 +70,8 @@ BEGIN
     ,ifreq_bw
     ,itaustart_ts
     ,iskyrgn
-    ,irb_smaj 
-    ,irb_smin 
+    ,irb_smaj
+    ,irb_smin
     ,irb_pa
     ,ideltax
     ,ideltay
@@ -96,7 +97,7 @@ BEGIN
   DECLARE itau INT;
   DECLARE iskyrgn INT;
 
-  SET iband = getBand(ifreq_eff, ifreq_bw);
+  SET iband = getBand(1e6 * ROUND(ifreq_eff / 1e6, 0), 1e6);
   SET iskyrgn = getSkyRgn(idataset, icentre_ra, icentre_decl, ixtr_radius);
 
   SELECT NEXT VALUE FOR seq_image INTO iimageid;

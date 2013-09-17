@@ -1,14 +1,18 @@
 import os.path
 import pyfits
+import logging
 from collections import namedtuple
 from pyrap.tables import table as pyrap_table
 from pyrap.images import image as pyrap_image
-from tkp.accessors.lofarcasaimage import LofarCasaImage, subtable_names
-from tkp.accessors.casaimage import CasaImage
+from tkp.accessors.lofarcasaimage import LofarCasaImage
 from tkp.accessors.lofarhdf5image import LofarHdf5Image
 from tkp.accessors.fitsimage import FitsImage
 from tkp.accessors.lofarfitsimage import LofarFitsImage
 from tkp.accessors.kat7casaimage import Kat7CasaImage
+
+
+logger = logging.getLogger(__name__)
+
 
 # files that should be contained by a casa table
 casafiles = ("table.dat", "table.f0", "table.f0_TSM0", "table.info",
@@ -49,6 +53,7 @@ def iscasa(filename):
     for file in casafiles:
         casafile = os.path.join(filename, file)
         if not os.path.isfile(casafile):
+            logger.debug("%s doesn't contain %s" % file)
             return False
     try:
         table = pyrap_table(filename.encode(), ack=False)
@@ -106,5 +111,4 @@ def detect(filename):
     elif islofarhdf5(filename):
         return LofarHdf5Image
     else:
-        raise IOError("This data appears to be in unsupported format:\n%s",
-                           filename)
+        raise IOError("unsupported format: %s" % filename)

@@ -50,10 +50,10 @@ def iscasa(filename):
     """returns True if filename is a lofar casa directory"""
     if not os.path.isdir(filename):
         return False
-    for file in casafiles:
-        casafile = os.path.join(filename, file)
+    for file_ in casafiles:
+        casafile = os.path.join(filename, file_)
         if not os.path.isfile(casafile):
-            logger.debug("%s doesn't contain %s" % file)
+            logger.debug("%s doesn't contain %s" % (filename, file_))
             return False
     try:
         table = pyrap_table(filename.encode(), ack=False)

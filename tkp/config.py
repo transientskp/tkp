@@ -43,7 +43,7 @@ def database_config(pipe_config=None, apply=False):
     # Default values
     kwargs = {
         'engine': "postgresql", 'database': None, 'user': getpass.getuser(),
-        'password': None, 'host': "localhost", 'port': 5432, 'passphrase': None
+        'password': None, 'host': "localhost", 'port': 5432, 'passphrase': ""
     }
 
     # Try loading a config file, if any

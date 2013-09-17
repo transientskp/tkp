@@ -240,6 +240,12 @@ def init_db(options):
         else:
             dbconfig['port'] = 5432
 
+    # correct port number if incorrect and set to default
+    if dbconfig['engine'] == 'monetdb' and dbconfig['port'] == 5432:
+        dbconfig['port'] = 50000
+    elif dbconfig['engine'] == 'postgresql' and dbconfig['port'] == 50000:
+        dbconfig['port'] = 5432
+
     if 'database' not in dbconfig or not dbconfig['database']:
         dbconfig['database'] = getpass.getuser()
 

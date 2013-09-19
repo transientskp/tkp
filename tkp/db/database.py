@@ -55,12 +55,16 @@ class Database(object):
         if self.port:
             kwargs['port'] = self.port
 
+        # During pipeline operation, we force autocommit to off (which should
+        # be the default according to the DB-API specs). See #4885.
         if self.engine == 'monetdb':
             import monetdb.sql
+            kwargs['autocommit'] = False
             self._connection = monetdb.sql.connect(**kwargs)
         elif self.engine == 'postgresql':
             import psycopg2
             self._connection = psycopg2.connect(**kwargs)
+            self._connection.autocommit = False
         else:
             msg = "engine %s not supported " % self.engine
             logger.error(msg)

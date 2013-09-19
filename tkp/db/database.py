@@ -53,7 +53,7 @@ class Database(object):
         if self.password:
             kwargs['password'] = self.password
         if self.port:
-            kwargs['port'] = self.port
+            kwargs['port'] = int(self.port)
 
         # During pipeline operation, we force autocommit to off (which should
         # be the default according to the DB-API specs). See #4885.

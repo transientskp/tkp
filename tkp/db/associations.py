@@ -253,6 +253,7 @@ SELECT CASE WHEN s.centre_ra - alpha(s.xtr_radius, s.centre_decl) < 0 OR
     else:
         raise ValueError("No FoV information present for image '%s'" % image_id)
 
+
     return {
         'q_across': q_across[0],
         'ra_min': ra_min[0],
@@ -294,7 +295,7 @@ def _insert_temprunningcatalog(image_id, deRuiter_r, mw):
     preventing the query to grow exponentially in response time
     """
 
-    deRuiter_red = float(deRuiter_r) / 3600.
+
     # The cross-meridian differs slightly from the normal association
     # query.
     # We removed the wm_ra between statement, because the dot-product
@@ -432,12 +433,12 @@ INSERT INTO temprunningcatalog
                                              + (rc0.z - x0.z) * (rc0.z - x0.z)
                                              ) / 2)
                                ) AS distance_arcsec
-                ,3600 * SQRT(  (MOD(CAST(rc0.wm_ra + 180 AS NUMERIC(11,8)), 360) * COS(RADIANS(rc0.wm_decl)) - MOD(CAST(x0.ra + 180 AS NUMERIC(11,8)), 360) * COS(RADIANS(x0.decl)))
-                             * (MOD(CAST(rc0.wm_ra + 180 AS NUMERIC(11,8)), 360) * COS(RADIANS(rc0.wm_decl)) - MOD(CAST(x0.ra + 180 AS NUMERIC(11,8)), 360) * COS(RADIANS(x0.decl)))
-                               / (rc0.wm_ra_err * rc0.wm_ra_err + x0.ra_err * x0.ra_err)
-                            + (rc0.wm_decl - x0.decl) * (rc0.wm_decl - x0.decl)
-                              / (rc0.wm_decl_err * rc0.wm_decl_err + x0.decl_err * x0.decl_err)
-                            ) AS r
+                ,3600 * DERUITER(rc0.wm_ra, rc0.wm_decl,
+                                 rc0.wm_ra_err, rc0.wm_decl_err,
+                                 x0.ra, x0.decl,
+                                 x0.ra_err, x0.decl_err,
+                                 TRUE
+                                ) AS r
                 ,x0.f_peak
                 ,x0.f_peak_err
                 ,x0.f_int
@@ -495,12 +496,12 @@ INSERT INTO temprunningcatalog
              AND rc0.wm_decl BETWEEN x0.decl - i0.rb_smaj
                                  AND x0.decl + i0.rb_smaj
              AND rc0.x*x0.x + rc0.y*x0.y + rc0.z*x0.z > cos(radians(i0.rb_smaj))
-             AND SQRT(  (MOD(CAST(x0.ra + 180 AS NUMERIC(11,8)), 360) * COS(RADIANS(x0.decl)) - MOD(CAST(rc0.wm_ra + 180 AS NUMERIC(11,8)), 360) * COS(RADIANS(rc0.wm_decl)))
-                      * (MOD(CAST(x0.ra + 180 AS NUMERIC(11,8)), 360) * COS(RADIANS(x0.decl)) - MOD(CAST(rc0.wm_ra + 180 AS NUMERIC(11,8)), 360) * COS(RADIANS(rc0.wm_decl)))
-                      / (x0.ra_err * x0.ra_err + rc0.wm_ra_err * rc0.wm_ra_err)
-                     + (x0.decl - rc0.wm_decl) * (x0.decl - rc0.wm_decl)
-                      / (x0.decl_err * x0.decl_err + rc0.wm_decl_err * rc0.wm_decl_err)
-                     ) < %(deRuiter)s
+             AND  DERUITER(rc0.wm_ra, rc0.wm_decl,
+                           rc0.wm_ra_err, rc0.wm_decl_err,
+                           x0.ra, x0.decl,
+                           x0.ra_err, x0.decl_err,
+                           TRUE
+                         ) < %(deRuiter)s
          ) t0
          LEFT OUTER JOIN runningcatalog_flux rf0
          ON t0.runcat = rf0.runcat
@@ -632,12 +633,12 @@ INSERT INTO temprunningcatalog
                                              + (rc0.z - x0.z) * (rc0.z - x0.z)
                                              ) / 2)
                                ) AS distance_arcsec
-                ,3600 * SQRT(  (rc0.wm_ra * COS(RADIANS(rc0.wm_decl)) - x0.ra * COS(RADIANS(x0.decl)))
-                             * (rc0.wm_ra * COS(RADIANS(rc0.wm_decl)) - x0.ra * COS(RADIANS(x0.decl)))
-                               / (rc0.wm_ra_err * rc0.wm_ra_err + x0.ra_err * x0.ra_err)
-                            + (rc0.wm_decl - x0.decl) * (rc0.wm_decl - x0.decl)
-                              / (rc0.wm_decl_err * rc0.wm_decl_err + x0.decl_err * x0.decl_err)
-                            ) AS r
+                ,3600 * DERUITER(rc0.wm_ra, rc0.wm_decl,
+                                 rc0.wm_ra_err, rc0.wm_decl_err,
+                                 x0.ra, x0.decl,
+                                 x0.ra_err, x0.decl_err,
+                                 FALSE
+                                ) AS r
                 ,x0.f_peak
                 ,x0.f_peak_err
                 ,x0.f_int
@@ -689,12 +690,12 @@ INSERT INTO temprunningcatalog
              AND rc0.wm_ra BETWEEN x0.ra - alpha(i0.rb_smaj, x0.decl)
                                AND x0.ra + alpha(i0.rb_smaj, x0.decl)
              AND rc0.x * x0.x + rc0.y * x0.y + rc0.z * x0.z > COS(RADIANS(i0.rb_smaj))
-             AND SQRT(  (x0.ra * COS(RADIANS(x0.decl)) - rc0.wm_ra * COS(RADIANS(rc0.wm_decl)))
-                      * (x0.ra * COS(RADIANS(x0.decl)) - rc0.wm_ra * COS(RADIANS(rc0.wm_decl)))
-                      / (x0.ra_err * x0.ra_err + rc0.wm_ra_err * rc0.wm_ra_err)
-                     + (x0.decl - rc0.wm_decl) * (x0.decl - rc0.wm_decl)
-                      / (x0.decl_err * x0.decl_err + rc0.wm_decl_err * rc0.wm_decl_err)
-                     ) < %(deRuiter)s
+             AND  DERUITER(rc0.wm_ra, rc0.wm_decl,
+                           rc0.wm_ra_err, rc0.wm_decl_err,
+                           x0.ra, x0.decl,
+                           x0.ra_err, x0.decl_err,
+                           FALSE
+                         ) < %(deRuiter)s
          ) t0
          LEFT OUTER JOIN runningcatalog_flux rf0
          ON t0.runcat = rf0.runcat

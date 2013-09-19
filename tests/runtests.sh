@@ -1,6 +1,6 @@
 #!/bin/bash
 
-export TKP_TESTPATH=/opt/share/repos/tkp-data/unittests/tkp_lib 
+export TKP_TESTPATH=/data2/repos/tkp-data/unittests/tkp_lib 
 export TKP_DBNAME=testdb
 
 echo "****************************"

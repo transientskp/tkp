@@ -19,7 +19,6 @@ ExtractedSourceTuple = namedtuple("ExtractedSourceTuple",
                                 ])
 
 
-
 def delete_test_database(database):
     """
     Use with caution!
@@ -85,8 +84,8 @@ def example_dbimage_datasets(n_images, **kwargs):
                       'beam_smaj_pix': float(2.7),
                       'beam_smin_pix': float(2.3),
                       'beam_pa_rad': float(1.7),
-                      'deltax': float(-0.01111),
-                      'deltay': float(0.01111),
+                      'deltax': float(-0.01111),  # degrees per pixel. NB-> Beamsize.
+                      'deltay': float(0.01111),  # degrees per pixel. NB-> Beamsize.
                       'url':testdata.fits_file, # just an arbitrary existing fits file
                       'centre_ra': 123., #Arbitarily picked.
                       'centre_decl': 10., #Arbitarily picked.

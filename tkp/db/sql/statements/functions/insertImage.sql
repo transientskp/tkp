@@ -4,13 +4,13 @@
  * This function inserts a row in the image table,
  * and returns the value of the id under which it is known.
  *
- * Note I: To be able to create a function that modifies data 
+ * Note I: To be able to create a function that modifies data
  * (by insertion) we have to set the global bin log var:
  * mysql> SET GLOBAL log_bin_trust_function_creators = 1;
  *
  * Note II: The params in comment should be specified soon.
  * This means this function inserts deafult values so long.
- * 
+ *
  * Note III: Two subroutines are called, getBand and getSkyRgn.
  * These return:
  *  - A matching band_id. Bands are always 1 MHz wide and centred on the
@@ -44,7 +44,7 @@ AS $$
   DECLARE iskyrgn INT;
 
 BEGIN
-  iband := getBand(1e6 * ROUND(ifreq_eff / 1e6, 0), 1e6);
+  iband := getBand(1e6 * ROUND(CAST((ifreq_eff/1e6) AS NUMERIC(11,8)), 0), 1e6);
   iskyrgn := getSkyRgn(idataset, icentre_ra, icentre_decl, ixtr_radius);
 
   INSERT INTO image
@@ -97,7 +97,7 @@ BEGIN
   DECLARE itau INT;
   DECLARE iskyrgn INT;
 
-  SET iband = getBand(1e6 * ROUND(ifreq_eff / 1e6, 0), 1e6);
+  SET iband = getBand(1e6 * ROUND(CAST((ifreq_eff/1e6) AS NUMERIC(11,8)), 0), 1e6);
   SET iskyrgn = getSkyRgn(idataset, icentre_ra, icentre_decl, ixtr_radius);
 
   SELECT NEXT VALUE FOR seq_image INTO iimageid;

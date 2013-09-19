@@ -1,11 +1,12 @@
 python: 
  - "2.7"
- - "2.6"
+virtualenv:
+  system_site_packages: true
 services:
  - postgresql
-env: 
-  secure: tCHXmou2NZSjMMyDs6VOKZn9DPwCsOdHhMI0uspEmKvx4vZmOUTLTlNpdysD9RROsvT/pKJ5Ff5SA4QUel3NHdUuWm5kVDMvFKnsYGVACW1UcGHz1+QBcddXTCjdMjg0n5Ue6lRtQi/L/JtEhnfHJ/LueMEso3Y2PLslymauCl4=
 language: python
+env:
+ - secure: "Fwo2XW1lCdHcQINoN+ifR4Rio029Mu5xeaOI/9+DDuY1eiY5JObntb7LGWb7y+kYRBLH7aqWahCEIIVlEnwRHsPE3ui2oQjBsNAR/Mb3l6nhm1+/P/KD/s4u5/BgljEvhHwQ1kUTPj7jYGyI0J1FW/qXK7lFYRcGZu0LhLcw29w="
 notifications: 
   hipchat: 
     rooms: 
@@ -14,19 +15,33 @@ before_install:
  - sudo apt-get install software-properties-common
  - sudo add-apt-repository -y ppa:gijzelaar/aartfaac
  - sudo apt-get update -qq
- - sudo apt-get install -qq libcasacore-dev casacore-data scons python-numpy-dev python-dev libboost-python-dev python-setuptools subversion libblas-dev liblapack-dev gfortran wcslib-dev libcfitsio3-dev git cmake build-essential python-pip python-numpy python-scipy python-pygresql
- - psql -c 'create database trap;' -U postgres
- - cd /tmp
- - svn checkout http://pyrap.googlecode.com/svn/trunk/ pyrap
- - cd pyrap
- - sudo ./batchbuild-trunk.py  --casacore-root=/usr
- - cd ~/transientskp/tkp/tests
- - svn co --pasword $SVNPASS http://svn.transientskp.org/data/unittests/tkp_lib/ data
+ - sudo sh -c "echo 'deb http://dev.monetdb.org/downloads/deb/ precise monetdb' > /etc/apt/sources.list.d/monetdb.list"
+ - wget --output-document=- http://dev.monetdb.org/downloads/MonetDB-GPG-KEY | sudo apt-key add -
+ - sudo apt-get update -qq
+ - sudo apt-get install -qq casacore-data subversion gfortran git cmake build-essential python-pip python-numpy python-scipy python-pygresql python-monetdb pyrap monetdb5-sql monetdb-client wcslib-dev libboost-python-dev 
+ - sudo usermod -a -G monetdb $USER
+ - sudo sh -c "echo 'STARTUP=yes\nDBFARM=/var/lib/monetdb\n' > /etc/default/monetdb5-sql"
+ - sudo service monetdb5-sql start
+ - sudo monetdbd set control=yes /var/lib/monetdb
+ - sudo monetdbd set passphrase=testdb /var/lib/monetdb
+ - psql -c 'create database testdb;' -U postgres
+ - cd ${TRAVIS_BUILD_DIR}/tests
+ - svn co --username gijs --password ${PASSWORD} http://svn.transientskp.org/data/unittests/tkp_lib/ data --config-option servers:global:store-plaintext-passwords=yes --non-interactive
+
 install: 
- - pip install -r requirements.txt --use-mirrors
+ - cd ${TRAVIS_BUILD_DIR}
+ - pip install -r requirements.txt
  - mkdir build && cd build
  - cmake ..
  - make
  - make install
 script: 
- - nosetests
+ - cd /tmp
+ - ${TRAVIS_BUILD_DIR}/tkp/bin/tkp-manage.py initproject pipeline
+ - cd pipeline
+ - ./manage.py initdb -d testdb -u testdb -p testdb -s testdb -e monetdb -y -P 50000
+ - ./manage.py initdb -d testdb -u postgres -p "" -y
+ - cd ${TRAVIS_BUILD_DIR}
+ - TKP_DBENGINE=monetdb TKPDB_USER=testdb TKPDB_PASS=testdb TKPDB_NAME=testdb TKPDB_PORT=50000 nosetests
+ - TKP_DBUSER=postgres TKP_DBPASS= nosetests
+

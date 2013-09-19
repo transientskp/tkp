@@ -13,38 +13,6 @@ import tkp.db
 
 logger = logging.getLogger(__name__)
 
-MonitorTuple = namedtuple('MonitorTuple',
-                          ('ra', 'decl', 'runcat','monitorid')
-                          )
-
-
-#NB CURRENTLY UNSUPPORTED.
-def get_userdetections(image_id):
-    """Returns the monitoringlist user-entry sources for a forced fit
-    in the current image
-
-    Output: list of tuples: [ (monlist.id, ra, decl)]
-    """
-    query = """\
-SELECT m.id
-      ,m.ra
-      ,m.decl
-  FROM monitoringlist m
-      ,(SELECT dataset
-          FROM image
-         WHERE id = %s
-       ) t
- WHERE m.dataset = t.dataset
-   AND m.userentry = TRUE
-"""
-    cursor = tkp.db.execute(query, (image_id,))
-    results = zip(*cursor.fetchall())
-    if len(results) != 0:
-        return zip(list(results[1]), list(results[2]))
-        #maxbeam = max(results[3][0],results[4][0]) # all bmaj & bmin are the same
-    else:
-        return []
-
 
 def get_nulldetections(image_id, deRuiter_r):
     """Returns the runcat sources that do not have a counterpart in the
@@ -115,68 +83,6 @@ SELECT r1.id
         #maxbeam = max(results[3][0],results[4][0]) # all bmaj & bmin are the same
     else:
         return []
-
-
-def get_monsources(image_id, deRuiter_r):
-    """Returns the user-entry sources and no-counterpart sources from
-    monitoringlist
-
-    Sources in monitoringlist that originate from a user entry and
-    those that do not have a counterpart in extractedsource need to be
-    passed on to sourcefinder for a forced fit.
-
-    Output: list of tuples [(runcatid, ra, decl)]
-    """
-    query = """\
-SELECT m1.id AS id
-      ,r1.wm_ra AS ra
-      ,r1.wm_decl AS decl
-  FROM monitoringlist m1
-      ,runningcatalog r1
-      ,image i1
- WHERE i1.id = %(imgid)s
-   AND i1.dataset = m1.dataset
-   AND m1.dataset = r1.dataset
-   AND m1.runcat = r1.id
-   AND m1.userentry = FALSE
-   AND m1.id NOT IN (
-                    SELECT m.id
-                      FROM monitoringlist m
-                          ,extractedsource x
-                          ,runningcatalog r
-                          ,image i
-                     WHERE i.id = %(imgid)s
-                       AND i.id = x.image
-                       AND x.image = %(imgid)s
-                       AND i.dataset = m.dataset
-                       AND m.runcat = r.id
-                       AND m.userentry = FALSE
-                       AND r.zone BETWEEN CAST(FLOOR(x.decl - i.rb_smaj) AS INTEGER)
-                                      AND CAST(FLOOR(x.decl + i.rb_smaj) AS INTEGER)
-                       AND r.wm_decl BETWEEN x.decl - i.rb_smaj
-                                         AND x.decl + i.rb_smaj
-                       AND r.wm_ra BETWEEN x.ra - alpha(i.rb_smaj, x.decl)
-                                       AND x.ra + alpha(i.rb_smaj, x.decl)
-                       AND SQRT(  (x.racosdecl - r.wm_ra * COS(RADIANS(r.wm_decl)))
-                                * (x.racosdecl - r.wm_ra * COS(RADIANS(r.wm_decl)))
-                                / (x.ra_err * x.ra_err + r.wm_ra_err * r.wm_ra_err)
-                               + (x.decl - r.wm_decl) * (x.decl - r.wm_decl)
-                                / (x.decl_err * x.decl_err + r.wm_decl_err * r.wm_decl_err)
-                               ) < %(dr_deg)s
-                    )
-"""
-    deRuiter_red = deRuiter_r / 3600.
-    qry_params = {'imgid':image_id, 'dr_deg': deRuiter_red}
-    cursor = tkp.db.execute(query, qry_params)
-    results = zip(*cursor.fetchall())
-    if len(results) != 0:
-        return zip(list(results[1]), list(results[2]))
-    else:
-        return []
-
-
-def insert_forcedfits_into_extractedsource(image_id, results, extract):
-    general.insert_extracted_sources(image_id, results, extract)
 
 
 def adjust_transients_in_monitoringlist(image_id, transients):

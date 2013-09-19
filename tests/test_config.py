@@ -6,6 +6,7 @@ import ConfigParser
 from tkp.config import database_config
 
 DUMMY_VALUE = "dummy"
+DUMMY_INT_VALUE = "666"
 
 class DatabaseConfigTestCase(unittest.TestCase):
     def setUp(self):
@@ -32,7 +33,7 @@ class DatabaseConfigTestCase(unittest.TestCase):
         self.assertEqual(db_config['user'], username)
         self.assertEqual(db_config['password'], username)
         self.assertEqual(db_config['host'], "localhost")
-        self.assertEqual(db_config['port'], "5432")
+        self.assertEqual(db_config['port'], 5432)
 
     def test_empty_pipeline_cfg(self):
         # Should not raise
@@ -57,16 +58,20 @@ class DatabaseConfigTestCase(unittest.TestCase):
         os.environ["TKP_DBUSER"] = DUMMY_VALUE
         os.environ["TKP_DBPASSWORD"] = DUMMY_VALUE
         os.environ["TKP_DBHOST"] = DUMMY_VALUE
-        os.environ["TKP_DBPORT"] = DUMMY_VALUE
         db_config = database_config()
         self._test_for_dummy_values(db_config)
+
+    def test_int_env_vars(self):
+        os.environ["TKP_DBPORT"] = DUMMY_INT_VALUE
+        db_config = database_config()
+        self.assertEqual(db_config['port'], int(DUMMY_INT_VALUE))
 
     def test_use_username_as_default(self):
         # database name and password default to the username
         os.environ["TKP_DBUSER"] = DUMMY_VALUE
         os.environ["TKP_DBENGINE"] = DUMMY_VALUE
         os.environ["TKP_DBHOST"] = DUMMY_VALUE
-        os.environ["TKP_DBPORT"] = DUMMY_VALUE
+        os.environ["TKP_DBPORT"] = DUMMY_INT_VALUE
         db_config = database_config()
         self._test_for_dummy_values(db_config)
 
@@ -76,4 +81,3 @@ class DatabaseConfigTestCase(unittest.TestCase):
         self.assertEqual(db_config['user'], DUMMY_VALUE)
         self.assertEqual(db_config['password'], DUMMY_VALUE)
         self.assertEqual(db_config['host'], DUMMY_VALUE)
-        self.assertEqual(db_config['port'], DUMMY_VALUE)

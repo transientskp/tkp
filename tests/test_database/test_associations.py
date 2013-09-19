@@ -483,6 +483,60 @@ class TestMeridianOne2One(unittest.TestCase):
         self.assertEqual(len(assoc), 2)
         self.assertAlmostEqual(assoc[1]['r'], expected_DR_radius)
 
+    def TestDeRuiterWrapping(self):
+        """Check identical DR for source pair rotated over RA"""
+        
+        dataset = DataSet(data={'description':"Assoc 1-to-1:" + self._testMethodName})
+        
+        im_list = db_subs.example_dbimage_datasets(n_images=2)
+        
+        # image 1
+        pos1 = [(30.0,10.5),(300.0,10.5)]
+        sources1 = [db_subs.example_extractedsource_tuple(ra=p[0], dec=p[1]) for p in pos1]
+
+        image = tkp.db.Image(dataset=dataset, data=im_list[0])
+        image.insert_extracted_sources(sources1)
+        associate_extracted_sources(image.id, deRuiter_r=3.717)
+        
+        # image 2
+        pos2 = [(30.001,10.51),(300.001,10.51)]
+        sources2 = [db_subs.example_extractedsource_tuple(ra=p[0], dec=p[1]) for p in pos2]
+        
+        expected_dr1 = db_subs.deRuiter_radius(sources1[0], sources2[0])
+        expected_dr2 = db_subs.deRuiter_radius(sources1[1], sources2[1])
+
+        image = tkp.db.Image(dataset=dataset, data=im_list[1])
+        image.insert_extracted_sources(sources2)
+        associate_extracted_sources(image.id, deRuiter_r=3.717)
+        
+        query = """\
+        SELECT a.runcat
+              ,a.xtrsrc
+              ,a.r 
+          FROM assocxtrsource a
+              ,runningcatalog r 
+         WHERE a.runcat = r.id 
+           AND r.dataset = %(dataset_id)s
+        ORDER BY a.runcat
+                ,a.r
+        """
+        cursor = tkp.db.execute(query, {'dataset_id': dataset.id})
+        dr_result = zip(*cursor.fetchall())
+        self.assertNotEqual(len(dr_result), 0)
+        runcat = dr_result[0]
+        xtrsrc = dr_result[1]
+        dr_radius = dr_result[2]
+        
+        self.assertEqual(len(runcat), 4)
+        self.assertEqual(runcat[0], runcat[1])
+        self.assertEqual(runcat[2], runcat[3])
+        self.assertAlmostEqual(dr_radius[0], 0)
+        self.assertAlmostEqual(dr_radius[2], 0)
+        self.assertAlmostEqual(dr_radius[1], expected_dr1)
+        self.assertAlmostEqual(dr_radius[3], expected_dr2)
+        self.assertAlmostEqual(dr_radius[3], expected_dr1)
+        self.assertAlmostEqual(dr_radius[1], expected_dr2)
+        
 
 class TestOne2Many(unittest.TestCase):
     """
@@ -846,8 +900,19 @@ class TestMany2Many(unittest.TestCase):
         """remove all stuff after the test has been run"""
         tkp.db.rollback()
 
-    def test_many2many(self):
-        dataset = DataSet(data={'description': 'assoc test set: n-m'})
+    def test_many2many_reduced_to_two_1_to_many_one_1to1(self):
+        """This handles the case where we have two sources in first image
+        and two in second image. 
+        The two sources in the second image can be associated with one source
+        from the first image, whereas the other source is not assocaited with 
+        any from the second image.
+        Both sources in the second image can be associated with both sources
+        in the first image. However, checking the DR radius reduces the 
+        associations to be two of the type 1-to-many and one source in the first
+        image that left unassociated. 
+        The runcat will end up with 3 sources.
+        """
+        dataset = DataSet(data={'description': 'assoc test set: n-m, ' + self._testMethodName})
         n_images = 2
         im_params = db_subs.example_dbimage_datasets(n_images)
 
@@ -856,7 +921,7 @@ class TestMany2Many(unittest.TestCase):
         imageid1 = image.id
         src1 = []
         # 2 sources (located relatively close together, so the catching the many-to-1 case in next image
-        src1.append(db_subs.example_extractedsource_tuple(ra=122.985, dec=10.5,
+        src1.append(db_subs.example_extractedsource_tuple(ra=122.983, dec=10.5,
                                                      ra_fit_err=5./3600, dec_fit_err=6./3600,
                                                      peak = 15e-3, peak_err = 5e-4,
                                                      flux = 15e-3, flux_err = 5e-4,
@@ -864,7 +929,7 @@ class TestMany2Many(unittest.TestCase):
                                                      beam_maj = 100, beam_min = 100, beam_angle = 45,
                                                      ew_sys_err=20, ns_sys_err=20
                                                         ))
-        src1.append(db_subs.example_extractedsource_tuple(ra=123.015, dec=10.5,
+        src1.append(db_subs.example_extractedsource_tuple(ra=123.017, dec=10.5,
                                                      ra_fit_err=5./3600, dec_fit_err=6./3600,
                                                      peak = 15e-3, peak_err = 5e-4,
                                                      flux = 15e-3, flux_err = 5e-4,
@@ -896,7 +961,7 @@ class TestMany2Many(unittest.TestCase):
         imageid2 = image.id
         src2 = []
         # 2 sources, where both can be associated with both from image 1
-        src2.append(db_subs.example_extractedsource_tuple(ra=123.0, dec=10.485,
+        src2.append(db_subs.example_extractedsource_tuple(ra=123.0001, dec=10.483,
                                                      ra_fit_err=5./3600, dec_fit_err=6./3600,
                                                      peak = 15e-3, peak_err = 5e-4,
                                                      flux = 15e-3, flux_err = 5e-4,
@@ -904,7 +969,169 @@ class TestMany2Many(unittest.TestCase):
                                                      beam_maj = 100, beam_min = 100, beam_angle = 45,
                                                      ew_sys_err=20, ns_sys_err=20
                                                         ))
-        src2.append(db_subs.example_extractedsource_tuple(ra=123.0, dec=10.515,
+        src2.append(db_subs.example_extractedsource_tuple(ra=123.0001, dec=10.518,
+                                                     ra_fit_err=5./3600, dec_fit_err=6./3600,
+                                                     peak = 15e-3, peak_err = 5e-4,
+                                                     flux = 15e-3, flux_err = 5e-4,
+                                                     sigma = 15,
+                                                     beam_maj = 100, beam_min = 100, beam_angle = 45,
+                                                     ew_sys_err=20, ns_sys_err=20
+                                                        ))
+        results = []
+        results.append(src2[0])
+        results.append(src2[1])
+        dbgen.insert_extracted_sources(imageid2, results, 'blind')
+        associate_extracted_sources(imageid2, deRuiter_r = 3.717)
+
+        query = """\
+        SELECT id
+          FROM extractedsource
+         WHERE image = %s
+        ORDER BY id
+        """
+        self.database.cursor.execute(query, (imageid2,))
+        im2 = zip(*self.database.cursor.fetchall())
+        self.assertNotEqual(len(im2), 0)
+        im2src = im2[0]
+        self.assertEqual(len(im2src), len(src2))
+
+        query = """\
+        SELECT id
+              ,xtrsrc
+              ,datapoints
+          FROM runningcatalog
+         WHERE dataset = %s
+        ORDER BY xtrsrc
+        """
+        self.database.cursor.execute(query, (dataset.id,))
+        rc2 = zip(*self.database.cursor.fetchall())
+        self.assertNotEqual(len(rc2), 0)
+        runcat2 = rc2[0]
+        xtrsrc2 = rc2[1]
+        datapoints = rc2[2]
+        self.assertEqual(len(runcat2), 3)
+        self.assertEqual(xtrsrc2[0], im1src[0])
+        self.assertEqual(xtrsrc2[1], im2src[0])
+        self.assertEqual(xtrsrc2[2], im2src[1])
+        self.assertEqual(datapoints[0], 1)
+        self.assertEqual(datapoints[1], datapoints[2])
+
+        query = """\
+        SELECT a.runcat
+              ,r.xtrsrc as rxtrsrc
+              ,a.xtrsrc as axtrsrc
+              ,a.type
+              ,x.image
+          FROM assocxtrsource a
+              ,runningcatalog r
+              ,extractedsource x
+         WHERE a.runcat = r.id
+           AND a.xtrsrc = x.id
+           AND r.dataset = %s
+        ORDER BY r.xtrsrc
+                ,a.xtrsrc
+        """
+        self.database.cursor.execute(query, (dataset.id,))
+        assoc2 = zip(*self.database.cursor.fetchall())
+        self.assertNotEqual(len(assoc2), 0)
+        aruncat2 = assoc2[0]
+        rxtrsrc2 = assoc2[1]
+        axtrsrc2 = assoc2[2]
+        atype2 = assoc2[3]
+        aimage2 = assoc2[4]
+        self.assertEqual(len(aruncat2), 5)
+        # Idem as many-to-one case
+        #self.assertEqual(aruncat2[0], rxtrsrc2[0])
+        #self.assertEqual(aruncat2[1], aruncat2[2])
+        self.assertEqual(rxtrsrc2[1], rxtrsrc2[2])
+        self.assertEqual(rxtrsrc2[3], rxtrsrc2[4])
+        self.assertEqual(rxtrsrc2[0], axtrsrc2[0])
+        self.assertEqual(rxtrsrc2[1], axtrsrc2[1] + 1)
+        self.assertEqual(rxtrsrc2[2], axtrsrc2[2])
+        self.assertEqual(rxtrsrc2[3], axtrsrc2[3] + 2)
+        self.assertEqual(rxtrsrc2[4], axtrsrc2[4])
+        self.assertEqual(axtrsrc2[0], im1src[0])
+        self.assertEqual(axtrsrc2[1], im1src[1])
+        self.assertEqual(axtrsrc2[2], im2src[0])
+        self.assertEqual(axtrsrc2[3], im1src[1])
+        self.assertEqual(axtrsrc2[4], im2src[1])
+        self.assertEqual(atype2[0], 4)
+        self.assertEqual(atype2[1], 6)
+        self.assertEqual(atype2[2], 2)
+        self.assertEqual(atype2[3], 6)
+        self.assertEqual(atype2[4], 2)
+        self.assertEqual(aimage2[0], imageid1)
+        self.assertEqual(aimage2[1], imageid1)
+        self.assertEqual(aimage2[2], imageid2)
+        self.assertEqual(aimage2[3], imageid1)
+        self.assertEqual(aimage2[4], imageid2)
+
+    def test_many2many_reduced_to_two_1to1(self):
+        """This handles the case where we have two sources in first image
+        and two in second image. 
+        Both sources in the second image can be associated with both sources
+        in the first image. However, checking the DR radius reduces the 
+        associations to be two of the type 1 to 1.
+        The runcat will end up with 2 sources.
+        """
+        dataset = DataSet(data={'description': 'assoc test set: n-m, ' + self._testMethodName})
+        n_images = 2
+        im_params = db_subs.example_dbimage_datasets(n_images)
+
+        # image 1
+        image = tkp.db.Image(dataset=dataset, data=im_params[0])
+        imageid1 = image.id
+        src1 = []
+        # 2 sources (located relatively close together, so the catching the many-to-1 case in next image
+        src1.append(db_subs.example_extractedsource_tuple(ra=122.983, dec=10.5,
+                                                     ra_fit_err=5./3600, dec_fit_err=6./3600,
+                                                     peak = 15e-3, peak_err = 5e-4,
+                                                     flux = 15e-3, flux_err = 5e-4,
+                                                     sigma = 15,
+                                                     beam_maj = 100, beam_min = 100, beam_angle = 45,
+                                                     ew_sys_err=20, ns_sys_err=20
+                                                        ))
+        src1.append(db_subs.example_extractedsource_tuple(ra=123.017, dec=10.5,
+                                                     ra_fit_err=5./3600, dec_fit_err=6./3600,
+                                                     peak = 15e-3, peak_err = 5e-4,
+                                                     flux = 15e-3, flux_err = 5e-4,
+                                                     sigma = 15,
+                                                     beam_maj = 100, beam_min = 100, beam_angle = 45,
+                                                     ew_sys_err=20, ns_sys_err=20
+                                                        ))
+        results = []
+        results.append(src1[0])
+        results.append(src1[1])
+        dbgen.insert_extracted_sources(imageid1, results, 'blind')
+        # We use a default value of 3.717
+        associate_extracted_sources(imageid1, deRuiter_r = 3.717)
+
+        query = """\
+        SELECT id
+          FROM extractedsource
+         WHERE image = %s
+        ORDER BY id
+        """
+        self.database.cursor.execute(query, (imageid1,))
+        im1 = zip(*self.database.cursor.fetchall())
+        self.assertNotEqual(len(im1), 0)
+        im1src = im1[0]
+        self.assertEqual(len(im1src), len(src1))
+
+        # image 2
+        image = tkp.db.Image(dataset=dataset, data=im_params[1])
+        imageid2 = image.id
+        src2 = []
+        # 2 sources, where both can be associated with both from image 1
+        src2.append(db_subs.example_extractedsource_tuple(ra=123.005, dec=10.483,
+                                                     ra_fit_err=5./3600, dec_fit_err=6./3600,
+                                                     peak = 15e-3, peak_err = 5e-4,
+                                                     flux = 15e-3, flux_err = 5e-4,
+                                                     sigma = 15,
+                                                     beam_maj = 100, beam_min = 100, beam_angle = 45,
+                                                     ew_sys_err=20, ns_sys_err=20
+                                                        ))
+        src2.append(db_subs.example_extractedsource_tuple(ra=122.99, dec=10.51,
                                                      ra_fit_err=5./3600, dec_fit_err=6./3600,
                                                      peak = 15e-3, peak_err = 5e-4,
                                                      flux = 15e-3, flux_err = 5e-4,
@@ -995,5 +1222,4 @@ class TestMany2Many(unittest.TestCase):
         self.assertEqual(aimage2[1], imageid2)
         self.assertEqual(aimage2[2], imageid1)
         self.assertEqual(aimage2[3], imageid2)
-        #TODO: Add runcat_flux test
 

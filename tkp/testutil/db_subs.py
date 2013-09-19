@@ -1,7 +1,7 @@
 import logging
 from collections import namedtuple
 
-import datetime
+import datetime, math
 import tkp.db
 from tkp.db.database import Database
 from tkp.db.orm import DataSet, Image
@@ -118,10 +118,8 @@ def example_extractedsource_tuple(ra=123.123, dec=10.5, #Arbitrarily picked defa
     """
     # NOTE: ra_fit_err & dec_fit_err are in degrees,
     # and ew_sys_err, ns_sys_err and error_radius are in arcsec.
-    # The uncertainty_ew is then the sqrt of the quadratic sum of the 
+    # The ew_uncertainty_ew is then the sqrt of the quadratic sum of the 
     # systematic error and the error_radius
-    # The ra_err is then the sqrt of the quadratic sum of the 
-    # fitted error and the alpha_inflated systematic error
     return ExtractedSourceTuple(ra=ra, dec=dec,
                                 ra_fit_err=ra_fit_err, dec_fit_err=dec_fit_err,
                                 peak=peak, peak_err=peak_err,
@@ -133,6 +131,26 @@ def example_extractedsource_tuple(ra=123.123, dec=10.5, #Arbitrarily picked defa
                                 error_radius=error_radius
                                )
 
+def deRuiter_radius(src1, src2):
+    """Calculates the De Ruiter radius for two sources"""
+
+    # The errors are the square root of the quadratic sum of 
+    # the systematic and fitted errors. 
+    src1_ew_uncertainty = math.sqrt(src1.ew_sys_err**2 + src1.error_radius**2) / 3600.
+    src1_ns_uncertainty = math.sqrt(src1.ns_sys_err**2 + src1.error_radius**2) / 3600.
+    src2_ew_uncertainty = math.sqrt(src2.ew_sys_err**2 + src2.error_radius**2) / 3600.
+    src2_ns_uncertainty = math.sqrt(src2.ns_sys_err**2 + src2.error_radius**2) / 3600.
+    
+    ra_nom = ((src1.ra - src2.ra) * math.cos(math.radians(0.5 * (src1.dec + src2.dec))))**2
+    ra_denom = src1_ew_uncertainty**2 + src2_ew_uncertainty**2
+    ra_fac = ra_nom / ra_denom
+    
+    dec_nom = (src1.dec - src2.dec)**2
+    dec_denom = src1_ns_uncertainty**2 + src2_ns_uncertainty**2
+    dec_fac = dec_nom / dec_denom
+    
+    dr = math.sqrt(ra_fac + dec_fac)
+    return dr
 
 #Used to record the significance levels on a lightcurve.
 MockLCPoint = namedtuple('MockLightCurvePoint',

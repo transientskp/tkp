@@ -242,8 +242,8 @@ class TestMany2Many(unittest.TestCase):
         """remove all stuff after the test has been run"""
         self.database.close()
 
-    def test_many2manyflux(self):
-        dataset = tkp.db.DataSet(database=self.database, data={'description': 'flux test set: n-m'})
+    def test_many2manyflux_reduced_to_two_1_to_many_one_1to1(self):
+        dataset = tkp.db.DataSet(database=self.database, data={'description': 'flux test set: n-m, ' + self._testMethodName})
         n_images = 2
         im_params = db_subs.example_dbimage_datasets(n_images)
 
@@ -252,7 +252,7 @@ class TestMany2Many(unittest.TestCase):
         imageid1 = image.id
         src1 = []
         # 2 sources (located relatively close together, so the catching the many-to-1 case in next image
-        src1.append(db_subs.example_extractedsource_tuple(ra=122.985, dec=10.5,
+        src1.append(db_subs.example_extractedsource_tuple(ra=122.983, dec=10.5,
                                                      ra_fit_err=5./3600, dec_fit_err=6./3600,
                                                      peak = 1.5, peak_err = 1e-1,
                                                      flux = 3.0, flux_err = 1e-1,
@@ -260,7 +260,7 @@ class TestMany2Many(unittest.TestCase):
                                                      beam_maj = 100, beam_min = 100, beam_angle = 45,
                                                      ew_sys_err=20, ns_sys_err=20
                                                         ))
-        src1.append(db_subs.example_extractedsource_tuple(ra=123.015, dec=10.5,
+        src1.append(db_subs.example_extractedsource_tuple(ra=123.017, dec=10.5,
                                                      ra_fit_err=5./3600, dec_fit_err=6./3600,
                                                      peak = 1.7, peak_err = 1e-1,
                                                      flux = 3.2, flux_err = 1e-1,
@@ -280,7 +280,7 @@ class TestMany2Many(unittest.TestCase):
         imageid2 = image.id
         src2 = []
         # 2 sources, where both can be associated with both from image 1
-        src2.append(db_subs.example_extractedsource_tuple(ra=123.0, dec=10.485,
+        src2.append(db_subs.example_extractedsource_tuple(ra=123.0001, dec=10.483,
                                                      ra_fit_err=5./3600, dec_fit_err=6./3600,
                                                      peak = 1.8, peak_err = 1e-1,
                                                      flux = 3.3, flux_err = 1e-1,
@@ -288,7 +288,93 @@ class TestMany2Many(unittest.TestCase):
                                                      beam_maj = 100, beam_min = 100, beam_angle = 45,
                                                      ew_sys_err=20, ns_sys_err=20
                                                         ))
-        src2.append(db_subs.example_extractedsource_tuple(ra=123.0, dec=10.515,
+        src2.append(db_subs.example_extractedsource_tuple(ra=123.0001, dec=10.518,
+                                                     ra_fit_err=5./3600, dec_fit_err=6./3600,
+                                                     peak = 1.4, peak_err = 1e-1,
+                                                     flux = 2.9, flux_err = 1e-1,
+                                                     sigma = 15,
+                                                     beam_maj = 100, beam_min = 100, beam_angle = 45,
+                                                     ew_sys_err=20, ns_sys_err=20
+                                                        ))
+        results = []
+        results.append(src2[0])
+        results.append(src2[1])
+        dbgen.insert_extracted_sources(imageid2, results, 'blind')
+        associate_extracted_sources(imageid2, deRuiter_r = 3.717)
+
+        query = """\
+        SELECT rf.avg_f_int
+              ,rf.avg_f_int_sq
+              ,avg_weighted_f_int/avg_f_int_weight as wI
+          FROM runningcatalog r
+              ,runningcatalog_flux rf
+         WHERE r.dataset = %(dataset)s
+           AND r.id = rf.runcat
+        ORDER BY rf.avg_f_int
+        """
+        self.database.cursor.execute(query, {'dataset': dataset.id})
+        result = zip(*self.database.cursor.fetchall())
+        avg_f_int = result[0]
+        avg_f_int_sq = result[1]
+        wI = result[2]
+        self.assertEqual(len(avg_f_int), 3)
+        self.assertAlmostEqual(avg_f_int[0], 3.0)
+        self.assertAlmostEqual(avg_f_int[1], 3.05)
+        self.assertAlmostEqual(avg_f_int[2], 3.25)
+        self.assertAlmostEqual(avg_f_int_sq[0], 9.0)
+        self.assertAlmostEqual(avg_f_int_sq[1], 9.325)
+        self.assertAlmostEqual(avg_f_int_sq[2], 10.565)
+        self.assertAlmostEqual(wI[0], 3.0)
+        self.assertAlmostEqual(wI[1], 3.05)
+        self.assertAlmostEqual(wI[2], 3.25)
+
+    def test_many2manyflux_reduced_to_two_1to1(self):
+        dataset = tkp.db.DataSet(database=self.database, data={'description': 'flux test set: n-m, ' + self._testMethodName})
+        n_images = 2
+        im_params = db_subs.example_dbimage_datasets(n_images)
+
+        # image 1
+        image = tkp.db.Image(database=self.database, dataset=dataset, data=im_params[0])
+        imageid1 = image.id
+        src1 = []
+        # 2 sources (located relatively close together, so the catching the many-to-1 case in next image
+        src1.append(db_subs.example_extractedsource_tuple(ra=122.983, dec=10.5,
+                                                     ra_fit_err=5./3600, dec_fit_err=6./3600,
+                                                     peak = 1.5, peak_err = 1e-1,
+                                                     flux = 3.0, flux_err = 1e-1,
+                                                     sigma = 15,
+                                                     beam_maj = 100, beam_min = 100, beam_angle = 45,
+                                                     ew_sys_err=20, ns_sys_err=20
+                                                        ))
+        src1.append(db_subs.example_extractedsource_tuple(ra=123.017, dec=10.5,
+                                                     ra_fit_err=5./3600, dec_fit_err=6./3600,
+                                                     peak = 1.7, peak_err = 1e-1,
+                                                     flux = 3.2, flux_err = 1e-1,
+                                                     sigma = 15,
+                                                     beam_maj = 100, beam_min = 100, beam_angle = 45,
+                                                     ew_sys_err=20, ns_sys_err=20
+                                                        ))
+        results = []
+        results.append(src1[0])
+        results.append(src1[1])
+        dbgen.insert_extracted_sources(imageid1, results, 'blind')
+        # We use a default value of 3.717
+        associate_extracted_sources(imageid1, deRuiter_r = 3.717)
+
+        # image 2
+        image = tkp.db.Image(database=self.database, dataset=dataset, data=im_params[1])
+        imageid2 = image.id
+        src2 = []
+        # 2 sources, where both can be associated with both from image 1
+        src2.append(db_subs.example_extractedsource_tuple(ra=123.005, dec=10.483,
+                                                     ra_fit_err=5./3600, dec_fit_err=6./3600,
+                                                     peak = 1.8, peak_err = 1e-1,
+                                                     flux = 3.3, flux_err = 1e-1,
+                                                     sigma = 15,
+                                                     beam_maj = 100, beam_min = 100, beam_angle = 45,
+                                                     ew_sys_err=20, ns_sys_err=20
+                                                        ))
+        src2.append(db_subs.example_extractedsource_tuple(ra=122.99, dec=10.51,
                                                      ra_fit_err=5./3600, dec_fit_err=6./3600,
                                                      peak = 1.4, peak_err = 1e-1,
                                                      flux = 2.9, flux_err = 1e-1,

@@ -194,8 +194,6 @@ def prepare_job(jobname, debug=False):
     else:
         # show us INFO logging
         sys.argv.append("-v")
-    # the lofar pipeline utils parse sys.argv to determine some options
-    sys.argv += ["-c", pipelinefile, "-j", jobname]
 
 
 def celery_cmd(args):

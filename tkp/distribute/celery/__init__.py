@@ -155,9 +155,9 @@ def run(job_name, local=False):
                                                            se_parset['radius'],
                                                            p_parset)
 
-    # manual monitoringlist entries
-    if not add_manual_monitoringlist_entries(dataset_id, []):
-        return 1
+    # As of the current release, we do not support a "monitoring list"
+    #if not add_manual_monitoringlist_entries(dataset_id, []):
+    #    return 1
 
     db_images = [Image(id=image_id) for image_id in image_ids]
 

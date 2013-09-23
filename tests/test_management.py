@@ -95,7 +95,7 @@ class TestManagement(unittest.TestCase):
         self.assertRaises(tkp.management.CommandError,
                                     tkp.management.check_if_exists, file.name)
 
-    def test_parse_arguments(self):
+    def test_parse_no_arguments(self):
         # should raise error if no arguments
         with nostderr():  # don't clutter test results
             self.assertRaises(SystemExit, tkp.management.parse_arguments)

@@ -258,7 +258,7 @@ def init_db(options):
     populate(dbconfig)
 
 
-def parse_arguments():
+def parse_arguments(argv=None):
     parser = argparse.ArgumentParser(
         description='A tool for managing TKP projects',
         formatter_class=argparse.RawDescriptionHelpFormatter,
@@ -333,7 +333,7 @@ environment variables to configure the connection:
                                help='A celery subcommand')
     celery_parser.set_defaults(func=celery_cmd)
 
-    return parser.parse_args()
+    return parser.parse_args(argv)
 
 
 def main():

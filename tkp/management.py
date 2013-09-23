@@ -231,9 +231,10 @@ def celery_cmd(args):
 def run_job(args):
     print "running job '%s'" % args.name
     prepare_job(args.name, args.debug)
+    monitor_coords = parse_monitoringlist_positions(args)
     if args.method == 'celery':
         import tkp.distribute.celery
-        tkp.distribute.celery.run(args.name)
+        tkp.distribute.celery.run(args.name, monitor_coords)
     elif args.method == 'test':
         return True
     else:

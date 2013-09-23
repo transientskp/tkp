@@ -74,19 +74,25 @@ class TestManagement(unittest.TestCase):
         namespace = argparse.Namespace()
         namespace.name = project_name
         namespace.target = None
-        target = tkp.management.init_project(namespace)
+        init_project_args = tkp.management.parse_arguments(['initproject',
+                                                            project_name])
+        target = init_project_args.func(init_project_args)
         os.chdir(target)
-        job_namespace = argparse.Namespace()
-        job_namespace.name = job_name
-        job_namespace.method = 'test'
-        job_namespace.debug = False
-        tkp.management.init_job(job_namespace)
+
+        initjob_args = tkp.management.parse_arguments(['initjob',
+                                                       job_name])
+        initjob_args.func(initjob_args)
         # we don't want no images!
         images_file = open(os.path.join(self.target,  job_name,
                                         'images_to_process.py'), 'w')
         images_file.write("images=[]\n")
         images_file.close()
-        tkp.management.run_job(job_namespace)
+        runjob_args = tkp.management.parse_arguments(['run',
+                                                       job_name,
+                                                       "--method=celery"])
+        runjob_args.method = "test"  # Kludge to avoid booting up celery
+        runjob_args.func(runjob_args)
+
 
 
     def test_check_if_exists(self):

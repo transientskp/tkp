@@ -42,8 +42,8 @@ def database_config(pipe_config=None, apply=False):
     """
     # Default values
     kwargs = {
-        'engine': "postgresql", 'database': None, 'user': getpass.getuser(),
-        'password': None, 'host': "localhost", 'port': "5432", 'passphrase': None
+        'engine': None, 'database': None, 'user': getpass.getuser(),
+        'password': None, 'host': "localhost", 'port': None, 'passphrase': None
     }
 
     # Try loading a config file, if any
@@ -71,6 +71,18 @@ def database_config(pipe_config=None, apply=False):
         kwargs['database'] = kwargs['user']
     if kwargs['user'] and not kwargs['password']:
         kwargs['password'] = kwargs['user']
+
+    if not kwargs['engine'] in ("postgresql", "monetdb"):
+        raise Exception("Invalid database engine")
+
+    if not kwargs['port']:
+        if kwargs['engine'] == "monetdb":
+            kwargs['port'] = 50000
+        if kwargs['engine'] == "postgresql":
+            kwargs['port'] = 5432
+    else:
+        # Port is always an integer
+        kwargs['port'] = int(kwargs['port'])
 
     # Optionally, initiate a db connection with the settings determined
     if apply:

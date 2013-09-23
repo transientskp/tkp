@@ -22,7 +22,7 @@ import getpass
 import stat
 import sys
 import logging
-
+import json
 import tkp
 from tkp.db.sql.populate import populate
 
@@ -172,6 +172,31 @@ def copy_template(job_or_project, name, target=None, **options):
                                   "problem.\n" % new_path)
     return top_dir
 
+def parse_monitoringlist_positions(args):
+    """Loads a list of monitoringlist (RA,Dec) tuples from cmd line args object.
+
+    Processes the flags "--monitor-coords" and "--monitor-list"
+    NB This is just a dumb function that does not care about units,
+    those should be matched against whatever uses the resulting values...
+    """
+    monitor_coords=[]
+    if args.monitor_coords:
+        try:
+            monitor_coords.extend(json.loads(args.monitor_coords))
+        except ValueError:
+            logging.error("Could not parse monitor-coords from command line:"
+                         "string passed was:\n%s", args.monitor_coords
+                         )
+            raise
+    if args.monitor_list:
+        try:
+            mon_list = json.load(open(args.monitor_list))
+            monitor_coords.extend(mon_list)
+        except ValueError:
+            logging.error("Could not parse monitor-coords from file: "
+                              +args.monitor_list)
+            raise
+    return monitor_coords
 
 def init_project(args):
     print "creating project '%s'" % args.name

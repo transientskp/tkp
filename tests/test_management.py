@@ -3,6 +3,7 @@ import os
 import shutil
 import tempfile
 import argparse
+import json
 
 import tkp.management
 from tkp.testutil import nostderr
@@ -99,6 +100,27 @@ class TestManagement(unittest.TestCase):
         # should raise error if no arguments
         with nostderr():  # don't clutter test results
             self.assertRaises(SystemExit, tkp.management.parse_arguments)
+
+    def test_parse_monitoringlist_coords(self):
+        coords1 = [[123.45, 67.89], [98.67, 54.32]]
+        coords2 = [[111.22, 33.33]]
+        coord1_string = json.dumps(coords1)
+
+        # Context manager ensures the temporary will be cleaned up if we throw
+        # during test execution.
+        with tempfile.NamedTemporaryFile() as t:
+            json.dump(coords2, t)
+            t.seek(0) # rewind to beginning of file
+            arg_list = ["run", "jobname",
+                        "--monitor-coords={}".format(coord1_string),
+                        "--monitor-list={}".format(t.name)
+                        ]
+            args = tkp.management.parse_arguments(arg_list)
+            loaded = tkp.management.parse_monitoringlist_positions(args)
+            all_coords = []
+            all_coords.extend(coords1)
+            all_coords.extend(coords2)
+            self.assertAlmostEqual(all_coords, loaded)
 
     def test_get_template_dir(self):
         tkp.management.get_template_dir()

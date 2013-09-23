@@ -7,6 +7,7 @@ import os
 import sys
 from subprocess import call
 import tkp
+from tkp.db.database import DB_VERSION
 
 
 tkp_folder = tkp.__path__[0]
@@ -22,6 +23,7 @@ tokens = (
     ('%WENSS%', os.path.join(tkp_folder, '../database/catalog/wenss/wenss.csv')),
     ('%NVSS%', os.path.join(tkp_folder, '../database/catalog/nvss/nvss.csv')),
     ('%EXO%', os.path.join(tkp_folder, '../database/catalog/exoplanets/exo.csv')),
+    ('%VERSION%', str(DB_VERSION))
 )
 
 

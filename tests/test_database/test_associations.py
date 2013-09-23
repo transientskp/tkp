@@ -270,8 +270,9 @@ class TestMixedSkyregions(unittest.TestCase):
         runcat = columns_from_table('runningcatalog', ['wm_ra'],
             where={'dataset': dataset.id}
         )
+        wm_ras = sorted(r['wm_ra'] for r in runcat)
         for ctr, ra in enumerate(ras):
-            self.assertAlmostEqual(runcat[ctr]['wm_ra'], ra)
+            self.assertAlmostEqual(wm_ras[ctr], ra)
 
 
 #@unittest.skip

@@ -295,15 +295,22 @@ def _insert_temprunningcatalog(image_id, deRuiter_r, mw):
     """
 
     deRuiter_red = float(deRuiter_r) / 3600.
-    # The cross-meridian differs slightly from the normal association
-    # query.
-    # We removed the wm_ra between statement, because the dot-product
-    # of the cartesian coordinates will handle the distance checking
-    # in case of meridian wrapping.
-    # The ra values are translated to the opposite site of the sphere,
-    # where we can easily work with the modulo values to calculate
-    # the ra position (but this is of course translated back)
-    # and de Ruiter radius.
+
+    # The cross-meridian differs slightly from the normal association query.
+    #
+    # We removed the wm_ra between statement, because the dot-product of the
+    # cartesian coordinates will handle the distance checking in case of
+    # meridian wrapping.
+    #
+    # The ra values are translated to the opposite site of the sphere, where
+    # we can easily work with the modulo values to calculate the ra position
+    # (but this is of course translated back) and de Ruiter radius.
+    #
+    # Note that a weighted mean RA in the range [-8e-14, 0) is snapped to
+    # zero. This accounts for dynamic range issues with doubles: if we end up
+    # with a tiny sub-zero RA and add 360 to it, we end up with 360 rather
+    # than 359.999..., but, of course, we don't regard an RA of 360 as
+    # meaningful.
     q_across_ra0 = """\
 INSERT INTO temprunningcatalog
   (runcat
@@ -348,7 +355,10 @@ INSERT INTO temprunningcatalog
         ,t0.datapoints
         ,CAST(FLOOR(t0.wm_decl) AS INTEGER) AS zone
         ,CASE WHEN t0.wm_ra < 0
-              THEN wm_ra + 360
+              THEN CASE WHEN ABS(t0.wm_ra) > 8e-14
+                        THEN t0.wm_ra + 360
+                        ELSE 0.0
+                   END
               ELSE t0.wm_ra
          END AS wm_ra
         ,t0.wm_decl

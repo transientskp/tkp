@@ -116,9 +116,12 @@ def example_extractedsource_tuple(ra=123.123, dec=10.5, #Arbitrarily picked defa
     to the RA and Dec of any fake images used, since the association routines
     reject sources outside of designated extraction regions.
     """
-    # NOTE: ra_fit_err & dec_fit_err are in degrees (they are converted to arcsec in the db),
+    # NOTE: ra_fit_err & dec_fit_err are in degrees,
     # and ra_sys_err, decl_sys_err and error_radius are in arcsec.
-    # The ra_err is then the sqrt of the quadratic sum of sys and erro_radius
+    # The uncertainty_ew is then the sqrt of the quadratic sum of the 
+    # systematic error and the error_radius
+    # The ra_err is then the sqrt of the quadratic sum of the 
+    # fitted error and the alpha_inflated systematic error
     return ExtractedSourceTuple(ra=ra, dec=dec,
                                 ra_fit_err=ra_fit_err, dec_fit_err=dec_fit_err,
                                 peak=peak, peak_err=peak_err,

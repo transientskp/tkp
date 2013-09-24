@@ -10,8 +10,10 @@ CREATE TABLE runningcatalog
   ,zone INT NOT NULL
   ,wm_ra DOUBLE PRECISION NOT NULL
   ,wm_decl DOUBLE PRECISION NOT NULL
-  ,wm_ra_err DOUBLE PRECISION NOT NULL
-  ,wm_decl_err DOUBLE PRECISION NOT NULL
+  ,wm_uncertainty_ew DOUBLE PRECISION NOT NULL
+  ,wm_uncertainty_ns DOUBLE PRECISION NOT NULL
+  ,avg_ra_err DOUBLE PRECISION NOT NULL
+  ,avg_decl_err DOUBLE PRECISION NOT NULL
   ,avg_wra DOUBLE PRECISION NOT NULL
   ,avg_wdecl DOUBLE PRECISION NOT NULL
   ,avg_weight_ra DOUBLE PRECISION NOT NULL
@@ -40,8 +42,8 @@ CREATE INDEX "runningcatalog_wm_decl" ON "runningcatalog" ("wm_decl");
 CREATE INDEX "runningcatalog_x" ON "runningcatalog" ("x");
 CREATE INDEX "runningcatalog_y" ON "runningcatalog" ("y");
 CREATE INDEX "runningcatalog_z" ON "runningcatalog" ("z");
-CREATE INDEX "runningcatalog_wm_ra_err" ON "runningcatalog" ("wm_ra_err");
-CREATE INDEX "runningcatalog_wm_decl_err" ON "runningcatalog" ("wm_decl_err");
+CREATE INDEX "runningcatalog_wm_uncertainty_ew" ON "runningcatalog" ("wm_uncertainty_ew");
+CREATE INDEX "runningcatalog_wm_uncertainty_ns" ON "runningcatalog" ("wm_uncertainty_ns");
 {% endifdb %}
 
 

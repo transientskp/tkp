@@ -325,6 +325,19 @@ def alpha(l, m, alpha0, delta0):
         (math.sqrt(1 - (l*l) - (m*m)) * math.cos(math.radians(delta0))) -
         (m * math.sin(math.radians(delta0))))))))
 
+def alpha_inflate(theta, decl):
+    """Compute the ra expansion for a given theta at a given declination
+    
+    Keyword arguments:
+    theta, decl are both in decimal degrees.
+    
+    Return value:
+    alpha -- RA inflation in decimal degrees
+    """
+    if abs(decl) + theta > 89.9:
+        return 180.0
+    else:
+        return math.degrees(abs(math.atan(math.sin(math.radians(theta)) / math.sqrt(abs(math.cos(math.radians(decl - theta)) * math.cos(math.radians(decl + theta)))))))
 
 # Find the RA of a point in a radio image, given l,m and field centre
 def delta(l, m, delta0):

@@ -53,16 +53,16 @@ SELECT r1.id
                         AND rf.runcat = r.id
                         AND rf.band = i.band
                         AND r.zone BETWEEN CAST(FLOOR(x.decl - i.rb_smaj) AS INTEGER)
-                                         AND CAST(FLOOR(x.decl + i.rb_smaj) AS INTEGER)
+                                       AND CAST(FLOOR(x.decl + i.rb_smaj) AS INTEGER)
                         AND r.wm_decl BETWEEN x.decl - i.rb_smaj
-                                            AND x.decl + i.rb_smaj
+                                          AND x.decl + i.rb_smaj
                         AND r.wm_ra BETWEEN x.ra - alpha(i.rb_smaj, x.decl)
-                                          AND x.ra + alpha(i.rb_smaj, x.decl)
+                                        AND x.ra + alpha(i.rb_smaj, x.decl)
                         AND SQRT(  (x.ra * COS(RADIANS(x.decl)) - r.wm_ra * COS(RADIANS(r.wm_decl)))
                                  * (x.ra * COS(RADIANS(x.decl)) - r.wm_ra * COS(RADIANS(r.wm_decl)))
-                                 / (x.ra_err * x.ra_err + r.wm_ra_err * r.wm_ra_err)
+                                 / (x.uncertainty_ew * x.uncertainty_ew + r.wm_uncertainty_ew * r.wm_uncertainty_ew)
                                 + (x.decl - r.wm_decl) * (x.decl - r.wm_decl)
-                                 / (x.decl_err * x.decl_err + r.wm_decl_err * r.wm_decl_err)
+                                 / (x.uncertainty_ns * x.uncertainty_ns + r.wm_uncertainty_ns * r.wm_uncertainty_ns)
                                 ) < %(drrad)s
                     )
             AND r1.id IN(SELECT rc2.id
@@ -74,8 +74,7 @@ SELECT r1.id
                             AND asr2.runcat = rc2.id
                         )
 """
-    deRuiter_red = deRuiter_r / 3600.
-    qry_params = {'imgid':image_id, 'drrad': deRuiter_red}
+    qry_params = {'imgid':image_id, 'drrad': deRuiter_r}
     cursor = tkp.db.execute(query, qry_params)
     results = zip(*cursor.fetchall())
     if len(results) != 0:

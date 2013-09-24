@@ -294,8 +294,6 @@ def _insert_temprunningcatalog(image_id, deRuiter_r, mw):
     preventing the query to grow exponentially in response time
     """
 
-    deRuiter_red = float(deRuiter_r) / 3600.
-
     # The cross-meridian differs slightly from the normal association query.
     #
     # We removed the wm_ra between statement, because the dot-product of the
@@ -324,8 +322,10 @@ INSERT INTO temprunningcatalog
   ,zone
   ,wm_ra
   ,wm_decl
-  ,wm_ra_err
-  ,wm_decl_err
+  ,wm_uncertainty_ew
+  ,wm_uncertainty_ns
+  ,avg_ra_err
+  ,avg_decl_err
   ,avg_wra
   ,avg_wdecl
   ,avg_weight_ra
@@ -362,8 +362,10 @@ INSERT INTO temprunningcatalog
               ELSE t0.wm_ra
          END AS wm_ra
         ,t0.wm_decl
-        ,t0.wm_ra_err
-        ,t0.wm_decl_err
+        ,t0.wm_uncertainty_ew
+        ,t0.wm_uncertainty_ns
+        ,t0.avg_ra_err
+        ,t0.avg_decl_err
         ,t0.avg_wra
         ,t0.avg_wdecl
         ,t0.avg_weight_ra
@@ -442,12 +444,12 @@ INSERT INTO temprunningcatalog
                                              + (rc0.z - x0.z) * (rc0.z - x0.z)
                                              ) / 2)
                                ) AS distance_arcsec
-                ,3600 * SQRT(  (MOD(CAST(rc0.wm_ra + 180 AS NUMERIC(11,8)), 360) * COS(RADIANS(rc0.wm_decl)) - MOD(CAST(x0.ra + 180 AS NUMERIC(11,8)), 360) * COS(RADIANS(x0.decl)))
-                             * (MOD(CAST(rc0.wm_ra + 180 AS NUMERIC(11,8)), 360) * COS(RADIANS(rc0.wm_decl)) - MOD(CAST(x0.ra + 180 AS NUMERIC(11,8)), 360) * COS(RADIANS(x0.decl)))
-                               / (rc0.wm_ra_err * rc0.wm_ra_err + x0.ra_err * x0.ra_err)
-                            + (rc0.wm_decl - x0.decl) * (rc0.wm_decl - x0.decl)
-                              / (rc0.wm_decl_err * rc0.wm_decl_err + x0.decl_err * x0.decl_err)
-                            ) AS r
+                ,SQRT(  (MOD(CAST(rc0.wm_ra + 180 AS NUMERIC(11,8)), 360) * COS(RADIANS(rc0.wm_decl)) - MOD(CAST(x0.ra + 180 AS NUMERIC(11,8)), 360) * COS(RADIANS(x0.decl)))
+                      * (MOD(CAST(rc0.wm_ra + 180 AS NUMERIC(11,8)), 360) * COS(RADIANS(rc0.wm_decl)) - MOD(CAST(x0.ra + 180 AS NUMERIC(11,8)), 360) * COS(RADIANS(x0.decl)))
+                      / (rc0.wm_uncertainty_ew * rc0.wm_uncertainty_ew + x0.uncertainty_ew * x0.uncertainty_ew)
+                     + (rc0.wm_decl - x0.decl) * (rc0.wm_decl - x0.decl)
+                      / (rc0.wm_uncertainty_ns * rc0.wm_uncertainty_ns + x0.uncertainty_ns * x0.uncertainty_ns)
+                    ) AS r
                 ,x0.f_peak
                 ,x0.f_peak_err
                 ,x0.f_int
@@ -456,42 +458,41 @@ INSERT INTO temprunningcatalog
                 ,i0.band
                 ,i0.stokes
                 ,rc0.datapoints + 1 AS datapoints
-                ,(datapoints * rc0.avg_weight_ra * MOD(CAST(rc0.wm_ra + 180 AS NUMERIC(11,8)), 360) + MOD(CAST(x0.ra + 180 AS NUMERIC(11,8)), 360) / (x0.ra_err * x0.ra_err) )
+                ,(datapoints * rc0.avg_weight_ra * MOD(CAST(rc0.wm_ra + 180 AS NUMERIC(11,8)), 360) + MOD(CAST(x0.ra + 180 AS NUMERIC(11,8)), 360) / (x0.uncertainty_ew * x0.uncertainty_ew) )
                  /
-                 (datapoints * rc0.avg_weight_ra + 1 / (x0.ra_err * x0.ra_err) ) - 180
+                 (datapoints * rc0.avg_weight_ra + 1 / (x0.uncertainty_ew * x0.uncertainty_ew) ) - 180
                  AS wm_ra
-                ,(datapoints * rc0.avg_weight_decl * rc0.wm_decl + x0.decl / (x0.decl_err * x0.decl_err))
+                ,(datapoints * rc0.avg_weight_decl * rc0.wm_decl + x0.decl / (x0.uncertainty_ns * x0.uncertainty_ns))
                  /
-                 (datapoints * rc0.avg_weight_decl + 1 / (x0.decl_err * x0.decl_err))
+                 (datapoints * rc0.avg_weight_decl + 1 / (x0.uncertainty_ns * x0.uncertainty_ns))
                  AS wm_decl
                 ,SQRT(1 / ((datapoints + 1) *
                   ((datapoints * rc0.avg_weight_ra +
-                    1 / (x0.ra_err * x0.ra_err)) / (datapoints + 1))
+                    1 / (x0.uncertainty_ew * x0.uncertainty_ew)) / (datapoints + 1))
                           )
-                     ) AS wm_ra_err
+                     ) AS wm_uncertainty_ew
                 ,SQRT(1 / ((datapoints + 1) *
                   ((datapoints * rc0.avg_weight_decl +
-                    1 / (x0.decl_err * x0.decl_err)) / (datapoints + 1))
+                    1 / (x0.uncertainty_ns * x0.uncertainty_ns)) / (datapoints + 1))
                           )
-                     ) AS wm_decl_err
-                ,((datapoints * avg_weight_ra * MOD(CAST(rc0.wm_ra + 180 AS NUMERIC(11,8)), 360) + MOD(CAST(x0.ra + 180 AS NUMERIC(11,8)), 360) / (x0.ra_err * x0.ra_err)
-                   - datapoints * avg_weight_ra * 180 - 180 / (x0.ra_err * x0.ra_err))
+                     ) AS wm_uncertainty_ns
+                ,(datapoints * rc0.avg_ra_err + x0.ra_err) / (datapoints + 1) AS avg_ra_err
+                ,(datapoints * rc0.avg_decl_err + x0.decl_err) / (datapoints + 1) AS avg_decl_err
+                ,((datapoints * rc0.avg_weight_ra * MOD(CAST(rc0.wm_ra + 180 AS NUMERIC(11,8)), 360) + MOD(CAST(x0.ra + 180 AS NUMERIC(11,8)), 360) / (x0.uncertainty_ew * x0.uncertainty_ew)
+                   - datapoints * avg_weight_ra * 180 - 180 / (x0.uncertainty_ew * x0.uncertainty_ew))
                    / (datapoints + 1))
-                 - 360 * (datapoints * rc0.avg_weight_ra + 1 / (x0.ra_err * x0.ra_err)) / (datapoints + 1)
+                 - 360 * (datapoints * rc0.avg_weight_ra + 1 / (x0.uncertainty_ew * x0.uncertainty_ew)) / (datapoints + 1)
                  * FLOOR(
-                    ((datapoints * avg_weight_ra * MOD(CAST(rc0.wm_ra + 180 AS NUMERIC(11,8)), 360) + MOD(CAST(x0.ra + 180 AS NUMERIC(11,8)), 360) / (x0.ra_err * x0.ra_err)
-                      - datapoints * avg_weight_ra * 180 - 180 / (x0.ra_err * x0.ra_err))
+                    ((datapoints * avg_weight_ra * MOD(CAST(rc0.wm_ra + 180 AS NUMERIC(11,8)), 360) + MOD(CAST(x0.ra + 180 AS NUMERIC(11,8)), 360) / (x0.uncertainty_ew * x0.uncertainty_ew)
+                      - datapoints * avg_weight_ra * 180 - 180 / (x0.uncertainty_ew * x0.uncertainty_ew))
                       / (datapoints + 1))
-                    / (360 * (datapoints * rc0.avg_weight_ra + 1 / (x0.ra_err * x0.ra_err)) / (datapoints + 1))
+                    / (360 * (datapoints * rc0.avg_weight_ra + 1 / (x0.uncertainty_ew * x0.uncertainty_ew)) / (datapoints + 1))
                     ) AS avg_wra
-                ,(datapoints * rc0.avg_wdecl + x0.decl /
-                  (x0.decl_err * x0.decl_err))
+                ,(datapoints * rc0.avg_wdecl + x0.decl / (x0.uncertainty_ns * x0.uncertainty_ns))
                  / (datapoints + 1) AS avg_wdecl
-                ,(datapoints * rc0.avg_weight_ra + 1 /
-                  (x0.ra_err * x0.ra_err))
+                ,(datapoints * rc0.avg_weight_ra + 1 / (x0.uncertainty_ew * x0.uncertainty_ew))
                  / (datapoints + 1) AS avg_weight_ra
-                ,(datapoints * rc0.avg_weight_decl + 1 /
-                  (x0.decl_err * x0.decl_err))
+                ,(datapoints * rc0.avg_weight_decl + 1 / (x0.uncertainty_ns * x0.uncertainty_ns))
                  / (datapoints + 1) AS avg_weight_decl
             FROM extractedsource x0
                 ,runningcatalog rc0
@@ -507,9 +508,9 @@ INSERT INTO temprunningcatalog
              AND rc0.x*x0.x + rc0.y*x0.y + rc0.z*x0.z > cos(radians(i0.rb_smaj))
              AND SQRT(  (MOD(CAST(x0.ra + 180 AS NUMERIC(11,8)), 360) * COS(RADIANS(x0.decl)) - MOD(CAST(rc0.wm_ra + 180 AS NUMERIC(11,8)), 360) * COS(RADIANS(rc0.wm_decl)))
                       * (MOD(CAST(x0.ra + 180 AS NUMERIC(11,8)), 360) * COS(RADIANS(x0.decl)) - MOD(CAST(rc0.wm_ra + 180 AS NUMERIC(11,8)), 360) * COS(RADIANS(rc0.wm_decl)))
-                      / (x0.ra_err * x0.ra_err + rc0.wm_ra_err * rc0.wm_ra_err)
+                      / (x0.uncertainty_ew * x0.uncertainty_ew + rc0.wm_uncertainty_ew * rc0.wm_uncertainty_ew)
                      + (x0.decl - rc0.wm_decl) * (x0.decl - rc0.wm_decl)
-                      / (x0.decl_err * x0.decl_err + rc0.wm_decl_err * rc0.wm_decl_err)
+                      / (x0.uncertainty_ns * x0.uncertainty_ns + rc0.wm_uncertainty_ns * rc0.wm_uncertainty_ns)
                      ) < %(deRuiter)s
          ) t0
          LEFT OUTER JOIN runningcatalog_flux rf0
@@ -530,8 +531,10 @@ INSERT INTO temprunningcatalog
   ,zone
   ,wm_ra
   ,wm_decl
-  ,wm_ra_err
-  ,wm_decl_err
+  ,wm_uncertainty_ew
+  ,wm_uncertainty_ns
+  ,avg_ra_err
+  ,avg_decl_err
   ,avg_wra
   ,avg_wdecl
   ,avg_weight_ra
@@ -562,8 +565,10 @@ INSERT INTO temprunningcatalog
         ,CAST(FLOOR(t0.wm_decl) AS INTEGER) AS zone
         ,t0.wm_ra
         ,t0.wm_decl
-        ,t0.wm_ra_err
-        ,t0.wm_decl_err
+        ,t0.wm_uncertainty_ew
+        ,t0.wm_uncertainty_ns
+        ,t0.avg_ra_err
+        ,t0.avg_decl_err
         ,t0.avg_wra
         ,t0.avg_wdecl
         ,t0.avg_weight_ra
@@ -642,12 +647,12 @@ INSERT INTO temprunningcatalog
                                              + (rc0.z - x0.z) * (rc0.z - x0.z)
                                              ) / 2)
                                ) AS distance_arcsec
-                ,3600 * SQRT(  (rc0.wm_ra * COS(RADIANS(rc0.wm_decl)) - x0.ra * COS(RADIANS(x0.decl)))
-                             * (rc0.wm_ra * COS(RADIANS(rc0.wm_decl)) - x0.ra * COS(RADIANS(x0.decl)))
-                               / (rc0.wm_ra_err * rc0.wm_ra_err + x0.ra_err * x0.ra_err)
-                            + (rc0.wm_decl - x0.decl) * (rc0.wm_decl - x0.decl)
-                              / (rc0.wm_decl_err * rc0.wm_decl_err + x0.decl_err * x0.decl_err)
-                            ) AS r
+                ,SQRT(  (rc0.wm_ra * COS(RADIANS(rc0.wm_decl)) - x0.ra * COS(RADIANS(x0.decl)))
+                      * (rc0.wm_ra * COS(RADIANS(rc0.wm_decl)) - x0.ra * COS(RADIANS(x0.decl)))
+                      / (rc0.wm_uncertainty_ew * rc0.wm_uncertainty_ew + x0.uncertainty_ew * x0.uncertainty_ew)
+                     +  (rc0.wm_decl - x0.decl) * (rc0.wm_decl - x0.decl)
+                      / (rc0.wm_uncertainty_ns * rc0.wm_uncertainty_ns + x0.uncertainty_ns * x0.uncertainty_ns)
+                     ) AS r
                 ,x0.f_peak
                 ,x0.f_peak_err
                 ,x0.f_int
@@ -656,34 +661,35 @@ INSERT INTO temprunningcatalog
                 ,i0.band
                 ,i0.stokes
                 ,rc0.datapoints + 1 AS datapoints
-                ,(datapoints * rc0.avg_wra + x0.ra /(x0.ra_err * x0.ra_err) )
+                ,(datapoints * rc0.avg_wra + x0.ra /(x0.uncertainty_ew * x0.uncertainty_ew) )
                  /
-                 (datapoints * rc0.avg_weight_ra + 1 / (x0.ra_err * x0.ra_err) )
+                 (datapoints * rc0.avg_weight_ra + 1 / (x0.uncertainty_ew * x0.uncertainty_ew) )
                  AS wm_ra
-                ,(datapoints * rc0.avg_wdecl + x0.decl /(x0.decl_err * x0.decl_err))
+                ,(datapoints * rc0.avg_wdecl + x0.decl /(x0.uncertainty_ns * x0.uncertainty_ns))
                  /
-                 (datapoints * rc0.avg_weight_decl + 1 /(x0.decl_err * x0.decl_err))
+                 (datapoints * rc0.avg_weight_decl + 1 /(x0.uncertainty_ns * x0.uncertainty_ns))
                  AS wm_decl
-                ,SQRT(1 / ((datapoints + 1) *
-                  ((datapoints * rc0.avg_weight_ra +
-                    1 / (x0.ra_err * x0.ra_err)) / (datapoints + 1))
-                          )
-                     ) AS wm_ra_err
-                ,SQRT(1 / ((datapoints + 1) *
-                  ((datapoints * rc0.avg_weight_decl +
-                    1 / (x0.decl_err * x0.decl_err)) / (datapoints + 1))
-                          )
-                     ) AS wm_decl_err
-                ,(datapoints * rc0.avg_wra + x0.ra / (x0.ra_err * x0.ra_err))
+                , SQRT(1 / ((datapoints + 1) 
+                           * ((datapoints * rc0.avg_weight_ra + 1 / (x0.uncertainty_ew * x0.uncertainty_ew)) 
+                              / (datapoints + 1)
+                             )
+                           )
+                      ) AS wm_uncertainty_ew
+                , SQRT(1 / ((datapoints + 1) 
+                           * ((datapoints * rc0.avg_weight_decl + 1 / (x0.uncertainty_ns * x0.uncertainty_ns)) 
+                              / (datapoints + 1)
+                             )
+                           )
+                      ) AS wm_uncertainty_ns
+                ,(datapoints * rc0.avg_ra_err + x0.ra_err) / (datapoints + 1) AS avg_ra_err
+                ,(datapoints * rc0.avg_decl_err + x0.decl_err) / (datapoints + 1) AS avg_decl_err
+                ,(datapoints * rc0.avg_wra + x0.ra / (x0.uncertainty_ew * x0.uncertainty_ew))
                  / (datapoints + 1) AS avg_wra
-                ,(datapoints * rc0.avg_wdecl + x0.decl /
-                  (x0.decl_err * x0.decl_err))
+                ,(datapoints * rc0.avg_wdecl + x0.decl / (x0.uncertainty_ns * x0.uncertainty_ns))
                  / (datapoints + 1) AS avg_wdecl
-                ,(datapoints * rc0.avg_weight_ra + 1 /
-                  (x0.ra_err * x0.ra_err))
+                ,(datapoints * rc0.avg_weight_ra + 1 / (x0.uncertainty_ew * x0.uncertainty_ew))
                  / (datapoints + 1) AS avg_weight_ra
-                ,(datapoints * rc0.avg_weight_decl + 1 /
-                  (x0.decl_err * x0.decl_err))
+                ,(datapoints * rc0.avg_weight_decl + 1 / (x0.uncertainty_ns * x0.uncertainty_ns))
                  / (datapoints + 1) AS avg_weight_decl
             FROM extractedsource x0
                 ,runningcatalog rc0
@@ -701,9 +707,9 @@ INSERT INTO temprunningcatalog
              AND rc0.x * x0.x + rc0.y * x0.y + rc0.z * x0.z > COS(RADIANS(i0.rb_smaj))
              AND SQRT(  (x0.ra * COS(RADIANS(x0.decl)) - rc0.wm_ra * COS(RADIANS(rc0.wm_decl)))
                       * (x0.ra * COS(RADIANS(x0.decl)) - rc0.wm_ra * COS(RADIANS(rc0.wm_decl)))
-                      / (x0.ra_err * x0.ra_err + rc0.wm_ra_err * rc0.wm_ra_err)
+                      / (x0.uncertainty_ew * x0.uncertainty_ew + rc0.wm_uncertainty_ew * rc0.wm_uncertainty_ew)
                      + (x0.decl - rc0.wm_decl) * (x0.decl - rc0.wm_decl)
-                      / (x0.decl_err * x0.decl_err + rc0.wm_decl_err * rc0.wm_decl_err)
+                      / (x0.uncertainty_ns * x0.uncertainty_ns + rc0.wm_uncertainty_ns * rc0.wm_uncertainty_ns)
                      ) < %(deRuiter)s
          ) t0
          LEFT OUTER JOIN runningcatalog_flux rf0
@@ -716,8 +722,7 @@ INSERT INTO temprunningcatalog
         logger.info("Search across 0/360 meridian: %s" % mw)
         query = q_across_ra0
 
-    deRuiter_red = float(deRuiter_r) / 3600.
-    args = {'image_id': image_id, 'deRuiter': deRuiter_red}
+    args = {'image_id': image_id, 'deRuiter': deRuiter_r}
     tkp.db.execute(query, args, commit=True)
 
 
@@ -818,8 +823,10 @@ INSERT INTO runningcatalog
   ,zone
   ,wm_ra
   ,wm_decl
-  ,wm_ra_err
-  ,wm_decl_err
+  ,wm_uncertainty_ew
+  ,wm_uncertainty_ns
+  ,avg_ra_err
+  ,avg_decl_err
   ,avg_wra
   ,avg_wdecl
   ,avg_weight_ra
@@ -834,8 +841,10 @@ INSERT INTO runningcatalog
         ,zone
         ,wm_ra
         ,wm_decl
-        ,wm_ra_err
-        ,wm_decl_err
+        ,wm_uncertainty_ew
+        ,wm_uncertainty_ns
+        ,avg_ra_err
+        ,avg_decl_err
         ,avg_wra
         ,avg_wdecl
         ,avg_weight_ra
@@ -1301,12 +1310,22 @@ def _update_1_to_1_runcat():
                            WHERE temprunningcatalog.runcat = runningcatalog.id
                           AND temprunningcatalog.inactive = FALSE
                          )
-              ,wm_ra_err = (SELECT wm_ra_err
+              ,avg_ra_err = (SELECT avg_ra_err
                               FROM temprunningcatalog
                              WHERE temprunningcatalog.runcat = runningcatalog.id
                           AND temprunningcatalog.inactive = FALSE
                            )
-              ,wm_decl_err = (SELECT wm_decl_err
+              ,avg_decl_err = (SELECT avg_decl_err
+                                FROM temprunningcatalog
+                               WHERE temprunningcatalog.runcat = runningcatalog.id
+                          AND temprunningcatalog.inactive = FALSE
+                             )
+              ,wm_uncertainty_ew = (SELECT wm_uncertainty_ew
+                                FROM temprunningcatalog
+                               WHERE temprunningcatalog.runcat = runningcatalog.id
+                          AND temprunningcatalog.inactive = FALSE
+                             )
+              ,wm_uncertainty_ns = (SELECT wm_uncertainty_ns
                                 FROM temprunningcatalog
                                WHERE temprunningcatalog.runcat = runningcatalog.id
                           AND temprunningcatalog.inactive = FALSE
@@ -1550,8 +1569,10 @@ INSERT INTO runningcatalog
   ,zone
   ,wm_ra
   ,wm_decl
-  ,wm_ra_err
-  ,wm_decl_err
+  ,avg_ra_err
+  ,avg_decl_err
+  ,wm_uncertainty_ew
+  ,wm_uncertainty_ns
   ,avg_wra
   ,avg_wdecl
   ,avg_weight_ra
@@ -1566,8 +1587,10 @@ INSERT INTO runningcatalog
         ,t0.zone
         ,t0.wm_ra
         ,t0.wm_decl
-        ,t0.wm_ra_err
-        ,t0.wm_decl_err
+        ,t0.avg_ra_err
+        ,t0.avg_decl_err
+        ,t0.wm_uncertainty_ew
+        ,t0.wm_uncertainty_ns
         ,t0.avg_wra
         ,t0.avg_wdecl
         ,t0.avg_weight_ra
@@ -1581,12 +1604,14 @@ INSERT INTO runningcatalog
                 ,x0.zone
                 ,x0.ra AS wm_ra
                 ,x0.decl AS wm_decl
-                ,x0.ra_err AS wm_ra_err
-                ,x0.decl_err AS wm_decl_err
-                ,x0.ra / (x0.ra_err * x0.ra_err) AS avg_wra
-                ,x0.decl / (x0.decl_err * x0.decl_err) AS avg_wdecl
-                ,1 / (x0.ra_err * x0.ra_err) AS avg_weight_ra
-                ,1 / (x0.decl_err * x0.decl_err) AS avg_weight_decl
+                ,x0.ra_err AS avg_ra_err
+                ,x0.decl_err AS avg_decl_err
+                ,x0.uncertainty_ew AS wm_uncertainty_ew
+                ,x0.uncertainty_ns AS wm_uncertainty_ns
+                ,x0.ra / (x0.uncertainty_ew * x0.uncertainty_ew) AS avg_wra
+                ,x0.decl / (x0.uncertainty_ns * x0.uncertainty_ns) AS avg_wdecl
+                ,1 / (x0.uncertainty_ew * x0.uncertainty_ew) AS avg_weight_ra
+                ,1 / (x0.uncertainty_ns * x0.uncertainty_ns) AS avg_weight_decl
                 ,x0.x
                 ,x0.y
                 ,x0.z

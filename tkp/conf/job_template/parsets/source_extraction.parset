@@ -1,5 +1,5 @@
 [source_extraction]
-# extraction threshold (basically S/N) and associetion radius (in units of the default De Ruiter radius) 
+# extraction threshold (basically S/N)
 # Systematic errors on ra & decl (units in arcsec)
 # See Dario Carbone's presentation at TKP Meeting 20121204
 detection_threshold = 8

@@ -48,8 +48,8 @@ class TestOne2One(unittest.TestCase):
         SELECT datapoints
               ,wm_ra
               ,wm_decl
-              ,wm_ra_err
-              ,wm_decl_err
+              ,wm_uncertainty_ew
+              ,wm_uncertainty_ns
               ,x
               ,y
               ,z
@@ -63,8 +63,8 @@ class TestOne2One(unittest.TestCase):
         dp = runcat[0]
         wm_ra = runcat[1]
         wm_decl = runcat[2]
-        wm_ra_err = runcat[3]
-        wm_decl_err = runcat[4]
+        wm_uncertainty_ew = runcat[3]
+        wm_uncertainty_ns = runcat[4]
         x = runcat[5]
         y = runcat[6]
         z = runcat[7]
@@ -73,12 +73,12 @@ class TestOne2One(unittest.TestCase):
         self.assertEqual(dp[0], n_images)
         self.assertAlmostEqual(wm_ra[0], steady_srcs[0].ra)
         self.assertAlmostEqual(wm_decl[0], steady_srcs[0].dec)
-        self.assertAlmostEqual(wm_ra_err[0], math.sqrt(
+        self.assertAlmostEqual(wm_uncertainty_ew[0], math.sqrt(
                            1./ (n_images / ( (steady_srcs[0].error_radius)**2 + (steady_srcs[0].ra_sys_err)**2))
-                               ))
-        self.assertAlmostEqual(wm_decl_err[0], math.sqrt(
+                               ) / 3600)
+        self.assertAlmostEqual(wm_uncertainty_ns[0], math.sqrt(
                            1./ (n_images / ((steady_srcs[0].error_radius)**2 + (steady_srcs[0].dec_sys_err)**2 ))
-                               ))
+                               ) / 3600)
 
         self.assertAlmostEqual(x[0],
                     math.cos(math.radians(steady_srcs[0].dec))*
@@ -461,8 +461,9 @@ class TestMeridianOne2One(unittest.TestCase):
                                              error_radius=10.0,
                                              ra_sys_err=0.0, dec_sys_err=0.0)
         src_list = [src0, src1]
-        # error on ra used in DR calculation is based on error_radius and sys_err
-        #NB dec_fit_err nonzero, but since delta_dec==0 this simplifies to:
+        # error on ra used in DR calculation is based on error_radius and sys_err,
+        # which are here in arcsec, and thus we have to multiply with 3600.
+        # NB dec_fit_err nonzero, but since delta_dec==0 this simplifies to:
         expected_DR_radius = 3600 * math.sqrt((src1.ra - src0.ra) ** 2 /
                                (src0.error_radius ** 2 + src1.error_radius ** 2))
 
@@ -608,11 +609,6 @@ class TestOne2Many(unittest.TestCase):
         SELECT r.id
               ,r.xtrsrc
               ,x.image
-              ,r.datapoints
-              ,r.wm_ra
-              ,r.wm_decl
-              ,r.wm_ra_err
-              ,r.wm_decl_err
           FROM runningcatalog r
               ,extractedsource x
          WHERE r.xtrsrc = x.id

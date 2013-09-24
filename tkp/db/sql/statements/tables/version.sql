@@ -4,4 +4,4 @@ CREATE TABLE version
   ,PRIMARY KEY(name)
 );
 
-INSERT INTO version (name, value) VALUES ('revision', 15);
+INSERT INTO version (name, value) VALUES ('revision', %VERSION%);

@@ -3,6 +3,11 @@ import tkp.config
 
 logger = logging.getLogger(__name__)
 
+# The version of the TKP DB schema which is assumed by the current tree.
+# Increment whenever the schema changes.
+DB_VERSION = 15
+
+
 class Database(object):
     """
     An object representing a database connection.
@@ -69,6 +74,16 @@ class Database(object):
             msg = "engine %s not supported " % self.engine
             logger.error(msg)
             raise NotImplementedError(msg)
+
+        # Check that our database revision matches that expected by the
+        # codebase.
+        cursor = self.connection.cursor()
+        cursor.execute("SELECT value FROM version WHERE name='revision'")
+        schema_version = cursor.fetchone()[0]
+        if schema_version != DB_VERSION:
+            error = "Database version incompatibility (needed %d, got %d)" % (DB_VERSION, schema_version)
+            logger.error(error)
+            raise Exception(error)
 
         # I don't like this but it is used in some parts of TKP
         self.cursor = self._connection.cursor()

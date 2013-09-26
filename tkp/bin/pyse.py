@@ -239,7 +239,7 @@ def run_sourcefinder(files, options):
     else:
         labels, labelled_data = [], None
     for counter, filename in enumerate(files):
-        os.path.splitext(os.path.basename(filename))[0]
+        imagename = os.path.splitext(os.path.basename(filename))[0]
         print "Processing %s (file %d of %d)." % (filename, counter+1, len(files))
         ff = open_accessor(filename, beam=beam, plane=0)
         imagedata = sourcefinder_image_from_accessor(ff, **configuration)
@@ -269,38 +269,34 @@ def run_sourcefinder(files, options):
             sr.extend(forced_fits)
 
         if options.regions:
-            regionfile = os.path.splitext(os.path.basename(filename))[0] + ".reg"
+            regionfile = imagename + ".reg"
             regionfile = open(regionfile, 'w')
             regionfile.write(regions(sr, options.labels))
             regionfile.close()
         if options.residuals or options.islands:
             gaussian_map, residual_map = generate_result_maps(imagedata.data, sr)
         if options.residuals:
-            residualfile = os.path.splitext(os.path.basename(filename))[0] + ".residuals.fits"
+            residualfile = imagename + ".residuals.fits"
             writefits(residualfile, residual_map, pyfits.getheader(filename))
         if options.islands:
-            islandfile = os.path.splitext(os.path.basename(filename))[0] + ".islands.fits"
+            islandfile = imagename + ".islands.fits"
             writefits(islandfile, gaussian_map, pyfits.getheader(filename))
         if options.rmsmap:
-            rmsfile = os.path.splitext(os.path.basename(filename))[0] + ".rms.fits"
+            rmsfile = imagename + ".rms.fits"
             writefits(rmsfile, numpy.array(imagedata.rmsmap), pyfits.getheader(filename))
         if options.sigmap:
-            sigfile = os.path.splitext(os.path.basename(filename))[0] + ".sig.fits"
+            sigfile = imagename + ".sig.fits"
             writefits(sigfile, numpy.array(imagedata.data_bgsubbed / imagedata.rmsmap), pyfits.getheader(filename))
         if options.skymodel:
-            skymodelfile = os.path.splitext(os.path.basename(filename))[0] + ".skymodel"
-            skymodelfile = open(skymodelfile, 'w')
-            if ff.freq_eff:
-                skymodelfile.write(skymodel(sr, ff.freq_eff))
-            else:
-                print "WARNING: Using default reference frequency for %s" % (skymodelfile.name,)
-                skymodelfile.write(skymodel(sr))
-            skymodelfile.close()
+            with open(imagename + ".skymodel", 'w') as skymodelfile:
+                if ff.freq_eff:
+                    skymodelfile.write(skymodel(sr, ff.freq_eff))
+                else:
+                    print "WARNING: Using default reference frequency for %s" % (skymodelfile.name,)
+                    skymodelfile.write(skymodel(sr))
         if options.csv:
-            csvfile = os.path.splitext(os.path.basename(filename))[0] + ".csv"
-            csvfile = open(csvfile, 'w')
-            csvfile.write(csv(sr))
-            csvfile.close()
+            with open(imagename + ".csv", 'w') as csvfile:
+                csvfile.write(csv(sr))
         print >>output, summary(filename, sr),
     return output.getvalue()
 

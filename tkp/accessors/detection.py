@@ -57,7 +57,9 @@ def iscasa(filename):
             return False
     try:
         table = pyrap_table(filename.encode(), ack=False)
-    except RuntimeError:
+        table.close()
+    except RuntimeError as e:
+        logger.debug("directory looks casacore, but cannot open: %s" % str(e))
         return False
     return True
 

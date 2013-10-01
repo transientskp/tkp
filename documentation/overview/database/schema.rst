@@ -760,10 +760,12 @@ If no counterpart could be found for an extracted sources, it is appended to
     The weighted mean of Declination of the source [in J2000 degrees].
 
 **wm_uncertainty_ew**
-    The weighted mean of the positional on-sky uncertainty in the east-west direction along ra [in degrees]
+    The positional on-sky uncertainty in the east-west direction of the weighted 
+    mean RA [in degrees].
 
 **wm_uncertainty_ns**
-    The weighted mean of the positional on-sky uncertainty in the north-south direction along dec [in degrees]
+    The positional on-sky uncertainty in the north-south direction of the 
+    weighted mean Dec [in degrees].
 
 **avg_ra_err**
     The average of the ra_err of the source [in degrees]
@@ -771,26 +773,16 @@ If no counterpart could be found for an extracted sources, it is appended to
 **avg_decl_err**
     The average of the decl_err of the source [in degrees]
 
-.. note::
-
-   I am not sure that the weighted mean of the errors is useful, since the
-   weighting is dependent upon the errors themselves.  A simple mean error
-   might be more sensible.  -TS 30/01/13
-
 **avg_wra** :math:`=\overline{w_{\alpha}\alpha}`
-    The average of ra/ra_err^2, used for calculating the average weight of ra.
-    (This alleviates the computations, when we have lots of datapoints.)
+    The average of ra/uncertainty_ew^2, used for calculating the weighted mean 
+    of the RA.
 
 **avg_wdecl** :math:`=\overline{w_{\delta}\delta}`
     Analogous to avg_wra.
 
 **avg_weight_ra** :math:`=\overline{w_{\alpha}}`
-    The average of 1/ra_err^2, used for calculating the weighted mean of ra.
-    (This alleviates the computations, when we have lots of datapoints.)
-
-.. note::
-   Is it really more efficient this way? It would be good to get a more detailed
-   explanation. -TS 30/01/13
+    The average of 1/uncertainty_ew^2, used for calculating the weighted mean 
+    of the RA.
 
 **avg_weight_decl**   :math:`=\overline{w_{\delta}}`
     Analogous to avg_weight_ra

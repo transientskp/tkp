@@ -333,6 +333,10 @@ def alpha_inflate(theta, decl):
     
     Return value:
     alpha -- RA inflation in decimal degrees
+
+    For a derivation, see MSR TR 2006 52, Section 2.1
+    http://research.microsoft.com/apps/pubs/default.aspx?id=64524
+
     """
     if abs(decl) + theta > 89.9:
         return 180.0

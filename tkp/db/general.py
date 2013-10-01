@@ -13,6 +13,7 @@ import logging
 
 import tkp.db
 from tkp.utility.coordinates import eq_to_cart
+from tkp.utility.coordinates import alpha_inflate
 
 
 logger = logging.getLogger(__name__)
@@ -72,15 +73,15 @@ DELETE
                                AND x0.ra + alpha(%(assoc_theta)s, x0.decl)
                  AND SQRT(  (x0.ra * COS(RADIANS(x0.decl)) - x1.ra * COS(RADIANS(x1.decl)))
                           * (x0.ra * COS(RADIANS(x0.decl)) - x1.ra * COS(RADIANS(x1.decl)))
-                          / (x0.ra_err * x0.ra_err + x1.ra_err * x1.ra_err)
+                          / (x0.uncertainty_ew * x0.uncertainty_ew + x1.uncertainty_ew * x1.uncertainty_ew)
                          +  (x0.decl - x1.decl) * (x0.decl - x1.decl)
-                          / (x0.decl_err * x0.decl_err + x1.decl_err * x1.decl_err)
-                         ) < %(deRuiter_red)s
+                          / (x0.uncertainty_ns * x0.uncertainty_ns + x1.uncertainty_ns * x1.uncertainty_ns)
+                         ) < %(deRuiter_r)s
              )
     """
     args = {'image_id': image_id,
             'assoc_theta': assoc_theta,
-            'deRuiter_red': deRuiter_r / 3600.
+            'deRuiter_r': deRuiter_r
     }
     cursor = tkp.db.execute(filter_ud_xtrsrcs_query, args, True)
     if cursor.rowcount == 0:
@@ -165,36 +166,44 @@ def insert_image(dataset, freq_eff, freq_bw, taustart_ts, tau_time,
 
 
 def insert_extracted_sources(image_id, results, extract):
-    """Insert all extracted sources with their properties that were detected by
-    the Source Extraction procedures into the extractedsources table.
+    """Insert all detections from sourcefinder into the extractedsource table.
 
-    Therefore, we use a temporary table containing the "raw" detections,
-    from which the sources will then be inserted into extractedsources.
+    Besides the source properties from sourcefinder, we calculate additional 
+    attributes that are increase performance in other tasks.
 
-    (ra , dec , [deg]
-    ra_err, dec_err, [deg, but converted to as in db]
-    peak, peak_err,  [Jy]
-    flux, flux_err,    [Jy]
-    significance level,
-    beam major width , beam minor width, [as]
-    beam parallactic angle).  [deg]
-    extract tells whether the source results are originating from:
+    The strict sequence from results (the sourcefinder detections) is given below.
+    Note the units between sourcefinder and database.
+    (0) ra [deg], (1) dec [deg],
+    (2) ra_fit_err [deg], (3) decl_fit_err [deg],
+    (4) peak_flux [Jy], (5) peak_flux_err [Jy],
+    (6) int_flux [Jy], (7) int_flux_err [Jy],
+    (8) significance detection level,
+    (9) beam major width (arcsec), (10) - minor width (arcsec), (11) - parallactic angle [deg],
+    (12) ew_sys_err [arcsec], (13) ns_sys_err [arcsec],
+    (14) error_radius [arcsec]
+    
+    ra_fit_err and decl_fit_err are the 1-sigma errors from the gaussian fit,
+    in degrees. Note that for a source located towards the poles the ra_fit_err 
+    increases with absolute declination.
+    error_radius is a pessimistic on-sky error estimate in arcsec.
+    ew_sys_err and ns_sys_err represent the telescope dependent systematic errors 
+    and are in arcsec.
+    An on-sky error (declination independent, and used in de ruiter calculations)
+    is then:
+    uncertainty_ew^2 = ew_sys_err^2 + error_radius^2
+    uncertainty_ns^2 = ns_sys_err^2 + error_radius^2
+    The units of uncertainty_ew and uncertainty_ns are in degrees.
+    The error on RA is given by ra_err. For a source with an RA of ra and an error 
+    of ra_err, its RA lies in the range [ra-ra_err, ra+ra_err].
+    ra_err^2 = ra_fit_err^2 + [alpha_inflate(ew_sys_err,decl)]^2
+    decl_err^2 = decl_fit_err^2 + ns_sys_err^2.
+    The units of ra_err and decl_err are in degrees.
+    Here alpha_inflate() is the RA inflation function, it converts an 
+    angular on-sky distance to a ra distance at given declination.
+    
+    Input argument "extract" tells whether the source detections originate from:
     0: blind source extraction
     1: from forced fits at null detection locations
-    2: from forced fits for monitoringlist sources
-
-    The content of results is in the following sequence:
-    (ra, dec, ra_fit_err, dec_fit_err, peak_flux, peak_flux_err,
-    int_flux, int_flux_err, significance level,
-    beam major width (as), beam minor width(as), beam parallactic angle,
-    ra_sys_err, dec_sys_err).
-    See insert_extracted_sources() for a description of extract.
-
-    ra_fit_err & dec_fit_err are the 1-sigma errors from the gaussian fit,
-    in degrees.
-    ra_sys_err and dec_sys_err represent the systematic errors in ra and declination,
-    and are in arcsec!
-    ra_err^2 = ra_sys_err^2 + ra_fit_err^2, idem for decl_err.
 
     For all extracted sources additional parameters are calculated,
     and appended to the sourcefinder data. Appended and converted are:
@@ -215,24 +224,24 @@ def insert_extracted_sources(image_id, results, extract):
     xtrsrc = []
     for src in results:
         r = list(src)
-        r[2] = r[2] * 3600. # ra_fit_err converted to arcsec
-        r[3] = r[3] * 3600. # decl_fit_err converted to arcsec
-        # ra_err: sqrt of quadratic sum of sys and fit errors, in arcsec
-        r.append(math.sqrt(r[12]**2 + r[2]**2))
-        # decl_err: sqrt of quadratic sum of sys and fit errors, in arcsec
-        r.append(math.sqrt(r[13]**2 + r[3]**2))
+        # ra_err: sqrt of quadratic sum of fitted and systematic errors.
+        r.append(math.sqrt(r[2]**2 + alpha_inflate(r[12]/3600., r[1])**2))
+        # decl_err: sqrt of quadratic sum of fitted and systematic errors.
+        r.append(math.sqrt(r[3]**2 + (r[13]/3600.)**2))
+        # uncertainty_ew: sqrt of quadratic sum of systematic error and error_radius
+        # divided by 3600 because uncertainty in degrees and others in arcsec.
+        r.append(math.sqrt(r[12]**2 + r[14]**2)/3600.)
+        # uncertainty_ns: sqrt of quadratic sum of systematic error and error_radius
+        # divided by 3600 because uncertainty in degrees and others in arcsec.
+        r.append(math.sqrt(r[13]**2 + r[14]**2)/3600.)
         r.append(image_id) # id of the image
         r.append(int(math.floor(r[1]))) # zone
-        r.extend(eq_to_cart(r[0], r[1])) #Cartesian x,y,z
-        r.append(r[0] * math.cos(math.radians(r[1]))) # ra * cos(radias(decl))
+        r.extend(eq_to_cart(r[0], r[1])) # Cartesian x,y,z
+        r.append(r[0] * math.cos(math.radians(r[1]))) # ra * cos(radians(decl))
         if extract == 'blind':
             r.append(0)
         elif extract == 'ff_nd':
             r.append(1)
-        elif extract == 'ff_mon':
-            r.append(2)
-        elif extract == 'ff_ud':
-            r.append(3)
         else:
             raise ValueError("Not a valid extractedsource insert type: '%s'" % extract)
         xtrsrc.append(r)
@@ -252,10 +261,13 @@ INSERT INTO extractedsource
   ,semimajor
   ,semiminor
   ,pa
-  ,ra_sys_err
-  ,decl_sys_err
+  ,ew_sys_err
+  ,ns_sys_err
+  ,error_radius
   ,ra_err
   ,decl_err
+  ,uncertainty_ew
+  ,uncertainty_ns
   ,image
   ,zone
   ,x
@@ -277,12 +289,6 @@ VALUES
     elif extract == 'ff_nd':
         logger.info("Inserted %d forced-fit null detections in extractedsource"
                     " for image %s" % (insert_num, image_id))
-    elif extract == 'ff_mon':
-        logger.info("Inserted %d forced-fit monitoringsources in "
-                    "extractedsource for image %s"  % (insert_num, image_id))
-    elif extract == 'ff_ud':
-        logger.info("Inserted %d forced-fit user entries in extractedsource "
-                    "for image %s" % (insert_num, image_id))
 
 
 def lightcurve(xtrsrcid):
@@ -337,19 +343,19 @@ SELECT c.id
       ,k.name
       ,c.ra
       ,c.decl
-      ,c.ra_err
-      ,c.decl_err
+      ,c.uncertainty_ew
+      ,c.uncertainty_ns
       ,3600 * DEGREES(2 * ASIN(SQRT( (r.x - c.x) * (r.x - c.x)
                                    + (r.y - c.y) * (r.y - c.y)
                                    + (r.z - c.z) * (r.z - c.z)
                                    ) / 2)
                      ) AS distance_arcsec
-      ,3600 * SQRT(  (r.wm_ra - c.ra) * COS(RADIANS(r.wm_decl))
-                   * (r.wm_ra - c.ra) * COS(RADIANS(r.wm_decl))
-                     / (r.wm_ra_err * r.wm_ra_err + c.ra_err * c.ra_err)
-                  + (r.wm_decl - c.decl) * (r.wm_decl - c.decl)
-                    / (r.wm_decl_err * r.wm_decl_err + c.decl_err * c.decl_err)
-                  ) AS assoc_r
+      ,SQRT(  (r.wm_ra - c.ra) * COS(RADIANS(r.wm_decl))
+            * (r.wm_ra - c.ra) * COS(RADIANS(r.wm_decl))
+            / (r.wm_uncertainty_ew * r.wm_uncertainty_ew + c.uncertainty_ew * c.uncertainty_ew)
+           +  (r.wm_decl - c.decl) * (r.wm_decl - c.decl)
+            / (r.wm_uncertainty_ns * r.wm_uncertainty_ns + c.uncertainty_ns * c.uncertainty_ns)
+           ) AS assoc_r
   FROM runningcatalog r
       ,catalogedsource c
       ,catalog k
@@ -363,20 +369,20 @@ SELECT c.id
    AND c.x * r.x + c.y * r.y + c.z * r.z > COS(RADIANS(%(radius)s))
    AND c.catalog = k.id
    AND SQRT(  (r.wm_ra - c.ra) * COS(RADIANS(r.wm_decl))
-                   * (r.wm_ra - c.ra) * COS(RADIANS(r.wm_decl))
-                     / (r.wm_ra_err * r.wm_ra_err + c.ra_err * c.ra_err)
-                  + (r.wm_decl - c.decl) * (r.wm_decl - c.decl)
-                    / (r.wm_decl_err * r.wm_decl_err + c.decl_err * c.decl_err)
-                  ) < %(deruiter)s
+            * (r.wm_ra - c.ra) * COS(RADIANS(r.wm_decl))
+            / (r.wm_uncertainty_ew * r.wm_uncertainty_ew + c.uncertainty_ew * c.uncertainty_ew)
+           +  (r.wm_decl - c.decl) * (r.wm_decl - c.decl)
+            / (r.wm_uncertainty_ns * r.wm_uncertainty_ns + c.uncertainty_ns * c.uncertainty_ns)
+           ) < %(deruiter)s
 ORDER BY c.catalog
         ,assoc_r
 """
 
-    args = {'runcatid': runcatid, 'radius': radius, 'deruiter': deRuiter_r/3600.}
+    args = {'runcatid': runcatid, 'radius': radius, 'deruiter': deRuiter_r}
     cursor = tkp.db.execute(query, args, True)
     results = cursor.fetchall()
     descriptions = ['catsrcid', 'catsrcname', 'catid', 'catname', 'ra', 'decl',
-                                'ra_err', 'decl_err', 'dist_arcsec', 'assoc_r']
+                                'uncertainty_ew', 'uncertainty_ns', 'dist_arcsec', 'assoc_r']
     result_dicts = []
     for result in results:
         result_dicts.append(dict(zip(descriptions, result)))

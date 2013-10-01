@@ -380,35 +380,51 @@ The TraP may add forced-fit entries to this table as well. Then
     sourcefinder procedures.
 
 **ra_err**
-    The 1-sigma error on ra [in arcsec], the square root of the quadratic sum of the
-    gaussian fit and systematic errors, calculated by the database at insertion time.
+    The 1-sigma error on ra [in degrees], ie. the square root of the 
+    quadratic sum of the fitted error (``ra_fit_err``) and the systematic 
+    error (``ew_sys_err``) after the latter has been corrected for 
+    ra inflation depending on declination. 
+    It is calculated by the database at insertion time.
+    Note that this error is declination dependent and the source
+    lies in the range [ra - ra_err, ra + ra_err].
 
 **decl_err**
-    The 1-sigma error on declination [in arcsec], 
-    the square root of the quadratic sum of the gaussian fit and systematic errors, 
-    calculated by the database at insertion time.
+    The 1-sigma error on declination [in degrees], ie. the square root of the 
+    quadratic sum of the fitted error (``decl_fit_err``) and the systematic error
+    (``ns_sys_err``), calculated by the database at insertion time.
+    Note that the source lies in the range [decl - decl_err, decl + decl_err]
+
+**uncertainty_ew**
+    The 1-sigma on-sky error on ra (in the east-west direction) [in degrees], 
+    ie. the square root of the quadratic sum of the error radius (``error_radius``) 
+    and the systematic error (``ew_sys_err``).
+    It is calculated by the database at insertion time.
+    Note that this is a positional uncertainty and is declination independent. 
+    This error is being used in the De Ruiter calculations.
+
+**uncertainty_ns**
+    Analogous to uncertainty_ew.
 
 **ra_fit_err**
-    The 1-sigma error from the source fitting for ra [in arcsec], calculated by the
-    sourcefinder procedures. NOTE: the db unit is in arcsec, while the
-    sourcefinder produces degrees, so be careful with convertions.
+    The 1-sigma error on ra [in degrees] from the source gaussian fitting, calculated by the
+    sourcefinder procedures. It is important to note that a source's fitted ra error increases
+    towards the poles, and is thus declination dependent (see also error_radius). 
 
 **decl_fit_err**
-    The 1-sigma error from the source fitting for declination [in arcsec],
-    calculated by the sourcefinder procedures. NOTE: the db unit is in arcsec,
-    while the sourcefinder produces degrees, so be careful with convertions.
+    The 1-sigma error from the source fitting for declination [in degrees],
+    calculated by the sourcefinder procedures (see also error_radius). 
 
-**ra_sys_err**
-    The systematic error on ra, as determined after source finder testing
-    by Dario Carbone and reported at 2012-12-04 `TKP Meeting
-    <https://speakerdeck.com/transientskp/source-finder-testing-overview-and-status>`_,
-    to be set at 20 arcsec.
+**ew_sys_err**
+    The systematic error on RA [arcsec]. 
+	(As an on-sky angular uncertainty, independent of Declination.)
+	It is a telescope dependent error and is provided by the user in the parset file.
 
-**decl_sys_err**
-    The systematic error on decl, as determined after source finder testing
-    by Dario Carbone and reported at 2012-12-04 `TKP Meeting
-    <https://speakerdeck.com/transientskp/source-finder-testing-overview-and-status>`_,
-    to be set at 20 arcsec.
+**ns_sys_err**
+    Analogous to ew_sys_err.
+
+**error_radius**
+    Estimate of the absolute angular error on a source's central position [arcsec]. 
+    It is a pessimistic estimate, because it takes the sum of the error along the X and Y axes.
 
 **x, y, z**
     Cartesian coordinate representation of (ra,decl), calculated by the
@@ -738,32 +754,30 @@ If no counterpart could be found for an extracted sources, it is appended to
 **wm_decl** :math:`=\xi_{\delta}`
     The weighted mean of Declination of the source [in J2000 degrees].
 
-**wm_ra_err**
-    The weighted mean of the ra_err of the source [in arcsec]
+**wm_uncertainty_ew**
+    The positional on-sky uncertainty in the east-west direction of the weighted 
+    mean RA [in degrees].
 
-**wm_decl_err**
-    The weighted mean of the decl_err of the source [in arcsec]
+**wm_uncertainty_ns**
+    The positional on-sky uncertainty in the north-south direction of the 
+    weighted mean Dec [in degrees].
 
-.. note::
+**avg_ra_err**
+    The average of the ra_err of the source [in degrees]
 
-   I am not sure that the weighted mean of the errors is useful, since the
-   weighting is dependent upon the errors themselves.  A simple mean error
-   might be more sensible.  -TS 30/01/13
+**avg_decl_err**
+    The average of the decl_err of the source [in degrees]
 
 **avg_wra** :math:`=\overline{w_{\alpha}\alpha}`
-    The average of ra/ra_err^2, used for calculating the average weight of ra.
-    (This alleviates the computations, when we have lots of datapoints.)
+    The average of ra/uncertainty_ew^2, used for calculating the weighted mean 
+    of the RA.
 
 **avg_wdecl** :math:`=\overline{w_{\delta}\delta}`
     Analogous to avg_wra.
 
 **avg_weight_ra** :math:`=\overline{w_{\alpha}}`
-    The average of 1/ra_err^2, used for calculating the weighted mean of ra.
-    (This alleviates the computations, when we have lots of datapoints.)
-
-.. note::
-   Is it really more efficient this way? It would be good to get a more detailed
-   explanation. -TS 30/01/13
+    The average of 1/uncertainty_ew^2, used for calculating the weighted mean 
+    of the RA.
 
 **avg_weight_decl**   :math:`=\overline{w_{\delta}}`
     Analogous to avg_weight_ra

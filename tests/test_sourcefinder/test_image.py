@@ -209,7 +209,8 @@ class TestSimpleImageSourceFind(unittest.TestCase):
             0.0006067963179204716, 0.00017037685531724465, #Integrated flux, err
             6.192259965962862, 25.516190123153514, #Significance level, Beam semimajor-axis width (arcsec)
             10.718798843620489, 178.62899212789304, #Beam semiminor-axis width (arcsec), Beam parallactic angle
-            0.0, 0.0 #ra_sys_err, dec_sys_err
+            0.0, 0.0, #ew_sys_err, ns_sys_err
+            5.181697175052841 #error_radius
         )
         self.image = accessors.sourcefinder_image_from_accessor(
                        accessors.FitsImage(os.path.join(DATAPATH,

@@ -34,7 +34,7 @@ class ImageData(object):
                 residuals=True, deblend=False, deblend_nthresh=32,
                 detection_threshold=10.0, analysis_threshold=3.0,
                 structuring_element=[[0,1,0], [1,1,1], [0,1,0]],
-                ra_sys_err=0.0, dec_sys_err=0.0, force_beam=False):
+                ew_sys_err=0.0, ns_sys_err=0.0, force_beam=False):
         """Sets up an ImageData object.
 
         *Args:*
@@ -75,7 +75,7 @@ class ImageData(object):
         self.detection_threshold=detection_threshold
         self.analysis_threshold=analysis_threshold
 
-        self.ra_sys_err, self.dec_sys_err = ra_sys_err, dec_sys_err
+        self.ew_sys_err, self.ns_sys_err = ew_sys_err, ns_sys_err
 
         # If force_beam is True, we force all blind extraction results to have
         # major/minor axes equal to the restoring beam.

@@ -48,8 +48,8 @@ class TestLightSurface(unittest.TestCase):
                 'decl': 11.11 + i,
                 'ra_fit_err': 0.01,
                 'decl_fit_err': 0.01,
-                'ra_sys_err': 20,
-                'decl_sys_err': 20,
+                'ew_sys_err': 20,
+                'ns_sys_err': 20,
                 'i_peak': 10*i,
                 'i_peak_err': 0.1,
                 'error_radius': 10.0
@@ -67,7 +67,7 @@ class TestLightSurface(unittest.TestCase):
                           data['i_peak']*(1+i), data['i_peak_err'],
                           10., # Significance level
                           1, 1, 0, # Beam params (width arcsec major, width arcsec minor, parallactic angle)
-                          data['ra_sys_err'], data['decl_sys_err'], # Systematic errors
+                          data['ew_sys_err'], data['ns_sys_err'], # Systematic errors
                           data['error_radius'])
                 sources.append(source)
 

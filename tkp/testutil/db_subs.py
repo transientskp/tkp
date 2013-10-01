@@ -15,7 +15,7 @@ ExtractedSourceTuple = namedtuple("ExtractedSourceTuple",
                                  'flux', 'flux_err',
                                  'sigma',
                                  'beam_maj', 'beam_min', 'beam_angle',
-                                 'ra_sys_err', 'dec_sys_err',
+                                 'ew_sys_err', 'ns_sys_err',
                                  'error_radius'
                                 ])
 
@@ -108,7 +108,7 @@ def example_extractedsource_tuple(ra=123.123, dec=10.5, #Arbitrarily picked defa
                                   flux=15e-3, flux_err=5e-4,
                                   sigma=15,
                                   beam_maj=100, beam_min=100, beam_angle=45,
-                                  ra_sys_err=20, dec_sys_err=20,
+                                  ew_sys_err=20, ns_sys_err=20,
                                   error_radius=10.0):
     """Generates an example 'fake extraction' for unit testing.
 
@@ -117,7 +117,7 @@ def example_extractedsource_tuple(ra=123.123, dec=10.5, #Arbitrarily picked defa
     reject sources outside of designated extraction regions.
     """
     # NOTE: ra_fit_err & dec_fit_err are in degrees,
-    # and ra_sys_err, decl_sys_err and error_radius are in arcsec.
+    # and ew_sys_err, ns_sys_err and error_radius are in arcsec.
     # The uncertainty_ew is then the sqrt of the quadratic sum of the 
     # systematic error and the error_radius
     # The ra_err is then the sqrt of the quadratic sum of the 
@@ -129,7 +129,7 @@ def example_extractedsource_tuple(ra=123.123, dec=10.5, #Arbitrarily picked defa
                                 sigma=sigma,
                                 beam_maj=beam_maj, beam_min=beam_min,
                                 beam_angle=beam_angle,
-                                ra_sys_err=ra_sys_err, dec_sys_err=dec_sys_err,
+                                ew_sys_err=ew_sys_err, ns_sys_err=ns_sys_err,
                                 error_radius=error_radius
                                )
 

@@ -382,7 +382,7 @@ The TraP may add forced-fit entries to this table as well. Then
 **ra_err**
     The 1-sigma error on ra [in degrees], ie. the square root of the 
     quadratic sum of the fitted error (``ra_fit_err``) and the systematic 
-    error (``ra_sys_err``) after the latter has been corrected for 
+    error (``ew_sys_err``) after the latter has been corrected for 
     ra inflation depending on declination. 
     It is calculated by the database at insertion time.
     Note that this error is declination dependent and the source
@@ -391,24 +391,19 @@ The TraP may add forced-fit entries to this table as well. Then
 **decl_err**
     The 1-sigma error on declination [in degrees], ie. the square root of the 
     quadratic sum of the fitted error (``decl_fit_err``) and the systematic error
-    (``decl_sys_err``), calculated by the database at insertion time.
+    (``ns_sys_err``), calculated by the database at insertion time.
     Note that the source lies in the range [decl - decl_err, decl + decl_err]
 
 **uncertainty_ew**
     The 1-sigma on-sky error on ra (in the east-west direction) [in degrees], 
     ie. the square root of the quadratic sum of the error radius (``error_radius``) 
-    and the systematic error (``ra_sys_err``).
+    and the systematic error (``ew_sys_err``).
     It is calculated by the database at insertion time.
     Note that this is a positional uncertainty and is declination independent. 
     This error is being used in the De Ruiter calculations.
 
 **uncertainty_ns**
-    The 1-sigma on-sky error on decl (in the north-south direction) [in degrees], 
-    ie. the square root of the quadratic sum of the error radius (``error_radius``) 
-    and the systematic error (``decl_sys_err``).
-    It is calculated by the database at insertion time.
-    Note that this is a positional uncertainty, independent of declination.
-    This error is being used in the De Ruiter calculations.
+    Analogous to uncertainty_ew.
 
 **ra_fit_err**
     The 1-sigma error on ra [in degrees] from the source gaussian fitting, calculated by the
@@ -419,13 +414,13 @@ The TraP may add forced-fit entries to this table as well. Then
     The 1-sigma error from the source fitting for declination [in degrees],
     calculated by the sourcefinder procedures (see also error_radius). 
 
-**ra_sys_err**
-    The systematic error on ra [arcsec]. It is a telescope dependent error and
-    is provided by the user in the parset file.
+**ew_sys_err**
+    The systematic error on RA [arcsec]. 
+	(As an on-sky angular uncertainty, independent of Declination.)
+	It is a telescope dependent error and is provided by the user in the parset file.
 
-**decl_sys_err**
-    The systematic error on decl [arcsec]. It is a telescope dependent error and
-    is provided by the user in the parset file.
+**ns_sys_err**
+    Analogous to ew_sys_err.
 
 **error_radius**
     Estimate of the absolute angular error on a source's central position [arcsec]. 

@@ -179,24 +179,24 @@ def insert_extracted_sources(image_id, results, extract):
     (6) int_flux [Jy], (7) int_flux_err [Jy],
     (8) significance detection level,
     (9) beam major width (arcsec), (10) - minor width (arcsec), (11) - parallactic angle [deg],
-    (12) ra_sys_err [arcsec], (13) decl_sys_err [arcsec],
+    (12) ew_sys_err [arcsec], (13) ns_sys_err [arcsec],
     (14) error_radius [arcsec]
     
     ra_fit_err and decl_fit_err are the 1-sigma errors from the gaussian fit,
     in degrees. Note that for a source located towards the poles the ra_fit_err 
     increases with absolute declination.
     error_radius is a pessimistic on-sky error estimate in arcsec.
-    ra_sys_err and dec_sys_err represent the telescope dependent systematic errors 
+    ew_sys_err and ns_sys_err represent the telescope dependent systematic errors 
     and are in arcsec.
     An on-sky error (declination independent, and used in de ruiter calculations)
     is then:
-    uncertainty_ew^2 = ra_sys_err^2 + error_radius^2
-    uncertainty_ns^2 = decl_sys_err^2 + error_radius^2
+    uncertainty_ew^2 = ew_sys_err^2 + error_radius^2
+    uncertainty_ns^2 = ns_sys_err^2 + error_radius^2
     The units of uncertainty_ew and uncertainty_ns are in degrees.
     The error on RA is given by ra_err. For a source with an RA of ra and an error 
     of ra_err, its RA lies in the range [ra-ra_err, ra+ra_err].
-    ra_err^2 = ra_fit_err^2 + [alpha_inflate(ra_sys_err,decl)]^2
-    decl_err^2 = decl_fit_err^2 + decl_sys_err^2.
+    ra_err^2 = ra_fit_err^2 + [alpha_inflate(ew_sys_err,decl)]^2
+    decl_err^2 = decl_fit_err^2 + ns_sys_err^2.
     The units of ra_err and decl_err are in degrees.
     Here alpha_inflate() is the RA inflation function, it converts an 
     angular on-sky distance to a ra distance at given declination.
@@ -261,8 +261,8 @@ INSERT INTO extractedsource
   ,semimajor
   ,semiminor
   ,pa
-  ,ra_sys_err
-  ,decl_sys_err
+  ,ew_sys_err
+  ,ns_sys_err
   ,error_radius
   ,ra_err
   ,decl_err

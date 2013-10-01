@@ -479,7 +479,7 @@ class Image(DBObject):
                 significance level,
                 beam major width (as), beam minor width(as),
                 beam parallactic angle
-                ra_sys_err, dec_sys_err,
+                ew_sys_err, ns_sys_err,
                 error_radius).
        """
        #To do: Figure out a saner method of passing the results around
@@ -508,7 +508,7 @@ class ExtractedSource(DBObject):
     REQUIRED = ('image', 'zone',
                 'ra', 'decl', 'ra_err', 'decl_err',
                 'uncertainty_ew', 'uncertainty_ns',
-                'ra_fit_err', 'decl_fit_err', 'ra_sys_err', 'decl_sys_err',
+                'ra_fit_err', 'decl_fit_err', 'ew_sys_err', 'ns_sys_err',
                 'error_radius',
                 'x', 'y', 'z',
                 'racosdecl', 'det_sigma')

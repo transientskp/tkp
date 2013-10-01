@@ -25,8 +25,8 @@ def extract_sources(image_path, parset):
                             radius=parset['radius'],
                             detection_threshold=parset['detection_threshold'],
                             analysis_threshold=parset['analysis_threshold'],
-                            ra_sys_err=parset['ra_sys_err'],
-                            dec_sys_err=parset['dec_sys_err'],
+                            ew_sys_err=parset['ew_sys_err'],
+                            ns_sys_err=parset['ns_sys_err'],
                             force_beam=parset['force_beam'])
 
     logger.debug("Employing margin: %s extraction radius: %s deblend: %s deblend_nthresh: %s",
@@ -57,8 +57,8 @@ def forced_fits(image_path, positions, parset):
                             margin=parset['margin'], radius=parset['radius'],
                             detection_threshold=parset['detection_threshold'],
                             analysis_threshold=parset['analysis_threshold'],
-                            ra_sys_err=parset['ra_sys_err'],
-                            dec_sys_err=parset['dec_sys_err'])
+                            ew_sys_err=parset['ew_sys_err'],
+                            ns_sys_err=parset['ns_sys_err'])
 
     if len(positions):
         boxsize = parset['box_in_beampix'] * max(data_image.beam[0],

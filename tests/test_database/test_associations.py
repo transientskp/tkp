@@ -74,10 +74,10 @@ class TestOne2One(unittest.TestCase):
         self.assertAlmostEqual(wm_ra[0], steady_srcs[0].ra)
         self.assertAlmostEqual(wm_decl[0], steady_srcs[0].dec)
         self.assertAlmostEqual(wm_uncertainty_ew[0], math.sqrt(
-                           1./ (n_images / ( (steady_srcs[0].error_radius)**2 + (steady_srcs[0].ra_sys_err)**2))
+                           1./ (n_images / ( (steady_srcs[0].error_radius)**2 + (steady_srcs[0].ew_sys_err)**2))
                                ) / 3600)
         self.assertAlmostEqual(wm_uncertainty_ns[0], math.sqrt(
-                           1./ (n_images / ((steady_srcs[0].error_radius)**2 + (steady_srcs[0].dec_sys_err)**2 ))
+                           1./ (n_images / ((steady_srcs[0].error_radius)**2 + (steady_srcs[0].ns_sys_err)**2 ))
                                ) / 3600)
 
         self.assertAlmostEqual(x[0],
@@ -450,16 +450,16 @@ class TestMeridianOne2One(unittest.TestCase):
 
 
         #Note ra / ra_fit_err are in degrees.
-        # ra_sys_err is in arcseconds, but we set it = 0 so doesn't matter.
+        # ew_sys_err is in arcseconds, but we set it = 0 so doesn't matter.
         #ra_fit_err cannot be zero or we get div by zero errors.
         #Also, there is a hard limit on association radii:
         #currently this defaults to 0.03 degrees== 108 arcseconds
         src0 = db_subs.example_extractedsource_tuple(ra=10.00, dec=0.0,
                                              error_radius=10.0,
-                                             ra_sys_err=0.0, dec_sys_err=0.0)
+                                             ew_sys_err=0.0, ns_sys_err=0.0)
         src1 = db_subs.example_extractedsource_tuple(ra=10.02, dec=0.0,
                                              error_radius=10.0,
-                                             ra_sys_err=0.0, dec_sys_err=0.0)
+                                             ew_sys_err=0.0, ns_sys_err=0.0)
         src_list = [src0, src1]
         # error on ra used in DR calculation is based on error_radius and sys_err,
         # which are here in arcsec, and thus we have to multiply with 3600.
@@ -513,7 +513,7 @@ class TestOne2Many(unittest.TestCase):
                                                      flux = 15e-3, flux_err = 5e-4,
                                                      sigma = 15,
                                                      beam_maj = 100, beam_min = 100, beam_angle = 45,
-                                                     ra_sys_err=20, dec_sys_err=20
+                                                     ew_sys_err=20, ns_sys_err=20
                                                         ))
         results = []
         results.append(src[-1])
@@ -577,7 +577,7 @@ class TestOne2Many(unittest.TestCase):
                                                      flux = 15e-3, flux_err = 5e-4,
                                                      sigma = 15,
                                                      beam_maj = 100, beam_min = 100, beam_angle = 45,
-                                                     ra_sys_err=20, dec_sys_err=20
+                                                     ew_sys_err=20, ns_sys_err=20
                                                         ))
         src.append(db_subs.example_extractedsource_tuple(ra=123.12351, dec=10.551,
                                                      ra_fit_err=5./3600, dec_fit_err=6./3600,
@@ -585,7 +585,7 @@ class TestOne2Many(unittest.TestCase):
                                                      flux = 15e-3, flux_err = 5e-4,
                                                      sigma = 15,
                                                      beam_maj = 100, beam_min = 100, beam_angle = 45,
-                                                     ra_sys_err=20, dec_sys_err=20
+                                                     ew_sys_err=20, ns_sys_err=20
                                                         ))
         results = []
         results.append(src[0])
@@ -706,7 +706,7 @@ class TestMany2One(unittest.TestCase):
                                                      flux = 15e-3, flux_err = 5e-4,
                                                      sigma = 15,
                                                      beam_maj = 100, beam_min = 100, beam_angle = 45,
-                                                     ra_sys_err=20, dec_sys_err=20
+                                                     ew_sys_err=20, ns_sys_err=20
                                                         ))
         src.append(db_subs.example_extractedsource_tuple(ra=123.015, dec=10.5,
                                                      ra_fit_err=5./3600, dec_fit_err=6./3600,
@@ -714,7 +714,7 @@ class TestMany2One(unittest.TestCase):
                                                      flux = 15e-3, flux_err = 5e-4,
                                                      sigma = 15,
                                                      beam_maj = 100, beam_min = 100, beam_angle = 45,
-                                                     ra_sys_err=20, dec_sys_err=20
+                                                     ew_sys_err=20, ns_sys_err=20
                                                         ))
         results = []
         results.append(src[0])
@@ -745,7 +745,7 @@ class TestMany2One(unittest.TestCase):
                                                      flux = 15e-3, flux_err = 5e-4,
                                                      sigma = 15,
                                                      beam_maj = 100, beam_min = 100, beam_angle = 45,
-                                                     ra_sys_err=20, dec_sys_err=20
+                                                     ew_sys_err=20, ns_sys_err=20
                                                         ))
         results = []
         results.append(src[-1])
@@ -862,7 +862,7 @@ class TestMany2Many(unittest.TestCase):
                                                      flux = 15e-3, flux_err = 5e-4,
                                                      sigma = 15,
                                                      beam_maj = 100, beam_min = 100, beam_angle = 45,
-                                                     ra_sys_err=20, dec_sys_err=20
+                                                     ew_sys_err=20, ns_sys_err=20
                                                         ))
         src1.append(db_subs.example_extractedsource_tuple(ra=123.015, dec=10.5,
                                                      ra_fit_err=5./3600, dec_fit_err=6./3600,
@@ -870,7 +870,7 @@ class TestMany2Many(unittest.TestCase):
                                                      flux = 15e-3, flux_err = 5e-4,
                                                      sigma = 15,
                                                      beam_maj = 100, beam_min = 100, beam_angle = 45,
-                                                     ra_sys_err=20, dec_sys_err=20
+                                                     ew_sys_err=20, ns_sys_err=20
                                                         ))
         results = []
         results.append(src1[0])
@@ -902,7 +902,7 @@ class TestMany2Many(unittest.TestCase):
                                                      flux = 15e-3, flux_err = 5e-4,
                                                      sigma = 15,
                                                      beam_maj = 100, beam_min = 100, beam_angle = 45,
-                                                     ra_sys_err=20, dec_sys_err=20
+                                                     ew_sys_err=20, ns_sys_err=20
                                                         ))
         src2.append(db_subs.example_extractedsource_tuple(ra=123.0, dec=10.515,
                                                      ra_fit_err=5./3600, dec_fit_err=6./3600,
@@ -910,7 +910,7 @@ class TestMany2Many(unittest.TestCase):
                                                      flux = 15e-3, flux_err = 5e-4,
                                                      sigma = 15,
                                                      beam_maj = 100, beam_min = 100, beam_angle = 45,
-                                                     ra_sys_err=20, dec_sys_err=20
+                                                     ew_sys_err=20, ns_sys_err=20
                                                         ))
         results = []
         results.append(src2[0])

@@ -156,7 +156,7 @@ def run(job_name, local=False):
                                                            p_parset)
 
     # As of the current release, we do not support a "monitoring list"
-    #if not add_manual_monitoringlist_entries(dataset_id, []):
+    #if not add_manual_monitoringlist_entries(dataset_id, monitor_coords):
     #    return 1
 
     db_images = [Image(id=image_id) for image_id in image_ids]

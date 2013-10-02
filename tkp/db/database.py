@@ -83,6 +83,8 @@ class Database(object):
         if schema_version != DB_VERSION:
             error = "Database version incompatibility (needed %d, got %d)" % (DB_VERSION, schema_version)
             logger.error(error)
+            self._connection.close()
+            self._connection = None
             raise Exception(error)
 
         # I don't like this but it is used in some parts of TKP

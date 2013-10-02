@@ -4,6 +4,9 @@
  * This function computes the ra expansion for a given theta at 
  * a given declination.
  * theta and decl are both in degrees.
+ *
+ * For a derivation, see MSR TR 2006 52, Section 2.1
+ * http://research.microsoft.com/apps/pubs/default.aspx?id=64524
  */
 CREATE FUNCTION alpha(theta DOUBLE PRECISION, decl DOUBLE PRECISION)
 RETURNS DOUBLE PRECISION

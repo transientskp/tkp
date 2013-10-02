@@ -15,7 +15,8 @@ ExtractedSourceTuple = namedtuple("ExtractedSourceTuple",
                                  'flux', 'flux_err',
                                  'sigma',
                                  'beam_maj', 'beam_min', 'beam_angle',
-                                 'ra_sys_err', 'dec_sys_err'
+                                 'ew_sys_err', 'ns_sys_err',
+                                 'error_radius'
                                 ])
 
 
@@ -107,16 +108,20 @@ def example_extractedsource_tuple(ra=123.123, dec=10.5, #Arbitrarily picked defa
                                   flux=15e-3, flux_err=5e-4,
                                   sigma=15,
                                   beam_maj=100, beam_min=100, beam_angle=45,
-                                  ra_sys_err=20, dec_sys_err=20):
+                                  ew_sys_err=20, ns_sys_err=20,
+                                  error_radius=10.0):
     """Generates an example 'fake extraction' for unit testing.
 
     Note that while RA and Dec are arbitrary, they should (usually) be close
     to the RA and Dec of any fake images used, since the association routines
     reject sources outside of designated extraction regions.
     """
-    # NOTE: ra_fit_err & dec_fit_err are in degrees (they are converted to arcsec in the db),
-    # and ra_sys_err & decl_sys_err are in arcsec.
-    # The ra_err is then the sqrt of the quadratic sum
+    # NOTE: ra_fit_err & dec_fit_err are in degrees,
+    # and ew_sys_err, ns_sys_err and error_radius are in arcsec.
+    # The uncertainty_ew is then the sqrt of the quadratic sum of the 
+    # systematic error and the error_radius
+    # The ra_err is then the sqrt of the quadratic sum of the 
+    # fitted error and the alpha_inflated systematic error
     return ExtractedSourceTuple(ra=ra, dec=dec,
                                 ra_fit_err=ra_fit_err, dec_fit_err=dec_fit_err,
                                 peak=peak, peak_err=peak_err,
@@ -124,7 +129,8 @@ def example_extractedsource_tuple(ra=123.123, dec=10.5, #Arbitrarily picked defa
                                 sigma=sigma,
                                 beam_maj=beam_maj, beam_min=beam_min,
                                 beam_angle=beam_angle,
-                                ra_sys_err=ra_sys_err, dec_sys_err=dec_sys_err
+                                ew_sys_err=ew_sys_err, ns_sys_err=ns_sys_err,
+                                error_radius=error_radius
                                )
 
 

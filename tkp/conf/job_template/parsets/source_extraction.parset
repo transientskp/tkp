@@ -1,5 +1,5 @@
 [source_extraction]
-# extraction threshold (basically S/N) and associetion radius (in units of the default De Ruiter radius) 
+# extraction threshold (basically S/N)
 # Systematic errors on ra & decl (units in arcsec)
 # See Dario Carbone's presentation at TKP Meeting 20121204
 detection_threshold = 8
@@ -10,8 +10,8 @@ margin = 10
 deblend = True
 deblend_nthresh = 90
 radius = 250
-ra_sys_err = 10
-dec_sys_err = 10
+ew_sys_err = 10
+ns_sys_err = 10
 max_degradation = 0.2
 force_beam = False
 box_in_beampix = 10

@@ -100,7 +100,7 @@ def _select_updated_variability_indices(image_id):
     *Returns*:
     A list of dicts with keys as follows:
         [{ runcat, band, f_datapoints,
-        wm_ra, wm_decl, wm_ra_err, wm_decl_err,
+        wm_ra, wm_decl, wm_uncertainty_ew, wm_uncertainty_ns,
         v_int, eta_int, trigger_xtrsrc, new_transient }]
     """
 
@@ -117,8 +117,8 @@ SELECT t1.runcat
       ,t1.f_datapoints
       ,t1.wm_ra
       ,t1.wm_decl
-      ,t1.wm_ra_err
-      ,t1.wm_decl_err
+      ,t1.wm_uncertainty_ew
+      ,t1.wm_uncertainty_ns
       ,t1.V_int_inter / t1.avg_f_int AS v_int
       ,t1.eta_int_inter / t1.avg_f_int_weight AS eta_int
       ,CASE WHEN tr0.trigger_xtrsrc IS NULL
@@ -134,8 +134,8 @@ SELECT t1.runcat
               ,f_datapoints
               ,wm_ra
               ,wm_decl
-              ,wm_ra_err
-              ,wm_decl_err
+              ,wm_uncertainty_ew
+              ,wm_uncertainty_ns
               ,CASE WHEN avg_f_int = 0.0
                     THEN 0.000001
                     ELSE avg_f_int
@@ -205,7 +205,7 @@ def multi_epoch_transient_search(image_id,
     satisfy the variability criteria given,
     with keys as follows:
         [{ runcat, band, f_datapoints,
-        wm_ra, wm_decl, wm_ra_err, wm_decl_err,
+        wm_ra, wm_decl, wm_uncertainty_ew, wm_uncertainty_ns,
         v_int, eta_int, 'siglevel',
         trigger_xtrsrc, new_transient }]
     """

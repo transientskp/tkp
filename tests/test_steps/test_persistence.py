@@ -1,4 +1,7 @@
 import unittest
+import pyfits
+import math
+import tempfile
 import tkp.steps.persistence
 from tkp.testutil import db_subs
 from tkp.testutil.decorators import requires_mongodb
@@ -56,3 +59,24 @@ class TestMongoDb(unittest.TestCase):
     def test_image_to_mongodb(self):
         self.assertTrue(tkp.steps.persistence.image_to_mongodb(self.images[0],
                                                     hostname, port, database))
+
+class TestFixReferenceDec(unittest.TestCase):
+    def test_dec_90(self):
+        # Default unit is degrees.
+        self._test_for_reference_dec(90.0)
+
+    def test_dec_90_deg(self):
+        self._test_for_reference_dec(90.0, "deg")
+
+    def test_dec_pi_by_2_rad(self):
+        self._test_for_reference_dec(math.pi/2, "rad")
+
+    def _test_for_reference_dec(self, refdec, unit=None):
+        with tempfile.NamedTemporaryFile() as temp_fits:
+            h = pyfits.PrimaryHDU()
+            h.header.update("CRVAL2", refdec)
+            if unit:
+                h.header.update("CUNIT2", unit)
+            h.writeto(temp_fits.name)
+            tkp.steps.persistence.fix_reference_dec(temp_fits.name)
+            self.assertLess(pyfits.getheader(temp_fits.name)['CRVAL2'], refdec)

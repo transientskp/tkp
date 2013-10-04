@@ -1,9 +1,11 @@
 import os
+import math
 import logging
 import warnings
 from tempfile import NamedTemporaryFile
 
 from pyrap.images import image as pyrap_image
+import pyfits
 
 import tkp.accessors
 from tkp.db.database import Database
@@ -12,6 +14,30 @@ from tkp.db.orm import DataSet, Image
 
 logger = logging.getLogger(__name__)
 
+def fix_reference_dec(imagename):
+    """
+    If the FITS file specified has a reference dec of 90 (or pi/2), make it
+    infinitesimally less. This works around problems with ill-defined
+    coordinate systems at the north celestial pole.
+    """
+    # TINY is an arbitrary constant which we regard as "far enough" away from
+    # dec 90 (or pi/2). In theory, we ought to be able to us
+    # sys.float_info.epsilon, but pyfits seems to round this when writing it
+    # to a FITS file so that isn't quite generous enough.
+    TINY = 1e-10
+    with pyfits.open(imagename, mode='update') as ff:
+        # The FITS standard (version 3.0, July 2008) tells us "For angular
+        # measurements given as floating-point values [...] the units should
+        # be degrees". We therefore use that as a default, but handle radians
+        # too, just to be on the safe side.
+        critical_value = 90.0 # degrees
+        if "CUNIT2" in ff[0].header and ff[0].header["CUNIT2"] == "rad":
+            critical_value = math.pi/2 # radians
+
+        ref_dec = ff[0].header['CRVAL2']
+        if (critical_value - ref_dec) < TINY:
+            ff[0].header['CRVAL2'] = ref_dec * (1 - TINY)
+            ff.flush()
 
 def image_to_mongodb(filename, hostname, port, db):
     """Copy a file into mongodb"""
@@ -38,6 +64,7 @@ def image_to_mongodb(filename, hostname, port, db):
             temp_fits_file = NamedTemporaryFile()
             i = pyrap_image(filename)
             i.tofits(temp_fits_file.name)
+            fix_reference_dec(temp_fits_file.name)
             new_file = gfs.new_file(filename=filename)
             with open(temp_fits_file.name, "r") as f:
                 new_file.write(f)

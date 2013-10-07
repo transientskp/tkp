@@ -274,10 +274,15 @@ def angsep(ra1, dec1, ra2, dec2):
 
     b = (math.pi / 2) - math.radians(dec1)
     c = (math.pi / 2) - math.radians(dec2)
+    temp = (math.cos(b) * math.cos(c)) + (math.sin(b) * math.sin(c) * math.cos(math.radians(ra1 - ra2)))
 
-    return (3600 * math.degrees(math.acos(
-        (math.cos(b) * math.cos(c)) + (math.sin(b) * math.sin(c) *
-                                       math.cos(math.radians(ra1 - ra2))))))
+    # Truncate the value of temp at +- 1: it makes no sense to do math.acos()
+    # of a value outside this range, but occasionally we might get one due to
+    # rounding errors.
+    if abs(temp) > 1.0:
+        temp = 1.0 * cmp(temp, 0)
+
+    return 3600 * math.degrees(math.acos(temp))
 
 
 def alphasep(ra1, ra2, dec1, dec2):

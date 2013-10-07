@@ -43,7 +43,7 @@ def database_config(pipe_config=None, apply=False):
     # Default values
     kwargs = {
         'engine': "postgresql", 'database': None, 'user': getpass.getuser(),
-        'password': None, 'host': "localhost", 'port': "5432", 'passphrase': None
+        'password': None, 'host': "localhost", 'port': 5432, 'passphrase': ""
     }
 
     # Try loading a config file, if any
@@ -54,16 +54,20 @@ def database_config(pipe_config=None, apply=False):
                 kwargs[key] = value
 
     # The environment takes precedence over the config file
-    for env_var, key in [
+    env_vars = [
         ("TKP_DBNAME", 'database'),
         ("TKP_DBUSER", 'user'),
         ("TKP_DBENGINE", 'engine'),
         ("TKP_DBPASSWORD", "password"),
         ("TKP_DBHOST", "host"),
         ("TKP_DBPORT", "port")
-    ]:
+    ]
+    for env_var, key in env_vars:
         if env_var in os.environ:
-            kwargs[key] = os.environ.get(env_var)
+            if env_var == "TKP_DBPORT":
+                kwargs[key] = int(os.environ.get(env_var))
+            else:
+                kwargs[key] = os.environ.get(env_var)
 
     # If only the username is defined, use that as a
     # default for the database name and password.

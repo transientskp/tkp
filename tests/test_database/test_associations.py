@@ -490,25 +490,37 @@ class TestMeridianOne2One(unittest.TestCase):
         
         im_list = db_subs.example_dbimage_datasets(n_images=2)
         
-        # image 1
-        pos1 = [(30.0,10.5),(300.0,10.5)]
-        sources1 = [db_subs.example_extractedsource_tuple(ra=p[0], dec=p[1]) for p in pos1]
+        # Base positions for each source pair:
+        pos1 = (30.0,10.5)
+        pos2 = (pos1[0]+270.0, pos1[1])
+
+        positions = [pos1, pos2]
+        sources1 = [db_subs.example_extractedsource_tuple(ra=p[0], dec=p[1])
+                    for p in positions]
 
         image = tkp.db.Image(dataset=dataset, data=im_list[0])
         image.insert_extracted_sources(sources1)
         associate_extracted_sources(image.id, deRuiter_r=3.717)
         
-        # image 2
-        pos2 = [(30.001,10.51),(300.001,10.51)]
-        sources2 = [db_subs.example_extractedsource_tuple(ra=p[0], dec=p[1]) for p in pos2]
+        # Now shift the positions to be associated in both RA and Dec,
+        # then make sure we get the same result at both base RA's:
+        delta_ra = 50 / 3600.0
+        delta_dec = 50 / 3600.0
+        positions = [  [pos1[0] + delta_ra, pos1[1] + delta_dec] ,
+                      [pos2[0] + delta_ra, pos2[1] + delta_dec]]
+
+        sources2 = [db_subs.example_extractedsource_tuple(ra=p[0], dec=p[1])
+                    for p in positions]
         
         expected_dr1 = db_subs.deRuiter_radius(sources1[0], sources2[0])
         expected_dr2 = db_subs.deRuiter_radius(sources1[1], sources2[1])
 
         image = tkp.db.Image(dataset=dataset, data=im_list[1])
         image.insert_extracted_sources(sources2)
-        associate_extracted_sources(image.id, deRuiter_r=3.717)
+        associate_extracted_sources(image.id, deRuiter_r=1e6)
         
+        # Now inspect the contents of assocxtrsource:
+        # Order results by runningcatalog id, then DR radius.
         query = """\
         SELECT a.runcat
               ,a.xtrsrc
@@ -528,14 +540,15 @@ class TestMeridianOne2One(unittest.TestCase):
         dr_radius = dr_result[2]
         
         self.assertEqual(len(runcat), 4)
+        # Ordered by runcat id,so check associations
+        # have performed as expected by checking consecutive pairs:
         self.assertEqual(runcat[0], runcat[1])
         self.assertEqual(runcat[2], runcat[3])
+        # New sources are assigned DR=0
         self.assertAlmostEqual(dr_radius[0], 0)
         self.assertAlmostEqual(dr_radius[2], 0)
         self.assertAlmostEqual(dr_radius[1], expected_dr1)
         self.assertAlmostEqual(dr_radius[3], expected_dr2)
-        self.assertAlmostEqual(dr_radius[3], expected_dr1)
-        self.assertAlmostEqual(dr_radius[1], expected_dr2)
         
 
 class TestOne2Many(unittest.TestCase):
@@ -911,6 +924,31 @@ class TestMany2Many(unittest.TestCase):
         associations to be two of the type 1-to-many and one source in the first
         image that left unassociated. 
         The runcat will end up with 3 sources.
+        All sources are candidate associations with each other (1-3, 1-4, 2-3, 2-4, 
+        where '*' is a runcat source and 'o' the lastest extracted sources)
+
+             3
+             o
+            / \
+         1 *   * 2
+            \ /
+             o
+             4
+
+        but only the ones with the smallest DR radius are considered as genuine, leaving
+
+             3
+             o
+              \
+         1 *   * 2
+              /
+             o
+             4
+
+        Here, runcat 1 is left unassociated (to be forced fit later), and extracted sources
+        3 and 4 are associated with runcat 2. Because it is a 1-to-many association, runcat
+        source 2 is replaced by 3 and 4.
+        
         """
         dataset = DataSet(data={'description': 'assoc test set: n-m, ' + self._testMethodName})
         n_images = 2
@@ -1039,27 +1077,37 @@ class TestMany2Many(unittest.TestCase):
         axtrsrc2 = assoc2[2]
         atype2 = assoc2[3]
         aimage2 = assoc2[4]
+        # Check that have 5 entries in runcat, i.e.
+        # 1 entry left unassociated + 2 times 2 1-to-many associations
         self.assertEqual(len(aruncat2), 5)
-        # Idem as many-to-one case
-        #self.assertEqual(aruncat2[0], rxtrsrc2[0])
-        #self.assertEqual(aruncat2[1], aruncat2[2])
+        # Check that the base of the splitted runcat source has the same id
         self.assertEqual(rxtrsrc2[1], rxtrsrc2[2])
+        # Check that the base of the splitted runcat source has the same id
         self.assertEqual(rxtrsrc2[3], rxtrsrc2[4])
+        # Check that the base of the unassocd runcat is unchanged
         self.assertEqual(rxtrsrc2[0], axtrsrc2[0])
+        # Check that the splitted runcat has two associations (here nr1 of 2)
         self.assertEqual(rxtrsrc2[1], axtrsrc2[1] + 1)
+        # Check that the splitted runcat has two associations (here nr2 of 2)
         self.assertEqual(rxtrsrc2[2], axtrsrc2[2])
+        # Check that the splitted runcat has two associations (here nr1 of 2)
         self.assertEqual(rxtrsrc2[3], axtrsrc2[3] + 2)
+        # Check that the splitted runcat has two associations (here nr2 of 2)
         self.assertEqual(rxtrsrc2[4], axtrsrc2[4])
+        # Check that the associated sources correspond to 
+        # their extracted source ids
         self.assertEqual(axtrsrc2[0], im1src[0])
         self.assertEqual(axtrsrc2[1], im1src[1])
         self.assertEqual(axtrsrc2[2], im2src[0])
         self.assertEqual(axtrsrc2[3], im1src[1])
         self.assertEqual(axtrsrc2[4], im2src[1])
+        # Check for correct assoc_types
         self.assertEqual(atype2[0], 4)
         self.assertEqual(atype2[1], 6)
         self.assertEqual(atype2[2], 2)
         self.assertEqual(atype2[3], 6)
         self.assertEqual(atype2[4], 2)
+        # Check the image from which the sources originate
         self.assertEqual(aimage2[0], imageid1)
         self.assertEqual(aimage2[1], imageid1)
         self.assertEqual(aimage2[2], imageid2)

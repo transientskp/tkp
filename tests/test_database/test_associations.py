@@ -490,25 +490,37 @@ class TestMeridianOne2One(unittest.TestCase):
         
         im_list = db_subs.example_dbimage_datasets(n_images=2)
         
-        # image 1
-        pos1 = [(30.0,10.5),(300.0,10.5)]
-        sources1 = [db_subs.example_extractedsource_tuple(ra=p[0], dec=p[1]) for p in pos1]
+        # Base positions for each source pair:
+        pos1 = (30.0,10.5)
+        pos2 = (pos1[0]+270.0, pos1[1])
+
+        positions = [pos1, pos2]
+        sources1 = [db_subs.example_extractedsource_tuple(ra=p[0], dec=p[1])
+                    for p in positions]
 
         image = tkp.db.Image(dataset=dataset, data=im_list[0])
         image.insert_extracted_sources(sources1)
         associate_extracted_sources(image.id, deRuiter_r=3.717)
         
-        # image 2
-        pos2 = [(30.001,10.51),(300.001,10.51)]
-        sources2 = [db_subs.example_extractedsource_tuple(ra=p[0], dec=p[1]) for p in pos2]
+        # Now shift the positions to be associated in both RA and Dec,
+        # then make sure we get the same result at both base RA's:
+        delta_ra = 50 / 3600.0
+        delta_dec = 50 / 3600.0
+        positions = [  [pos1[0] + delta_ra, pos1[1] + delta_dec] ,
+                      [pos2[0] + delta_ra, pos2[1] + delta_dec]]
+
+        sources2 = [db_subs.example_extractedsource_tuple(ra=p[0], dec=p[1])
+                    for p in positions]
         
         expected_dr1 = db_subs.deRuiter_radius(sources1[0], sources2[0])
         expected_dr2 = db_subs.deRuiter_radius(sources1[1], sources2[1])
 
         image = tkp.db.Image(dataset=dataset, data=im_list[1])
         image.insert_extracted_sources(sources2)
-        associate_extracted_sources(image.id, deRuiter_r=3.717)
+        associate_extracted_sources(image.id, deRuiter_r=1e6)
         
+        # Now inspect the contents of assocxtrsource:
+        # Order results by runningcatalog id, then DR radius.
         query = """\
         SELECT a.runcat
               ,a.xtrsrc
@@ -528,14 +540,15 @@ class TestMeridianOne2One(unittest.TestCase):
         dr_radius = dr_result[2]
         
         self.assertEqual(len(runcat), 4)
+        # Ordered by runcat id,so check associations
+        # have performed as expected by checking consecutive pairs:
         self.assertEqual(runcat[0], runcat[1])
         self.assertEqual(runcat[2], runcat[3])
+        # New sources are assigned DR=0
         self.assertAlmostEqual(dr_radius[0], 0)
         self.assertAlmostEqual(dr_radius[2], 0)
         self.assertAlmostEqual(dr_radius[1], expected_dr1)
         self.assertAlmostEqual(dr_radius[3], expected_dr2)
-        self.assertAlmostEqual(dr_radius[3], expected_dr1)
-        self.assertAlmostEqual(dr_radius[1], expected_dr2)
         
 
 class TestOne2Many(unittest.TestCase):

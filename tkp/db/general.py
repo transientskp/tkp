@@ -71,8 +71,8 @@ DELETE
                                  AND x0.decl + %(assoc_theta)s
                  AND x1.ra BETWEEN x0.ra - alpha(%(assoc_theta)s, x0.decl)
                                AND x0.ra + alpha(%(assoc_theta)s, x0.decl)
-                 AND SQRT(  (x0.ra * COS(RADIANS(x0.decl)) - x1.ra * COS(RADIANS(x1.decl)))
-                          * (x0.ra * COS(RADIANS(x0.decl)) - x1.ra * COS(RADIANS(x1.decl)))
+                 AND SQRT(  (x0.ra - x1.ra) * COS(RADIANS((x0.decl + x1.decl)/2))
+                          * (x0.ra - x1.ra) * COS(RADIANS((x0.decl + x1.decl)/2))
                           / (x0.uncertainty_ew * x0.uncertainty_ew + x1.uncertainty_ew * x1.uncertainty_ew)
                          +  (x0.decl - x1.decl) * (x0.decl - x1.decl)
                           / (x0.uncertainty_ns * x0.uncertainty_ns + x1.uncertainty_ns * x1.uncertainty_ns)
@@ -368,8 +368,8 @@ SELECT c.id
                 AND r.wm_ra + alpha(%(radius)s, r.wm_decl)
    AND c.x * r.x + c.y * r.y + c.z * r.z > COS(RADIANS(%(radius)s))
    AND c.catalog = k.id
-   AND SQRT(  (r.wm_ra - c.ra) * COS(RADIANS(r.wm_decl))
-            * (r.wm_ra - c.ra) * COS(RADIANS(r.wm_decl))
+   AND SQRT(  (r.wm_ra - c.ra) * COS(RADIANS((r.wm_decl + c.decl)/2))
+            * (r.wm_ra - c.ra) * COS(RADIANS((r.wm_decl + c.decl)/2))
             / (r.wm_uncertainty_ew * r.wm_uncertainty_ew + c.uncertainty_ew * c.uncertainty_ew)
            +  (r.wm_decl - c.decl) * (r.wm_decl - c.decl)
             / (r.wm_uncertainty_ns * r.wm_uncertainty_ns + c.uncertainty_ns * c.uncertainty_ns)

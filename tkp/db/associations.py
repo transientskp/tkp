@@ -444,8 +444,8 @@ INSERT INTO temprunningcatalog
                                              + (rc0.z - x0.z) * (rc0.z - x0.z)
                                              ) / 2)
                                ) AS distance_arcsec
-                ,SQRT(  (MOD(CAST(rc0.wm_ra + 180 AS NUMERIC(11,8)), 360) * COS(RADIANS(rc0.wm_decl)) - MOD(CAST(x0.ra + 180 AS NUMERIC(11,8)), 360) * COS(RADIANS(x0.decl)))
-                      * (MOD(CAST(rc0.wm_ra + 180 AS NUMERIC(11,8)), 360) * COS(RADIANS(rc0.wm_decl)) - MOD(CAST(x0.ra + 180 AS NUMERIC(11,8)), 360) * COS(RADIANS(x0.decl)))
+                ,SQRT(  (MOD(CAST(rc0.wm_ra + 180 AS NUMERIC(11,8)), 360) - MOD(CAST(x0.ra + 180 AS NUMERIC(11,8)), 360)) * COS(RADIANS((rc0.wm_decl + x0.decl)/2))
+                      * (MOD(CAST(rc0.wm_ra + 180 AS NUMERIC(11,8)), 360) - MOD(CAST(x0.ra + 180 AS NUMERIC(11,8)), 360)) * COS(RADIANS((rc0.wm_decl + x0.decl)/2))
                       / (rc0.wm_uncertainty_ew * rc0.wm_uncertainty_ew + x0.uncertainty_ew * x0.uncertainty_ew)
                      + (rc0.wm_decl - x0.decl) * (rc0.wm_decl - x0.decl)
                       / (rc0.wm_uncertainty_ns * rc0.wm_uncertainty_ns + x0.uncertainty_ns * x0.uncertainty_ns)
@@ -506,8 +506,8 @@ INSERT INTO temprunningcatalog
              AND rc0.wm_decl BETWEEN x0.decl - i0.rb_smaj
                                  AND x0.decl + i0.rb_smaj
              AND rc0.x*x0.x + rc0.y*x0.y + rc0.z*x0.z > cos(radians(i0.rb_smaj))
-             AND SQRT(  (MOD(CAST(x0.ra + 180 AS NUMERIC(11,8)), 360) * COS(RADIANS(x0.decl)) - MOD(CAST(rc0.wm_ra + 180 AS NUMERIC(11,8)), 360) * COS(RADIANS(rc0.wm_decl)))
-                      * (MOD(CAST(x0.ra + 180 AS NUMERIC(11,8)), 360) * COS(RADIANS(x0.decl)) - MOD(CAST(rc0.wm_ra + 180 AS NUMERIC(11,8)), 360) * COS(RADIANS(rc0.wm_decl)))
+             AND SQRT(  (MOD(CAST(rc0.wm_ra + 180 AS NUMERIC(11,8)), 360) - MOD(CAST(x0.ra + 180 AS NUMERIC(11,8)), 360)) * COS(RADIANS((rc0.wm_decl + x0.decl)/2))
+                      * (MOD(CAST(rc0.wm_ra + 180 AS NUMERIC(11,8)), 360) - MOD(CAST(x0.ra + 180 AS NUMERIC(11,8)), 360)) * COS(RADIANS((rc0.wm_decl + x0.decl)/2))
                       / (x0.uncertainty_ew * x0.uncertainty_ew + rc0.wm_uncertainty_ew * rc0.wm_uncertainty_ew)
                      + (x0.decl - rc0.wm_decl) * (x0.decl - rc0.wm_decl)
                       / (x0.uncertainty_ns * x0.uncertainty_ns + rc0.wm_uncertainty_ns * rc0.wm_uncertainty_ns)
@@ -647,8 +647,8 @@ INSERT INTO temprunningcatalog
                                              + (rc0.z - x0.z) * (rc0.z - x0.z)
                                              ) / 2)
                                ) AS distance_arcsec
-                ,SQRT(  (rc0.wm_ra * COS(RADIANS(rc0.wm_decl)) - x0.ra * COS(RADIANS(x0.decl)))
-                      * (rc0.wm_ra * COS(RADIANS(rc0.wm_decl)) - x0.ra * COS(RADIANS(x0.decl)))
+                ,SQRT(  (rc0.wm_ra - x0.ra) * COS(RADIANS((rc0.wm_decl + x0.decl)/2))
+                      * (rc0.wm_ra - x0.ra) * COS(RADIANS((rc0.wm_decl + x0.decl)/2))
                       / (rc0.wm_uncertainty_ew * rc0.wm_uncertainty_ew + x0.uncertainty_ew * x0.uncertainty_ew)
                      +  (rc0.wm_decl - x0.decl) * (rc0.wm_decl - x0.decl)
                       / (rc0.wm_uncertainty_ns * rc0.wm_uncertainty_ns + x0.uncertainty_ns * x0.uncertainty_ns)
@@ -705,8 +705,8 @@ INSERT INTO temprunningcatalog
              AND rc0.wm_ra BETWEEN x0.ra - alpha(i0.rb_smaj, x0.decl)
                                AND x0.ra + alpha(i0.rb_smaj, x0.decl)
              AND rc0.x * x0.x + rc0.y * x0.y + rc0.z * x0.z > COS(RADIANS(i0.rb_smaj))
-             AND SQRT(  (x0.ra * COS(RADIANS(x0.decl)) - rc0.wm_ra * COS(RADIANS(rc0.wm_decl)))
-                      * (x0.ra * COS(RADIANS(x0.decl)) - rc0.wm_ra * COS(RADIANS(rc0.wm_decl)))
+             AND SQRT(  (rc0.wm_ra - x0.ra) * COS(RADIANS((rc0.wm_decl + x0.decl)/2))
+                      * (rc0.wm_ra - x0.ra) * COS(RADIANS((rc0.wm_decl + x0.decl)/2))
                       / (x0.uncertainty_ew * x0.uncertainty_ew + rc0.wm_uncertainty_ew * rc0.wm_uncertainty_ew)
                      + (x0.decl - rc0.wm_decl) * (x0.decl - rc0.wm_decl)
                       / (x0.uncertainty_ns * x0.uncertainty_ns + rc0.wm_uncertainty_ns * rc0.wm_uncertainty_ns)
@@ -794,7 +794,6 @@ UPDATE temprunningcatalog
                 WHERE t2.runcat = temprunningcatalog.runcat
                   AND t2.xtrsrc = temprunningcatalog.xtrsrc
               )
-;
 """
     tkp.db.execute(query, commit=True)
 

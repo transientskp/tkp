@@ -58,8 +58,8 @@ SELECT r1.id
                                           AND x.decl + i.rb_smaj
                         AND r.wm_ra BETWEEN x.ra - alpha(i.rb_smaj, x.decl)
                                         AND x.ra + alpha(i.rb_smaj, x.decl)
-                        AND SQRT(  (x.ra * COS(RADIANS(x.decl)) - r.wm_ra * COS(RADIANS(r.wm_decl)))
-                                 * (x.ra * COS(RADIANS(x.decl)) - r.wm_ra * COS(RADIANS(r.wm_decl)))
+                        AND SQRT(  (x.ra - r.wm_ra) * COS(RADIANS((x.decl + r.wm_decl)/2))
+                                 * (x.ra - r.wm_ra) * COS(RADIANS((x.decl + r.wm_decl)/2))
                                  / (x.uncertainty_ew * x.uncertainty_ew + r.wm_uncertainty_ew * r.wm_uncertainty_ew)
                                 + (x.decl - r.wm_decl) * (x.decl - r.wm_decl)
                                  / (x.uncertainty_ns * x.uncertainty_ns + r.wm_uncertainty_ns * r.wm_uncertainty_ns)

@@ -257,5 +257,20 @@ class coordsystemTest(unittest.TestCase):
             self.assertAlmostEqual(dec, coord_pair["fk4"][1], 3)
 
 
+class angsepTest(unittest.TestCase):
+    def testZeroSeparation(self):
+        self.assertEqual(coordinates.angsep(0, 0, 0, 0), 0)
+
+    def testSmallSeparation(self):
+        # Due to float rounding issues, feeding these values to
+        # coordinates.angsep() can cause us to attempt math.acos(x) for x
+        # greater than 1, which throws a ValueError.
+        ra1 = 33.655858149999993145229382207617
+        dec1 = 87.061899808796610500394308473915
+        ra2 = 33.655860050872931310550484340638
+        dec2 = 87.061899872535235545001341961324
+        coordinates.angsep(ra1, dec1, ra2, dec2)
+
+
 if __name__ == '__main__':
     unittest.main()

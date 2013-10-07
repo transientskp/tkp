@@ -173,7 +173,6 @@ class TestMixedSkyregions(unittest.TestCase):
         details. The detailed numbers in this test (RA, dec, etc) come from
         the data involved in that bug report and have no other special
         meaning.
-        TODO: This test takes too long...
         """
         dataset = DataSet(data={'description': "Test:" + self._testMethodName})
         im_list = db_subs.example_dbimage_datasets(
@@ -411,7 +410,6 @@ class TestMeridianOne2One(unittest.TestCase):
         """Checking that source measurements that flip around the 
         meridian are being associated.
         See TestNCP for sources right on the meridian
-        TODO: This test takes a bit too long...
         """
 
         dataset = DataSet(data={'description':"Assoc 1-to-1:" +
@@ -631,7 +629,6 @@ class TestOne2Many(unittest.TestCase):
         self.assertEqual(axtrsrc1[0], im1src1[0])
         self.assertEqual(axtrsrc1[0], xtrsrc1[0])
         self.assertEqual(atype[0], 4)
-        #TODO: Add runcat_flux test
 
         # image 2
         image = tkp.db.Image(dataset=dataset, data=im_params[1])
@@ -740,7 +737,6 @@ class TestOne2Many(unittest.TestCase):
         count = zip(*self.database.cursor.fetchall())
         self.assertEqual(count[0][0], 0)
 
-        #TODO: Add runcat_flux test
 
 
 class TestMany2One(unittest.TestCase):
@@ -896,7 +892,6 @@ class TestMany2One(unittest.TestCase):
         self.assertEqual(aimage2[1], imageid2)
         self.assertEqual(aimage2[2], imageid1)
         self.assertEqual(aimage2[3], imageid2)
-        #TODO: Add runcat_flux test
 
 
 class TestMany2Many(unittest.TestCase):
@@ -948,7 +943,6 @@ class TestMany2Many(unittest.TestCase):
         Here, runcat 1 is left unassociated (to be forced fit later), and extracted sources
         3 and 4 are associated with runcat 2. Because it is a 1-to-many association, runcat
         source 2 is replaced by 3 and 4.
-        
         """
         dataset = DataSet(data={'description': 'assoc test set: n-m, ' + self._testMethodName})
         n_images = 2
@@ -1121,6 +1115,27 @@ class TestMany2Many(unittest.TestCase):
         in the first image. However, checking the DR radius reduces the 
         associations to be two of the type 1 to 1.
         The runcat will end up with 2 sources.
+        All sources are candidate associations with each other (1-3, 1-4, 2-3, 2-4, 
+        where '*' is a runcat source and 'o' the lastest extracted sources)
+
+             3
+             o
+            / \
+         1 *   * 2
+            \ /
+             o
+             4
+
+        but we end up with two 1-1 associations, leaving
+
+             3
+             o
+              \
+         1 *   * 2
+            \ 
+             o
+             4
+
         """
         dataset = DataSet(data={'description': 'assoc test set: n-m, ' + self._testMethodName})
         n_images = 2
@@ -1248,24 +1263,33 @@ class TestMany2Many(unittest.TestCase):
         axtrsrc2 = assoc2[2]
         atype2 = assoc2[3]
         aimage2 = assoc2[4]
+        # Check that we have two runcats, so 4 assoc entries
         self.assertEqual(len(aruncat2), 4)
-        # Idem as many-to-one case
-        #self.assertEqual(aruncat2[0], aruncat2[3])
-        #self.assertEqual(aruncat2[1], aruncat2[2])
+        # Check that the base source of runcat is unchanged
         self.assertEqual(rxtrsrc2[0], rxtrsrc2[1])
+        # Check that the base source of runcat is unchanged
         self.assertEqual(rxtrsrc2[2], rxtrsrc2[3])
+        # Check that the base source of runcat is the first assoc source
         self.assertEqual(rxtrsrc2[0], axtrsrc2[0])
+        # Check that the base source of runcat is the second assoc source
+        # The ids happen to differ by 3
         self.assertEqual(rxtrsrc2[1], axtrsrc2[1] - 3)
+        # Check that the base source of (other) runcat is the first assoc source
         self.assertEqual(rxtrsrc2[2], axtrsrc2[2])
+        # Check that the base source of (other) runcat is the second assoc source
+        # The ids happen to differ by 1
         self.assertEqual(rxtrsrc2[3], axtrsrc2[3] - 1)
+        # Check that the assoc sources originate from the correct source
         self.assertEqual(axtrsrc2[0], im1src[0])
         self.assertEqual(axtrsrc2[1], im2src[1])
         self.assertEqual(axtrsrc2[2], im1src[1])
         self.assertEqual(axtrsrc2[3], im2src[0])
+        # Check for correct assoc_types
         self.assertEqual(atype2[0], 4)
         self.assertEqual(atype2[1], 3)
         self.assertEqual(atype2[2], 4)
         self.assertEqual(atype2[3], 3)
+        # Check that the assoc sources originate from the correct images
         self.assertEqual(aimage2[0], imageid1)
         self.assertEqual(aimage2[1], imageid2)
         self.assertEqual(aimage2[2], imageid1)

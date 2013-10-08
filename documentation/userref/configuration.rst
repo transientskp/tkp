@@ -1,7 +1,11 @@
-.. configuration:
+.. _configuration:
 
 Configuration
 =============
+
+.. Warning::
+
+   This material is comprehensively outdated!
 
 Per-user settings may be defined by in the file .tkp.cfg in your home
 directory. This file follows the standard Python ConfigParser syntax.
@@ -23,9 +27,4 @@ A default configuration file may be generated as follows::
 
 
 Note that this will overwrite any existing configuration file: use with care!
-
-.. Warning::
-
-  We are working on moving all tkp.config settings to configuration and parset
-  files inside a pipeline project folder, this will be removed in the future.
 

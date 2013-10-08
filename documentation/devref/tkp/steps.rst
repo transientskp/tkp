@@ -39,7 +39,7 @@ Main logic flow
 Features overview
 =================
 
-The TraP has several steps; most steps are optional, but leaving out
+The Trap has several steps; most steps are optional, but leaving out
 some will make little sense. The steps are:
 
 - **Source extraction, database storage and source association.** This
@@ -106,7 +106,7 @@ are under development.
   alerting people to possible transients detected by the pipeline.
 
 - An **imaging** step. This actually belongs to the standard
-  imaging pipeline (SIP), but can be implemented into the TraP for
+  imaging pipeline (SIP), but can be implemented into the Trap for
   convenience (so to have an end-to-end pipeline).
   `Currently out of commission, awaiting upstream updates to the LOFAR pipeline.`
 
@@ -115,8 +115,8 @@ are under development.
   then compared among each other to find transients within the dataset
   (ie, not by comparing with existing catalogs).
 
-  The two routines above are not used when the input to the TraP
-  consists of a list of individual images. In this case the TraP will
+  The two routines above are not used when the input to the Trap
+  consists of a list of individual images. In this case the Trap will
   just loop over this list of images.
 
 
@@ -124,7 +124,7 @@ Steps and their parameters
 --------------------------
 
 This page gives a very brief description of each script / recipe used in the
-TraP workflow, and details the parameters supplied
+Trap workflow, and details the parameters supplied
 either via command line arguments (in the case of top-level scripts) or via
 parameter sets (for the recipes).
 
@@ -173,7 +173,7 @@ new sources with existing ones.
 
 Notes:
 
-- In a future TRAP version, the source association part may get its
+- In a future Trap version, the source association part may get its
   own recipe.
 
 - A future version will allow for other images than just FITS.

@@ -9,3 +9,4 @@ Getting Started
 
    installation/index
    tutorial
+   sites

@@ -3,7 +3,7 @@
 Introduction
 ============
 
-This documentation comes from the TRAP documentation. The TRAP tree
+This documentation comes from the Trap documentation. The Trap tree
 has been merged into the TKP tree.
 
 

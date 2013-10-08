@@ -12,7 +12,8 @@ Create a pipeline project directory
 ===================================
 
 Create a project directory which is a container of your pipeline settings and job
-files. Run these command to initialise a project directory in your home directory
+files. Run these command to initialise a project directory in your home
+directory::
 
     $ cd ~
     $ tkp-manage.py initproject <projectname>

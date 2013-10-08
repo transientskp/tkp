@@ -5,7 +5,7 @@ Guidelines for Developers
 +++++++++++++++++++++++++
 
 This documents deals (shortly) with writing software for the
-Transients Pipeline, either the TraP part (recipes) or the underlying
+Transients Pipeline, either the Trap part (recipes) or the underlying
 modules (the TKP package).
 
 
@@ -127,7 +127,7 @@ night.
 
 There currently exists two main sections of documentation:
 
-- TraP: this section deals with setting up and running the transients
+- Trap: this section deals with setting up and running the transients
   pipeline, as well as more details about the individual recipes.
 
 - TKP: this section deals with the underlying modules and algorithms

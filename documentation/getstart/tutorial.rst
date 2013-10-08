@@ -1,8 +1,6 @@
-.. _getstart:
-
-+++++++++++++++
-Getting Started
-+++++++++++++++
++++++++++++++++++
+Tutorial Overview
++++++++++++++++++
 
 Install the software
 ====================

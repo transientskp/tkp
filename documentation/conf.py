@@ -51,7 +51,7 @@ source_suffix = '.rst'
 master_doc = 'index'
 
 # General information about the project.
-project = u'Transient Key Project'
+project = u'LOFAR Transients Pipeline'
 copyright = u'2013, LOFAR Transients Key Project'
 
 # The version info for the project you're documenting, acts as replacement for

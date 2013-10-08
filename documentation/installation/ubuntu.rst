@@ -14,9 +14,9 @@ Casacore & Pyrap
 Casacore is a collection of libraries which can be used to perform astronomical
 calculations and operations. Pyrap is the python wrapper around casacore.
 
-There are two ways to install these packages, use our precompiled binary
-packages or ite by yourself. Some people like to compile from source
-to have more control over compilation flags and installation location.
+There are two suggested ways to install these packages: use our precompiled
+binary packages or build them yourself. Some people like to compile from
+source to have more control over compilation flags and installation location.
 
 Binary packages
 ---------------
@@ -157,7 +157,6 @@ When you next log in you will be a member of the appropriate group.
 
 If you want to be able to issue remote management command like creating
 databases you need to enable this and set a passphrase
-(mysecretpassphrase here)::
 (mysecretpassphrase here)::
 
     $ monetdbd set control=yes /var/lib/monetdb

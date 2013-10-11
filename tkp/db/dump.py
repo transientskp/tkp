@@ -29,7 +29,7 @@ def dump_monetdb(hostname, port, dbname, dbuser, dbpass, output_filename):
                 [
                     mclient_executable,
                     "-h", hostname,
-                    "-p", port,
+                    "-p", str(port),
                     "-d", dbname,
                     "--dump"
                 ],
@@ -48,7 +48,7 @@ def dump_pg(hostname, port, dbname, dbuser, dbpass, output_filename):
             [
                 pg_dump_executable,
                 "-h", hostname,
-                "-p", port,
+                "-p", str(port),
                 "-U", dbuser,
                 "-f", output_filename,
                 dbname

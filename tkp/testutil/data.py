@@ -20,7 +20,5 @@ casa_table = os.path.join(DATAPATH,
 'casatable/L55614_020TO029_skymodellsc_wmax6000_noise_mult10_cell40_npix512_wplanes215.img.restored.corr')
 
 job_template_dir = os.path.join(tkp.__path__[0], 'conf/job_template')
-default_parset_paths = dict([(os.path.basename(f), f) for f in
-                            glob.glob(os.path.join(job_template_dir,
-                                                   'parsets',
-                                                   '*.parset'))])
+default_job_config = os.path.join(job_template_dir, 'job_params.cfg')
+default_header_inject_config = os.path.join(job_template_dir, 'inject.cfg')

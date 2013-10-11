@@ -3,7 +3,7 @@ import StringIO
 import ConfigParser
 
 import datetime
-from tkp.testutil.data import default_parset_paths
+from tkp.testutil.data import default_job_config
 import tkp.conf as conf
 
 
@@ -33,7 +33,7 @@ class TestAllSections(unittest.TestCase):
     def test_all_default_parsets(self):
         #This also demonstrates how we load everything into a single config
         master_config = ConfigParser.SafeConfigParser()
-        master_config.read(default_parset_paths.values())
+        master_config.read(default_job_config)
         for section in master_config.sections():
             section_params = conf.parse_to_dict(master_config, section)
     #        print "*********************************************"

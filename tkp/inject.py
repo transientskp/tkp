@@ -9,7 +9,7 @@ import pyfits
 from pyrap.tables import table as pyrap_table
 import tkp.accessors.detection
 from tkp.accessors import LofarFitsImage, LofarCasaImage
-from  tkp.utility.parset import read_config_section
+from  tkp.conf import read_config_section
 
 type_mapping = {
     str: 'getString',

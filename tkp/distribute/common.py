@@ -12,25 +12,16 @@ def load_job_config(pipe_config):
     combined ConfigParser object representing the 'job settings', i.e.
     the parameters relating to this particular data reduction run.
     """
-    task_parsets_to_read = ['db_dump',
-                            'persistence',
-                            'quality_check',
-                            'source_association',
-                            'source_extraction',
-                            'null_detections',
-                            'transient_search']
-    parset_directory = pipe_config.get('layout', 'parset_directory')
-    parset_files_to_read = [os.path.join(parset_directory, taskname + '.parset')
-                                for taskname in task_parsets_to_read]
+    job_directory = pipe_config.get('layout', 'job_directory')
     job_config = ConfigParser.SafeConfigParser()
-    job_config.read(parset_files_to_read)
+    job_config.read(os.path.join(job_directory, 'job_params.cfg'))
     return job_config
 
 
 def dump_job_config_to_logdir(log_dir, job_config):
     if not os.path.isdir(log_dir):
         os.makedirs(log_dir)
-    with open(os.path.join(log_dir, 'jobpars.parset'), 'w') as f:
+    with open(os.path.join(log_dir, 'job_and_pipeline_params.cfg'), 'w') as f:
         job_config.write(f)
 
 

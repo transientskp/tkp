@@ -3,8 +3,8 @@ import StringIO
 import ConfigParser
 
 import datetime
-from tkp.testutil.data import default_parset_paths
-import tkp.utility.parset as parset
+from tkp.testutil.data import default_job_config
+import tkp.conf as conf
 
 
 class TestParsingCode(unittest.TestCase):
@@ -22,9 +22,9 @@ class TestParsingCode(unittest.TestCase):
 
     def test_round_trip(self):
         bufout = StringIO.StringIO()
-        parset.write_config_section(bufout, self.section, self.parset)
+        conf.write_config_section(bufout, self.section, self.parset)
         bufin = StringIO.StringIO(bufout.getvalue())
-        parsed = parset.read_config_section(bufin, self.section)
+        parsed = conf.read_config_section(bufin, self.section)
 #        print parsed
         self.assertEqual(self.parset, parsed)
 
@@ -33,9 +33,9 @@ class TestAllSections(unittest.TestCase):
     def test_all_default_parsets(self):
         #This also demonstrates how we load everything into a single config
         master_config = ConfigParser.SafeConfigParser()
-        master_config.read(default_parset_paths.values())
+        master_config.read(default_job_config)
         for section in master_config.sections():
-            section_params = parset.load_section(master_config, section)
+            section_params = conf.parse_to_dict(master_config, section)
     #        print "*********************************************"
     #        print "SECTION:", section
     #        print section_params

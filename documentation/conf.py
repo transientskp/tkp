@@ -44,6 +44,13 @@ templates_path = ['_templates']
 # The suffix of source filenames.
 source_suffix = '.rst'
 
+# rst_prolog is included in all our rst files. Use it to define common
+# substitutions, like the database version number.
+from tkp.db.database import DB_VERSION
+rst_prolog = """
+.. |db_version| replace:: %d
+""" % (DB_VERSION)
+
 # The encoding of source files.
 #source_encoding = 'utf-8-sig'
 

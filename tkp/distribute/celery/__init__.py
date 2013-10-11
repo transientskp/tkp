@@ -20,7 +20,7 @@ from tkp.db import associations as dbass
 from tkp.db.dump import dump_db
 from tkp.distribute.celery import tasks
 from tkp.distribute.common import load_job_config, dump_job_config_to_logdir, setup_file_logging
-import tkp.utility.parset as parset
+from tkp.conf import parse_to_dict
 
 
 logger = logging.getLogger(__name__)
@@ -112,7 +112,7 @@ def run(job_name, local=False):
     # a) we have a job config section called "db_dump", and
     # b) that section contains a "db_dump" option which is True.
     if job_config.has_section("db_dump"):
-        dump_cfg = parset.load_section(job_config, 'db_dump')
+        dump_cfg = parse_to_dict(job_config, 'db_dump')
     else:
         dump_cfg = {}
     if 'db_dump' in dump_cfg and dump_cfg['db_dump']:
@@ -135,10 +135,10 @@ def run(job_name, local=False):
 
     dump_job_config_to_logdir(log_dir, job_config)
 
-    p_parset = parset.load_section(job_config, 'persistence')
-    se_parset = parset.load_section(job_config, 'source_extraction')
-    nd_parset = parset.load_section(job_config, 'null_detections')
-    tr_parset = parset.load_section(job_config, 'transient_search')
+    p_parset = parse_to_dict(job_config, 'persistence')
+    se_parset = parse_to_dict(job_config, 'source_extraction')
+    tr_parset = parse_to_dict(job_config, 'transient_search')
+    deRuiter_radius = parse_to_dict(job_config, 'association')['deruiter_radius']
 
     logger.info("performing database consistency check")
     if not dbconsistency.check():
@@ -152,8 +152,8 @@ def run(job_name, local=False):
     metadatas = [m[0] for m in metadatas]
 
     dataset_id, image_ids = steps.persistence.master_steps(metadatas,
-                                                           se_parset['radius'],
-                                                           p_parset)
+                                           se_parset['extraction_radius_pix'],
+                                           p_parset)
 
     # As of the current release, we do not support a "monitoring list"
     #if not add_manual_monitoringlist_entries(dataset_id, monitor_coords):
@@ -196,13 +196,12 @@ def run(job_name, local=False):
             dbgen.insert_extracted_sources(image.id, sources, 'blind')
 
         logger.info("performing null detections")
-        deRuiter_radius = nd_parset['deruiter_radius']
         null_detectionss = [dbmon.get_nulldetections(image.id, deRuiter_radius)
                             for image in images]
 
         logger.info("performing forced fits")
         iters = zip([i.url for i in images], null_detectionss)
-        arguments = [nd_parset]
+        arguments = [se_parset]
         ff_nds = runner(tasks.forced_fits, iters, arguments, local)
 
         for image, ff_nd in zip(images, ff_nds):

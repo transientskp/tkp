@@ -12,9 +12,9 @@ local_logger = logging.getLogger(__name__)
 
 
 @trap.task
-def persistence_node_step(images, p_parset):
+def persistence_node_step(images, persistence_config):
     local_logger.info("running persistence task")
-    return tkp.steps.persistence.node_steps(images, p_parset)
+    return tkp.steps.persistence.node_steps(images, persistence_config)
 
 
 @trap.task
@@ -24,18 +24,18 @@ def quality_reject_check(url, job_config):
 
 
 @trap.task
-def extract_sources(url, se_parset):
+def extract_sources(url, extraction_params):
     local_logger.info("running extracted sources task")
-    return tkp.steps.source_extraction.extract_sources(url, se_parset)
+    return tkp.steps.source_extraction.extract_sources(url, extraction_params)
 
 
 @trap.task
-def forced_fits(detection_set, parset):
+def forced_fits(detection_set, extraction_params):
     """
     :param detection_set: should be (url, detections) tuple
-    :param parset: null detections parset
+    :param extraction_params: null detections extraction_params
     :return:
     """
     local_logger.info("running forced fits task")
     url, detections = detection_set
-    return tkp.steps.source_extraction.forced_fits(url, detections, parset)
+    return tkp.steps.source_extraction.forced_fits(url, detections, extraction_params)

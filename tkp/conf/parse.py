@@ -19,13 +19,13 @@ def loads_timestamp_w_microseconds(dt_str):
 def dumps_timestamp_w_microseconds(dt):
     return dt.strftime(dt_w_microsecond_format)
 
-#NB default dumps_method is 'repr' (implemented in dump_section)
+#NB default dumps_method is 'repr' (implemented in serialize_to_config)
 dumps_methods = { datetime.datetime : dumps_timestamp_w_microseconds}
 loads_methods = (ast.literal_eval,
                   loads_timestamp_w_microseconds)
 
-def load_section(config, section):
-    """Loads the specified section of a parset file as a dictionary.
+def parse_to_dict(config, section):
+    """Loads the specified section of a ConfigParser object as a dictionary.
     
     Automatically converts strings representing ints and floats to their
     respective types, through the magic of ast.literal_eval.
@@ -41,6 +41,14 @@ def load_section(config, section):
     Note that as a feature of ConfigParser, and variable defined in 
     the section 'DEFAULT' are present in all other sections, 
     so you might get more than you expected.
+    
+    Args:
+      - *config*: A ConfigParser object to add entries to.
+      - *section*: (string) - name of section to parse and return as a dict.
+      
+    Returns:
+    Dictionary representing parsed params.
+    
     """
     pars = {}
     for k, rawval in config.items(section):
@@ -60,9 +68,9 @@ def load_section(config, section):
 
     return pars
 
-def dump_section(config, section, params):
+def serialize_to_config(config, section, params_dict):
     """
-    Writes a dictionary (params) into a ConfigParser object, 
+    Writes a dictionary (params_dict) into a ConfigParser object, 
     under the specified section header.
     
     Normally ConfigParser only accepts string values, but here
@@ -71,22 +79,42 @@ def dump_section(config, section, params):
     we have defined a specific output method. Otherwise, we try the 
     standard 'repr' function.
     
+    Args:
+      - *config*: A ConfigParser object.
+      - *section*: (string) Name of the section to write params_dict under.
+      - *params_dict*: (dict) Dictionary of parameters to write.
     """
     if not section in config.sections():
         config.add_section(section)
-    for k, v in params.iteritems():
+    for k, v in params_dict.iteritems():
         dumps_func = dumps_methods.get(type(v), repr)
         config.set(section, k, dumps_func(v))
 
 
 def read_config_section(fp, section):
+    """Loads a ConfigParser object from a file object and parses 'section'
+    
+    Args:
+      - *fp*: An open file object ('file pointer')
+      - *section*: (string) - name of section to parse and return as a dict.
+      
+    Returns:
+    Dictionary representing parsed params.
+    """
     conf = ConfigParser.SafeConfigParser()
     conf.readfp(fp)
-    return load_section(conf, section)
+    return parse_to_dict(conf, section)
 
-def write_config_section(fp, section, params):
+def write_config_section(fp, section, params_dict):
+    """Writes a ConfigParser object to a file object, representing 'params_dict'
+    
+    Args:
+      - *fp*: An open, writable file object ('file pointer')
+      - *section*: (string) Name of the section to write params_dict under.
+      - *params_dict*: (dict) Dictionary of parameters to write.
+    """
     conf = ConfigParser.SafeConfigParser()
-    dump_section(conf, section, params)
+    serialize_to_config(conf, section, params_dict)
     conf.write(fp)
 
 

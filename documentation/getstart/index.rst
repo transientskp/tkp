@@ -8,6 +8,6 @@ Getting Started
    :maxdepth: 2
 
    installation/index
-   concepts
+   concepts/index
    tutorial
    sites

@@ -1122,9 +1122,9 @@ class TestMany2Many(unittest.TestCase):
                                          self.base_srcs, image2_srcs,
                                          dr_limit=3.717)
         # Print summary
-        print
-        print self.picture
-        self.summarise_associations(runcat, extracted)
+#         print
+#         print self.picture
+#         self.summarise_associations(runcat, extracted)
 
         # We expect 3 runcat entries: 1 single extraction (at lower RA)
         # and 2 1-to-many associations for the higher RA pairs
@@ -1204,9 +1204,9 @@ class TestMany2Many(unittest.TestCase):
                                          self.base_srcs, image2_srcs,
                                          dr_limit=3.717)
         # Print summary
-        print
-        print self.picture
-        self.summarise_associations(runcat, extracted)
+#         print
+#         print self.picture
+#         self.summarise_associations(runcat, extracted)
 
         # We expect 2 runcat entries: both 1-to-1 associations.
         self.assertEqual(len(runcat), 2)

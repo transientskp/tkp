@@ -31,8 +31,8 @@ the database is using MonetDB or PostgreSQL.
 Initialize a project directory
 ------------------------------
 
-The :ref:`project directory <project>` holds common settings for a collection
-of pipeline runs.  Choose a location, and run::
+The :ref:`project directory <config-overview>` holds common settings for a
+collection of pipeline runs.  Choose a location, and run::
 
   $ tkp-manage.py initproject <projectname>
 
@@ -53,7 +53,7 @@ Check that all the fields match the values given to you by the administrator.
 Generally, the ``passphrase`` entry will be blank.
 
 If you wish, you can also customize the other fields in ``pipeline.cfg``: see
-the :ref:`configuration` section for details. Generally, the defaults are
+the :ref:`config-overview` section for details. Generally, the defaults are
 fine.
 
 Create and configure a job

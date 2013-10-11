@@ -29,10 +29,11 @@ convenient way of interfacing with a variety of Celery subcommands: try
 
 When you start a worker, you will need to configure it to connect to an
 appropriate broker. If you are using the ``tkp-manage.py`` script, you can
-configure the worker through the file :ref:`celeryconfig.py <configuration>`
-in your :ref:`project folder <project>`: set the ``BROKER_URL`` variable
-appropriately. Note that if you are running the broker and a worker on the
-same host with a standard configuration, the default value should be fine.
+configure the worker through the file :ref:`celeryconfig.py <celeryconfig_py>`
+in your :ref:`project folder <config-overview>`: set the ``BROKER_URL``
+variable appropriately. Note that if you are running the broker and a worker
+on the same host with a standard configuration, the default value should be
+fine.
 
 Note that a single broker and set of workers can be used by multiple different
 pipeline users. If running on a shared system, it is likely sensible to

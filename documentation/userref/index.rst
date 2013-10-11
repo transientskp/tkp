@@ -8,7 +8,6 @@ User's Reference Guide
    :maxdepth: 2
 
    scripts
-   project
-   configuration
+   config/index
    system
    overview/index

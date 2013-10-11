@@ -22,7 +22,7 @@ def extract_sources(image_path, extraction_params):
                  image_path, extraction_params['detection_threshold'])
     data_image = sourcefinder_image_from_accessor(accessor,
                     margin=extraction_params['margin'],
-                    radius=extraction_params['radius'],
+                    radius=extraction_params['extraction_radius_pix'],
                     detection_threshold=extraction_params['detection_threshold'],
                     analysis_threshold=extraction_params['analysis_threshold'],
                     ew_sys_err=extraction_params['ew_sys_err'],
@@ -31,7 +31,7 @@ def extract_sources(image_path, extraction_params):
 
     logger.debug("Employing margin: %s extraction radius: %s deblend: %s deblend_nthresh: %s",
             extraction_params['margin'],
-            extraction_params['radius'],
+            extraction_params['extraction_radius_pix'],
             extraction_params['deblend'],
             extraction_params['deblend_nthresh']
     )
@@ -55,7 +55,7 @@ def forced_fits(image_path, positions, extraction_params):
 
     data_image = sourcefinder_image_from_accessor(fitsimage,
                     margin=extraction_params['margin'],
-                    radius=extraction_params['radius'],
+                    radius=extraction_params['extraction_radius_pix'],
                     detection_threshold=extraction_params['detection_threshold'],
                     analysis_threshold=extraction_params['analysis_threshold'],
                     ew_sys_err=extraction_params['ew_sys_err'],

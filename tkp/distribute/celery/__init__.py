@@ -152,8 +152,8 @@ def run(job_name, local=False):
     metadatas = [m[0] for m in metadatas]
 
     dataset_id, image_ids = steps.persistence.master_steps(metadatas,
-                                                           se_parset['radius'],
-                                                           p_parset)
+                                           se_parset['extraction_radius_pix'],
+                                           p_parset)
 
     # As of the current release, we do not support a "monitoring list"
     #if not add_manual_monitoringlist_entries(dataset_id, monitor_coords):

@@ -6,7 +6,7 @@ import tkp
 import tkp.accessors
 import tkp.inject
 from tkp.testutil.data import DATAPATH
-import tkp.utility.parset
+import tkp.conf
 from tkp.testutil.data import default_parset_paths
 from tkp.accessors.lofaraccessor import LofarAccessor
 from tkp.accessors.dataaccessor import DataAccessor
@@ -35,7 +35,7 @@ class TestInject(unittest.TestCase):
 
     def test_injection(self):
         with open(default_parset_paths['inject.parset']) as f:
-            parset = tkp.utility.parset.read_config_section(f, 'inject')
+            parset = tkp.conf.read_config_section(f, 'inject')
 
         tkp.inject.modify_fits_headers(parset, self.fixed_file, overwrite=True)
         fixed_fits = tkp.accessors.open(self.fixed_file)

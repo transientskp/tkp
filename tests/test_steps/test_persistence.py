@@ -5,7 +5,7 @@ from tkp.testutil.decorators import requires_mongodb
 import tkp.testutil.data as testdata
 from tkp.testutil.decorators import requires_database
 import tkp.db
-import tkp.utility.parset as parset
+from tkp.conf import read_config_section
 from tkp.testutil.data import default_parset_paths
 
 @requires_database()
@@ -20,7 +20,7 @@ class TestPersistence(unittest.TestCase):
         cls.images = [testdata.fits_file]
         cls.extraction_radius = 256
         with open(default_parset_paths['persistence.parset']) as f:
-            cls.parset = parset.read_config_section(f, 'persistence')
+            cls.parset = read_config_section(f, 'persistence')
 
 
     def test_create_dataset(self):

@@ -1,7 +1,7 @@
 import unittest
 import tkp.steps.classification
 from tkp.testutil.decorators import requires_database
-import tkp.utility.parset as parset
+from tkp.conf import read_config_section
 from tkp.testutil.data import default_parset_paths
 
 
@@ -13,7 +13,7 @@ class TestClassification(unittest.TestCase):
         self.transients = [{'runcat':'1', 'band':'1'}]
 
         with open(default_parset_paths['classification.parset']) as f:
-            self.parset = parset.read_config_section(f, 'classification')
+            self.parset = read_config_section(f, 'classification')
 
     def runTest(self):
         for t in self.transients:

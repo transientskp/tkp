@@ -20,7 +20,7 @@ from tkp.db import associations as dbass
 from tkp.db.dump import dump_db
 from tkp.distribute.celery import tasks
 from tkp.distribute.common import load_job_config, dump_job_config_to_logdir, setup_file_logging
-import tkp.utility.parset as parset
+from tkp.conf import parse_to_dict
 
 
 logger = logging.getLogger(__name__)
@@ -112,7 +112,7 @@ def run(job_name, local=False):
     # a) we have a job config section called "db_dump", and
     # b) that section contains a "db_dump" option which is True.
     if job_config.has_section("db_dump"):
-        dump_cfg = parset.load_section(job_config, 'db_dump')
+        dump_cfg = parse_to_dict(job_config, 'db_dump')
     else:
         dump_cfg = {}
     if 'db_dump' in dump_cfg and dump_cfg['db_dump']:
@@ -135,10 +135,10 @@ def run(job_name, local=False):
 
     dump_job_config_to_logdir(log_dir, job_config)
 
-    p_parset = parset.load_section(job_config, 'persistence')
-    se_parset = parset.load_section(job_config, 'source_extraction')
-    nd_parset = parset.load_section(job_config, 'null_detections')
-    tr_parset = parset.load_section(job_config, 'transient_search')
+    p_parset = parse_to_dict(job_config, 'persistence')
+    se_parset = parse_to_dict(job_config, 'source_extraction')
+    nd_parset = parse_to_dict(job_config, 'null_detections')
+    tr_parset = parse_to_dict(job_config, 'transient_search')
 
     logger.info("performing database consistency check")
     if not dbconsistency.check():

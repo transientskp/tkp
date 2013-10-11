@@ -2,7 +2,7 @@ import ConfigParser
 import os
 import datetime
 import tkp.db
-import tkp.utility.parset as parset
+from tkp.conf import parse_to_dict
 import getpass
 
 import logging
@@ -48,7 +48,7 @@ def database_config(pipe_config=None, apply=False):
 
     # Try loading a config file, if any
     if pipe_config and pipe_config.has_section('database'):
-        db_parset = parset.load_section(pipe_config, 'database')
+        db_parset = parse_to_dict(pipe_config, 'database')
         for key, value in db_parset.iteritems():
             if key in kwargs:
                 kwargs[key] = value

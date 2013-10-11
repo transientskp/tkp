@@ -41,6 +41,10 @@ class Database(object):
                                                            self.port,
                                                            self.database))
         self._configured = True
+        # Provide placeholders for engine-specific Exception classes
+        # See issue 4778
+        # https://support.astron.nl/lofar_issuetracker/issues/4778
+        self._UnicornError = None
 
     def connect(self):
         """
@@ -121,3 +125,14 @@ class Database(object):
         if self._connection:
             self._connection.close()
         self._connection = None
+
+    @property
+    def UnicornError(self):
+        if self._UnicornError is None:
+            if self.engine == 'monetdb':
+                import monetdb.exceptions
+                self._UnicornError = monetdb.exceptions.OperationalError
+            elif self.engine == 'postgresql':
+                import psycopg2
+                self._UnicornError = psycopg2.IntegrityError
+        return self._UnicornError

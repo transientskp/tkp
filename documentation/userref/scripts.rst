@@ -3,6 +3,8 @@
 Scripts
 *******
 
+.. _tkp-manage:
+
 tkp-manage.py
 ==============
 

@@ -40,8 +40,8 @@ and *community alerts* of all transients which have been identified.
 
 Some aspects of the data processing performed by the Trap are
 compute-intensive. For this reason, it is possible to distribute processing
-over a cluster. We use the `Celery <http://celeryproject.org/>`_ distributed
-task queue for this purpose.
+over a cluster. We use the :ref:`Celery <celery-intro>` distributed task queue for
+this purpose.
 
 Exploiting the results of the Trap involves understanding and analysing the
 resulting lightcurve database. The Trap itself provides no tools directly

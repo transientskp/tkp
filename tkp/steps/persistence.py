@@ -94,6 +94,7 @@ def store_images(images_metadata, extraction_radius_pix, dataset_id):
 
     Args:
         images_metadata: list of dicts containing image metadata
+        extraction_radius_pix: (float) Used to calculate the 'skyregion' 
         dataset_id: dataset id to be used. don't use value from parset file
                     since this can be -1 (trap way of setting auto increment)
     Returns:
@@ -115,15 +116,15 @@ def store_images(images_metadata, extraction_radius_pix, dataset_id):
     return image_ids
 
 
-def node_steps(images, parset):
+def node_steps(images, persistence_config):
     """
     this function executes all persistence steps that should be executed on a node.
     Note: Should only be used in a node recipe
     """
-    mongohost = parset['mongo_host']
-    mongoport = parset['mongo_port']
-    mongodb = parset['mongo_db']
-    copy_images = parset['copy_images']
+    mongohost = persistence_config['mongo_host']
+    mongoport = persistence_config['mongo_port']
+    mongodb = persistence_config['mongo_db']
+    copy_images = persistence_config['copy_images']
 
     if copy_images:
         for image in images:
@@ -135,18 +136,19 @@ def node_steps(images, parset):
     return metadatas
 
 
-def master_steps(metadatas, extraction_radius_pix, parset):
+def master_steps(metadatas, extraction_radius_pix, persistence_config):
     """this function executes all persistence steps that should be executed on
         a master.
     Args:
-        parset_file: path to a parset file containig persistence settings
         metadatas: a list of dicts containing info from Image Accessors. This
                    is returned by the node recipe
+       extraction_radius_pix: (float) Used to calculate the 'skyregion'
+       persistence_config: (dict)  
     """
     logger.info("creating dataset in database ...")
     dataset_id = create_dataset(
-        parset['dataset_id'],
-        parset['description'])
+        persistence_config['dataset_id'],
+        persistence_config['description'])
     logger.info("added dataset with ID %s" % dataset_id)
 
     logger.info("Storing images")

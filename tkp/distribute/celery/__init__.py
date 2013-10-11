@@ -137,8 +137,8 @@ def run(job_name, local=False):
 
     p_parset = parse_to_dict(job_config, 'persistence')
     se_parset = parse_to_dict(job_config, 'source_extraction')
-    nd_parset = parse_to_dict(job_config, 'null_detections')
     tr_parset = parse_to_dict(job_config, 'transient_search')
+    deRuiter_radius = parse_to_dict(job_config, 'association')['deruiter_radius']
 
     logger.info("performing database consistency check")
     if not dbconsistency.check():
@@ -196,13 +196,12 @@ def run(job_name, local=False):
             dbgen.insert_extracted_sources(image.id, sources, 'blind')
 
         logger.info("performing null detections")
-        deRuiter_radius = nd_parset['deruiter_radius']
         null_detectionss = [dbmon.get_nulldetections(image.id, deRuiter_radius)
                             for image in images]
 
         logger.info("performing forced fits")
         iters = zip([i.url for i in images], null_detectionss)
-        arguments = [nd_parset]
+        arguments = [se_parset]
         ff_nds = runner(tasks.forced_fits, iters, arguments, local)
 
         for image, ff_nd in zip(images, ff_nds):

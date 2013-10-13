@@ -42,9 +42,9 @@ class Database(object):
                                                            self.database))
         self._configured = True
         # Provide placeholders for engine-specific Exception classes
-        # See issue 4778
+        # RhombusError refers to unhandled source layout, See issue 4778:
         # https://support.astron.nl/lofar_issuetracker/issues/4778
-        self._UnicornError = None
+        self._RhombusError = None
 
     def connect(self):
         """
@@ -127,12 +127,12 @@ class Database(object):
         self._connection = None
 
     @property
-    def UnicornError(self):
-        if self._UnicornError is None:
+    def RhombusError(self):
+        if self._RhombusError is None:
             if self.engine == 'monetdb':
                 import monetdb.exceptions
-                self._UnicornError = monetdb.exceptions.OperationalError
+                self._RhombusError = monetdb.exceptions.OperationalError
             elif self.engine == 'postgresql':
                 import psycopg2
-                self._UnicornError = psycopg2.IntegrityError
-        return self._UnicornError
+                self._RhombusError = psycopg2.IntegrityError
+        return self._RhombusError

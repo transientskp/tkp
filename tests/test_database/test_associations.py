@@ -1262,7 +1262,7 @@ class TestMany2Many(unittest.TestCase):
                                              self.im_params,
                                              self.base_srcs, image2_srcs,
                                              dr_limit=3.717)
-        except tkp.db.Database().UnicornError as e:
+        except tkp.db.Database().RhombusError as e:
 #             print "Caught a unicorn!"
 #             raise e  # To see logger message.
             pass

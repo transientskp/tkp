@@ -52,9 +52,8 @@ above. It should look something like::
 Check that all the fields match the values given to you by the administrator.
 Generally, the ``passphrase`` entry will be blank.
 
-If you wish, you can also customize the other fields in ``pipeline.cfg``: see
-the :ref:`config-overview` section for details. Generally, the defaults are
-fine.
+If you wish, you can also customize the other fields in ``pipeline.cfg``:
+:ref:`details are here <pipeline_cfg>`. Generally, the defaults are fine.
 
 Create and configure a job
 --------------------------

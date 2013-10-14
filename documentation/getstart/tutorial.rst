@@ -1,8 +1,10 @@
-.. _getstart:
++++++++++++++++++
+Tutorial Overview
++++++++++++++++++
 
-+++++++++++++++
-Getting Started
-+++++++++++++++
+This page walks you through setting up a complete, stand-alone Trap
+environment running on your own system. See also our :ref:`site-specific
+guides <sites>`.
 
 Install the software
 ====================
@@ -14,7 +16,8 @@ Create a pipeline project directory
 ===================================
 
 Create a project directory which is a container of your pipeline settings and job
-files. Run these command to initialise a project directory in your home directory
+files. Run these command to initialise a project directory in your home
+directory::
 
     $ cd ~
     $ tkp-manage.py initproject <projectname>

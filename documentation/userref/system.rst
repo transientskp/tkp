@@ -80,7 +80,7 @@ adjusted from :file:`/home/evert/work/trap/trap.cfg` and
 
 The recipes directory,
 :file:`${TKP}/lib/python2.6/site-packages/trap/recipes`, contains practical
-recipes for the TRAP; these are in the master and nodes subdirectories
+recipes for the Trap; these are in the master and nodes subdirectories
 (frontend and compute node recipes). The SIP recipes can be found in
 :file:`/opt/LofIm/lofar/lib/python2.6/dist-packages/lofarpipe/recipes`, but
 some of these have a slightly adjusted variant in the TKP recipes directory.
@@ -143,7 +143,7 @@ scratch one: tkp/tkp/tkp.
 
 Now edit :file:`control/runtrap.sh`. This is a simple script that
 first clears directories (since the pipeline won't clobber existing
-files normally), and then runs the TRAP with the correct job ID. Edit
+files normally), and then runs the Trap with the correct job ID. Edit
 the paths accordingly. Don't forget to change the job name (value to
 -j option) as well!
 

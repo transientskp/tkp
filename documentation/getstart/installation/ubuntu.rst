@@ -8,15 +8,15 @@ This page describes how to install the Transient Pipeline software on Ubuntu.
 Tested with Ubuntu 12.04.
 
 
-Casacore
-========
+Casacore & Pyrap
+================
 
 Casacore is a collection of libraries which can be used to perform astronomical
-calculations and operations.
+calculations and operations. Pyrap is the python wrapper around casacore.
 
-There are two ways to install Casacore, use our precompiled binary packages or
-compile Casacore by yourself. Some people like to compile casacore themselves
-to have more control over compilation flags and installation location.
+There are two suggested ways to install these packages: use our precompiled
+binary packages or build them yourself. Some people like to compile from
+source to have more control over compilation flags and installation location.
 
 Binary packages
 ---------------
@@ -26,11 +26,11 @@ To install the pre compiled binaries run::
     $ sudo apt-get install software-properties-common
     $ sudo add-apt-repository ppa:gijzelaar/aartfaac
     $ sudo apt-get update
-    $ sudo apt-get install libcasacore-dev casacore-data
+    $ sudo apt-get install libcasacore-dev casacore-data pyrap
 
 
-Manual casacore compilation
----------------------------
+Manual compilation
+------------------
 
 This will compile casacore from source.
 
@@ -38,7 +38,8 @@ First, install its dependencies::
 
    $ sudo apt-get install subversion cmake build-essential flex bison   \
         libblas-dev liblapack-dev libcfitsio3-dev wcslib-dev libfftw3-dev \
-        libhdf5-dev libreadline-dev libncurses5-dev wget
+        libhdf5-dev libreadline-dev libncurses5-dev wget scons python-numpy-dev\
+        python-dev libboost-python-dev python-setuptools subversion gfortran
 
 Get the measures data::
 
@@ -54,23 +55,12 @@ Finally, casacore itself::
    $ svn checkout http://casacore.googlecode.com/svn/trunk/ casacore
    $ mkdir casacore/build && cd casacore/build
    $ cmake .. -DDATA_DIR=/usr/local/share/casacore/data -DUSE_FFTW3=ON \
-         -DUSE_HDF5=ON -DUSE_OPENMP=ON
+         -DUSE_OPENMP=ON
    $ make
    $ sudo make install
 
 
-Pyrap
-=====
-
-Pyrap is a a Python wrapper around casacore.
-
-Pyrap depends on scons, numpy and boost::
-
-   $ sudo apt-get install scons python-numpy-dev python-dev \
-        libboost-python-dev python-setuptools subversion libblas-dev \
-        liblapack-dev gfortran wcslib-dev libcfitsio3-dev
-
-To install install Pyrap::
+and Pyrap::
 
    $ cd /tmp
    $ svn checkout http://pyrap.googlecode.com/svn/trunk/ pyrap
@@ -164,6 +154,13 @@ group::
     $ sudo usermod -a -G monetdb $USER
 
 When you next log in you will be a member of the appropriate group.
+
+If you want to be able to issue remote management command like creating
+databases you need to enable this and set a passphrase
+(mysecretpassphrase here)::
+
+    $ monetdbd set control=yes /var/lib/monetdb
+    $ monetdbd set passphrase=mysecretpassphrase /var/lib/monetdb
 
 For more information see the `MonetDB ubuntu packages manual`_.
 

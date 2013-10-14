@@ -12,7 +12,7 @@ def load_job_config(pipe_config):
     combined ConfigParser object representing the 'job settings', i.e.
     the parameters relating to this particular data reduction run.
     """
-    job_directory = pipe_config.get('layout', 'job_directory')
+    job_directory = pipe_config.get('DEFAULT', 'job_directory')
     job_config = ConfigParser.SafeConfigParser()
     job_config.read(os.path.join(job_directory, 'job_params.cfg'))
     return job_config

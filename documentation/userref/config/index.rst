@@ -13,3 +13,4 @@ can best customize to meet their needs.
 
    overview
    pipeline_cfg
+   celeryconfig_py

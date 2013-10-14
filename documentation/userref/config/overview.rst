@@ -39,8 +39,8 @@ name. Within that directory, there are four files:
    log files. :ref:`See here <pipeline_cfg>` for a full description.
 
 ``celeryconfig.py``
-   Configuration of the Celery task distribution system.  :ref:`See here
-   <celeryconfig_py>` for a full description.
+   Configuration of the :ref:`Celery <celery-intro>` task distribution system.
+   :ref:`See here <celeryconfig_py>` for a full description.
 
 ``manage.py``
    An interface to the TKP management system. By default, invoking this is

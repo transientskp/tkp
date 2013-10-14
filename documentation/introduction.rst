@@ -16,6 +16,8 @@ of supporting routines for source finding, measurement, characterization, and
 so on. Some of these routines are also available as :ref:`stand-alone tools
 <tools>`.
 
+.. _overview:
+
 High-level overview
 ===================
 

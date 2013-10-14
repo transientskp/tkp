@@ -102,13 +102,13 @@ PostgreSQL is included in Ubuntu::
     $ sudo apt-get install postgresql
 
 After package installation, you must configure access rights to your postgres
-server, by editing 
-`/etc/postgresql/9.1/main/pg_hba.conf 
+server, by editing
+`/etc/postgresql/9.1/main/pg_hba.conf
 <http://www.postgresql.org/docs/9.1/static/auth-pg-hba-conf.html>`_.
 
-For a typical development (i.e. possibly insecure) installation, 
-you will probably want to edit the pre-existing entries to something along the 
-lines of::
+For a typical development (i.e. possibly insecure) installation, you will
+probably want to edit the pre-existing entries to something along the lines
+of::
 
    local   all             all                                     trust
    host    all             all             127.0.0.1/32            trust
@@ -121,25 +121,22 @@ You can check everything is working using ``psql``::
 
    $ psql -U postgres
 
-You should now be able to run the :ref:`initdb <getstart-initdb>` 
-process, 
-however you should note that by default all databases must be created with 
-user `postgres` - to allow creation of databases with other user-owners, 
-you must first add a new `role 
+You should now be able to run the :ref:`initdb <getstart-initdb>` process,
+however you should note that by default all databases must be created with
+user `postgres` - to allow creation of databases with other user-owners, you
+must first add a new `role
 <http://www.postgresql.org/docs/9.1/static/sql-createrole.html>`_, e.g.::
 
    $ psql -U postgres
    postgres=# CREATE ROLE myuser WITH CREATEDB SUPERUSER LOGIN;
-   
+
 You should now be able to run ``tkp-manage.py initdb`` with the newly added
 username.
-   
-
 
 MonetDB
 ^^^^^^^
 
-monetDB is not included in Ubuntu, but there is a MonetDB repository available
+MonetDB is not included in Ubuntu, but there is a MonetDB repository available
 with prebuild binaries. To install these packages::
 
     $ sudo apt-get install software-properties-common
@@ -165,17 +162,32 @@ databases you need to enable this and set a passphrase
 For more information see the `MonetDB ubuntu packages manual`_.
 
 
-Broker
-------
+Celery Broker
+-------------
 
-If you want to run `Celery`_ workers, you need a broker. There are multiple
-`brokers`_ where you can choose from. If you do not have a compelling reason
-to choose another, we suggest `RabbitMQ`_::
+If you want to run :ref:`Celery <celery-intro>` workers, you need a broker.
+We suggest `RabbitMQ`_::
 
     $ sudo apt-get install rabbitmq-server
 
-.. _Celery: http://www.celeryproject.org/
-.. _brokers: http://docs.celeryproject.org/en/latest/getting-started/brokers/index.html
+MongoDB
+-------
+
+If you want to use the :ref:`pixel store <mongodb-intro>`, you will need to
+installed MongoDB on the chosen database host::
+
+    $ sudo apt-get install mongodb
+
+See the `MongoDB documentation
+<http://docs.mongodb.org/manual/tutorial/install-mongodb-on-ubuntu/>`_ for
+full instructions.
+
+You will also need to make sure the Python wrapper is available on your client
+machine::
+
+    $ sudo apt-get install python-pymongo
+
+
 .. _RabbitMQ: http://www.rabbitmq.com/
 .. _homebrew: http://mxcl.github.io/homebrew/
 .. _homebrew SKA tap: https://github.com/ska-sa/homebrew-tap/

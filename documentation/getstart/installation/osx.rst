@@ -79,9 +79,8 @@ Now you need to initialize the database somewhere::
 Broker
 ------
 
-If you want to run `Celery`_ workers, you need a broker. There are multiple
-`brokers`_ where you can choose from. If you do not have a compelling reason
-to choose another, we suggest `RabbitMQ`_::
+If you want to run `Celery <celery-intro>` workers, you need a broker.  We
+suggest `RabbitMQ`_::
 
     $ brew install rabbitmq
 
@@ -89,9 +88,24 @@ To run a rabbitmq server run::
 
     $ rabbitmq-server
 
+MongoDB
+-------
 
-.. _Celery: http://www.celeryproject.org/
-.. _brokers: http://docs.celeryproject.org/en/latest/getting-started/brokers/index.html
+If you want to use the :ref:`pixel store <mongodb-intro>`, you will need to
+installed MongoDB on the chosen database host::
+
+    $ brew install mongodb
+
+See the `MongoDB documentation
+<http://docs.mongodb.org/manual/tutorial/install-mongodb-on-os-x>`_ for
+full instructions.
+
+You will also need to make sure the Python wrapper is available on your client
+machine::
+
+    $ pip install python-pymongo
+
+
 .. _RabbitMQ: http://www.rabbitmq.com/
 .. _homebrew: http://mxcl.github.io/homebrew/
 .. _homebrew SKA tap: https://github.com/ska-sa/homebrew-tap/

@@ -9,5 +9,4 @@ User's Reference Guide
 
    scripts
    config/index
-   system
    overview/index

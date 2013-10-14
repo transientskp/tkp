@@ -11,3 +11,4 @@ Developer's Reference Guide
   testing
   documentation
   tkp/index
+  database/index

@@ -9,4 +9,4 @@ User's Reference Guide
 
    scripts
    config/index
-   overview/index
+   structure/index

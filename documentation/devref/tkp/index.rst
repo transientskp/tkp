@@ -31,6 +31,7 @@ The modules are separated into four subpackages:
 .. toctree::
    :maxdepth: 2
 
+   design
    config
    steps
    accessors

@@ -79,13 +79,44 @@ files:
    requirements.
 
 ``inject.cfg``
-   Configuration for the :ref:`metadata injection tool <tkp-inject>`. This is
-   a Python :mod:`ConfigParser` format file.
+   Configuration for the :ref:`metadata injection tool <tkp-inject>`.
 
 ``job_params.cfg``
    Configuration for each stage of the pipeline run represented by this job.
    This contains all the end-user tunable parameters which are relevant to
-   Trap operation. This is a Python :mod:`ConfigParser` format file. Each
-   section of the file refers to a particular stage of Trap operation: refer
-   to the material on the :ref:`Trap structure <trap-structure>` for a guide
-   to the various sections and the relevant configuration parameters.
+   Trap operation. :ref:`See here <job_params_cfg>` for details.
+
+.. _configparser:
+
+Configuration file syntax
+=========================
+
+Several of the Trap's configuration files -- :ref:`pipeline.cfg
+<pipeline_cfg>`, :ref:`inject.cfg <tkp-inject>`, :ref:`job_params.cfg
+<job_params_cfg>` -- use the Python :mod:`ConfigParser` file format. This is
+defined by the Python standard library, and you should refer to its
+documentation for a comprehensive reference. However, it is worth noting a few
+salient points that may be of relevance to the Trap user.
+
+These files are divided into named sections: the name comes at the top of the
+section, surrounded by square brackets (``[`` and ``]``). Within a section,
+a simple ``name = value`` syntax is used. ``;`` indicates a comment (``#`` may
+also be used for commenting, but only at the start of a line).
+
+Variable substiution is performed using the notation ``%(name)s``: this will
+be exapanded into the value of the variable ``name`` when the file is read.
+Variables used in expansion are taken either from the same section of the
+file, or from the special ``DEFAULT`` section. For example::
+
+   [DEFAULT]
+   a = 1
+
+   [section_name]
+   b = 2
+   c = %(a)s
+   d = %(b)s
+
+Would set the values of ``a`` and ``c`` to ``1``, and ``b`` and ``d`` to
+``2``.  In some cases, the Trap provides additional variables which may be
+used in expansions in a particular file: these are noted in the documentation
+for that file.

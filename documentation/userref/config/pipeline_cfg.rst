@@ -14,15 +14,11 @@ The default ``pipeline.cfg`` file is as follows:
 
 .. literalinclude:: /../tkp/conf/project_template/pipeline.cfg
 
-The file follows the convention of Python's :mod:`ConfgParser` module. In
-particular, it is divided into sections with names given surrounded by square
-brackets (``[`` and ``]``). The ``%(name)s`` syntax provides for variable
-substitution: this will be exapanded into the value of the variable ``name``
-when the file is read. Variables may be expanded from either the current
-section of the file, the ``[DEFAULT]`` section, or by referring to one of
-three special variables provided by the Trap: ``cwd``, the current working
-directory, ``start_time``, the time at which the current pipeline job is
-started and ``job_name``, the name of the job currently being executed.
+The file follows the :ref:`standard ConfigParser syntax <configparser>`.
+Three special variables which may be used in expansions are provided provided
+by the Trap: ``cwd``, the current working directory, ``start_time``, the time
+at which the current pipeline job is started and ``job_name``, the name of the
+job currently being executed.
 
 ``DEFAULT`` section
 ===================

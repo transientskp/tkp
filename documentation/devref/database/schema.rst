@@ -269,6 +269,8 @@ classification
 This table contains classification of transients
 
 
+.. _dataset:
+
 dataset
 =======
 

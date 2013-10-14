@@ -94,7 +94,7 @@ def run(job_name, local=False):
                              job_name)
 
     db_config = database_config(pipe_config, apply=True)
-    job_dir = pipe_config.get('layout', 'job_directory')
+    job_dir = pipe_config.get('DEFAULT', 'job_directory')
     debug = pipe_config.getboolean('logging', 'debug')
     log_dir = os.path.dirname(pipe_config.get('logging', 'log_file'))
     setup_file_logging(log_dir, debug)

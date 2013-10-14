@@ -1,13 +1,16 @@
 .. _database-intro:
 
-+++++++++
-Databases
-+++++++++
++++++++++++++++++
+Pipeline Database
++++++++++++++++++
 
 The Trap consists of a very tightly-coupled set of logic implemented partial
-in Python code and partially in a relational database. The database is
-fundamental to the operation of the Trap: except for a few :ref:`standalone
-tools <tools>`, use of a database is absolutely required.
+in Python code and partially in a relational database. The database contains
+measurements made of sources being processed by the Trap, as well as
+information about the images being processed, the regions of the sky being
+surveyed, and so on. The database is fundamental to the operation of the Trap:
+except for a few :ref:`standalone tools <tools>`, use of a database is
+absolutely required.
 
 The tight coupling between the Python code and the database implies that the
 version of the :ref:`database schema <database_schema>` in use must match the
@@ -31,3 +34,8 @@ usability and performance for your particular usage.
 See the :ref:`relevant section <database_background>` of the documentation for
 much more information about configuring and operating the database as well as
 understanding its contents.
+
+Finally, it is important to note that the pipeline database does *not* contain
+any image pixel data: it stored metadata and derived products only. It is
+possible to store pixel data as part of a pipeline run, but that is a separate
+subsystem: see :ref:`mongodb-intro`.

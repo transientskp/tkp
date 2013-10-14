@@ -10,3 +10,4 @@ operation.
 
    celery
    database
+   mongodb

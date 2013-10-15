@@ -96,8 +96,8 @@ def run(job_name, local=False):
     db_config = database_config(pipe_config, apply=True)
     job_dir = pipe_config.get('DEFAULT', 'job_directory')
     debug = pipe_config.getboolean('logging', 'debug')
-    log_dir = os.path.dirname(pipe_config.get('logging', 'log_file'))
-    setup_file_logging(log_dir, debug)
+    log_file = pipe_config.get('logging', 'log_file')
+    setup_file_logging(log_file, debug)
 
     if not os.access(job_dir, os.X_OK):
         msg = "can't access job folder %s" % job_dir
@@ -133,7 +133,7 @@ def run(job_name, local=False):
 
     logger.info("dataset %s contains %s images" % (job_name, len(all_images)))
 
-    dump_job_config_to_logdir(log_dir, job_config)
+    dump_job_config_to_logdir(os.path.dirname(log_file), job_config)
 
     p_parset = parse_to_dict(job_config, 'persistence')
     se_parset = parse_to_dict(job_config, 'source_extraction')

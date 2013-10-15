@@ -25,21 +25,21 @@ def dump_job_config_to_logdir(log_dir, job_config):
         job_config.write(f)
 
 
-def setup_file_logging(log_dir, debug=False):
+def setup_file_logging(log_file, debug=False):
     """
-    sets up a catch all logging handler which writes to a file in `log_dir`.
+    sets up a catch all logging handler which writes to `log_file`.
 
-    :param log_dir: where to store the log file
+    :param log_file: log file to write
     :param debug: do we want debug level logging?
     """
-    if not os.path.isdir(log_dir):
-        os.makedirs(log_dir)
+    if not os.path.isdir(os.path.dirname(log_file)):
+        os.makedirs(os.path.dirname(log_file))
     global_logger = logging.getLogger()
-    hdlr = logging.FileHandler(os.path.join(log_dir, 'output.log'))
+    hdlr = logging.FileHandler(log_file)
     global_logger.addHandler(hdlr)
     formatter = logging.Formatter('%(asctime)s %(levelname)s %(name)s: %(message)s')
     hdlr.setFormatter(formatter)
-    logger.info("logging to %s" % log_dir)
+    logger.info("logging to %s" % log_file)
     if debug:
         global_logger.setLevel(logging.DEBUG)
     else:

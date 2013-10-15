@@ -25,4 +25,4 @@ The use of MongoDB within the Trap is completely optional: it is perfectly
 possibly to run a complete survey without installing it. However, if storing
 image data is required, you will need to `install MongoDB
 <http://docs.mongodb.org/manual/installation/>`_ along with the Trap and
-configure the :ref:`persistence step <step-persistence>` appropriately.
+configure the :ref:`persistence step <stage-persistence>` appropriately.

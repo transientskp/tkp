@@ -14,6 +14,22 @@ by Swinbank et al (`draft version
 <https://github.com/transientskp/trap-paper>`_ now available to project
 members only). Here, we sketch only an outline of the various pipeline stages.
 
+The material below describes each of the stages an image goes through as it is
+processed through the pipeline. It is important to realise, though, that the
+order in which images are processed is important due to the way in which
+lightcurves are generated within the database: see the material on
+:ref:`stage-association` for details. Reproducibility of pipeline results is
+of paramount importance: the Trap guarantees that results will be reproducible
+provided that images are always processed *in order of time*. That is, an
+image from time :math:`t_n` must always be processed before an image from time
+:math:`t_{n+1}`. In order to satisfy this condition, the Trap will internally
+re-order images provided to it in the :ref:`images_to_process.py file
+<config-job>` so that they are in time order. *If multiple Trap runs are to be
+combined in a single dataset, the user must ensure that the runs are in an
+appropriate sequence.*
+
+It is worth noting the ordering of images across *frequency* is not important.
+
 Pipeline topology and code re-use
 =================================
 
@@ -36,3 +52,4 @@ Pipeline stages
    stages/dump
    stages/persistence
    stages/quality
+   stages/association

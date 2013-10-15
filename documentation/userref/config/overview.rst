@@ -51,6 +51,8 @@ name. Within that directory, there are four files:
 ``README.md``
    A basic guide to the project directory text format.
 
+.. _config-job:
+
 Creating a Job
 ==============
 

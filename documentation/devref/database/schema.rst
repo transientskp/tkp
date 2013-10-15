@@ -16,9 +16,8 @@ For every association pair the association parameters, distance_arcsec, r and
 loglr are calculated as well. Only source pairs that fullfil the criterion of
 an association (:math:`r < r_{lim}`) are accepted and appended to this table.
 :math:`r_{lim}` may be specified in the user parsets or tkp.cfg, otherwise it
-defaults to 3.717, corresponding to missing :math:`10^{-3}` counterparts (see
-`Scheers's thesis <http://dare.uva.nl/en/record/367374>`_, section 3.2.3)
-
+defaults to 3.717, corresponding to missing :math:`10^{-3}` counterparts
+(:ref:`Scheers, 2011 <scheers-2011>`, section 3.2.3).
 
 **xrtsrc**
    This refers to the xtrsrcid of the extractedsource
@@ -38,12 +37,12 @@ defaults to 3.717, corresponding to missing :math:`10^{-3}` counterparts (see
 **r**
    The dimensionless distance (De Ruiter radius) between the associated
    sources. It is determined as the positional differences weighted by the
-   errors, calculated by the association procedure inside the database (Scheers
-   thesis ch3).
+   errors, calculated by the association procedure inside the database
+   (:ref:`Scheers, 2011 <scheers-2011>`, chapter 3).
 
 **loglr**
    The logarithm of the likelihood ratio of the associated sources, defaults to
-   NULL if not calculated (Scheers thesis ch3).
+   NULL if not calculated (:ref:`Scheers, 2011 <scheers-2011>`, chapter 3).
 
 
 assocxtrsource
@@ -77,13 +76,12 @@ or n-1.
 **r**
    The dimensionless distance (De Ruiter radius) between the associated
    sources. It is determined as the positional differences weighted by the
-   errors, calculated by the association procedure inside the database (Scheers
-   thesis chapter 3).
+   errors, calculated by the association procedure inside the database
+   (:ref:`Scheers, 2011 <scheers-2011>`, chapter 3).
 
 **loglr**
    The logarithm of the likelihood ratio of the associated sources, defaults to
-   NULL if not calculated (Scheers thesis ch3).
-
+   NULL if not calculated (:ref:`Scheers, 2011 <scheers-2011>`, chapter 3).
 
 .. _schema-assocskyrgn:
 
@@ -1119,7 +1117,7 @@ On 'aggregated' variability indexes
 
 We now explain how running averages are used to compute the 'variability indices'
 we use in identifying sources which may be intrinsically transient or variable.
-(Adopted from Bart Scheers' PhD thesis.)
+Adapted from :ref:`Scheers (2011) <scheers-2011>`.
 
 The first variability indicator, the proportional flux variability of a
 source, is expressed as the ratio of the sample standard deviation, and mean,

@@ -15,8 +15,7 @@ design decisions.
 
 Here, we summarise the various possible results of source association,
 highlighting potential issues. For a full discussion of the algorithms
-involved, the user is referred to the thesis by `Scheers
-<http://dare.uva.nl/en/record/367374>`_.
+involved, the user is referred to :ref:`Scheers (2011) <scheers-2011>`.
 
 ==========================================
 Database Structure & Association Procedure
@@ -611,7 +610,3 @@ deletes those runningcatalog entries which we have now superceded, via a simple
 	the inactive runcat entries after ``_delete_1_to_many_inactive_transient``.
 	(Though there's no real harm in leaving it till last).
 
-
-
-
-     

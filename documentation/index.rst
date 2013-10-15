@@ -15,6 +15,7 @@ LOFAR Transients Pipeline
    userref/index
    devref/index
    tools/index
+   bibliography
 
 
 ++++++++++++++++++

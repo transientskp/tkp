@@ -61,6 +61,9 @@ For each source, the following measurements are stored:
 * The significance of the detection (that is, the ratio of the peak flux value
   to the RMS map at that point).
 
+After the blind extraction has been performed, the list of source measurements
+is stored in the database.
+
 The following parameters may be configured in the :ref:`job configuration file
 <job_params_cfg>`:
 

@@ -40,7 +40,8 @@ options = AttributeDict({
     'csv': True,
     'force_beam': True,
     'alpha': .1,
-    'detection_image': False
+    'detection_image': False,
+    'mode': 'threshold'
 })
 
 
@@ -148,8 +149,8 @@ class TestPyse(unittest.TestCase):
         tkp.bin.pyse.run_sourcefinder([self.filename], options)
         self.assertEqual(tkp.bin.pyse.get_detection_labels.callcount, 0)
 
-        # But if we set options.detection_image to True, we should
-        options.detection_image = True
+        # But if we set options.mode="detimage", we should
+        options.mode = "detimage"
         tkp.bin.pyse.run_sourcefinder([self.filename], options)
         self.assertEqual(tkp.bin.pyse.get_detection_labels.callcount, 1)
 

@@ -172,7 +172,7 @@ def copy_template(job_or_project, name, target=None, **options):
                                   "problem.\n" % new_path)
     return top_dir
 
-def parse_monitoringlist_positions(args):
+def parse_monitoringlist_positions(args, str_name="monitor_coords", list_name="monitor_list"):
     """Loads a list of monitoringlist (RA,Dec) tuples from cmd line args object.
 
     Processes the flags "--monitor-coords" and "--monitor-list"
@@ -180,21 +180,21 @@ def parse_monitoringlist_positions(args):
     those should be matched against whatever uses the resulting values...
     """
     monitor_coords=[]
-    if args.monitor_coords:
+    if hasattr(args, str_name) and getattr(args, str_name):
         try:
-            monitor_coords.extend(json.loads(args.monitor_coords))
+            monitor_coords.extend(json.loads(getattr(args, str_name)))
         except ValueError:
             logging.error("Could not parse monitor-coords from command line:"
-                         "string passed was:\n%s", args.monitor_coords
+                         "string passed was:\n%s" % (getattr(args, str_name),)
                          )
             raise
-    if args.monitor_list:
+    if hasattr(args, list_name) and getattr(args, list_name):
         try:
-            mon_list = json.load(open(args.monitor_list))
+            mon_list = json.load(open(getattr(args, list_name)))
             monitor_coords.extend(mon_list)
         except ValueError:
             logging.error("Could not parse monitor-coords from file: "
-                              +args.monitor_list)
+                              + getattr(args, list_name))
             raise
     return monitor_coords
 

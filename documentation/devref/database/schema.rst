@@ -1,4 +1,4 @@
-.. _database_schema:
+.. _database-schema:
 
 ++++++
 Schema
@@ -336,6 +336,8 @@ the id is auto-incremented as well, treating it as an independent dataset.
 **node(s)**
     Determine the current and number of nodes in case of a sharded database
     set-up.
+
+.. _schema-extractedsource:
 
 extractedsource
 ===============
@@ -788,7 +790,7 @@ If no counterpart could be found for an extracted sources, it is appended to
 
 **inactive**
     Boolean to set an entry to inactive.  This is done during the :ref:`source
-    association <database_assoc>` procedure, where e.g. the many-to-many cases
+    association <database-assoc>` procedure, where e.g. the many-to-many cases
     are handled and an existing entry is replaced by two or more entries.
 
 .. _schema-runningcatalog-flux:

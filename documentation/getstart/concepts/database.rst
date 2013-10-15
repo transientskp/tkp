@@ -13,7 +13,7 @@ except for a few :ref:`standalone tools <tools>`, use of a database is
 absolutely required.
 
 The tight coupling between the Python code and the database implies that the
-version of the :ref:`database schema <database_schema>` in use must match the
+version of the :ref:`database schema <database-schema>` in use must match the
 version in the of the code. Note that the schema version referred to in this
 document is |db_version|.
 

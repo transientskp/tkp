@@ -1,4 +1,4 @@
-.. _database_assoc:
+.. _database-assoc:
 
 ******************
 Source Association
@@ -22,7 +22,7 @@ Database Structure & Association Procedure
 ==========================================
 
 The structure of the database is discussed in detail :ref:`elsewhere
-<database_schema>`: here, only a brief overview of the relevant tables is
+<database-schema>`: here, only a brief overview of the relevant tables is
 presented.
 
 Each measurement (that is, a set of coordinates, a shape, and a flux) taken is
@@ -349,7 +349,7 @@ work.
 
 .. warning::
 
-   The following detail is really aimed at devs or particularly 
+   The following detail is really aimed at developers or particularly
    interested users only, and can certainly be skipped on first reading.
 
 We assume that source extraction has been run on input images,
@@ -358,7 +358,7 @@ and new measurements have been inserted into the ``extractedsource`` table.
 
 Clean any previously created temporary listings.
 ------------------------------------------------
-To ensure a clean start, we first run ``_empty_temprunningcatalog``, 
+To ensure a clean start, we first run ``_empty_temprunningcatalog``,
 which does what it says on the tin.
 
 

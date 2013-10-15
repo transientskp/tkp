@@ -30,7 +30,7 @@ processing.
 Broadly speaking, as images are ingested by the Trap, a Python-based
 source-finding routine scans them, identifying and measuring all point-like
 sources. Those sources are ingested by the database, which :ref:`associates
-<database_assoc>` them with previous measurements (both from earlier images
+<database-assoc>` them with previous measurements (both from earlier images
 processed by the Trap and from other catalogues) to form a lightcurve.
 Measurements are then performed at the locations of sources which were
 expected to be seen in this image but which were *not* detected. A series of

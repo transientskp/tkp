@@ -57,3 +57,4 @@ Pipeline stages
    stages/extraction
    stages/nulldet
    stages/association
+   stages/transient

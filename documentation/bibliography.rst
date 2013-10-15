@@ -4,6 +4,12 @@
 Bibliography
 ++++++++++++
 
+.. _greisen-1983:
+
+Greisen, E.W. *Non-linear coordinate systems in AIPS*. AIPS Memo 027, NRAO, 1983.
+
+* `AIPS Memo Archive <http://www.aips.nrao.edu/aipsmemo.html>`_
+
 .. _scheers-2011:
 
 Scheers, L.H.A. *Transient and variable radio sources in the LOFAR sky: An

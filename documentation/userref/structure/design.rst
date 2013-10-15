@@ -54,4 +54,5 @@ Pipeline stages
    stages/dump
    stages/persistence
    stages/quality
+   stages/extraction
    stages/association

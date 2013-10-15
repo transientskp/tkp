@@ -33,7 +33,7 @@ from tkp.accessors import open as open_accessor
 from tkp.accessors import sourcefinder_image_from_accessor
 from tkp.accessors import writefits as tkp_writefits
 from tkp.sourcefinder.utils import generate_result_maps
-
+from tkp.management import parse_monitoringlist_positions
 
 def regions(sourcelist):
     """
@@ -79,9 +79,9 @@ def csv(sourcelist):
     Return a string containing a csv from the extracted sources.
     """
     output = StringIO()
-    print >>output, "ra, ra_err, dec, dec_err, smaj, smaj_err, smin, smin_err, pa, pa_err, int_flux, int_flux_err, pk_flux, pk_flux_err"
+    print >> output, "ra, ra_err, dec, dec_err, smaj, smaj_err, smin, smin_err, pa, pa_err, int_flux, int_flux_err, pk_flux, pk_flux_err"
     for source in sourcelist:
-        print >>output, "%f, %f, %f, %f, %f, %f, %f, %f, %f, %f, %f, %f, %f, %f" % (
+        print >> output, "%s, %f, %f, %f, %f, %f, %f, %f, %f, %f, %f, %f, %f, %f, %f" % (
             source.ra,
             source.ra.error,
             source.dec,
@@ -144,7 +144,53 @@ def handle_args(args=None):
     parser.add_option("--sigmap", action="store_true", help="Generate significance map")
     parser.add_option("--force-beam", action="store_true", help="Force fit axis lengths to beam size")
     parser.add_option("--detection-image", type="string", help="Find islands on different image")
-    return parser.parse_args(args=args)
+    m_help = "Specify a list of RA,Dec co-ordinate positions to force-fit " \
+        '(decimal degrees, JSON format e.g. "[[144.2,33.3],[146.1,34.1]]" )'
+    parser.add_option('--fixed', help=m_help, default=None)
+    parser.add_option('--fixed-list',
+        help="Specify a file containing a list of positions to force-fit", default=None
+    )
+    box_help = "Specify forced fitting positional freedom / error-box size, " \
+        "as a multiple of beam width."
+    parser.add_option('--ffbox-in-beampix', type='float', default=3., help=box_help)
+    options, files = parser.parse_args(args=args)
+
+    # Overwrite 'fixed_coords' with a parsed list of coords
+    # collated from both command line and file.
+    options.fixed_coords = parse_monitoringlist_positions(
+        options, str_name="fixed", list_name="fixed_list"
+    )
+    # Quick & dirty check that the position list looks plausible
+    if options.fixed_coords:
+        mlist = numpy.array(options.fixed_coords)
+        if not (len(mlist.shape) == 2 and mlist.shape[1] == 2):
+            parser.error("Positions for forced-fitting must be [RA,dec] pairs")
+
+    # We have four potential modes, of which we choose only one to run:
+    #
+    # 1. Blind sourcefinding
+    #  1.1 Thresholding, no detection image (no extra cmd line options)
+    #  1.2 Thresholding, detection image (--detection-image)
+    #  1.3 FDR (--fdr)
+    #
+    # 2. Fit to fixed points (--fixed-coords and/or --fixed-list)
+
+    if options.fixed_coords:
+        if options.fdr:
+            parser.error("--fdr not supported with fixed positions")
+        elif options.detection_image:
+            parser.error("--detection-image not supported with fixed positions")
+        options.mode = "fixed" # mode 2 above
+    elif options.fdr:
+        if options.detection_image:
+            parser.error("--detection-image not supported with --fdr")
+        options.mode = "fdr" # mode 1.3 above
+    elif options.detection_image:
+        options.mode = "detimage" # mode 1.2 above
+    else:
+        options.mode = "threshold" # mode 1.1 above
+
+    return options, files
 
 def writefits(filename, data, header={}):
     try:
@@ -207,59 +253,62 @@ def run_sourcefinder(files, options):
     beam = get_beam(options.bmaj, options.bmin, options.bpa)
     configuration = get_sourcefinder_configuration(options)
 
-    if options.detection_image and options.fdr:
-        bailout("--detection-image not suppored with --fdr")
-
-    if options.detection_image:
+    if options.mode == "detimage":
         labels, labelled_data = get_detection_labels(
             options.detection_image, options.detection, options.analysis, beam, configuration
         )
     else:
         labels, labelled_data = [], None
+
     for counter, filename in enumerate(files):
         print "Processing %s (file %d of %d)." % (filename, counter+1, len(files))
+        imagename = os.path.splitext(os.path.basename(filename))[0]
         ff = open_accessor(filename, beam=beam, plane=0)
         imagedata = sourcefinder_image_from_accessor(ff, **configuration)
-        if options.fdr:
-            print "Using False Detection Rate algorithm with alpha = %f" % (options.alpha,)
-            sr = imagedata.fd_extract(options.alpha)
+
+        if options.mode == "fixed":
+            sr = imagedata.fit_fixed_positions(options.fixed_coords,
+                options.ffbox_in_beampix * max(imagedata.beam[0:2])
+            )
+
         else:
-            if labelled_data is None:
-                print "Thresholding with det = %f sigma, analysis = %f sigma" % (options.detection, options.analysis)
-            sr = imagedata.extract(options.detection, options.analysis, labelled_data=labelled_data, labels=labels)
+            if options.mode == "fdr":
+                print "Using False Detection Rate algorithm with alpha = %f" % (options.alpha,)
+                sr = imagedata.fd_extract(options.alpha)
+            else:
+                if labelled_data is None:
+                    print "Thresholding with det = %f sigma, analysis = %f sigma" % (options.detection, options.analysis)
+                sr = imagedata.extract(options.detection, options.analysis, labelled_data=labelled_data, labels=labels)
+
         if options.regions:
-            regionfile = os.path.splitext(os.path.basename(filename))[0] + ".reg"
+            regionfile = imagename + ".reg"
             regionfile = open(regionfile, 'w')
             regionfile.write(regions(sr))
             regionfile.close()
         if options.residuals or options.islands:
             gaussian_map, residual_map = generate_result_maps(imagedata.data, sr)
         if options.residuals:
-            residualfile = os.path.splitext(os.path.basename(filename))[0] + ".residuals.fits"
+            residualfile = imagename + ".residuals.fits"
             writefits(residualfile, residual_map, pyfits.getheader(filename))
         if options.islands:
-            islandfile = os.path.splitext(os.path.basename(filename))[0] + ".islands.fits"
+            islandfile = imagename + ".islands.fits"
             writefits(islandfile, gaussian_map, pyfits.getheader(filename))
         if options.rmsmap:
-            rmsfile = os.path.splitext(os.path.basename(filename))[0] + ".rms.fits"
+            rmsfile = imagename + ".rms.fits"
             writefits(rmsfile, numpy.array(imagedata.rmsmap), pyfits.getheader(filename))
         if options.sigmap:
-            sigfile = os.path.splitext(os.path.basename(filename))[0] + ".sig.fits"
-            writefits(sigfile, numpy.array(imagedata.data_bgsubbed/imagedata.rmsmap), pyfits.getheader(filename))
+            sigfile = imagename + ".sig.fits"
+            writefits(sigfile, numpy.array(imagedata.data_bgsubbed / imagedata.rmsmap), pyfits.getheader(filename))
         if options.skymodel:
-            skymodelfile = os.path.splitext(os.path.basename(filename))[0] + ".skymodel"
-            skymodelfile = open(skymodelfile, 'w')
-            if ff.freq_eff:
-                skymodelfile.write(skymodel(sr, ff.freq_eff))
-            else:
-                print "WARNING: Using default reference frequency for %s" % (skymodelfile.name,)
-                skymodelfile.write(skymodel(sr))
-            skymodelfile.close()
+            with open(imagename + ".skymodel", 'w') as skymodelfile:
+                if ff.freq_eff:
+                    skymodelfile.write(skymodel(sr, ff.freq_eff))
+                else:
+                    print "WARNING: Using default reference frequency for %s" % (skymodelfile.name,)
+                    skymodelfile.write(skymodel(sr))
         if options.csv:
-            csvfile = os.path.splitext(os.path.basename(filename))[0] + ".csv"
-            csvfile = open(csvfile, 'w')
-            csvfile.write(csv(sr))
-            csvfile.close()
+            with open(imagename + ".csv", 'w') as csvfile:
+                csvfile.write(csv(sr))
         print >>output, summary(filename, sr),
     return output.getvalue()
 

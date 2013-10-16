@@ -6,11 +6,21 @@ def nice_format(f):
     else:
         return "%.2f" % f
 
-def substitute_nan(value, substitute=0.0):
-    """
-    If value is not NaN, return value. Otherwise, return substitute.
-    """
-    if math.isnan(value):
-        return substitute
+def substitute(value, sub, test_f):
+    if test_f(value):
+        return sub
     else:
         return value
+
+def substitute_inf(value, sub="Infinity"):
+     """
+     If value is not infinite, return value. Otherwise, return sub.
+     """
+     return substitute(value, sub, math.isinf)
+
+def substitute_nan(value, sub=0.0):
+     """
+     If value is not NaN, return value. Otherwise, return sub.
+
+     """
+     return substitute(value, sub, math.isnan)

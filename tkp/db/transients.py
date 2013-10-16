@@ -10,6 +10,7 @@ from scipy.stats import chisqprob
 
 import tkp.db
 from tkp.db.generic import get_db_rows_as_dicts
+from tkp.utility import substitute_nan
 
 
 logger = logging.getLogger(__name__)
@@ -231,10 +232,10 @@ def multi_epoch_transient_search(image_id,
     for entry in updated_variability_indices:
         probability_not_flat = 1 - chisqprob(entry['eta_int'] * (entry['f_datapoints'] - 1),
                                              (entry['f_datapoints'] - 1))
-        if probability_not_flat == probability_not_flat:
-            entry['siglevel'] = float(probability_not_flat) #Monetdb doesn't like numpy.float64
-        else: #prob = NaN
-            entry['siglevel'] = 0.0
+
+        # If the above is not NaN, we use it; otherwise, 0.
+        # The call to float() converts to a type suits the DB-API.
+        entry['siglevel'] = float(substitute_nan(probability_not_flat))
 
     old_transients = [entry for entry in updated_variability_indices
                             if not entry['new_transient']]

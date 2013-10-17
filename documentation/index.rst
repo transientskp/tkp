@@ -1,8 +1,8 @@
 .. _trap:
 
-++++++++++++++++++++++
-Transient Key Project
-++++++++++++++++++++++
++++++++++++++++++++++++++
+LOFAR Transients Pipeline
++++++++++++++++++++++++++
 .. |last_updated| last_updated::
 
 *This document last updated:* |last_updated|.
@@ -11,12 +11,11 @@ Transient Key Project
    :maxdepth: 2
 
    introduction
-   installation/index
-   getstart
-   usage/index
-   overview/index
-   developers/index
+   getstart/index
+   userref/index
+   devref/index
    tools/index
+   bibliography
 
 
 ++++++++++++++++++

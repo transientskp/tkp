@@ -50,8 +50,8 @@ they stay up-to-date.
 
 Finally, always bear in mind that it is possible to disable the whole task
 distribution system and run the pipeline in a single process. This is simpler
-to set up, and likely simpler to debug in the event of problems. To enable
-this mode, simple edit your ``celeryconfig.py`` file and ensure it contains
-the (uncommented) line::
+to set up, and likely simpler to debug in the event of problems. But keep in
+mind that a running broker is still required. To enable this mode, simple edit
+your ``celeryconfig.py`` file and ensure it contains the (uncommented) line::
 
   CELERY_ALWAYS_EAGER = CELERY_EAGER_PROPAGATES_EXCEPTIONS = True

@@ -54,6 +54,8 @@ your pipline directory::
 
     #CELERY_ALWAYS_EAGER = CELERY_EAGER_PROPAGATES_EXCEPTIONS = True
 
+Note that a running broker is still required.
+
 
 Create and configure a job
 ==========================

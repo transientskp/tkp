@@ -44,7 +44,12 @@ def associate_extracted_sources(image_id, deRuiter_r):
     #+------------------------------------------------------+
     #| Here we process the one-to-many associations.        |
     #+------------------------------------------------------+
-    _insert_1_to_many_runcat()
+    try:
+        _insert_1_to_many_runcat()
+    except tkp.db.Database().RhombusError as e:
+        logger.error("Error caught around _insert_1_to_many_runcat - "
+                 "possible 'RhombusError'. See Issue #4778. Will now re-raise.")
+        raise e
     _insert_1_to_many_runcat_flux()
     _insert_1_to_many_basepoint_assoc()
     _insert_1_to_many_assoc()

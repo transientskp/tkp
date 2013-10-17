@@ -16,7 +16,7 @@ LOFAR Transients Pipeline
    devref/index
    tools/index
    bibliography
-
+   colophon
 
 ++++++++++++++++++
 Indices and tables

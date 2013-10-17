@@ -6,6 +6,7 @@ import tkp.db
 from tkp.db.orm import DataSet, Image
 from tkp.db.database import Database
 from tkp.db.orm import ExtractedSource
+from tkp.testutil import db_subs
 
 # We're cheating here: a unit test shouldn't really depend on an
 # external dependency like the database being up and running
@@ -193,6 +194,21 @@ class TestExtractedSource(unittest.TestCase):
 
     def tearDown(self):
         tkp.db.rollback()
+
+    @requires_database()
+    def test_infinite(self):
+        # Check that database insertion doesn't choke on infinite errors
+        dataset = DataSet(data={'description': 'example dataset'},
+                           database=self.database)
+        image = Image(dataset=dataset, data=db_subs.example_dbimage_datasets(1)[0])
+
+        # Inserting an example extractedsource should be fine
+        extracted_source = db_subs.example_extractedsource_tuple()
+        image.insert_extracted_sources([extracted_source])
+
+        # But it should also be fine if the source has infinite errors
+        extracted_source = db_subs.example_extractedsource_tuple(error_radius=float('inf'))
+        image.insert_extracted_sources([extracted_source])
 
     @requires_database()
     def test_create(self):

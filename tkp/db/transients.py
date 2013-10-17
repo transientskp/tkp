@@ -209,11 +209,6 @@ def multi_epoch_transient_search(image_id,
         v_int, eta_int, 'siglevel',
         trigger_xtrsrc, new_transient }]
     """
-    # TODO:
-    # What do we do with transients that start as transient, but as
-    # more data is collected the siglevel decreases below the threshold?
-    # Should they get removed from the transient table?
-
     ##Bit of a kludge here:
     ## We want to update *all* transient entries, even if they have dropped below
     ## the 'new transient' selection criteria.

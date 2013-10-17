@@ -1,3 +1,5 @@
+.. _tools:
+
 ++++++++++++++++
 Standalone Tools
 ++++++++++++++++
@@ -6,3 +8,4 @@ Standalone Tools
    :maxdepth: 2
 
    pyse
+   tkp-inject

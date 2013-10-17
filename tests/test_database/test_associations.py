@@ -1,4 +1,6 @@
 import math
+import logging
+from io import BytesIO
 
 import unittest2 as unittest
 
@@ -10,6 +12,7 @@ from tkp.db.associations import associate_extracted_sources
 from tkp.db.generic import columns_from_table, get_db_rows_as_dicts
 from tkp.testutil import db_subs
 from tkp.testutil.decorators import requires_database
+
 
 @requires_database()
 class TestOne2One(unittest.TestCase):
@@ -1224,14 +1227,14 @@ class TestMany2Many(unittest.TestCase):
             self.assertEqual(assocs[1]['type'], 3)
 
     def test_many2many_pathological_equilateral_rhombus(self):
-        """This handles the case where we have two sources in first image
-        and two in second image. 
+        """This handles the case where we have two sources in first image and
+        two in second image.
         The two sources in the second image are *both equidistant from both
         of the original sources*.
-        
+
         In this case, it is not clear how to 'prune' the candidate associations,
-        and our SQL breaks.  
-        ( https://support.astron.nl/lofar_issuetracker/issues/4778 )
+        and our SQL breaks. The response is to abort with an exception and log
+        a sane error. (https://support.astron.nl/lofar_issuetracker/issues/4778)
 
              3
              o
@@ -1247,22 +1250,27 @@ class TestMany2Many(unittest.TestCase):
         dataset = DataSet(data={'description': 'assoc test set: n-m, '
                                 + self._testMethodName})
 
-#       So in this case, we have 2 sources in image2, offset from centre in
-#       Dec, with *NO* offset in RA.
+        # So in this case, we have 2 sources in image2, offset from centre in
+        # Dec, with *NO* offset in RA.
         north_src = self.template_src._replace(
                                dec=self.centre_dec + self.src_offset_deg,)
         south_src = self.template_src._replace(
                                dec=self.centre_dec - self.src_offset_deg,)
         image2_srcs = [north_src, south_src]
 
-        # Raises an error, exact type depends on
-        # database engine in use:
-        try:
+        # We will add a handler to the root logger which catches all log
+        # output in a buffer.
+        iostream = BytesIO()
+        hdlr = logging.StreamHandler(iostream)
+        logging.getLogger().addHandler(hdlr)
+
+        # Raises an error, exact type depends on database engine in use:
+        with self.assertRaises(tkp.db.Database().RhombusError):
             runcat, extracted = self.insert_many_to_many_sources(dataset,
                                              self.im_params,
                                              self.base_srcs, image2_srcs,
                                              dr_limit=3.717)
-        except tkp.db.Database().RhombusError as e:
-#             print "Caught a unicorn!"
-#             raise e  # To see logger message.
-            pass
+        logging.getLogger().removeHandler(hdlr)
+
+        # We want to be sure that the error has been appropriately logged.
+        self.assertIn("RhombusError", iostream.getvalue())

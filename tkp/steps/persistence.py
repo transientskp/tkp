@@ -35,7 +35,7 @@ def fix_reference_dec(imagename):
             critical_value = math.pi/2 # radians
 
         ref_dec = ff[0].header['CRVAL2']
-        if (critical_value - ref_dec) < TINY:
+        if (critical_value - abs(ref_dec)) < TINY:
             ff[0].header['CRVAL2'] = ref_dec * (1 - TINY)
             ff.flush()
 

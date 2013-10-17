@@ -65,6 +65,10 @@ class TestFixReferenceDec(unittest.TestCase):
         # Default unit is degrees.
         self._test_for_reference_dec(90.0)
 
+    def test_dec_minus90(self):
+        # Default unit is degrees.
+        self._test_for_reference_dec(-90.0)
+
     def test_dec_90_deg(self):
         self._test_for_reference_dec(90.0, "deg")
 
@@ -79,4 +83,4 @@ class TestFixReferenceDec(unittest.TestCase):
                 h.header.update("CUNIT2", unit)
             h.writeto(temp_fits.name)
             tkp.steps.persistence.fix_reference_dec(temp_fits.name)
-            self.assertLess(pyfits.getheader(temp_fits.name)['CRVAL2'], refdec)
+            self.assertLess(abs(pyfits.getheader(temp_fits.name)['CRVAL2']), abs(refdec))

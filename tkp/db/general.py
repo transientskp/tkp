@@ -14,6 +14,7 @@ import logging
 import tkp.db
 from tkp.utility.coordinates import eq_to_cart
 from tkp.utility.coordinates import alpha_inflate
+from tkp.utility import substitute_inf
 
 
 logger = logging.getLogger(__name__)
@@ -153,9 +154,9 @@ def insert_image(dataset, freq_eff, freq_bw, taustart_ts, tau_time,
     """
     arguments = {'dataset': dataset, 'tau_time': tau_time, 'freq_eff': freq_eff,
                  'freq_bw': freq_bw, 'taustart_ts': taustart_ts,
-                 'rb_smaj': beam_smaj_pix * math.fabs(deltax) if not beam_smaj_pix == float('inf') else 'Infinity',
-                 'rb_smin': beam_smin_pix * math.fabs(deltay) if not beam_smin_pix == float('inf') else 'Infinity',
-                 'rb_pa': 180 * beam_pa_rad / math.pi if not beam_pa_rad == float('inf') else 'Infinity',
+                 'rb_smaj': substitute_inf(beam_smaj_pix * math.fabs(deltax)),
+                 'rb_smin': substitute_inf(beam_smin_pix * math.fabs(deltay)),
+                 'rb_pa': substitute_inf(180 * beam_pa_rad / math.pi),
                  'deltax': deltax, 'deltay': deltay,
                  'url': url,
                  'centre_ra': centre_ra, 'centre_decl': centre_decl,
@@ -168,7 +169,7 @@ def insert_image(dataset, freq_eff, freq_bw, taustart_ts, tau_time,
 def insert_extracted_sources(image_id, results, extract):
     """Insert all detections from sourcefinder into the extractedsource table.
 
-    Besides the source properties from sourcefinder, we calculate additional 
+    Besides the source properties from sourcefinder, we calculate additional
     attributes that are increase performance in other tasks.
 
     The strict sequence from results (the sourcefinder detections) is given below.
@@ -181,26 +182,26 @@ def insert_extracted_sources(image_id, results, extract):
     (9) beam major width (arcsec), (10) - minor width (arcsec), (11) - parallactic angle [deg],
     (12) ew_sys_err [arcsec], (13) ns_sys_err [arcsec],
     (14) error_radius [arcsec]
-    
+
     ra_fit_err and decl_fit_err are the 1-sigma errors from the gaussian fit,
-    in degrees. Note that for a source located towards the poles the ra_fit_err 
+    in degrees. Note that for a source located towards the poles the ra_fit_err
     increases with absolute declination.
     error_radius is a pessimistic on-sky error estimate in arcsec.
-    ew_sys_err and ns_sys_err represent the telescope dependent systematic errors 
+    ew_sys_err and ns_sys_err represent the telescope dependent systematic errors
     and are in arcsec.
     An on-sky error (declination independent, and used in de ruiter calculations)
     is then:
     uncertainty_ew^2 = ew_sys_err^2 + error_radius^2
     uncertainty_ns^2 = ns_sys_err^2 + error_radius^2
     The units of uncertainty_ew and uncertainty_ns are in degrees.
-    The error on RA is given by ra_err. For a source with an RA of ra and an error 
+    The error on RA is given by ra_err. For a source with an RA of ra and an error
     of ra_err, its RA lies in the range [ra-ra_err, ra+ra_err].
     ra_err^2 = ra_fit_err^2 + [alpha_inflate(ew_sys_err,decl)]^2
     decl_err^2 = decl_fit_err^2 + ns_sys_err^2.
     The units of ra_err and decl_err are in degrees.
-    Here alpha_inflate() is the RA inflation function, it converts an 
+    Here alpha_inflate() is the RA inflation function, it converts an
     angular on-sky distance to a ra distance at given declination.
-    
+
     Input argument "extract" tells whether the source detections originate from:
     0: blind source extraction
     1: from forced fits at null detection locations
@@ -244,6 +245,7 @@ def insert_extracted_sources(image_id, results, extract):
             r.append(1)
         else:
             raise ValueError("Not a valid extractedsource insert type: '%s'" % extract)
+        r = [substitute_inf(value) for value in r]
         xtrsrc.append(r)
     values = [str(tuple(xsrc)) for xsrc in xtrsrc]
 

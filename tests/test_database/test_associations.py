@@ -155,6 +155,23 @@ class TestOne2One(unittest.TestCase):
         self.assertEqual(avg_f_int_weight[0], 1./steady_srcs[0].flux_err**2)
 
 
+    def test_infinite_errors(self):
+        # Check that source association doesn't choke on sources with infinite
+        # errors. This is a problem because the calculation of the
+        # dimensionless distance involves weighting by error radius, and hence
+        # can cause underflow errors.
+        dataset = DataSet(data={'description': 'test_infinite_errors'})
+        im_params = db_subs.example_dbimage_datasets(2)
+
+        extracted_source = db_subs.example_extractedsource_tuple(error_radius=float('inf'))
+
+        for im_param in im_params:
+            image = tkp.db.Image(dataset=dataset, data=im_param)
+            image.insert_extracted_sources([extracted_source])
+            # NB choice of De Ruiter radius is arbitrary.
+            associate_extracted_sources(image.id, deRuiter_r=1.0)
+
+
 @requires_database()
 class TestMixedSkyregions(unittest.TestCase):
     """

@@ -25,11 +25,13 @@ class DatabaseConfigTestCase(unittest.TestCase):
         os.environ = self.old_environment
 
     def test_unconfigured(self):
-        self.assertRaises(Exception, database_config)
+        # Should *not* raise.
+        database_config()
 
     def test_invalid_dbengine(self):
+        # Should *not* raise; database_config does not sanity check.
         os.environ["TKP_DBENGINE"] = DUMMY_VALUE
-        self.assertRaises(Exception, database_config)
+        database_config()
 
     def test_defaults_postgresql(self):
         # Demonstrate that we get the expected default values

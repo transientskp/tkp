@@ -225,6 +225,9 @@ def insert_extracted_sources(image_id, results, extract):
     xtrsrc = []
     for src in results:
         r = list(src)
+        # Use 360 degree rather than infinite uncertainty for
+        # unconstrained positions.
+        r[14] = substitute_inf(r[14], 360.0)
         # ra_err: sqrt of quadratic sum of fitted and systematic errors.
         r.append(math.sqrt(r[2]**2 + alpha_inflate(r[12]/3600., r[1])**2))
         # decl_err: sqrt of quadratic sum of fitted and systematic errors.
@@ -245,7 +248,6 @@ def insert_extracted_sources(image_id, results, extract):
             r.append(1)
         else:
             raise ValueError("Not a valid extractedsource insert type: '%s'" % extract)
-        r = [substitute_inf(value) for value in r]
         xtrsrc.append(r)
     values = [str(tuple(xsrc)) for xsrc in xtrsrc]
 

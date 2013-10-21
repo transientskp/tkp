@@ -16,7 +16,7 @@ logger = logging.getLogger(__name__)
 
 def get_nulldetections(image_id, deRuiter_r):
     """Returns the runcat sources that do not have a counterpart in the
-    extractedsources of the current image.
+    extractedsources of the current image irrespective of the frequency.
 
     NB This is run *prior* to source association.
 
@@ -36,22 +36,16 @@ SELECT r1.id
       ,r1.wm_decl
   FROM runningcatalog r1
       ,image i1
-      ,runningcatalog_flux rf1
  WHERE i1.id = %(imgid)s
    AND i1.dataset = r1.dataset
-   AND rf1.runcat = r1.id
-   AND rf1.band = i1.band
    AND r1.id NOT IN (SELECT r.id
                        FROM runningcatalog r
                            ,extractedsource x
                            ,image i
-                           ,runningcatalog_flux rf
                       WHERE i.id = %(imgid)s
                         AND x.image = i.id
                         AND x.image = %(imgid)s
                         AND i.dataset = r.dataset
-                        AND rf.runcat = r.id
-                        AND rf.band = i.band
                         AND r.zone BETWEEN CAST(FLOOR(x.decl - i.rb_smaj) AS INTEGER)
                                        AND CAST(FLOOR(x.decl + i.rb_smaj) AS INTEGER)
                         AND r.wm_decl BETWEEN x.decl - i.rb_smaj
@@ -65,14 +59,14 @@ SELECT r1.id
                                  / (x.uncertainty_ns * x.uncertainty_ns + r.wm_uncertainty_ns * r.wm_uncertainty_ns)
                                 ) < %(drrad)s
                     )
-            AND r1.id IN(SELECT rc2.id
-                           FROM runningcatalog rc2
-                               ,assocskyrgn asr2
-                               ,image im2
-                          WHERE im2.id = %(imgid)s
-                            AND asr2.skyrgn = im2.skyrgn
-                            AND asr2.runcat = rc2.id
-                        )
+   AND r1.id IN (SELECT r2.id
+                   FROM runningcatalog r2
+                       ,assocskyrgn a2
+                       ,image i2
+                  WHERE i2.id = %(imgid)s
+                    AND a2.skyrgn = i2.skyrgn
+                    AND a2.runcat = r2.id
+                )
 """
     qry_params = {'imgid':image_id, 'drrad': deRuiter_r}
     cursor = tkp.db.execute(query, qry_params)

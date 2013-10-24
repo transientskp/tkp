@@ -15,8 +15,13 @@ logger = logging.getLogger(__name__)
 
 
 def get_nulldetections(image_id, deRuiter_r):
-    """Returns the runcat sources that do not have a counterpart in the
-    extractedsources of the current image irrespective of the frequency.
+    """
+    Returns the runningcatalog sources which:
+
+      * Do not have a counterpart in the extractedsources of the current
+        image;
+      * Have been seen (in any band) in a timestep earlier than that of the
+        current image.
 
     NB This is run *prior* to source association.
 
@@ -66,6 +71,14 @@ SELECT r1.id
                   WHERE i2.id = %(imgid)s
                     AND a2.skyrgn = i2.skyrgn
                     AND a2.runcat = r2.id
+                )
+   AND r1.id IN (SELECT r3.id
+                  FROM runningcatalog r3
+                      ,extractedsource x3
+                      ,image i3
+                  WHERE x3.id = r3.xtrsrc
+                    AND x3.image = i3.id
+                    AND i3.taustart_ts < (SELECT i4.taustart_ts FROM image i4 WHERE i4.id = %(imgid)s )
                 )
 """
     qry_params = {'imgid':image_id, 'drrad': deRuiter_r}

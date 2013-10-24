@@ -67,18 +67,11 @@ class TestForcedFit(unittest.TestCase):
 
             for image in images:
                 null_detections = dbmon.get_nulldetections(image.id, 5.68)
-                if (image.taustart_ts == taustart_tss[0] and image.freq_eff == freq_effs[0]):
-                    # The image into which we inserted src0 has no null
-                    # detections.
+                if (image.taustart_ts == taustart_tss[0]):
+                    # There are no null detections at the first timestep
                     self.assertEqual(len(null_detections), 0)
-                elif image.taustart_ts == taustart_tss[0]:
-                    # Other images in the first timestep have one null
-                    # detection.
-                    self.assertEqual(len(null_detections), 1)
-                    dbgen.insert_extracted_sources(image.id, [src0], 'ff_nd')
-                elif (image.taustart_ts == taustart_tss[1] and image.freq_eff == freq_effs[3]):
-                    # The image into which we inserted src1 has one null
-                    # detection (that of src0).
+                elif image.taustart_ts == taustart_tss[1]:
+                    # src0 is a null detection at the second timestep
                     self.assertEqual(len(null_detections), 1)
                     dbgen.insert_extracted_sources(image.id, [src0], 'ff_nd')
                 else:
@@ -96,9 +89,15 @@ class TestForcedFit(unittest.TestCase):
         """
         cursor = tkp.db.execute(query, {'dataset_id': dataset.id})
         result = cursor.fetchall()
-        # We should have two runningcatalog sources.
+
+        # We should have two runningcatalog sources, with a datapoint for
+        # every image in which the sources were seen.
         self.assertEqual(len(result), 2)
 
-        # With a datapoint for every image in which the sources were seen.
-        self.assertEqual(result[0][1], 8)
-        self.assertEqual(result[1][1], 12)
+        # Inserted into timestep 2. Seen in one image there, and force-fits in
+        # all four images at timestep 3.
+        self.assertEqual(result[0][1], 5)
+
+        # Inserted into timestep 1. Seen in one image there, and force-fits in
+        # all eight images at timesteps 2 and 3.
+        self.assertEqual(result[1][1], 9)

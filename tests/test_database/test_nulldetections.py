@@ -48,37 +48,43 @@ class TestForcedFit(unittest.TestCase):
             image = tkp.db.Image(dataset=dataset, data=im)
             images.append(image)
 
-        # Source properties are the same in every image
-        src = db_subs.example_extractedsource_tuple()
+        # Arbitrary parameters, except that they fall insite our image.
+        src0 = db_subs.example_extractedsource_tuple(ra=122.5, dec=9.5)
+        src1 = db_subs.example_extractedsource_tuple(ra=123.5, dec=10.5)
 
-        # group images in blocks of 4, corresponding to all frequency bands at
+        # Group images in blocks of 4, corresponding to all frequency bands at
         # a given timestep.
         for images in zip(*(iter(images),) * len(freq_effs)):
             for image in images:
-                # We 'skip' a couple of images to simulate missed blind
-                # detections.
-                print image.id, image.taustart_ts, image.freq_eff, type(image.taustart_ts)
-                if (
-                    (image.taustart_ts == taustart_tss[1] and image.freq_eff == freq_effs[0]) or
-                    (image.taustart_ts == taustart_tss[2] and image.freq_eff == freq_effs[2])
-                ):
-                    pass
+                # The first source is only seen at timestep 0, band 0.
+                # The second source is only seen at timestep 1, band 3.
+                if (image.taustart_ts == taustart_tss[0] and image.freq_eff == freq_effs[0]):
+                    dbgen.insert_extracted_sources(image.id, [src0], 'blind')
+                elif (image.taustart_ts == taustart_tss[1] and image.freq_eff == freq_effs[3]):
+                    dbgen.insert_extracted_sources(image.id, [src1], 'blind')
                 else:
-                    dbgen.insert_extracted_sources(image.id, [src], 'blind')
+                    pass
 
             for image in images:
-                # The images we skipped above will have null detections at the
-                # source position; the others should have no null detections.
                 null_detections = dbmon.get_nulldetections(image.id, 5.68)
-                if (
-                    (image.taustart_ts == taustart_tss[1] and image.freq_eff == freq_effs[0]) or
-                    (image.taustart_ts == taustart_tss[2] and image.freq_eff == freq_effs[2])
-                ):
-                    self.assertEqual(null_detections[0][0], src.ra)
-                    self.assertEqual(null_detections[0][1], src.dec)
-                    dbgen.insert_extracted_sources(image.id, [src], 'ff_nd')
-                else:
+                if (image.taustart_ts == taustart_tss[0] and image.freq_eff == freq_effs[0]):
+                    # The image into which we inserted src0 has no null
+                    # detections.
                     self.assertEqual(len(null_detections), 0)
+                elif image.taustart_ts == taustart_tss[0]:
+                    # Other images in the first timestep have one null
+                    # detection.
+                    self.assertEqual(len(null_detections), 1)
+                    dbgen.insert_extracted_sources(image.id, [src0], 'ff_nd')
+                elif (image.taustart_ts == taustart_tss[1] and image.freq_eff == freq_effs[3]):
+                    # The image into which we inserted src1 has one null
+                    # detection (that of src0).
+                    self.assertEqual(len(null_detections), 1)
+                    dbgen.insert_extracted_sources(image.id, [src0], 'ff_nd')
+                else:
+                    # All other images have two null detections.
+                    self.assertEqual(len(null_detections), 2)
+                    dbgen.insert_extracted_sources(image.id, [src0, src1], 'ff_nd')
                 dbass.associate_extracted_sources(image.id, deRuiter_r=5.68)
 
         query = """\
@@ -86,11 +92,13 @@ class TestForcedFit(unittest.TestCase):
               ,datapoints
         FROM runningcatalog r
         WHERE dataset = %(dataset_id)s
+        ORDER BY datapoints
         """
         cursor = tkp.db.execute(query, {'dataset_id': dataset.id})
         result = cursor.fetchall()
-        # We should have a single running catalog source
-        self.assertEqual(len(result), 1)
+        # We should have two runningcatalog sources.
+        self.assertEqual(len(result), 2)
 
-        # With a datapoint for every image
-        self.assertEqual(result[0][1], len(im_params))
+        # With a datapoint for every image in which the sources were seen.
+        self.assertEqual(result[0][1], 8)
+        self.assertEqual(result[1][1], 12)

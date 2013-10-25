@@ -188,5 +188,3 @@ class TestTransientRoutines(unittest.TestCase):
                  minpoints=1)
         self.assertEqual(len(transients), very_non_flat)
 
-
-

@@ -590,11 +590,7 @@ values from extractedsource.
 ``_insert_new_assoc(image_id)``
 Performs the same routine of grab 'new-source' entries, match new runcat entries,
 as  ``_insert_new_runcat_flux`` - it's then trival to insert the relevant entries
-in assocxtrsource. 
-
-.. warning::
-
- Currently we set ``type = 4``, (i.e. many-to-many ???) in _insert_new_assoc.
+in assocxtrsource. These are then marked as a ``type = 4`` association.
 
 Cleanup
 -------

@@ -64,17 +64,25 @@ or n-1.
 
 **type**
     Type of association, and its description.  n-m, where n is the number of
-    runningcatalog sources, and m the number of extractedsources.
-    There is no logical behind the type numbers.
-        
-        * ``type = 3``: 1-1 association
-        * ``type = 2``: base point of a 1-n (one-to-many) association (relates to ``type = 6``)
-        * ``type = 6``: associations of 1-n (one-to-many) type. These are updates of pre-existing associations, due
-                        to the 1-n case (relates to ``type = 2`` association)
-        * ``type = 4``: 0-1 (zero-to-one) association, i.e. a new source.
+    runningcatalog sources, and m the number of extractedsources. (The
+    assignment of numbers is to association types is arbitrary.)
 
-    Note that many-to-1 relations reduce to 1-to-1 and 1-to-many associations. Therefore,
-    there is no type specifying such a case.
+    ``type = 3``
+        1-1 association
+
+    ``type = 2``
+        base point of a 1-n (one-to-many) association (relates to ``type = 6``)
+
+    ``type = 6``
+        associations of 1-n (one-to-many) type. These are updates of
+        pre-existing associations, due to the 1-n case (relates to ``type =
+        2`` association)
+
+    ``type = 4``
+        0-1 (zero-to-one) association, i.e. a new source.
+
+    Note that many-to-1 relations reduce to 1-to-1 and 1-to-many associations.
+    Therefore, there is no type specifying such a case.
 
 **distance_arcsec**
    The distance in arcsec between the associated sources, calculated by the

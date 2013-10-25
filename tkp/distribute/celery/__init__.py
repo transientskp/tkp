@@ -11,6 +11,7 @@ from celery.signals import after_setup_logger, after_setup_task_logger
 from tkp.config import initialize_pipeline_config, database_config
 from tkp.distribute.celery.tasklog import setup_task_log_emitter, monitor_events
 from tkp.steps.monitoringlist import add_manual_monitoringlist_entries
+from tkp.steps.source_extraction import forced_fits
 from tkp import steps
 from tkp.db.orm import Image
 from tkp.db import consistency as dbconsistency
@@ -195,21 +196,17 @@ def run(job_name, local=False):
         for image, sources in zip(images, extract_sources):
             dbgen.insert_extracted_sources(image.id, sources, 'blind')
 
-        logger.info("performing null detections")
-        null_detectionss = [dbmon.get_nulldetections(image.id, deRuiter_radius)
-                            for image in images]
-
-        logger.info("performing forced fits")
-        iters = zip([i.url for i in images], null_detectionss)
-        arguments = [se_parset]
-        ff_nds = runner(tasks.forced_fits, iters, arguments, local)
-
-        for image, ff_nd in zip(images, ff_nds):
-            dbgen.insert_extracted_sources(image.id, ff_nd, 'ff_nd')
-
         logger.info("performing database operations")
         for image in images:
             logger.info("performing DB operations for image %s" % image.id)
+            logger.info("performing null detections")
+            null_detections = dbmon.get_nulldetections(image.id, deRuiter_radius)
+            
+            logger.info("performing forced fits")
+            ff_nd = forced_fits(image.url, null_detections, se_parset)
+            dbgen.insert_extracted_sources(image.id, ff_nd, 'ff_nd')
+
+            logger.info("performing source association")
             dbass.associate_extracted_sources(image.id,
                                               deRuiter_r=deRuiter_radius)
             dbmon.add_nulldetections(image.id)

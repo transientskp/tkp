@@ -15,8 +15,13 @@ logger = logging.getLogger(__name__)
 
 
 def get_nulldetections(image_id, deRuiter_r):
-    """Returns the runcat sources that do not have a counterpart in the
-    extractedsources of the current image.
+    """
+    Returns the runningcatalog sources which:
+
+      * Do not have a counterpart in the extractedsources of the current
+        image;
+      * Have been seen (in any band) in a timestep earlier than that of the
+        current image.
 
     NB This is run *prior* to source association.
 
@@ -27,31 +32,27 @@ def get_nulldetections(image_id, deRuiter_r):
 
     Output: list of tuples [(runcatid, ra, decl)]
     """
-    #The first subquery looks for extractedsources without runcat associations.
+    # The first subquery looks for extractedsources without runcat associations.
     # The second subquery looks for runcat entries we expect to see in this image.
-    #NB extra clause on x.image is necessary for performance reasons.
+    # Note about the second subquery that we want the first detection of a runcat 
+    # source to be in the same skyregion as the current image. 
+    # NB extra clause on x.image is necessary for performance reasons.
     query = """\
 SELECT r1.id
       ,r1.wm_ra
       ,r1.wm_decl
   FROM runningcatalog r1
       ,image i1
-      ,runningcatalog_flux rf1
  WHERE i1.id = %(imgid)s
    AND i1.dataset = r1.dataset
-   AND rf1.runcat = r1.id
-   AND rf1.band = i1.band
    AND r1.id NOT IN (SELECT r.id
                        FROM runningcatalog r
                            ,extractedsource x
                            ,image i
-                           ,runningcatalog_flux rf
                       WHERE i.id = %(imgid)s
                         AND x.image = i.id
                         AND x.image = %(imgid)s
                         AND i.dataset = r.dataset
-                        AND rf.runcat = r.id
-                        AND rf.band = i.band
                         AND r.zone BETWEEN CAST(FLOOR(x.decl - i.rb_smaj) AS INTEGER)
                                        AND CAST(FLOOR(x.decl + i.rb_smaj) AS INTEGER)
                         AND r.wm_decl BETWEEN x.decl - i.rb_smaj
@@ -65,14 +66,19 @@ SELECT r1.id
                                  / (x.uncertainty_ns * x.uncertainty_ns + r.wm_uncertainty_ns * r.wm_uncertainty_ns)
                                 ) < %(drrad)s
                     )
-            AND r1.id IN(SELECT rc2.id
-                           FROM runningcatalog rc2
-                               ,assocskyrgn asr2
-                               ,image im2
-                          WHERE im2.id = %(imgid)s
-                            AND asr2.skyrgn = im2.skyrgn
-                            AND asr2.runcat = rc2.id
-                        )
+   AND r1.id IN (SELECT r2.id
+                   FROM runningcatalog r2
+                       ,assocskyrgn a2 
+                       ,image i2
+                       ,extractedsource x
+                       ,image i3
+                  WHERE i2.id = %(imgid)s
+                    AND a2.skyrgn = i2.skyrgn
+                    AND a2.runcat = r2.id 
+                    AND r2.xtrsrc = x.id
+                    AND x.image = i3.id
+                    AND i3.taustart_ts < i2.taustart_ts
+                )
 """
     qry_params = {'imgid':image_id, 'drrad': deRuiter_r}
     cursor = tkp.db.execute(query, qry_params)

@@ -32,9 +32,11 @@ def get_nulldetections(image_id, deRuiter_r):
 
     Output: list of tuples [(runcatid, ra, decl)]
     """
-    #The first subquery looks for extractedsources without runcat associations.
+    # The first subquery looks for extractedsources without runcat associations.
     # The second subquery looks for runcat entries we expect to see in this image.
-    #NB extra clause on x.image is necessary for performance reasons.
+    # Note about the second subquery that we want the first detection of a runcat 
+    # source to be in the same skyregion as the current image. 
+    # NB extra clause on x.image is necessary for performance reasons.
     query = """\
 SELECT r1.id
       ,r1.wm_ra
@@ -66,19 +68,16 @@ SELECT r1.id
                     )
    AND r1.id IN (SELECT r2.id
                    FROM runningcatalog r2
-                       ,assocskyrgn a2
+                       ,assocskyrgn a2 
                        ,image i2
+                       ,extractedsource x
+                       ,image i3
                   WHERE i2.id = %(imgid)s
                     AND a2.skyrgn = i2.skyrgn
-                    AND a2.runcat = r2.id
-                )
-   AND r1.id IN (SELECT r3.id
-                  FROM runningcatalog r3
-                      ,extractedsource x3
-                      ,image i3
-                  WHERE x3.id = r3.xtrsrc
-                    AND x3.image = i3.id
-                    AND i3.taustart_ts < (SELECT i4.taustart_ts FROM image i4 WHERE i4.id = %(imgid)s )
+                    AND a2.runcat = r2.id 
+                    AND r2.xtrsrc = x.id
+                    AND x.image = i3.id
+                    AND i3.taustart_ts < i2.taustart_ts
                 )
 """
     qry_params = {'imgid':image_id, 'drrad': deRuiter_r}

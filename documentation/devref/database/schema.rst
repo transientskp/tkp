@@ -5,6 +5,7 @@ Schema
 ++++++
 
 .. image:: schema.png
+   :scale: 20%
 
 assoccatsource
 ==============

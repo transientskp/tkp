@@ -1,3 +1,4 @@
+import exceptions
 import logging
 import tkp.config
 
@@ -6,6 +7,35 @@ logger = logging.getLogger(__name__)
 # The version of the TKP DB schema which is assumed by the current tree.
 # Increment whenever the schema changes.
 DB_VERSION = 17
+
+class DBExceptions(object):
+    """
+    This provides an engine-agnostic wrapper around the exceptions that can
+    the thrown by the database layer: we can refer to eg
+    DBExcetions(engine).Error rather than <engine specific module>.Error.
+
+    We handle both the PEP-0249 exceptions as provided by the DB engine, and
+    add our own as necessary.
+    """
+    def __init__(self, engine):
+        if engine == "monetdb":
+            import monetdb.exceptions
+            self.exceptions = monetdb.exceptions
+        elif engine == "postgresql":
+            import psycopg2
+            self.exceptions = psycopg2
+        # RhombusError refers to unhandled source layout, See issue 4778:
+        # https://support.astron.nl/lofar_issuetracker/issues/4778
+        self.RhombusError = self.exceptions.IntegrityError
+
+    def __getattr__(self, attrname):
+        obj = getattr(self.exceptions, attrname)
+        # Weed the cluttered psycopg2 namespace: only return things that
+        # really are valid database errors.
+        if isinstance(obj, type) and issubclass(obj, exceptions.StandardError):
+            return obj
+        else:
+            raise AttributeError(attrname)
 
 
 class Database(object):
@@ -42,9 +72,7 @@ class Database(object):
                                                            self.database))
         self._configured = True
         # Provide placeholders for engine-specific Exception classes
-        # RhombusError refers to unhandled source layout, See issue 4778:
-        # https://support.astron.nl/lofar_issuetracker/issues/4778
-        self._RhombusError = None
+        self.exceptions = DBExceptions(self.engine)
 
     def connect(self):
         """
@@ -125,14 +153,3 @@ class Database(object):
         if self._connection:
             self._connection.close()
         self._connection = None
-
-    @property
-    def RhombusError(self):
-        if self._RhombusError is None:
-            if self.engine == 'monetdb':
-                import monetdb.exceptions
-                self._RhombusError = monetdb.exceptions.OperationalError
-            elif self.engine == 'postgresql':
-                import psycopg2
-                self._RhombusError = psycopg2.IntegrityError
-        return self._RhombusError

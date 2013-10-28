@@ -1,6 +1,7 @@
 import unittest2 as unittest
 import tkp.db
 from tkp.db.transients import multi_epoch_transient_search
+from tkp.db.transients import _insert_transients
 from tkp.db.generic import get_db_rows_as_dicts
 from tkp.testutil import db_subs
 from tkp.testutil.decorators import requires_database
@@ -188,5 +189,16 @@ class TestTransientRoutines(unittest.TestCase):
                  minpoints=1)
         self.assertEqual(len(transients), very_non_flat)
 
-
-
+    def test_variability_not_null(self):
+        # As per #4306, it should be impossible to insert a transient with a
+        # null value for V_int or eta_int.
+        transients = [
+            {'runcat': 0,
+             'band': 0,
+             'siglevel': 0,
+             'v_int': None,
+             'eta_int': None,
+             'trigger_xtrsrc': 0}
+        ]
+        with self.assertRaises(self.database.exceptions.IntegrityError):
+            _insert_transients(transients)

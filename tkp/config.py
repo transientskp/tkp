@@ -59,6 +59,7 @@ def database_config(pipe_config=None, apply=False):
         ("TKP_DBUSER", 'user'),
         ("TKP_DBENGINE", 'engine'),
         ("TKP_DBPASSWORD", "password"),
+        ("TKP_DBPASSPHRASE", "passphrase"),
         ("TKP_DBHOST", "host"),
         ("TKP_DBPORT", "port")
     ]:

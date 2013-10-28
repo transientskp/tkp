@@ -243,9 +243,11 @@ def run_job(args):
 
 def init_db(options):
     from tkp.config import initialize_pipeline_config, database_config
-    pipe_config = initialize_pipeline_config(
-                         os.path.join(os.getcwd(), "pipeline.cfg"),
-                         "notset")
+    cfgfile = os.path.join(os.getcwd(), "pipeline.cfg")
+    if os.path.exists(cfgfile):
+        pipe_config = initialize_pipeline_config(cfgfile, "notset")
+    else:
+        pipe_config = None
     dbconfig = database_config(pipe_config, apply=False)
 
 

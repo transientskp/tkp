@@ -72,9 +72,6 @@ def database_config(pipe_config=None, apply=False):
     if kwargs['user'] and not kwargs['password']:
         kwargs['password'] = kwargs['user']
 
-    if not kwargs['engine'] in ("postgresql", "monetdb"):
-        raise Exception("Invalid database engine")
-
     if not kwargs['port']:
         if kwargs['engine'] == "monetdb":
             kwargs['port'] = 50000

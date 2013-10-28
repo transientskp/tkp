@@ -18,15 +18,16 @@ class DBExceptions(object):
     add our own as necessary.
     """
     def __init__(self, engine):
+        # RhombusError refers to unhandled source layout, See issue 4778:
+        # https://support.astron.nl/lofar_issuetracker/issues/4778
         if engine == "monetdb":
             import monetdb.exceptions
             self.exceptions = monetdb.exceptions
+            self.RhombusError = self.exceptions.OperationalError
         elif engine == "postgresql":
             import psycopg2
             self.exceptions = psycopg2
-        # RhombusError refers to unhandled source layout, See issue 4778:
-        # https://support.astron.nl/lofar_issuetracker/issues/4778
-        self.RhombusError = self.exceptions.IntegrityError
+            self.RhombusError = self.exceptions.IntegrityError
 
     def __getattr__(self, attrname):
         obj = getattr(self.exceptions, attrname)

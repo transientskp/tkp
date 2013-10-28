@@ -192,13 +192,26 @@ class TestTransientRoutines(unittest.TestCase):
     def test_variability_not_null(self):
         # As per #4306, it should be impossible to insert a transient with a
         # null value for V_int or eta_int.
+
+        # To satisfy foreign key constraints, we need to use a matching
+        # runningcatalog and extractedsource entry.
+        cursor = self.database.connection.cursor()
+        cursor.execute("SELECT id, xtrsrc from runningcatalog LIMIT 1")
+        rc, xtrsrc = cursor.fetchone()
+
         transients = [
-            {'runcat': 0,
+            {'runcat': rc,
              'band': 0,
              'siglevel': 0,
              'v_int': None,
              'eta_int': None,
-             'trigger_xtrsrc': 0}
+             'trigger_xtrsrc': xtrsrc}
         ]
-        with self.assertRaises(self.database.exceptions.IntegrityError):
+        # MonetDB raises OperationalError; Postgres raises IntegrityError.
+        # (IntegrityError is correct per PEP 249.)
+        possible_errors = (
+            self.database.exceptions.OperationalError,
+            self.database.exceptions.IntegrityError
+        )
+        with self.assertRaises(possible_errors):
             _insert_transients(transients)

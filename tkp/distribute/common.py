@@ -37,7 +37,10 @@ def setup_file_logging(log_file, debug=False):
     global_logger = logging.getLogger()
     hdlr = logging.FileHandler(log_file)
     global_logger.addHandler(hdlr)
-    formatter = logging.Formatter('%(asctime)s %(levelname)s %(name)s: %(message)s')
+    formatter = logging.Formatter(
+        '%(asctime)s.%(msecs)03d %(levelname)s %(name)s: %(message)s',
+        datefmt="%Y-%m-%d %H:%M:%S"
+    )
     hdlr.setFormatter(formatter)
     logger.info("logging to %s" % log_file)
     if debug:

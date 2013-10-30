@@ -1944,6 +1944,7 @@ INSERT INTO transient
                                 )
                  AND i2.skyrgn = asr2.skyrgn
                  AND rc2.id = asr2.runcat
+                 AND i2.id not in (SELECT image from rejection)
                  GROUP BY rc2.id
           ) tstamps
    WHERE r0.xtrsrc = x0.id

@@ -12,6 +12,31 @@ import datetime
 
 MJD0 = datetime.datetime(1858, 11, 17, 0, 0, 0)
 
+def fix_reference_dec(imagename):
+    """
+    If the FITS file specified has a reference dec of 90 (or pi/2), make it
+    infinitesimally less. This works around problems with ill-defined
+    coordinate systems at the north celestial pole.
+    """
+    # TINY is an arbitrary constant which we regard as "far enough" away from
+    # dec 90 (or pi/2). In theory, we ought to be able to us
+    # sys.float_info.epsilon, but pyfits seems to round this when writing it
+    # to a FITS file so that isn't quite generous enough.
+    TINY = 1e-10
+    with pyfits.open(imagename, mode='update') as ff:
+        # The FITS standard (version 3.0, July 2008) tells us "For angular
+        # measurements given as floating-point values [...] the units should
+        # be degrees". We therefore use that as a default, but handle radians
+        # too, just to be on the safe side.
+        critical_value = 90.0 # degrees
+        if "CUNIT2" in ff[0].header and ff[0].header["CUNIT2"] == "rad":
+            critical_value = math.pi/2 # radians
+
+        ref_dec = ff[0].header['CRVAL2']
+        if (critical_value - abs(ref_dec)) < TINY:
+            ff[0].header['CRVAL2'] = ref_dec * (1 - TINY)
+            ff.flush()
+
 
 def convert(casa_image, ms, fits_filename=None):
     """Convert a CASA image to FITS, taking care of header keywords

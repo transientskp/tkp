@@ -11,7 +11,7 @@ from tkp.testutil.data import DATAPATH
 from tkp.testutil import Mock
 
 
-orig_fits_file = os.path.join(DATAPATH, 'pyse-test.fits')
+orig_fits_file = os.path.join(DATAPATH, 'NCP_sample_image_1.fits')
 
 
 class AttributeDict(dict):
@@ -53,9 +53,10 @@ class TestPyse(unittest.TestCase):
         os.chdir(cls.temp_dir)
         cls.filename = os.path.join(cls.temp_dir, 'playground.fits')
         shutil.copy(orig_fits_file, cls.filename)
-        cls.fits = FitsImage(cls.filename, beam=(.5, .5, .5))
+        cls.fits = FitsImage(cls.filename)
         cls.imagedata = sourcefinder_image_from_accessor(cls.fits)
-        cls.sourcelist = cls.imagedata.extract()
+        cls.sourcelist = cls.imagedata.extract(10, 3)
+        assert(len(cls.sourcelist) > 0)
 
     @classmethod
     def tearDownClass(cls):

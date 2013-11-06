@@ -81,7 +81,7 @@ def csv(sourcelist):
     output = StringIO()
     print >> output, "ra, ra_err, dec, dec_err, smaj, smaj_err, smin, smin_err, pa, pa_err, int_flux, int_flux_err, pk_flux, pk_flux_err"
     for source in sourcelist:
-        print >> output, "%s, %f, %f, %f, %f, %f, %f, %f, %f, %f, %f, %f, %f, %f, %f" % (
+        print >> output, "%f, %f, %f, %f, %f, %f, %f, %f, %f, %f, %f, %f, %f, %f" % (
             source.ra,
             source.ra.error,
             source.dec,

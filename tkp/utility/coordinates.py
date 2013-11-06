@@ -28,6 +28,7 @@ ITRF_Z = 5064892.786
 
 # Useful constants
 SECONDS_IN_HOUR = 60**2
+SECONDS_IN_DAY = 24 * SECONDS_IN_HOUR
 
 def julian_date(time=None, modified=False):
     """Return the Julian Date: the number of days (including fractions) which
@@ -60,7 +61,7 @@ def mjd2lst(mjd, position=None):
     seconds at a given position. If position is None, we default to the
     reference position of CS002.
 
-    mjd -- Modified Julian Date (float)
+    mjd -- Modified Julian Date (float, in days)
     position -- Position (pyrap measure)
     """
     dm = measures()
@@ -71,6 +72,16 @@ def mjd2lst(mjd, position=None):
     last = dm.measure(dm.epoch("UTC", "%fd" % mjd), "LAST")
     fractional_day = last['m0']['value'] % 1
     return fractional_day * 24 * SECONDS_IN_HOUR
+
+
+def mjds2lst(mjds, position=None):
+    """
+    As mjd2lst(), but takes an argument in seconds rather than days.
+
+    mjds -- Modified Julian Date (float, in seconds)
+    position -- Position (pyrap measure)
+    """
+    return mjd2lst(mjds/SECONDS_IN_DAY, position)
 
 
 def jd2lst(jd, position=None):

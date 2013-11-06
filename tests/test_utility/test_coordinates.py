@@ -16,16 +16,19 @@ class mjd2lstTest(unittest.TestCase):
     # casacore measures database, so we allow for a 1s uncertainty in the
     # results
     MJD = 56272.503491875
+    MJDs = coordinates.SECONDS_IN_DAY * MJD
 
     def testDefaultLocation(self):
         last = 64496.73666805029
         self.assertTrue(abs(coordinates.mjd2lst(self.MJD) - last) < 1.0)
+        self.assertTrue(abs(coordinates.mjds2lst(self.MJDs) - last) < 1.0)
 
     def testSpecificLocation(self):
         last = 73647.97547170892
         dm = measures()
         position = dm.position("itrf", "1m", "1m", "1m")
         self.assertTrue(abs(coordinates.mjd2lst(self.MJD, position) - last) < 1.0)
+        self.assertTrue(abs(coordinates.mjds2lst(self.MJDs, position) - last) < 1.0)
 
 
 class jd2lsttest(unittest.TestCase):
@@ -270,6 +273,14 @@ class angsepTest(unittest.TestCase):
         ra2 = 33.655860050872931310550484340638
         dec2 = 87.061899872535235545001341961324
         coordinates.angsep(ra1, dec1, ra2, dec2)
+
+
+class altazTest(unittest.TestCase):
+    def testExecute(self):
+        # Simply testing the function is usable, because earlier changes had
+        # broken it completely. This does not check it gives the right
+        # results!
+        coordinates.altaz(55000 * coordinates.SECONDS_IN_DAY, 1, 1)
 
 
 if __name__ == '__main__':

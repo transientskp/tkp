@@ -18,22 +18,19 @@ For help with command line options:
 See chapters 2 & 3 of Spreeuw, PhD Thesis, University of Amsterdam, 2010,
 <http://dare.uva.nl/en/record/340633> for details.
 """
-import sys
 import math
-import numbers
 import os.path
 from cStringIO import StringIO
 from optparse import OptionParser
 import numpy
+
 import pyfits
 
-import logging
-
-from tkp.accessors import open as open_accessor
+from tkp.accessors import FitsImage
 from tkp.accessors import sourcefinder_image_from_accessor
 from tkp.accessors import writefits as tkp_writefits
 from tkp.sourcefinder.utils import generate_result_maps
-from tkp.management import parse_monitoringlist_positions
+
 
 def regions(sourcelist):
     """
@@ -45,10 +42,9 @@ def regions(sourcelist):
     print >>output, "global color=green dashlist=8 3 width=1 font=\"helvetica 10 normal\" select=1 highlite=1 dash=0 fixed=0 edit=1 move=1 delete=1 include=1 source=1"
     print >>output, "image"
     for source in sourcelist:
-        # NB, here we convert from internal 0-origin indexing to DS9 1-origin indexing
         print >>output, "ellipse(%f, %f, %f, %f, %f)" % (
-            source.x.value + 1.0,
-            source.y.value + 1.0,
+            source.x.value,
+            source.y.value,
             source.smaj.value*2,
             source.smin.value*2,
             math.degrees(source.theta)+90
@@ -79,9 +75,9 @@ def csv(sourcelist):
     Return a string containing a csv from the extracted sources.
     """
     output = StringIO()
-    print >> output, "ra, ra_err, dec, dec_err, smaj, smaj_err, smin, smin_err, pa, pa_err, int_flux, int_flux_err, pk_flux, pk_flux_err"
+    print >>output, "ra, ra_err, dec, dec_err, smaj, smaj_err, smin, smin_err, pa, pa_err, int_flux, int_flux_err, pk_flux, pk_flux_err"
     for source in sourcelist:
-        print >> output, "%s, %f, %f, %f, %f, %f, %f, %f, %f, %f, %f, %f, %f, %f, %f" % (
+        print >>output, "%f, %f, %f, %f, %f, %f, %f, %f, %f, %f, %f, %f, %f, %f" % (
             source.ra,
             source.ra.error,
             source.dec,
@@ -108,7 +104,6 @@ def summary(filename, sourcelist):
     print >>output, "** %s **\n" % (filename)
     for source in sourcelist:
         print >>output, "RA: %s, dec: %s" % (str(source.ra), str(source.dec))
-        print >>output, "Error radius (arcsec): %s" % (str(source.error_radius))
         print >>output, "Semi-major axis (arcsec): %s" % (str(source.smaj_asec))
         print >>output, "Semi-minor axis (arcsec): %s" % (str(source.smin_asec))
         print >>output, "Position angle: %s" % (str(source.theta_celes))
@@ -116,7 +111,7 @@ def summary(filename, sourcelist):
         print >>output, "Peak: %s\n" % (str(source.peak))
     return output.getvalue()
 
-def handle_args(args=None):
+def handle_args():
     """
     Parses command line options & arguments using OptionParser.
     Options & default values for the script are defined herein.
@@ -144,53 +139,8 @@ def handle_args(args=None):
     parser.add_option("--sigmap", action="store_true", help="Generate significance map")
     parser.add_option("--force-beam", action="store_true", help="Force fit axis lengths to beam size")
     parser.add_option("--detection-image", type="string", help="Find islands on different image")
-    m_help = "Specify a list of RA,Dec co-ordinate positions to force-fit " \
-        '(decimal degrees, JSON format e.g. "[[144.2,33.3],[146.1,34.1]]" )'
-    parser.add_option('--fixed', help=m_help, default=None)
-    parser.add_option('--fixed-list',
-        help="Specify a file containing a list of positions to force-fit", default=None
-    )
-    box_help = "Specify forced fitting positional freedom / error-box size, " \
-        "as a multiple of beam width."
-    parser.add_option('--ffbox-in-beampix', type='float', default=3., help=box_help)
-    options, files = parser.parse_args(args=args)
-
-    # Overwrite 'fixed_coords' with a parsed list of coords
-    # collated from both command line and file.
-    options.fixed_coords = parse_monitoringlist_positions(
-        options, str_name="fixed", list_name="fixed_list"
-    )
-    # Quick & dirty check that the position list looks plausible
-    if options.fixed_coords:
-        mlist = numpy.array(options.fixed_coords)
-        if not (len(mlist.shape) == 2 and mlist.shape[1] == 2):
-            parser.error("Positions for forced-fitting must be [RA,dec] pairs")
-
-    # We have four potential modes, of which we choose only one to run:
-    #
-    # 1. Blind sourcefinding
-    #  1.1 Thresholding, no detection image (no extra cmd line options)
-    #  1.2 Thresholding, detection image (--detection-image)
-    #  1.3 FDR (--fdr)
-    #
-    # 2. Fit to fixed points (--fixed-coords and/or --fixed-list)
-
-    if options.fixed_coords:
-        if options.fdr:
-            parser.error("--fdr not supported with fixed positions")
-        elif options.detection_image:
-            parser.error("--detection-image not supported with fixed positions")
-        options.mode = "fixed" # mode 2 above
-    elif options.fdr:
-        if options.detection_image:
-            parser.error("--detection-image not supported with --fdr")
-        options.mode = "fdr" # mode 1.3 above
-    elif options.detection_image:
-        options.mode = "detimage" # mode 1.2 above
-    else:
-        options.mode = "threshold" # mode 1.1 above
-
-    return options, files
+    parser.add_option("--nproc",default=1, type="int", help="Number of processes to use")
+    return parser.parse_args()
 
 def writefits(filename, data, header={}):
     try:
@@ -200,47 +150,6 @@ def writefits(filename, data, header={}):
         pass
     tkp_writefits(data, filename, header)
 
-def get_detection_labels(filename, det, anl, beam, configuration, plane=0):
-    print "Detecting islands in %s" % (filename,)
-    print "Thresholding with det = %f sigma, analysis = %f sigma" % (det, anl)
-    ff = open_accessor(filename, beam=beam, plane=plane)
-    imagedata = sourcefinder_image_from_accessor(ff, **configuration)
-    labels, labelled_data = imagedata.label_islands(
-        det * imagedata.rmsmap, anl * imagedata.rmsmap
-    )
-    return labels, labelled_data
-
-def get_sourcefinder_configuration(options):
-    configuration = {
-        "back_sizex": options.grid,
-        "back_sizey": options.grid,
-        "margin": options.margin,
-        "radius": options.radius,
-        "deblend": bool(options.deblend),
-        "deblend_nthresh": options.deblend_thresholds,
-        "force_beam": options.force_beam
-    }
-    if options.residuals or options.islands:
-        configuration['residuals'] = True
-    return configuration
-
-def get_beam(bmaj, bmin, bpa):
-
-    if (
-        isinstance(bmaj, numbers.Real)
-        and isinstance(bmin, numbers.Real)
-        and isinstance(bpa, numbers.Real)
-    ):
-        return (float(bmaj), float(bmin), float(bpa))
-    if bmaj or bmin or bpa:
-        print "WARNING: partial beam specification ignored"
-    return None
-
-def bailout(reason):
-    # Exit with error
-    print "ERROR: %s" % (reason)
-    sys.exit(1)
-
 def run_sourcefinder(files, options):
     """
     Iterate over the list of files, running a sourcefinding step on each in
@@ -249,72 +158,94 @@ def run_sourcefinder(files, options):
     A string containing a human readable list of sources is returned.
     """
     output = StringIO()
-
-    beam = get_beam(options.bmaj, options.bmin, options.bpa)
-    configuration = get_sourcefinder_configuration(options)
-
-    if options.mode == "detimage":
-        labels, labelled_data = get_detection_labels(
-            options.detection_image, options.detection, options.analysis, beam, configuration
-        )
+    configuration = {
+        "back_sizex": options.grid,
+        "back_sizey": options.grid,
+        "margin": options.margin,
+        "radius": options.radius,
+        "deblend": bool(options.deblend),
+        "deblend_nthresh": options.deblend_thresholds,
+        "force_beam": options.force_beam,
+	"nproc" : options.nproc
+    }
+    if options.residuals or options.islands:
+        configuration['residuals'] = True
+    if options.detection_image:
+        if options.fdr:
+            print "WARNING: --detection-image not supported with --fdr; ignored"
+        else:
+            print "Detecting islands in %s" % (options.detection_image)
+            print "Thresholding with det = %f sigma, analysis = %f sigma" % (options.detection, options.analysis)
+            if (
+                isinstance(options.bmaj, float)
+                and isinstance(options.bmin, float)
+                and isinstance(options.bpa, float)
+            ):
+                ff = FitsImage(options.detection_image, beam=(options.bmaj, options.bmin, options.bpa), plane=0)
+            else:
+                ff = FitsImage(options.detection_image, plane=0)
+            imagedata = sourcefinder_image_from_accessor(ff, **configuration)
+            labels, labelled_data = imagedata.label_islands(
+                options.detection * imagedata.rmsmap, options.analysis * imagedata.rmsmap
+            )
     else:
         labels, labelled_data = [], None
-
     for counter, filename in enumerate(files):
         print "Processing %s (file %d of %d)." % (filename, counter+1, len(files))
-        imagename = os.path.splitext(os.path.basename(filename))[0]
-        ff = open_accessor(filename, beam=beam, plane=0)
-        imagedata = sourcefinder_image_from_accessor(ff, **configuration)
-
-        if options.mode == "fixed":
-            sr = imagedata.fit_fixed_positions(options.fixed_coords,
-                options.ffbox_in_beampix * max(imagedata.beam[0:2])
-            )
-
+        if (
+            isinstance(options.bmaj, float)
+            and isinstance(options.bmin, float)
+            and isinstance(options.bpa, float)
+        ):
+            ff = FitsImage(filename, beam=(options.bmaj, options.bmin, options.bpa), plane=0)
         else:
-            if options.mode == "fdr":
-                print "Using False Detection Rate algorithm with alpha = %f" % (options.alpha,)
-                sr = imagedata.fd_extract(options.alpha)
-            else:
-                if labelled_data is None:
-                    print "Thresholding with det = %f sigma, analysis = %f sigma" % (options.detection, options.analysis)
-                sr = imagedata.extract(options.detection, options.analysis, labelled_data=labelled_data, labels=labels)
-
+            ff = FitsImage(filename, plane=0)
+        imagedata = sourcefinder_image_from_accessor(ff, **configuration)
+        if options.fdr:
+            print "Using False Detection Rate algorithm with alpha = %f" % (options.alpha,)
+            sr = imagedata.fd_extract(options.alpha)
+        else:
+            if labelled_data is None:
+                print "Thresholding with det = %f sigma, analysis = %f sigma" % (options.detection, options.analysis)
+            sr = imagedata.extract(options.detection, options.analysis, labelled_data=labelled_data, labels=labels)
         if options.regions:
-            regionfile = imagename + ".reg"
+            regionfile = os.path.splitext(os.path.basename(filename))[0] + ".reg"
             regionfile = open(regionfile, 'w')
             regionfile.write(regions(sr))
             regionfile.close()
         if options.residuals or options.islands:
             gaussian_map, residual_map = generate_result_maps(imagedata.data, sr)
         if options.residuals:
-            residualfile = imagename + ".residuals.fits"
+            residualfile = os.path.splitext(os.path.basename(filename))[0] + ".residuals.fits"
             writefits(residualfile, residual_map, pyfits.getheader(filename))
         if options.islands:
-            islandfile = imagename + ".islands.fits"
+            islandfile = os.path.splitext(os.path.basename(filename))[0] + ".islands.fits"
             writefits(islandfile, gaussian_map, pyfits.getheader(filename))
         if options.rmsmap:
-            rmsfile = imagename + ".rms.fits"
+            rmsfile = os.path.splitext(os.path.basename(filename))[0] + ".rms.fits"
             writefits(rmsfile, numpy.array(imagedata.rmsmap), pyfits.getheader(filename))
         if options.sigmap:
-            sigfile = imagename + ".sig.fits"
-            writefits(sigfile, numpy.array(imagedata.data_bgsubbed / imagedata.rmsmap), pyfits.getheader(filename))
+            sigfile = os.path.splitext(os.path.basename(filename))[0] + ".sig.fits"
+            writefits(sigfile, numpy.array(imagedata.data_bgsubbed/imagedata.rmsmap), pyfits.getheader(filename))
         if options.skymodel:
-            with open(imagename + ".skymodel", 'w') as skymodelfile:
-                if ff.freq_eff:
-                    skymodelfile.write(skymodel(sr, ff.freq_eff))
-                else:
-                    print "WARNING: Using default reference frequency for %s" % (skymodelfile.name,)
-                    skymodelfile.write(skymodel(sr))
+            skymodelfile = os.path.splitext(os.path.basename(filename))[0] + ".skymodel"
+            skymodelfile = open(skymodelfile, 'w')
+            if ff.freq_eff:
+                skymodelfile.write(skymodel(sr, ff.freq_eff))
+            else:
+                print "WARNING: Using default reference frequency for %s" % (skymodelfile.name,)
+                skymodelfile.write(skymodel(sr))
+            skymodelfile.close()
         if options.csv:
-            with open(imagename + ".csv", 'w') as csvfile:
-                csvfile.write(csv(sr))
+            csvfile = os.path.splitext(os.path.basename(filename))[0] + ".csv"
+            csvfile = open(csvfile, 'w')
+            csvfile.write(csv(sr))
+            csvfile.close()
         print >>output, summary(filename, sr),
     return output.getvalue()
 
 
 if __name__ == "__main__":
-    logging.basicConfig()
     options, files = handle_args()
     if files:
         print run_sourcefinder(files, options),

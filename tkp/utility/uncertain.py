@@ -30,7 +30,7 @@ class Uncertain(object):
         return "Uncertain(%s, %s)" % (self.value, self.error)
 
     def __float__(self):
-        return self.value
+        return float(self.value)
 
     def assign(self, other):
         if isinstance(other, Uncertain):

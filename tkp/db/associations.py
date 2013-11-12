@@ -1681,16 +1681,12 @@ INSERT INTO runningcatalog_flux
         ,extractedsource x0
    WHERE x0.image = i0.id
      AND x0.id = r0.xtrsrc
-     AND r0.xtrsrc IN (SELECT t0.xtrsrc
-                         FROM (SELECT x1.id AS xtrsrc
-                                 FROM extractedsource x1
-                                     ,image i1
-                                WHERE x1.image = i1.id
-                                  AND i1.id = %(image_id)s
-                              ) t0
+     AND r0.xtrsrc IN (SELECT x1.id
+                         FROM extractedsource x1
                               LEFT OUTER JOIN temprunningcatalog trc1
-                              ON t0.xtrsrc = trc1.xtrsrc
-                         WHERE trc1.xtrsrc IS NULL
+                              ON x1.id = trc1.xtrsrc
+                        WHERE x1.image = %(image_id)s
+                          AND trc1.xtrsrc IS NULL
                       )
 """
     tkp.db.execute(query, {'image_id': image_id}, True)
@@ -1821,16 +1817,12 @@ INSERT INTO assocxtrsource
     FROM runningcatalog r0
         ,extractedsource x0
    WHERE r0.xtrsrc = x0.id
-     AND r0.xtrsrc IN (SELECT t0.xtrsrc
-                         FROM (SELECT x1.id AS xtrsrc
-                                 FROM extractedsource x1
-                                     ,image i1
-                                WHERE x1.image = i1.id
-                                  AND i1.id = %(image_id)s
-                              ) t0
+     AND r0.xtrsrc IN (SELECT x1.id
+                         FROM extractedsource x1
                               LEFT OUTER JOIN temprunningcatalog trc1
-                              ON t0.xtrsrc = trc1.xtrsrc
-                         WHERE trc1.xtrsrc IS NULL
+                              ON x1.id = trc1.xtrsrc
+                        WHERE x1.image = %(image_id)s
+                          AND trc1.xtrsrc IS NULL
                       )
 """
     tkp.db.execute(query, {'image_id':image_id}, True)

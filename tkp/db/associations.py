@@ -856,14 +856,15 @@ INSERT INTO runningcatalog
         ,x
         ,y
         ,z
-    FROM temprunningcatalog
-   WHERE inactive = FALSE
-     AND runcat IN (SELECT runcat
-                      FROM temprunningcatalog
-                     WHERE inactive = FALSE
-                    GROUP BY runcat
-                    HAVING COUNT(*) > 1
-                   )
+    FROM (SELECT runcat
+            FROM temprunningcatalog
+           WHERE inactive = FALSE
+          GROUP BY runcat
+          HAVING COUNT(*) > 1
+         ) t0
+        ,temprunningcatalog t1
+   WHERE t1.runcat = t0.runcat
+     AND t1.inactive = FALSE
 """
     tkp.db.execute(query, commit=True)
 
@@ -892,10 +893,10 @@ INSERT INTO runningcatalog_flux
   ,avg_weighted_f_int
   ,avg_weighted_f_int_sq
   )
-  SELECT rc0.id
-        ,trc0.band
-        ,trc0.stokes
-        ,trc0.f_datapoints
+  SELECT r.id
+        ,t1.band
+        ,t1.stokes
+        ,t1.f_datapoints
         ,avg_f_peak
         ,avg_f_peak_sq
         ,avg_f_peak_weight
@@ -906,16 +907,17 @@ INSERT INTO runningcatalog_flux
         ,avg_f_int_weight
         ,avg_weighted_f_int
         ,avg_weighted_f_int_sq
-    FROM temprunningcatalog trc0
-        ,runningcatalog rc0
-   WHERE trc0.xtrsrc = rc0.xtrsrc
-     AND trc0.inactive = FALSE
-     AND trc0.runcat IN (SELECT runcat
-                           FROM temprunningcatalog
-                          WHERE inactive = FALSE
-                         GROUP BY runcat
-                         HAVING COUNT(*) > 1
-                        )
+    FROM (SELECT runcat
+            FROM temprunningcatalog
+           WHERE inactive = FALSE
+          GROUP BY runcat
+          HAVING COUNT(*) > 1
+         ) t0
+        ,temprunningcatalog t1
+        ,runningcatalog r
+   WHERE t1.runcat = t0.runcat
+     AND t1.inactive = FALSE
+     AND r.xtrsrc = t1.xtrsrc
 """
     tkp.db.execute(query, commit=True)
 
@@ -936,20 +938,21 @@ INSERT INTO assocxtrsource
   ,type
   )
   SELECT r.id
-        ,t.xtrsrc
-        ,t.distance_arcsec
-        ,t.r
+        ,t1.xtrsrc
+        ,t1.distance_arcsec
+        ,t1.r
         ,2
-    FROM temprunningcatalog t
+    FROM (SELECT runcat
+            FROM temprunningcatalog
+           WHERE inactive = FALSE
+          GROUP BY runcat
+          HAVING COUNT(*) > 1
+         ) t0
+        ,temprunningcatalog t1
         ,runningcatalog r
-   WHERE t.inactive = FALSE
-     AND t.xtrsrc = r.xtrsrc
-     AND t.runcat IN (SELECT runcat
-                        FROM temprunningcatalog
-                       WHERE inactive = FALSE
-                      GROUP BY runcat
-                      HAVING COUNT(*) > 1
-                     )
+   WHERE t1.runcat = t0.runcat
+     AND t1.inactive = FALSE
+     AND r.xtrsrc = t1.xtrsrc
     """
     tkp.db.execute(query, commit=True)
 
@@ -981,28 +984,51 @@ INSERT INTO assocxtrsource
   ,r
   ,type
   )
-  SELECT r.id
+  SELECT r.id AS runcat
         ,a.xtrsrc
         ,a.distance_arcsec
         ,a.r
         ,6
-    FROM assocxtrsource a
+    FROM (SELECT runcat
+            FROM temprunningcatalog
+           WHERE inactive = FALSE
+          GROUP BY runcat
+          HAVING COUNT(*) > 1
+         ) t0
+        ,temprunningcatalog t1
         ,runningcatalog r
-        ,temprunningcatalog t
-   WHERE t.inactive = FALSE
-     AND t.xtrsrc = r.xtrsrc
-     AND t.runcat = a.runcat
-     AND t.runcat IN (SELECT runcat
-                        FROM temprunningcatalog
-                       WHERE inactive = FALSE
-                      GROUP BY runcat
-                      HAVING COUNT(*) > 1
-                     )
+        ,assocxtrsource a
+   WHERE t1.runcat = t0.runcat
+     AND t1.inactive = FALSE
+     AND r.xtrsrc = t1.xtrsrc
+     AND a.runcat = t1.runcat
 """
     tkp.db.execute(query, commit=True)
 
 
 def _insert_1_to_many_skyrgn():
+#    query = """\
+#INSERT INTO assocskyrgn
+#  (runcat
+#  ,skyrgn
+#  ,distance_deg
+#  )
+#  SELECT r.id AS runcat
+#         ,asr.skyrgn
+#         ,asr.distance_deg
+#    FROM temprunningcatalog t
+#        ,runningcatalog r
+#        ,assocskyrgn asr
+#   WHERE t.inactive = FALSE
+#     AND t.xtrsrc = r.xtrsrc
+#     AND t.runcat IN (SELECT runcat
+#                        FROM temprunningcatalog
+#                       WHERE inactive = FALSE
+#                      GROUP BY runcat
+#                      HAVING COUNT(*) > 1
+#                     )
+#     AND asr.runcat = t.runcat
+#"""
     query = """\
 INSERT INTO assocskyrgn
   (runcat
@@ -1010,20 +1036,21 @@ INSERT INTO assocskyrgn
   ,distance_deg
   )
   SELECT r.id AS runcat
-         ,asr.skyrgn
-         ,asr.distance_deg
-    FROM temprunningcatalog t
+        ,a.skyrgn
+        ,a.distance_deg
+    FROM (SELECT runcat
+            FROM temprunningcatalog
+           WHERE inactive = FALSE
+          GROUP BY runcat
+          HAVING COUNT(*) > 1
+         ) t0
+        ,temprunningcatalog t1
         ,runningcatalog r
-        ,assocskyrgn asr
-   WHERE t.inactive = FALSE
-     AND t.xtrsrc = r.xtrsrc
-     AND t.runcat IN (SELECT runcat
-                        FROM temprunningcatalog
-                       WHERE inactive = FALSE
-                      GROUP BY runcat
-                      HAVING COUNT(*) > 1
-                     )
-     AND asr.runcat = t.runcat
+        ,assocskyrgn a
+   WHERE t1.runcat = t0.runcat
+     AND t1.inactive = FALSE
+     AND r.xtrsrc = t1.xtrsrc
+     AND a.runcat = t1.runcat
 """
     tkp.db.execute(query, commit=True)
 
@@ -1048,16 +1075,17 @@ INSERT INTO monitoringlist
         ,r.wm_ra AS ra
         ,r.wm_decl AS decl
         ,r.dataset
-    FROM temprunningcatalog t
+    FROM (SELECT runcat
+            FROM temprunningcatalog
+           WHERE inactive = FALSE
+          GROUP BY runcat
+          HAVING COUNT(*) > 1
+         ) t0
+        ,temprunningcatalog t1
         ,runningcatalog r
-   WHERE t.inactive = FALSE
-     AND t.xtrsrc = r.xtrsrc
-     AND t.runcat IN (SELECT runcat
-                        FROM temprunningcatalog
-                       WHERE inactive = FALSE
-                      GROUP BY runcat
-                      HAVING COUNT(*) > 1
-                     )
+   WHERE t1.runcat = t0.runcat
+     AND t1.inactive = FALSE
+     AND r.xtrsrc = t1.xtrsrc
 """
     tkp.db.execute(query, commit=True)
 
@@ -1095,18 +1123,19 @@ INSERT INTO transient
         ,tr.trigger_xtrsrc
         ,tr.status
         ,tr.t_start
-    FROM temprunningcatalog t
+    FROM (SELECT runcat
+            FROM temprunningcatalog
+           WHERE inactive = FALSE
+          GROUP BY runcat
+          HAVING COUNT(*) > 1
+         ) t0
+        ,temprunningcatalog t1
         ,runningcatalog r
         ,transient tr
-   WHERE t.xtrsrc = r.xtrsrc
-     AND t.inactive = FALSE
-     AND t.runcat = tr.runcat
-     AND t.runcat IN (SELECT runcat
-                        FROM temprunningcatalog
-                       WHERE inactive = FALSE
-                      GROUP BY runcat
-                      HAVING COUNT(*) > 1
-                     )
+   WHERE t1.runcat = t0.runcat
+     AND t1.inactive = FALSE
+     AND r.xtrsrc = t1.xtrsrc
+     AND tr.runcat = t1.runcat
 """
     tkp.db.execute(query, commit=True)
 

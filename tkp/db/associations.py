@@ -1705,18 +1705,19 @@ INSERT INTO runningcatalog_flux
         ,1 / (x0.f_int_err * x0.f_int_err)
         ,x0.f_int / (x0.f_int_err * x0.f_int_err)
         ,x0.f_int * x0.f_int / (x0.f_int_err * x0.f_int_err)
-    FROM runningcatalog r0
-        ,image i0
+    FROM image i0
+        ,(SELECT x1.id AS xtrsrc
+            FROM extractedsource x1
+                 LEFT OUTER JOIN temprunningcatalog trc1
+                 ON x1.id = trc1.xtrsrc
+            WHERE x1.image = %(image_id)s
+              AND trc1.xtrsrc IS NULL
+          ) t0
+        ,runningcatalog r0
         ,extractedsource x0
-   WHERE x0.image = i0.id
+   WHERE i0.id = %(image_id)s
+     AND r0.xtrsrc = t0.xtrsrc 
      AND x0.id = r0.xtrsrc
-     AND r0.xtrsrc IN (SELECT x1.id
-                         FROM extractedsource x1
-                              LEFT OUTER JOIN temprunningcatalog trc1
-                              ON x1.id = trc1.xtrsrc
-                        WHERE x1.image = %(image_id)s
-                          AND trc1.xtrsrc IS NULL
-                      )
 """
     tkp.db.execute(query, {'image_id': image_id}, True)
 
@@ -1839,20 +1840,19 @@ INSERT INTO assocxtrsource
   ,type
   )
   SELECT r0.id AS runcat
-        ,x0.id AS xtrsrc
+        ,r0.xtrsrc
         ,0
         ,0
         ,4
-    FROM runningcatalog r0
-        ,extractedsource x0
-   WHERE r0.xtrsrc = x0.id
-     AND r0.xtrsrc IN (SELECT x1.id
-                         FROM extractedsource x1
-                              LEFT OUTER JOIN temprunningcatalog trc1
-                              ON x1.id = trc1.xtrsrc
-                        WHERE x1.image = %(image_id)s
-                          AND trc1.xtrsrc IS NULL
-                      )
+    FROM (SELECT x1.id AS xtrsrc
+            FROM extractedsource x1
+                 LEFT OUTER JOIN temprunningcatalog trc1
+                 ON x1.id = trc1.xtrsrc
+            WHERE x1.image = %(image_id)s
+              AND trc1.xtrsrc IS NULL
+          ) t0
+        ,runningcatalog r0
+   WHERE r0.xtrsrc = t0.xtrsrc
 """
     tkp.db.execute(query, {'image_id':image_id}, True)
 

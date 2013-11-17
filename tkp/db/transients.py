@@ -37,8 +37,9 @@ UPDATE transient
     """
     upd = 0
     for tr in transients:
-        cursor = tkp.db.execute(query, tr, commit=True)
+        cursor = tkp.db.execute(query, tr, commit=False)
         upd += cursor.rowcount
+    tkp.db.commit()
     if upd > 0:
         logger.info("Updated %s known transients" % (upd,))
     return upd
@@ -73,8 +74,9 @@ VALUES
     """
     ins = 0
     for entry in transients:
-        cursor = tkp.db.execute(query, entry, commit=True)
+        cursor = tkp.db.execute(query, entry, commit=False)
         ins += cursor.rowcount
+    tkp.db.commit()
     logger.info("Inserted %s new transients in transients table" % (ins,))
 
 

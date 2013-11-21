@@ -107,10 +107,10 @@ def _select_updated_variability_indices(image_id):
         v_int, eta_int, trigger_xtrsrc, new_transient }]
     """
 
-#        Note: We cannot trivially calculate an updated 'siglevel' probability,
-#        and selecting it from transients gives the *old* value.
-#        So; we recalculate it later, (using scipy.stats),
-#        and apply a threshold there.
+    #  Note: We cannot trivially calculate an updated 'siglevel' probability,
+    #  and selecting it from transients gives the *old* value.
+    #  So; we recalculate it later, (using scipy.stats),
+    #  and apply a threshold there.
     #  NB We also perform a left outer join with the transient table,
     #  to determine if the source has been inserted into that table yet.
     #  This allows us to distinguish newly identified transients.

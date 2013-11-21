@@ -37,54 +37,14 @@ def get_nulldetections(image_id, deRuiter_r):
 
     Output: list of tuples [(runcatid, ra, decl)]
     """
-    # The first subquery looks for extractedsources without runcat associations.
-    # The second subquery looks for runcat entries we expect to see in this image.
-    # Note about the second subquery that we want the first detection of a runcat 
-    # source to be in the same skyregion as the current image. 
-    # NB extra clause on x.image is necessary for performance reasons.
-#    query = """\
-#SELECT r1.id
-#      ,r1.wm_ra
-#      ,r1.wm_decl
-#  FROM runningcatalog r1
-#      ,image i1
-# WHERE i1.id = %(imgid)s
-#   AND i1.dataset = r1.dataset
-#   AND r1.id NOT IN (SELECT r.id
-#                       FROM runningcatalog r
-#                           ,extractedsource x
-#                           ,image i
-#                      WHERE i.id = %(imgid)s
-#                        AND x.image = i.id
-#                        AND x.image = %(imgid)s
-#                        AND i.dataset = r.dataset
-#                        AND r.zone BETWEEN CAST(FLOOR(x.decl - i.rb_smaj) AS INTEGER)
-#                                       AND CAST(FLOOR(x.decl + i.rb_smaj) AS INTEGER)
-#                        AND r.wm_decl BETWEEN x.decl - i.rb_smaj
-#                                          AND x.decl + i.rb_smaj
-#                        AND r.wm_ra BETWEEN x.ra - alpha(i.rb_smaj, x.decl)
-#                                        AND x.ra + alpha(i.rb_smaj, x.decl)
-#                        AND SQRT(  (x.ra - r.wm_ra) * COS(RADIANS((x.decl + r.wm_decl)/2))
-#                                 * (x.ra - r.wm_ra) * COS(RADIANS((x.decl + r.wm_decl)/2))
-#                                 / (x.uncertainty_ew * x.uncertainty_ew + r.wm_uncertainty_ew * r.wm_uncertainty_ew)
-#                                + (x.decl - r.wm_decl) * (x.decl - r.wm_decl)
-#                                 / (x.uncertainty_ns * x.uncertainty_ns + r.wm_uncertainty_ns * r.wm_uncertainty_ns)
-#                                ) < %(drrad)s
-#                    )
-#   AND r1.id IN (SELECT r2.id
-#                   FROM runningcatalog r2
-#                       ,assocskyrgn a2 
-#                       ,image i2
-#                       ,extractedsource x
-#                       ,image i3
-#                  WHERE i2.id = %(imgid)s
-#                    AND a2.skyrgn = i2.skyrgn
-#                    AND a2.runcat = r2.id 
-#                    AND r2.xtrsrc = x.id
-#                    AND x.image = i3.id
-#                    AND i3.taustart_ts < i2.taustart_ts
-#                )
-#"""
+    
+    # The first temptable t0 looks for runcat sources in the same or adjacent 
+    # sky regions in which the extracted sources were found.
+    # The second temptable t1 returns the runcat source ids for those sources 
+    # that have an association with the current extracted sources.
+    # The left outer join in combination with the t1.id IS NULL then
+    # returns the runcat sources that could not be associated.
+    
     query = """\
 SELECT t0.id
       ,t0.wm_ra
@@ -106,41 +66,37 @@ SELECT t0.id
            AND i1.taustart_ts > i2.taustart_ts
        ) t0
        LEFT OUTER JOIN (SELECT r1.id
-          FROM image i1
-              ,runningcatalog r1
-              ,assocskyrgn a1
-              ,extractedsource x1
-              ,image i2
-              ,extractedsource x2
-         WHERE i1.id = %(image_id)s
-           AND r1.dataset = i1.dataset
-           AND a1.skyrgn = i1.skyrgn
-           AND r1.id = a1.runcat
-           AND x1.id = r1.xtrsrc
-           AND i2.id = x1.image
-           AND i1.taustart_ts > i2.taustart_ts
-           AND x2.image = %(image_id)s
-           AND r1.zone BETWEEN CAST(FLOOR(x2.decl - i1.rb_smaj) AS INTEGER)
-                           AND CAST(FLOOR(x2.decl + i1.rb_smaj) AS INTEGER)
-           AND r1.wm_decl BETWEEN x2.decl - i1.rb_smaj
-                              AND x2.decl + i1.rb_smaj
-           AND r1.wm_ra BETWEEN x2.ra - alpha(i1.rb_smaj, x2.decl)
-                            AND x2.ra + alpha(i1.rb_smaj, x2.decl)
-           AND SQRT(  (x2.ra - r1.wm_ra) * COS(RADIANS((x2.decl + r1.wm_decl)/2))
-                    * (x2.ra - r1.wm_ra) * COS(RADIANS((x2.decl + r1.wm_decl)/2))
-                    / (x2.uncertainty_ew * x2.uncertainty_ew + r1.wm_uncertainty_ew * r1.wm_uncertainty_ew)
-                   + (x2.decl - r1.wm_decl) * (x2.decl - r1.wm_decl)
-                    / (x2.uncertainty_ns * x2.uncertainty_ns + r1.wm_uncertainty_ns * r1.wm_uncertainty_ns)
-                   ) < %(drrad)s
+                          FROM image i1
+                              ,runningcatalog r1
+                              ,assocskyrgn a1
+                              ,extractedsource x1
+                              ,image i2
+                              ,extractedsource x2
+                         WHERE i1.id = %(image_id)s
+                           AND r1.dataset = i1.dataset
+                           AND a1.skyrgn = i1.skyrgn
+                           AND r1.id = a1.runcat
+                           AND x1.id = r1.xtrsrc
+                           AND i2.id = x1.image
+                           AND i1.taustart_ts > i2.taustart_ts
+                           AND x2.image = %(image_id)s
+                           AND r1.zone BETWEEN CAST(FLOOR(x2.decl - i1.rb_smaj) AS INTEGER)
+                                           AND CAST(FLOOR(x2.decl + i1.rb_smaj) AS INTEGER)
+                           AND r1.wm_decl BETWEEN x2.decl - i1.rb_smaj
+                                              AND x2.decl + i1.rb_smaj
+                           AND r1.wm_ra BETWEEN x2.ra - alpha(i1.rb_smaj, x2.decl)
+                                            AND x2.ra + alpha(i1.rb_smaj, x2.decl)
+                           AND SQRT(  (x2.ra - r1.wm_ra) * COS(RADIANS((x2.decl + r1.wm_decl)/2))
+                                    * (x2.ra - r1.wm_ra) * COS(RADIANS((x2.decl + r1.wm_decl)/2))
+                                    / (x2.uncertainty_ew * x2.uncertainty_ew + r1.wm_uncertainty_ew * r1.wm_uncertainty_ew)
+                                   + (x2.decl - r1.wm_decl) * (x2.decl - r1.wm_decl)
+                                    / (x2.uncertainty_ns * x2.uncertainty_ns + r1.wm_uncertainty_ns * r1.wm_uncertainty_ns)
+                                   ) < %(drrad)s
        ) t1
        ON t0.id = t1.id
  WHERE t1.id IS NULL
 """    
     qry_params = {'image_id':image_id, 'drrad': deRuiter_r}
-    print "query:\n", query % qry_params
-    answer = raw_input("Do you want to continue? [y/N]: ")
-    if answer.lower() != 'y':
-        sys.exit()
     cursor = tkp.db.execute(query, qry_params)
     results = zip(*cursor.fetchall())
     if len(results) != 0:

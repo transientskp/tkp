@@ -1007,28 +1007,6 @@ INSERT INTO assocxtrsource
 
 
 def _insert_1_to_many_skyrgn():
-#    query = """\
-#INSERT INTO assocskyrgn
-#  (runcat
-#  ,skyrgn
-#  ,distance_deg
-#  )
-#  SELECT r.id AS runcat
-#         ,asr.skyrgn
-#         ,asr.distance_deg
-#    FROM temprunningcatalog t
-#        ,runningcatalog r
-#        ,assocskyrgn asr
-#   WHERE t.inactive = FALSE
-#     AND t.xtrsrc = r.xtrsrc
-#     AND t.runcat IN (SELECT runcat
-#                        FROM temprunningcatalog
-#                       WHERE inactive = FALSE
-#                      GROUP BY runcat
-#                      HAVING COUNT(*) > 1
-#                     )
-#     AND asr.runcat = t.runcat
-#"""
     query = """\
 INSERT INTO assocskyrgn
   (runcat

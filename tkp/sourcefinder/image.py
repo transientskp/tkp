@@ -27,7 +27,7 @@ logger = logging.getLogger(__name__)
 class ImageData(object):
     """Encapsulates an image in terms of a numpy array + meta/headerdata.
 
-    This is your primary contact point for interaction with images: it icludes
+    This is your primary contact point for interaction with images: it includes
     facilities for source extraction and measurement, etc.
     """
     def __init__(self, data, beam, wcs, max_degradation=0.2, median_filter=0,
@@ -363,7 +363,7 @@ class ImageData(object):
             pylab.show()
 
     def process_rows(self, where_data, sx, ex, ydim, queue):
- 	rmsgrid, bggrid = [], []
+        rmsgrid, bggrid = [], []
         for startx in xrange(sx, ex, self.back_sizex):
 	    rmsrow, bgrow = [], []
 
@@ -973,6 +973,7 @@ class ImageData(object):
 	
             try:
                 det = extract.Detection(measurement, self, chunk=island.chunk)
+		if queue is not None: det.imagedata = None   # Don't need/want to send this for pyse
                 if (det.ra.error == float('inf') or
                         det.dec.error == float('inf')):
                     logger.warn('Bad fit from blind extraction at pixel coords:'

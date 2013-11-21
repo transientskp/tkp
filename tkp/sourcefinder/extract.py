@@ -719,9 +719,9 @@ class Detection(object):
 
     def __getstate__(self):
         return {
-          
-	    'eps_ra' : self.eps_ra,
-	    'eps_dec' : self.eps_dec,
+      	    'imagedata': self.imagedata, 
+            'eps_ra' : self.eps_ra,
+            'eps_dec' : self.eps_dec,
             'chunk': (self.chunk[0].start, self.chunk[0].stop,
                       self.chunk[1].start, self.chunk[1].stop),
             'peak': self.peak,
@@ -756,6 +756,7 @@ class Detection(object):
             }
 
     def __setstate__(self, attrdict):
+	self.imagedata = attrdict['imagedata']
         self.eps_ra = attrdict['eps_ra']
 	self.eps_dec = attrdict['eps_dec']
         self.chunk = (slice(attrdict['chunk'][0], attrdict['chunk'][1]),

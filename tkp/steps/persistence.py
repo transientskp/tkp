@@ -107,7 +107,7 @@ def store_images(images_metadata, extraction_radius_pix, dataset_id):
     images_metadata.sort(key=lambda m: m['taustart_ts'])
 
     for metadata in images_metadata:
-        metadata['xtr_radius'] = extraction_radius_pix * metadata['deltax']
+        metadata['xtr_radius'] = extraction_radius_pix * abs(metadata['deltax'])
         filename = metadata['url']
         db_image = Image(data=metadata, dataset=dataset)
         image_ids.append(db_image.id)

@@ -8,6 +8,7 @@ from tkp.testutil.decorators import requires_mongodb
 import tkp.testutil.data as testdata
 from tkp.testutil.decorators import requires_database
 import tkp.db
+import tkp.db.generic
 from tkp.conf import read_config_section
 from tkp.testutil.data import default_job_config
 
@@ -35,9 +36,16 @@ class TestPersistence(unittest.TestCase):
 
     def test_store_images(self):
         images_metadata = tkp.steps.persistence.extract_metadatas(self.images)
-        tkp.steps.persistence.store_images(images_metadata,
+        img_ids = tkp.steps.persistence.store_images(images_metadata,
                                            self.extraction_radius,
                                            self.dataset_id)
+        # xtr_radius >=0 is a Postgres constraint, but we should also test
+        # manually, in case running MonetDB:
+        for id in img_ids:
+            image = tkp.db.Image(id=id)
+            skyrgn = tkp.db.generic.columns_from_table('skyregion',
+                                                   where=dict(id=image.skyrgn))
+            self.assertGreaterEqual(skyrgn[0]['xtr_radius'], 0)
 
     def test_node_steps(self):
         tkp.steps.persistence.node_steps(self.images, self.parset)

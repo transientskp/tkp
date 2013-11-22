@@ -879,8 +879,13 @@ See also :ref:`assocskyrgn <schema-assocskyrgn>`.
 
 **centre_ra** and **centre_decl**
     The central coordinates (J2000) (or pointing centre) of the region, in
-    degrees. 
+    degrees.
     RA and Dec values are read from ``DataAccessor`` metadata. 
+
+**xtr_radius**
+   The radius of the circular mask used for source extraction, in degrees.
+   This is calculated from the 'extraction_radius_pix' parameter and the image
+   metadata during the 'persistence' image loading steps.
 
 **x**, **y** and **z**
     The Cartesian coordinates of centre_ra and centre_decl. 

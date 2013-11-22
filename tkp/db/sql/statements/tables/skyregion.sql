@@ -21,6 +21,9 @@ CREATE TABLE skyregion
   ,centre_ra DOUBLE PRECISION NOT NULL
   ,centre_decl DOUBLE PRECISION NOT NULL
   ,xtr_radius DOUBLE PRECISION NOT NULL
+  {% ifdb postgresql %}
+  ,CHECK (xtr_radius >= 0)
+  {% endifdb %}
   ,x DOUBLE PRECISION NOT NULL
   ,y DOUBLE PRECISION NOT NULL
   ,z DOUBLE PRECISION NOT NULL

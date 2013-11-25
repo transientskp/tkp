@@ -81,8 +81,8 @@ def generate_result_maps(data, sourcelist):
 
         local_gaussian = gaussian(
             src.peak.value,
-            src.x.value - 1, # -1 offset due to difference between FITS and
-            src.y.value - 1, # NumPy array indexing.
+            src.x.value,
+            src.y.value,
             src.smaj.value,
             src.smin.value,
             src.theta.value

@@ -5,6 +5,7 @@ import unittest2 as unittest
 
 from tkp.sourcefinder.utils import maximum_pixel_method_variance, fudge_max_pix
 from tkp.sourcefinder.utils import circular_mask
+from tkp.sourcefinder.utils import generate_subthresholds
 
 
 class TestCircularMask(unittest.TestCase):
@@ -38,3 +39,28 @@ class UtilsTest(unittest.TestCase):
         for (semimajor, semiminor, theta, correction, variance) in self.correct_data:
             self.assertAlmostEqual(fudge_max_pix(semimajor, semiminor, theta), correction)
 
+
+class SubthresholdingTest(unittest.TestCase):
+    def test_ranges(self):
+        # For each test range, we have a max, a min, and a number of
+        # thresholds
+        test_ranges = [
+            (0, 1, 10),
+            (0, 10, 10),
+            (-10, 0, 10),
+            (-10, 10, 10),
+            (1.1, 1.2, 100)
+        ]
+        for r in test_ranges:
+            subthr = generate_subthresholds(*r)
+
+            # Check we have the right number of thresholds
+            self.assertEqual(len(subthr), r[2])
+
+            # Falling in the right range
+            self.assertGreater(subthr[0], r[0])
+            self.assertLess(subthr[-1], r[1])
+
+            # And non-linearly spaced
+            for i in xrange(2, len(subthr)):
+                self.assertGreater(subthr[i] - subthr[i-1], subthr[i-1] - subthr[i-2])

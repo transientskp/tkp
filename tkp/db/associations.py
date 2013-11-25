@@ -856,14 +856,15 @@ INSERT INTO runningcatalog
         ,x
         ,y
         ,z
-    FROM temprunningcatalog
-   WHERE inactive = FALSE
-     AND runcat IN (SELECT runcat
-                      FROM temprunningcatalog
-                     WHERE inactive = FALSE
-                    GROUP BY runcat
-                    HAVING COUNT(*) > 1
-                   )
+    FROM (SELECT runcat
+            FROM temprunningcatalog
+           WHERE inactive = FALSE
+          GROUP BY runcat
+          HAVING COUNT(*) > 1
+         ) t0
+        ,temprunningcatalog t1
+   WHERE t1.runcat = t0.runcat
+     AND t1.inactive = FALSE
 """
     tkp.db.execute(query, commit=True)
 
@@ -892,10 +893,10 @@ INSERT INTO runningcatalog_flux
   ,avg_weighted_f_int
   ,avg_weighted_f_int_sq
   )
-  SELECT rc0.id
-        ,trc0.band
-        ,trc0.stokes
-        ,trc0.f_datapoints
+  SELECT r.id
+        ,t1.band
+        ,t1.stokes
+        ,t1.f_datapoints
         ,avg_f_peak
         ,avg_f_peak_sq
         ,avg_f_peak_weight
@@ -906,16 +907,17 @@ INSERT INTO runningcatalog_flux
         ,avg_f_int_weight
         ,avg_weighted_f_int
         ,avg_weighted_f_int_sq
-    FROM temprunningcatalog trc0
-        ,runningcatalog rc0
-   WHERE trc0.xtrsrc = rc0.xtrsrc
-     AND trc0.inactive = FALSE
-     AND trc0.runcat IN (SELECT runcat
-                           FROM temprunningcatalog
-                          WHERE inactive = FALSE
-                         GROUP BY runcat
-                         HAVING COUNT(*) > 1
-                        )
+    FROM (SELECT runcat
+            FROM temprunningcatalog
+           WHERE inactive = FALSE
+          GROUP BY runcat
+          HAVING COUNT(*) > 1
+         ) t0
+        ,temprunningcatalog t1
+        ,runningcatalog r
+   WHERE t1.runcat = t0.runcat
+     AND t1.inactive = FALSE
+     AND r.xtrsrc = t1.xtrsrc
 """
     tkp.db.execute(query, commit=True)
 
@@ -936,20 +938,21 @@ INSERT INTO assocxtrsource
   ,type
   )
   SELECT r.id
-        ,t.xtrsrc
-        ,t.distance_arcsec
-        ,t.r
+        ,t1.xtrsrc
+        ,t1.distance_arcsec
+        ,t1.r
         ,2
-    FROM temprunningcatalog t
+    FROM (SELECT runcat
+            FROM temprunningcatalog
+           WHERE inactive = FALSE
+          GROUP BY runcat
+          HAVING COUNT(*) > 1
+         ) t0
+        ,temprunningcatalog t1
         ,runningcatalog r
-   WHERE t.inactive = FALSE
-     AND t.xtrsrc = r.xtrsrc
-     AND t.runcat IN (SELECT runcat
-                        FROM temprunningcatalog
-                       WHERE inactive = FALSE
-                      GROUP BY runcat
-                      HAVING COUNT(*) > 1
-                     )
+   WHERE t1.runcat = t0.runcat
+     AND t1.inactive = FALSE
+     AND r.xtrsrc = t1.xtrsrc
     """
     tkp.db.execute(query, commit=True)
 
@@ -981,23 +984,24 @@ INSERT INTO assocxtrsource
   ,r
   ,type
   )
-  SELECT r.id
+  SELECT r.id AS runcat
         ,a.xtrsrc
         ,a.distance_arcsec
         ,a.r
         ,6
-    FROM assocxtrsource a
+    FROM (SELECT runcat
+            FROM temprunningcatalog
+           WHERE inactive = FALSE
+          GROUP BY runcat
+          HAVING COUNT(*) > 1
+         ) t0
+        ,temprunningcatalog t1
         ,runningcatalog r
-        ,temprunningcatalog t
-   WHERE t.inactive = FALSE
-     AND t.xtrsrc = r.xtrsrc
-     AND t.runcat = a.runcat
-     AND t.runcat IN (SELECT runcat
-                        FROM temprunningcatalog
-                       WHERE inactive = FALSE
-                      GROUP BY runcat
-                      HAVING COUNT(*) > 1
-                     )
+        ,assocxtrsource a
+   WHERE t1.runcat = t0.runcat
+     AND t1.inactive = FALSE
+     AND r.xtrsrc = t1.xtrsrc
+     AND a.runcat = t1.runcat
 """
     tkp.db.execute(query, commit=True)
 
@@ -1010,20 +1014,21 @@ INSERT INTO assocskyrgn
   ,distance_deg
   )
   SELECT r.id AS runcat
-         ,asr.skyrgn
-         ,asr.distance_deg
-    FROM temprunningcatalog t
+        ,a.skyrgn
+        ,a.distance_deg
+    FROM (SELECT runcat
+            FROM temprunningcatalog
+           WHERE inactive = FALSE
+          GROUP BY runcat
+          HAVING COUNT(*) > 1
+         ) t0
+        ,temprunningcatalog t1
         ,runningcatalog r
-        ,assocskyrgn asr
-   WHERE t.inactive = FALSE
-     AND t.xtrsrc = r.xtrsrc
-     AND t.runcat IN (SELECT runcat
-                        FROM temprunningcatalog
-                       WHERE inactive = FALSE
-                      GROUP BY runcat
-                      HAVING COUNT(*) > 1
-                     )
-     AND asr.runcat = t.runcat
+        ,assocskyrgn a
+   WHERE t1.runcat = t0.runcat
+     AND t1.inactive = FALSE
+     AND r.xtrsrc = t1.xtrsrc
+     AND a.runcat = t1.runcat
 """
     tkp.db.execute(query, commit=True)
 
@@ -1048,16 +1053,17 @@ INSERT INTO monitoringlist
         ,r.wm_ra AS ra
         ,r.wm_decl AS decl
         ,r.dataset
-    FROM temprunningcatalog t
+    FROM (SELECT runcat
+            FROM temprunningcatalog
+           WHERE inactive = FALSE
+          GROUP BY runcat
+          HAVING COUNT(*) > 1
+         ) t0
+        ,temprunningcatalog t1
         ,runningcatalog r
-   WHERE t.inactive = FALSE
-     AND t.xtrsrc = r.xtrsrc
-     AND t.runcat IN (SELECT runcat
-                        FROM temprunningcatalog
-                       WHERE inactive = FALSE
-                      GROUP BY runcat
-                      HAVING COUNT(*) > 1
-                     )
+   WHERE t1.runcat = t0.runcat
+     AND t1.inactive = FALSE
+     AND r.xtrsrc = t1.xtrsrc
 """
     tkp.db.execute(query, commit=True)
 
@@ -1095,18 +1101,19 @@ INSERT INTO transient
         ,tr.trigger_xtrsrc
         ,tr.status
         ,tr.t_start
-    FROM temprunningcatalog t
+    FROM (SELECT runcat
+            FROM temprunningcatalog
+           WHERE inactive = FALSE
+          GROUP BY runcat
+          HAVING COUNT(*) > 1
+         ) t0
+        ,temprunningcatalog t1
         ,runningcatalog r
         ,transient tr
-   WHERE t.xtrsrc = r.xtrsrc
-     AND t.inactive = FALSE
-     AND t.runcat = tr.runcat
-     AND t.runcat IN (SELECT runcat
-                        FROM temprunningcatalog
-                       WHERE inactive = FALSE
-                      GROUP BY runcat
-                      HAVING COUNT(*) > 1
-                     )
+   WHERE t1.runcat = t0.runcat
+     AND t1.inactive = FALSE
+     AND r.xtrsrc = t1.xtrsrc
+     AND tr.runcat = t1.runcat
 """
     tkp.db.execute(query, commit=True)
 
@@ -1676,22 +1683,19 @@ INSERT INTO runningcatalog_flux
         ,1 / (x0.f_int_err * x0.f_int_err)
         ,x0.f_int / (x0.f_int_err * x0.f_int_err)
         ,x0.f_int * x0.f_int / (x0.f_int_err * x0.f_int_err)
-    FROM runningcatalog r0
-        ,image i0
+    FROM image i0
+        ,(SELECT x1.id AS xtrsrc
+            FROM extractedsource x1
+                 LEFT OUTER JOIN temprunningcatalog trc1
+                 ON x1.id = trc1.xtrsrc
+            WHERE x1.image = %(image_id)s
+              AND trc1.xtrsrc IS NULL
+          ) t0
+        ,runningcatalog r0
         ,extractedsource x0
-   WHERE x0.image = i0.id
+   WHERE i0.id = %(image_id)s
+     AND r0.xtrsrc = t0.xtrsrc 
      AND x0.id = r0.xtrsrc
-     AND r0.xtrsrc IN (SELECT t0.xtrsrc
-                         FROM (SELECT x1.id AS xtrsrc
-                                 FROM extractedsource x1
-                                     ,image i1
-                                WHERE x1.image = i1.id
-                                  AND i1.id = %(image_id)s
-                              ) t0
-                              LEFT OUTER JOIN temprunningcatalog trc1
-                              ON t0.xtrsrc = trc1.xtrsrc
-                         WHERE trc1.xtrsrc IS NULL
-                      )
 """
     tkp.db.execute(query, {'image_id': image_id}, True)
 
@@ -1814,47 +1818,53 @@ INSERT INTO assocxtrsource
   ,type
   )
   SELECT r0.id AS runcat
-        ,x0.id AS xtrsrc
+        ,r0.xtrsrc
         ,0
         ,0
         ,4
-    FROM runningcatalog r0
-        ,extractedsource x0
-   WHERE r0.xtrsrc = x0.id
-     AND r0.xtrsrc IN (SELECT t0.xtrsrc
-                         FROM (SELECT x1.id AS xtrsrc
-                                 FROM extractedsource x1
-                                     ,image i1
-                                WHERE x1.image = i1.id
-                                  AND i1.id = %(image_id)s
-                              ) t0
-                              LEFT OUTER JOIN temprunningcatalog trc1
-                              ON t0.xtrsrc = trc1.xtrsrc
-                         WHERE trc1.xtrsrc IS NULL
-                      )
+    FROM (SELECT x1.id AS xtrsrc
+            FROM extractedsource x1
+                 LEFT OUTER JOIN temprunningcatalog trc1
+                 ON x1.id = trc1.xtrsrc
+            WHERE x1.image = %(image_id)s
+              AND trc1.xtrsrc IS NULL
+          ) t0
+        ,runningcatalog r0
+   WHERE r0.xtrsrc = t0.xtrsrc
 """
     tkp.db.execute(query, {'image_id':image_id}, True)
 
-
 def _insert_new_monitoringlist(image_id):
     """This query looks for sources extracted from the latest image,
-    which have no candidate associations. If there is already more than
-    one image in this dataset, then *ALL* of these un-associated sources
-    are added to the monitoringlist.
+    which do not have a counterpart among the runningcatalog sources,
+    and skyregions that were surveyed before, i.e. we have a new source
+    that we want to monitor.
+
+    It is added to the monitoringlist if the current image is not 
+    the first (in time) of an observed skyregion. It is also added
+    when it was undetected in an "overlapping" skyregion other than the
+    current.
+    
+    The query is constructed as follows.
+    The sub-subquery (table t1) selects the extracted sources that do 
+    not have a counterpart among the runcat sources.
+    Those were just added to the runningcatalog (by _insert_new_runcat()) 
+    as a new source and therefore we can set r1.xtrsrc = t1.xtrsrc.
+    Using that, we can get the runcat ids and their skyregions with
+    a1.runcat = r1.id.
+    The skyregions are coupled to the images, where we only take into
+    account non-rejected images (left outer join with rejection 
+    where rj.image IS NULL).
+    If there exists a valid - overlapping or from the same skyregion -
+    image with a smaller timestamp than the current one, we know the 
+    runcat source is new and needs to be monitored.
+    
+    We are relying on the assumption that images are processed in strict 
+    time order.
+    
+    NB. This ignores the possibility of later, more sensitive 
+    observations revealing new sources - but it's a start.
     """
-#    Some non-trivial subqueries here:
-#    First We grab the minimum image_timestamp for each runcat entry in this dataset
-#    as temp table 'tstamps' (via skyrgn associations).
-#    Then we grab the new, unassociated runcat entries using the left join
-#    trc by xtrsrc.
-#    If the image the new source was found in has a timestamp *greater*
-#    than the minimum this implies that region was previously surveyed
-#    ('real' transient). Otherwise, it's simply the first time we've looked at
-#    that patch of sky. (We are relying on the assumption that images are
-#    processed in strict time order).
-#    (NB. This ignores the possibility of later, more sensitive observations
-#    revealing new sources - but it's a start.)
-#
     query = """\
 INSERT INTO monitoringlist
   (runcat
@@ -1867,54 +1877,52 @@ INSERT INTO monitoringlist
         ,r0.wm_decl AS decl
         ,r0.dataset AS dataset
     FROM runningcatalog r0
-        ,extractedsource x0
-        ,image i0
-        ,(SELECT rc2.id as ts_runcat
-                ,MIN(taustart_ts) as ts_min
-                 FROM image i2
-                     ,assocskyrgn asr2
-                     ,runningcatalog rc2
-                WHERE i2.dataset in (SELECT dataset
-                                   FROM image
-                                  WHERE id = %s
-                                )
-                 AND i2.skyrgn = asr2.skyrgn
-                 AND rc2.id = asr2.runcat
-                 GROUP BY rc2.id
-          ) tstamps
-   WHERE r0.xtrsrc = x0.id
-     AND x0.image = i0.id
-     AND r0.xtrsrc IN (SELECT t0.xtrsrc
-                         FROM (SELECT x1.id AS xtrsrc
-                                 FROM extractedsource x1
-                                     ,image i1
-                                WHERE x1.image = i1.id
-                                  AND i1.id = %s
-                              ) t0
-                              LEFT OUTER JOIN temprunningcatalog trc1
-                              ON t0.xtrsrc = trc1.xtrsrc
-                         WHERE trc1.xtrsrc IS NULL
-                      )
-     AND r0.id = tstamps.ts_runcat
-     AND i0.taustart_ts > tstamps.ts_min
+        ,(SELECT r1.id
+            FROM image i1
+                ,(SELECT x1.id AS xtrsrc
+                    FROM extractedsource x1
+                         LEFT OUTER JOIN temprunningcatalog trc1
+                         ON x1.id = trc1.xtrsrc
+                    WHERE x1.image = %(image_id)s
+                      AND trc1.xtrsrc IS NULL
+                  ) t1
+                ,runningcatalog r1
+                ,assocskyrgn a1
+                ,image i2
+                 LEFT OUTER JOIN rejection rj
+                 ON i2.id = rj.image
+           WHERE i1.id = %(image_id)s
+             AND r1.xtrsrc = t1.xtrsrc
+             AND a1.runcat = r1.id
+             AND i2.dataset = i1.dataset
+             AND i2.skyrgn = a1.skyrgn
+             AND i1.taustart_ts > i2.taustart_ts
+             AND rj.image IS NULL
+          GROUP BY r1.id
+         ) t0
+   WHERE r0.id = t0.id
 """
-    cursor = tkp.db.execute(query, (image_id, image_id), commit=True)
+
+    params = {'image_id': image_id}
+    cursor = tkp.db.execute(query, params, commit=True)
     ins = cursor.rowcount
     if ins > 0:
         logger.info("Added %s new sources to monitoringlist table" % (ins,))
 
 
 def _insert_new_transient(image_id):
-    """A new source needs to be added to the transient table
+    """A new source needs to be added to the transient table,
+    except for sources that were detected in an image of skyregion
+    that was surveyed for the first time.
 
-    Except for sources that were detected in the initial image,
-    checked by timestamp.
+    We set the siglevel to 1 and the variability indices 0 for
+    new transients.
 
-    We set the siglevel to 1 for a new source and the
-    the variability indices 0.
-
+    Note that this nearly the same as the insertion of a new
+    monitoringlist source. See _insert_new_monitoringlist for 
+    details that apply to query here as well.
     """
-    #See insert_new_monitoringlist for notes.
+    
     query = """\
 INSERT INTO transient
   (runcat
@@ -1929,41 +1937,37 @@ INSERT INTO transient
         ,1
         ,0
         ,0
-        ,x0.id AS trigger_xtrsrc
+        ,r0.xtrsrc AS trigger_xtrsrc
     FROM runningcatalog r0
-        ,extractedsource x0
+        ,(SELECT r1.id
+            FROM image i1
+                ,(SELECT x1.id AS xtrsrc
+                    FROM extractedsource x1
+                         LEFT OUTER JOIN temprunningcatalog trc1
+                         ON x1.id = trc1.xtrsrc
+                    WHERE x1.image = %(image_id)s
+                      AND trc1.xtrsrc IS NULL
+                  ) t1
+                ,runningcatalog r1
+                ,assocskyrgn a1
+                ,image i2
+                 LEFT OUTER JOIN rejection rj
+                 ON i2.id = rj.image
+           WHERE i1.id = %(image_id)s
+             AND r1.xtrsrc = t1.xtrsrc
+             AND a1.runcat = r1.id
+             AND i2.dataset = i1.dataset
+             AND i2.skyrgn = a1.skyrgn
+             AND i1.taustart_ts > i2.taustart_ts
+             AND rj.image IS NULL
+          GROUP BY r1.id
+         ) t0
         ,image i0
-        ,(SELECT rc2.id as ts_runcat
-                ,MIN(taustart_ts) as ts_min
-                 FROM image i2
-                     ,assocskyrgn asr2
-                     ,runningcatalog rc2
-                WHERE i2.dataset in (SELECT dataset
-                                   FROM image
-                                  WHERE id = %s
-                                )
-                 AND i2.skyrgn = asr2.skyrgn
-                 AND rc2.id = asr2.runcat
-                 AND i2.id not in (SELECT image from rejection)
-                 GROUP BY rc2.id
-          ) tstamps
-   WHERE r0.xtrsrc = x0.id
-     AND x0.image = i0.id
-     AND r0.xtrsrc IN (SELECT t0.xtrsrc
-                         FROM (SELECT x1.id AS xtrsrc
-                                 FROM extractedsource x1
-                                     ,image i1
-                                WHERE x1.image = i1.id
-                                  AND i1.id = %s
-                              ) t0
-                              LEFT OUTER JOIN temprunningcatalog trc1
-                              ON t0.xtrsrc = trc1.xtrsrc
-                         WHERE trc1.xtrsrc IS NULL
-                      )
-     AND r0.id = tstamps.ts_runcat
-     AND i0.taustart_ts > tstamps.ts_min
+   WHERE r0.id = t0.id
+     AND i0.id = %(image_id)s
 """
-    cursor = tkp.db.execute(query, (image_id, image_id), commit=True)
+    params = {'image_id': image_id}
+    cursor = tkp.db.execute(query, params, commit=True)
     ins = cursor.rowcount
     if ins > 0:
         logger.info("Added %s new sources to transient table" % (ins,))

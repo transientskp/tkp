@@ -222,13 +222,13 @@ are real: they are just artefacts of, liekely, flux calibration
 problems).
 
 Release procedure
------------------
+=================
 
 Code and repository management
-==============================
+------------------------------
 
-To make a release you should first create a new branch (if appropriate), then
-set the version number in the code, then tag the new release.
+To make a release you should first create a new branch (if appropriate: see
+below), then set the version number in the code, then tag the new release.
 
 Major releases are sequentially numbered (``1``, ``2``, ``N``). They happen on
 a branch named ``releaseN``. Create the branch as follows::
@@ -254,16 +254,16 @@ Commit your changes. This commit is the basis of the release::
   $ git commit -am "Release N.M"
 
 Tag the release. This is important, as we use the tags to indicate which
-versions should be built and added to the documentation site:
+versions should be built and added to the documentation site::
 
-  $ git tag -a "Releas N.M"
+  $ git tag -a "Release N.M"
 
-Push everything, including the tag, to GitHub:
+Push everything, including the tag, to GitHub::
 
   $ git push --tags origin releaseN
 
 Local setup in Amsterdam
-========================
+------------------------
 
 All tagged releases will be build under ``/opt/tkp/[tag]``. Set
 ``/opt/tkp/stable`` such that it is a symlink to the latest tag.

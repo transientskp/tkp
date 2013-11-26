@@ -28,13 +28,15 @@ class ImageData(object):
     This is your primary contact point for interaction with images: it icludes
     facilities for source extraction and measurement, etc.
     """
-    def __init__(self, data, beam, wcs, max_degradation=0.2, median_filter=0,
-                mf_threshold=0, interpolate_order=1, back_sizex=32,
-                back_sizey=32, margin=0, radius=0, fdr_alpha=1e-2,
-                residuals=True, deblend=False, deblend_nthresh=32,
+    def __init__(self, data, beam, wcs, max_degradation=0.2,
+                median_filter=0, mf_threshold=0, interpolate_order=1,
+                back_sizex=32, back_sizey=32, margin=0, radius=0,
+                fdr_alpha=1e-2, residuals=True, deblend=False,
+                deblend_nthresh=32, deblend_mincont=0.005,
                 detection_threshold=10.0, analysis_threshold=3.0,
                 structuring_element=[[0,1,0], [1,1,1], [0,1,0]],
-                ew_sys_err=0.0, ns_sys_err=0.0, force_beam=False):
+                ew_sys_err=0.0, ns_sys_err=0.0, force_beam=False
+    ):
         """Sets up an ImageData object.
 
         *Args:*
@@ -71,6 +73,7 @@ class ImageData(object):
         self.residuals = residuals
         self.deblend_enabled = deblend
         self.deblend_nthresh = deblend_nthresh
+        self.deblend_mincont = deblend_mincont
 
         self.detection_threshold=detection_threshold
         self.analysis_threshold=analysis_threshold
@@ -372,7 +375,6 @@ class ImageData(object):
         # there's no point in working with the whole of the data array
         # if it's masked.
         useful_chunk = ndimage.find_objects(numpy.where(self.data.mask, 0, 1))
-        #print useful_chunk
         assert(len(useful_chunk) == 1)
         useful_data = self.data[useful_chunk[0]]
         my_xdim, my_ydim = useful_data.shape
@@ -943,7 +945,10 @@ class ImageData(object):
                     chunk,
                     analysis_threshold,
                     detectionthresholdmap[chunk],
-                    self.beam
+                    self.beam,
+                    self.deblend_nthresh,
+                    self.deblend_mincont,
+                    self.structuring_element
                 )
             )
 

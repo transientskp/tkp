@@ -12,8 +12,10 @@ images covering the same field of view) but was in fact not detected by the
 After the blindly-extracted source measurements have been stored to the
 database, we retrieve from the database a list of all sources which are fall
 within the field of view of the image being processed but which could never be
-associated with any of the blindly-extracted source measurements made. We
-define a "dimensionless distance" :math:`r_{ij}` between two sources
+associated with any of the blindly-extracted source measurements made. The
+logic for this check is as follows.
+
+We define a "dimensionless distance" :math:`r_{ij}` between two sources
 :math:`r_i` and :math:`r_j` with RA :math:`\alpha` and declination
 :math:`\delta` as:
 
@@ -33,7 +35,7 @@ where :math:`\sigma` indicates a one sigma RMS uncertainty,
 and :math:`\sigma^2_{\Delta \delta, ij}` is defined analagously
 (:ref:`Scheers, 2011 <scheers-2011>`). We then check for all known sources for
 which the dimensionless distance to all blind extractions is greater than some
-user-defined threshold.
+user-defined threshold: these sources are our null detections.
 
 For all sources identified as null detections, we measure fluxes by performing
 a forced elliptical Gaussian fit to the expected source position on the image.
@@ -44,6 +46,14 @@ deblending is performed.
 
 The results of these "forced" source measurements are marked as such and
 appended to the database.
+
+It is worth emphasizing that the above procedure does *not* guarantee that
+every known source will have either a blind detection or a forced-fit
+measurement in every image. In particular, the above logic checks that a
+source association is possible, not that one will actually take place. The
+:ref:`full association procedure <stage-association>` is more complex than the
+check included here, and it is possible that there will remain catalogued
+sources with no associated measurement for the image.
 
 The following parameters may be configured in the :ref:`job configuration file
 <job_params_cfg>`:

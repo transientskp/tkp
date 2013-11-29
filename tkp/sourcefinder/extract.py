@@ -121,8 +121,10 @@ class Island(object):
                 label = 0
                 for chunk in ndimage.find_objects(labels):
                     label += 1
-                    newdata = numpy.where(labels == label,
-                                          self.data.filled(fill_value=0.0), 0)
+                    newdata = numpy.where(
+                        labels == label,
+                        self.data.filled(fill_value=-99999.0), -99999.0
+                    )
                     # NB: In class Island(object), rms * analysis_threshold
                     # is taken as the threshold for the bottom of the island.
                     # Everything below that level is masked.

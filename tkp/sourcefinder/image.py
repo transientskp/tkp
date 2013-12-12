@@ -506,7 +506,8 @@ class ImageData(object):
     # extraction systems.                                                     #
     #                                                                         #
     ###########################################################################
-    def extract(self, det=None, anl=None, noisemap=None, bgmap=None, labelled_data=None, labels=None):
+    def extract(self, det=None, anl=None, noisemap=None, bgmap=None,
+                labelled_data=None, labels=None):
         """
         Kick off conventional (ie, RMS island finding) source extraction.
 
@@ -557,7 +558,8 @@ class ImageData(object):
                 raise ValueError("Labelled map is wrong shape")
 
         return self._pyse(
-            det * self.rmsmap, anl * self.rmsmap, labelled_data=labelled_data, labels=labels
+            det * self.rmsmap, anl * self.rmsmap,
+            labelled_data=labelled_data, labels=labels
         )
 
     def reverse_se(self, det=None):
@@ -880,6 +882,7 @@ class ImageData(object):
                     labels_below_det_thr.append(i)
                 else:
                     labels_above_det_thr.append(i)
+            # Set to zero all labelled islands that are below det_thr:
             labelled_data = numpy.where(
                 numpy.in1d(labelled_data.ravel(), labels_above_det_thr).reshape(labelled_data.shape),
                 labelled_data, 0
@@ -922,6 +925,9 @@ class ImageData(object):
                 detectionthresholdmap, analysisthresholdmap
             )
 
+        # Get a bounding box for each island:
+        # NB Slices ordered by label value (1...N,)
+        # 'None' returned for missing label indices.
         slices = ndimage.find_objects(labelled_data)
 
         for label in labels:
@@ -930,13 +936,14 @@ class ImageData(object):
                                   self.rmsmap[chunk]).max()
             # In selected_data only the pixels with the "correct"
             # (see above) labels are retained. Other pixel values are
-            # set to zero.
+            # set to -(bignum).
             # In this way, disconnected pixels within (rectangular)
-            # slices around islands (paricularly the large ones) do
+            # slices around islands (particularly the large ones) do
             # not affect the source measurements.
             selected_data = numpy.ma.where(
-                labelled_data[chunk] == label, self.data_bgsubbed[chunk].data, -99999.0
-            ).filled(fill_value=-99999.0)
+                labelled_data[chunk] == label,
+                self.data_bgsubbed[chunk].data, -extract.BIGNUM
+            ).filled(fill_value=-extract.BIGNUM)
 
             island_list.append(
                 extract.Island(

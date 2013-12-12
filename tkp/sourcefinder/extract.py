@@ -23,6 +23,11 @@ from . import utils
 
 logger = logging.getLogger(__name__)
 
+# This is used as a dummy value, -BIGNUM values will be always be masked.
+# As such, it should be larger than the expected range of real values,
+# since we will get negative values representing real data after
+# background subtraction, etc.
+BIGNUM = 99999.0
 
 class Island(object):
     """
@@ -60,7 +65,7 @@ class Island(object):
 
         # NB we have set all unused data to -(lots) before passing it to
         # Island().
-        mask = numpy.where(data > -9999, 0, 1)
+        mask = numpy.where(data > -BIGNUM / 10.0, 0, 1)
         self.data = numpy.ma.array(data, mask=mask)
         self.rms = rms
         self.chunk = chunk
@@ -121,8 +126,10 @@ class Island(object):
                 label = 0
                 for chunk in ndimage.find_objects(labels):
                     label += 1
-                    newdata = numpy.where(labels == label,
-                                          self.data.filled(fill_value=0.0), 0)
+                    newdata = numpy.where(
+                        labels == label,
+                        self.data.filled(fill_value=-BIGNUM), -BIGNUM
+                    )
                     # NB: In class Island(object), rms * analysis_threshold
                     # is taken as the threshold for the bottom of the island.
                     # Everything below that level is masked.

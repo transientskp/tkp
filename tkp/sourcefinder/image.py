@@ -938,12 +938,12 @@ class ImageData(object):
             # (see above) labels are retained. Other pixel values are
             # set to -(bignum).
             # In this way, disconnected pixels within (rectangular)
-            # slices around islands (paricularly the large ones) do
+            # slices around islands (particularly the large ones) do
             # not affect the source measurements.
             selected_data = numpy.ma.where(
                 labelled_data[chunk] == label,
-                self.data_bgsubbed[chunk].data, -99999.0
-            ).filled(fill_value=-99999.0)
+                self.data_bgsubbed[chunk].data, -extract.BIGNUM
+            ).filled(fill_value=-extract.BIGNUM)
 
             island_list.append(
                 extract.Island(

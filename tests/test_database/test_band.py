@@ -82,17 +82,35 @@ class TestBand(unittest.TestCase):
         """
         Determine range of frequencies supported by DB schema.
         """
+
+        def get_freq_for_image(image):
+            # Returns the stored frequency corresponding to a particular image.
+            return tkp.db.execute("""
+                SELECT freq_central
+                FROM image
+                    ,frequencyband
+                WHERE image.id = %(id)s
+                  AND image.band = frequencyband.id
+            """, {"id": image.id}).fetchone()[0]
+
         dataset = DataSet(data={'description': self._testMethodName},
                    database=self.database)
         data = copy(self.data)
+
         data['freq_eff'] = 1e6  # 1MHz
         data['freq_bw'] = 1e3 # 1KHz
-
         mhz_freq_image = Image(dataset=dataset, data=data)
+        self.assertEqual(data['freq_eff'], get_freq_for_image(mhz_freq_image))
 
-        data['freq_eff'] = 100e9  # 100 GHz
+        data['freq_eff'] = 100e9  # 100 GHz (e.g. CARMA)
         data['freq_bw'] = 5e9 # 5GHz
         ghz_freq_image = Image(dataset=dataset, data=data)
+        self.assertEqual(data['freq_eff'], get_freq_for_image(ghz_freq_image))
+
+        data['freq_eff'] = 5e15  # 5 PHz (e.g. UV obs)
+        data['freq_bw'] = 1e14 # 5GHz
+        phz_freq_image = Image(dataset=dataset, data=data)
+        self.assertEqual(data['freq_eff'], get_freq_for_image(phz_freq_image))
 
 if __name__ == "__main__":
     unittest.main()

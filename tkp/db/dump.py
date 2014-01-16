@@ -1,6 +1,7 @@
 import logging
 import subprocess
 import tempfile
+import os
 
 logger = logging.getLogger(__name__)
 
@@ -25,6 +26,8 @@ def dump_monetdb(hostname, port, dbname, dbuser, dbpass, output_filename):
         dotmonetdb.flush()
 
         try:
+            env = os.environ
+            env["DOTMONETDBFILE"]= dotmonetdb.name
             subprocess.check_call(
                 [
                     mclient_executable,
@@ -33,7 +36,7 @@ def dump_monetdb(hostname, port, dbname, dbuser, dbpass, output_filename):
                     "-d", dbname,
                     "--dump"
                 ],
-                env={"DOTMONETDBFILE": dotmonetdb.name},
+                env=env,
                 stdout=output_file
             )
         except Exception, e:
@@ -44,6 +47,8 @@ def dump_pg(hostname, port, dbname, dbuser, dbpass, output_filename):
     pg_dump_executable = "pg_dump"
 
     try:
+        env = os.environ
+        env["PGPASSWORD"]= dbpass
         subprocess.check_call(
             [
                 pg_dump_executable,
@@ -53,7 +58,7 @@ def dump_pg(hostname, port, dbname, dbuser, dbpass, output_filename):
                 "-f", output_filename,
                 dbname
             ],
-            env={"PGPASSWORD": dbpass}
+            env=env
         )
     except Exception, e:
         logger.error("Failed to dump: %s" % (e,))

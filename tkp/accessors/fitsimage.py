@@ -207,13 +207,25 @@ def parse_beam(header, pixelsize):
         bpa = header['BPA']
     except KeyError:
 
-        for i, key in enumerate(header.ascardlist().keys()):
-            if key == 'HISTORY':
-                results = beam_regex.search(header[i])
-                if results:
-                    bmaj, bmin, bpa = [float(results.group(key)) for
-                                       key in ('bmaj', 'bmin', 'bpa')]
-                    break
+        def get_history(hdr):
+            """
+            Returns all history cards in FITS header hdr as a list of strings.
+            """
+            # Appropriate method to get the HISTORY from a FITS header varies with
+            # PyFITS version. See discussion at
+            # <http://pythonhosted.org/pyfits/appendix/header_transition.html>.
+            # This is quite ugly, so deliberately limited to this scope.
+            if pyfits.__version__ < 3.2:
+                return hdr.get_history()
+            else:
+                return hdr['HISTORY']
+
+        for hist_entry in get_history(header):
+            results = beam_regex.search(hist_entry)
+            if results:
+                bmaj, bmin, bpa = [float(results.group(key)) for
+                                   key in ('bmaj', 'bmin', 'bpa')]
+                break
 
     beam = degrees2pixels(bmaj, bmin, bpa, pixelsize[0], pixelsize[1])
     return beam

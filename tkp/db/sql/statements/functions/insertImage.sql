@@ -44,7 +44,7 @@ AS $$
   DECLARE iskyrgn INT;
 
 BEGIN
-  iband := getBand(1e6 * ROUND(CAST((ifreq_eff/1e6) AS NUMERIC(21,0)), 0), 1e6);
+  iband := getBand(1e6 * FLOOR(ifreq_eff/1e6 + 0.5), 1e6);
   iskyrgn := getSkyRgn(idataset, icentre_ra, icentre_decl, ixtr_radius);
 
   INSERT INTO image
@@ -97,7 +97,7 @@ BEGIN
   DECLARE itau INT;
   DECLARE iskyrgn INT;
 
-  SET iband = getBand(1e6 * ROUND(CAST((ifreq_eff/1e6) AS NUMERIC(18,1)), 0), 1e6);
+  SET iband = getBand(1e6 * FLOOR(ifreq_eff/1e6 + 0.5), 1e6);
   SET iskyrgn = getSkyRgn(idataset, icentre_ra, icentre_decl, ixtr_radius);
 
   SELECT NEXT VALUE FOR seq_image INTO iimageid;

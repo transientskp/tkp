@@ -3,8 +3,8 @@ import tkp.db
 import tkp.db.general as dbgen
 from tkp.db.associations import associate_extracted_sources
 from tkp.testutil import db_subs
+from tkp.testutil import db_queries
 from tkp.testutil.decorators import requires_database
-
 
 class TestOne2OneFlux(unittest.TestCase):
     """
@@ -51,6 +51,19 @@ class TestOne2OneFlux(unittest.TestCase):
         self.assertEqual(len(avg_f_int), 1)
         self.assertAlmostEqual(avg_f_int[0], 2.3)
 
+        # Check evolution of variability indices
+        result = db_queries.evolved_var_indices_1_to_1_or_n(self.database, dataset.id)
+        runcat = result[0]
+        xtrsrc = result[1]
+        v_int = result[2]
+        eta_int = result[3]
+        self.assertEqual(len(runcat), n_images)
+        # Compare the python- and db-calculated values
+        py_v, py_eta = db_subs.var_indices(src_list)
+        for i in range(len(runcat)):
+            self.assertAlmostEqual(v_int[i], py_v[i])
+            self.assertAlmostEqual(eta_int[i], py_eta[i])
+
 class TestOne2ManyFlux(unittest.TestCase):
     """
     These tests will check the 1-to-many source associations, i.e. two extractedsources
@@ -73,9 +86,9 @@ class TestOne2ManyFlux(unittest.TestCase):
         # image 1
         image = tkp.db.Image(database=self.database, dataset=dataset, data=im_params[0])
         imageid1 = image.id
-        src = []
+        src1 = []
         # 1 source
-        src.append(db_subs.example_extractedsource_tuple(ra=123.1235, dec=10.55,
+        src1.append(db_subs.example_extractedsource_tuple(ra=123.1235, dec=10.55,
                                                      ra_fit_err=5./3600, dec_fit_err=6./3600,
                                                      peak = 1.5, peak_err = 5e-1,
                                                      flux = 3.0, flux_err = 5e-1,
@@ -84,16 +97,16 @@ class TestOne2ManyFlux(unittest.TestCase):
                                                      ew_sys_err=20, ns_sys_err=20
                                                         ))
         results = []
-        results.append(src[-1])
+        results.append(src1[-1])
         dbgen.insert_extracted_sources(imageid1, results, 'blind')
         associate_extracted_sources(imageid1, deRuiter_r=3.717)
 
         # image 2
         image = tkp.db.Image(database=self.database, dataset=dataset, data=im_params[1])
         imageid2 = image.id
-        src = []
+        src2 = []
         # 2 sources (located close to source 1, catching the 1-to-many case
-        src.append(db_subs.example_extractedsource_tuple(ra=123.12349, dec=10.549,
+        src2.append(db_subs.example_extractedsource_tuple(ra=123.12349, dec=10.549,
                                                      ra_fit_err=5./3600, dec_fit_err=6./3600,
                                                      peak = 1.6, peak_err = 5e-1,
                                                      flux = 3.2, flux_err = 5e-1,
@@ -101,7 +114,7 @@ class TestOne2ManyFlux(unittest.TestCase):
                                                      beam_maj = 100, beam_min = 100, beam_angle = 45,
                                                      ew_sys_err=20, ns_sys_err=20
                                                         ))
-        src.append(db_subs.example_extractedsource_tuple(ra=123.12351, dec=10.551,
+        src2.append(db_subs.example_extractedsource_tuple(ra=123.12351, dec=10.551,
                                                      ra_fit_err=5./3600, dec_fit_err=6./3600,
                                                      peak = 1.9, peak_err = 5e-1,
                                                      flux = 3.4, flux_err = 5e-1,
@@ -110,8 +123,8 @@ class TestOne2ManyFlux(unittest.TestCase):
                                                      ew_sys_err=20, ns_sys_err=20
                                                         ))
         results = []
-        results.append(src[0])
-        results.append(src[1])
+        results.append(src2[0])
+        results.append(src2[1])
         dbgen.insert_extracted_sources(imageid2, results, 'blind')
         associate_extracted_sources(imageid2, deRuiter_r=3.717)
 
@@ -138,6 +151,27 @@ class TestOne2ManyFlux(unittest.TestCase):
         self.assertAlmostEqual(wI[0], 3.1)
         self.assertAlmostEqual(wI[1], 3.2)
 
+        # Check evolution of variability indices
+        result = db_queries.evolved_var_indices_1_to_1_or_n(self.database, dataset.id)
+        runcat = result[0]
+        xtrsrc = result[1]
+        v_int = result[2]
+        eta_int = result[3]
+        self.assertEqual(len(runcat), 4)
+        # Compare the python- and db-calculated values,
+        # the same runcat is associated with two xtrsrc
+        py_v1, py_eta1 = db_subs.var_indices([src1[0],src2[0]])
+        py_v2, py_eta2 = db_subs.var_indices([src1[0],src2[1]])
+        self.assertAlmostEqual(v_int[0], py_v1[0])
+        self.assertAlmostEqual(eta_int[0], py_eta1[0])
+        self.assertAlmostEqual(v_int[1], py_v1[1])
+        self.assertAlmostEqual(eta_int[1], py_eta1[1])
+
+        self.assertAlmostEqual(v_int[2], py_v2[0])
+        self.assertAlmostEqual(eta_int[2], py_eta2[0])
+        self.assertAlmostEqual(v_int[3], py_v2[1])
+        self.assertAlmostEqual(eta_int[3], py_eta2[1])
+
 class TestMany2OneFlux(unittest.TestCase):
     """
     These tests will check the many-to-1 source associations, i.e. one extractedsource
@@ -161,9 +195,9 @@ class TestMany2OneFlux(unittest.TestCase):
         # image 1
         image = tkp.db.Image(database=self.database, dataset=dataset, data=im_params[0])
         imageid1 = image.id
-        src = []
+        src1 = []
         # 2 sources (located close together, so the catching the many-to-1 case in next image
-        src.append(db_subs.example_extractedsource_tuple(ra=122.985, dec=10.5,
+        src1.append(db_subs.example_extractedsource_tuple(ra=122.985, dec=10.5,
                                                      ra_fit_err=5./3600, dec_fit_err=6./3600,
                                                      peak = 1.6, peak_err = 5e-1,
                                                      flux = 3.2, flux_err = 5e-1,
@@ -171,7 +205,7 @@ class TestMany2OneFlux(unittest.TestCase):
                                                      beam_maj = 100, beam_min = 100, beam_angle = 45,
                                                      ew_sys_err=20, ns_sys_err=20
                                                         ))
-        src.append(db_subs.example_extractedsource_tuple(ra=123.015, dec=10.5,
+        src1.append(db_subs.example_extractedsource_tuple(ra=123.015, dec=10.5,
                                                      ra_fit_err=5./3600, dec_fit_err=6./3600,
                                                      peak = 1.9, peak_err = 5e-1,
                                                      flux = 3.4, flux_err = 5e-1,
@@ -180,17 +214,17 @@ class TestMany2OneFlux(unittest.TestCase):
                                                      ew_sys_err=20, ns_sys_err=20
                                                         ))
         results = []
-        results.append(src[0])
-        results.append(src[1])
+        results.append(src1[0])
+        results.append(src1[1])
         dbgen.insert_extracted_sources(imageid1, results, 'blind')
         associate_extracted_sources(imageid1, deRuiter_r = 3.717)
 
         # image 2
         image = tkp.db.Image(database=self.database, dataset=dataset, data=im_params[1])
         imageid2 = image.id
-        src = []
+        src2 = []
         # 1 source
-        src.append(db_subs.example_extractedsource_tuple(ra=123.0, dec=10.5,
+        src2.append(db_subs.example_extractedsource_tuple(ra=123.0, dec=10.5,
                                                      ra_fit_err=5./3600, dec_fit_err=6./3600,
                                                      peak = 1.5, peak_err = 5e-1,
                                                      flux = 3.0, flux_err = 5e-1,
@@ -199,7 +233,7 @@ class TestMany2OneFlux(unittest.TestCase):
                                                      ew_sys_err=20, ns_sys_err=20
                                                         ))
         results = []
-        results.append(src[-1])
+        results.append(src2[-1])
         dbgen.insert_extracted_sources(imageid2, results, 'blind')
         associate_extracted_sources(imageid2, deRuiter_r = 3.717)
 
@@ -226,6 +260,25 @@ class TestMany2OneFlux(unittest.TestCase):
         self.assertAlmostEqual(wI[0], 3.1)
         self.assertAlmostEqual(wI[1], 3.2)
 
+        # Check evolution of variability indices
+        result = db_queries.evolved_var_indices(self.database, dataset.id)
+        runcat = result[0]
+        xtrsrc = result[1]
+        v_int = result[2]
+        eta_int = result[3]
+        self.assertEqual(len(runcat), 4)
+        # Compare the python- and db-calculated values,
+        py_v1, py_eta1 = db_subs.var_indices([src1[0],src2[0]])
+        py_v2, py_eta2 = db_subs.var_indices([src1[1],src2[0]])
+        self.assertAlmostEqual(v_int[0], py_v1[0])
+        self.assertAlmostEqual(eta_int[0], py_eta1[0])
+        self.assertAlmostEqual(v_int[1], py_v1[1])
+        self.assertAlmostEqual(eta_int[1], py_eta1[1])
+
+        self.assertAlmostEqual(v_int[2], py_v2[0])
+        self.assertAlmostEqual(eta_int[2], py_eta2[0])
+        self.assertAlmostEqual(v_int[3], py_v2[1])
+        self.assertAlmostEqual(eta_int[3], py_eta2[1])
 
 class TestMany2Many(unittest.TestCase):
     """
@@ -328,6 +381,29 @@ class TestMany2Many(unittest.TestCase):
         self.assertAlmostEqual(wI[1], 3.05)
         self.assertAlmostEqual(wI[2], 3.25)
 
+        # Check evolution of variability indices
+        result = db_queries.evolved_var_indices(self.database, dataset.id)
+        runcat = result[0]
+        xtrsrc = result[1]
+        v_int = result[2]
+        eta_int = result[3]
+        self.assertEqual(len(runcat), 5)
+        py_v1, py_eta1 = db_subs.var_indices([src1[0]])
+        py_v2, py_eta2 = db_subs.var_indices([src1[1],src2[0]])
+        py_v3, py_eta3 = db_subs.var_indices([src1[1],src2[1]])
+        self.assertAlmostEqual(v_int[0], py_v1[0])
+        self.assertAlmostEqual(eta_int[0], py_eta1[0])
+
+        self.assertAlmostEqual(v_int[1], py_v2[0])
+        self.assertAlmostEqual(eta_int[1], py_eta2[0])
+        self.assertAlmostEqual(v_int[2], py_v2[1])
+        self.assertAlmostEqual(eta_int[2], py_eta2[1])
+
+        self.assertAlmostEqual(v_int[3], py_v3[0])
+        self.assertAlmostEqual(eta_int[3], py_eta3[0])
+        self.assertAlmostEqual(v_int[4], py_v3[1])
+        self.assertAlmostEqual(eta_int[4], py_eta3[1])
+
     def test_many2manyflux_reduced_to_two_1to1(self):
         dataset = tkp.db.DataSet(database=self.database, data={'description': 'flux test set: n-m, ' + self._testMethodName})
         n_images = 2
@@ -411,4 +487,22 @@ class TestMany2Many(unittest.TestCase):
         self.assertAlmostEqual(wI[0], 2.95)
         self.assertAlmostEqual(wI[1], 3.25)
 
+        # Check evolution of variability indices
+        result = db_queries.evolved_var_indices(self.database, dataset.id)
+        runcat = result[0]
+        xtrsrc = result[1]
+        v_int = result[2]
+        eta_int = result[3]
+        self.assertEqual(len(runcat), 4)
+        # Compare the python- and db-calculated values,
+        py_v1, py_eta1 = db_subs.var_indices([src1[0],src2[1]])
+        py_v2, py_eta2 = db_subs.var_indices([src1[1],src2[0]])
+        self.assertAlmostEqual(v_int[0], py_v1[0])
+        self.assertAlmostEqual(eta_int[0], py_eta1[0])
+        self.assertAlmostEqual(v_int[1], py_v1[1])
+        self.assertAlmostEqual(eta_int[1], py_eta1[1])
 
+        self.assertAlmostEqual(v_int[2], py_v2[0])
+        self.assertAlmostEqual(eta_int[2], py_eta2[0])
+        self.assertAlmostEqual(v_int[3], py_v2[1])
+        self.assertAlmostEqual(eta_int[3], py_eta2[1])

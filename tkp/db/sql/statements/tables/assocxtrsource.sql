@@ -6,6 +6,8 @@ CREATE TABLE assocxtrsource
   ,distance_arcsec DOUBLE PRECISION NULL
   ,r DOUBLE PRECISION NULL
   ,loglr DOUBLE PRECISION NULL
+  ,v_int DOUBLE PRECISION NOT NULL
+  ,eta_int DOUBLE PRECISION NOT NULL
   ,UNIQUE (runcat, xtrsrc)
   ,FOREIGN KEY (runcat) REFERENCES runningcatalog (id)
   ,FOREIGN KEY (xtrsrc) REFERENCES extractedsource (id)

@@ -51,6 +51,33 @@ class TestOne2OneFlux(unittest.TestCase):
         self.assertEqual(len(avg_f_int), 1)
         self.assertAlmostEqual(avg_f_int[0], 2.3)
 
+        # Check evolution of variability indices
+        query = """\
+        select a.runcat
+              ,a.xtrsrc
+              ,a.v_int
+              ,a.eta_int
+          from assocxtrsource a
+              ,extractedsource x
+              ,image i
+         where a.xtrsrc = x.id
+           and x.image = i.id
+           and i.dataset = %(dataset)s
+        order by i.taustart_ts
+        """
+        self.database.cursor.execute(query, {'dataset': dataset.id})
+        result = zip(*self.database.cursor.fetchall())
+        runcat = result[0]
+        xtrsrc = result[1]
+        v_int = result[2]
+        eta_int = result[3]
+        self.assertEqual(len(runcat), n_images)
+        v_nu = (0,0.15713484026367724,0.11503266569845851)
+        eta_nu = (0,500000,280000)
+        for i in range(len(runcat)):
+            self.assertAlmostEqual(v_int[i], v_nu[i])
+            self.assertAlmostEqual(eta_int[i], eta_nu[i])
+
 class TestOne2ManyFlux(unittest.TestCase):
     """
     These tests will check the 1-to-many source associations, i.e. two extractedsources
@@ -137,6 +164,32 @@ class TestOne2ManyFlux(unittest.TestCase):
         self.assertAlmostEqual(avg_f_int_sq[1], 10.28)
         self.assertAlmostEqual(wI[0], 3.1)
         self.assertAlmostEqual(wI[1], 3.2)
+
+        # Check evolution of variability indices
+        query = """\
+        select a.runcat
+              ,a.xtrsrc
+              ,a.v_int
+              ,a.eta_int
+          from assocxtrsource a
+              ,runningcatalog r
+         where a.runcat = r.id
+           and r.dataset = %(dataset)s
+        order by a.runcat
+                ,a.xtrsrc
+        """
+        self.database.cursor.execute(query, {'dataset': dataset.id})
+        result = zip(*self.database.cursor.fetchall())
+        runcat = result[0]
+        xtrsrc = result[1]
+        v_int = result[2]
+        eta_int = result[3]
+        self.assertEqual(len(runcat), 4)
+        v_nu = (0, 0.088388347648315532, 0, 0.045619792334615487)
+        eta_nu = (0, 0.32, 0, 0.08)
+        for i in range(len(runcat)):
+            self.assertAlmostEqual(v_int[i], v_nu[i])
+            self.assertAlmostEqual(eta_int[i], eta_nu[i])
 
 class TestMany2OneFlux(unittest.TestCase):
     """
@@ -225,6 +278,32 @@ class TestMany2OneFlux(unittest.TestCase):
         self.assertAlmostEqual(avg_f_int_sq[1], 10.28)
         self.assertAlmostEqual(wI[0], 3.1)
         self.assertAlmostEqual(wI[1], 3.2)
+
+        # Check evolution of variability indices
+        query = """\
+        select a.runcat
+              ,a.xtrsrc
+              ,a.v_int
+              ,a.eta_int
+          from assocxtrsource a
+              ,runningcatalog r
+         where a.runcat = r.id
+           and r.dataset = %(dataset)s
+        order by a.runcat
+                ,a.xtrsrc
+        """
+        self.database.cursor.execute(query, {'dataset': dataset.id})
+        result = zip(*self.database.cursor.fetchall())
+        runcat = result[0]
+        xtrsrc = result[1]
+        v_int = result[2]
+        eta_int = result[3]
+        self.assertEqual(len(runcat), 4)
+        v_nu = (0, 0.045619792334615487, 0, 0.088388347648315532)
+        eta_nu = (0, 0.08, 0, 0.32)
+        for i in range(len(runcat)):
+            self.assertAlmostEqual(v_int[i], v_nu[i])
+            self.assertAlmostEqual(eta_int[i], eta_nu[i])
 
 
 class TestMany2Many(unittest.TestCase):
@@ -328,6 +407,36 @@ class TestMany2Many(unittest.TestCase):
         self.assertAlmostEqual(wI[1], 3.05)
         self.assertAlmostEqual(wI[2], 3.25)
 
+        # Check evolution of variability indices
+        query = """\
+        select a.runcat
+              ,a.xtrsrc
+              ,a.v_int
+              ,a.eta_int
+          from assocxtrsource a
+              ,runningcatalog r
+              ,extractedsource x
+              ,image i
+         where a.runcat = r.id
+           and a.xtrsrc = x.id
+           and x.image = i.id
+           and r.dataset = %(dataset)s
+        order by runcat
+                ,taustart_ts
+        """
+        self.database.cursor.execute(query, {'dataset': dataset.id})
+        result = zip(*self.database.cursor.fetchall())
+        runcat = result[0]
+        xtrsrc = result[1]
+        v_int = result[2]
+        eta_int = result[3]
+        self.assertEqual(len(runcat), 5)
+        v_nu = (0, 0, 0.06955148667409071, 0, 0.021757131728822411)
+        eta_nu = (0, 0, 4.5, 0, 0.5)
+        for i in range(len(runcat)):
+            self.assertAlmostEqual(v_int[i], v_nu[i])
+            self.assertAlmostEqual(eta_int[i], eta_nu[i])
+
     def test_many2manyflux_reduced_to_two_1to1(self):
         dataset = tkp.db.DataSet(database=self.database, data={'description': 'flux test set: n-m, ' + self._testMethodName})
         n_images = 2
@@ -410,5 +519,35 @@ class TestMany2Many(unittest.TestCase):
         self.assertAlmostEqual(avg_f_int_sq[1], 10.565)
         self.assertAlmostEqual(wI[0], 2.95)
         self.assertAlmostEqual(wI[1], 3.25)
+
+        # Check evolution of variability indices
+        query = """\
+        select a.runcat
+              ,a.xtrsrc
+              ,a.v_int
+              ,a.eta_int
+          from assocxtrsource a
+              ,runningcatalog r
+              ,extractedsource x
+              ,image i
+         where a.runcat = r.id
+           and a.xtrsrc = x.id
+           and x.image = i.id
+           and r.dataset = %(dataset)s
+        order by runcat
+                ,taustart_ts
+        """
+        self.database.cursor.execute(query, {'dataset': dataset.id})
+        result = zip(*self.database.cursor.fetchall())
+        runcat = result[0]
+        xtrsrc = result[1]
+        v_int = result[2]
+        eta_int = result[3]
+        self.assertEqual(len(runcat), 4)
+        v_nu = (0, 0.023969721396151767, 0, 0.021757131728822411)
+        eta_nu = (0, 0.5, 0, 0.5)
+        for i in range(len(runcat)):
+            self.assertAlmostEqual(v_int[i], v_nu[i])
+            self.assertAlmostEqual(eta_int[i], eta_nu[i])
 
 

@@ -674,14 +674,14 @@ INSERT INTO temprunningcatalog
                  /
                  (datapoints * rc0.avg_weight_decl + 1 /(x0.uncertainty_ns * x0.uncertainty_ns))
                  AS wm_decl
-                , SQRT(1 / ((datapoints + 1) 
-                           * ((datapoints * rc0.avg_weight_ra + 1 / (x0.uncertainty_ew * x0.uncertainty_ew)) 
+                , SQRT(1 / ((datapoints + 1)
+                           * ((datapoints * rc0.avg_weight_ra + 1 / (x0.uncertainty_ew * x0.uncertainty_ew))
                               / (datapoints + 1)
                              )
                            )
                       ) AS wm_uncertainty_ew
-                , SQRT(1 / ((datapoints + 1) 
-                           * ((datapoints * rc0.avg_weight_decl + 1 / (x0.uncertainty_ns * x0.uncertainty_ns)) 
+                , SQRT(1 / ((datapoints + 1)
+                           * ((datapoints * rc0.avg_weight_decl + 1 / (x0.uncertainty_ns * x0.uncertainty_ns))
                               / (datapoints + 1)
                              )
                            )
@@ -928,31 +928,59 @@ def _insert_1_to_many_basepoint_assoc():
     Before continuing, we have to insert the 'base points' of the associations,
     i.e. the links between the new runningcatalog entries
     and their associated (new) extractedsources.
+
+    We also calculate the variability indices at the timestamp of the
+    the current image.
     """
     query = """\
 INSERT INTO assocxtrsource
   (runcat
   ,xtrsrc
+  ,type
   ,distance_arcsec
   ,r
-  ,type
+  ,v_int
+  ,eta_int
   )
-  SELECT r.id
-        ,t1.xtrsrc
-        ,t1.distance_arcsec
-        ,t1.r
+  SELECT t0.runcat
+        ,t0.xtrsrc
         ,2
-    FROM (SELECT runcat
-            FROM temprunningcatalog
-           WHERE inactive = FALSE
-          GROUP BY runcat
-          HAVING COUNT(*) > 1
+        ,t0.distance_arcsec
+        ,t0.r
+        ,t0.v_int_inter / t0.avg_f_int
+        ,t0.eta_int_inter / t0.avg_f_int_weight
+    FROM (SELECT r.id AS runcat
+                ,t1.xtrsrc
+                ,t1.distance_arcsec
+                ,t1.r
+                ,CASE WHEN t1.avg_f_int = 0.0
+                      THEN 0.000001
+                      ELSE avg_f_int
+                 END AS avg_f_int
+                ,t1.avg_f_int_weight
+                ,CASE WHEN t1.f_datapoints = 1
+                      THEN 0
+                      ELSE SQRT(CAST(t1.f_datapoints AS DOUBLE PRECISION) * (t1.avg_f_int_sq - t1.avg_f_int * t1.avg_f_int)
+                               / (CAST(t1.f_datapoints AS DOUBLE PRECISION) - 1.0)
+                               )
+                 END AS v_int_inter
+                ,CASE WHEN t1.f_datapoints = 1
+                      THEN 0
+                      ELSE (CAST(t1.f_datapoints AS DOUBLE PRECISION) / (CAST(t1.f_datapoints AS DOUBLE PRECISION) - 1.0))
+                           * (t1.avg_f_int_weight * t1.avg_weighted_f_int_sq - t1.avg_weighted_f_int * t1.avg_weighted_f_int)
+                 END AS eta_int_inter
+            FROM (SELECT runcat
+                    FROM temprunningcatalog
+                   WHERE inactive = FALSE
+                  GROUP BY runcat
+                  HAVING COUNT(*) > 1
+                 ) t0
+                ,temprunningcatalog t1
+                ,runningcatalog r
+           WHERE t1.runcat = t0.runcat
+             AND t1.inactive = FALSE
+             AND r.xtrsrc = t1.xtrsrc
          ) t0
-        ,temprunningcatalog t1
-        ,runningcatalog r
-   WHERE t1.runcat = t0.runcat
-     AND t1.inactive = FALSE
-     AND r.xtrsrc = t1.xtrsrc
     """
     tkp.db.execute(query, commit=True)
 
@@ -980,15 +1008,19 @@ def _insert_1_to_many_assoc():
 INSERT INTO assocxtrsource
   (runcat
   ,xtrsrc
+  ,type
   ,distance_arcsec
   ,r
-  ,type
+  ,v_int
+  ,eta_int
   )
   SELECT r.id AS runcat
         ,a.xtrsrc
+        ,6
         ,a.distance_arcsec
         ,a.r
-        ,6
+        ,a.v_int
+        ,a.eta_int
     FROM (SELECT runcat
             FROM temprunningcatalog
            WHERE inactive = FALSE
@@ -1273,27 +1305,62 @@ UPDATE temprunningcatalog
 def _insert_1_to_1_assoc():
     """
     Insert remaining associations from temprunningcatalog into assocxtrsource.
+
+    We also calculate the variability indices at the timestamp of the
+    the current image.
     """
     query = """\
 INSERT INTO assocxtrsource
   (runcat
   ,xtrsrc
+  ,type
   ,distance_arcsec
   ,r
-  ,type
+  ,v_int
+  ,eta_int
   )
-  SELECT t.runcat
-        ,t.xtrsrc
-        ,t.distance_arcsec
-        ,t.r
+  SELECT t0.runcat
+        ,t0.xtrsrc
         ,3
-    FROM temprunningcatalog t
-        ,runningcatalog r
-        ,extractedsource x
-   WHERE t.runcat = r.id
-     AND t.inactive = FALSE
-     AND t.xtrsrc = x.id
-"""
+        ,t0.distance_arcsec
+        ,t0.r
+        ,t0.v_int_inter / t0.avg_f_int
+        ,t0.eta_int_inter / t0.avg_f_int_weight
+    FROM (SELECT t.runcat
+                ,t.xtrsrc
+                ,t.distance_arcsec
+                ,t.r
+                ,CASE WHEN t.avg_f_int = 0.0
+                      THEN 0.000001
+                      ELSE avg_f_int
+                 END AS avg_f_int
+                ,t.avg_f_int_weight
+                ,CASE WHEN t.f_datapoints = 1
+                      THEN 0
+                      ELSE SQRT(CAST(t.f_datapoints AS DOUBLE PRECISION)
+                                * (t.avg_f_int_sq - t.avg_f_int * t.avg_f_int)
+                               / (CAST(t.f_datapoints AS DOUBLE PRECISION) - 1.0)
+                               )
+                 END AS v_int_inter
+                ,CASE WHEN t.f_datapoints = 1
+                      THEN 0
+                      ELSE (CAST(t.f_datapoints AS DOUBLE PRECISION)
+                            / (CAST(t.f_datapoints AS DOUBLE PRECISION) - 1.0))
+                           * (t.avg_f_int_weight * t.avg_weighted_f_int_sq
+                             - t.avg_weighted_f_int * t.avg_weighted_f_int)
+                 END AS eta_int_inter
+            FROM temprunningcatalog t
+                ,runningcatalog r
+                ,extractedsource x
+           WHERE t.runcat = r.id
+             AND t.inactive = FALSE
+             AND t.xtrsrc = x.id
+                 ) t0
+        """
+    #print "Q:\n",query
+    #answer = raw_input("Do you want to continue? [y/N]: ")
+    #if answer.lower() != 'y':
+    #    sys.exit(1)
     tkp.db.execute(query, commit=True)
 
 
@@ -1694,7 +1761,7 @@ INSERT INTO runningcatalog_flux
         ,runningcatalog r0
         ,extractedsource x0
    WHERE i0.id = %(image_id)s
-     AND r0.xtrsrc = t0.xtrsrc 
+     AND r0.xtrsrc = t0.xtrsrc
      AND x0.id = r0.xtrsrc
 """
     tkp.db.execute(query, {'image_id': image_id}, True)
@@ -1813,15 +1880,19 @@ def _insert_new_assoc(image_id):
 INSERT INTO assocxtrsource
   (runcat
   ,xtrsrc
+  ,type
   ,distance_arcsec
   ,r
-  ,type
+  ,v_int
+  ,eta_int
   )
   SELECT r0.id AS runcat
         ,r0.xtrsrc
-        ,0
-        ,0
         ,4
+        ,0
+        ,0
+        ,0
+        ,0
     FROM (SELECT x1.id AS xtrsrc
             FROM extractedsource x1
                  LEFT OUTER JOIN temprunningcatalog trc1
@@ -1840,29 +1911,29 @@ def _insert_new_monitoringlist(image_id):
     and skyregions that were surveyed before, i.e. we have a new source
     that we want to monitor.
 
-    It is added to the monitoringlist if the current image is not 
+    It is added to the monitoringlist if the current image is not
     the first (in time) of an observed skyregion. It is also added
     when it was undetected in an "overlapping" skyregion other than the
     current.
-    
+
     The query is constructed as follows.
-    The sub-subquery (table t1) selects the extracted sources that do 
+    The sub-subquery (table t1) selects the extracted sources that do
     not have a counterpart among the runcat sources.
-    Those were just added to the runningcatalog (by _insert_new_runcat()) 
+    Those were just added to the runningcatalog (by _insert_new_runcat())
     as a new source and therefore we can set r1.xtrsrc = t1.xtrsrc.
     Using that, we can get the runcat ids and their skyregions with
     a1.runcat = r1.id.
     The skyregions are coupled to the images, where we only take into
-    account non-rejected images (left outer join with rejection 
+    account non-rejected images (left outer join with rejection
     where rj.image IS NULL).
     If there exists a valid - overlapping or from the same skyregion -
-    image with a smaller timestamp than the current one, we know the 
+    image with a smaller timestamp than the current one, we know the
     runcat source is new and needs to be monitored.
-    
-    We are relying on the assumption that images are processed in strict 
+
+    We are relying on the assumption that images are processed in strict
     time order.
-    
-    NB. This ignores the possibility of later, more sensitive 
+
+    NB. This ignores the possibility of later, more sensitive
     observations revealing new sources - but it's a start.
     """
     query = """\
@@ -1919,10 +1990,10 @@ def _insert_new_transient(image_id):
     new transients.
 
     Note that this nearly the same as the insertion of a new
-    monitoringlist source. See _insert_new_monitoringlist for 
+    monitoringlist source. See _insert_new_monitoringlist for
     details that apply to query here as well.
     """
-    
+
     query = """\
 INSERT INTO transient
   (runcat

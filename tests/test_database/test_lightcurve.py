@@ -86,10 +86,10 @@ class TestLightCurve(unittest.TestCase):
         for image in self.dataset.images:
             image.update()
             image.update_sources()
-            # Now pick any image, select the first source (smallest RA)
 
+        # Now pick last image, select the first source (smallest RA)
         # and extract its light curve
-        sources = self.dataset.images.pop().sources
+        sources = self.dataset.images[-1].sources
         sources = sorted(sources, key=attrgetter('ra'))
         lightcurve = sources[0].lightcurve()
 
@@ -112,5 +112,40 @@ class TestLightCurve(unittest.TestCase):
             self.assertEqual(result['f_datapoints'], 4)
             self.assertAlmostEqual(result['eta_int'], eta_nu)
             self.assertAlmostEqual(result['v_int'], 0.516397779494)
+
+        # Check individual datapoints and their indices
+        # order by runcat,xtrsrc is by asc ra and f_int
+        query = """\
+        select a.runcat
+              ,a.xtrsrc
+              ,x.ra
+              ,x.f_int
+              ,a.v_int
+              ,a.eta_int
+          FROM assocxtrsource a
+              ,extractedsource x
+              ,image i
+         WHERE a.xtrsrc = x.id
+           AND x.image = i.id
+           AND i.dataset = %(dataset_id)s
+        ORDER BY runcat
+                ,xtrsrc
+        """
+        qry_params = {'dataset_id': self.dataset.id}
+        cursor = tkp.db.execute(query, qry_params)
+        res = zip(*cursor.fetchall())
+        self.assertNotEqual(len(res), 0)
+        runcat = res[0]
+        xtrsrc = res[1]
+        ra = res[2]
+        f_int = res[3]
+        v_int = res[4]
+        eta_int = res[5]
+        self.assertEqual(len(runcat), 12)
+        v_nu = (0,0.47140452079103168,0.5,0.5163977794943222)*3
+        eta_nu = (0,5000,10000,16666.66666666667,0,20000,40000,66666.6666666667,0,45000,90000,150000)
+        for i in range(len(runcat)):
+            self.assertAlmostEqual(v_int[i], v_nu[i])
+            self.assertAlmostEqual(eta_int[i], eta_nu[i])
 
 

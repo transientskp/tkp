@@ -99,6 +99,14 @@ or n-1.
    The logarithm of the likelihood ratio of the associated sources, defaults to
    NULL if not calculated (:ref:`Scheers, 2011 <scheers-2011>`, chapter 3).
 
+**v_int**
+    The first variability index, :math:`V_{\nu}`, based on the integrated flux
+    values.
+
+**eta_int**
+    The second variability index, :math:`\eta_{\nu}`, based on the integrated
+    flux values.
+
 .. _schema-assocskyrgn:
 
 assocskyrgn

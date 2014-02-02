@@ -165,17 +165,20 @@ def run(job_name, local=False):
         logger.info("performing database operations")
         for image in images:
             logger.info("performing DB operations for image %s" % image.id)
-            logger.info("performing null detections")
-            null_detections = dbmon.get_nulldetections(image.id, deRuiter_radius)
-
-            logger.info("performing forced fits")
-            ff_nd = forced_fits(image.url, null_detections, se_parset)
-            dbgen.insert_extracted_sources(image.id, ff_nd, 'ff_nd')
+            #logger.info("performing null detections")
+            #null_detections = dbmon.get_nulldetections(image.id, deRuiter_radius)
+            
+            #logger.info("performing forced fits")
+            #ff_nd = forced_fits(image.url, null_detections, se_parset)
+            #dbgen.insert_extracted_sources(image.id, ff_nd, 'ff_nd')
 
             logger.info("performing source association")
             dbass.associate_extracted_sources(image.id,
                                               deRuiter_r=deRuiter_radius)
-            dbmon.add_nulldetections(image.id)
+            logger.info("performing null detections")
+            logger.info("performing forced fits")
+            logger.info("adding null detections")
+            #dbmon.add_nulldetections(image.id)
             transients = steps.transient_search.search_transients(image.id,
                                                                   job_config['transient_search'])
             dbmon.adjust_transients_in_monitoringlist(image.id, transients)

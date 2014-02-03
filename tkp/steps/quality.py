@@ -10,7 +10,6 @@ import tkp.accessors
 import tkp.db.quality
 import tkp.quality.brightsource
 import tkp.quality
-from tkp.conf import parse_to_dict
 
 logger = logging.getLogger(__name__)
 
@@ -34,7 +33,7 @@ def reject_check(image_path, job_config):
     # Only run LOFAR-specific QC checks on LOFAR images.
     if isinstance(accessor, LofarAccessor):
         return reject_check_lofar(
-            accessor, parse_to_dict(job_config, 'quality_lofar')
+            accessor, job_config['quality_lofar']
         )
     else:
         logger.warn(

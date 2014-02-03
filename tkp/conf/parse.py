@@ -6,26 +6,21 @@ import ast
 import logging
 
 import datetime
+from collections import defaultdict, OrderedDict
 
 logger = logging.getLogger(__name__)
 
-dt_w_microsecond_format = '%Y-%m-%dT%H:%M:%S.%f'
 
 ## Use prefix loads / dumps for 'load string', 'dump string', a la JSON.
-
+dt_w_microsecond_format = '%Y-%m-%dT%H:%M:%S.%f'
 def loads_timestamp_w_microseconds(dt_str):
     return datetime.datetime.strptime(dt_str, dt_w_microsecond_format)
 
-def dumps_timestamp_w_microseconds(dt):
-    return dt.strftime(dt_w_microsecond_format)
-
-#NB default dumps_method is 'repr' (implemented in serialize_to_config)
-dumps_methods = { datetime.datetime : dumps_timestamp_w_microseconds}
 loads_methods = (ast.literal_eval,
                   loads_timestamp_w_microseconds)
 
-def parse_to_dict(config, section):
-    """Loads the specified section of a ConfigParser object as a dictionary.
+def parse_to_dict(config):
+    """Loads the ConfigParser object as a nested dictionary.
     
     Automatically converts strings representing ints and floats to their
     respective types, through the magic of ast.literal_eval.
@@ -38,84 +33,37 @@ def parse_to_dict(config, section):
     surrounded with quote marks in the parset - then ast.literal_eval
     knows to load it as a string. 
 
-    Note that as a feature of ConfigParser, and variable defined in 
-    the section 'DEFAULT' are present in all other sections, 
-    so you might get more than you expected.
-    
-    Args:
-      - *config*: A ConfigParser object to add entries to.
-      - *section*: (string) - name of section to parse and return as a dict.
-      
-    Returns:
-    Dictionary representing parsed params.
-    
-    """
-    pars = {}
-    for k, rawval in config.items(section):
-        val = rawval
-        for func in loads_methods:
-            try:
-                val = func(rawval)
-                break #Drop out of loop if exception not thrown
-            except (ValueError, SyntaxError):
-                pass #Try the next method
-        if val == rawval:
-            logger.debug("Parsing section: [%s]\n"
-                        "Could not parse key-value pair:\n%s = %s\n"
-                                "-assuming string value",
-                                section, k, rawval)
-        pars[k] = val
-
-    return pars
-
-def serialize_to_config(config, section, params_dict):
-    """
-    Writes a dictionary (params_dict) into a ConfigParser object, 
-    under the specified section header.
-    
-    Normally ConfigParser only accepts string values, but here
-    type conversion to string is handled automatically via the dumps_methods
-    (dump string methods). This uses the type of a variable to check if 
-    we have defined a specific output method. Otherwise, we try the 
-    standard 'repr' function.
     
     Args:
       - *config*: A ConfigParser object.
-      - *section*: (string) Name of the section to write params_dict under.
-      - *params_dict*: (dict) Dictionary of parameters to write.
-    """
-    if not section in config.sections():
-        config.add_section(section)
-    for k, v in params_dict.iteritems():
-        dumps_func = dumps_methods.get(type(v), repr)
-        config.set(section, k, dumps_func(v))
-
-
-def read_config_section(fp, section):
-    """Loads a ConfigParser object from a file object and parses 'section'
-    
-    Args:
-      - *fp*: An open file object ('file pointer')
-      - *section*: (string) - name of section to parse and return as a dict.
       
     Returns:
-    Dictionary representing parsed params.
-    """
-    conf = ConfigParser.SafeConfigParser()
-    conf.readfp(fp)
-    return parse_to_dict(conf, section)
-
-def write_config_section(fp, section, params_dict):
-    """Writes a ConfigParser object to a file object, representing 'params_dict'
+    Nested OrderedDict {sections -> keys -> values } representing parsed params.
     
-    Args:
-      - *fp*: An open, writable file object ('file pointer')
-      - *section*: (string) Name of the section to write params_dict under.
-      - *params_dict*: (dict) Dictionary of parameters to write.
     """
-    conf = ConfigParser.SafeConfigParser()
-    serialize_to_config(conf, section, params_dict)
-    conf.write(fp)
+    pars = {}
+    #'DEFAULT' section is not listed by ``sections()``,
+    # but we sometimes (ab)use it.
+    sections = config.sections()
+    if len(config.items('DEFAULT')):
+        sections.append('DEFAULT')
 
+    for section_name in sections:
+        if section_name not in pars:
+            pars[section_name]={}
+        for k, rawval in config.items(section_name):
+            val = rawval
+            for func in loads_methods:
+                try:
+                    val = func(rawval)
+                    break #Drop out of loop if exception not thrown
+                except (ValueError, SyntaxError):
+                    pass #Try the next method
+            if val == rawval:
+                logger.debug("Parsing section: [%s]\n"
+                            "Could not parse key-value pair:\n%s = %s\n"
+                                    "-assuming string value",
+                                    section_name, k, rawval)
+            pars[section_name][k] = val
 
-
+    return pars

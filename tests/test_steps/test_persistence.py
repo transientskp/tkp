@@ -9,9 +9,11 @@ import tkp.testutil.data as testdata
 from tkp.testutil.decorators import requires_database
 import tkp.db
 import tkp.db.generic
-from tkp.conf import read_config_section, parse_to_dict
+from ConfigParser import SafeConfigParser
+from tkp.conf import parse_to_dict
 from tkp.config import initialize_pipeline_config
 from tkp.testutil.data import default_job_config, default_pipeline_config
+import StringIO
 
 @requires_database()
 class TestPersistence(unittest.TestCase):
@@ -24,12 +26,14 @@ class TestPersistence(unittest.TestCase):
         cls.dataset_id = db_subs.create_dataset_8images()
         cls.images = [testdata.fits_file]
         cls.extraction_radius = 256
-        with open(default_job_config) as f:
-            cls.job_id_pars = read_config_section(f, 'job_id')
+        job_config = SafeConfigParser()
+        job_config.read(default_job_config)
+        job_config = parse_to_dict(job_config)
+        cls.job_id_pars = job_config['job_id']
         pipe_config = initialize_pipeline_config(default_pipeline_config,
                                                  job_name="test_persistence")
 
-        cls.image_cache_pars = parse_to_dict(pipe_config, 'image_cache')
+        cls.image_cache_pars = pipe_config['image_cache']
 
 
 

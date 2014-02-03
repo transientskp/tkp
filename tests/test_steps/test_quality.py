@@ -1,5 +1,5 @@
 import unittest
-import ConfigParser
+from ConfigParser import SafeConfigParser
 import tkp.steps.quality
 import tkp.accessors
 from tkp.testutil.decorators import requires_data
@@ -12,8 +12,11 @@ class TestQuality(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         cls.accessor = tkp.accessors.open(casa_table)
-        cls.job_config = ConfigParser.SafeConfigParser()
-        cls.job_config.read(default_job_config)
+        config = SafeConfigParser()
+        config.read(default_job_config)
+        cls.job_config = parse_to_dict(config)
+
+
 
     def test_check(self):
         tkp.steps.quality.reject_check(self.accessor.url, self.job_config)
@@ -21,6 +24,6 @@ class TestQuality(unittest.TestCase):
     def test_zero_integration(self):
         accessor = tkp.accessors.open(fits_file)
         accessor._tau_time = 0
-        quality_parset = parse_to_dict(self.job_config, 'quality_lofar')
+        quality_parset = self.job_config['quality_lofar']
         result = tkp.steps.quality.reject_check_lofar(accessor, quality_parset)
         self.assertTrue(result)

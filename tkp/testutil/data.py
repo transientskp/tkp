@@ -22,3 +22,6 @@ casa_table = os.path.join(DATAPATH,
 job_template_dir = os.path.join(tkp.__path__[0], 'conf/job_template')
 default_job_config = os.path.join(job_template_dir, 'job_params.cfg')
 default_header_inject_config = os.path.join(job_template_dir, 'inject.cfg')
+
+project_template_dir = os.path.join(tkp.__path__[0], 'conf/project_template')
+default_pipeline_config = os.path.join(project_template_dir, 'pipeline.cfg')

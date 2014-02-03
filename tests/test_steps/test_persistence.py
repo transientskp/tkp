@@ -9,8 +9,9 @@ import tkp.testutil.data as testdata
 from tkp.testutil.decorators import requires_database
 import tkp.db
 import tkp.db.generic
-from tkp.conf import read_config_section
-from tkp.testutil.data import default_job_config
+from tkp.conf import read_config_section, parse_to_dict
+from tkp.config import initialize_pipeline_config
+from tkp.testutil.data import default_job_config, default_pipeline_config
 
 @requires_database()
 class TestPersistence(unittest.TestCase):
@@ -24,7 +25,12 @@ class TestPersistence(unittest.TestCase):
         cls.images = [testdata.fits_file]
         cls.extraction_radius = 256
         with open(default_job_config) as f:
-            cls.parset = read_config_section(f, 'persistence')
+            cls.job_id_pars = read_config_section(f, 'job_id')
+        pipe_config = initialize_pipeline_config(default_pipeline_config,
+                                                 job_name="test_persistence")
+
+        cls.image_cache_pars = parse_to_dict(pipe_config, 'image_cache')
+
 
 
     def test_create_dataset(self):
@@ -48,12 +54,12 @@ class TestPersistence(unittest.TestCase):
             self.assertGreaterEqual(skyrgn[0]['xtr_radius'], 0)
 
     def test_node_steps(self):
-        tkp.steps.persistence.node_steps(self.images, self.parset)
+        tkp.steps.persistence.node_steps(self.images, self.image_cache_pars)
 
     def test_master_steps(self):
         images_metadata = tkp.steps.persistence.extract_metadatas(self.images)
         tkp.steps.persistence.master_steps(images_metadata,
-                                           self.extraction_radius, self.parset)
+                                           self.extraction_radius, self.job_id_pars)
 
 
 

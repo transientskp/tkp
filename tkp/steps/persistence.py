@@ -115,15 +115,15 @@ def store_images(images_metadata, extraction_radius_pix, dataset_id):
     return image_ids
 
 
-def node_steps(images, persistence_config):
+def node_steps(images, image_cache_config):
     """
     this function executes all persistence steps that should be executed on a node.
     Note: Should only be used in a node recipe
     """
-    mongohost = persistence_config['mongo_host']
-    mongoport = persistence_config['mongo_port']
-    mongodb = persistence_config['mongo_db']
-    copy_images = persistence_config['copy_images']
+    mongohost = image_cache_config['mongo_host']
+    mongoport = image_cache_config['mongo_port']
+    mongodb = image_cache_config['mongo_db']
+    copy_images = image_cache_config['copy_images']
 
     if copy_images:
         for image in images:

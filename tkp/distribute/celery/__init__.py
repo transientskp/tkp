@@ -20,7 +20,7 @@ from tkp.db import monitoringlist as dbmon
 from tkp.db import associations as dbass
 from tkp.db.dump import dump_db
 from tkp.distribute.celery import tasks
-from tkp.distribute.common import load_job_config, dump_job_config_to_logdir, setup_file_logging
+from tkp.distribute.common import load_job_config, dump_configs_to_logdir, setup_log_file
 from tkp.conf import parse_to_dict
 
 
@@ -91,14 +91,14 @@ def run(job_name, local=False):
 
     setup_log_broadcasting()
     pipe_config = initialize_pipeline_config(
-                             os.path.join(os.getcwd(), "pipeline.cfg"),
-                             job_name)
+        os.path.join(os.getcwd(), "pipeline.cfg"),
+        job_name)
 
     db_config = database_config(pipe_config, apply=True)
     job_dir = pipe_config.get('DEFAULT', 'job_directory')
     debug = pipe_config.getboolean('logging', 'debug')
-    log_file = pipe_config.get('logging', 'log_file')
-    setup_file_logging(log_file, debug)
+    log_dir = pipe_config.get('logging', 'log_dir')
+    setup_log_file(log_dir, debug)
 
     if not os.access(job_dir, os.X_OK):
         msg = "can't access job folder %s" % job_dir
@@ -109,34 +109,27 @@ def run(job_name, local=False):
 
     job_config = load_job_config(pipe_config)
 
-    # Dump the database to the job directory if:
-    # a) we have a job config section called "db_dump", and
-    # b) that section contains a "db_dump" option which is True.
-    if job_config.has_section("db_dump"):
-        dump_cfg = parse_to_dict(job_config, 'db_dump')
-    else:
-        dump_cfg = {}
-    if 'db_dump' in dump_cfg and dump_cfg['db_dump']:
-        output_name = os.path.join(
-            job_dir, "%s_%s_%s.dump" % (
-                db_config['host'], db_config['database'],
-                datetime.datetime.now().strftime("%Y-%m-%dT%H:%M:%S")
+    if 'dump_backup_copy' in db_config:
+        if db_config['dump_backup_copy']:
+            output_name = os.path.join(
+                job_dir, "%s_%s_%s.dump" % (
+                    db_config['host'], db_config['database'],
+                    datetime.datetime.now().strftime("%Y-%m-%dT%H:%M:%S")
+                )
             )
-        )
-        dump_db(
-            db_config['engine'], db_config['host'], str(db_config['port']),
-            db_config['database'], db_config['user'], db_config['password'],
-            output_name
-        )
+            dump_db(
+                db_config['engine'], db_config['host'], str(db_config['port']),
+                db_config['database'], db_config['user'], db_config['password'],
+                output_name
+            )
 
     all_images = imp.load_source('images_to_process', os.path.join(job_dir,
-                             'images_to_process.py')).images
+                                                                   'images_to_process.py')).images
 
     logger.info("dataset %s contains %s images" % (job_name, len(all_images)))
 
-    dump_job_config_to_logdir(os.path.dirname(log_file), job_config)
+    dump_configs_to_logdir(log_dir, job_config, pipe_config)
 
-    p_parset = parse_to_dict(job_config, 'persistence')
     se_parset = parse_to_dict(job_config, 'source_extraction')
     tr_parset = parse_to_dict(job_config, 'transient_search')
     deRuiter_radius = parse_to_dict(job_config, 'association')['deruiter_radius']
@@ -147,18 +140,16 @@ def run(job_name, local=False):
         return 1
 
     logger.info("performing persistence step")
+    image_cache_params = parse_to_dict(pipe_config, 'image_cache')
     imgs = [[img] for img in all_images]
-    arguments = [p_parset]
-    metadatas = runner(tasks.persistence_node_step, imgs, arguments, local)
+    metadatas = runner(tasks.persistence_node_step,imgs, [image_cache_params],
+                       local)
     metadatas = [m[0] for m in metadatas]
 
+    job_id = parse_to_dict(job_config, 'job_id')
     dataset_id, image_ids = steps.persistence.master_steps(metadatas,
-                                           se_parset['extraction_radius_pix'],
-                                           p_parset)
-
-    # As of the current release, we do not support a "monitoring list"
-    #if not add_manual_monitoringlist_entries(dataset_id, monitor_coords):
-    #    return 1
+                                       se_parset['extraction_radius_pix'],
+                                       job_id)
 
     db_images = [Image(id=image_id) for image_id in image_ids]
 
@@ -184,8 +175,8 @@ def run(job_name, local=False):
     timestep_num = len(grouped_images)
     for n, (timestep, images) in enumerate(grouped_images):
         logging.info("processing %s images in timestep %s (%s/%s)" % (len(images),
-                                                              timestep, n+1,
-                                                              timestep_num))
+                                                                      timestep, n+1,
+                                                                      timestep_num))
 
         logger.info("performing source extraction")
         urls = [img.url for img in images]
@@ -201,7 +192,7 @@ def run(job_name, local=False):
             logger.info("performing DB operations for image %s" % image.id)
             logger.info("performing null detections")
             null_detections = dbmon.get_nulldetections(image.id, deRuiter_radius)
-            
+
             logger.info("performing forced fits")
             ff_nd = forced_fits(image.url, null_detections, se_parset)
             dbgen.insert_extracted_sources(image.id, ff_nd, 'ff_nd')

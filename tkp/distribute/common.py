@@ -18,22 +18,26 @@ def load_job_config(pipe_config):
     return job_config
 
 
-def dump_job_config_to_logdir(log_dir, job_config):
+def dump_configs_to_logdir(log_dir, job_config, pipe_config):
     if not os.path.isdir(log_dir):
         os.makedirs(log_dir)
-    with open(os.path.join(log_dir, 'job_and_pipeline_params.cfg'), 'w') as f:
+    with open(os.path.join(log_dir, 'job_params.cfg'), 'w') as f:
         job_config.write(f)
+    with open(os.path.join(log_dir, 'pipeline.cfg'), 'w') as f:
+        pipe_config.write(f)
 
 
-def setup_file_logging(log_file, debug=False):
+def setup_log_file(log_dir, debug=False, basename='trap.log'):
     """
     sets up a catch all logging handler which writes to `log_file`.
 
     :param log_file: log file to write
     :param debug: do we want debug level logging?
+    :param basename: basename of the log file
     """
-    if not os.path.isdir(os.path.dirname(log_file)):
-        os.makedirs(os.path.dirname(log_file))
+    if not os.path.isdir(log_dir):
+        os.makedirs(log_dir)
+    log_file = os.path.join(log_dir, basename)
     global_logger = logging.getLogger()
     hdlr = logging.FileHandler(log_file)
     global_logger.addHandler(hdlr)

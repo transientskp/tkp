@@ -10,7 +10,13 @@ import logging
 logger = logging.getLogger(__name__)
 
 def initialize_pipeline_config(pipe_cfg_file, job_name):
-    """Replaces the sort of background bookkeeping that cuisine would do"""
+    """
+    Initializes the default variables and loads the ConfigParser file.
+
+    Sets defaults for start_time, job_name and cwd; these can then be used
+    via variable substitution in other config values.
+
+    """
     start_time = datetime.datetime.utcnow().replace(microsecond=0).isoformat()
     config = ConfigParser.SafeConfigParser({
         "job_name": job_name,

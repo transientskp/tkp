@@ -202,7 +202,7 @@ In other words:
 
 - :math:`x` and :math:`y` are the Cartesian coordinates of the centre of the Gaussian;
 
-    - :math:`peak` is the value at the centre of the Gaussian;
+- :math:`peak` is the value at the centre of the Gaussian;
 
 - :math:`theta` is the position angle of the major axis measured counterclockwise
   from the y axis;

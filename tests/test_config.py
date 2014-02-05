@@ -11,14 +11,14 @@ from tkp.conf import dt_w_microsecond_format, parse_to_dict
 from tkp.config import get_database_config, initialize_pipeline_config
 
 DUMMY_VALUE = "dummy"
-DUMMY_INT = 1234
+DUMMY_INT = "1234"
 
 
 
 class TestParsingCode(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        """Create manually parsed OrderedDict to check against"""
+        """Create manually parsed dict to check against"""
 
         example_config_str = """\
 [test1]
@@ -122,16 +122,6 @@ class DatabaseConfigTestCase(unittest.TestCase):
         self.assertEqual(db_config['password'], username)
         self.assertEqual(db_config['host'], "localhost")
         self.assertEqual(db_config['port'], 50000)
-
-    def test_populated_pipeline_cfg(self):
-        # Demonstrate that we correctly read a configparser
-        self.pipeline_cfg['database']['engine'] =  "monetdb"
-        self.pipeline_cfg['database']['database'] = DUMMY_VALUE
-        self.pipeline_cfg['database']['user'] = DUMMY_VALUE
-        self.pipeline_cfg['database']['password'] = DUMMY_VALUE
-        self.pipeline_cfg['database']['host'] = DUMMY_VALUE
-        self.pipeline_cfg['database']['port'] = DUMMY_INT
-        self._test_for_dummy_values(self.pipeline_cfg['database'])
 
     def test_env_vars(self):
         # Demonstrate that we correctly read the environment

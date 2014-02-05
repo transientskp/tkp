@@ -1,10 +1,10 @@
-.. _classification-transient-utils:
+.. _classification-features-utils:
 
 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-:mod:`tkp.classification.transient.utils` -- Classification transient utility objects
+:mod:`tkp.classification.features.utils` -- Classification transient utility objects
 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-.. MODULE:: tkp.classification.transient.utils
+.. MODULE:: tkp.classification.features.utils
     :synopsis: Utility object for the manual classification routines.
 
 .. autoclass:: Position

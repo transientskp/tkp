@@ -6,7 +6,7 @@ table. This can be useful to make your data processable by the TraP pipeline.
 import os.path
 import argparse
 from ConfigParser import SafeConfigParser
-from tkp.conf import parse_to_dict
+from tkp.config import parse_to_dict
 import pyfits
 from pyrap.tables import table as pyrap_table
 import tkp.accessors.detection

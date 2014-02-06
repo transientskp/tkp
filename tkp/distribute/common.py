@@ -9,7 +9,7 @@ import ConfigParser
 import logging
 import os
 from pprint import pprint
-from tkp.conf import parse_to_dict
+from tkp.config import parse_to_dict
 from tkp.db.dump import dump_db
 
 

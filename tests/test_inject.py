@@ -7,7 +7,7 @@ import tkp
 import tkp.accessors
 import tkp.inject
 from tkp.testutil.data import DATAPATH
-from tkp.conf import parse_to_dict
+from tkp.config import parse_to_dict
 from tkp.testutil.data import default_header_inject_config
 from tkp.accessors.lofaraccessor import LofarAccessor
 from tkp.accessors.dataaccessor import DataAccessor

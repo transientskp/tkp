@@ -4,7 +4,7 @@ import tkp.steps.quality
 import tkp.accessors
 from tkp.testutil.decorators import requires_data
 from tkp.testutil.data import default_job_config, fits_file, casa_table
-from tkp.conf import parse_to_dict
+from tkp.config import parse_to_dict
 
 
 @requires_data()

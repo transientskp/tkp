@@ -4,7 +4,7 @@ from tkp.testutil import db_subs, db_queries
 from tkp.testutil.decorators import requires_database
 import tkp.db
 from ConfigParser import SafeConfigParser
-from tkp.conf import parse_to_dict
+from tkp.config import parse_to_dict
 from tkp.testutil.data import default_job_config
 
 @requires_database()

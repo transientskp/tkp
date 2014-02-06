@@ -19,7 +19,8 @@ import logging
 from celery import group
 from celery.signals import after_setup_logger, after_setup_task_logger
 
-from tkp.config import initialize_pipeline_config, get_database_config
+from tkp.config import (parse_to_dict,
+                        initialize_pipeline_config, get_database_config)
 from tkp.distribute.celery.tasklog import setup_task_log_emitter, monitor_events
 from tkp.steps.monitoringlist import add_manual_monitoringlist_entries
 from tkp.steps.source_extraction import forced_fits
@@ -33,7 +34,6 @@ from tkp.distribute.celery import tasks
 from tkp.distribute.common import (load_job_config, dump_configs_to_logdir,
                                    setup_log_file, dump_database_backup,
                                    group_per_timestep)
-from tkp.conf import parse_to_dict
 
 
 logger = logging.getLogger(__name__)

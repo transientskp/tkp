@@ -2,7 +2,7 @@ import unittest
 from tkp.steps.source_extraction import extract_sources
 from tkp.testutil import db_subs, data
 from ConfigParser import SafeConfigParser
-from tkp.conf import parse_to_dict
+from tkp.config import parse_to_dict
 from tkp.testutil.data import default_job_config
 
 

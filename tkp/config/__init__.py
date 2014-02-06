@@ -1,8 +1,11 @@
+from __future__ import absolute_import
+
+from tkp.config.parse import parse_to_dict, dt_w_microsecond_format
+
 from ConfigParser import SafeConfigParser
 import os
 import datetime
 import tkp.db
-from tkp.conf import parse_to_dict
 import getpass
 
 import logging

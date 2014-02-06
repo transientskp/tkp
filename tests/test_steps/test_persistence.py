@@ -10,8 +10,8 @@ from tkp.testutil.decorators import requires_database
 import tkp.db
 import tkp.db.generic
 from ConfigParser import SafeConfigParser
-from tkp.conf import parse_to_dict
-from tkp.config import initialize_pipeline_config
+
+from tkp.config import parse_to_dict, initialize_pipeline_config
 from tkp.testutil.data import default_job_config, default_pipeline_config
 import StringIO
 

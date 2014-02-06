@@ -55,7 +55,7 @@ def get_template_dir():
     """
     Determines where the job and project templates are.
     """
-    return path.join(tkp.__path__[0], 'conf')
+    return path.join(tkp.__path__[0], 'config')
 
 
 def make_writeable(filename):

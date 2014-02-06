@@ -19,9 +19,9 @@ fits_file = os.path.join(DATAPATH,
 casa_table = os.path.join(DATAPATH,
 'casatable/L55614_020TO029_skymodellsc_wmax6000_noise_mult10_cell40_npix512_wplanes215.img.restored.corr')
 
-job_template_dir = os.path.join(tkp.__path__[0], 'conf/job_template')
+job_template_dir = os.path.join(tkp.__path__[0], 'config/job_template')
 default_job_config = os.path.join(job_template_dir, 'job_params.cfg')
 default_header_inject_config = os.path.join(job_template_dir, 'inject.cfg')
 
-project_template_dir = os.path.join(tkp.__path__[0], 'conf/project_template')
+project_template_dir = os.path.join(tkp.__path__[0], 'config/project_template')
 default_pipeline_config = os.path.join(project_template_dir, 'pipeline.cfg')

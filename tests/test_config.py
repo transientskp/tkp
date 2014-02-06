@@ -7,8 +7,9 @@ from ConfigParser import SafeConfigParser
 
 from tkp.testutil.data import (default_job_config, default_pipeline_config,
                                default_header_inject_config)
-from tkp.conf import dt_w_microsecond_format, parse_to_dict
-from tkp.config import get_database_config, initialize_pipeline_config
+
+from tkp.config import (dt_w_microsecond_format, parse_to_dict,
+                        get_database_config, initialize_pipeline_config)
 
 DUMMY_VALUE = "dummy"
 DUMMY_INT = "1234"

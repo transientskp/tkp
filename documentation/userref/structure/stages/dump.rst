@@ -10,11 +10,7 @@ necessary, forensics) in the results of a pipeline failure mid-way through
 processing. The dump is made to the job directory in a file named according to
 the pattern ``<database host>_<database name>_<current time>.dump``.
 
-The following parameters may be configured in the :ref:`job configuration file
-<job_params_cfg>`:
-
-Section ``db_dump``
--------------------
-
-``db_dump``
-   Boolean. ``True`` to enable the database dump, ``False`` to disable.
+This functionality may be enabled / disabled via the
+``dump_backup_copy`` boolean in the
+:ref:`database section <pipeline_cfg_database>` of the
+:ref:`pipeline.cfg file <pipeline_cfg>`.

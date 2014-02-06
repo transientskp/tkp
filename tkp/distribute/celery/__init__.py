@@ -121,10 +121,10 @@ def run(job_name, local=False):
                        local)
     metadatas = [m[0] for m in metadatas]
 
-    job_id = job_config['job_id']
+    persistence = job_config['persistence']
     dataset_id, image_ids = steps.persistence.master_steps(metadatas,
                                                            se_parset['extraction_radius_pix'],
-                                                           job_id)
+                                                           persistence)
 
     db_images = [Image(id=image_id) for image_id in image_ids]
 

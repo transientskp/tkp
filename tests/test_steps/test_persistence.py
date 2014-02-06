@@ -29,7 +29,7 @@ class TestPersistence(unittest.TestCase):
         job_config = SafeConfigParser()
         job_config.read(default_job_config)
         job_config = parse_to_dict(job_config)
-        cls.job_id_pars = job_config['job_id']
+        cls.persistence_pars = job_config['persistence']
         pipe_config = initialize_pipeline_config(default_pipeline_config,
                                                  job_name="test_persistence")
 
@@ -63,7 +63,7 @@ class TestPersistence(unittest.TestCase):
     def test_master_steps(self):
         images_metadata = tkp.steps.persistence.extract_metadatas(self.images)
         tkp.steps.persistence.master_steps(images_metadata,
-                                           self.extraction_radius, self.job_id_pars)
+                                           self.extraction_radius, self.persistence_pars)
 
 
 

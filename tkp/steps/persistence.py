@@ -135,7 +135,7 @@ def node_steps(images, image_cache_config):
     return metadatas
 
 
-def master_steps(metadatas, extraction_radius_pix, job_id_config):
+def master_steps(metadatas, extraction_radius_pix, persistence_config):
     """this function executes all persistence steps that should be executed on
         a master.
     Args:
@@ -146,8 +146,8 @@ def master_steps(metadatas, extraction_radius_pix, job_id_config):
     """
     logger.info("creating dataset in database ...")
     dataset_id = create_dataset(
-        job_id_config['dataset_id'],
-        job_id_config['description'])
+        persistence_config['dataset_id'],
+        persistence_config['description'])
     logger.info("added dataset with ID %s" % dataset_id)
 
     logger.info("Storing images")

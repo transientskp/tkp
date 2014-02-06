@@ -40,19 +40,22 @@ def get_database_config(config_passed=None, apply=False):
     and environment variables is returned as a dict. If apply==True,
     the Database singleton is configured using these resulting settings.
 
-    The following environment variables are recognized, and take priority::
+    The following environment variables are recognized, and take priority:
 
-      * TKP_DBENGINE
-      * TKP_DBNAME
-      * TKP_DBUSER
-      * TKP_DBPASS
-      * TKP_DBHOST
-      * TKP_DBPORT
+    - TKP_DBENGINE
+    - TKP_DBNAME
+    - TKP_DBUSER
+    - TKP_DBPASS
+    - TKP_DBHOST
+    - TKP_DBPORT
 
     :param config_passed: Dict of db settings.
-        Relevant keys: (engine, database, user, password, host, port, passphrase )
+        Relevant keys: (engine, database, user, password, host, port,
+        passphrase )
     :param apply: apply settings (configure db connection) or not
-    :return:
+    :return: Dict containing the resulting combined settings
+        (resulting from defaults, ``config_passed`` and possibly environment
+        variables.)
     """
     # Default values
     combined_config = {

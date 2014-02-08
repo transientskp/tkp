@@ -12,6 +12,3 @@ Modules from ``tkp.classification``
 
    introduction
    features/index
-   transient/index
-   manual/index
-   fromtrap

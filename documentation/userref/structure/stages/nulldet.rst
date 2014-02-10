@@ -70,3 +70,11 @@ Section ``source_extraction``
 
 ``backsize_x``, ``backsize_y``, ``margin``, ``extraction_radius_pix``, ``max_degredation``, ``force_beam``
    Defined as for :ref:`blind extraction <stage-extraction>`.
+
+``box_in_beampix``
+    When a forced fit is being applied to a particular point on the image, it
+    is unnecessary and inefficient to include all of the image pixel data in
+    the minimization procedure. Instead, we only include that within a square
+    region of size ``box_in_beampix`` about the target position.
+    ``box_in_beampix`` is specified in units of the size of the major axis of
+    the restoring beam.

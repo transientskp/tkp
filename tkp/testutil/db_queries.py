@@ -20,4 +20,22 @@ def convert_to_cartesian(conn, ra, decl):
     curs.execute(qry, (ra, decl))
     return curs.fetchone()
 
+def evolved_var_indices(db, dataset):
+    query = """\
+    select a.runcat
+          ,a.xtrsrc
+          ,a.v_int
+          ,a.eta_int
+      from assocxtrsource a
+          ,extractedsource x
+          ,image i
+     where a.xtrsrc = x.id
+       and x.image = i.id
+       and i.dataset = %(dataset)s
+    order by a.runcat
+            ,i.taustart_ts
+    """
+    db.cursor.execute(query, {'dataset': dataset})
+    result = zip(*db.cursor.fetchall())
+    return result
 

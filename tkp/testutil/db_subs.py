@@ -118,7 +118,7 @@ def example_extractedsource_tuple(ra=123.123, dec=10.5, #Arbitrarily picked defa
     """
     # NOTE: ra_fit_err & dec_fit_err are in degrees,
     # and ew_sys_err, ns_sys_err and error_radius are in arcsec.
-    # The ew_uncertainty_ew is then the sqrt of the quadratic sum of the 
+    # The ew_uncertainty_ew is then the sqrt of the quadratic sum of the
     # systematic error and the error_radius
     return ExtractedSourceTuple(ra=ra, dec=dec,
                                 ra_fit_err=ra_fit_err, dec_fit_err=dec_fit_err,
@@ -134,23 +134,48 @@ def example_extractedsource_tuple(ra=123.123, dec=10.5, #Arbitrarily picked defa
 def deRuiter_radius(src1, src2):
     """Calculates the De Ruiter radius for two sources"""
 
-    # The errors are the square root of the quadratic sum of 
-    # the systematic and fitted errors. 
+    # The errors are the square root of the quadratic sum of
+    # the systematic and fitted errors.
     src1_ew_uncertainty = math.sqrt(src1.ew_sys_err**2 + src1.error_radius**2) / 3600.
     src1_ns_uncertainty = math.sqrt(src1.ns_sys_err**2 + src1.error_radius**2) / 3600.
     src2_ew_uncertainty = math.sqrt(src2.ew_sys_err**2 + src2.error_radius**2) / 3600.
     src2_ns_uncertainty = math.sqrt(src2.ns_sys_err**2 + src2.error_radius**2) / 3600.
-    
+
     ra_nom = ((src1.ra - src2.ra) * math.cos(math.radians(0.5 * (src1.dec + src2.dec))))**2
     ra_denom = src1_ew_uncertainty**2 + src2_ew_uncertainty**2
     ra_fac = ra_nom / ra_denom
-    
+
     dec_nom = (src1.dec - src2.dec)**2
     dec_denom = src1_ns_uncertainty**2 + src2_ns_uncertainty**2
     dec_fac = dec_nom / dec_denom
-    
+
     dr = math.sqrt(ra_fac + dec_fac)
     return dr
+
+def var_indices(src_list):
+    """Calculates the variability indices
+    for a series of flux measurements of a source"""
+
+    py_v = []
+    py_eta = []
+    for i, src in enumerate(src_list):
+        N = i + 1
+        if N == 1:
+            v = 0.0
+            eta = 0.0
+        else:
+            avg_flux = sum(src.flux for src in src_list[0:N]) / N
+            avg_flux_sq = sum(src.flux**2 for src in src_list[0:N]) / N
+            v = math.sqrt(N * (avg_flux_sq - avg_flux**2) / (N - 1.)) / avg_flux
+
+            avg_w_I = sum(src.flux/src.flux_err**2 for src in src_list[0:N]) / N
+            avg_w_Isq = sum(src.flux**2/src.flux_err**2 for src in src_list[0:N]) / N
+            avg_w = sum(1./src.flux_err**2 for src in src_list[0:N]) / N
+            eta = N * (avg_w_Isq - avg_w_I**2/avg_w) / (N - 1.)
+        py_v.append(v)
+        py_eta.append(eta)
+
+    return py_v, py_eta
 
 #Used to record the significance levels on a lightcurve.
 MockLCPoint = namedtuple('MockLightCurvePoint',

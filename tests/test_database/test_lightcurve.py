@@ -1,9 +1,13 @@
 from operator import attrgetter, itemgetter
+from collections import namedtuple
 
 import unittest2 as unittest
 
 import datetime
 from tkp.testutil.decorators import requires_database
+from tkp.testutil import db_queries
+from tkp.testutil import db_subs
+from tkp.testutil import db_queries
 from tkp.db.orm import DataSet
 from tkp.db.orm import Image
 import tkp.db
@@ -49,14 +53,16 @@ class TestLightCurve(unittest.TestCase):
                 'decl': 11.11 + i,
                 'ra_fit_err': 0.01,
                 'decl_fit_err': 0.01,
-                'ew_sys_err': 20,
-                'ns_sys_err': 20,
-                'i_peak': 10 * i ,
+                'ew_sys_err': 20.,
+                'ns_sys_err': 20.,
+                'i_peak': 10. * i ,
                 'i_peak_err': 0.1,
                 'error_radius': 10.0
             #  x=0.11, y=0.22, z=0.33, det_sigma=11.1, zone=i
             })
         # Insert the 3 sources in each image, while further varying the flux
+        XtrSrc = namedtuple('XtrSrc',['flux','flux_err'])
+        src_list = []
         for i, image in enumerate(images):
             # Create the "source finding results"
             # Note that we reuse 'i_peak' as both peak & integrated flux.
@@ -71,6 +77,7 @@ class TestLightCurve(unittest.TestCase):
                      data['ew_sys_err'], data['ns_sys_err'],  # Systematic errors
                      data['error_radius'])
                 sources.append(source)
+                src_list.append(XtrSrc(*[source[4],source[5]]))
 
             # Insert the sources
             image.insert_extracted_sources(sources)
@@ -114,38 +121,45 @@ class TestLightCurve(unittest.TestCase):
             self.assertAlmostEqual(result['v_int'], 0.516397779494)
 
         # Check individual datapoints and their indices
-        # order by runcat,xtrsrc is by asc ra and f_int
-        query = """\
-        select a.runcat
-              ,a.xtrsrc
-              ,x.ra
-              ,x.f_int
-              ,a.v_int
-              ,a.eta_int
-          FROM assocxtrsource a
-              ,extractedsource x
-              ,image i
-         WHERE a.xtrsrc = x.id
-           AND x.image = i.id
-           AND i.dataset = %(dataset_id)s
-        ORDER BY runcat
-                ,xtrsrc
-        """
-        qry_params = {'dataset_id': self.dataset.id}
-        cursor = tkp.db.execute(query, qry_params)
-        res = zip(*cursor.fetchall())
+        res = db_queries.evolved_var_indices(self.database, self.dataset.id)
         self.assertNotEqual(len(res), 0)
         runcat = res[0]
         xtrsrc = res[1]
-        ra = res[2]
-        f_int = res[3]
-        v_int = res[4]
-        eta_int = res[5]
+        v_int = res[2]
+        eta_int = res[3]
         self.assertEqual(len(runcat), 12)
-        v_nu = (0,0.47140452079103168,0.5,0.5163977794943222)*3
-        eta_nu = (0,5000,10000,16666.66666666667,0,20000,40000,66666.6666666667,0,45000,90000,150000)
-        for i in range(len(runcat)):
-            self.assertAlmostEqual(v_int[i], v_nu[i])
-            self.assertAlmostEqual(eta_int[i], eta_nu[i])
+        print "src_list=",src_list
+        for src in src_list:
+            print src
+        py_v1, py_eta1 = db_subs.var_indices([src_list[0],src_list[3],src_list[6],src_list[9]])
+        py_v2, py_eta2 = db_subs.var_indices([src_list[1],src_list[4],src_list[7],src_list[10]])
+        py_v3, py_eta3 = db_subs.var_indices([src_list[2],src_list[5],src_list[8],src_list[11]])
 
+        # We group the tests per runcat source (3 in total),
+        # and every runcat has 4 associations
+        self.assertAlmostEqual(v_int[0], py_v1[0])
+        self.assertAlmostEqual(eta_int[0], py_eta1[0])
+        self.assertAlmostEqual(v_int[1], py_v1[1])
+        self.assertAlmostEqual(eta_int[1], py_eta1[1])
+        self.assertAlmostEqual(v_int[2], py_v1[2])
+        self.assertAlmostEqual(eta_int[2], py_eta1[2])
+        self.assertAlmostEqual(v_int[3], py_v1[3])
+        self.assertAlmostEqual(eta_int[3], py_eta1[3])
 
+        self.assertAlmostEqual(v_int[4], py_v2[0])
+        self.assertAlmostEqual(eta_int[4], py_eta2[0])
+        self.assertAlmostEqual(v_int[5], py_v2[1])
+        self.assertAlmostEqual(eta_int[5], py_eta2[1])
+        self.assertAlmostEqual(v_int[6], py_v2[2])
+        self.assertAlmostEqual(eta_int[6], py_eta2[2])
+        self.assertAlmostEqual(v_int[7], py_v2[3])
+        self.assertAlmostEqual(eta_int[7], py_eta2[3])
+
+        self.assertAlmostEqual(v_int[8], py_v3[0])
+        self.assertAlmostEqual(eta_int[8], py_eta3[0])
+        self.assertAlmostEqual(v_int[9], py_v3[1])
+        self.assertAlmostEqual(eta_int[9], py_eta3[1])
+        self.assertAlmostEqual(v_int[10], py_v3[2])
+        self.assertAlmostEqual(eta_int[10], py_eta3[2])
+        self.assertAlmostEqual(v_int[11], py_v3[3])
+        self.assertAlmostEqual(eta_int[11], py_eta3[3])

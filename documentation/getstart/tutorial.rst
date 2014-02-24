@@ -40,7 +40,7 @@ add a ``[database]`` section to your pipeline.cfg.
 Run Celery workers
 ==================
 
-If you want to parallelize trap operations, you need to run a separate Celery
+If you want to parallelize TraP operations, you need to run a separate Celery
 worker. This worker will receive jobs from a broker, so it is assumed you
 installed and started a broker in the installation step. Start a Celery worker
 by running::

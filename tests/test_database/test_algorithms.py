@@ -44,7 +44,7 @@ class TestSourceAssociation(unittest.TestCase):
         """test_only_first_epoch_source
 
         - Pretend to extract a source only from the first image.
-        - Run source association for each image, as we would in Trap.
+        - Run source association for each image, as we would in TraP.
         - Check the image source listing works
         - Check runcat and assocxtrsource are correct.
 

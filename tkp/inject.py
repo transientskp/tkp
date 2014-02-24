@@ -1,6 +1,6 @@
 """
 This script is used to inject missing header info into a FITS file or CASA
-table. This can be useful to make your data processable by the TRAP pipeline.
+table. This can be useful to make your data processable by the TraP pipeline.
 """
 
 import os.path

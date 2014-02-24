@@ -26,7 +26,7 @@ class TestManagement(unittest.TestCase):
 
     def test_init_project(self):
         """
-        test the creation of a TRAP project
+        test the creation of a TraP project
         """
         # forced target, target needs to exist
         namespace = argparse.Namespace()
@@ -52,7 +52,7 @@ class TestManagement(unittest.TestCase):
 
     def test_init_job(self):
         """
-        test the creation of a TRAP job
+        test the creation of a TraP job
         """
         os.chdir(self.parent)
         namespace = argparse.Namespace()

@@ -17,7 +17,7 @@ class DataAccessor(object):
     the abstract properties provided. Note that all abstract properties are
     required to provide a valid accessor.
 
-    Additional properties may also be provided by subclasses. However, Trap
+    Additional properties may also be provided by subclasses. However, TraP
     components are required to degrade gracefully in the absence of this
     optional properties.
     """

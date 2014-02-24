@@ -4,7 +4,7 @@
 Developer's Reference Guide
 +++++++++++++++++++++++++++
 
-The developer's reference guide presents the Trap from a code-oriented
+The developer's reference guide presents the TraP from a code-oriented
 perspective: it aims to enable developers to quickly get up-to-speed with the
 structure of the project so they are able to start contributing. It also
 describes the development process followed and the requirements regarding code

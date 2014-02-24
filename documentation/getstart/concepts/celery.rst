@@ -42,10 +42,10 @@ rather than having each user try to run their own Celery system.
 
 Note also that a worker loads all the necessary code to perform its
 tasks into memory when it is initalized. If the code on disk changes after
-this point (for example, if a bug is fixed in the Trap installation), the
+this point (for example, if a bug is fixed in the TraP installation), the
 worker *will continuing executing the old version of the code* until it is
 stopped and restarted. If, for example, you are using a "daily build" of the
-Trap code, you will need to restart your workers after each build to ensure
+TraP code, you will need to restart your workers after each build to ensure
 they stay up-to-date.
 
 Finally, always bear in mind that it is possible to disable the whole task

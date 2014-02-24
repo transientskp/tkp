@@ -9,11 +9,11 @@ tkp-manage.py
 ==============
 
 the ``tkp-manage.py`` script is designed to be the new method for using the
-Trap pipeline. It can setup a local pipeline working environment filled with
+TraP pipeline. It can setup a local pipeline working environment filled with
 templates, create new jobs in this environment, start a job, clean a job and
 probably more actions will be added in the future.
 
-When the Trap is correctly installed on the system you can issue the
+When the TraP is correctly installed on the system you can issue the
 ``tkp-manage.py`` command. Documentation of subcommands is also available
 on the command line. You can use the ``--help`` flag (also per subcommand) to
 explore all possible options.

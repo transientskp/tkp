@@ -1,4 +1,4 @@
-This is a Trap project directory. From here you can start and manage your Trap
-jobs. For more info, visit the Trap documentation website:
+This is a TraP project directory. From here you can start and manage your TraP
+jobs. For more info, visit the TraP documentation website:
 
 * http://docs.transientskp.org/

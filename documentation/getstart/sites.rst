@@ -11,7 +11,7 @@ Set up your environment
 -----------------------
 
 If you have an account on the ``heastro1`` machine, all the software needed to
-run the Trap has already been installed. You can add it to your environment by
+run the TraP has already been installed. You can add it to your environment by
 running::
 
   $ . /opt/tkpenv/init.sh
@@ -22,7 +22,7 @@ Get access to a database
 ------------------------
 
 Regular users in Amsterdam do not have access to create their own database for
-use with the Trap. Please speak to an administrator, and ask them to create
+use with the TraP. Please speak to an administrator, and ask them to create
 one for you. The database will be created on the machine
 ``heastrodb.science.uva.nl``, and will generally have the database name and
 password set equal to your username. Discuss with the administrator whether

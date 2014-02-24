@@ -291,7 +291,7 @@ dataset
 This table contains the information about a dataset. A dataset is nothing more
 than a collection of images grouped together for processing. When the same
 group is reprocessed, and the dataset.inname is identical (e.g. when the
-processing runs with other trap parameters), the rerun is incremented by 1, but
+processing runs with other TraP parameters), the rerun is incremented by 1, but
 the id is auto-incremented as well, treating it as an independent dataset.
 
 
@@ -372,7 +372,7 @@ dumped and transported to the catalog database.
 All detections (measurements) found by sourcefinder are appended to this table.
 At insertion time some additional auxiliary parameters are calculated by the
 database as well. At anytime, no entries will be deleted or updated.
-The Trap may add forced-fit entries to this table as well. Then
+The TraP may add forced-fit entries to this table as well. Then
 ``extract_type`` is set to 1.
 
 **id**
@@ -535,7 +535,7 @@ the nearest MHz, and assuming a band width of 1 MHz.
 image
 =====
 
-This table contains the images that are being or were processed in the Trap.
+This table contains the images that are being or were processed in the TraP.
 Note that the format of the image is not stored as an image property.  An
 image might be a composite of multiple images, but it is not yet defined how
 the individual values for effective frequency, integration times, etc are
@@ -674,7 +674,7 @@ have userentry set to true, so that the position used is that in this table
     Refers to the id in dataset, to which this monitoringlist belongs to.
 
 **userentry**
-    Boolean to state whether it is an user inserted soure (true) or by the trap
+    Boolean to state whether it is an user inserted soure (true) or by the TraP
     (false)
 
 

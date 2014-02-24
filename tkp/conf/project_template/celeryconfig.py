@@ -1,4 +1,4 @@
-# Trap Celery Configuration
+# TraP Celery Configuration
 
 # This file uses the standard Celery configuration system.
 # Please refer to the URL below for full documentation:

@@ -7,7 +7,7 @@ Image Metadata Injection
 Preamble
 --------
 
-In order to images through the Trap, they are required to provide a
+In order to images through the TraP, they are required to provide a
 comprehensive set of metadata, including details such as observation time,
 frequency and the shape of the restoring beam.
 

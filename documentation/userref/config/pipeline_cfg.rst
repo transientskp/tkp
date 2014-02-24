@@ -16,7 +16,7 @@ The default ``pipeline.cfg`` file is as follows:
 
 The file follows the :ref:`standard ConfigParser syntax <configparser>`.
 Three special variables which may be used in expansions are provided provided
-by the Trap: ``cwd``, the current working directory, ``start_time``, the time
+by the TraP: ``cwd``, the current working directory, ``start_time``, the time
 at which the current pipeline job is started and ``job_name``, the name of the
 job currently being executed.
 

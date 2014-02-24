@@ -1,7 +1,7 @@
 LOFAR Transients Pipeline
 =========================
 
-The LOFAR Transients Pipeline (or "Trap") is a Python and SQL based system for
+The LOFAR Transients Pipeline (or "TraP") is a Python and SQL based system for
 detecting and responding to transient and variable sources in a stream of
 astronomical images. It primarily targets LOFAR data, but is also applicable
 to a range of other instruments.

@@ -62,7 +62,7 @@ following attributes:
     initialized to handle coordinate conversions for this image.
 
 An accessor which provides all of these properties is guaranteed to be usable
-with all core Trap functionality.
+with all core TraP functionality.
 
 In some cases, most notably :ref:`quality control <quality>`, specialized (eg,
 per-telescope) metadata may also be required. A further abstract base class

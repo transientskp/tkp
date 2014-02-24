@@ -4,14 +4,14 @@
 Development Procedure
 +++++++++++++++++++++
 
-This document describes the development process used when working on the Trap.
+This document describes the development process used when working on the TraP.
 All developers are encouraged to familiarize themselves with this material
 before making any changes to the code.
 
 Accessing the Code
 ==================
 
-All code relating to the core Trap functionality is hosted in the
+All code relating to the core TraP functionality is hosted in the
 `transientskp/tkp <https://github.com/transientskp/tkp>`_ ``git`` repository
 on `GitHub <https://github.com/>`_.
 
@@ -26,7 +26,7 @@ with the codebase. There are many excellent tutorials available: start at the
 Planning
 ========
 
-We aim to make releases of the Trap at the cadence of a few per year. Broadly,
+We aim to make releases of the TraP at the cadence of a few per year. Broadly,
 the plan is to alternate technically focused releases, which clean up the
 codebase and make behind-the-scenes improvements, with science based releases,
 which provide new functionality to end users. Technical releases have odd
@@ -51,7 +51,7 @@ implementation before you begin coding.
 Issue Tracker
 =============
 
-We keep track of bug reports and feature requests using the `Trap Project
+We keep track of bug reports and feature requests using the `TraP Project
 <https://support.astron.nl/lofar_issuetracker/projects/bfmise>`_ on the `LOFAR
 Issue Tracker <https://support.astron.nl/lofar_issuetracker/>`_. You will need
 to register for the issue tracker separately with `ASTRON
@@ -88,7 +88,7 @@ Testing
 Writing Tests
 -------------
 
-The Trap has a moderately-extensive (and constantly expanding!) test suite.
+The TraP has a moderately-extensive (and constantly expanding!) test suite.
 Whenever you make *any* changes to the code, however minor, you should check
 and ensure that all the tests continue to pass. In addition, you should write
 new tests to demonstrate the correctness of your changes. In particular:
@@ -114,7 +114,7 @@ environment variable to enable the test suite to find it.
 
 Running the full test suite also requires that you have test :ref:`database
 <database-intro>` available and initialized. Note that the schema version of
-the database must match the version of the Trap you wish to test. An easy way
+the database must match the version of the TraP you wish to test. An easy way
 to configure the database such that it can be access by the test suite is to
 export the environment variables ``TKP_DBENGINE``, ``TKP_DBNAME``,
 ``TKP_DBHOST``, ``TKP_DBPORT``, ``TKP_DBUSER`` and ``TKP_DBPASSWORD``.

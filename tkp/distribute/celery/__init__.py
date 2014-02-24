@@ -71,7 +71,7 @@ def setup_log_broadcasting():
 
 def group_per_timestep(images):
     """
-    groups a list of TRAP images per timestep
+    groups a list of TraP images per timestep
     """
     img_dict = {}
     for image in images:

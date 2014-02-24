@@ -95,7 +95,7 @@ def store_images(images_metadata, extraction_radius_pix, dataset_id):
         images_metadata: list of dicts containing image metadata
         extraction_radius_pix: (float) Used to calculate the 'skyregion' 
         dataset_id: dataset id to be used. don't use value from parset file
-                    since this can be -1 (trap way of setting auto increment)
+                    since this can be -1 (TraP way of setting auto increment)
     Returns:
         the database ID of this dataset
     """

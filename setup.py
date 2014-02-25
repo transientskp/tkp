@@ -48,7 +48,7 @@ for dirpath, dirnames, filenames in os.walk('tkp'):
 
 setup(
     name = "tkp",
-    version = "1.0",
+    version = "1.1",
     packages = tkp_packages,
     scripts = tkp_scripts,
     data_files=tkp_data_files,

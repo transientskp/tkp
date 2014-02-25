@@ -220,4 +220,3 @@ transients pipeline. Practically, running these data through the
 pipeline should produce about five transients (although none of them
 are real: they are just artefacts of, liekely, flux calibration
 problems).
-

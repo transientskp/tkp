@@ -273,7 +273,7 @@ Commit your changes. This commit is the basis of the release::
 Tag the release. This is important, as we use the tags to indicate which
 versions should be built and added to the documentation site::
 
-  $ git tag -a "Release N.M"
+  $ git tag -a "rN.M"
 
 Push everything, including the tag, to GitHub::
 
@@ -282,8 +282,9 @@ Push everything, including the tag, to GitHub::
 Local setup in Amsterdam
 ------------------------
 
-All tagged releases will be build under ``/opt/tkp/[tag]``. Set
-``/opt/tkp/stable`` such that it is a symlink to the latest tag.
+All tagged releases will be build under ``/opt/tkp/[tag]``. After making &
+building a release, *manually* set ``/opt/tkp/stable`` such that it is a
+symlink to the latest tag.
 
 Documentation for all tagged releases is built in ``/srv/TKP-docs/tkp/[tag]``
 on ``pc-swinbank``. Edit ``/srv/TKP-docs/index.html`` such that the

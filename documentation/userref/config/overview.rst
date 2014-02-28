@@ -106,7 +106,7 @@ a simple ``name = value`` syntax is used. ``;`` indicates a comment (``#`` may
 also be used for commenting, but only at the start of a line).
 
 Variable substiution is performed using the notation ``%(name)s``: this will
-be exapanded into the value of the variable ``name`` when the file is read.
+be expanded into the value of the variable ``name`` when the file is read.
 Variables used in expansion are taken either from the same section of the
 file, or from the special ``DEFAULT`` section. For example::
 

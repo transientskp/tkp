@@ -55,7 +55,7 @@ def get_template_dir():
     """
     Determines where the job and project templates are.
     """
-    return path.join(tkp.__path__[0], 'conf')
+    return path.join(tkp.__path__[0], 'config')
 
 
 def make_writeable(filename):
@@ -242,13 +242,13 @@ def run_job(args):
 
 
 def init_db(options):
-    from tkp.config import initialize_pipeline_config, database_config
+    from tkp.config import initialize_pipeline_config, get_database_config
     cfgfile = os.path.join(os.getcwd(), "pipeline.cfg")
     if os.path.exists(cfgfile):
         pipe_config = initialize_pipeline_config(cfgfile, "notset")
     else:
         pipe_config = None
-    dbconfig = database_config(pipe_config, apply=False)
+    dbconfig = get_database_config(pipe_config, apply=False)
 
 
     for field in ['engine', 'database', 'user', 'password', 'host', 'port',

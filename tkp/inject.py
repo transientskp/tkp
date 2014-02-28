@@ -5,11 +5,13 @@ table. This can be useful to make your data processable by the TraP pipeline.
 
 import os.path
 import argparse
+from ConfigParser import SafeConfigParser
+from tkp.config import parse_to_dict
 import pyfits
 from pyrap.tables import table as pyrap_table
 import tkp.accessors.detection
 from tkp.accessors import LofarFitsImage, LofarCasaImage
-from  tkp.conf import read_config_section
+
 
 type_mapping = {
     str: 'getString',
@@ -87,8 +89,9 @@ def modify_casa_headers(parset, casa_file):
 
 def main():
     parset_file, target_files, overwrite = parse_arguments()
-    with open(parset_file) as fp:
-        parset = read_config_section(fp, 'inject')
+    c = SafeConfigParser()
+    c.read(parset_file)
+    new_hdr_entries = parse_to_dict(c)['inject']
 
     for target_file in target_files:
         #Normally accessors.open checks this, but we're going straight 
@@ -100,8 +103,8 @@ def main():
         accessor_class = tkp.accessors.detection.detect(target_file)
 
         if accessor_class == LofarFitsImage:
-            modify_fits_headers(parset, target_file, overwrite)
+            modify_fits_headers(new_hdr_entries, target_file, overwrite)
         elif accessor_class == LofarCasaImage:
-            modify_casa_headers(parset, target_file)
+            modify_casa_headers(new_hdr_entries, target_file)
         else:
             print "ERROR: %s is in a unknown format" % target_file

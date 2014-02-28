@@ -58,7 +58,7 @@ class Database(object):
             if kwargs: logger.warning("Not configuring pre-configured database")
             return
         elif not kwargs:
-            kwargs = tkp.config.database_config()
+            kwargs = tkp.config.get_database_config()
 
         self.engine = kwargs['engine']
         self.database = kwargs['database']

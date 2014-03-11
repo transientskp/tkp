@@ -29,10 +29,36 @@ def evolved_var_indices(db, dataset):
       from assocxtrsource a
           ,extractedsource x
           ,image i
+          ,runningcatalog r
      where a.xtrsrc = x.id
        and x.image = i.id
        and i.dataset = %(dataset)s
-    order by a.runcat
+       and a.runcat = r.id
+    order by /*a.runcat
+            ,i.taustart_ts*/
+             r.wm_ra
+            ,r.wm_decl
+            ,a.v_int
+    """
+    db.cursor.execute(query, {'dataset': dataset})
+    result = zip(*db.cursor.fetchall())
+    return result
+
+def evolved_var_indices_1_to_1_or_n(db, dataset):
+    query = """\
+    select a.runcat
+          ,a.xtrsrc
+          ,a.v_int
+          ,a.eta_int
+      from assocxtrsource a
+          ,extractedsource x
+          ,image i
+          ,runningcatalog r
+     where a.xtrsrc = x.id
+       and x.image = i.id
+       and i.dataset = %(dataset)s
+       and a.runcat = r.id
+    order by r.wm_ra
             ,i.taustart_ts
     """
     db.cursor.execute(query, {'dataset': dataset})

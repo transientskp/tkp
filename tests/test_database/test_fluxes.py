@@ -52,7 +52,8 @@ class TestOne2OneFlux(unittest.TestCase):
         self.assertAlmostEqual(avg_f_int[0], 2.3)
 
         # Check evolution of variability indices
-        result = db_queries.evolved_var_indices(self.database, dataset.id)
+        #result = db_queries.evolved_var_indices(self.database, dataset.id)
+        result = db_queries.evolved_var_indices_1_to_1_or_n(self.database, dataset.id)
         runcat = result[0]
         xtrsrc = result[1]
         v_int = result[2]
@@ -152,7 +153,8 @@ class TestOne2ManyFlux(unittest.TestCase):
         self.assertAlmostEqual(wI[1], 3.2)
 
         # Check evolution of variability indices
-        result = db_queries.evolved_var_indices(self.database, dataset.id)
+        #result = db_queries.evolved_var_indices(self.database, dataset.id)
+        result = db_queries.evolved_var_indices_1_to_1_or_n(self.database, dataset.id)
         runcat = result[0]
         xtrsrc = result[1]
         v_int = result[2]

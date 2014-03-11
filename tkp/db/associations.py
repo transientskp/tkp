@@ -960,9 +960,13 @@ INSERT INTO assocxtrsource
                 ,t1.avg_f_int_weight
                 ,CASE WHEN t1.f_datapoints = 1
                       THEN 0
-                      ELSE SQRT(CAST(t1.f_datapoints AS DOUBLE PRECISION) * (t1.avg_f_int_sq - t1.avg_f_int * t1.avg_f_int)
-                               / (CAST(t1.f_datapoints AS DOUBLE PRECISION) - 1.0)
-                               )
+                      ELSE CASE WHEN ABS(t1.avg_f_int_sq - t1.avg_f_int * t1.avg_f_int) < 8e-14
+                                THEN 0
+                                ELSE SQRT(CAST(t1.f_datapoints AS DOUBLE PRECISION)
+                                         * (t1.avg_f_int_sq - t1.avg_f_int * t1.avg_f_int)
+                                         / (CAST(t1.f_datapoints AS DOUBLE PRECISION) - 1.0)
+                                         )
+                           END
                  END AS v_int_inter
                 ,CASE WHEN t1.f_datapoints = 1
                       THEN 0
@@ -1337,10 +1341,13 @@ INSERT INTO assocxtrsource
                 ,t.avg_f_int_weight
                 ,CASE WHEN t.f_datapoints = 1
                       THEN 0
-                      ELSE SQRT(CAST(t.f_datapoints AS DOUBLE PRECISION)
-                                * (t.avg_f_int_sq - t.avg_f_int * t.avg_f_int)
-                               / (CAST(t.f_datapoints AS DOUBLE PRECISION) - 1.0)
-                               )
+                      ELSE CASE WHEN ABS(t.avg_f_int_sq - t.avg_f_int * t.avg_f_int) < 8e-14
+                                THEN 0
+                                ELSE SQRT(CAST(t.f_datapoints AS DOUBLE PRECISION)
+                                         * (t.avg_f_int_sq - t.avg_f_int * t.avg_f_int)
+                                         / (CAST(t.f_datapoints AS DOUBLE PRECISION) - 1.0)
+                                         )
+                           END
                  END AS v_int_inter
                 ,CASE WHEN t.f_datapoints = 1
                       THEN 0

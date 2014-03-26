@@ -248,7 +248,7 @@ def init_db(options):
         pipe_config = initialize_pipeline_config(cfgfile, "notset")
     else:
         pipe_config = None
-    dbconfig = get_database_config(pipe_config, apply=False)
+    dbconfig = get_database_config(pipe_config['database'], apply=False)
 
 
     for field in ['engine', 'database', 'user', 'password', 'host', 'port',

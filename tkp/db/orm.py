@@ -303,8 +303,8 @@ class DataSet(DBObject):
         self._init_data()
 
     def __str__(self):
-        return 'DataSet: "%s". Database ID: %s %d images.' % (
-            self.name, str(self._dsid), len(self.images))
+        return 'DataSet: "%s". Database ID: %s, %d images.' % (
+            self.description, str(self.id), len(self.images))
 
     # Inserting datasets is handled a little different than normal inserts
     # (We make use of the SQL function insertDataset)

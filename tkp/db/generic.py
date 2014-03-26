@@ -71,7 +71,7 @@ def columns_from_table(table, keywords=None, alias=None, where=None,
     if where:
         query += " WHERE " + where
     if order:
-        query += "ORDER BY " + order
+        query += " ORDER BY " + order
 
     cursor = tkp.db.execute(query, where_args)
     results = cursor.fetchall()

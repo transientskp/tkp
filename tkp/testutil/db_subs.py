@@ -118,7 +118,7 @@ def example_extractedsource_tuple(ra=123.123, dec=10.5, #Arbitrarily picked defa
     """
     # NOTE: ra_fit_err & dec_fit_err are in degrees,
     # and ew_sys_err, ns_sys_err and error_radius are in arcsec.
-    # The ew_uncertainty_ew is then the sqrt of the quadratic sum of the 
+    # The ew_uncertainty_ew is then the sqrt of the quadratic sum of the
     # systematic error and the error_radius
     return ExtractedSourceTuple(ra=ra, dec=dec,
                                 ra_fit_err=ra_fit_err, dec_fit_err=dec_fit_err,
@@ -134,23 +134,71 @@ def example_extractedsource_tuple(ra=123.123, dec=10.5, #Arbitrarily picked defa
 def deRuiter_radius(src1, src2):
     """Calculates the De Ruiter radius for two sources"""
 
-    # The errors are the square root of the quadratic sum of 
-    # the systematic and fitted errors. 
+    # The errors are the square root of the quadratic sum of
+    # the systematic and fitted errors.
     src1_ew_uncertainty = math.sqrt(src1.ew_sys_err**2 + src1.error_radius**2) / 3600.
     src1_ns_uncertainty = math.sqrt(src1.ns_sys_err**2 + src1.error_radius**2) / 3600.
     src2_ew_uncertainty = math.sqrt(src2.ew_sys_err**2 + src2.error_radius**2) / 3600.
     src2_ns_uncertainty = math.sqrt(src2.ns_sys_err**2 + src2.error_radius**2) / 3600.
-    
+
     ra_nom = ((src1.ra - src2.ra) * math.cos(math.radians(0.5 * (src1.dec + src2.dec))))**2
     ra_denom = src1_ew_uncertainty**2 + src2_ew_uncertainty**2
     ra_fac = ra_nom / ra_denom
-    
+
     dec_nom = (src1.dec - src2.dec)**2
     dec_denom = src1_ns_uncertainty**2 + src2_ns_uncertainty**2
     dec_fac = dec_nom / dec_denom
-    
+
     dr = math.sqrt(ra_fac + dec_fac)
     return dr
+
+def lightcurve_metrics(src_list):
+    """
+    Calculates various metrics for a lightcurve made up of source extractions
+
+    These are normally calculated internally in the database - this function
+    serves as a sanity check, and is used for unit-testing purposes.
+
+    Returns a list of dictionaries, the nth dict representing the value
+    of the metrics after processing the first n extractions in the lightcurve.
+    The dict keys mirror the column names in the database, to make
+    cross-checking of results trivial.
+
+    Final note: this function is very inefficient, recalculating over the
+    first n extractions for each step. We could make it iterative, updating
+    the weighted averages as we do in the database. However, this way
+    provides a stronger cross-check that our iterative SQL approaches are
+    correct - less chance of making the same mistakes in two languages!
+
+    """
+
+    metrics=[]
+    for i, src in enumerate(src_list):
+        N = i + 1
+        avg_int_flux = sum(src.flux for src in src_list[0:N]) / N
+        avg_int_flux_sq = sum(src.flux**2 for src in src_list[0:N]) / N
+        avg_w_f_int = sum(src.flux/src.flux_err**2 for src in src_list[0:N]) / N
+        avg_w_f_int_sq = sum(src.flux**2/src.flux_err**2 for src in src_list[0:N]) / N
+        avg_w = sum(1./src.flux_err**2 for src in src_list[0:N]) / N
+        if N == 1:
+            v = 0.0
+            eta = 0.0
+        else:
+            v = math.sqrt(N * (avg_int_flux_sq - avg_int_flux**2) / (N - 1.)) / avg_int_flux
+            eta = N * (avg_w_f_int_sq - avg_w_f_int**2/avg_w) / (N - 1.)
+
+        metrics.append({
+            'v_int':v,
+            'eta_int':eta,
+            'avg_f_int':avg_int_flux,
+            'avg_f_int_sq':avg_int_flux_sq,
+            'avg_f_int_weight': avg_w,
+            'avg_weighted_f_int': avg_w_f_int,
+            'avg_weighted_f_int_sq': avg_w_f_int_sq,
+            })
+
+
+    return metrics
 
 #Used to record the significance levels on a lightcurve.
 MockLCPoint = namedtuple('MockLightCurvePoint',

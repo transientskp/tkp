@@ -122,8 +122,8 @@ SELECT t1.runcat
       ,t1.wm_decl
       ,t1.wm_uncertainty_ew
       ,t1.wm_uncertainty_ns
-      ,t1.V_int_inter / t1.avg_f_int AS v_int
-      ,t1.eta_int_inter / t1.avg_f_int_weight AS eta_int
+      ,t1.v_int
+      ,t1.eta_int
       ,CASE WHEN tr0.trigger_xtrsrc IS NULL
             THEN t1.xtrsrc
             ELSE tr0.trigger_xtrsrc
@@ -139,22 +139,8 @@ SELECT t1.runcat
               ,wm_decl
               ,wm_uncertainty_ew
               ,wm_uncertainty_ns
-              ,CASE WHEN avg_f_int = 0.0
-                    THEN 0.000001
-                    ELSE avg_f_int
-               END AS avg_f_int
-              ,avg_f_int_weight
-              ,CASE WHEN rf0.f_datapoints = 1 THEN 0
-                    WHEN avg_f_int_sq - avg_f_int * avg_f_int < 0 THEN 0
-                    ELSE SQRT(CAST(rf0.f_datapoints AS DOUBLE PRECISION) * (avg_f_int_sq - avg_f_int * avg_f_int)
-                             / (CAST(rf0.f_datapoints AS DOUBLE PRECISION) - 1.0)
-                             )
-               END AS V_int_inter
-              ,CASE WHEN rf0.f_datapoints = 1
-                    THEN 0
-                    ELSE (CAST(rf0.f_datapoints AS DOUBLE PRECISION) / (CAST(rf0.f_datapoints AS DOUBLE PRECISION) - 1.0))
-                         * (avg_f_int_weight * avg_weighted_f_int_sq - avg_weighted_f_int * avg_weighted_f_int)
-               END AS eta_int_inter
+              ,a0.v_int
+              ,a0.eta_int
               ,a0.xtrsrc
           FROM runningcatalog rc0
               ,runningcatalog_flux rf0

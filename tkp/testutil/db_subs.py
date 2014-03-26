@@ -152,30 +152,53 @@ def deRuiter_radius(src1, src2):
     dr = math.sqrt(ra_fac + dec_fac)
     return dr
 
-def var_indices(src_list):
-    """Calculates the variability indices
-    for a series of flux measurements of a source"""
+def lightcurve_metrics(src_list):
+    """
+    Calculates various metrics for a lightcurve made up of source extractions
 
-    py_v = []
-    py_eta = []
+    These are normally calculated internally in the database - this function
+    serves as a sanity check, and is used for unit-testing purposes.
+
+    Returns a list of dictionaries, the nth dict representing the value
+    of the metrics after processing the first n extractions in the lightcurve.
+    The dict keys mirror the column names in the database, to make
+    cross-checking of results trivial.
+
+    Final note: this function is very inefficient, recalculating over the
+    first n extractions for each step. We could make it iterative, updating
+    the weighted averages as we do in the database. However, this way
+    provides a stronger cross-check that our iterative SQL approaches are
+    correct - less chance of making the same mistakes in two languages!
+
+    """
+
+    metrics=[]
     for i, src in enumerate(src_list):
         N = i + 1
+        avg_int_flux = sum(src.flux for src in src_list[0:N]) / N
+        avg_int_flux_sq = sum(src.flux**2 for src in src_list[0:N]) / N
+        avg_w_f_int = sum(src.flux/src.flux_err**2 for src in src_list[0:N]) / N
+        avg_w_f_int_sq = sum(src.flux**2/src.flux_err**2 for src in src_list[0:N]) / N
+        avg_w = sum(1./src.flux_err**2 for src in src_list[0:N]) / N
         if N == 1:
             v = 0.0
             eta = 0.0
         else:
-            avg_flux = sum(src.flux for src in src_list[0:N]) / N
-            avg_flux_sq = sum(src.flux**2 for src in src_list[0:N]) / N
-            v = math.sqrt(N * (avg_flux_sq - avg_flux**2) / (N - 1.)) / avg_flux
+            v = math.sqrt(N * (avg_int_flux_sq - avg_int_flux**2) / (N - 1.)) / avg_int_flux
+            eta = N * (avg_w_f_int_sq - avg_w_f_int**2/avg_w) / (N - 1.)
 
-            avg_w_I = sum(src.flux/src.flux_err**2 for src in src_list[0:N]) / N
-            avg_w_Isq = sum(src.flux**2/src.flux_err**2 for src in src_list[0:N]) / N
-            avg_w = sum(1./src.flux_err**2 for src in src_list[0:N]) / N
-            eta = N * (avg_w_Isq - avg_w_I**2/avg_w) / (N - 1.)
-        py_v.append(v)
-        py_eta.append(eta)
+        metrics.append({
+            'v_int':v,
+            'eta_int':eta,
+            'avg_f_int':avg_int_flux,
+            'avg_f_int_sq':avg_int_flux_sq,
+            'avg_f_int_weight': avg_w,
+            'avg_weighted_f_int': avg_w_f_int,
+            'avg_weighted_f_int_sq': avg_w_f_int_sq,
+            })
 
-    return py_v, py_eta
+
+    return metrics
 
 #Used to record the significance levels on a lightcurve.
 MockLCPoint = namedtuple('MockLightCurvePoint',

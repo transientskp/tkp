@@ -3,6 +3,7 @@
 A collection of back end db query subroutines used for unittesting
 """
 from tkp.db import execute
+from tkp.db.generic import get_db_rows_as_dicts
 
 
 def dataset_images(dataset_id, database=None):
@@ -20,10 +21,11 @@ def convert_to_cartesian(conn, ra, decl):
     curs.execute(qry, (ra, decl))
     return curs.fetchone()
 
-def evolved_var_indices(db, dataset):
+def per_timestep_variability_indices(db, runcat_id):
     query = """\
     select a.runcat
           ,a.xtrsrc
+          ,i.taustart_ts
           ,a.v_int
           ,a.eta_int
       from assocxtrsource a
@@ -32,36 +34,12 @@ def evolved_var_indices(db, dataset):
           ,runningcatalog r
      where a.xtrsrc = x.id
        and x.image = i.id
-       and i.dataset = %(dataset)s
        and a.runcat = r.id
-    order by /*a.runcat
-            ,i.taustart_ts*/
-             r.wm_ra
-            ,r.wm_decl
-            ,a.v_int
-    """
-    db.cursor.execute(query, {'dataset': dataset})
-    result = zip(*db.cursor.fetchall())
-    return result
-
-def evolved_var_indices_1_to_1_or_n(db, dataset):
-    query = """\
-    select a.runcat
-          ,a.xtrsrc
-          ,a.v_int
-          ,a.eta_int
-      from assocxtrsource a
-          ,extractedsource x
-          ,image i
-          ,runningcatalog r
-     where a.xtrsrc = x.id
-       and x.image = i.id
-       and i.dataset = %(dataset)s
-       and a.runcat = r.id
+       and r.id = %(runcat_id)s
     order by r.wm_ra
             ,i.taustart_ts
     """
-    db.cursor.execute(query, {'dataset': dataset})
-    result = zip(*db.cursor.fetchall())
-    return result
+    db.cursor.execute(query, {'runcat_id': runcat_id})
+    return get_db_rows_as_dicts(db.cursor)
+
 

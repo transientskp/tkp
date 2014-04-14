@@ -12,7 +12,7 @@ logging.
 
 The default ``pipeline.cfg`` file is as follows:
 
-.. literalinclude:: /../tkp/conf/project_template/pipeline.cfg
+.. literalinclude:: /../tkp/config/project_template/pipeline.cfg
 
 The file follows the :ref:`standard ConfigParser syntax <configparser>`.
 Three special variables which may be used in expansions are provided provided

@@ -27,6 +27,6 @@ named ``inject.cfg`` in the users job directory. See the documentation on
 
 The default ``inject.cfg`` file contains the following settings:
 
-.. literalinclude:: /../tkp/conf/job_template/inject.cfg
+.. literalinclude:: /../tkp/config/job_template/inject.cfg
 
 Any or all of these may be changed by the user to reflect their requirements.

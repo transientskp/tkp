@@ -7,6 +7,9 @@ Schema
 .. image:: schema.png
    :scale: 20%
 
+Note that this diagram is periodically updated and may not reliably reflect
+the current status of the development version.
+
 Table Listing
 ^^^^^^^^^^^^^
 

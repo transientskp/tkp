@@ -2,7 +2,7 @@ project (TKP)
 cmake_minimum_required (VERSION 2.8)
 
 # These are the versions of Python we support.
-set(Python_ADDITIONAL_VERSIONS 2.7 2.6)
+set(Python_ADDITIONAL_VERSIONS 2.7)
 
 include (FindPythonInterp)
 include (FindPythonLibs)

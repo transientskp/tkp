@@ -7,7 +7,7 @@ Getting Started
 .. toctree::
    :maxdepth: 2
 
-   installation/index
+   installation
    concepts/index
    tutorial
    sites

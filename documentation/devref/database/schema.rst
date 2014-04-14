@@ -7,6 +7,9 @@ Schema
 .. image:: schema.png
    :scale: 20%
 
+Table Listing
+^^^^^^^^^^^^^
+
 assoccatsource
 ==============
 
@@ -1037,17 +1040,13 @@ This table contains all rejected images and a reference to the reason.
     the theoretical noise value and the calculated RMS value of the image.
 
 
-++++++++++
 Appendices
-++++++++++
+^^^^^^^^^^
 
 .. _mathematical-diversion:
 
-Mathematical diversion
-======================
-
 On iteratively updated weighted means
--------------------------------------
+=====================================
 We now take a diversion to note the mechanics of storing and updating weighted
 means - this happens a lot in the database.
 
@@ -1144,7 +1143,7 @@ compute), but requires many multiplications and divisions by the factor
 consideration during the next big code review).
 
 On 'aggregated' variability indexes
------------------------------------
+===================================
 
 We now explain how running averages are used to compute the 'variability indices'
 we use in identifying sources which may be intrinsically transient or variable.

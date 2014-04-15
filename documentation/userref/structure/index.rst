@@ -15,7 +15,7 @@ often interfacing with the pipeline database.
 
 A complete description of the logical design of the TraP is beyond the scope
 of this document. Instead, the reader is referred to an upcoming publication
-by :ref:`Swinbank et al <swinbank-2013>`. Here, we sketch only an outline of
+by :ref:`Swinbank et al <swinbank-2014>`. Here, we sketch only an outline of
 the various pipeline stages.
 
 Pipeline topology and code re-use

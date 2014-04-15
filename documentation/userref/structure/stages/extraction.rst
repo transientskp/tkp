@@ -95,13 +95,6 @@ Section ``source_extraction``
    Integer. The number of subthresholds to use for deblending. Only applicable
    if ``deblend`` is ``True``.
 
-``max_degredation``
-   Float. Maxmimum permitted fractional degredation of astrometry due to image
-   projection effects. Areas of the image for which the fractional degredation
-   is higher than ``max_degredation`` are excluded from the analysis. Only
-   used in the case of "SIN" projection images (:ref:`Greisen, 1983
-   <greisen-1983>`).
-
 ``force_beam``
    Boolean. If ``True``, all detected sources are assumed to have the size and
    shape of the restoring beam (ie, to be unresolved point sources), and these

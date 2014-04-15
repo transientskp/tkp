@@ -28,14 +28,15 @@ class ImageData(object):
     This is your primary contact point for interaction with images: it icludes
     facilities for source extraction and measurement, etc.
     """
-    def __init__(self, data, beam, wcs, max_degradation=0.2,
-                median_filter=0, mf_threshold=0, interpolate_order=1,
-                back_sizex=32, back_sizey=32, margin=0, radius=0,
-                fdr_alpha=1e-2, residuals=True, deblend=False,
-                deblend_nthresh=32, deblend_mincont=0.005,
-                detection_threshold=10.0, analysis_threshold=3.0,
-                structuring_element=[[0,1,0], [1,1,1], [0,1,0]],
-                ew_sys_err=0.0, ns_sys_err=0.0, force_beam=False
+
+    def __init__(self, data, beam, wcs, median_filter=0, mf_threshold=0,
+                 interpolate_order=1, back_sizex=32, back_sizey=32, margin=0,
+                 radius=0, fdr_alpha=1e-2, residuals=True, deblend=False,
+                 deblend_nthresh=32, deblend_mincont=0.005,
+                 detection_threshold=10.0, analysis_threshold=3.0,
+                 structuring_element=[[0,1,0], [1,1,1], [0,1,0]],
+                 ew_sys_err=0.0, ns_sys_err=0.0, force_beam=False
+
     ):
         """Sets up an ImageData object.
 
@@ -60,7 +61,6 @@ class ImageData(object):
         self.freq_low = 1
         self.freq_high = 1
 
-        self.max_degradation = max_degradation
         self.median_filter = median_filter
         self.mf_threshold = mf_threshold
         self.interpolate_order = interpolate_order
@@ -140,12 +140,10 @@ class ImageData(object):
         # sourcefinding process. We build up the mask by stacking ("or-ing
         # together") a number of different effects:
         #
-        # * self.reliable_window() which masks data which is distored by
-        #   projection effects;
         # * A margin from the edge of the image;
         # * Any data outside a given radius from the centre of the image;
         # * Data which is "obviously" bad (equal to 0 or NaN).
-        mask = self.reliable_window()
+        mask = numpy.zeros((self.xdim, self.ydim))
         if self.margin:
             margin_mask = numpy.ones((self.xdim, self.ydim))
             margin_mask[self.margin:-self.margin, self.margin:-self.margin] = 0
@@ -214,84 +212,6 @@ class ImageData(object):
     # maps (in conjuntion with the properties above).                         #
     #                                                                         #
     ###########################################################################
-
-    def reliable_window(self, max_degradation=None):
-        """Calculates limits over which the image may be regarded as
-        "reliable".
-
-        Kwargs:
-
-            keyword max_degradation (float): astrometry accuracy
-                allowed. See description below
-
-        Returns:
-
-            (numpy.ndarray): masked window where the FITS image
-                astrometry is valid
-
-
-        This code calculates a window within a FITS image that is "reliable",
-        i.e.  the mapping from pixel coordinates to celestial coordinates is
-        well defined.  Often this window equals the entire FITS image, in some
-        cases, e.g., in all-sky maps, this is not the case.  So there is some
-        user-allowed maximum degradation.
-
-        The degradation of the accuracy of astrometry due to projection
-        effects at a position on the sky phi radians away from the center of
-        the projection is equal to ``1/cos(phi)``. So if you allow for a
-        maximum degradation of 10% the code will output pixels within a circle
-        with a radius of ``arccos(1/(1+0.1)) = 24.6`` degrees around the
-        center of the projection. The output FITS image will be the largest
-        possible square within that circle.
-
-        I assume that we are working with SIN projected images.  So in the
-        east-west direction (``M=0``) the pixel that is max_angle away from
-        the center of the SIN projection is
-        ``self.centrerapix+sin(max_angle)/raincr_rad``. In the north-south
-        direction (``L=0``) the pixel that is max_angle away from the center
-        of the SIN projection is
-        ``self.centredecpix+sin(max_angle)/decincr_rad``.  Now cutting out the
-        largest possible square is relatively straightforward.  Just multiply
-        both of these pixel offsets by ``0.5*sqrt(2)``. See `Non-Linear
-        Coordinate Systems in AIPS
-        <ftp://ftp.aoc.nrao.edu/pub/software/aips/TEXT/PUBL/AIPSMEMO27.PS>`_,
-        paragraph 3.2, for details on SIN projection.
-
-        **NOTE: This is only valid for a SIN projection. Needs more thought
-        for other projection types.**
-        """
-
-        if not max_degradation:
-            max_degradation = self.max_degradation
-
-        mask = numpy.ones((self.xdim, self.ydim))
-        wcs = self.wcs
-        if max_degradation and wcs.ctype == ('RA---SIN', 'DEC--SIN'):
-            max_angle = numpy.arccos(1./(1. + max_degradation))
-            conv_factor = 0.5 * numpy.sqrt(2.) * numpy.sin(max_angle)
-            raincr_rad = numpy.radians(numpy.fabs(wcs.cdelt[0]))
-            decincr_rad = numpy.radians(numpy.fabs(wcs.cdelt[1]))
-
-            delta_ra_pix = int(conv_factor/raincr_rad)
-            delta_dec_pix = int(conv_factor/decincr_rad)
-
-            # One added to lower limits to exclude lower bound.
-            limits = numpy.array([
-                wcs.crpix[0] - delta_ra_pix,
-                wcs.crpix[0] - 1 + delta_ra_pix,
-                wcs.crpix[1] - delta_dec_pix,
-                wcs.crpix[1] - 1 + delta_dec_pix])
-            limits = numpy.where(limits > 0, limits, 0)
-
-            mask[limits[0]:limits[1], limits[2]:limits[3]] = 0
-
-        elif max_degradation:
-            logger.warn("Not SIN projection: reliable window not calculated.")
-            mask[:] = 0.0
-        else:
-            mask[:] = 0.0
-
-        return mask
 
     # Deprecated (see note below)
     def stats(self, nbins=100, plot=True):
@@ -833,8 +753,7 @@ class ImageData(object):
         # sourcefitting. We are actually using three separate filters, which
         # exclude:
         #
-        # 1. Anything which has been masked before we reach this point (eg by
-        #    reliable_window(), etc);
+        # 1. Anything which has been masked before we reach this point;
         # 2. Any pixels which fall below the analysis threshold at that pixel
         #    position;
         # 3. Any pixels corresponding to a position where the RMS noise is

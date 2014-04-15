@@ -97,7 +97,7 @@ class L15_12hConstMod(unittest.TestCase):
         # without the declination dependence.
         fitsfile = tkp.accessors.fitsimage.FitsImage(all_fits,
             beam=(54./3600, 54./3600, 0.))
-        self.image = image.ImageData(fitsfile.data, fitsfile.beam, fitsfile.wcs)
+        self.image = image.ImageData(fitsfile.data, fitsfile.beam, fitsfile.wcs, radius=100)
         self.results  = self.image.extract(det=5)
 
     @requires_data(all_fits)

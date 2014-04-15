@@ -202,6 +202,7 @@ class TestSimpleImageSourceFind(unittest.TestCase):
         From visual inspection we only expect a single source in the image,
         at around 5 or 6 sigma detection level."""
 
+        ew_sys_err, ns_sys_err = 0.0, 0.0
         known_result = (
             136.89603241069054, 14.022184792492785, #RA, DEC
             0.0005341819139061954, 0.0013428186757078464, #Err, Err
@@ -209,7 +210,7 @@ class TestSimpleImageSourceFind(unittest.TestCase):
             0.0006067963179204716, 0.00017037685531724465, #Integrated flux, err
             6.192259965962862, 25.516190123153514, #Significance level, Beam semimajor-axis width (arcsec)
             10.718798843620489, 178.62899212789304, #Beam semiminor-axis width (arcsec), Beam parallactic angle
-            0.0, 0.0, #ew_sys_err, ns_sys_err
+            ew_sys_err, ns_sys_err,
             5.181697175052841 #error_radius
         )
         self.image = accessors.sourcefinder_image_from_accessor(
@@ -217,7 +218,7 @@ class TestSimpleImageSourceFind(unittest.TestCase):
                                         'GRB120422A/GRB120422A-120429.fits')))
 
         results = self.image.extract(det=5, anl=3)
-        results = [result.serialize() for result in results]
+        results = [result.serialize(ew_sys_err, ns_sys_err) for result in results]
         self.assertEqual(len(results), 1)
         r = results[0]
         self.assertEqual(len(r), len(known_result))
@@ -261,10 +262,11 @@ class TestSimpleImageSourceFind(unittest.TestCase):
                      os.path.join(DATAPATH,
                                   'GRB130828A/SWIFT_554620-130504.image')))
 
+        ew_sys_err, ns_sys_err = 0.0, 0.0
         fits_results = fits_image.extract(det=5, anl=3)
-        fits_results = [result.serialize() for result in fits_results]
+        fits_results = [result.serialize(ew_sys_err, ns_sys_err) for result in fits_results]
         casa_results = fits_image.extract(det=5, anl=3)
-        casa_results = [result.serialize() for result in casa_results]
+        casa_results = [result.serialize(ew_sys_err, ns_sys_err) for result in casa_results]
         self.assertEqual(len(fits_results), 1)
         self.assertEqual(len(casa_results), 1)
         fits_src = fits_results[0]
@@ -347,5 +349,5 @@ class TestMaskedBackground(unittest.TestCase):
             accessors.open(os.path.join(DATAPATH, "L41391_0.img.restored.corr.fits")),
             radius=1.0,
         )
-        result = self.image.extract()
+        result = self.image.extract(det=10.0, anl=3.0)
         self.assertFalse(result)

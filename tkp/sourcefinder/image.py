@@ -38,10 +38,7 @@ class ImageData(object):
     """
 
     def __init__(self, data, beam, wcs, margin=0, radius=0, back_sizex=32,
-                 back_sizey=32, residuals=True, detection_threshold=10.0,
-                 analysis_threshold=3.0, ew_sys_err=0.0, ns_sys_err=0.0,
-                 force_beam=False
-
+                 back_sizey=32, residuals=True, force_beam=False
     ):
         """Sets up an ImageData object.
 
@@ -71,11 +68,6 @@ class ImageData(object):
         self.margin = margin
         self.radius = radius
         self.residuals = residuals
-
-        self.detection_threshold=detection_threshold
-        self.analysis_threshold=analysis_threshold
-
-        self.ew_sys_err, self.ns_sys_err = ew_sys_err, ns_sys_err
 
         # If force_beam is True, we force all blind extraction results to have
         # major/minor axes equal to the restoring beam.
@@ -352,7 +344,7 @@ class ImageData(object):
     #                                                                         #
     ###########################################################################
 
-    def extract(self, det=None, anl=None, noisemap=None, bgmap=None,
+    def extract(self, det, anl, noisemap=None, bgmap=None,
                 labelled_data=None, labels=None, deblend_nthresh=0):
 
         """
@@ -380,10 +372,6 @@ class ImageData(object):
              (..utility.containers.ExtractionResults):
         """
 
-        if det is None:
-            det = self.detection_threshold
-        if anl is None:
-            anl = self.analysis_threshold
         if anl > det:
             logger.warn(
                 "Analysis threshold is higher than detection threshold"
@@ -412,7 +400,7 @@ class ImageData(object):
             labelled_data=labelled_data, labels=labels
         )
 
-    def reverse_se(self, det=None):
+    def reverse_se(self, det):
         """Run source extraction on the negative of this image.
 
         Obviously, there should be no sources in the negative image, so this
@@ -423,8 +411,6 @@ class ImageData(object):
         extraction process. If this is regularly used, we'll want to
         implement a separate cache.
         """
-        if not det:
-            det = self.detection_threshold
         self.labels.clear()
         self.clip.clear()
         self.data_bgsubbed *= -1

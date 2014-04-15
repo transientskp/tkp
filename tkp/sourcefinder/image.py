@@ -21,6 +21,14 @@ except ImportError:
 
 logger = logging.getLogger(__name__)
 
+#
+# Hard-coded configuration parameters; not user settable.
+#
+MEDIAN_FILTER = 0       # ???
+MF_THRESHOLD = 0        # ???
+INTERPOLATE_ORDER = 1   # Spline order for grid interpolation
+DEBLEND_MINCONT = 0.005 # Min. fraction of island flux in deblended subisland
+STRUCTURING_ELEMENT = [[0,1,0], [1,1,1], [0,1,0]] # Island connectiivty
 
 class ImageData(object):
     """Encapsulates an image in terms of a numpy array + meta/headerdata.
@@ -29,14 +37,11 @@ class ImageData(object):
     facilities for source extraction and measurement, etc.
     """
 
-    def __init__(self, data, beam, wcs, median_filter=0, mf_threshold=0,
-                 interpolate_order=1, back_sizex=32, back_sizey=32, margin=0,
-                 radius=0, fdr_alpha=1e-2, residuals=True, deblend=False,
-                 deblend_nthresh=32, deblend_mincont=0.005,
-                 detection_threshold=10.0, analysis_threshold=3.0,
-                 structuring_element=[[0,1,0], [1,1,1], [0,1,0]],
-                 ew_sys_err=0.0, ns_sys_err=0.0, force_beam=False
-
+    def __init__(self, data, beam, wcs, back_sizex=32, back_sizey=32,
+                 margin=0, radius=0, fdr_alpha=1e-2, residuals=True,
+                 deblend=False, deblend_nthresh=32, detection_threshold=10.0,
+                 analysis_threshold=3.0, ew_sys_err=0.0, ns_sys_err=0.0,
+                 force_beam=False
     ):
         """Sets up an ImageData object.
 
@@ -61,19 +66,14 @@ class ImageData(object):
         self.freq_low = 1
         self.freq_high = 1
 
-        self.median_filter = median_filter
-        self.mf_threshold = mf_threshold
-        self.interpolate_order = interpolate_order
         self.back_sizex = back_sizex
         self.back_sizey= back_sizey
         self.margin = margin
         self.radius = radius
         self.fdr_alpha = fdr_alpha
-        self.structuring_element = structuring_element
         self.residuals = residuals
         self.deblend_enabled = deblend
         self.deblend_nthresh = deblend_nthresh
-        self.deblend_mincont = deblend_mincont
 
         self.detection_threshold=detection_threshold
         self.analysis_threshold=analysis_threshold
@@ -367,21 +367,17 @@ class ImageData(object):
         If roundup is true, values of the resultant map which are lower than
         the input grid are trimmed.
         """
-        my_filter = self.median_filter
-        mf_threshold = self.mf_threshold
-        interpolate_order = self.interpolate_order
-
         # there's no point in working with the whole of the data array if it's
         # masked.
         useful_chunk = ndimage.find_objects(numpy.where(self.data.mask, 0, 1))
         assert(len(useful_chunk) == 1)
         my_xdim, my_ydim = self.data[useful_chunk[0]].shape
 
-        if my_filter:
-            f_grid = ndimage.median_filter(grid, my_filter)
-            if mf_threshold:
+        if MEDIAN_FILTER:
+            f_grid = ndimage.median_filter(grid, MEDIAN_FILTER)
+            if MF_THRESHOLD:
                 grid = numpy.where(
-                    numpy.fabs(f_grid - grid) > mf_threshold, f_grid, grid
+                    numpy.fabs(f_grid - grid) > MF_THRESHOLD, f_grid, grid
                 )
             else:
                 grid = f_grid
@@ -397,7 +393,7 @@ class ImageData(object):
         my_map = numpy.zeros(self.data.shape)
         my_map[useful_chunk[0]] = ndimage.map_coordinates(
             grid, numpy.mgrid[slicex, slicey],
-            mode='nearest', order=interpolate_order)
+            mode='nearest', order=INTERPOLATE_ORDER)
         my_map = numpy.ma.array(my_map)
 
         
@@ -526,8 +522,8 @@ class ImageData(object):
 
         # Calculate the FDR threshold
         # Things will go terribly wrong in the line below if the interpolated
-        # noise values get very close or below zero. Use interpolate_order=1
-        # in config or the roundup option.
+        # noise values get very close or below zero. Use INTERPOLATE_ORDER=1
+        # or the roundup option.
         if (type(bgmap).__name__ == 'ndarray' or
             type(bgmap).__name__ == 'MaskedArray'):
             if bgmap.shape != self.backmap.shape:
@@ -769,7 +765,7 @@ class ImageData(object):
             (self.rmsmap >= (RMS_FILTER * numpy.median(self.rmsmap))),
             1, 0
         ).filled(fill_value=0)
-        labelled_data, num_labels = ndimage.label(clipped_data, self.structuring_element)
+        labelled_data, num_labels = ndimage.label(clipped_data, STRUCTURING_ELEMENT)
 
         labels_below_det_thr, labels_above_det_thr = [], []
         if num_labels > 0:
@@ -873,8 +869,8 @@ class ImageData(object):
                     detectionthresholdmap[chunk],
                     self.beam,
                     self.deblend_nthresh,
-                    self.deblend_mincont,
-                    self.structuring_element
+                    DEBLEND_MINCONT,
+                    STRUCTURING_ELEMENT
                 )
             )
 

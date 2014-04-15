@@ -130,8 +130,7 @@ def handle_args(args=None):
     parser.add_option("--regions", action="store_true", help="Generate DS9 region file(s)")
     parser.add_option("--residuals", action="store_true", help="Generate residual maps")
     parser.add_option("--islands", action="store_true", help="Generate island maps")
-    parser.add_option("--deblend", action="store_true", help="Deblend composite sources")
-    parser.add_option("--deblend-thresholds", default=32, type="int", help="Number of deblending subthresholds")
+    parser.add_option("--deblend-thresholds", default=0, type="int", help="Number of deblending subthresholds; 0 to disable")
     parser.add_option("--bmaj", type="float", help="Major axis of beam (deg)")
     parser.add_option("--bmin", type="float", help="Minor axis of beam (deg)")
     parser.add_option("--bpa", type="float", help="Beam position angle (deg)")
@@ -216,8 +215,6 @@ def get_sourcefinder_configuration(options):
         "back_sizey": options.grid,
         "margin": options.margin,
         "radius": options.radius,
-        "deblend": bool(options.deblend),
-        "deblend_nthresh": options.deblend_thresholds,
         "force_beam": options.force_beam
     }
     if options.residuals or options.islands:
@@ -274,11 +271,19 @@ def run_sourcefinder(files, options):
         else:
             if options.mode == "fdr":
                 print "Using False Detection Rate algorithm with alpha = %f" % (options.alpha,)
-                sr = imagedata.fd_extract(options.alpha)
+                sr = imagedata.fd_extract(
+                    alpha=options.alpha,
+                    deblend_nthresh=options.deblend_thresholds
+                )
             else:
                 if labelled_data is None:
                     print "Thresholding with det = %f sigma, analysis = %f sigma" % (options.detection, options.analysis)
-                sr = imagedata.extract(options.detection, options.analysis, labelled_data=labelled_data, labels=labels)
+
+                sr = imagedata.extract(
+                    det=options.detection, anl=options.analysis,
+                    labelled_data=labelled_data, labels=labels,
+                    deblend_nthresh=options.deblend_thresholds
+                )
 
         if options.regions:
             regionfile = imagename + ".reg"

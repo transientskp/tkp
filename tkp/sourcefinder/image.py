@@ -37,11 +37,10 @@ class ImageData(object):
     facilities for source extraction and measurement, etc.
     """
 
-    def __init__(self, data, beam, wcs, back_sizex=32, back_sizey=32,
-                 margin=0, radius=0, fdr_alpha=1e-2, residuals=True,
-                 deblend=False, deblend_nthresh=32, detection_threshold=10.0,
-                 analysis_threshold=3.0, ew_sys_err=0.0, ns_sys_err=0.0,
-                 force_beam=False
+    def __init__(self, data, beam, wcs, margin=0, radius=0, back_sizex=32,
+                 back_sizey=32, fdr_alpha=1e-2, residuals=True,
+                 detection_threshold=10.0, analysis_threshold=3.0,
+                 ew_sys_err=0.0, ns_sys_err=0.0, force_beam=False
     ):
         """Sets up an ImageData object.
 
@@ -72,8 +71,6 @@ class ImageData(object):
         self.radius = radius
         self.fdr_alpha = fdr_alpha
         self.residuals = residuals
-        self.deblend_enabled = deblend
-        self.deblend_nthresh = deblend_nthresh
 
         self.detection_threshold=detection_threshold
         self.analysis_threshold=analysis_threshold
@@ -354,8 +351,10 @@ class ImageData(object):
     # extraction systems.                                                     #
     #                                                                         #
     ###########################################################################
+
     def extract(self, det=None, anl=None, noisemap=None, bgmap=None,
-                labelled_data=None, labels=None):
+                labelled_data=None, labels=None, deblend_nthresh=0):
+
         """
         Kick off conventional (ie, RMS island finding) source extraction.
 
@@ -372,6 +371,9 @@ class ImageData(object):
             noisemap (numpy.ndarray):
 
             bgmap (numpy.ndarray):
+
+            deblend_nthresh (int): number of subthresholds to use for
+                deblending. Set to 0 to disable.
 
         Returns:
 
@@ -406,7 +408,7 @@ class ImageData(object):
                 raise ValueError("Labelled map is wrong shape")
 
         return self._pyse(
-            det * self.rmsmap, anl * self.rmsmap,
+            det * self.rmsmap, anl * self.rmsmap, deblend_nthresh,
             labelled_data=labelled_data, labels=labels
         )
 
@@ -432,7 +434,9 @@ class ImageData(object):
         self.clip.clear()
         return results
 
-    def fd_extract(self, alpha=None, anl=None, noisemap=None, bgmap=None):
+    def fd_extract(self, alpha=None, anl=None, noisemap=None,
+                   bgmap=None, deblend_nthresh=0
+    ):
         """False Detection Rate based source extraction.
 
         See `Hopkins et al., AJ, 123, 1086 (2002)
@@ -493,7 +497,7 @@ class ImageData(object):
         # See, e.g., Hopkins et al., AJ 123, 1086 (2002).
         if not anl:
             anl = fdr_threshold
-        return self._pyse(fdr_threshold * self.rmsmap, anl * self.rmsmap)
+        return self._pyse(fdr_threshold * self.rmsmap, anl * self.rmsmap, deblend_nthresh)
 
     def flux_at_pixel(self, x, y, numpix=1):
         """Return the background-subtracted flux at a certain position
@@ -740,7 +744,7 @@ class ImageData(object):
 
     def _pyse(
         self, detectionthresholdmap, analysisthresholdmap,
-        labelled_data=None, labels=[]
+        deblend_nthresh=0, labelled_data=None, labels=[]
     ):
         """
         Run Python-based source extraction on this image.
@@ -800,7 +804,7 @@ class ImageData(object):
                     analysis_threshold,
                     detectionthresholdmap[chunk],
                     self.beam,
-                    self.deblend_nthresh,
+                    deblend_nthresh,
                     DEBLEND_MINCONT,
                     STRUCTURING_ELEMENT
                 )
@@ -816,7 +820,7 @@ class ImageData(object):
                     island.data.filled(fill_value=0.))
 
         # Deblend each of the islands to its consituent parts, if necessary
-        if self.deblend_enabled:
+        if deblend_nthresh:
             deblended_list = map(lambda x: x.deblend(), island_list)
             #deblended_list = [x.deblend() for x in island_list]
             island_list = list(utils.flatten(deblended_list))

@@ -88,12 +88,9 @@ Section ``source_extraction``
    Integer. Pixel data more than ``extraction_radius_pix`` pixels from the
    centre of the image will be excluded from the analysis.
 
-``deblend``
-   Boolean. ``True`` to enable source deblending; ``False`` to disable.
-
 ``deblend_nthresh``
-   Integer. The number of subthresholds to use for deblending. Only applicable
-   if ``deblend`` is ``True``.
+   Integer. The number of subthresholds to use for deblending. Set to ``0`` to
+   disable deblending.
 
 ``force_beam``
    Boolean. If ``True``, all detected sources are assumed to have the size and

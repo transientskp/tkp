@@ -29,14 +29,14 @@ def extract_sources(image_path, extraction_params):
                     ns_sys_err=extraction_params['ns_sys_err'],
                     force_beam=extraction_params['force_beam'])
 
-    logger.debug("Employing margin: %s extraction radius: %s deblend: %s deblend_nthresh: %s",
+    logger.debug("Employing margin: %s extraction radius: %s deblend_nthresh: %s",
             extraction_params['margin'],
             extraction_params['extraction_radius_pix'],
-            extraction_params['deblend'],
             extraction_params['deblend_nthresh']
     )
 
-    results = data_image.extract()  # "blind" extraction of sources
+    # "blind" extraction of sources
+    results = data_image.extract(deblend_nthresh=extraction_params['deblend_nthresh'])
     logger.info("Detected %d sources in image %s" % (len(results), image_path))
     return [r.serialize() for r in results]
 

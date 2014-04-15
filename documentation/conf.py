@@ -59,7 +59,14 @@ master_doc = 'index'
 
 # General information about the project.
 project = u'LOFAR Transients Pipeline'
-copyright = u'2013, LOFAR Transients Key Project'
+author = u'LOFAR Transients Key Science Project'
+import datetime
+start_year = 2011
+if datetime.datetime.now().year == start_year:
+    years = u"%d" % start_year
+else:
+    years = u"%d—%d" % (start_year, datetime.datetime.now().year)
+copyright = u"%s, %s" % (years, author)
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
@@ -199,7 +206,7 @@ htmlhelp_basename = 'TKP'
 # (source start file, target name, title, author, documentclass [howto/manual]).
 latex_documents = [
   ('index', 'TKP.tex', u'TKP Documentation',
-   u'Transients Key Project', 'manual'),
+   author, 'manual'),
 ]
 
 # The name of an image file (relative to this directory) to place at the top of
@@ -232,7 +239,7 @@ latex_documents = [
 # (source start file, name, description, authors, manual section).
 man_pages = [
     ('index', 'tkp', u'TKP Documentation',
-     [u'LOFAR Transients Key Project'], 1)
+     [author], 1)
 ]
 
 

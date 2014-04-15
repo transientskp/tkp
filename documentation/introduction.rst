@@ -77,3 +77,13 @@ The documentation is split into four broad sections:
 :ref:`Stand-alone Tools <tools>`
   Some functionality developed for the TraP is also available in these simple,
   end-user focused tools.
+
+This documentation focuses on the technical aspects of using the TraP: all the
+pipeline components are described, together with their user-configurable
+parameters and the systems which have been developed for connecting them
+together to form a pipeline. However, it does not provide detailed rationale
+for all of the scientific choices made in the pipeline design. It is the
+position of the author that achieving high quality results requires
+understanding *both* the technical and the scientific choices made. For help
+with the latter, the reader is referred to :ref:`Swinbank et al
+<swinbank-2014>`>

@@ -76,7 +76,7 @@ Section ``source_extraction``
 ``analysis_threshold``
    Float. The analysis threshold as a multiple of the RMS noise.
 
-``backsize_x``, ``backsize_y``
+``back_size_x``, ``back_size_y``
    Integers. The size of the background grid parallel to the X and Y axes of
    the pixel grid.
 

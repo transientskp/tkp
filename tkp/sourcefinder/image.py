@@ -37,8 +37,8 @@ class ImageData(object):
     facilities for source extraction and measurement, etc.
     """
 
-    def __init__(self, data, beam, wcs, margin=0, radius=0, back_sizex=32,
-                 back_sizey=32, residuals=True, force_beam=False
+    def __init__(self, data, beam, wcs, margin=0, radius=0, back_size_x=32,
+                 back_size_y=32, residuals=True
     ):
         """Sets up an ImageData object.
 
@@ -63,15 +63,12 @@ class ImageData(object):
         self.freq_low = 1
         self.freq_high = 1
 
-        self.back_sizex = back_sizex
-        self.back_sizey= back_sizey
+        self.back_size_x = back_size_x
+        self.back_size_y= back_size_y
         self.margin = margin
         self.radius = radius
         self.residuals = residuals
 
-        # If force_beam is True, we force all blind extraction results to have
-        # major/minor axes equal to the restoring beam.
-        self.force_beam = force_beam
 
     ###########################################################################
     #                                                                         #
@@ -221,12 +218,12 @@ class ImageData(object):
         my_xdim, my_ydim = useful_data.shape
 
         rmsgrid, bggrid = [], []
-        for startx in xrange(0, my_xdim, self.back_sizex):
+        for startx in xrange(0, my_xdim, self.back_size_x):
             rmsrow, bgrow = [], []
-            for starty in xrange(0, my_ydim, self.back_sizey):
+            for starty in xrange(0, my_ydim, self.back_size_y):
                 chunk = useful_data[
-                    startx:startx + self.back_sizex,
-                    starty:starty + self.back_sizey
+                    startx:startx + self.back_size_x,
+                    starty:starty + self.back_size_y
                 ].ravel()
                 if not chunk.any():
                     rmsrow.append(False)
@@ -304,8 +301,8 @@ class ImageData(object):
                 grid = f_grid
 
         # Bicubic spline interpolation
-        xratio = float(my_xdim)/self.back_sizex
-        yratio = float(my_ydim)/self.back_sizey
+        xratio = float(my_xdim)/self.back_size_x
+        yratio = float(my_ydim)/self.back_size_y
         # First arg: starting point. Second arg: ending point. Third arg:
         # 1j * number of points. (Why is this complex? Sometimes, NumPy has an
         # utterly baffling API...)
@@ -344,8 +341,8 @@ class ImageData(object):
     #                                                                         #
     ###########################################################################
 
-    def extract(self, det, anl, noisemap=None, bgmap=None,
-                labelled_data=None, labels=None, deblend_nthresh=0):
+    def extract(self, det, anl, noisemap=None, bgmap=None, labelled_data=None,
+                labels=None, deblend_nthresh=0, force_beam=False):
 
         """
         Kick off conventional (ie, RMS island finding) source extraction.
@@ -366,6 +363,9 @@ class ImageData(object):
 
             deblend_nthresh (int): number of subthresholds to use for
                 deblending. Set to 0 to disable.
+
+            force_beam (bool): force all extractions to have major/minor axes
+                equal to the restoring beam
 
         Returns:
 
@@ -396,7 +396,7 @@ class ImageData(object):
                 raise ValueError("Labelled map is wrong shape")
 
         return self._pyse(
-            det * self.rmsmap, anl * self.rmsmap, deblend_nthresh,
+            det * self.rmsmap, anl * self.rmsmap, deblend_nthresh, force_beam,
             labelled_data=labelled_data, labels=labels
         )
 
@@ -421,7 +421,7 @@ class ImageData(object):
         return results
 
     def fd_extract(self, alpha, anl=None, noisemap=None,
-                   bgmap=None, deblend_nthresh=0
+                   bgmap=None, deblend_nthresh=0, force_beam=False
     ):
         """False Detection Rate based source extraction.
         The FDR procedure guarantees that <FDR> < alpha.
@@ -481,7 +481,8 @@ class ImageData(object):
         # See, e.g., Hopkins et al., AJ 123, 1086 (2002).
         if not anl:
             anl = fdr_threshold
-        return self._pyse(fdr_threshold * self.rmsmap, anl * self.rmsmap, deblend_nthresh)
+        return self._pyse(fdr_threshold * self.rmsmap, anl * self.rmsmap,
+                          deblend_nthresh, force_beam)
 
     def flux_at_pixel(self, x, y, numpix=1):
         """Return the background-subtracted flux at a certain position
@@ -728,7 +729,7 @@ class ImageData(object):
 
     def _pyse(
         self, detectionthresholdmap, analysisthresholdmap,
-        deblend_nthresh=0, labelled_data=None, labels=[]
+        deblend_nthresh, force_beam, labelled_data=None, labels=[]
     ):
         """
         Run Python-based source extraction on this image.
@@ -738,6 +739,12 @@ class ImageData(object):
             detectionthresholdmap (numpy.ndarray):
 
             analysisthresholdmap (numpy.ndarray):
+
+            deblend_nthresh (int): number of subthresholds for deblending. 0
+                disables.
+
+            force_beam (bool): force all extractions to have major/minor axes
+                equal to the restoring beam
 
             labelled_data (numpy.ndarray): labelled island map (output of
             numpy.ndimage.label()). Will be calculated automatically if not
@@ -813,7 +820,7 @@ class ImageData(object):
         # appending it to the results list.
         results = containers.ExtractionResults()
         for island in island_list:
-            if self.force_beam:
+            if force_beam:
                 fixed = {'semimajor': self.beam[0], 'semiminor': self.beam[1]}
             else:
                 fixed = None

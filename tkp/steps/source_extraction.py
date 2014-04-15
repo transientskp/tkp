@@ -23,7 +23,8 @@ def extract_sources(image_path, extraction_params):
     data_image = sourcefinder_image_from_accessor(accessor,
                     margin=extraction_params['margin'],
                     radius=extraction_params['extraction_radius_pix'],
-                    force_beam=extraction_params['force_beam'])
+                    back_size_x=extraction_params['back_size_x'],
+                    back_size_y=extraction_params['back_size_y'])
 
     logger.debug("Employing margin: %s extraction radius: %s deblend_nthresh: %s",
             extraction_params['margin'],
@@ -35,7 +36,8 @@ def extract_sources(image_path, extraction_params):
     results = data_image.extract(
         det=extraction_params['detection_threshold'],
         anl=extraction_params['analysis_threshold'],
-        deblend_nthresh=extraction_params['deblend_nthresh']
+        deblend_nthresh=extraction_params['deblend_nthresh'],
+        force_beam=extraction_params['force_beam']
     )
     logger.info("Detected %d sources in image %s" % (len(results), image_path))
     return [
@@ -59,7 +61,9 @@ def forced_fits(image_path, positions, extraction_params):
 
     data_image = sourcefinder_image_from_accessor(fitsimage,
                     margin=extraction_params['margin'],
-                    radius=extraction_params['extraction_radius_pix'])
+                    radius=extraction_params['extraction_radius_pix'],
+                    back_size_x=extraction_params['back_size_x'],
+                    back_size_y=extraction_params['back_size_y'])
 
     if len(positions):
         boxsize = extraction_params['box_in_beampix'] * max(data_image.beam[0],

@@ -238,9 +238,8 @@ class TestSimpleImageSourceFind(unittest.TestCase):
            accessors.FitsImage(
                os.path.join(DATAPATH, 'GRB120422A/GRB120422A-120429.fits')
             ),
-            force_beam=True
         )
-        results = self.image.extract(det=5, anl=3)
+        results = self.image.extract(det=5, anl=3, force_beam=True)
         self.assertEqual(results[0].smaj.value, self.image.beam[0])
         self.assertEqual(results[0].smin.value, self.image.beam[1])
 

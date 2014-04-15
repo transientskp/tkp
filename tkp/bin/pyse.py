@@ -211,11 +211,10 @@ def get_detection_labels(filename, det, anl, beam, configuration, plane=0):
 
 def get_sourcefinder_configuration(options):
     configuration = {
-        "back_sizex": options.grid,
-        "back_sizey": options.grid,
+        "back_size_x": options.grid,
+        "back_size_y": options.grid,
         "margin": options.margin,
         "radius": options.radius,
-        "force_beam": options.force_beam
     }
     if options.residuals or options.islands:
         configuration['residuals'] = True
@@ -273,7 +272,8 @@ def run_sourcefinder(files, options):
                 print "Using False Detection Rate algorithm with alpha = %f" % (options.alpha,)
                 sr = imagedata.fd_extract(
                     alpha=options.alpha,
-                    deblend_nthresh=options.deblend_thresholds
+                    deblend_nthresh=options.deblend_thresholds,
+                    force_beam=options.force_beam
                 )
             else:
                 if labelled_data is None:
@@ -282,7 +282,8 @@ def run_sourcefinder(files, options):
                 sr = imagedata.extract(
                     det=options.detection, anl=options.analysis,
                     labelled_data=labelled_data, labels=labels,
-                    deblend_nthresh=options.deblend_thresholds
+                    deblend_nthresh=options.deblend_thresholds,
+                    force_beam=options.force_beam
                 )
 
         if options.regions:

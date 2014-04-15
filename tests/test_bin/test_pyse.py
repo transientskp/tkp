@@ -56,7 +56,9 @@ class TestPyse(unittest.TestCase):
         cls.fits = FitsImage(cls.filename)
         cls.imagedata = sourcefinder_image_from_accessor(cls.fits)
         cls.sourcelist = cls.imagedata.extract(
-            det=10, anl=3, deblend_nthresh=options['deblend_thresholds']
+            det=10, anl=3,
+            deblend_nthresh=options['deblend_thresholds'],
+            force_beam=options['force_beam']
         )
         assert(len(cls.sourcelist) > 0)
 
@@ -118,9 +120,8 @@ class TestPyse(unittest.TestCase):
     def test_get_sourcefinder_configuration(self):
         config = tkp.bin.pyse.get_sourcefinder_configuration(options)
         self.assertTrue(config["residuals"])
-        self.assertTrue(config["force_beam"])
-        self.assertEqual(config['back_sizex'], options.grid)
-        self.assertEqual(config['back_sizey'], options.grid)
+        self.assertEqual(config['back_size_x'], options.grid)
+        self.assertEqual(config['back_size_y'], options.grid)
         self.assertEqual(config['margin'], options.margin)
         self.assertEqual(config['radius'], options.radius)
 

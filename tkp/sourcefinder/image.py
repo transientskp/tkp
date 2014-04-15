@@ -38,9 +38,10 @@ class ImageData(object):
     """
 
     def __init__(self, data, beam, wcs, margin=0, radius=0, back_sizex=32,
-                 back_sizey=32, fdr_alpha=1e-2, residuals=True,
-                 detection_threshold=10.0, analysis_threshold=3.0,
-                 ew_sys_err=0.0, ns_sys_err=0.0, force_beam=False
+                 back_sizey=32, residuals=True, detection_threshold=10.0,
+                 analysis_threshold=3.0, ew_sys_err=0.0, ns_sys_err=0.0,
+                 force_beam=False
+
     ):
         """Sets up an ImageData object.
 
@@ -69,7 +70,6 @@ class ImageData(object):
         self.back_sizey= back_sizey
         self.margin = margin
         self.radius = radius
-        self.fdr_alpha = fdr_alpha
         self.residuals = residuals
 
         self.detection_threshold=detection_threshold
@@ -434,18 +434,16 @@ class ImageData(object):
         self.clip.clear()
         return results
 
-    def fd_extract(self, alpha=None, anl=None, noisemap=None,
+    def fd_extract(self, alpha, anl=None, noisemap=None,
                    bgmap=None, deblend_nthresh=0
     ):
         """False Detection Rate based source extraction.
+        The FDR procedure guarantees that <FDR> < alpha.
 
         See `Hopkins et al., AJ, 123, 1086 (2002)
         <http://adsabs.harvard.edu/abs/2002AJ....123.1086H>`_.
         """
 
-        # The FDR procedure... guarantees that <FDR> < alpha
-        if not alpha:
-            alpha = self.fdr_alpha
         # The correlation length in config.py is used not only for the
         # calculation of error bars with the Condon formulae, but also for
         # calculating the number of independent pixels.

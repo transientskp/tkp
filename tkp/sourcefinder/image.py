@@ -24,9 +24,13 @@ logger = logging.getLogger(__name__)
 #
 # Hard-coded configuration parameters; not user settable.
 #
-MEDIAN_FILTER = 0       # ???
-MF_THRESHOLD = 0        # ???
 INTERPOLATE_ORDER = 1   # Spline order for grid interpolation
+MEDIAN_FILTER = 0       # If non-zero, apply a median filter of size
+                        # MEDIAN_FILTER to the background and RMS grids prior
+                        # to interpolating.
+MF_THRESHOLD = 0        # If MEDIAN_FILTER is non-zero, only use the filtered
+                        # grid when the (absolute) difference between the raw
+                        # and filtered grids is larger than MF_THRESHOLD.
 DEBLEND_MINCONT = 0.005 # Min. fraction of island flux in deblended subisland
 STRUCTURING_ELEMENT = [[0,1,0], [1,1,1], [0,1,0]] # Island connectiivty
 
@@ -306,15 +310,14 @@ class ImageData(object):
         # First arg: starting point. Second arg: ending point. Third arg:
         # 1j * number of points. (Why is this complex? Sometimes, NumPy has an
         # utterly baffling API...)
-        slicex = slice(-0.5, -0.5+xratio, 1j * my_xdim)
-        slicey = slice(-0.5, -0.5+yratio, 1j * my_ydim)
+        slicex = slice(-0.5, -0.5+xratio, 1j*my_xdim)
+        slicey = slice(-0.5, -0.5+yratio, 1j*my_ydim)
         my_map = numpy.zeros(self.data.shape)
         my_map[useful_chunk[0]] = ndimage.map_coordinates(
             grid, numpy.mgrid[slicex, slicey],
             mode='nearest', order=INTERPOLATE_ORDER)
         my_map = numpy.ma.array(my_map)
 
-        
         # If the input grid was entirely masked, then the output map must
         # also be masked: there's no useful data here. We don't search for
         # sources on a masked background/RMS, so this data will be cleanly

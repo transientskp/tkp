@@ -722,7 +722,7 @@ class ImageData(object):
         # set argument for fixed parameters based on input string
         if fixed == 'position':
             fixed = {'xbar': boxsize/2.0, 'ybar': boxsize/2.0}
-        elif fixed == 'position+error':
+        elif fixed == 'position+shape':
             fixed = {'xbar': boxsize/2.0, 'ybar': boxsize/2.0,
                      'semimajor': self.beam[0],
                      'semiminor': self.beam[1],
@@ -764,7 +764,7 @@ class ImageData(object):
         return extract.Detection(measurement, self)
 
     def fit_fixed_positions(self, sources, boxsize, threshold=None,
-                            fixed='position+error'):
+                            fixed='position+shape'):
         """Convenience function to fit a list of sources at the given positions
 
         This function wraps around fit_to_point().
@@ -979,7 +979,9 @@ class ImageData(object):
         results = containers.ExtractionResults()
         for island in island_list:
             if self.force_beam:
-                fixed = {'semimajor': self.beam[0], 'semiminor': self.beam[1]}
+                fixed = {'semimajor': self.beam[0],
+                         'semiminor': self.beam[1],
+                         'theta': self.beam[2]}
             else:
                 fixed = None
             fit_results = island.fit(fixed=fixed)

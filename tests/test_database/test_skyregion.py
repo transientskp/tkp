@@ -1,4 +1,4 @@
-import unittest2 as unittest
+import unittest
 import tkp.db
 from tkp.db import monitoringlist as dbmon
 from tkp.testutil import db_subs

@@ -1,4 +1,4 @@
-import unittest2 as unittest
+import unittest
 import tkp.db
 import tkp.db.general as dbgen
 from tkp.db.generic import  get_db_rows_as_dicts, columns_from_table

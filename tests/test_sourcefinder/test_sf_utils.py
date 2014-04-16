@@ -3,7 +3,7 @@ from numpy.testing import assert_array_equal
 from collections import namedtuple
 from tkp.utility.uncertain import Uncertain
 
-import unittest2 as unittest
+import unittest
 
 from tkp.sourcefinder.utils import maximum_pixel_method_variance, fudge_max_pix
 from tkp.sourcefinder.utils import generate_result_maps

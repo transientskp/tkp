@@ -2,7 +2,7 @@ import math
 import logging
 from io import BytesIO
 
-import unittest2 as unittest
+import unittest
 
 import tkp.db
 import tkp.db.general as dbgen

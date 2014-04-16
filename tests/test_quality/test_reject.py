@@ -1,4 +1,4 @@
-import unittest2 as unittest
+import unittest
 import tkp.quality
 import tkp.db
 import tkp.db.quality

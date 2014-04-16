@@ -3,7 +3,7 @@ Tests for elliptical Gaussian fitting code in the TKP pipeline.
 """
 import numpy
 
-import unittest2 as unittest
+import unittest
 
 from tkp.sourcefinder.gaussian import gaussian
 from tkp.sourcefinder.fitting import moments, fitgaussian

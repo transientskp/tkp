@@ -1,4 +1,4 @@
-import unittest2 as unittest
+import unittest
 import sys
 import resource
 from io import BytesIO

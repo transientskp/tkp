@@ -1,6 +1,6 @@
 import numpy
 
-import unittest2 as unittest
+import unittest
 
 from tkp.utility import sigmaclip
 

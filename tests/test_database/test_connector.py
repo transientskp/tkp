@@ -1,4 +1,4 @@
-import unittest2 as unittest
+import unittest
 from exceptions import StandardError
 from tkp.testutil.decorators import requires_database
 import tkp.db

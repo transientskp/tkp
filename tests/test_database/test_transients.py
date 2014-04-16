@@ -1,4 +1,4 @@
-import unittest2 as unittest
+import unittest
 import tkp.db
 from tkp.db.transients import multi_epoch_transient_search
 from tkp.db.transients import _insert_transients

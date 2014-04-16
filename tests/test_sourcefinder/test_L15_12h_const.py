@@ -4,7 +4,7 @@ Tests for simulated LOFAR datasets.
 
 import os
 
-import unittest2 as unittest
+import unittest
 
 import tkp.accessors.fitsimage
 import tkp.sourcefinder.image as image

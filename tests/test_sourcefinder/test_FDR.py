@@ -37,7 +37,7 @@ of detected sources in the presence of correlated noise in a single map
 
 import os
 
-import unittest2 as unittest
+import unittest
 
 from tkp import accessors
 from tkp.sourcefinder import image

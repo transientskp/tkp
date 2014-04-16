@@ -1,6 +1,6 @@
 import os
 
-import unittest2 as unittest
+import unittest
 
 from tkp import accessors
 from tkp.accessors.lofaraccessor import LofarAccessor

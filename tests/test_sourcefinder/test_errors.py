@@ -1,4 +1,4 @@
-import unittest2 as unittest
+import unittest
 
 import math
 from tkp.utility.coordinates import WCS

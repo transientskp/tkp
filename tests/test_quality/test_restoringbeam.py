@@ -1,6 +1,6 @@
 import os
 
-import unittest2 as unittest
+import unittest
 from tkp.quality.restoringbeam import beam_invalid
 
 from tkp.testutil.decorators import requires_data

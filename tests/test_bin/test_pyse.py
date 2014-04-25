@@ -2,7 +2,7 @@ import os
 import tempfile
 import shutil
 
-import unittest2 as unittest
+import unittest
 
 import tkp.bin.pyse
 from tkp.accessors import FitsImage

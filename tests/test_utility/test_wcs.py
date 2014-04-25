@@ -1,6 +1,6 @@
 import wcslib
 
-import unittest2 as unittest
+import unittest
 
 from tkp.utility import coordinates
 from tkp.sourcefinder import extract

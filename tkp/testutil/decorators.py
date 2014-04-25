@@ -1,10 +1,6 @@
 import os
 import unittest
 
-
-if not  hasattr(unittest.TestCase, 'assertIsInstance'):
-    import unittest2 as unittest
-
 def requires_database():
     if os.environ.get("TKP_DISABLEDB", False):
         return unittest.skip("Database functionality disabled in configuration")

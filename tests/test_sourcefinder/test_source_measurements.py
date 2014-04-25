@@ -16,7 +16,7 @@ deblending algorithm.
 import os
 import numpy as np
 
-import unittest2 as unittest
+import unittest
 
 import tkp.accessors
 from tkp.sourcefinder import image

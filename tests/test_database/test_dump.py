@@ -1,5 +1,5 @@
 import os
-import unittest2 as unittest
+import unittest
 from tempfile import NamedTemporaryFile
 from tkp.config import get_database_config
 from tkp.db.dump import dump_db, dump_monetdb, dump_pg

@@ -176,16 +176,7 @@ I suggest to follow at least one simple rule:
 Unit tests
 ----------
 
-The unit tests use the :mod:`unittest2` module. For Python 2.7, this
-is the built-in :mod:`unittest` module, but for earlier versions, the
-module needs to be installed separately. The unit tests have the
-following check at the import level for this::
-
-    import unittest
-    try:
-        unittest.TestCase.assertIsInstance
-    except AttributeError:
-        import unittest2 as unittest
+The unit tests use the Python 2.7's :mod:`unittest` module.
 
 Running the unit tests
 ----------------------

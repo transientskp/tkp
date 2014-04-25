@@ -1,6 +1,6 @@
 import os
 
-import unittest2 as unittest
+import unittest
 from tkp.testutil.decorators import requires_database, requires_data, duration
 from tkp.testutil.data import DATAPATH
 

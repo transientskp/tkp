@@ -1,7 +1,7 @@
 from operator import attrgetter, itemgetter
 from collections import namedtuple
 
-import unittest2 as unittest
+import unittest
 
 import datetime
 from tkp.testutil.decorators import requires_database

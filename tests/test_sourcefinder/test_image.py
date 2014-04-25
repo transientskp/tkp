@@ -1,7 +1,7 @@
 import numpy as np
 import os
 
-import unittest2 as unittest
+import unittest
 
 from tkp.testutil.decorators import requires_data
 import tkp.sourcefinder

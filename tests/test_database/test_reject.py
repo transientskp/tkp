@@ -1,4 +1,4 @@
-import unittest2 as unittest
+import unittest
 import tkp.db
 from tkp.testutil import db_subs
 from tkp.testutil.decorators import requires_database

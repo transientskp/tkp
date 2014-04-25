@@ -1,7 +1,7 @@
 import datetime
 import itertools
 
-import unittest2 as unittest
+import unittest
 
 import tkp.db
 from tkp.db import associations as dbass

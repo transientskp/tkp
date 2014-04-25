@@ -16,7 +16,7 @@ comparison is more approritate.
 """
 import numpy
 
-import unittest2 as unittest
+import unittest
 
 from datetime import datetime
 from datetime import timedelta

@@ -1,6 +1,6 @@
 import math
 
-import unittest2 as unittest
+import unittest
 
 import tkp.db
 from tkp.testutil.decorators import requires_database

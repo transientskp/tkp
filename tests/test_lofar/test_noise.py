@@ -1,4 +1,4 @@
-import unittest2 as unittest
+import unittest
 from tkp.lofar.noise import ANTENNAE_PER_TILE
 from tkp.lofar.noise import TILES_PER_CORE_STATION
 from tkp.lofar.noise import TILES_PER_REMOTE_STATION

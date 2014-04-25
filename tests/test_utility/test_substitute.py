@@ -1,4 +1,4 @@
-import unittest2 as unittest
+import unittest
 from tkp.utility import substitute_nan, substitute_inf
 
 class SubstituteInfTestCase(unittest.TestCase):

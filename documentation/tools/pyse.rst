@@ -62,37 +62,9 @@ For each file specified, a list of sources identified is printed to the
 screen.
 
 A list of available command line option may be obtained with the
-``-h``/``--help`` option::
+``-h``/``--help`` option:
 
-  Usage: pyse.py [options] file1 ... fileN
-
-  Options:
-    -h, --help            show this help message and exit
-    --fdr                 Use False Detection Rate algorithm
-    --alpha=ALPHA         FDR Alpha
-    --detection=DETECTION
-                          Detection threshold
-    --analysis=ANALYSIS   Analysis threshold
-    --regions             Generate DS9 region file(s)
-    --residuals           Generate residual maps
-    --islands             Generate island maps
-    --deblend             Deblend composite sources
-    --deblend-thresholds=DEBLEND_THRESHOLDS
-                          Number of deblending subthresholds
-    --bmaj=BMAJ           Major axis of beam
-    --bmin=BMIN           Minor axis of beam
-    --bpa=BPA             Beam position angle
-    --grid=GRID           Background grid segment size
-    --margin=MARGIN       Margin applied to each edge of image (in pixels)
-    --radius=RADIUS       Radius of usable portion of image (in pixels)
-    --skymodel            Generate sky model
-    --csv                 Generate csv text file for use in programs such as
-                          TopCat
-    --rmsmap              Generate RMS map
-    --sigmap              Generate significance map
-    --force-beam          Force fit axis lengths to beam size
-    --detection-image=DETECTION_IMAGE
-                            Find islands on different image
+.. program-output:: python ../tkp/bin/pyse.py -h
 
 By default, source extraction is carried out by thresholding: that is,
 identifying islands of pixels which exceed a particular multiple of the RMS
@@ -185,6 +157,22 @@ measurements. Of course, the detection image and the target image(s) must have
 the same pixel dimensions. Note that only a single detection image may be
 specified, and the same pixels are then used on all target images. Note
 further that this ``--detection-image`` option is incompatible with ``--fdr``.
+
+It is possible to configure PySE to perform a fit to user-specified positions
+in the image _rather_ than "blindly" locating sources and attempting to fit
+them. (Note that it is not possible to do both at once: that requires invoking
+PySE twice.) This mode may be invoked either by using either of the
+``--fixed-posns`` or ``--fixed-posn-file`` options. The former directly reads a
+list of positions from the command line; the latter accepts a filename, and
+reads the positions to fit from that. In both cases, the positions themselves
+are provided in `JSON <http://json.org/>`_ format, and should consist of a
+_list_ of RA, declination _pairs_ given in decimal degrees.
+
+When fitting to a fixed position, a square "box" of pixels is chosen around
+the requested position, and the optimization procedure allows the source
+position to vary within that box. The size of the box may be changed with the
+``--ffbox`` option. Note that this parameter is given in units of the major
+axis of the beam.
 
 All of these arguments are optional (with the caveat that the beam shape must
 be provided if not included with the image).

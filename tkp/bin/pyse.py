@@ -144,15 +144,14 @@ def handle_args(args=None):
     parser.add_option("--sigmap", action="store_true", help="Generate significance map")
     parser.add_option("--force-beam", action="store_true", help="Force fit axis lengths to beam size")
     parser.add_option("--detection-image", type="string", help="Find islands on different image")
-    m_help = "Specify a list of RA,Dec co-ordinate positions to force-fit " \
-        '(decimal degrees, JSON format e.g. "[[144.2,33.3],[146.1,34.1]]" )'
-    parser.add_option('--fixed', help=m_help, default=None)
-    parser.add_option('--fixed-list',
-        help="Specify a file containing a list of positions to force-fit", default=None
-    )
-    box_help = "Specify forced fitting positional freedom / error-box size, " \
-        "as a multiple of beam width."
-    parser.add_option('--ffbox-in-beampix', type='float', default=3., help=box_help)
+    parser.add_option('--fixed-posns', help="List of coordinate pairs to "  \
+        "force-fit (decimal degrees, JSON, e.g [[123.4,56.7],[359.9,89.9]])",
+        default=None)
+    parser.add_option('--fixed-posn-file',
+        help="Filename containing a list of positions to force-fit",
+        default=None)
+    parser.add_option('--ffbox', type='float', default=3.,
+        help="Forced fitting positional box size as a multiple of beam width.")
     options, files = parser.parse_args(args=args)
 
     # Overwrite 'fixed_coords' with a parsed list of coords
@@ -268,7 +267,7 @@ def run_sourcefinder(files, options):
 
         if options.mode == "fixed":
             sr = imagedata.fit_fixed_positions(options.fixed_coords,
-                options.ffbox_in_beampix * max(imagedata.beam[0:2])
+                options.ffbox * max(imagedata.beam[0:2])
             )
 
         else:

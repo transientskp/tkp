@@ -25,6 +25,7 @@ import logging
 import json
 import tkp
 from tkp.db.sql.populate import populate
+from tkp.main import run
 
 
 logging.basicConfig(level=logging.INFO)
@@ -223,7 +224,7 @@ def prepare_job(jobname, debug=False):
 
 def celery_cmd(args):
     from celery.bin import celery
-    base = celery.CeleryCommand(app='tkp.distribute.celery.tasks.trap')
+    base = celery.CeleryCommand(app='tkp.distribute.celery.celery_app')
     base.execute_from_commandline(sys.argv[1:])
 
 
@@ -233,7 +234,7 @@ def run_job(args):
     monitor_coords = parse_monitoringlist_positions(args)
     if args.method == 'celery':
         import tkp.distribute.celery
-        tkp.distribute.celery.run(args.name, monitor_coords)
+        run(args.name, monitor_coords)
     elif args.method == 'test':
         return True
     else:

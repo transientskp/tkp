@@ -18,15 +18,19 @@ from tkp.db import consistency as dbconsistency
 from tkp.db import Image
 from tkp.db import general as dbgen
 from tkp.db import monitoringlist as dbmon
+from tkp.db import nd as dbnd
 from tkp.db import associations as dbass
 from tkp.distribute.celery import celery_app
 from tkp.distribute.celery import tasks
 from tkp.distribute.celery.log import setup_event_listening
-from tkp.distribute.common import setup_log_file, dump_database_backup
-from tkp.distribute.common import load_job_config, dump_configs_to_logdir
-from tkp.distribute.common import group_per_timestep
+from tkp.distribute.common import (load_job_config, dump_configs_to_logdir,
+                                   check_job_configs_match,
+                                   setup_log_file, dump_database_backup,
+                                   group_per_timestep)
+from tkp.db.configstore import store_config, fetch_config
+from tkp.steps.persistence import create_dataset, store_images
+from tkp.steps.transient_search import search_transients
 from tkp.steps.source_extraction import forced_fits
-
 
 logger = logging.getLogger(__name__)
 
@@ -76,17 +80,14 @@ def run(job_name, local=False):
 
     job_config = load_job_config(pipe_config)
     se_parset = job_config['source_extraction']
-    deRuiter_radius = job_config['association']['deruiter_radius']
-
+    deruiter_radius = job_config['association']['deruiter_radius']
 
     all_images = imp.load_source('images_to_process',
                                  os.path.join(job_dir,
-                                              'images_to_process.py')
-                                 ).images
+                                              'images_to_process.py')).images
 
     logger.info("dataset %s contains %s images" % (job_name, len(all_images)))
 
-    dump_configs_to_logdir(log_dir, job_config, pipe_config)
 
 
     logger.info("performing database consistency check")
@@ -94,17 +95,35 @@ def run(job_name, local=False):
         logger.error("Inconsistent database found; aborting")
         return 1
 
+    dataset_id = create_dataset(job_config['persistence']['dataset_id'],
+                                job_config['persistence']['description'])
+
+    if job_config['persistence']['dataset_id'] == -1:
+        store_config(job_config, dataset_id)  # new data set
+    else:
+        job_config_from_db = fetch_config(dataset_id)  # existing data set
+        if check_job_configs_match(job_config, job_config_from_db):
+            logger.debug("Job configs from file / database match OK.")
+        else:
+            logger.warn("Job config file has changed since dataset was "
+                        "first loaded into database. ")
+            logger.warn("Using job config settings loaded from database, see "
+                        "log dir for details")
+        job_config = job_config_from_db
+
+    dump_configs_to_logdir(log_dir, job_config, pipe_config)
+
     logger.info("performing persistence step")
     image_cache_params = pipe_config['image_cache']
     imgs = [[img] for img in all_images]
-    metadatas = runner(tasks.persistence_node_step,imgs, [image_cache_params],
+    metadatas = runner(tasks.persistence_node_step, imgs, [image_cache_params],
                        local)
     metadatas = [m[0] for m in metadatas]
 
-    persistence = job_config['persistence']
-    dataset_id, image_ids = steps.persistence.master_steps(metadatas,
-                                                           se_parset['extraction_radius_pix'],
-                                                           persistence)
+    logger.info("Storing images")
+    image_ids = store_images(metadatas,
+                     job_config['source_extraction']['extraction_radius_pix'],
+                     dataset_id)
 
     db_images = [Image(id=image_id) for image_id in image_ids]
 
@@ -126,12 +145,10 @@ def run(job_name, local=False):
         return
 
     grouped_images = group_per_timestep(good_images)
-
     timestep_num = len(grouped_images)
     for n, (timestep, images) in enumerate(grouped_images):
-        logging.info("processing %s images in timestep %s (%s/%s)" % (len(images),
-                                                                      timestep, n+1,
-                                                                      timestep_num))
+        msg = "processing %s images in timestep %s (%s/%s)"
+        logger.info(msg % (len(images), timestep, n+1, timestep_num))
 
         logger.info("performing source extraction")
         urls = [img.url for img in images]
@@ -145,19 +162,22 @@ def run(job_name, local=False):
         logger.info("performing database operations")
         for image in images:
             logger.info("performing DB operations for image %s" % image.id)
-            logger.info("performing null detections")
-            null_detections = dbmon.get_nulldetections(image.id, deRuiter_radius)
-
-            logger.info("performing forced fits")
-            ff_nd = forced_fits(image.url, null_detections, se_parset)
-            dbgen.insert_extracted_sources(image.id, ff_nd, 'ff_nd')
 
             logger.info("performing source association")
             dbass.associate_extracted_sources(image.id,
-                                              deRuiter_r=deRuiter_radius)
-            dbmon.add_nulldetections(image.id)
-            transients = steps.transient_search.search_transients(image.id,
-                                                                  job_config['transient_search'])
+                                              deRuiter_r=deruiter_radius)
+            logger.info("performing null detections")
+            null_detections = dbnd.get_nulldetections(image.id)
+            logger.info("Found %s null detections" % len(null_detections))
+            # Only if we found null_detections the next steps are necessary
+            if len(null_detections) > 0:
+                logger.info("performing forced fits")
+                ff_nd = forced_fits(image.url, null_detections, se_parset)
+                dbgen.insert_extracted_sources(image.id, ff_nd, 'ff_nd')
+                logger.info("adding null detections")
+                dbnd.associate_nd(image.id)
+            transients = search_transients(image.id,
+                                           job_config['transient_search'])
             dbmon.adjust_transients_in_monitoringlist(image.id, transients)
 
         dbgen.update_dataset_process_end_ts(dataset_id)

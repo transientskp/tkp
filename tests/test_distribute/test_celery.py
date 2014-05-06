@@ -26,12 +26,13 @@ class MockLoggingHandler(logging.Handler):
         self.records = []
 
 
-@unittest.skip("disabled for now since it is quite fragile")
 class TestCelery(unittest.TestCase):
     """
     Tests related to distributing jobs using celery
     """
-    def testTaskLogging(self):
+
+    @unittest.skip("Enable this if you have broker and worker running")
+    def testRemoteTaskLogging(self):
         """
         make sure the worker log->event->client log mechanism is working.
         """
@@ -43,6 +44,24 @@ class TestCelery(unittest.TestCase):
         check = {logging.INFO, logging.WARNING, logging.ERROR}
         mock_handler.reset()
         bogus.delay().get()
+        for record in mock_handler.records:
+            if record.name == 'tkp.distribute.celery.tasks':
+                self.assertTrue(record.levelno in check)
+                check.remove(record.levelno)
+        self.assertFalse(len(check))
+
+    def testLocalTaskLogging(self):
+        """
+        Logging should also work if you run it locally
+        """
+        setup_event_listening(celery_app)
+        mock_handler = MockLoggingHandler()
+        root_logger = logging.getLogger()
+        root_logger.setLevel(logging.DEBUG)
+        root_logger.addHandler(mock_handler)
+        check = {logging.INFO, logging.WARNING, logging.ERROR, logging.DEBUG}
+        mock_handler.reset()
+        bogus()
         for record in mock_handler.records:
             if record.name == 'tkp.distribute.celery.tasks':
                 self.assertTrue(record.levelno in check)

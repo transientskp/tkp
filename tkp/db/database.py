@@ -6,7 +6,7 @@ logger = logging.getLogger(__name__)
 
 # The version of the TKP DB schema which is assumed by the current tree.
 # Increment whenever the schema changes.
-DB_VERSION = 19
+DB_VERSION = 20
 
 class DBExceptions(object):
     """

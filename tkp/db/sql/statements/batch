@@ -21,6 +21,7 @@ tables/transient.sql
 tables/classification.sql
 tables/rejectreason.sql
 tables/rejection.sql
+tables/config.sql
 #
 #system functions
 #

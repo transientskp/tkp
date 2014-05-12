@@ -60,12 +60,6 @@ class TestPersistence(unittest.TestCase):
     def test_node_steps(self):
         tkp.steps.persistence.node_steps(self.images, self.image_cache_pars)
 
-    def test_master_steps(self):
-        images_metadata = tkp.steps.persistence.extract_metadatas(self.images)
-        tkp.steps.persistence.master_steps(images_metadata,
-                                           self.extraction_radius, self.persistence_pars)
-
-
 
 @requires_mongodb()
 class TestMongoDb(unittest.TestCase):

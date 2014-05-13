@@ -7,7 +7,6 @@ import logging, sys
 from collections import namedtuple
 
 from tkp.db import general
-#import tkp.db
 from tkp.db import execute as execute
 from tkp.db.associations import _empty_temprunningcatalog as _del_tempruncat
 
@@ -75,32 +74,35 @@ SELECT t0.id
     results = zip(*cursor.fetchall())
     if len(results) != 0:
         return zip(list(results[1]), list(results[2]))
-        #maxbeam = max(results[3][0],results[4][0]) # all bmaj & bmin are the same
     else:
         return []
 
 def associate_nd(image_id):
     """
-    Also take into account the ra=360 wrapping
+    Associate the null detections (ie forced fits) of the current image.
     
-    Mmm, how do we associate with the runcats...
+    They will be inserted in a temporary table, which contains the 
+    associations of the forced fits with the running catalog sources.
+    Also, the forced fits are appended to the assocxtrsource (light-curve) 
+    table. The runcat_flux table is updated with the new datapoints if it 
+    already existed, otherwise it is inserted as a new datapoint.
+    (We leave the runcat table unchanged.)
+    After all this, the temporary table is emptied again.
     """
     
-    # Here we select the forced fit null detections in the current image
-    # and associate them with the runningcatalog sources
-    print "assoc_nd, im:", image_id
     _del_tempruncat()
-    # Check meridian wrapping...?
     _insert_tempruncat(image_id)
     _insert_1_to_1_assoc(image_id)
-    # We have to update the runcat_fluxes or insert
     _update_runcat_flux(image_id)
     _insert_runcat_flux(image_id)
     _del_tempruncat()
 
 def _insert_tempruncat(image_id):
     """
+    Here the associations of forced fits and their runningcatalog counterparts
+    are inserted into the temporary table.
     """
+    
     query = """\
 INSERT INTO temprunningcatalog
   (runcat
@@ -261,8 +263,7 @@ INSERT INTO temprunningcatalog
                                AND x.decl + x.error_radius/3600
              AND r.wm_ra BETWEEN x.ra - alpha(x.error_radius/3600, x.decl)
                              AND x.ra + alpha(x.error_radius/3600, x.decl)
-             /*AND r.x * x.x + r.y * x.y + r.z * x.z > COS(RADIANS(r.wm_uncertainty_ew/3600))*/
-             AND r.x * x.x + r.y * x.y + r.z * x.z > COS(RADIANS(x.error_radius/3600))
+             AND r.x * x.x + r.y * x.y + r.z * x.z > COS(RADIANS(r.wm_uncertainty_ew))
          ) t0
          LEFT OUTER JOIN runningcatalog_flux rf
          ON t0.runcat = rf.runcat
@@ -270,17 +271,15 @@ INSERT INTO temprunningcatalog
          AND t0.stokes = rf.stokes
 """    
     qry_params = {'image_id': image_id}
-    #print "QQQ:", query % qry_params
-    #if image_id == 771:
-    #    sys.exit()
     cursor = execute(query, qry_params, commit=True)
     cnt = cursor.rowcount
-    print "# tempruncat_inserts:", cnt
     logger.info("Inserted %s null detections in tempruncat" % cnt)
 
 def _insert_1_to_1_assoc(image_id):
     """
-    Insert remaining associations from temprunningcatalog into assocxtrsource.
+    The null detection forced fits are appended to the assocxtrsource (light-curve)
+    table as a type = 7 datapoint.
+    
     """
     query = """\
 INSERT INTO assocxtrsource
@@ -299,13 +298,11 @@ INSERT INTO assocxtrsource
 """
     cursor = execute(query, commit=True)
     cnt = cursor.rowcount
-    print "# assocxtrsrc_inserts:", cnt
     logger.info("Inserted %s 1-to-1 null detections in assocxtrsource" % cnt)
 
-
 def _update_runcat_flux(image_id):
-    """We only have to update those runcat sources that had already a detection, so 
-    their f_datapoints is larger than 1.
+    """We only have to update those runcat sources that already had a detection, 
+    so their f_datapoints is larger than 1.
         
     """
     query = """\

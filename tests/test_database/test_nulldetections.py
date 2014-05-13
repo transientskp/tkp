@@ -151,7 +151,6 @@ class TestForcedFit(unittest.TestCase):
         # and 2 datapoints for the other three bands (t2,t3).
         # Source 2 has two datapoints for band3 (t2,t3) and
         # one for the other three bands (t3).
-        # TODO
         query = """\
         SELECT a.runcat
               ,a.xtrsrc

@@ -24,3 +24,11 @@ def substitute_nan(value, sub=0.0):
 
      """
      return substitute(value, sub, math.isnan)
+
+
+class adict(dict):
+    """
+    Accessing dict keys like an attribute.
+    """
+    __getattr__ = dict.__getitem__
+    __setattr__ = dict.__setitem__

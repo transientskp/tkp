@@ -20,7 +20,7 @@ sourcefinder settings, with each analysis constituting a particular job.
 Alternatively, a project might be dedicated to a multi-epoch survey, with each
 job corresponding to a different epoch. The fundamental point is that the
 basic control structures such as the database and task distribution system
-remain the same, but, within those limits, the user is free to oragnize their
+remain the same, but, within those limits, the user is free to organize their
 work as they please.
 
 Creating a Project Directory

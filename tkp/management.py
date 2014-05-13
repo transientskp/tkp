@@ -246,10 +246,9 @@ def init_db(options):
     cfgfile = os.path.join(os.getcwd(), "pipeline.cfg")
     if os.path.exists(cfgfile):
         pipe_config = initialize_pipeline_config(cfgfile, "notset")
+        dbconfig = get_database_config(pipe_config['database'], apply=False)
     else:
-        pipe_config = None
-    dbconfig = get_database_config(pipe_config['database'], apply=False)
-
+        dbconfig = get_database_config(None, apply=False)
 
     for field in ['engine', 'database', 'user', 'password', 'host', 'port',
                   'passphrase']:

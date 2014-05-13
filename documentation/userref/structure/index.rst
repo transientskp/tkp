@@ -60,6 +60,6 @@ Pipeline stages
    stages/persistence
    stages/quality
    stages/extraction
-   stages/nulldet
    stages/association
+   stages/nulldet
    stages/transient

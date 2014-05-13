@@ -29,6 +29,7 @@ from tkp.db.orm import Image
 from tkp.db import consistency as dbconsistency
 from tkp.db import general as dbgen
 from tkp.db import monitoringlist as dbmon
+from tkp.db import nd as dbnd
 from tkp.db import associations as dbass
 from tkp.distribute.celery import tasks
 from tkp.distribute.common import (load_job_config, dump_configs_to_logdir,
@@ -176,9 +177,12 @@ def run(job_name, local=False):
             dbass.associate_extracted_sources(image.id,
                                               deRuiter_r=deRuiter_radius)
             logger.info("performing null detections")
+            null_detections = dbnd.get_nulldetections(image.id, deRuiter_radius)
             logger.info("performing forced fits")
+            # Only if found nd we do next step, otherwise continue
             logger.info("adding null detections")
             #dbmon.add_nulldetections(image.id)
+            dbnd.associate_nd(image.id)
             transients = steps.transient_search.search_transients(image.id,
                                                                   job_config['transient_search'])
             dbmon.adjust_transients_in_monitoringlist(image.id, transients)

@@ -327,10 +327,6 @@ class TestTransientExclusion(unittest.TestCase):
                                 where={'dataset': self.dataset.id})
         self.assertEqual(len(runcats), 4) #sanity check.
 
-        monlist = columns_from_table('monitoringlist',
-                                where={'dataset': self.dataset.id})
-        self.assertEqual(len(monlist), 1)
-
         transients_qry = """\
         SELECT *
           FROM transient tr
@@ -392,9 +388,6 @@ class TestTransientExclusion(unittest.TestCase):
                                 where={'dataset':self.dataset.id})
         self.assertEqual(len(runcats), 4) #sanity check.
 
-#        monlist = columns_from_table('monitoringlist',
-#                                where={'dataset':self.dataset.id})
-#        self.assertEqual(len(monlist), 1)
 
 
 

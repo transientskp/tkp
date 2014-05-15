@@ -5,7 +5,7 @@ In this module we collect together various routines
 that don't fit into a more specific collection.
 
 Most of the basic insertion routines are kept here,
-with exceptions of monitoringlist and transients.
+with exception of transients.
 """
 
 import math
@@ -205,6 +205,7 @@ def insert_extracted_sources(image_id, results, extract):
     Input argument "extract" tells whether the source detections originate from:
     0: blind source extraction
     1: from forced fits at null detection locations
+    2: from forced fits at monitoringlist positions
 
     For all extracted sources additional parameters are calculated,
     and appended to the sourcefinder data. Appended and converted are:
@@ -246,6 +247,8 @@ def insert_extracted_sources(image_id, results, extract):
             r.append(0)
         elif extract == 'ff_nd':
             r.append(1)
+        elif extract == 'ff_ms':
+            r.append(2)
         else:
             raise ValueError("Not a valid extractedsource insert type: '%s'" % extract)
         xtrsrc.append(r)
@@ -292,6 +295,9 @@ VALUES
                     (insert_num, image_id))
     elif extract == 'ff_nd':
         logger.info("Inserted %d forced-fit null detections in extractedsource"
+                    " for image %s" % (insert_num, image_id))
+    elif extract == 'ff_ms':
+        logger.info("Inserted %d forced-fit for monitoring sourcs in extractedsource"
                     " for image %s" % (insert_num, image_id))
 
 

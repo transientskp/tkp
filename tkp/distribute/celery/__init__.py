@@ -74,7 +74,7 @@ def setup_log_broadcasting():
     # we need to wait for the thread to release the import lock
     time.sleep(2)
 
-def run(job_name, local=False):
+def run(job_name, mon_coords, local=False):
 
     setup_log_broadcasting()
     pipe_config = initialize_pipeline_config(
@@ -193,8 +193,13 @@ def run(job_name, local=False):
                 dbgen.insert_extracted_sources(image.id, ff_nd, 'ff_nd')
                 logger.info("adding null detections")
                 dbnd.associate_nd(image.id)
-            transients = search_transients(image.id,
-                                           job_config.transient_search)
-            dbmon.adjust_transients_in_monitoringlist(image.id, transients)
+            if len(mon_coords) > 0:
+                logger.info("performing monitoringlist")
+                ff_ms = forced_fits(image.url, mon_coords, se_parset)
+                dbgen.insert_extracted_sources(image.id, ff_ms, 'ff_ms')
+                logger.info("adding monitoring sources")
+                dbmon.associate_ms(image.id)
+            transients = steps.transient_search.search_transients(image.id,
+                                                                  job_config['transient_search'])
 
         dbgen.update_dataset_process_end_ts(dataset_id)

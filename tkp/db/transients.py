@@ -183,7 +183,6 @@ def multi_epoch_transient_search(image_id,
     variability indices, here.)
 
     Transients are stored in the transient table,
-    as well as in the monitoringlist (done by the association recipe),
     to ensure it is measured even when it drops below the threshold.
 
     Transient behaviour is checked per frequency band,

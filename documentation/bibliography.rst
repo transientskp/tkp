@@ -4,12 +4,6 @@
 Bibliography
 ++++++++++++
 
-.. _greisen-1983:
-
-Greisen, E.W. *Non-linear coordinate systems in AIPS*. AIPS Memo 027, NRAO, 1983.
-
-* `AIPS Memo Archive <http://www.aips.nrao.edu/aipsmemo.html>`_
-
 .. _scheers-2011:
 
 Scheers, L.H.A. *Transient and variable radio sources in the LOFAR sky: An
@@ -25,7 +19,7 @@ thesis, University of Amsteram, 2010.
 
 * `Spreeuw (2010) in University of Amsterdam Repository <http://dare.uva.nl/en/record/340633>`_
 
-.. _swinbank-2013:
+.. _swinbank-2014:
 
 Swinbank, J.D. et al. *The LOFAR Transients Pipeline*. In prep.
 

@@ -32,7 +32,7 @@ class L15_12hConstObs(unittest.TestCase):
         fitsfile = tkp.accessors.fitsimage.FitsImage(observed_fits,
                                     beam=(54./3600, 54./3600, 0.))
         self.image = image.ImageData(fitsfile.data, fitsfile.beam, fitsfile.wcs)
-        self.results = self.image.extract(det=10)
+        self.results = self.image.extract(det=10, anl=3.0)
 
     @requires_data(observed_fits)
     def testNumSources(self):
@@ -57,7 +57,7 @@ class L15_12hConstCor(unittest.TestCase):
         fitsfile = tkp.accessors.fitsimage.FitsImage(corrected_fits,
             beam=(54./3600, 54./3600, 0.))
         self.image = image.ImageData(fitsfile.data, fitsfile.beam, fitsfile.wcs)
-        self.results  = self.image.extract(det=10)
+        self.results  = self.image.extract(det=10.0, anl=3.0)
 
     @requires_data(corrected_fits)
     def testNumSources(self):
@@ -97,8 +97,8 @@ class L15_12hConstMod(unittest.TestCase):
         # without the declination dependence.
         fitsfile = tkp.accessors.fitsimage.FitsImage(all_fits,
             beam=(54./3600, 54./3600, 0.))
-        self.image = image.ImageData(fitsfile.data, fitsfile.beam, fitsfile.wcs)
-        self.results  = self.image.extract(det=5)
+        self.image = image.ImageData(fitsfile.data, fitsfile.beam, fitsfile.wcs, radius=100)
+        self.results  = self.image.extract(det=5, anl=3.0)
 
     @requires_data(all_fits)
     def testNumSources(self):

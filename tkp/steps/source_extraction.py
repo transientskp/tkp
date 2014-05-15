@@ -23,22 +23,28 @@ def extract_sources(image_path, extraction_params):
     data_image = sourcefinder_image_from_accessor(accessor,
                     margin=extraction_params['margin'],
                     radius=extraction_params['extraction_radius_pix'],
-                    detection_threshold=extraction_params['detection_threshold'],
-                    analysis_threshold=extraction_params['analysis_threshold'],
-                    ew_sys_err=extraction_params['ew_sys_err'],
-                    ns_sys_err=extraction_params['ns_sys_err'],
-                    force_beam=extraction_params['force_beam'])
+                    back_size_x=extraction_params['back_size_x'],
+                    back_size_y=extraction_params['back_size_y'])
 
-    logger.debug("Employing margin: %s extraction radius: %s deblend: %s deblend_nthresh: %s",
+    logger.debug("Employing margin: %s extraction radius: %s deblend_nthresh: %s",
             extraction_params['margin'],
             extraction_params['extraction_radius_pix'],
-            extraction_params['deblend'],
             extraction_params['deblend_nthresh']
     )
 
-    results = data_image.extract()  # "blind" extraction of sources
+    # "blind" extraction of sources
+    results = data_image.extract(
+        det=extraction_params['detection_threshold'],
+        anl=extraction_params['analysis_threshold'],
+        deblend_nthresh=extraction_params['deblend_nthresh'],
+        force_beam=extraction_params['force_beam']
+    )
     logger.info("Detected %d sources in image %s" % (len(results), image_path))
-    return [r.serialize() for r in results]
+    return [
+        r.serialize(
+            extraction_params['ew_sys_err'], extraction_params['ns_sys_err']
+        ) for r in results
+    ]
 
 
 def forced_fits(image_path, positions, extraction_params):
@@ -56,15 +62,17 @@ def forced_fits(image_path, positions, extraction_params):
     data_image = sourcefinder_image_from_accessor(fitsimage,
                     margin=extraction_params['margin'],
                     radius=extraction_params['extraction_radius_pix'],
-                    detection_threshold=extraction_params['detection_threshold'],
-                    analysis_threshold=extraction_params['analysis_threshold'],
-                    ew_sys_err=extraction_params['ew_sys_err'],
-                    ns_sys_err=extraction_params['ns_sys_err'])
+                    back_size_x=extraction_params['back_size_x'],
+                    back_size_y=extraction_params['back_size_y'])
 
     if len(positions):
         boxsize = extraction_params['box_in_beampix'] * max(data_image.beam[0],
                                                  data_image.beam[1])
         forced_fits = data_image.fit_fixed_positions(positions, boxsize)
-        return [forced_fit.serialize() for forced_fit in forced_fits]
+        return [
+            forced_fit.serialize(
+                extraction_params['ew_sys_err'], extraction_params['ns_sys_err']
+            ) for forced_fit in forced_fits
+        ]
     else:
         return []

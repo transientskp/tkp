@@ -56,7 +56,7 @@ The following parameters may be configured in the :ref:`job configuration file
 Section ``source_extraction``
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-``backsize_x``, ``backsize_y``, ``margin``, ``extraction_radius_pix``, ``max_degredation``, ``force_beam``
+``back_size_x``, ``back_size_y``, ``margin``, ``extraction_radius_pix``, ``max_degredation``, ``force_beam``
    Defined as for :ref:`blind extraction <stage-extraction>`.
 
 ``box_in_beampix``

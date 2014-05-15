@@ -952,7 +952,7 @@ class Detection(object):
         """Distance from center"""
         return ((self.x - x)**2 + (self.y - y)**2)**0.5
 
-    def serialize(self):
+    def serialize(self, ew_sys_err, ns_sys_err):
         """Return source properties suitable for database storage.
 
         @rtype: tuple
@@ -973,7 +973,7 @@ class Detection(object):
             float(self.smaj_asec.value),
             float(self.smin_asec.value),
             float(self.theta_celes.value),
-            float(self.imagedata.ew_sys_err),
-            float(self.imagedata.ns_sys_err),
+            float(ew_sys_err),
+            float(ns_sys_err),
             float(self.error_radius)
         )

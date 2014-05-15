@@ -6,7 +6,6 @@ import unittest
 import tkp.db
 from tkp.db import associations as dbass
 from tkp.db import general as dbgen
-#from tkp.db import monitoringlist as dbmon
 from tkp.db import nd as dbnd
 from tkp.db.orm import DataSet
 from tkp.testutil import db_subs
@@ -26,7 +25,8 @@ class TestForcedFit(unittest.TestCase):
         tkp.db.rollback()
 
     def test_nullDetection(self):
-        dataset = DataSet(data={'description': "null detection:" + self._testMethodName})
+        data = {'description': "null detection:" + self._testMethodName}
+        dataset = DataSet(data=data)
 
         # Three timesteps, each with 4 bands -> 12 images.
         taustart_tss = [datetime.datetime(2013, 8, 1),
@@ -35,12 +35,12 @@ class TestForcedFit(unittest.TestCase):
         freq_effs = [124, 149, 156, 185]
         freq_effs = [f * 1e6 for f in freq_effs]
 
-        im_params = db_subs.example_dbimage_datasets(len(freq_effs) * len(taustart_tss))
+        im_params = db_subs.example_dbimage_datasets(len(freq_effs)
+                                                     * len(taustart_tss))
         timestamps = itertools.repeat(taustart_tss, len(freq_effs))
 
         for im, freq, ts in zip(im_params, itertools.cycle(freq_effs),
-            itertools.chain.from_iterable(zip(*timestamps))
-        ):
+                                itertools.chain.from_iterable(zip(*timestamps))):
             im['freq_eff'] = freq
             im['taustart_ts'] = ts
 
@@ -49,7 +49,7 @@ class TestForcedFit(unittest.TestCase):
             image = tkp.db.Image(dataset=dataset, data=im)
             images.append(image)
 
-        # Arbitrary parameters, except that they fall insite our image.
+        # Arbitrary parameters, except that they fall inside our image.
         src0 = db_subs.example_extractedsource_tuple(ra=122.5, dec=9.5)
         src1 = db_subs.example_extractedsource_tuple(ra=123.5, dec=10.5)
 
@@ -59,21 +59,22 @@ class TestForcedFit(unittest.TestCase):
             for image in images:
                 # The first source is only seen at timestep 0, band 0.
                 # The second source is only seen at timestep 1, band 3.
-                if (image.taustart_ts == taustart_tss[0] and image.freq_eff == freq_effs[0]):
+                if (image.taustart_ts == taustart_tss[0] and
+                            image.freq_eff == freq_effs[0]):
                     dbgen.insert_extracted_sources(image.id, [src0], 'blind')
-                elif (image.taustart_ts == taustart_tss[1] and image.freq_eff == freq_effs[3]):
+                elif (image.taustart_ts == taustart_tss[1] and
+                      image.freq_eff == freq_effs[3]):
                     dbgen.insert_extracted_sources(image.id, [src1], 'blind')
                 else:
                     pass
 
             for image in images:
-                #null_detections = dbmon.get_nulldetections(image.id, 5.68)
                 dbass.associate_extracted_sources(image.id, deRuiter_r=5.68)
-                null_detections = dbnd.get_nulldetections(image.id, 5.68)
-                # The null_detections are the positional inputs for the forced fits, 
-                # which on their turn return additional parameters, 
+                null_detections = dbnd.get_nulldetections(image.id)
+                # The null_detections are the positional inputs for the forced
+                #  fits, which on their turn return additional parameters,
                 # e.g. from src0, src1
-                if (image.taustart_ts == taustart_tss[0]):
+                if image.taustart_ts == taustart_tss[0]:
                     # There are no null detections at the first timestep
                     self.assertEqual(len(null_detections), 0)
                 elif image.taustart_ts == taustart_tss[1]:
@@ -83,9 +84,11 @@ class TestForcedFit(unittest.TestCase):
                 else:
                     # All other images have two null detections.
                     self.assertEqual(len(null_detections), 2)
-                    dbgen.insert_extracted_sources(image.id, [src0, src1], 'ff_nd')
-                #dbass.associate_extracted_sources(image.id, deRuiter_r=5.68)
-                # And here we have to associate the null detections with the runcat sources...
+                    dbgen.insert_extracted_sources(image.id, [src0, src1],
+                                                   'ff_nd')
+
+                # And here we have to associate the null detections with the
+                # runcat sources...
                 dbnd.associate_nd(image.id)
 
         query = """\
@@ -107,27 +110,26 @@ class TestForcedFit(unittest.TestCase):
               ,rf.band
               ,rf.f_datapoints
           FROM runningcatalog r
-              ,runningcatalog_flux rf 
+              ,runningcatalog_flux rf
          WHERE r.dataset = %(dataset_id)s
-           AND rf.runcat = r.id 
+           AND rf.runcat = r.id
         ORDER BY r.id
                 ,rf.band
         """
         cursor = tkp.db.execute(query, {'dataset_id': dataset.id})
         result = cursor.fetchall()
 
-        # We should have eight runningcatalog_flux entries, 
+        # We should have eight runningcatalog_flux entries,
         # one for every source in every band, i.e. 2 x 4.
         # The number of flux datapoints differ per source, though
         self.assertEqual(len(result), 8)
-        #self.assertEqual(99, 8)
 
-        # Source 1: inserted into timestep 0, band 0. 
+        # Source 1: inserted into timestep 0, band 0.
         # Force-fits in band 0 images at next timesteps,
         # so 1+2 for band 0.
         self.assertEqual(result[0][2], 3)
 
-        # Source 1: inserted into timestep 0, band 0. 
+        # Source 1: inserted into timestep 0, band 0.
         # Force-fits in bands 1,2,3 images at next timesteps.
         # so 0+2 for bands 1,2,3.
         self.assertEqual(result[1][2], 2)
@@ -154,14 +156,14 @@ class TestForcedFit(unittest.TestCase):
         query = """\
         SELECT a.runcat
               ,a.xtrsrc
-              ,a.type 
+              ,a.type
               ,i.band
               ,i.taustart_ts
           FROM assocxtrsource a
               ,extractedsource x
-              ,image i 
-         WHERE a.xtrsrc = x.id 
-           AND x.image = i.id 
+              ,image i
+         WHERE a.xtrsrc = x.id
+           AND x.image = i.id
            AND i.dataset = %(dataset_id)s
         ORDER BY a.runcat
                 ,i.band
@@ -172,74 +174,73 @@ class TestForcedFit(unittest.TestCase):
 
         # 9 + 5 entries for source 1 and 2 resp.
         self.assertEqual(len(result), 14)
-        
+
         # The individual light-curve datapoints
         # Source1: new at t1, band0
         self.assertEqual(result[0][2], 4)
         self.assertEqual(result[0][4], taustart_tss[0])
-        
+
         # Source1: Forced fit at t2, same band
         self.assertEqual(result[1][2], 7)
         self.assertEqual(result[1][3], result[0][3])
         self.assertEqual(result[1][4], taustart_tss[1])
-        
+
         # Source1: Forced fit at t3, same band
         self.assertEqual(result[2][2], 7)
         self.assertEqual(result[2][3], result[1][3])
         self.assertEqual(result[2][4], taustart_tss[2])
-        
+
         # Source1: Forced fit at t2, band1
         self.assertEqual(result[3][2], 7)
         self.assertTrue(result[3][3] > result[2][3])
         self.assertEqual(result[3][4], taustart_tss[1])
-        
+
         # Source1: Forced fit at t3, band1
         self.assertEqual(result[4][2], 7)
         self.assertEqual(result[4][3], result[3][3])
         self.assertEqual(result[4][4], taustart_tss[2])
-        
+
         # Source1: Forced fit at t2, band2
         self.assertEqual(result[5][2], 7)
         self.assertTrue(result[5][3] > result[4][3])
         self.assertEqual(result[5][4], taustart_tss[1])
-        
+
         # Source1: Forced fit at t3, band2
         self.assertEqual(result[6][2], 7)
         self.assertEqual(result[6][3], result[5][3])
         self.assertEqual(result[6][4], taustart_tss[2])
-        
+
         # Source1: Forced fit at t2, band3
         self.assertEqual(result[7][2], 7)
         self.assertTrue(result[7][3] > result[6][3])
         self.assertEqual(result[7][4], taustart_tss[1])
-        
+
         # Source1: Forced fit at t3, band3
         self.assertEqual(result[8][2], 7)
         self.assertEqual(result[8][3], result[7][3])
         self.assertEqual(result[8][4], taustart_tss[2])
-        
+
         # Source2: Forced fit at t3, band0
         self.assertEqual(result[9][2], 7)
         self.assertEqual(result[9][3], result[0][3])
         self.assertEqual(result[9][4], taustart_tss[2])
-        
+
         # Source2: Forced fit at t3, band1
         self.assertEqual(result[10][2], 7)
         self.assertTrue(result[10][3] > result[9][3])
         self.assertEqual(result[10][4], taustart_tss[2])
-        
+
         # Source2: Forced fit at t3, band2
         self.assertEqual(result[11][2], 7)
         self.assertTrue(result[11][3] > result[10][3])
         self.assertEqual(result[11][4], taustart_tss[2])
-        
+
         # Source2: new at t2, band3
         self.assertEqual(result[12][2], 4)
         self.assertTrue(result[12][3] > result[11][3])
         self.assertEqual(result[12][4], taustart_tss[1])
-        
+
         # Source2: Forced fit at t3, band3
         self.assertEqual(result[13][2], 7)
         self.assertEqual(result[13][3], result[12][3])
         self.assertEqual(result[13][4], taustart_tss[2])
-        

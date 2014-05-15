@@ -170,9 +170,9 @@ def run(job_name, local=False):
             logger.info("performing source association")
             dbass.associate_extracted_sources(image.id, deRuiter_r=deRuiter_radius)
             logger.info("performing null detections")
-            null_detections = dbnd.get_nulldetections(image.id, deRuiter_radius)
+            null_detections = dbnd.get_nulldetections(image.id)
             logger.info("Found %s null detections" % len(null_detections))
-            # Only if we found null_detections the next steps are necessary 
+            # Only if we found null_detections the next steps are necessary
             if len(null_detections) > 0:
                 logger.info("performing forced fits")
                 ff_nd = forced_fits(image.url, null_detections, se_parset)

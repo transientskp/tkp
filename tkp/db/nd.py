@@ -3,17 +3,14 @@ A collection of back end subroutines (mostly SQL queries).
 
 This module contains the routines to deal with null detections.
 """
-import logging, sys
-from collections import namedtuple
-
-from tkp.db import general
+import logging
 from tkp.db import execute as execute
 from tkp.db.associations import _empty_temprunningcatalog as _del_tempruncat
 
 logger = logging.getLogger(__name__)
 
 
-def get_nulldetections(image_id, deRuiter_r):
+def get_nulldetections(image_id):
     """
     Returns the runningcatalog sources which:
 
@@ -25,22 +22,22 @@ def get_nulldetections(image_id, deRuiter_r):
     NB This runs *after* the source association.
 
     We determine null detections only as those sources which have been
-    seen at earlier times which don't appear in the current image. 
-    Sources which have not been seen earlier, and which appear in 
+    seen at earlier times which don't appear in the current image.
+    Sources which have not been seen earlier, and which appear in
     different bands at the current timestep, are *not* null detections,
     but are considered as "new" sources.
 
-    Output: list of tuples [(runcatid, ra, decl)]
+    Returns: list of tuples [(runcatid, ra, decl)]
     """
-    
-    # The first temptable t0 looks for runcat sources that have been seen 
-    # in the same sky region as the current image, 
+
+    # The first temptable t0 looks for runcat sources that have been seen
+    # in the same sky region as the current image,
     # but at an earlier timestamp, irrespective of the band.
-    # The second temptable t1 returns the runcat source ids for those sources 
+    # The second temptable t1 returns the runcat source ids for those sources
     # that have an association with the current extracted sources.
     # The left outer join in combination with the t1.runcat IS NULL then
     # returns the runcat sources that could not be associated.
-    
+
     query = """\
 SELECT t0.id
       ,t0.wm_ra
@@ -68,8 +65,8 @@ SELECT t0.id
                        ) t1
        ON t0.id = t1.runcat
  WHERE t1.runcat IS NULL
-"""    
-    qry_params = {'image_id':image_id}
+"""
+    qry_params = {'image_id': image_id}
     cursor = execute(query, qry_params)
     results = zip(*cursor.fetchall())
     if len(results) != 0:
@@ -77,32 +74,38 @@ SELECT t0.id
     else:
         return []
 
+
 def associate_nd(image_id):
     """
     Associate the null detections (ie forced fits) of the current image.
-    
-    They will be inserted in a temporary table, which contains the 
+
+    They will be inserted in a temporary table, which contains the
     associations of the forced fits with the running catalog sources.
-    Also, the forced fits are appended to the assocxtrsource (light-curve) 
-    table. The runcat_flux table is updated with the new datapoints if it 
+    Also, the forced fits are appended to the assocxtrsource (light-curve)
+    table. The runcat_flux table is updated with the new datapoints if it
     already existed, otherwise it is inserted as a new datapoint.
     (We leave the runcat table unchanged.)
     After all this, the temporary table is emptied again.
     """
-    
+
     _del_tempruncat()
     _insert_tempruncat(image_id)
-    _insert_1_to_1_assoc(image_id)
-    _update_runcat_flux(image_id)
-    _insert_runcat_flux(image_id)
+    _insert_1_to_1_assoc()
+    _update_runcat_flux()
+    _insert_runcat_flux()
     _del_tempruncat()
+
 
 def _insert_tempruncat(image_id):
     """
     Here the associations of forced fits and their runningcatalog counterparts
     are inserted into the temporary table.
+
+    We follow the implementation of the normal association procedure,
+    except that we don't need to match with a De Ruiter radius, since
+    the counterpart pairs are from the same runningcatalog source.
     """
-    
+
     query = """\
 INSERT INTO temprunningcatalog
   (runcat
@@ -143,9 +146,9 @@ INSERT INTO temprunningcatalog
         ,t0.xtrsrc
         ,0 as distance_arcsec
         ,0 as r
-        ,t0.dataset 
-        ,t0.band 
-        ,t0.stokes 
+        ,t0.dataset
+        ,t0.band
+        ,t0.stokes
         ,t0.datapoints
         ,t0.zone
         ,t0.wm_ra
@@ -231,9 +234,9 @@ INSERT INTO temprunningcatalog
                 ,x.f_peak_err
                 ,x.f_int
                 ,x.f_int_err
-                ,i.dataset 
-                ,i.band 
-                ,i.stokes 
+                ,i.dataset
+                ,i.band
+                ,i.stokes
                 ,r.datapoints
                 ,r.zone
                 ,r.wm_ra
@@ -253,7 +256,7 @@ INSERT INTO temprunningcatalog
                 ,image i
                 ,extractedsource x
            WHERE i.id = %(image_id)s
-             AND r.dataset = i.dataset 
+             AND r.dataset = i.dataset
              AND x.image = i.id
              AND x.image = %(image_id)s
              AND x.extract_type = 1
@@ -269,17 +272,17 @@ INSERT INTO temprunningcatalog
          ON t0.runcat = rf.runcat
          AND t0.band = rf.band
          AND t0.stokes = rf.stokes
-"""    
+"""
     qry_params = {'image_id': image_id}
     cursor = execute(query, qry_params, commit=True)
     cnt = cursor.rowcount
     logger.info("Inserted %s null detections in tempruncat" % cnt)
 
-def _insert_1_to_1_assoc(image_id):
+
+def _insert_1_to_1_assoc():
     """
-    The null detection forced fits are appended to the assocxtrsource (light-curve)
-    table as a type = 7 datapoint.
-    
+    The null detection forced fits are appended to the assocxtrsource
+    (light-curve) table as a type = 7 datapoint.
     """
     query = """\
 INSERT INTO assocxtrsource
@@ -329,10 +332,11 @@ INSERT INTO assocxtrsource
     cnt = cursor.rowcount
     logger.info("Inserted %s 1-to-1 null detections in assocxtrsource" % cnt)
 
-def _update_runcat_flux(image_id):
-    """We only have to update those runcat sources that already had a detection, 
+
+def _update_runcat_flux():
+    """We only have to update those runcat sources that already had a detection,
     so their f_datapoints is larger than 1.
-        
+
     """
     query = """\
 UPDATE runningcatalog_flux
@@ -437,9 +441,10 @@ UPDATE runningcatalog_flux
     cnt = cursor.rowcount
     if cnt > 0:
         logger.info("Updated flux for %s null_detections" % cnt)
-    
-def _insert_runcat_flux(image_id):
-    """Sources that were not yet detected in this frequency band before, 
+
+
+def _insert_runcat_flux():
+    """Sources that were not yet detected in this frequency band before,
     will be appended to it. Those have their first f_datapoint.
     """
 
@@ -481,4 +486,4 @@ INSERT INTO runningcatalog_flux
     cnt = cursor.rowcount
     if cnt > 0:
         logger.info("Inserted fluxes for %s null_detections" % cnt)
-    
+

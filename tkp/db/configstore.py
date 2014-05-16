@@ -23,7 +23,7 @@ def store_config(config, dataset_id):
     Args:
         config (dict): nested dict containing config, [section][key] -> [value]
     """
-    logging.info("storing config to database for dataset %s" % dataset_id)
+    logger.info("storing config to database for dataset %s" % dataset_id)
     error = "type of value %s, key %s in section %s has type %s, we only do %s"
     for section, v in config.items():
         for key, value in v.items():
@@ -53,7 +53,7 @@ def fetch_config(dataset_id):
     Returns:
         nested dict [section][key] -> [value]
     """
-    logging.info("fetching config from database for dataset %s" % dataset_id)
+    logger.info("fetching config from database for dataset %s" % dataset_id)
     error = "type in database is %s but we only support %s"
     result = execute(fetch_query, {'dataset': dataset_id}).fetchall()
     config = adict()

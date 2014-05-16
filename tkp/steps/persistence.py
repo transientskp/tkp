@@ -68,11 +68,11 @@ def create_dataset(dataset_id, description):
     database = Database()
     if dataset_id == -1:
         dataset = DataSet({'description': description}, database)
-        logging.info("created dataset %s (%s)" % (dataset.id,
+        logger.info("created dataset %s (%s)" % (dataset.id,
                                                   dataset.description))
     else:
         dataset = DataSet(id=dataset_id, database=database)
-        logging.info("using dataset %s (%s)" % (dataset.id,
+        logger.info("using dataset %s (%s)" % (dataset.id,
                                                 dataset.description))
     return dataset.id
 

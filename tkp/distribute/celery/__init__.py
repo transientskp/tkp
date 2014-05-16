@@ -31,6 +31,7 @@ from tkp.db import nd as dbnd
 from tkp.db import associations as dbass
 from tkp.distribute.celery import tasks
 from tkp.distribute.common import (load_job_config, dump_configs_to_logdir,
+                                   check_job_configs_match,
                                    setup_log_file, dump_database_backup,
                                    group_per_timestep)
 from tkp.db.configstore import store_config, fetch_config
@@ -105,19 +106,12 @@ def run(job_name, local=False):
 
     logger.info("dataset %s contains %s images" % (job_name, len(all_images)))
 
-    dump_configs_to_logdir(log_dir, job_config, pipe_config)
+
 
     logger.info("performing database consistency check")
     if not dbconsistency.check():
         logger.error("Inconsistent database found; aborting")
         return 1
-
-    logger.info("performing persistence step")
-    image_cache_params = pipe_config.image_cache
-    imgs = [[img] for img in all_images]
-    metadatas = runner(tasks.persistence_node_step, imgs, [image_cache_params],
-                       local)
-    metadatas = [m[0] for m in metadatas]
 
     dataset_id = create_dataset(job_config.persistence.dataset_id,
                                 job_config.persistence.description)
@@ -125,7 +119,24 @@ def run(job_name, local=False):
     if job_config.persistence.dataset_id == -1:
         store_config(job_config, dataset_id)  # new data set
     else:
-        job_config = fetch_config(dataset_id)  # existing data set
+        job_config_from_db = fetch_config(dataset_id)  # existing data set
+        if check_job_configs_match(job_config, job_config_from_db):
+            logger.debug("Job configs from file / database match OK.")
+        else:
+            logger.warn("Job config file has changed since dataset was "
+                        "first loaded into database. ")
+            logger.warn("Using job config settings loaded from database, see "
+                        "log dir for details")
+        job_config = job_config_from_db
+
+    dump_configs_to_logdir(log_dir, job_config, pipe_config)
+
+    logger.info("performing persistence step")
+    image_cache_params = pipe_config.image_cache
+    imgs = [[img] for img in all_images]
+    metadatas = runner(tasks.persistence_node_step, imgs, [image_cache_params],
+                       local)
+    metadatas = [m[0] for m in metadatas]
 
     logger.info("Storing images")
     image_ids = store_images(metadatas,
@@ -155,7 +166,7 @@ def run(job_name, local=False):
     timestep_num = len(grouped_images)
     for n, (timestep, images) in enumerate(grouped_images):
         msg = "processing %s images in timestep %s (%s/%s)"
-        logging.info(msg % (len(images), timestep, n+1, timestep_num))
+        logger.info(msg % (len(images), timestep, n+1, timestep_num))
 
         logger.info("performing source extraction")
         urls = [img.url for img in images]

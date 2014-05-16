@@ -68,8 +68,12 @@ def create_dataset(dataset_id, description):
     database = Database()
     if dataset_id == -1:
         dataset = DataSet({'description': description}, database)
+        logger.info("created dataset %s (%s)" % (dataset.id,
+                                                  dataset.description))
     else:
         dataset = DataSet(id=dataset_id, database=database)
+        logger.info("using dataset %s (%s)" % (dataset.id,
+                                                dataset.description))
     return dataset.id
 
 
@@ -133,24 +137,3 @@ def node_steps(images, image_cache_config):
 
     metadatas = extract_metadatas(images)
     return metadatas
-
-
-def master_steps(metadatas, extraction_radius_pix, persistence_config):
-    """this function executes all persistence steps that should be executed on
-        a master.
-    Args:
-        metadatas: a list of dicts containing info from Image Accessors. This
-                   is returned by the node recipe
-       extraction_radius_pix: (float) Used to calculate the 'skyregion'
-       persistence_config: (dict)  
-    """
-    logger.info("creating dataset in database ...")
-    dataset_id = create_dataset(
-        persistence_config['dataset_id'],
-        persistence_config['description'])
-    logger.info("added dataset with ID %s" % dataset_id)
-
-    logger.info("Storing images")
-    image_ids = store_images(metadatas, extraction_radius_pix, dataset_id)
-    return dataset_id, image_ids
-

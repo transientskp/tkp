@@ -1,23 +1,26 @@
 """Utilities for loading parameters from config files, with automatic type 
 conversion."""
 
-import ConfigParser
 import ast
 import logging
-
 import datetime
-from collections import defaultdict, OrderedDict
+
+from tkp.utility import adict
+
 
 logger = logging.getLogger(__name__)
 
 
 ## Use prefix loads / dumps for 'load string', 'dump string', a la JSON.
 dt_w_microsecond_format = '%Y-%m-%dT%H:%M:%S.%f'
+
+
 def loads_timestamp_w_microseconds(dt_str):
     return datetime.datetime.strptime(dt_str, dt_w_microsecond_format)
 
 loads_methods = (ast.literal_eval,
                   loads_timestamp_w_microseconds)
+
 
 def parse_to_dict(config):
     """Loads the ConfigParser object as a nested dictionary.
@@ -41,7 +44,7 @@ def parse_to_dict(config):
     Nested OrderedDict {sections -> keys -> values } representing parsed params.
     
     """
-    pars = {}
+    pars = adict()
     #'DEFAULT' section is not listed by ``sections()``,
     # but we sometimes (ab)use it.
     sections = config.sections()
@@ -50,20 +53,20 @@ def parse_to_dict(config):
 
     for section_name in sections:
         if section_name not in pars:
-            pars[section_name]={}
+            pars[section_name] = adict()
         for k, rawval in config.items(section_name):
             val = rawval
             for func in loads_methods:
                 try:
                     val = func(rawval)
-                    break #Drop out of loop if exception not thrown
+                    break  # Drop out of loop if exception not thrown
                 except (ValueError, SyntaxError):
-                    pass #Try the next method
+                    pass  # Try the next method
             if val == rawval:
                 logger.debug("Parsing section: [%s]\n"
-                            "Could not parse key-value pair:\n%s = %s\n"
-                                    "-assuming string value",
-                                    section_name, k, rawval)
+                             "Could not parse key-value pair:\n%s = %s\n"
+                             "-assuming string value",
+                             section_name, k, rawval)
             pars[section_name][k] = val
 
     return pars

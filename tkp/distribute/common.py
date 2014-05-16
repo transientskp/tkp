@@ -34,6 +34,17 @@ def dump_configs_to_logdir(log_dir, job_config, pipe_config):
     with open(os.path.join(log_dir, 'pipeline.cfg'), 'w') as f:
         pprint(pipe_config, stream=f)
 
+def check_job_configs_match(job_config_1, job_config_2):
+    """
+    Check if job configs match, except dataset_id which we expect to change.
+    """
+    jc_from_file = job_config_1.copy()
+    jc_from_db = job_config_2.copy()
+    del jc_from_file['persistence']['dataset_id']
+    del jc_from_db['persistence']['dataset_id']
+    return jc_from_file==jc_from_db
+
+
 
 def setup_log_file(log_dir, debug=False, basename='trap.log'):
     """

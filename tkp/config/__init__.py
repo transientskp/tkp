@@ -1,16 +1,16 @@
 from __future__ import absolute_import
 
-from tkp.config.parse import parse_to_dict, dt_w_microsecond_format
-
 from ConfigParser import SafeConfigParser
-import os
 import datetime
-import tkp.db
 import getpass
-
 import logging
+import os
+
+from tkp.config.parse import parse_to_dict, dt_w_microsecond_format
+import tkp.db
 
 logger = logging.getLogger(__name__)
+
 
 def initialize_pipeline_config(pipe_cfg_file, job_name):
     """
@@ -29,7 +29,6 @@ def initialize_pipeline_config(pipe_cfg_file, job_name):
     #NB we force sensible errors by attempting to open the pipeline.cfg file:
     config.read(pipe_cfg_file)
     return parse_to_dict(config)
-
 
 
 def get_database_config(config_passed=None, apply=False):

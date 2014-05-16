@@ -139,18 +139,19 @@ the two documentation sections.
 Doc strings
 -----------
 
-The doc strings also follow pretty much the suggestions in PEP 8. They
-are relatively relaxed, and not all methods will have a proper
-docstring. The documentation of the arguments and keyword arguments
-follow roughly the convention suggested `by Google
-<http://google-styleguide.googlecode.com/svn/trunk/pyguide.html?showone=Comments#Comments>`_
-(`see also
-<http://packages.python.org/an_example_pypi_project/sphinx.html#function-definitions>`_);
-this is different than the `Sphinx supported style
-<http://sphinx.pocoo.org/markup/desc.html#info-field-lists>`_, but
-feels more readable.
+For doc strings we use the `sphinxcontrib-napoleon
+<https://pypi.python.org/pypi/sphinxcontrib-napoleon>`_ syntax, since
+it is much more clear to read than the suggested PEP 8 syntax or
+default Sphinx Syntax. Example::
 
+    Args:
+        path (str): The path of the file to wrap
+        field_storage (FileStorage): The :class:`FileStorage` instance to wrap
+        temporary (bool): Whether or not to delete the file when the File
+           instance is destructed
 
+    Returns:
+        BufferedFileStorage: A buffered writable file descriptor
 
 
 Testing

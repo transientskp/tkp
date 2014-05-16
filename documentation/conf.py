@@ -35,6 +35,7 @@ extensions = [
     'sphinx.ext.mathjax',
     'tkp.utility.sphinx.lastupdated',
     'sphinxcontrib.programoutput',
+    'sphinxcontrib.napoleon',
 ]
 
 

@@ -6,10 +6,6 @@ pytz
 #pyrap>=1.1.0  # not available on pip
 celery>=3.0
 
-## if you want to genere the doc
-# sphinx  # only for documentation
-# sphinxcontrib-programoutput  # only for documentation
-
 ## if you want to connect to the image cache
 pymongo
 

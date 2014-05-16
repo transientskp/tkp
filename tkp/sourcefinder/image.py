@@ -823,7 +823,7 @@ class ImageData(object):
         # appending it to the results list.
         results = containers.ExtractionResults()
         for island in island_list:
-            if self.force_beam:
+            if force_beam:
                 fixed = {'semimajor': self.beam[0],
                          'semiminor': self.beam[1],
                          'theta': self.beam[2]}

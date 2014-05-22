@@ -60,5 +60,9 @@ class TestConfigStore(unittest.TestCase):
         """
         store_config(config, self.dataset_id)
         database = Database()
-        self.assertRaises(database.connection.IntegrityError, store_config,
-                          config, self.dataset_id)
+        if database.engine == "monetdb":
+            # monetdb raises an OperationalError here, postgres (and probably others IntegrityError)
+            exception = database.connection.OperationalError
+        else:
+            exception = database.connection.IntegrityError
+        self.assertRaises(exception, store_config, config, self.dataset_id)

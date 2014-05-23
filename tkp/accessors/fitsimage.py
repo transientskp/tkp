@@ -240,15 +240,15 @@ def parse_times(header):
         start = parse_start_time(header)
     except KeyError:
         #If no start time specified, give up:
-        logger.warn("Timestamp not specified in FITS file;"
+        logger.warn("Timestamp not specified in FITS file:"
                     " using 'now' with dummy (zero-valued) integration time.")
         return datetime.datetime.now(), 0.
 
     try:
         end = dateutil.parser.parse(header['end_utc'])
     except KeyError:
-        logger.warn("End time not specified or unreadable,"
-                    "using dummy (zero-valued) integration time")
+        logger.warn("End time not specified or unreadable:"
+                    " using dummy (zero-valued) integration time")
         end = start
 
     delta = end - start

@@ -122,7 +122,7 @@ This table records which :ref:`runningcatalog <schema-runningcatalog>` sources
 we expect to see in any given skyregion. This serves two purposes: 
 it allows us to determine when we *do not* see previously detected sources, 
 presumably because they have dropped in flux 
-(see :py:func:`tkp.db.monitoringlist.get_nulldetections`). 
+(see :py:func:`tkp.db.nd.get_nulldetections`). 
 It also allows us to determine whether a new runningcatalog entry (i.e. 
 a newly detected source without associated historical detections) is being 
 detected for the first time because it is actually a new transient, or 

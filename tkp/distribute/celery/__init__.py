@@ -134,7 +134,9 @@ def run(job_name, local=False):
     logger.info("performing persistence step")
     image_cache_params = pipe_config.image_cache
     imgs = [[img] for img in all_images]
-    metadatas = runner(tasks.persistence_node_step, imgs, [image_cache_params],
+    sigma = job_config.persistence.sigma
+    f = job_config.persistence.f
+    metadatas = runner(tasks.persistence_node_step, imgs, [image_cache_params, sigma, f],
                        local)
     metadatas = [m[0] for m in metadatas]
 

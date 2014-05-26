@@ -317,8 +317,8 @@ class DataSet(DBObject):
         if self._id is None:
             try:
                 self._id = insert_dataset(self._data['description'])
-            except self.database.connection.Error, e:
-                logger.error("insert dataset failed: %s" % e)
+            except Exception as e:
+                logger.error("ORM: unkown error inserting dataset,  %s: %s" % (type(e).__name__, str(e)))
                 raise
         return self._id
 
@@ -374,7 +374,7 @@ class Image(DBObject):
     REQUIRED = ('dataset', 'tau_time', 'freq_eff', 'freq_bw', 'taustart_ts',
                 'beam_smaj_pix', 'beam_smin_pix', 'beam_pa_rad',
                 'deltax', 'deltay',
-                'url', 'centre_ra', 'centre_decl', 'xtr_radius')
+                'url', 'centre_ra', 'centre_decl', 'xtr_radius', 'rms')
 
 
 
@@ -429,9 +429,10 @@ class Image(DBObject):
                     self._data['centre_ra'], #Degrees J2000
                     self._data['centre_decl'], #Degrees J2000
                     self._data['xtr_radius'], #Degrees
+                    self._data['rms'],
                 )
-            except self.database.Error, e:
-                logger.warn("insertion of Image() into the database failed")
+            except Exception as e:
+                logger.error("ORM: unkown error inserting image,  %s: %s" % (type(e).__name__, str(e)))
                 raise
         return self._id
 

@@ -12,6 +12,7 @@ class CasaImage(DataAccessor):
     # NB CasaImage does not provide tau_time or taustart_ts, so cannot be
     # instantiated.
     def __init__(self, url, plane=0, beam=None):
+        super(CasaImage, self).__init__()
         self._url = url
         table = pyrap_table(self.url.encode(), ack=False)
         self._data = parse_data(table, plane)

@@ -619,9 +619,7 @@ dataset).
     The timestamp of the start of the observation, originating or read from 
     the CASA LOFAR_OBSERVATION table from the ``OBSERVATION_START`` data field.
 
-
-
-**rb_smaj** 
+**rb_smaj**
     The semi-major axis of the restoring beam, in degrees. 
     Full major axis value originates or is read from the CASA Main table in the imageinfor
     subsection from the ``restoringbeam`` record and is converted at db insertion time.
@@ -651,6 +649,9 @@ dataset).
 **node(s)** 
     Determine the current and number of nodes in case of a sharded database
     set-up.
+
+**rms**
+    The RMS value of the image step, calculated in the persistence step.
 
 
 monitoringlist

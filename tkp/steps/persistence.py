@@ -1,3 +1,7 @@
+"""
+This `step` is used for the storing of images and metadata
+to the database and image cache (mongodb).
+"""
 import os
 import logging
 import warnings
@@ -77,11 +81,19 @@ def create_dataset(dataset_id, description):
     return dataset.id
 
 
-def extract_metadatas(images):
+def extract_metadatas(images, sigma, f):
+    """
+    args:
+        images: list of image urls
+        sigma: used for RMS calculation, see `tkp.quality.statistics`
+        f: used for RMS calculation, see `tkp.quality.statistics`
+    """
     results = []
     for image in images:
         logger.info("Extracting metadata from %s" % image)
         accessor = tkp.accessors.open(image)
+        accessor.sigma = sigma
+        accessor.f = f
         results.append(accessor.extract_metadata())
     return results
 
@@ -119,7 +131,7 @@ def store_images(images_metadata, extraction_radius_pix, dataset_id):
     return image_ids
 
 
-def node_steps(images, image_cache_config):
+def node_steps(images, image_cache_config, sigma, f):
     """
     this function executes all persistence steps that should be executed on a node.
     Note: Should only be used in a node recipe
@@ -135,5 +147,5 @@ def node_steps(images, image_cache_config):
     else:
         logger.info("Not copying images to mongodb")
 
-    metadatas = extract_metadatas(images)
+    metadatas = extract_metadatas(images, sigma, f)
     return metadatas

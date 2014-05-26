@@ -12,9 +12,9 @@ local_logger = logging.getLogger(__name__)
 
 
 @trap.task
-def persistence_node_step(images, image_cache_config):
+def persistence_node_step(images, image_cache_config, sigma, f):
     local_logger.info("running persistence task")
-    return tkp.steps.persistence.node_steps(images, image_cache_config)
+    return tkp.steps.persistence.node_steps(images, image_cache_config, sigma, f)
 
 
 @trap.task

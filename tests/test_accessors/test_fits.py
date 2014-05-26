@@ -3,7 +3,7 @@ Tests for simulated LOFAR datasets.
 """
 
 import os
-
+import logging
 import unittest
 
 from tkp.testutil.data import DATAPATH
@@ -15,6 +15,8 @@ import tkp.db
 from tkp.testutil.decorators import requires_data
 from tkp.testutil.decorators import requires_database
 
+
+logging.basicConfig(level=logging.DEBUG)
 
 
 class PyfitsFitsImage(unittest.TestCase):

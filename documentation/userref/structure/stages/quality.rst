@@ -29,13 +29,6 @@ The following parameters may be configured in the :ref:`job configuration file
 Section ``quality_lofar``
 ^^^^^^^^^^^^^^^^^^^^^^^^^
 
-``sigma``
-   Float. :math:`\sigma` value used for iterative clipping.
-
-``f``
-   Integer. Determines the size of the subsection used for RMS measurement:
-   the central ``1/f`` of the image will be used.
-
 ``low_bound``
    Float. Reject the image if the measured RMS is less than ``low_bound``
    times the theoretical noise.

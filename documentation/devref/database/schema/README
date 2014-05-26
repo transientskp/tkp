@@ -1,0 +1,13 @@
+You can use this mini django project for creating
+a schema of your database.
+
+steps:
+
+ 1> $ sudo apt-get install python-django-extensions
+
+ 2> edit settings.py to reflect your DB settings
+
+ 3> run update.sh
+
+ 4> now you have a shiny new schema.png
+

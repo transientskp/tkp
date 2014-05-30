@@ -1,9 +1,5 @@
 """
 Tests the log message transportation mechanism.
-
-Requires a running broker and a TKP worker accepting jobs and configured with
-INFO level logging (-l INFO). Don't run with DEBUG, the worker will hang.
-If not ran with logging level INFO the test will fail.
 """
 import unittest
 import logging

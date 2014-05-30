@@ -5,6 +5,7 @@ all functions should be a wrapper around the code in tkp.steps.
 from __future__ import absolute_import
 import logging
 
+from celery.utils.log import get_task_logger
 from celery.signals import after_setup_logger
 from celery.signals import after_setup_task_logger
 
@@ -13,7 +14,7 @@ from tkp.distribute.celery.log import TaskLogEmitter
 import tkp.steps
 
 
-worker_logger = logging.getLogger(__name__)
+worker_logger = get_task_logger(__name__)
 
 
 @after_setup_logger.connect

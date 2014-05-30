@@ -6,7 +6,6 @@ import socket
 import pwd
 
 user = pwd.getpwuid(os.getuid()).pw_name
-pid = os.getpid()
 host = socket.getfqdn(socket.gethostname())
 
 
@@ -18,7 +17,8 @@ def monitor_events(celery_app):
     def on_event(event):
         logger = logging.getLogger(event['name'])
         msg = "WORKER %(user)s@%(host)s(%(pid)s): %(msg)s" % event
-        logger.log(event['levelno'], msg)
+        if not event['name'].startswith('celery.redirected'):
+            logger.log(event['levelno'], msg)
 
     with celery_app.connection() as conn:
         recv = celery_app.events.Receiver(conn, handlers={'task-log': on_event})

@@ -43,7 +43,9 @@ class TestCelery(unittest.TestCase):
         root_logger.addHandler(mock_handler)
         check = {logging.INFO, logging.WARNING, logging.ERROR}
         mock_handler.reset()
-        bogus.delay().get()
+        mock_handler.setLevel(logging.INFO)
+        result=bogus()
+
         for record in mock_handler.records:
             if record.name == 'tkp.distribute.celery.tasks':
                 self.assertTrue(record.levelno in check)

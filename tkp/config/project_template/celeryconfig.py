@@ -9,6 +9,9 @@
 # workers are required.
 #CELERY_ALWAYS_EAGER = CELERY_EAGER_PROPAGATES_EXCEPTIONS = True
 
+# Prevents issues with using a separate threading.Thread in addition to Celery.
+CELERYD_FORCE_EXECV = True
+
 # Otherwise, configure the broker to which workers should connect and to which
 # they will return results. This must be started independently of the
 # pipeline.
@@ -16,6 +19,3 @@ BROKER_URL = CELERY_RESULT_BACKEND = 'amqp://guest@localhost//'
 
 # This is used when you run a worker.
 CELERY_IMPORTS = ("tkp.distribute.celery.tasks", )
-
-# Don't reconfigure the logger, important for a worker.
-CELERYD_HIJACK_ROOT_LOGGER = False

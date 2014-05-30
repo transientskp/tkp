@@ -1,41 +1,73 @@
-from __future__ import absolute_import
 """
 All Celery worker tasks are defined here. No logic should be implemented here,
 all functions should be a wrapper around the code in tkp.steps.
 """
-import warnings
+from __future__ import absolute_import
 import logging
-from tkp.distribute.celery.trap_app import trap
+
+from celery.utils.log import get_task_logger
+from celery.signals import after_setup_logger
+from celery.signals import after_setup_task_logger
+
+from tkp.distribute.celery import celery_app
+from tkp.distribute.celery.log import TaskLogEmitter
 import tkp.steps
 
-local_logger = logging.getLogger(__name__)
+
+worker_logger = get_task_logger(__name__)
 
 
-@trap.task
+@after_setup_logger.connect
+@after_setup_task_logger.connect
+def setup_task_log_emitter(sender=None, logger=None, loglevel=None,
+                           logfile=None, format=None, colorize=None, **kwargs):
+    """
+    adds event emitter to every task logger and to every global logger.
+    This should be run on the worker. Probably it is best do leave this
+    function definition inside the task definition!
+    """
+    handler = TaskLogEmitter(celery_app)
+    logger.addHandler(handler)
+
+
+@celery_app.task
 def persistence_node_step(images, image_cache_config):
-    local_logger.info("running persistence task")
+    worker_logger.info("running persistence task")
     return tkp.steps.persistence.node_steps(images, image_cache_config)
 
 
-@trap.task
+@celery_app.task
 def quality_reject_check(url, job_config):
-    local_logger.info("running quality task")
+    worker_logger.info("running quality task")
     return tkp.steps.quality.reject_check(url, job_config)
 
 
-@trap.task
+@celery_app.task
 def extract_sources(url, extraction_params):
-    local_logger.info("running extracted sources task")
+    worker_logger.info("running extracted sources task")
     return tkp.steps.source_extraction.extract_sources(url, extraction_params)
 
 
-@trap.task
+@celery_app.task
 def forced_fits(detection_set, extraction_params):
     """
     :param detection_set: should be (url, detections) tuple
     :param extraction_params: null detections extraction_params
     :return:
     """
-    local_logger.info("running forced fits task")
+    worker_logger.info("running forced fits task")
     url, detections = detection_set
-    return tkp.steps.source_extraction.forced_fits(url, detections, extraction_params)
+    return tkp.steps.source_extraction.forced_fits(url, detections,
+                                                   extraction_params)
+
+@celery_app.task
+def bogus():
+    """
+    doesn't do much, only emit some log messages so we can test if the
+    logging facilities are working
+    """
+    worker_logger.info("info from task")
+    worker_logger.warning("warning from task")
+    worker_logger.error("error from task")
+    worker_logger.debug("debug from task")
+    return "love"

@@ -5,9 +5,6 @@ import ast
 import logging
 import datetime
 
-from tkp.utility import adict
-
-
 logger = logging.getLogger(__name__)
 
 
@@ -41,10 +38,10 @@ def parse_to_dict(config):
       - *config*: A ConfigParser object.
       
     Returns:
-    Nested OrderedDict {sections -> keys -> values } representing parsed params.
+    Nested dict {sections -> keys -> values } representing parsed params.
     
     """
-    pars = adict()
+    pars = {}
     #'DEFAULT' section is not listed by ``sections()``,
     # but we sometimes (ab)use it.
     sections = config.sections()
@@ -53,7 +50,7 @@ def parse_to_dict(config):
 
     for section_name in sections:
         if section_name not in pars:
-            pars[section_name] = adict()
+            pars[section_name] = {}
         for k, rawval in config.items(section_name):
             val = rawval
             for func in loads_methods:

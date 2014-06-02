@@ -151,7 +151,6 @@ class TestManagement(unittest.TestCase):
     def test_prepare_job(self):
         os.chdir(self.parent)
         tkp.management.prepare_job(job_name)
-        tkp.management.prepare_job(job_name, debug=True)
 
     def test_main(self):
         # should raise exception when no arguments

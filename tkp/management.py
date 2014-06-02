@@ -209,17 +209,11 @@ def init_job(args):
     return copy_template("job", args.name)
 
 
-def prepare_job(jobname, debug=False):
+def prepare_job(jobname):
     here = os.getcwd()
     jobdir = os.path.join(here, jobname)
     pipelinefile = os.path.join(here, "pipeline.cfg")
     sys.path.append(jobdir)
-    if debug:
-        # show us DEBUG logging
-        sys.argv.append("-d")
-    else:
-        # show us INFO logging
-        sys.argv.append("-v")
 
 
 def celery_cmd(args):
@@ -230,7 +224,7 @@ def celery_cmd(args):
 
 def run_job(args):
     print "running job '%s'" % args.name
-    prepare_job(args.name, args.debug)
+    prepare_job(args.name)
     monitor_coords = parse_monitoringlist_positions(args)
     if args.method == 'celery':
         import tkp.distribute.celery
@@ -323,8 +317,6 @@ environment variables to configure the connection:
                               formatter_class=argparse.RawTextHelpFormatter)
 
     run_parser.add_argument('name', help='Name of job to run')
-    run_parser.add_argument('-d', '--debug', help='enable debug logging',
-                            action='store_true')
     m_help = 'Specify a list of RA,DEC co-ordinate pairs to monitor (decimal' \
              ' degrees, no spaces)'
     run_parser.add_argument('-m', '--monitor-coords', help=m_help)

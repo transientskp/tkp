@@ -3,6 +3,7 @@ store and retrieve pipeline settings to/from database
 """
 import logging
 from tkp.db import execute
+from tkp.utility import adict
 
 # the types of values we accept
 types = [str, int, float, bool]
@@ -55,7 +56,7 @@ def fetch_config(dataset_id):
     logger.info("fetching config from database for dataset %s" % dataset_id)
     error = "type in database is %s but we only support %s"
     result = execute(fetch_query, {'dataset': dataset_id}).fetchall()
-    config = {}
+    config = adict()
     for section, key, value, type_ in result:
         if type_ not in (t.__name__ for t in types):
             msg = error % (type_, ", ".join(t.__name__ for t in types))
@@ -63,6 +64,6 @@ def fetch_config(dataset_id):
             raise TypeError(msg)
         converted = eval(type_)(value)
         if not section in config:
-            config[section] = {}
+            config[section] = adict()
         config[section][key] = converted
     return config

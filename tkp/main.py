@@ -63,24 +63,24 @@ def run(job_name, local=False):
         os.path.join(os.getcwd(), "pipeline.cfg"),
         job_name)
 
-    debug = pipe_config['logging']['debug']
+    debug = pipe_config.logging.debug
     #Setup logfile before we do anything else
-    log_dir = pipe_config['logging']['log_dir']
+    log_dir = pipe_config.logging.log_dir
     setup_log_file(log_dir, debug)
 
-    job_dir = pipe_config['DEFAULT']['job_directory']
+    job_dir = pipe_config.DEFAULT.job_directory
     if not os.access(job_dir, os.X_OK):
         msg = "can't access job folder %s" % job_dir
         logger.error(msg)
         raise IOError(msg)
     logger.info("Job dir: %s", job_dir)
 
-    db_config = get_database_config(pipe_config['database'], apply=True)
+    db_config = get_database_config(pipe_config.database, apply=True)
     dump_database_backup(db_config, job_dir)
 
     job_config = load_job_config(pipe_config)
-    se_parset = job_config['source_extraction']
-    deruiter_radius = job_config['association']['deruiter_radius']
+    se_parset = job_config.source_extraction
+    deruiter_radius = job_config.association.deruiter_radius
 
     all_images = imp.load_source('images_to_process',
                                  os.path.join(job_dir,
@@ -95,10 +95,10 @@ def run(job_name, local=False):
         logger.error("Inconsistent database found; aborting")
         return 1
 
-    dataset_id = create_dataset(job_config['persistence']['dataset_id'],
-                                job_config['persistence']['description'])
+    dataset_id = create_dataset(job_config.persistence.dataset_id,
+                                job_config.persistence.description)
 
-    if job_config['persistence']['dataset_id'] == -1:
+    if job_config.persistence.dataset_id == -1:
         store_config(job_config, dataset_id)  # new data set
     else:
         job_config_from_db = fetch_config(dataset_id)  # existing data set
@@ -114,7 +114,7 @@ def run(job_name, local=False):
     dump_configs_to_logdir(log_dir, job_config, pipe_config)
 
     logger.info("performing persistence step")
-    image_cache_params = pipe_config['image_cache']
+    image_cache_params = pipe_config.image_cache
     imgs = [[img] for img in all_images]
     metadatas = runner(tasks.persistence_node_step, imgs, [image_cache_params],
                        local)
@@ -122,7 +122,7 @@ def run(job_name, local=False):
 
     logger.info("Storing images")
     image_ids = store_images(metadatas,
-                     job_config['source_extraction']['extraction_radius_pix'],
+                     job_config.source_extraction.extraction_radius_pix,
                      dataset_id)
 
     db_images = [Image(id=image_id) for image_id in image_ids]
@@ -177,7 +177,7 @@ def run(job_name, local=False):
                 logger.info("adding null detections")
                 dbnd.associate_nd(image.id)
             transients = search_transients(image.id,
-                                           job_config['transient_search'])
+                                           job_config.transient_search)
             dbmon.adjust_transients_in_monitoringlist(image.id, transients)
 
         dbgen.update_dataset_process_end_ts(dataset_id)

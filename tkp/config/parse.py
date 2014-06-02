@@ -4,9 +4,7 @@ conversion."""
 import ast
 import logging
 import datetime
-
 from tkp.utility import adict
-
 
 logger = logging.getLogger(__name__)
 
@@ -41,7 +39,7 @@ def parse_to_dict(config):
       - *config*: A ConfigParser object.
       
     Returns:
-    Nested OrderedDict {sections -> keys -> values } representing parsed params.
+    Nested dict {sections -> keys -> values } representing parsed params.
     
     """
     pars = adict()

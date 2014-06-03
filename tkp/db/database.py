@@ -8,7 +8,6 @@ logger = logging.getLogger(__name__)
 # Increment whenever the schema changes.
 DB_VERSION = 21
 
-
 class DBExceptions(object):
     """
     This provides an engine-agnostic wrapper around the exceptions that can

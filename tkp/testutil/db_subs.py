@@ -33,8 +33,6 @@ def delete_test_database(database):
                          "Not recommended!")
     try:
         #cursor = database.connection.cursor()
-        query = "DELETE from monitoringlist"
-        tkp.db.execute(query, commit=True)
         query = "DELETE from runningcatalog_flux"
         tkp.db.execute(query, commit=True)
         query = "DELETE from assocxtrsource"

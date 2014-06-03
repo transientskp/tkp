@@ -119,7 +119,6 @@ import logging
 from tkp.db.generic import columns_from_table, set_columns_for_table
 from tkp.db.general import (insert_dataset, insert_image,
                             insert_extracted_sources, lightcurve)
-from tkp.db.monitoringlist import add_manual_entry_to_monitoringlist
 from tkp.db.associations import associate_extracted_sources
 import tkp.db
 import tkp.db.quality
@@ -348,10 +347,6 @@ class DataSet(DBObject):
                                       keywords=['id', 'xtrsrc', 'datapoints'],
                                       alias={'id':'runcat'},
                                       where={'dataset':self.id})
-
-
-    def add_manual_entry_to_monitoringlist(self, ra, dec):
-        add_manual_entry_to_monitoringlist(self.id, ra, dec)
 
 
     def frequency_bands(self):

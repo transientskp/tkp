@@ -122,7 +122,7 @@ This table records which :ref:`runningcatalog <schema-runningcatalog>` sources
 we expect to see in any given skyregion. This serves two purposes: 
 it allows us to determine when we *do not* see previously detected sources, 
 presumably because they have dropped in flux 
-(see :py:func:`tkp.db.monitoringlist.get_nulldetections`). 
+(see :py:func:`tkp.db.nd.get_nulldetections`). 
 It also allows us to determine whether a new runningcatalog entry (i.e. 
 a newly detected source without associated historical detections) is being 
 detected for the first time because it is actually a new transient, or 
@@ -654,48 +654,6 @@ dataset).
     The RMS value of the image step, calculated in the persistence step.
 
 
-monitoringlist
-==============
-
-This table contains the list of sources that are monitored. This implies that
-the source finder software will measure the flux in an image at exactly the
-given position.  These positions are 0 by default, since they can be retrieved
-by joining with the runningcatalog.
-
-For user defined sources, however, positions may be available that are more
-precise than those in the runningcatalog.  Hence the ra and decl columns are
-still necessary for these sources.  The runcat refers to the id in the
-runningcatalog, when available.  Eg, manually inserted sources with positions
-obtained differently will not have a runcat to start with (in which case
-runcat will have the NULL value), until the first time the flux has been
-measured; then these sources (even when actual upper limits) will be inserted
-into extractedsources and runningcatalog, and have a runcat.  They will still
-have userentry set to true, so that the position used is that in this table
-(the more precise position), not that of the runningcatalog.
-
-**id**
-    Every source in the monitoringlist gets a unique id
-
-**runcat**
-    Refers to the id in runningcatalog.
-
-**ra**
-    The Right Ascension (J2000) of the source
-
-**decl**
-    The Declination (J2000) of the source
-
-**dataset**
-    Refers to the id in dataset, to which this monitoringlist belongs to.
-
-**userentry**
-    Boolean to state whether it is an user inserted soure (true) or by the TraP
-    (false)
-
-
-node
-====
-
 This table keeps track of zones (declinations) of the stored sources on the
 nodes in a sharded database configuration. Every node in such a set-up will
 have this table, but with different content.
@@ -815,13 +773,14 @@ If no counterpart could be found for an extracted sources, it is appended to
 **x, y, z**
     The Cartesian coordinate representation of wm_ra and wm_decl
 
-**margin**
-    Boolean to define that a source is near the 360-0 meridian. Not being used.
-
 **inactive**
     Boolean to set an entry to inactive.  This is done during the :ref:`source
     association <database-assoc>` procedure, where e.g. the many-to-many cases
     are handled and an existing entry is replaced by two or more entries.
+
+**mon_src**
+    Boolean to indicate whether an entry is from the user-specified monitoring list.
+    Default value is false.
 
 .. _schema-runningcatalog-flux:
 

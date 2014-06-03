@@ -54,14 +54,12 @@ def associate_extracted_sources(image_id, deRuiter_r):
     _insert_1_to_many_basepoint_assoc()
     _insert_1_to_many_assoc()
     _insert_1_to_many_skyrgn()
-    _insert_1_to_many_monitoringlist()
     _insert_1_to_many_transient()
     _delete_1_to_many_inactive_assoc()
     _delete_1_to_many_inactive_runcat_flux()
     _flag_1_to_many_inactive_runcat()
     _flag_1_to_many_inactive_tempruncat()
     _delete_1_to_many_inactive_assocskyrgn()
-    _delete_1_to_many_inactive_monitoringlist()
     _delete_1_to_many_inactive_transient()
     #+-----------------------------------------------------+
     #| Here we process the one-to-one associations         |
@@ -79,7 +77,6 @@ def associate_extracted_sources(image_id, deRuiter_r):
     _insert_new_runcat_flux(image_id)
     _insert_new_runcat_skyrgn_assocs(image_id)
     _insert_new_assoc(image_id)
-    _insert_new_monitoringlist(image_id)
     _insert_new_transient(image_id)
 
     #+-------------------------------------------------------+
@@ -506,6 +503,7 @@ INSERT INTO temprunningcatalog
              AND x0.image = i0.id
              AND x0.image = %(image_id)s
              AND i0.dataset = rc0.dataset
+             AND rc0.mon_src = FALSE
              AND rc0.zone BETWEEN CAST(FLOOR(x0.decl - i0.rb_smaj) as INTEGER)
                               AND CAST(FLOOR(x0.decl + i0.rb_smaj) as INTEGER)
              AND rc0.wm_decl BETWEEN x0.decl - i0.rb_smaj
@@ -703,6 +701,7 @@ INSERT INTO temprunningcatalog
              AND x0.image = i0.id
              AND x0.image = %(image_id)s
              AND i0.dataset = rc0.dataset
+             AND rc0.mon_src = FALSE
              AND rc0.zone BETWEEN CAST(FLOOR(x0.decl - i0.rb_smaj) AS INTEGER)
                               AND CAST(FLOOR(x0.decl + i0.rb_smaj) AS INTEGER)
              AND rc0.wm_decl BETWEEN x0.decl - i0.rb_smaj
@@ -1069,41 +1068,6 @@ INSERT INTO assocskyrgn
     tkp.db.execute(query, commit=True)
 
 
-def _insert_1_to_many_monitoringlist():
-    """Insert one-to-many in monitoringlist
-
-    In case where we have a non-user-entry source in the monitoringlist
-    that goes one-to-many in the associations, we have to "split" it up
-    into the new runcat ids and delete the old runcat.
-    """
-    #TODO: See discussion in issues #3564 & #3919 how to proceed
-    #TODO: Discriminate between the user and non-user entries.
-    query = """\
-INSERT INTO monitoringlist
-  (runcat
-  ,ra
-  ,decl
-  ,dataset
-  )
-  SELECT r.id AS runcat
-        ,r.wm_ra AS ra
-        ,r.wm_decl AS decl
-        ,r.dataset
-    FROM (SELECT runcat
-            FROM temprunningcatalog
-           WHERE inactive = FALSE
-          GROUP BY runcat
-          HAVING COUNT(*) > 1
-         ) t0
-        ,temprunningcatalog t1
-        ,runningcatalog r
-   WHERE t1.runcat = t0.runcat
-     AND t1.inactive = FALSE
-     AND r.xtrsrc = t1.xtrsrc
-"""
-    tkp.db.execute(query, commit=True)
-
-
 def _insert_1_to_many_transient():
     """Update the runcat id for the one-to-many associations,
     and delete the transient entries of the old runcat id
@@ -1113,8 +1077,6 @@ def _insert_1_to_many_transient():
     were already added (for every extractedsource one), which will replace
     the existing ones in the runningcatalog.
     Therefore, we have to update the references to these new ids as well.
-    So, we will append these to monitoringlist and delete the entries referring
-    to the old runncat.
     """
     query = """\
 INSERT INTO transient
@@ -1150,27 +1112,6 @@ INSERT INTO transient
      AND t1.inactive = FALSE
      AND r.xtrsrc = t1.xtrsrc
      AND tr.runcat = t1.runcat
-"""
-    tkp.db.execute(query, commit=True)
-
-
-def _delete_1_to_many_inactive_monitoringlist():
-    """Delete the monitoringlist sources of the old runcat
-
-    Since we replaced this runcat.id with multiple new ones, we now
-    delete the old one.
-    """
-    query = """\
-DELETE
-  FROM monitoringlist
- WHERE userentry = FALSE
-   AND id IN (SELECT m.id
-                FROM monitoringlist m
-                    ,runningcatalog r
-               WHERE m.runcat = r.id
-                 AND m.userentry = FALSE
-                 AND r.inactive = TRUE
-             )
 """
     tkp.db.execute(query, commit=True)
 
@@ -1912,82 +1853,6 @@ INSERT INTO assocxtrsource
 """
     tkp.db.execute(query, {'image_id':image_id}, True)
 
-def _insert_new_monitoringlist(image_id):
-    """This query looks for sources extracted from the latest image,
-    which do not have a counterpart among the runningcatalog sources,
-    and skyregions that were surveyed before, i.e. we have a new source
-    that we want to monitor.
-
-    It is added to the monitoringlist if the current image is not
-    the first (in time) of an observed skyregion. It is also added
-    when it was undetected in an "overlapping" skyregion other than the
-    current.
-
-    The query is constructed as follows.
-    The sub-subquery (table t1) selects the extracted sources that do
-    not have a counterpart among the runcat sources.
-    Those were just added to the runningcatalog (by _insert_new_runcat())
-    as a new source and therefore we can set r1.xtrsrc = t1.xtrsrc.
-    Using that, we can get the runcat ids and their skyregions with
-    a1.runcat = r1.id.
-    The skyregions are coupled to the images, where we only take into
-    account non-rejected images (left outer join with rejection
-    where rj.image IS NULL).
-    If there exists a valid - overlapping or from the same skyregion -
-    image with a smaller timestamp than the current one, we know the
-    runcat source is new and needs to be monitored.
-
-    We are relying on the assumption that images are processed in strict
-    time order.
-
-    NB. This ignores the possibility of later, more sensitive
-    observations revealing new sources - but it's a start.
-    """
-    query = """\
-INSERT INTO monitoringlist
-  (runcat
-  ,ra
-  ,decl
-  ,dataset
-  )
-  SELECT r0.id AS runcat
-        ,r0.wm_ra AS ra
-        ,r0.wm_decl AS decl
-        ,r0.dataset AS dataset
-    FROM runningcatalog r0
-        ,(SELECT r1.id
-            FROM image i1
-                ,(SELECT x1.id AS xtrsrc
-                    FROM extractedsource x1
-                         LEFT OUTER JOIN temprunningcatalog trc1
-                         ON x1.id = trc1.xtrsrc
-                    WHERE x1.image = %(image_id)s
-                      AND trc1.xtrsrc IS NULL
-                  ) t1
-                ,runningcatalog r1
-                ,assocskyrgn a1
-                ,image i2
-                 LEFT OUTER JOIN rejection rj
-                 ON i2.id = rj.image
-           WHERE i1.id = %(image_id)s
-             AND r1.xtrsrc = t1.xtrsrc
-             AND a1.runcat = r1.id
-             AND i2.dataset = i1.dataset
-             AND i2.skyrgn = a1.skyrgn
-             AND i1.taustart_ts > i2.taustart_ts
-             AND rj.image IS NULL
-          GROUP BY r1.id
-         ) t0
-   WHERE r0.id = t0.id
-"""
-
-    params = {'image_id': image_id}
-    cursor = tkp.db.execute(query, params, commit=True)
-    ins = cursor.rowcount
-    if ins > 0:
-        logger.info("Added %s new sources to monitoringlist table" % (ins,))
-
-
 def _insert_new_transient(image_id):
     """A new source needs to be added to the transient table,
     except for sources that were detected in an image of skyregion
@@ -1995,10 +1860,6 @@ def _insert_new_transient(image_id):
 
     We set the siglevel to 1 and the variability indices 0 for
     new transients.
-
-    Note that this nearly the same as the insertion of a new
-    monitoringlist source. See _insert_new_monitoringlist for
-    details that apply to query here as well.
     """
 
     query = """\

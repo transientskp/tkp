@@ -260,6 +260,7 @@ INSERT INTO temprunningcatalog
              AND x.image = i.id
              AND x.image = %(image_id)s
              AND x.extract_type = 1
+             AND r.mon_src = FALSE
              AND r.zone BETWEEN CAST(FLOOR(x.decl - x.error_radius/3600) AS INTEGER)
                               AND CAST(FLOOR(x.decl + x.error_radius/3600) AS INTEGER)
              AND r.wm_decl BETWEEN x.decl - x.error_radius/3600

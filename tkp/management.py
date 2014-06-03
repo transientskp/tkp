@@ -317,8 +317,8 @@ environment variables to configure the connection:
                               formatter_class=argparse.RawTextHelpFormatter)
 
     run_parser.add_argument('name', help='Name of job to run')
-    m_help = 'Specify a list of RA,DEC co-ordinate pairs to monitor (decimal' \
-             ' degrees, no spaces)'
+    m_help = 'a list of RA,DEC coordinates to monitor in JSON format,' \
+             ' example: [[5, 6], [7, 8]]'
     run_parser.add_argument('-m', '--monitor-coords', help=m_help)
     run_parser.add_argument('-l', '--monitor-list',
                             help='Specify a file containing a list of RA,DEC')

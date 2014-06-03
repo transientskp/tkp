@@ -18,7 +18,7 @@ from tkp.db import consistency as dbconsistency
 from tkp.db import Image
 from tkp.db import general as dbgen
 from tkp.db import monitoringlist as dbmon
-from tkp.db import nd as dbnd
+from tkp.db import nulldetections as dbnd
 from tkp.db import associations as dbass
 from tkp.distribute.celery import celery_app
 from tkp.distribute.celery import tasks
@@ -57,7 +57,7 @@ def runner(func, iterable, arguments, local=False):
             return []
 
 
-def run(job_name, local=False):
+def run(job_name, mon_coords, local=False):
     setup_event_listening(celery_app)
     pipe_config = initialize_pipeline_config(
         os.path.join(os.getcwd(), "pipeline.cfg"),
@@ -87,8 +87,6 @@ def run(job_name, local=False):
                                               'images_to_process.py')).images
 
     logger.info("dataset %s contains %s images" % (job_name, len(all_images)))
-
-
 
     logger.info("performing database consistency check")
     if not dbconsistency.check():
@@ -122,8 +120,8 @@ def run(job_name, local=False):
 
     logger.info("Storing images")
     image_ids = store_images(metadatas,
-                     job_config.source_extraction.extraction_radius_pix,
-                     dataset_id)
+                             job_config.source_extraction.extraction_radius_pix,
+                             dataset_id)
 
     db_images = [Image(id=image_id) for image_id in image_ids]
 
@@ -176,8 +174,12 @@ def run(job_name, local=False):
                 dbgen.insert_extracted_sources(image.id, ff_nd, 'ff_nd')
                 logger.info("adding null detections")
                 dbnd.associate_nd(image.id)
+            if len(mon_coords) > 0:
+                logger.info("performing monitoringlist")
+                ff_ms = forced_fits(image.url, mon_coords, se_parset)
+                dbgen.insert_extracted_sources(image.id, ff_ms, 'ff_ms')
+                logger.info("adding monitoring sources")
+                dbmon.associate_ms(image.id)
             transients = search_transients(image.id,
-                                           job_config.transient_search)
-            dbmon.adjust_transients_in_monitoringlist(image.id, transients)
-
+                                           job_config['transient_search'])
         dbgen.update_dataset_process_end_ts(dataset_id)

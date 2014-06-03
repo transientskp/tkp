@@ -17,10 +17,10 @@ Main logic flow
    (unsuitable for further processing). Subsequent recipes only act on 'good'
    images.
  * :py:mod:`source_extraction.py`  Performs blind extraction and source association.
- * :py:mod:`monitoringlist.py` Performs a crude transient candidates search
-   (:py:func:`monitoringlist.mark_sources`) to check for new locations worth
-   monitoring, and then performs forced extractions
-   (:py:func:`monitoringlist.update_monitoringlist`).
+ * :py:mod:`monitoringlist.py` Performs forced fits for the user-provided source
+   positions to be monitored. Associates the monitoring sources 1-to-1 with 
+   the known monitoring sources in the runningcatalog 
+   (:py:func:`monitoringlist.associate_ms`).
  * :py:mod:`transient_search.py` First selects sources from the runningcatalog which
    satisfy the user-supplied criteria for variability indices.
    The variability indices are then used to calculate a chi-squared value for
@@ -51,12 +51,16 @@ some will make little sense. The steps are:
   up into two steps for clarity (extraction and association are quite
   different steps).
 
-- **Monitor existing or user-added sources.** This takes care of measuring fluxes
-  of transient sources, even when these have disappeared below the detection
-  threshold, so that the light curve is measured with upper limits instead.
-  This step also takes care of sources that were obtained from elsewhere and
-  manually added, such as a new X-ray source: the pipeline will now monitor
-  this position so the full LOFAR light curve for this source can be measured.
+- **Null detections.** This takes care of measuring source properties 
+  of undetected sources in the current image, because the source is known 
+  in the runningcatalog. A forced fit at this catalog position serves 
+  as input for association with the known catalog sources, so
+  that the light curve now has upper limits at those timestamps.
+
+- **Monitor user-added sources.** This step takes care of sources 
+  that were obtained from a user-specified list, such as a new X-ray 
+  source: the pipeline will now monitor this position so the full 
+  LOFAR light curve for this source can be measured.
 
 - **Transient detection.** All existing light curves (ie, associated sources from
   the previous step) will be examined to determine if sources are variable.

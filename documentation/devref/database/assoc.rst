@@ -518,16 +518,9 @@ Next, ``_flag_1_to_many_inactive_tempruncat`` sets the remaining
 'active' temprunningcatalog entries in 1-to-many sets to ``inactive = TRUE``,
 as we've now finished processing them.
 
-``_delete_1_to_many_inactive_monitoringlist`` using the fact that we have 
-set the superceded runningcatalog entries as ``inactive = TRUE``,
-we now delete any corresponding entries in the monitoringlist.  
-
-.. warning::
-
-	NB. This does not discriminate between automatic and manual entries. 
-	Possibly we might end up deleting user entries as a result?
-
-``_delete_1_to_many_inactive_transient``: same as above, for old transients.
+``_delete_1_to_many_inactive_transient``: using the fact that 
+we have set the superceded runningcatalog entries as inactive = TRUE, 
+we now delete the old transients.
 We don't attempt any update / re-insertion here, instead relying on the 
 next ``transient_search`` execution to re-identify any valid transients.
  

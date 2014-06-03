@@ -6,7 +6,7 @@ import unittest
 import tkp.db
 from tkp.db import associations as dbass
 from tkp.db import general as dbgen
-from tkp.db import nd as dbnd
+from tkp.db import nulldetections as dbnd
 from tkp.db.orm import DataSet
 from tkp.testutil import db_subs
 from tkp.testutil.decorators import requires_database

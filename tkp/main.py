@@ -11,7 +11,6 @@ The exceptions are a couple of celery-specific subroutines.
 import imp
 import logging
 import os
-from celery import group
 from tkp import steps
 from tkp.config import initialize_pipeline_config, get_database_config
 from tkp.db import consistency as dbconsistency
@@ -20,9 +19,9 @@ from tkp.db import general as dbgen
 from tkp.db import monitoringlist as dbmon
 from tkp.db import nulldetections as dbnd
 from tkp.db import associations as dbass
-from tkp.distribute.celery import celery_app
-from tkp.distribute.celery import tasks
-from tkp.distribute.celery.log import setup_event_listening
+from tkp.distribute import Runner
+#from tkp.distribute.celery import celery_app
+#from tkp.distribute.celery.log import setup_event_listening
 from tkp.distribute.common import (load_job_config, dump_configs_to_logdir,
                                    check_job_configs_match,
                                    setup_log_file, dump_database_backup,
@@ -35,30 +34,9 @@ from tkp.steps.source_extraction import forced_fits
 logger = logging.getLogger(__name__)
 
 
-def runner(func, iterable, arguments, local=False):
-    """
-    A wrapper for mapping your iterable over a function. If local is False,
-    the mapping is performed using celery, else it will be performed locally.
-
-    :param func: The function to be called, should have task decorator
-    :param iterable: a list of objects to iterate over
-    :param arguments: list of arguments to give to the function
-    :param local: False if you want to use celery, True if local run
-    :return: the result of the func mapped
-    """
-    if local:
-        return [func(i, *arguments) for i in iterable]
-    else:
-        if iterable:
-            return group(func.s(i, *arguments) for i in iterable)().get()
-        else:
-            # group()() returns None if group is called with no arguments,
-            # leading to an AttributeError with get().
-            return []
-
-
-def run(job_name, mon_coords, local=False):
-    setup_event_listening(celery_app)
+def run(job_name, mon_coords):
+    runner = Runner(distributor='multiproc')
+    #setup_event_listening(celery_app)
     pipe_config = initialize_pipeline_config(
         os.path.join(os.getcwd(), "pipeline.cfg"),
         job_name)
@@ -114,8 +92,7 @@ def run(job_name, mon_coords, local=False):
     logger.info("performing persistence step")
     image_cache_params = pipe_config.image_cache
     imgs = [[img] for img in all_images]
-    metadatas = runner(tasks.persistence_node_step, imgs, [image_cache_params],
-                       local)
+    metadatas = runner.map("persistence_node_step", imgs, [image_cache_params])
     metadatas = [m[0] for m in metadatas]
 
     logger.info("Storing images")
@@ -128,7 +105,7 @@ def run(job_name, mon_coords, local=False):
     logger.info("performing quality check")
     urls = [img.url for img in db_images]
     arguments = [job_config]
-    rejecteds = runner(tasks.quality_reject_check, urls, arguments, local)
+    rejecteds = runner.map("quality_reject_check", urls, arguments)
 
     good_images = []
     for image, rejected in zip(db_images, rejecteds):
@@ -151,7 +128,7 @@ def run(job_name, mon_coords, local=False):
         logger.info("performing source extraction")
         urls = [img.url for img in images]
         arguments = [se_parset]
-        extract_sources = runner(tasks.extract_sources, urls, arguments, local)
+        extract_sources = runner.map("extract_sources", urls, arguments)
 
         logger.info("storing extracted to database")
         for image, sources in zip(images, extract_sources):

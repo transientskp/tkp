@@ -6,7 +6,7 @@ using tkp.distribute.celery.celery_app
 from __future__ import absolute_import
 import warnings
 import logging
-from celery import Celery
+from celery import Celery, group
 from tkp.distribute.celery.log import monitor_events
 
 
@@ -24,6 +24,10 @@ except ImportError:
     local_logger.warn(msg)
 
 
-
-
-
+def map(func, iterable, arguments):
+    if iterable:
+        return group(func.s(i, *arguments) for i in iterable)().get()
+    else:
+        # group()() returns None if group is called with no arguments,
+        # leading to an AttributeError with get().
+        return []

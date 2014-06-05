@@ -32,7 +32,7 @@ CREATE FUNCTION insertImage(idataset INT
                            ,icentre_ra DOUBLE PRECISION
                            ,icentre_decl DOUBLE PRECISION
                            ,ixtr_radius DOUBLE PRECISION
-                           ,irsm DOUBLE PRECISION
+                           ,irms DOUBLE PRECISION
                            ) RETURNS INT
 
 
@@ -62,7 +62,7 @@ BEGIN
     ,deltax
     ,deltay
     ,url
-    ,rsm
+    ,rms
     )
   VALUES
     (idataset
@@ -78,7 +78,7 @@ BEGIN
     ,ideltax
     ,ideltay
     ,iurl
-    ,irsm
+    ,irms
     )
     RETURNING id INTO oimageid
   ;
@@ -120,7 +120,7 @@ BEGIN
     ,deltax
     ,deltay
     ,url
-    ,rsm
+    ,rms
     )
   VALUES
     (iimageid
@@ -137,7 +137,7 @@ BEGIN
     ,ideltax
     ,ideltay
     ,iurl
-    ,irsm
+    ,irms
     )
   ;
 

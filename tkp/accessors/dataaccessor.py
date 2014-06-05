@@ -25,7 +25,7 @@ class DataAccessor(object):
     def __init__(self):
         """
         Initialise the `sigma` and `f` properties used for calculating the
-        RSM value of the data. See `tkp.quality.statistics` for details.
+        RMS value of the data. See `tkp.quality.statistics` for details.
         """
         self.sigma = 3
         self.f = 4

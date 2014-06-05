@@ -5,7 +5,7 @@ import unittest
 import logging
 from tkp.distribute.celery.log import setup_event_listening
 from tkp.distribute.celery import celery_app
-from tkp.distribute.celery.tasks import bogus
+from tkp.distribute.celery.tasks import test_log
 
 
 class MockLoggingHandler(logging.Handler):
@@ -40,7 +40,7 @@ class TestCelery(unittest.TestCase):
         check = {logging.INFO, logging.WARNING, logging.ERROR}
         mock_handler.reset()
         mock_handler.setLevel(logging.INFO)
-        result = bogus()
+        result = test_log()
 
         for record in mock_handler.records:
             if record.name == 'tkp.distribute.celery.tasks':
@@ -59,7 +59,7 @@ class TestCelery(unittest.TestCase):
         root_logger.addHandler(mock_handler)
         check = {logging.INFO, logging.WARNING, logging.ERROR, logging.DEBUG}
         mock_handler.reset()
-        bogus()
+        test_log()
         for record in mock_handler.records:
             if record.name == 'tkp.distribute.celery.tasks':
                 self.assertTrue(record.levelno in check)

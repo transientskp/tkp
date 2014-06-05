@@ -40,11 +40,6 @@ process results in two key data products: an *archival database* containing
 the lightcurves of all point-sources included in the dataset being processed,
 and *community alerts* of all transients which have been identified.
 
-Some aspects of the data processing performed by the TraP are
-compute-intensive. For this reason, it is possible to distribute processing
-over a cluster. We use the :ref:`Celery <celery-intro>` distributed task queue for
-this purpose.
-
 Exploiting the results of the TraP involves understanding and analysing the
 resulting lightcurve database. The TraP itself provides no tools directly
 aimed at this. Instead, the Transients Key Science Project has developed the

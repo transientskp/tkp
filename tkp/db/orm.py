@@ -464,13 +464,6 @@ class Image(DBObject):
         self.sources = sources
 
 
-    def update_extraction_info(self,rms_min, rms_max,
-                               detection_thresh, analysis_thresh):
-        self.update(rms_min=rms_min, rms_max=rms_max,
-                    detection_thresh=detection_thresh,
-                    analysis_thresh=analysis_thresh)
-
-
     def insert_extracted_sources(self, results, extract='blind'):
         """Insert a list of sources
 

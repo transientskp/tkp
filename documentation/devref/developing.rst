@@ -5,7 +5,7 @@ Guidelines for Developers
 +++++++++++++++++++++++++
 
 This documents deals (shortly) with writing software for the
-Transients Pipeline, either the Trap part (recipes) or the underlying
+Transients Pipeline, either the TraP part (recipes) or the underlying
 modules (the TKP package).
 
 
@@ -127,7 +127,7 @@ night.
 
 There currently exists two main sections of documentation:
 
-- Trap: this section deals with setting up and running the transients
+- TraP: this section deals with setting up and running the transients
   pipeline, as well as more details about the individual recipes.
 
 - TKP: this section deals with the underlying modules and algorithms
@@ -139,18 +139,19 @@ the two documentation sections.
 Doc strings
 -----------
 
-The doc strings also follow pretty much the suggestions in PEP 8. They
-are relatively relaxed, and not all methods will have a proper
-docstring. The documentation of the arguments and keyword arguments
-follow roughly the convention suggested `by Google
-<http://google-styleguide.googlecode.com/svn/trunk/pyguide.html?showone=Comments#Comments>`_
-(`see also
-<http://packages.python.org/an_example_pypi_project/sphinx.html#function-definitions>`_);
-this is different than the `Sphinx supported style
-<http://sphinx.pocoo.org/markup/desc.html#info-field-lists>`_, but
-feels more readable.
+For doc strings we use the `sphinxcontrib-napoleon
+<https://pypi.python.org/pypi/sphinxcontrib-napoleon>`_ syntax, since
+it is much more clear to read than the suggested PEP 8 syntax or
+default Sphinx Syntax. Example::
 
+    Args:
+        path (str): The path of the file to wrap
+        field_storage (FileStorage): The :class:`FileStorage` instance to wrap
+        temporary (bool): Whether or not to delete the file when the File
+           instance is destructed
 
+    Returns:
+        BufferedFileStorage: A buffered writable file descriptor
 
 
 Testing
@@ -176,16 +177,7 @@ I suggest to follow at least one simple rule:
 Unit tests
 ----------
 
-The unit tests use the :mod:`unittest2` module. For Python 2.7, this
-is the built-in :mod:`unittest` module, but for earlier versions, the
-module needs to be installed separately. The unit tests have the
-following check at the import level for this::
-
-    import unittest
-    try:
-        unittest.TestCase.assertIsInstance
-    except AttributeError:
-        import unittest2 as unittest
+The unit tests use the Python 2.7's :mod:`unittest` module.
 
 Running the unit tests
 ----------------------
@@ -220,4 +212,3 @@ transients pipeline. Practically, running these data through the
 pipeline should produce about five transients (although none of them
 are real: they are just artefacts of, liekely, flux calibration
 problems).
-

@@ -3,7 +3,6 @@ Some generic utility routines for number handling and
  calculating (specific) variances
 """
 
-from multiprocessing import Process, Queue
 import time
 import logging
 import itertools
@@ -22,21 +21,29 @@ except ImportError:
 
 logger = logging.getLogger(__name__)
 
-
+#
+# Hard-coded configuration parameters; not user settable.
+#
+INTERPOLATE_ORDER = 1   # Spline order for grid interpolation
+MEDIAN_FILTER = 0       # If non-zero, apply a median filter of size
+                        # MEDIAN_FILTER to the background and RMS grids prior
+                        # to interpolating.
+MF_THRESHOLD = 0        # If MEDIAN_FILTER is non-zero, only use the filtered
+                        # grid when the (absolute) difference between the raw
+                        # and filtered grids is larger than MF_THRESHOLD.
+DEBLEND_MINCONT = 0.005 # Min. fraction of island flux in deblended subisland
+STRUCTURING_ELEMENT = [[0,1,0], [1,1,1], [0,1,0]] # Island connectiivty
 
 class ImageData(object):
     """Encapsulates an image in terms of a numpy array + meta/headerdata.
 
-    This is your primary contact point for interaction with images: it includes
+    This is your primary contact point for interaction with images: it icludes
     facilities for source extraction and measurement, etc.
     """
-    def __init__(self, data, beam, wcs, max_degradation=0.2, median_filter=0,
-                mf_threshold=0, interpolate_order=1, back_sizex=32,
-                back_sizey=32, margin=0, radius=0, fdr_alpha=1e-2,
-                residuals=True, deblend=False, deblend_nthresh=32,
-                detection_threshold=10.0, analysis_threshold=3.0,
-                structuring_element=[[0,1,0], [1,1,1], [0,1,0]],
-                ew_sys_err=0.0, ns_sys_err=0.0, force_beam=False, nproc=1):
+
+    def __init__(self, data, beam, wcs, margin=0, radius=0, back_size_x=32,
+                 back_size_y=32, residuals=True
+    ):
         """Sets up an ImageData object.
 
         *Args:*
@@ -60,30 +67,12 @@ class ImageData(object):
         self.freq_low = 1
         self.freq_high = 1
 
-        self.max_degradation = max_degradation
-        self.median_filter = median_filter
-        self.mf_threshold = mf_threshold
-        self.interpolate_order = interpolate_order
-        self.back_sizex = back_sizex
-        self.back_sizey= back_sizey
+        self.back_size_x = back_size_x
+        self.back_size_y= back_size_y
         self.margin = margin
         self.radius = radius
-        self.fdr_alpha = fdr_alpha
-        self.structuring_element = structuring_element
         self.residuals = residuals
-        self.deblend_enabled = deblend
-        self.deblend_nthresh = deblend_nthresh
 
-        self.detection_threshold=detection_threshold
-        self.analysis_threshold=analysis_threshold
-
-        self.ew_sys_err, self.ns_sys_err = ew_sys_err, ns_sys_err
-
-        # If force_beam is True, we force all blind extraction results to have
-        # major/minor axes equal to the restoring beam.
-        self.force_beam = force_beam
-	self.nproc = nproc
-	
 
     ###########################################################################
     #                                                                         #
@@ -141,12 +130,10 @@ class ImageData(object):
         # sourcefinding process. We build up the mask by stacking ("or-ing
         # together") a number of different effects:
         #
-        # * self.reliable_window() which masks data which is distored by
-        #   projection effects;
         # * A margin from the edge of the image;
         # * Any data outside a given radius from the centre of the image;
         # * Data which is "obviously" bad (equal to 0 or NaN).
-        mask = self.reliable_window()
+        mask = numpy.zeros((self.xdim, self.ydim))
         if self.margin:
             margin_mask = numpy.ones((self.xdim, self.ydim))
             margin_mask[self.margin:-self.margin, self.margin:-self.margin] = 0
@@ -216,161 +203,31 @@ class ImageData(object):
     #                                                                         #
     ###########################################################################
 
-    def reliable_window(self, max_degradation=None):
-        """Calculates limits over which the image may be regarded as
-        "reliable".
+    # Private "support" methods
+    def __grids(self):
+        """Calculate background and RMS grids of this image.
 
-        Kwargs:
+        These grids can be interpolated up to make maps of the original image
+        dimensions: see _interpolate().
 
-            keyword max_degradation (float): astrometry accuracy
-                allowed. See description below
-
-        Returns:
-
-            (numpy.ndarray): masked window where the FITS image
-                astrometry is valid
-
-
-        This code calculates a window within a FITS image that is "reliable",
-        i.e.  the mapping from pixel coordinates to celestial coordinates is
-        well defined.  Often this window equals the entire FITS image, in some
-        cases, e.g., in all-sky maps, this is not the case.  So there is some
-        user-allowed maximum degradation.
-
-        The degradation of the accuracy of astrometry due to projection
-        effects at a position on the sky phi radians away from the center of
-        the projection is equal to ``1/cos(phi)``. So if you allow for a
-        maximum degradation of 10% the code will output pixels within a circle
-        with a radius of ``arccos(1/(1+0.1)) = 24.6`` degrees around the
-        center of the projection. The output FITS image will be the largest
-        possible square within that circle.
-
-        I assume that we are working with SIN projected images.  So in the
-        east-west direction (``M=0``) the pixel that is max_angle away from
-        the center of the SIN projection is
-        ``self.centrerapix+sin(max_angle)/raincr_rad``. In the north-south
-        direction (``L=0``) the pixel that is max_angle away from the center
-        of the SIN projection is
-        ``self.centredecpix+sin(max_angle)/decincr_rad``.  Now cutting out the
-        largest possible square is relatively straightforward.  Just multiply
-        both of these pixel offsets by ``0.5*sqrt(2)``. See `Non-Linear
-        Coordinate Systems in AIPS
-        <ftp://ftp.aoc.nrao.edu/pub/software/aips/TEXT/PUBL/AIPSMEMO27.PS>`_,
-        paragraph 3.2, for details on SIN projection.
-
-        **NOTE: This is only valid for a SIN projection. Needs more thought
-        for other projection types.**
+        This is called automatically when ImageData.backmap,
+        ImageData.rmsmap or ImageData.fdrmap is first accessed.
         """
 
-        if not max_degradation:
-            max_degradation = self.max_degradation
+        # there's no point in working with the whole of the data array
+        # if it's masked.
+        useful_chunk = ndimage.find_objects(numpy.where(self.data.mask, 0, 1))
+        assert(len(useful_chunk) == 1)
+        useful_data = self.data[useful_chunk[0]]
+        my_xdim, my_ydim = useful_data.shape
 
-        mask = numpy.ones((self.xdim, self.ydim))
-        wcs = self.wcs
-        if max_degradation and wcs.ctype == ('RA---SIN', 'DEC--SIN'):
-            max_angle = numpy.arccos(1./(1. + max_degradation))
-            conv_factor = 0.5 * numpy.sqrt(2.) * numpy.sin(max_angle)
-            raincr_rad = numpy.radians(numpy.fabs(wcs.cdelt[0]))
-            decincr_rad = numpy.radians(numpy.fabs(wcs.cdelt[1]))
-
-            delta_ra_pix = int(conv_factor/raincr_rad)
-            delta_dec_pix = int(conv_factor/decincr_rad)
-
-            # One added to lower limits to exclude lower bound.
-            limits = numpy.array([
-                wcs.crpix[0] - delta_ra_pix,
-                wcs.crpix[0] - 1 + delta_ra_pix,
-                wcs.crpix[1] - delta_dec_pix,
-                wcs.crpix[1] - 1 + delta_dec_pix])
-            limits = numpy.where(limits > 0, limits, 0)
-
-            mask[limits[0]:limits[1], limits[2]:limits[3]] = 0
-
-        elif max_degradation:
-            logger.warn("Not SIN projection: reliable window not calculated.")
-            mask[:] = 0.0
-        else:
-            mask[:] = 0.0
-
-        return mask
-
-    # Deprecated (see note below)
-    def stats(self, nbins=100, plot=True):
-        """Produce brief statistical report on this image, suitable for
-        printing.
-
-        Kwargs:
-
-            nbins (int): how many bins to divide the pixel values into
-                for building a historgram.
-
-            plot (bool): print histogram?
-
-        Deprecated.
-        """
-
-        # Note (23-12-2011, ER):
-        # This uses the imagestats module, which is not really
-        # described anywhere. I can find either one at
-        # http://stsdas.stsci.edu/stsci_python_epydoc/imagestats/index.html
-        # (presumably the correct one) or
-        # http://www.pythonware.com/library/pil/handbook/imagestat.htm.
-        # Overall, it appears that this method is rarely called, and
-        # certainly not in a normal pipeline run. It's merely to be
-        # used in testing. I've therefore indicated it as being
-        # deprecated.
-        try:
-            import imagestats
-        except ImportError:
-            raise NotImplementedError("imagestats not found")
-        try:
-            import pylab
-        except ImportError:
-            raise NotImplementedError("matplotlib not found")
-        pylab.close()
-        imgstats = imagestats.ImageStats(self.data, nclip=5)
-        norm = scipy.stats.normaltest(self.data.ravel())
-        binsize = (imgstats.max-imgstats.min)/nbins
-        histogram = imagestats.histogram1d(
-                        self.data, nbins, binsize, imgstats.min
-        )
-        pylab.plot(
-            numpy.arange(imgstats.min, imgstats.max, binsize)[0:nbins],
-            histogram.histogram
-        )
-        pylab.xlabel("Pixel value")
-        pylab.ylabel("Number of pixels")
-
-        mystats = {
-            'npix': imgstats.npix,
-            'smin': imgstats.min,
-            'smax': imgstats.max,
-            'stdd': imgstats.stddev,
-            'mean': imgstats.mean,
-            'medi': scipy.stats.median(self.data.ravel()),
-            'skew': scipy.stats.skew(self.data.ravel()),
-            'kurt': scipy.stats.kurtosis(self.data.ravel()),
-            'n1': norm[0],
-            'n2': norm[1],
-            'filename': self.filename.split('/')[-1].replace('_', '\_'),
-            'time': time.strftime('%c')
-            }
-        imgstats.printStats()
-        print "Median            :   " + str(mystats['medi'])
-        print "Skew              :   " + str(mystats['skew'])
-        print "Kurtosis          :   " + str(mystats['kurt'])
-        if plot:
-            pylab.show()
-
-    def process_rows(self, where_data, sx, ex, ydim, queue):
         rmsgrid, bggrid = [], []
-        for startx in xrange(sx, ex, self.back_sizex):
-	    rmsrow, bgrow = [], []
-
-            for starty in xrange(0, ydim, self.back_sizey):
-                chunk = self.data[where_data][
-                    startx:startx + self.back_sizex,
-                    starty:starty + self.back_sizey
+        for startx in xrange(0, my_xdim, self.back_size_x):
+            rmsrow, bgrow = [], []
+            for starty in xrange(0, my_ydim, self.back_size_y):
+                chunk = useful_data[
+                    startx:startx + self.back_size_x,
+                    starty:starty + self.back_size_y
                 ].ravel()
                 if not chunk.any():
                     rmsrow.append(False)
@@ -388,69 +245,21 @@ class ImageData(object):
                     # skewed and we take the median as the background level.
                     # Otherwise, we take 2.5 * median - 1.5 * mean. This is the
                     # same as SExtractor: see discussion at
-                    # <http://terapix.iap.fr/forum/showthreaD.php?tid=267>.
+                    # <http://terapix.iap.fr/forum/showthread.php?tid=267>.
                     # (mean - median) / sigma is a quick n' dirty skewness
                     # estimator devised by Karl Pearson.
                     if numpy.fabs(mean - median) / sigma >= 0.3:
                         logger.debug(
-                        'bg skewed, %f clipping iterations', num_clip_its)
+                            'bg skewed, %f clipping iterations', num_clip_its)
                         bgrow.append(median)
                     else:
                         logger.debug(
                             'bg not skewed, %f clipping iterations', num_clip_its)
                         bgrow.append(2.5 * median - 1.5 * mean)
-	    rmsgrid.append(rmsrow)
-	    bggrid.append(bgrow)	
 
-	if queue == None: return (rmsgrid,bggrid)
-	else: queue.put((rmsgrid, bggrid))
-	
+            rmsgrid.append(rmsrow)
+            bggrid.append(bgrow)
 
-    # Private "support" methods
-    def __grids(self):
-        """Calculate background and RMS grids of this image.
-
-        These grids can be interpolated up to make maps of the original image
-        dimensions: see _interpolate().
-
-        This is called automatically when ImageData.backmap,
-        ImageData.rmsmap or ImageData.fdrmap is first accesseD.
-        """
-
-        # there's no point in working with the whole of the data array
-        # if it's maskeD.
-        useful_chunk = ndimage.find_objects(numpy.where(self.data.mask, 0, 1))
-        #print useful_chunk
-        assert(len(useful_chunk) == 1)
-     
-        my_xdim, my_ydim = self.data[useful_chunk[0]].shape
-
-	num_iters = len(xrange(0, my_xdim, self.back_sizex))
-        per_proc = num_iters/self.nproc
-        if num_iters%self.nproc != 0: per_proc += 1
-        rmsgrid, bggrid = [], []
-	process_list = []
-        for startx in xrange(per_proc*self.back_sizex, my_xdim, per_proc*self.back_sizex):
-	    endx = startx+per_proc*self.back_sizex
-	    if endx >= my_xdim: endx = my_xdim	   
-	    q = Queue()
-	    p = Process(target=self.process_rows,args=(useful_chunk[0], startx, endx, my_ydim, q))    
-	    process_list.append((p, q))
-	    p.start()
-	    
-	# Be careful to reconstruct in the correct order
-	# This process does the first few rows
-	endx = per_proc*self.back_sizex
-	(rmsg, bgg) = self.process_rows(useful_chunk[0], 0, endx, my_ydim, None)
-	rmsgrid += rmsg
-        bggrid += bgg
-
-	# Results from other processes
-	for process in process_list:
-	    (rmsg, bgg) = process[1].get()
-	    process[0].join()
-	    rmsgrid += rmsg
-            bggrid += bgg
         rmsgrid = numpy.ma.array(
             rmsgrid, mask=numpy.where(numpy.array(rmsgrid) == False, 1, 0))
         bggrid = numpy.ma.array(
@@ -480,40 +289,35 @@ class ImageData(object):
         If roundup is true, values of the resultant map which are lower than
         the input grid are trimmed.
         """
-        my_filter = self.median_filter
-        mf_threshold = self.mf_threshold
-        interpolate_order = self.interpolate_order
-
         # there's no point in working with the whole of the data array if it's
         # masked.
         useful_chunk = ndimage.find_objects(numpy.where(self.data.mask, 0, 1))
         assert(len(useful_chunk) == 1)
         my_xdim, my_ydim = self.data[useful_chunk[0]].shape
 
-        if my_filter:
-            f_grid = ndimage.median_filter(grid, my_filter)
-            if mf_threshold:
+        if MEDIAN_FILTER:
+            f_grid = ndimage.median_filter(grid, MEDIAN_FILTER)
+            if MF_THRESHOLD:
                 grid = numpy.where(
-                    numpy.fabs(f_grid - grid) > mf_threshold, f_grid, grid
+                    numpy.fabs(f_grid - grid) > MF_THRESHOLD, f_grid, grid
                 )
             else:
                 grid = f_grid
 
         # Bicubic spline interpolation
-        xratio = float(my_xdim)/self.back_sizex
-        yratio = float(my_ydim)/self.back_sizey
+        xratio = float(my_xdim)/self.back_size_x
+        yratio = float(my_ydim)/self.back_size_y
         # First arg: starting point. Second arg: ending point. Third arg:
         # 1j * number of points. (Why is this complex? Sometimes, NumPy has an
         # utterly baffling API...)
-        slicex = slice(-0.5, -0.5+xratio, 1j * my_xdim)
-        slicey = slice(-0.5, -0.5+yratio, 1j * my_ydim)
+        slicex = slice(-0.5, -0.5+xratio, 1j*my_xdim)
+        slicey = slice(-0.5, -0.5+yratio, 1j*my_ydim)
         my_map = numpy.zeros(self.data.shape)
         my_map[useful_chunk[0]] = ndimage.map_coordinates(
             grid, numpy.mgrid[slicex, slicey],
-            mode='nearest', order=interpolate_order)
+            mode='nearest', order=INTERPOLATE_ORDER)
         my_map = numpy.ma.array(my_map)
 
-        
         # If the input grid was entirely masked, then the output map must
         # also be masked: there's no useful data here. We don't search for
         # sources on a masked background/RMS, so this data will be cleanly
@@ -539,7 +343,10 @@ class ImageData(object):
     # extraction systems.                                                     #
     #                                                                         #
     ###########################################################################
-    def extract(self, det=None, anl=None, noisemap=None, bgmap=None, labelled_data=None, labels=None):
+
+    def extract(self, det, anl, noisemap=None, bgmap=None, labelled_data=None,
+                labels=None, deblend_nthresh=0, force_beam=False):
+
         """
         Kick off conventional (ie, RMS island finding) source extraction.
 
@@ -557,15 +364,17 @@ class ImageData(object):
 
             bgmap (numpy.ndarray):
 
+            deblend_nthresh (int): number of subthresholds to use for
+                deblending. Set to 0 to disable.
+
+            force_beam (bool): force all extractions to have major/minor axes
+                equal to the restoring beam
+
         Returns:
 
              (..utility.containers.ExtractionResults):
         """
 
-        if det is None:
-            det = self.detection_threshold
-        if anl is None:
-            anl = self.analysis_threshold
         if anl > det:
             logger.warn(
                 "Analysis threshold is higher than detection threshold"
@@ -590,10 +399,11 @@ class ImageData(object):
                 raise ValueError("Labelled map is wrong shape")
 
         return self._pyse(
-            det * self.rmsmap, anl * self.rmsmap, labelled_data=labelled_data, labels=labels
+            det * self.rmsmap, anl * self.rmsmap, deblend_nthresh, force_beam,
+            labelled_data=labelled_data, labels=labels
         )
 
-    def reverse_se(self, det=None):
+    def reverse_se(self, det):
         """Run source extraction on the negative of this image.
 
         Obviously, there should be no sources in the negative image, so this
@@ -604,8 +414,6 @@ class ImageData(object):
         extraction process. If this is regularly used, we'll want to
         implement a separate cache.
         """
-        if not det:
-            det = self.detection_threshold
         self.labels.clear()
         self.clip.clear()
         self.data_bgsubbed *= -1
@@ -615,16 +423,16 @@ class ImageData(object):
         self.clip.clear()
         return results
 
-    def fd_extract(self, alpha=None, anl=None, noisemap=None, bgmap=None):
+    def fd_extract(self, alpha, anl=None, noisemap=None,
+                   bgmap=None, deblend_nthresh=0, force_beam=False
+    ):
         """False Detection Rate based source extraction.
+        The FDR procedure guarantees that <FDR> < alpha.
 
         See `Hopkins et al., AJ, 123, 1086 (2002)
         <http://adsabs.harvard.edu/abs/2002AJ....123.1086H>`_.
         """
 
-        # The FDR procedure... guarantees that <FDR> < alpha
-        if not alpha:
-            alpha = self.fdr_alpha
         # The correlation length in config.py is used not only for the
         # calculation of error bars with the Condon formulae, but also for
         # calculating the number of independent pixels.
@@ -637,8 +445,8 @@ class ImageData(object):
 
         # Calculate the FDR threshold
         # Things will go terribly wrong in the line below if the interpolated
-        # noise values get very close or below zero. Use interpolate_order=1
-        # in config or the roundup option.
+        # noise values get very close or below zero. Use INTERPOLATE_ORDER=1
+        # or the roundup option.
         if (type(bgmap).__name__ == 'ndarray' or
             type(bgmap).__name__ == 'MaskedArray'):
             if bgmap.shape != self.backmap.shape:
@@ -676,7 +484,8 @@ class ImageData(object):
         # See, e.g., Hopkins et al., AJ 123, 1086 (2002).
         if not anl:
             anl = fdr_threshold
-        return self._pyse(fdr_threshold * self.rmsmap, anl * self.rmsmap)
+        return self._pyse(fdr_threshold * self.rmsmap, anl * self.rmsmap,
+                          deblend_nthresh, force_beam)
 
     def flux_at_pixel(self, x, y, numpix=1):
         """Return the background-subtracted flux at a certain position
@@ -753,7 +562,7 @@ class ImageData(object):
         # set argument for fixed parameters based on input string
         if fixed == 'position':
             fixed = {'xbar': boxsize/2.0, 'ybar': boxsize/2.0}
-        elif fixed == 'position+error':
+        elif fixed == 'position+shape':
             fixed = {'xbar': boxsize/2.0, 'ybar': boxsize/2.0,
                      'semimajor': self.beam[0],
                      'semiminor': self.beam[1],
@@ -795,7 +604,7 @@ class ImageData(object):
         return extract.Detection(measurement, self)
 
     def fit_fixed_positions(self, sources, boxsize, threshold=None,
-                            fixed='position+error'):
+                            fixed='position+shape'):
         """Convenience function to fit a list of sources at the given positions
 
         This function wraps around fit_to_point().
@@ -864,8 +673,7 @@ class ImageData(object):
         # sourcefitting. We are actually using three separate filters, which
         # exclude:
         #
-        # 1. Anything which has been masked before we reach this point (eg by
-        #    reliable_window(), etc);
+        # 1. Anything which has been masked before we reach this point;
         # 2. Any pixels which fall below the analysis threshold at that pixel
         #    position;
         # 3. Any pixels corresponding to a position where the RMS noise is
@@ -881,7 +689,7 @@ class ImageData(object):
             (self.rmsmap >= (RMS_FILTER * numpy.median(self.rmsmap))),
             1, 0
         ).filled(fill_value=0)
-        labelled_data, num_labels = ndimage.label(clipped_data, self.structuring_element)
+        labelled_data, num_labels = ndimage.label(clipped_data, STRUCTURING_ELEMENT)
 
         labels_below_det_thr, labels_above_det_thr = [], []
         if num_labels > 0:
@@ -908,12 +716,12 @@ class ImageData(object):
                 maximum_values = [maximum_values]
 
             # We'll filter out the insignificant islands
-
             for i, x in enumerate(maximum_values, 1):
                 if x < 0:
                     labels_below_det_thr.append(i)
                 else:
                     labels_above_det_thr.append(i)
+            # Set to zero all labelled islands that are below det_thr:
             labelled_data = numpy.where(
                 numpy.in1d(labelled_data.ravel(), labels_above_det_thr).reshape(labelled_data.shape),
                 labelled_data, 0
@@ -921,86 +729,10 @@ class ImageData(object):
 
         return labels_above_det_thr, labelled_data
 
-    def process_labels(self, labels, queue):
-    	results_list = []
-	for label in labels:
-            chunk = self.shared_data["slices"][label-1]
-            analysis_threshold = (self.shared_data["analysisthresholdmap"][chunk] /
-                                  self.rmsmap[chunk]).max()
-            # In selected_data only the pixels with the "correct"
-            # (see above) labels are retaineD. Other pixel values are
-            # set to zero.
-            # In this way, disconnected pixels within (rectangular)
-            # slices around islands (paricularly the large ones) do
-            # not affect the source measurements.
-            selected_data = numpy.ma.where(
-                self.shared_data["labelled_data"][chunk] == label, self.data_bgsubbed[chunk].data, -99999.0
-            ).filled(fill_value=-99999.0)
-
-            results_list.append(
-                extract.Island(
-                    selected_data,
-                    self.rmsmap[chunk],
-                    chunk,
-                    analysis_threshold,
-                    self.shared_data["detectionthresholdmap"][chunk],
-                    self.beam
-                )
-            )
-	    
-	if queue == None: return results_list
-	else: queue.put(results_list)
-
-
-
-
-    def process_islands(self, start, finish, queue):
-   
-    	results_list = containers.ExtractionResults()
-        for island in self.shared_data["island_list"][start:finish]:
-       	    if self.force_beam:
-                fixed = {'semimajor': self.beam[0], 'semiminor': self.beam[1]}
-            else:
-                fixed = None
-
-            fit_results = island.fit(fixed=fixed)
-            if fit_results:
-                measurement, residual = fit_results
-		
-            else:
-                # Failed to fit; drop this island and go to the next.
-	        continue
-	
-            try:
-                det = extract.Detection(measurement, self, chunk=island.chunk)
-		if queue is not None: det.imagedata = None   # Don't need/want to send this for pyse
-                if (det.ra.error == float('inf') or
-                        det.dec.error == float('inf')):
-                    logger.warn('Bad fit from blind extraction at pixel coords:'
-                              '%f %f - measurement discarded'
-                              '(increase fitting margin?)', det.x, det.y )
-		    
-                else:
-
-                    results_list.append(det)
-		    
-                if self.residuals:
-                    self.residuals_from_deblending[island.chunk] -= (
-                        island.data.filled(fill_value=0.))
-                    self.residuals_from_gauss_fitting[island.chunk] += residual
-
-            except RuntimeError:
-                logger.warn("Island not processed; unphysical?")
-                raise
-		
-	
-	if queue == None: return results_list
-	else: queue.put(results_list)
-
 
     def _pyse(
         self, detectionthresholdmap, analysisthresholdmap,
-        labelled_data=None, labels=[]
+        deblend_nthresh, force_beam, labelled_data=None, labels=[]
     ):
         """
         Run Python-based source extraction on this image.
@@ -1010,6 +742,12 @@ class ImageData(object):
             detectionthresholdmap (numpy.ndarray):
 
             analysisthresholdmap (numpy.ndarray):
+
+            deblend_nthresh (int): number of subthresholds for deblending. 0
+                disables.
+
+            force_beam (bool): force all extractions to have major/minor axes
+                equal to the restoring beam
 
             labelled_data (numpy.ndarray): labelled island map (output of
             numpy.ndimage.label()). Will be calculated automatically if not
@@ -1032,36 +770,39 @@ class ImageData(object):
                 detectionthresholdmap, analysisthresholdmap
             )
 
+        # Get a bounding box for each island:
+        # NB Slices ordered by label value (1...N,)
+        # 'None' returned for missing label indices.
         slices = ndimage.find_objects(labelled_data)
 
- 	num_iters = len(labels)
-        per_proc = num_iters/self.nproc
-        if num_iters%self.nproc != 0: per_proc += 1
+        for label in labels:
+            chunk = slices[label-1]
+            analysis_threshold = (analysisthresholdmap[chunk] /
+                                  self.rmsmap[chunk]).max()
+            # In selected_data only the pixels with the "correct"
+            # (see above) labels are retained. Other pixel values are
+            # set to -(bignum).
+            # In this way, disconnected pixels within (rectangular)
+            # slices around islands (particularly the large ones) do
+            # not affect the source measurements.
+            selected_data = numpy.ma.where(
+                labelled_data[chunk] == label,
+                self.data_bgsubbed[chunk].data, -extract.BIGNUM
+            ).filled(fill_value=-extract.BIGNUM)
 
-	self.shared_data = {
-	    # Assume that processes fork without copying data, 
-	    # and that references to the data are stored in this object.
-	    # In that case, we get free shared memory between processes.
-	    "slices" : slices,
-	    "analysisthresholdmap" : analysisthresholdmap,
-	    "labelled_data" : labelled_data,
-	    "detectionthresholdmap" : detectionthresholdmap
-	}
-
-        process_list = []
-	for i in range(1,self.nproc):
-	    q = Queue()
-		# labels is a list of integers, not hugely big even if thousands of sources
-            p = Process(target=self.process_labels, args=(labels[i*per_proc:(i+1)*per_proc],q))
-            process_list.append((p, q))
-            p.start()
-	
-	# This process does the first few in the list
-	island_list += self.process_labels(labels[0:per_proc],None)
- 	
-        for process in process_list:
-            island_list += process[1].get()
-            process[0].join()
+            island_list.append(
+                extract.Island(
+                    selected_data,
+                    self.rmsmap[chunk],
+                    chunk,
+                    analysis_threshold,
+                    detectionthresholdmap[chunk],
+                    self.beam,
+                    deblend_nthresh,
+                    DEBLEND_MINCONT,
+                    STRUCTURING_ELEMENT
+                )
+            )
 
         # If required, we can save the 'left overs' from the deblending and
         # fitting processes for later analysis. This needs setting up here:
@@ -1073,7 +814,7 @@ class ImageData(object):
                     island.data.filled(fill_value=0.))
 
         # Deblend each of the islands to its consituent parts, if necessary
-        if self.deblend_enabled:
+        if deblend_nthresh:
             deblended_list = map(lambda x: x.deblend(), island_list)
             #deblended_list = [x.deblend() for x in island_list]
             island_list = list(utils.flatten(deblended_list))
@@ -1081,33 +822,37 @@ class ImageData(object):
         # Iterate over the list of islands and measure the source in each,
         # appending it to the results list.
         results = containers.ExtractionResults()
-	
-	num_iters = len(island_list)
-        per_proc = num_iters/self.nproc
-        if num_iters%self.nproc != 0: per_proc += 1
+        for island in island_list:
+            if force_beam:
+                fixed = {'semimajor': self.beam[0],
+                         'semiminor': self.beam[1],
+                         'theta': self.beam[2]}
+            else:
+                fixed = None
+            fit_results = island.fit(fixed=fixed)
+            if fit_results:
+                measurement, residual = fit_results
+            else:
+                # Failed to fit; drop this island and go to the next.
+                continue
+            try:
+                det = extract.Detection(measurement, self, chunk=island.chunk)
+                if (det.ra.error == float('inf') or
+                        det.dec.error == float('inf')):
+                    logger.warn('Bad fit from blind extraction at pixel coords:'
+                                  '%f %f - measurement discarded'
+                                  '(increase fitting margin?)', det.x, det.y )
+                else:
+                    results.append(det)
 
-	self.shared_data = {
-	    "island_list" : island_list
-	}
+                if self.residuals:
+                    self.residuals_from_deblending[island.chunk] -= (
+                        island.data.filled(fill_value=0.))
+                    self.residuals_from_gauss_fitting[island.chunk] += residual
+            except RuntimeError:
+                logger.warn("Island not processed; unphysical?")
+                raise
 
-	process_list = []
-	for i in range(1,self.nproc):
-	    q = Queue()
-	    p = Process(target=self.process_islands, args=(i*per_proc,(i+1)*per_proc,q))
-	    process_list.append((p, q))
-	    p.start()
-	    
-	# This process    
-	for r in self.process_islands(0,per_proc,None):
-	    results.append(r)
-	    
-	for process in process_list:
-	    for r in process[1].get():
-		r.imagedata = self    # Not sent, so put back 
-	    	results.append(r)
-	    process[0].join()	
-	
-	
         def is_usable(det):
             # Check that both ends of each axis are usable; that is, that they
             # fall within an unmasked part of the image.

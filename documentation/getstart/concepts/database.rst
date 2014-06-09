@@ -4,11 +4,11 @@
 Pipeline Database
 +++++++++++++++++
 
-The Trap consists of a very tightly-coupled set of logic implemented partial
+The TraP consists of a very tightly-coupled set of logic implemented partial
 in Python code and partially in a relational database. The database contains
-measurements made of sources being processed by the Trap, as well as
+measurements made of sources being processed by the TraP, as well as
 information about the images being processed, the regions of the sky being
-surveyed, and so on. The database is fundamental to the operation of the Trap:
+surveyed, and so on. The database is fundamental to the operation of the TraP:
 except for a few :ref:`standalone tools <tools>`, use of a database is
 absolutely required.
 
@@ -19,15 +19,15 @@ document is |db_version|.
 
 In general, a single database management system (RDBMS) can support more than
 one independent database. It is suggested that each coherent "project"
-processed through the Trap be given an independent database. For example, a
+processed through the TraP be given an independent database. For example, a
 project in this sense  might include all the data from a particular survey, or
 all the data processed by a particular user. The resulting data can then be
 archived as a coherent unit, while other projects continue to use the same
 RDBMS undisturbed.
 
-Within the context of the Trap, we support two different RDBMSs: `MonetDB
+Within the context of the TraP, we support two different RDBMSs: `MonetDB
 <http://www.monetdb.org/>`_ and `PostgreSQL <http://www.postgresql.org/>`_.
-All Trap functionality is available whichever database you choose: it is
+All TraP functionality is available whichever database you choose: it is
 suggested you experiment to determine which provides the best combination of
 usability and performance for your particular usage.
 

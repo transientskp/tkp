@@ -6,7 +6,7 @@ logger = logging.getLogger(__name__)
 
 # The version of the TKP DB schema which is assumed by the current tree.
 # Increment whenever the schema changes.
-DB_VERSION = 17
+DB_VERSION = 21
 
 class DBExceptions(object):
     """
@@ -58,7 +58,7 @@ class Database(object):
             if kwargs: logger.warning("Not configuring pre-configured database")
             return
         elif not kwargs:
-            kwargs = tkp.config.database_config()
+            kwargs = tkp.config.get_database_config()
 
         self.engine = kwargs['engine']
         self.database = kwargs['database']

@@ -1,141 +1,356 @@
-import unittest2 as unittest
+import datetime
+import itertools
+
+import unittest
+
 import tkp.db
-from tkp.db import monitoringlist
+from tkp.db import associations as dbass
+from tkp.db import general as dbgen
+from tkp.db import monitoringlist as dbmon
+from tkp.db.orm import DataSet
 from tkp.testutil import db_subs
 from tkp.testutil.decorators import requires_database
-from tkp.db import associations as dbass
-from tkp.db import transients as tr_search
-from tkp.db import general as dbgen
 
 
-class TestIntermittentToMonitorlist(unittest.TestCase):
+@requires_database()
+class TestForcedFit(unittest.TestCase):
     """
-    These tests will check an intermittent source, having
-    a null-detection in the second image out of three images.
-    This source should end up in the monitoringlist
+    These tests will check that monitoringlist sources are associated only amongst themselves.
     """
-    @requires_database()
-    def setUp(self):
-        self.database = tkp.db.Database()
+    def shortDescription(self):
+        """http://www.saltycrane.com/blog/2012/07/how-prevent-nose-unittest-using-docstring-when-verbosity-2/"""
+        return None
 
     def tearDown(self):
         tkp.db.rollback()
 
-    def test_intermittentToMonitorlist(self):
-        dataset = tkp.db.DataSet(database=self.database, data={'description': "Monlist:" + self._testMethodName})
-        n_images = 3
-        im_params = db_subs.example_dbimage_datasets(n_images)
+    def test_monitoringSource(self):
+        data = {'description': "monitoringlist:" + self._testMethodName}
+        dataset = DataSet(data=data)
 
-        steady_srcs = []
-        # We will work with 2 sources per image
-        # one being detected in all images and not in the monlist
-        # the second having a null-detection in the second image
-        # and stored in the monlist
-        n_steady_srcs = 2
-        for i in range(n_steady_srcs):
-            src = db_subs.example_extractedsource_tuple()
-            src = src._replace(ra=src.ra + 2 * i)
-            steady_srcs.append(src)
+        # Three timesteps, 1 band -> 3 images.
+        taustart_tss = [datetime.datetime(2013, 8, 1),
+                        datetime.datetime(2013, 9, 1),
+                        datetime.datetime(2013, 10, 1)]
+        #freq_effs = [124, 149, 156, 185]
+        freq_effs = [124]
+        freq_effs = [f * 1e6 for f in freq_effs]
 
-        for idx, im in enumerate(im_params):
-            image = tkp.db.Image(database=self.database, dataset=dataset, data=im)
+        im_params = db_subs.example_dbimage_datasets(len(freq_effs)
+                                                     * len(taustart_tss))
+        timestamps = itertools.repeat(taustart_tss, len(freq_effs))
 
-            if idx == 1:
-                # The second image has a null detection, so only the first source is detected
-                image.insert_extracted_sources(steady_srcs[0:1])
-            else:
-                image.insert_extracted_sources(steady_srcs)
+        for im, freq, ts in zip(im_params, itertools.cycle(freq_effs),
+                                itertools.chain.from_iterable(zip(*timestamps))):
+            im['freq_eff'] = freq
+            im['taustart_ts'] = ts
 
-            # First, we check for null detections
-            nd = monitoringlist.get_nulldetections(image.id, deRuiter_r=3.717)
+        images = []
+        for im in im_params:
+            image = tkp.db.Image(dataset=dataset, data=im)
+            images.append(image)
 
-            if idx == 0:
-                self.assertEqual(len(nd), 0)
-            elif idx == 1:
-                self.assertEqual(len(nd), 1)
-                # The null detection is found,
-                # We simulate the forced fit result back into extractedsource
-                # Check that the null-detection ra is the ra of source two
-                self.assertEqual(nd[0][0], steady_srcs[1].ra)
-                #print "nd=",nd
-                tuple_ff_nd = steady_srcs[1:2]
-                dbgen.insert_extracted_sources(image.id, tuple_ff_nd, 'ff_nd')
-            elif idx == 2:
-                self.assertEqual(len(nd), 0)
+        # Arbitrary parameters, except that they fall inside our image.
+        # We have one to be monitored source and one "normal" source
+        src0 = db_subs.example_extractedsource_tuple(ra=122.5, dec=9.5)
+        src1_mon = db_subs.example_extractedsource_tuple(ra=123.5, dec=10.5)
 
-            # Secondly, we do the source association
-            dbass.associate_extracted_sources(image.id, deRuiter_r=3.717)
-            monitoringlist.add_nulldetections(image.id)
-            # We also need to run the transient search in order to pick up the variable
-            # eta_lim, V_lim, prob_threshold, minpoints, resp.
-            transients = tr_search.multi_epoch_transient_search(image.id,
-                                                     0.0,
-                                                     0.0,
-                                                     0.5,
-                                                     1)
+        # Group images in blocks of 1, corresponding to all frequency bands at
+        # a given timestep.
+        for images in zip(*(iter(images),) * len(freq_effs)):
+            for image in images:
+                # The "normal" source is seen at all timesteps
+                dbgen.insert_extracted_sources(image.id, [src0], 'blind')
 
-            # Adjust (insert/update/remove) transients in monlist as well
-            monitoringlist.adjust_transients_in_monitoringlist(image.id,
-                                                               transients)
+            for image in images:
+                dbass.associate_extracted_sources(image.id, deRuiter_r=5.68)
+                # The monitoring sources are the positional inputs for the forced
+                # fits, which on their turn return additional parameters,
+                # e.g. from src0_mon
+                # src1_mon is the monitoring source at all timesteps
+                dbgen.insert_extracted_sources(image.id, [src1_mon], 'ff_ms')
 
-        # So after the three images have been processed,
-        # We should have the null-detection source in the monlist
+                # And here we have to associate the monitoring sources with the
+                # runcat sources...
+                dbmon.associate_ms(image.id)
 
-        # Get the null detection in extractedsource
-        # These are of extract_type = 1
         query = """\
-        select x.id
-          from extractedsource x
-              ,image i
-         where x.image = i.id
-           and i.dataset = %s
-           and x.extract_type = 1
+        SELECT id
+              ,mon_src
+          FROM runningcatalog r
+         WHERE dataset = %(dataset_id)s
+           AND datapoints = 3
+        ORDER BY id
         """
-        self.database.cursor.execute(query, (dataset.id,))
-        result = zip(*self.database.cursor.fetchall())
-        null_det = result[0]
-        self.assertEqual(len(null_det), 1)
+        cursor = tkp.db.execute(query, {'dataset_id': dataset.id})
+        result = cursor.fetchall()
+
+        # We should have two runningcatalog sources, one for the "normal"
+        # source and one for the monitoring source.
+        # Both should have three datapoints.
+        print "dp_result:",result
+        self.assertEqual(len(result), 2)
+        # The first source is the "normal" one
+        self.assertEqual(result[0][1], False)
+        # The second source is the monitoring one
+        self.assertEqual(result[1][1], True)
 
         query = """\
-        select a.runcat
+        SELECT r.id
+              ,r.mon_src
+              ,rf.f_datapoints
+          FROM runningcatalog r
+              ,runningcatalog_flux rf
+         WHERE r.dataset = %(dataset_id)s
+           AND rf.runcat = r.id
+        ORDER BY r.id
+        """
+        cursor = tkp.db.execute(query, {'dataset_id': dataset.id})
+        result = cursor.fetchall()
+
+        # We should have two runningcatalog_flux entries,
+        # one for every source, where every source has
+        # three f_datapoints
+        self.assertEqual(len(result), 2)
+
+        # "Normal" source: three flux datapoints
+        self.assertEqual(result[0][1], False)
+        self.assertEqual(result[0][2], 3)
+        # Monitoring source: three flux datapoints
+        self.assertEqual(result[1][1], True)
+        self.assertEqual(result[1][2], 3)
+
+        # We should also have two lightcurves for both sources,
+        # where both sources have three datapoints.
+        # The association types of the "normal" source are
+        # 3 (first) or 4 (later ones), while the monitoring source
+        # association types are 8 (first) or 9 (later ones).
+        query = """\
+        SELECT a.runcat
               ,a.xtrsrc
-              ,r.wm_ra
-              ,r.wm_decl
-          from assocxtrsource a
+              ,a.type
+              ,i.taustart_ts
+              ,r.mon_src
+              ,x.extract_type
+          FROM assocxtrsource a
               ,extractedsource x
               ,image i
               ,runningcatalog r
-         where a.xtrsrc = x.id
-           and x.id = %s
-           and x.image = i.id
-           and i.dataset = %s
-           and a.runcat = r.id
-           and r.dataset = i.dataset
+         WHERE a.xtrsrc = x.id
+           AND x.image = i.id
+           AND i.dataset = %(dataset_id)s
+           AND a.runcat = r.id
+        ORDER BY a.runcat
+                ,i.taustart_ts
         """
-        self.database.cursor.execute(query, (null_det[0], dataset.id,))
-        result = zip(*self.database.cursor.fetchall())
-        assocruncat = result[0]
-        xtrsrc = result[1]
-        wm_ra = result[2]
-        wm_decl = result[3]
-        self.assertEqual(len(assocruncat), 1)
+        cursor = tkp.db.execute(query, {'dataset_id': dataset.id})
+        result = cursor.fetchall()
+
+        # 3 + 3 entries for source 1 and 2 resp.
+        self.assertEqual(len(result), 6)
+
+        # The individual light-curve datapoints for the "normal" source
+        # It was new at first timestep
+        self.assertEqual(result[0][2], 4)
+        self.assertEqual(result[0][3], taustart_tss[0])
+        self.assertEqual(result[0][4], False)
+        self.assertEqual(result[0][5], 0)
+
+        # It was known at second timestep
+        self.assertEqual(result[1][2], 3)
+        self.assertEqual(result[1][3], taustart_tss[1])
+        self.assertEqual(result[1][4], result[0][4])
+        self.assertEqual(result[1][5], result[0][5])
+
+        # It was known at third timestep
+        self.assertEqual(result[2][2], result[1][2])
+        self.assertEqual(result[2][3], taustart_tss[2])
+        self.assertEqual(result[2][4], result[1][4])
+        self.assertEqual(result[2][5], result[1][5])
+
+        # The individual light-curve datapoints for the monitoring source
+        # It was new at first timestep
+        self.assertEqual(result[3][2], 8)
+        self.assertEqual(result[3][3], taustart_tss[0])
+        self.assertEqual(result[3][4], True)
+        self.assertEqual(result[3][5], 2)
+
+        # It was known at second timestep
+        self.assertEqual(result[4][2], 9)
+        self.assertEqual(result[4][3], taustart_tss[1])
+        self.assertEqual(result[4][4], result[3][4])
+        self.assertEqual(result[4][5], result[3][5])
+
+        # It was known at third timestep
+        self.assertEqual(result[5][2], result[4][2])
+        self.assertEqual(result[5][3], taustart_tss[2])
+        self.assertEqual(result[5][4], result[4][4])
+        self.assertEqual(result[5][5], result[4][5])
+
+    def test_monitoringSourceSamePos(self):
+        """Here we test the case when the monitoring source position
+        is identical to a blindly extracted source
+        """
+
+        data = {'description': "monitoringlist:" + self._testMethodName}
+        dataset = DataSet(data=data)
+
+        # Three timesteps, 1 band -> 3 images.
+        taustart_tss = [datetime.datetime(2013, 8, 1),
+                        datetime.datetime(2013, 9, 1),
+                        datetime.datetime(2013, 10, 1)]
+        #freq_effs = [124, 149, 156, 185]
+        freq_effs = [124]
+        freq_effs = [f * 1e6 for f in freq_effs]
+
+        im_params = db_subs.example_dbimage_datasets(len(freq_effs)
+                                                     * len(taustart_tss))
+        timestamps = itertools.repeat(taustart_tss, len(freq_effs))
+
+        for im, freq, ts in zip(im_params, itertools.cycle(freq_effs),
+                                itertools.chain.from_iterable(zip(*timestamps))):
+            im['freq_eff'] = freq
+            im['taustart_ts'] = ts
+
+        images = []
+        for im in im_params:
+            image = tkp.db.Image(dataset=dataset, data=im)
+            images.append(image)
+
+        # Arbitrary parameters, except that they fall inside our image.
+        # We have one to be monitored source and one "normal" source
+        src0 = db_subs.example_extractedsource_tuple(ra=122.5, dec=9.5)
+        src1_mon = db_subs.example_extractedsource_tuple(ra=122.5, dec=9.5)
+
+        # Group images in blocks of 1, corresponding to all frequency bands at
+        # a given timestep.
+        for images in zip(*(iter(images),) * len(freq_effs)):
+            for image in images:
+                # The "normal" source is seen at all timesteps
+                dbgen.insert_extracted_sources(image.id, [src0], 'blind')
+
+            for image in images:
+                dbass.associate_extracted_sources(image.id, deRuiter_r=5.68)
+                # The monitoring sources are the positional inputs for the forced
+                # fits, which on their turn return additional parameters,
+                # e.g. from src0_mon
+                # src1_mon is the monitoring source at all timesteps
+                dbgen.insert_extracted_sources(image.id, [src1_mon], 'ff_ms')
+
+                # And here we have to associate the monitoring sources with the
+                # runcat sources...
+                dbmon.associate_ms(image.id)
 
         query = """\
-        SELECT runcat
-              ,ra
-              ,decl
-          FROM monitoringlist
-         WHERE dataset = %s
+        SELECT id
+              ,mon_src
+          FROM runningcatalog r
+         WHERE dataset = %(dataset_id)s
+           AND datapoints = 3
+        ORDER BY id
         """
-        self.database.cursor.execute(query, (dataset.id,))
-        result = zip(*self.database.cursor.fetchall())
-#        print "len(result)=",len(result)
-        self.assertEqual(len(result), 3)
-        #self.assertEqual(0, 1)
-        monruncat = result[0]
-        ra = result[1]
-        decl = result[2]
-        self.assertEqual(len(monruncat), 1)
-        self.assertEqual(monruncat[0], assocruncat[0])
-        self.assertAlmostEqual(ra[0], wm_ra[0])
-        self.assertAlmostEqual(decl[0], wm_decl[0])
+        cursor = tkp.db.execute(query, {'dataset_id': dataset.id})
+        result = cursor.fetchall()
+
+        # We should have two runningcatalog sources, one for the "normal"
+        # source and one for the monitoring source.
+        # Both should have three datapoints.
+        print "dp_result:",result
+        self.assertEqual(len(result), 2)
+        # The first source is the "normal" one
+        self.assertEqual(result[0][1], False)
+        # The second source is the monitoring one
+        self.assertEqual(result[1][1], True)
+
+        query = """\
+        SELECT r.id
+              ,r.mon_src
+              ,rf.f_datapoints
+          FROM runningcatalog r
+              ,runningcatalog_flux rf
+         WHERE r.dataset = %(dataset_id)s
+           AND rf.runcat = r.id
+        ORDER BY r.id
+        """
+        cursor = tkp.db.execute(query, {'dataset_id': dataset.id})
+        result = cursor.fetchall()
+
+        # We should have two runningcatalog_flux entries,
+        # one for every source, where every source has
+        # three f_datapoints
+        self.assertEqual(len(result), 2)
+
+        # "Normal" source: three flux datapoints
+        self.assertEqual(result[0][1], False)
+        self.assertEqual(result[0][2], 3)
+        # Monitoring source: three flux datapoints
+        self.assertEqual(result[1][1], True)
+        self.assertEqual(result[1][2], 3)
+
+        # We should also have two lightcurves for both sources,
+        # where both sources have three datapoints.
+        # The association types of the "normal" source are
+        # 3 (first) or 4 (later ones), while the monitoring source
+        # association types are 8 (first) or 9 (later ones).
+        query = """\
+        SELECT a.runcat
+              ,a.xtrsrc
+              ,a.type
+              ,i.taustart_ts
+              ,r.mon_src
+              ,x.extract_type
+          FROM assocxtrsource a
+              ,extractedsource x
+              ,image i
+              ,runningcatalog r
+         WHERE a.xtrsrc = x.id
+           AND x.image = i.id
+           AND i.dataset = %(dataset_id)s
+           AND a.runcat = r.id
+        ORDER BY a.runcat
+                ,i.taustart_ts
+        """
+        cursor = tkp.db.execute(query, {'dataset_id': dataset.id})
+        result = cursor.fetchall()
+
+        # 3 + 3 entries for source 1 and 2 resp.
+        self.assertEqual(len(result), 6)
+
+        # The individual light-curve datapoints for the "normal" source
+        # It was new at first timestep
+        self.assertEqual(result[0][2], 4)
+        self.assertEqual(result[0][3], taustart_tss[0])
+        self.assertEqual(result[0][4], False)
+        self.assertEqual(result[0][5], 0)
+
+        # It was known at second timestep
+        self.assertEqual(result[1][2], 3)
+        self.assertEqual(result[1][3], taustart_tss[1])
+        self.assertEqual(result[1][4], result[0][4])
+        self.assertEqual(result[1][5], result[0][5])
+
+        # It was known at third timestep
+        self.assertEqual(result[2][2], result[1][2])
+        self.assertEqual(result[2][3], taustart_tss[2])
+        self.assertEqual(result[2][4], result[1][4])
+        self.assertEqual(result[2][5], result[1][5])
+
+        # The individual light-curve datapoints for the monitoring source
+        # It was new at first timestep
+        self.assertEqual(result[3][2], 8)
+        self.assertEqual(result[3][3], taustart_tss[0])
+        self.assertEqual(result[3][4], True)
+        self.assertEqual(result[3][5], 2)
+
+        # It was known at second timestep
+        self.assertEqual(result[4][2], 9)
+        self.assertEqual(result[4][3], taustart_tss[1])
+        self.assertEqual(result[4][4], result[3][4])
+        self.assertEqual(result[4][5], result[3][5])
+
+        # It was known at third timestep
+        self.assertEqual(result[5][2], result[4][2])
+        self.assertEqual(result[5][3], taustart_tss[2])
+        self.assertEqual(result[5][4], result[4][4])
+        self.assertEqual(result[5][5], result[4][5])
+

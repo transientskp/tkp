@@ -2,7 +2,7 @@
 Tutorial Overview
 +++++++++++++++++
 
-This page walks you through setting up a complete, stand-alone Trap
+This page walks you through setting up a complete, stand-alone TraP
 environment running on your own system. See also our :ref:`site-specific
 guides <sites>`.
 
@@ -28,7 +28,7 @@ Initialize a database
 =====================
 
 The pipeline requires a database for storing data. To initialise a database
-the trap manage ``initdb`` subcommand can be used (from the project directory)::
+the TraP manage ``initdb`` subcommand can be used (from the project directory)::
 
   $ ./manage.py initdb
 
@@ -40,7 +40,7 @@ add a ``[database]`` section to your pipeline.cfg.
 Run Celery workers
 ==================
 
-If you want to parallelize trap operations, you need to run a separate Celery
+If you want to parallelize TraP operations, you need to run a separate Celery
 worker. This worker will receive jobs from a broker, so it is assumed you
 installed and started a broker in the installation step. Start a Celery worker
 by running::

@@ -4,14 +4,14 @@
 Development Procedure
 +++++++++++++++++++++
 
-This document describes the development process used when working on the Trap.
+This document describes the development process used when working on the TraP.
 All developers are encouraged to familiarize themselves with this material
 before making any changes to the code.
 
 Accessing the Code
 ==================
 
-All code relating to the core Trap functionality is hosted in the
+All code relating to the core TraP functionality is hosted in the
 `transientskp/tkp <https://github.com/transientskp/tkp>`_ ``git`` repository
 on `GitHub <https://github.com/>`_.
 
@@ -26,7 +26,7 @@ with the codebase. There are many excellent tutorials available: start at the
 Planning
 ========
 
-We aim to make releases of the Trap at the cadence of a few per year. Broadly,
+We aim to make releases of the TraP at the cadence of a few per year. Broadly,
 the plan is to alternate technically focused releases, which clean up the
 codebase and make behind-the-scenes improvements, with science based releases,
 which provide new functionality to end users. Technical releases have odd
@@ -51,7 +51,7 @@ implementation before you begin coding.
 Issue Tracker
 =============
 
-We keep track of bug reports and feature requests using the `Trap Project
+We keep track of bug reports and feature requests using the `TraP Project
 <https://support.astron.nl/lofar_issuetracker/projects/bfmise>`_ on the `LOFAR
 Issue Tracker <https://support.astron.nl/lofar_issuetracker/>`_. You will need
 to register for the issue tracker separately with `ASTRON
@@ -88,7 +88,7 @@ Testing
 Writing Tests
 -------------
 
-The Trap has a moderately-extensive (and constantly expanding!) test suite.
+The TraP has a moderately-extensive (and constantly expanding!) test suite.
 Whenever you make *any* changes to the code, however minor, you should check
 and ensure that all the tests continue to pass. In addition, you should write
 new tests to demonstrate the correctness of your changes. In particular:
@@ -114,7 +114,7 @@ environment variable to enable the test suite to find it.
 
 Running the full test suite also requires that you have test :ref:`database
 <database-intro>` available and initialized. Note that the schema version of
-the database must match the version of the Trap you wish to test. An easy way
+the database must match the version of the TraP you wish to test. An easy way
 to configure the database such that it can be access by the test suite is to
 export the environment variables ``TKP_DBENGINE``, ``TKP_DBNAME``,
 ``TKP_DBHOST``, ``TKP_DBPORT``, ``TKP_DBUSER`` and ``TKP_DBPASSWORD``.
@@ -237,3 +237,55 @@ guidelines in mind:
   recording that you did "stuff"), and appropriate use of ``git rebase`` to
   eliminate dead-end and work-in-progress commits before submitting the code
   for review.
+
+Release procedure
+=================
+
+Code and repository management
+------------------------------
+
+To make a release you should first create a new branch (if appropriate: see
+below), then set the version number in the code, then tag the new release.
+
+Major releases are sequentially numbered (``1``, ``2``, ``N``). They happen on
+a branch named ``releaseN``. Create the branch as follows::
+
+  $ git checkout -b <releaseN>
+
+Minor releases happen on existing release branches. They are named ``N.M``,
+where ``N`` is the major release version and ``M`` the minor version. The
+first commit on every release branch corresponds to ``N.0``. Check
+out the relevant branch::
+
+  $ git checkout <releaseN>
+
+Next, edit the code to set the version number. You will need to change the
+following files:
+
+  * ``setup.py``
+  * ``tkp/__init__.py``
+  * ``documentation/conf.py``
+
+Commit your changes. This commit is the basis of the release::
+
+  $ git commit -am "Release N.M"
+
+Tag the release. This is important, as we use the tags to indicate which
+versions should be built and added to the documentation site::
+
+  $ git tag -a "rN.M"
+
+Push everything, including the tag, to GitHub::
+
+  $ git push --tags origin releaseN
+
+Local setup in Amsterdam
+------------------------
+
+All tagged releases will be build under ``/opt/tkp/[tag]``. After making &
+building a release, *manually* set ``/opt/tkp/stable`` such that it is a
+symlink to the latest tag.
+
+Documentation for all tagged releases is built in ``/srv/TKP-docs/tkp/[tag]``
+on ``pc-swinbank``. Edit ``/srv/TKP-docs/index.html`` such that the
+documentation for every released version appears on the website.

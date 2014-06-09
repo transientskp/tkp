@@ -16,12 +16,12 @@ comparison is more approritate.
 """
 import numpy
 
-import unittest2 as unittest
+import unittest
 
 from datetime import datetime
 from datetime import timedelta
 from tkp.classification.features import lightcurve as lcmod
-from tkp.classification.transient import DateTime
+from tkp.classification.features.utils import DateTime
 
 
 class TestLightcurve(unittest.TestCase):

@@ -4,7 +4,7 @@ Tests for simulated LOFAR datasets.
 
 import os
 
-import unittest2 as unittest
+import unittest
 
 from tkp.testutil.data import DATAPATH
 from tkp import accessors

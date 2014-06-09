@@ -1,11 +1,9 @@
 import os
-import math
 import logging
 import warnings
 from tempfile import NamedTemporaryFile
 
 from pyrap.images import image as pyrap_image
-import pyfits
 
 import tkp.accessors
 from tkp.db.database import Database
@@ -13,31 +11,6 @@ from tkp.db.orm import DataSet, Image
 
 
 logger = logging.getLogger(__name__)
-
-def fix_reference_dec(imagename):
-    """
-    If the FITS file specified has a reference dec of 90 (or pi/2), make it
-    infinitesimally less. This works around problems with ill-defined
-    coordinate systems at the north celestial pole.
-    """
-    # TINY is an arbitrary constant which we regard as "far enough" away from
-    # dec 90 (or pi/2). In theory, we ought to be able to us
-    # sys.float_info.epsilon, but pyfits seems to round this when writing it
-    # to a FITS file so that isn't quite generous enough.
-    TINY = 1e-10
-    with pyfits.open(imagename, mode='update') as ff:
-        # The FITS standard (version 3.0, July 2008) tells us "For angular
-        # measurements given as floating-point values [...] the units should
-        # be degrees". We therefore use that as a default, but handle radians
-        # too, just to be on the safe side.
-        critical_value = 90.0 # degrees
-        if "CUNIT2" in ff[0].header and ff[0].header["CUNIT2"] == "rad":
-            critical_value = math.pi/2 # radians
-
-        ref_dec = ff[0].header['CRVAL2']
-        if (critical_value - abs(ref_dec)) < TINY:
-            ff[0].header['CRVAL2'] = ref_dec * (1 - TINY)
-            ff.flush()
 
 def image_to_mongodb(filename, hostname, port, db):
     """Copy a file into mongodb"""
@@ -64,7 +37,6 @@ def image_to_mongodb(filename, hostname, port, db):
             temp_fits_file = NamedTemporaryFile()
             i = pyrap_image(filename)
             i.tofits(temp_fits_file.name)
-            fix_reference_dec(temp_fits_file.name)
             new_file = gfs.new_file(filename=filename)
             with open(temp_fits_file.name, "r") as f:
                 new_file.write(f)
@@ -96,8 +68,12 @@ def create_dataset(dataset_id, description):
     database = Database()
     if dataset_id == -1:
         dataset = DataSet({'description': description}, database)
+        logger.info("created dataset %s (%s)" % (dataset.id,
+                                                  dataset.description))
     else:
         dataset = DataSet(id=dataset_id, database=database)
+        logger.info("using dataset %s (%s)" % (dataset.id,
+                                                dataset.description))
     return dataset.id
 
 
@@ -123,7 +99,7 @@ def store_images(images_metadata, extraction_radius_pix, dataset_id):
         images_metadata: list of dicts containing image metadata
         extraction_radius_pix: (float) Used to calculate the 'skyregion' 
         dataset_id: dataset id to be used. don't use value from parset file
-                    since this can be -1 (trap way of setting auto increment)
+                    since this can be -1 (TraP way of setting auto increment)
     Returns:
         the database ID of this dataset
     """
@@ -135,7 +111,7 @@ def store_images(images_metadata, extraction_radius_pix, dataset_id):
     images_metadata.sort(key=lambda m: m['taustart_ts'])
 
     for metadata in images_metadata:
-        metadata['xtr_radius'] = extraction_radius_pix * metadata['deltax']
+        metadata['xtr_radius'] = extraction_radius_pix * abs(metadata['deltax'])
         filename = metadata['url']
         db_image = Image(data=metadata, dataset=dataset)
         image_ids.append(db_image.id)
@@ -143,15 +119,15 @@ def store_images(images_metadata, extraction_radius_pix, dataset_id):
     return image_ids
 
 
-def node_steps(images, persistence_config):
+def node_steps(images, image_cache_config):
     """
     this function executes all persistence steps that should be executed on a node.
     Note: Should only be used in a node recipe
     """
-    mongohost = persistence_config['mongo_host']
-    mongoport = persistence_config['mongo_port']
-    mongodb = persistence_config['mongo_db']
-    copy_images = persistence_config['copy_images']
+    mongohost = image_cache_config['mongo_host']
+    mongoport = image_cache_config['mongo_port']
+    mongodb = image_cache_config['mongo_db']
+    copy_images = image_cache_config['copy_images']
 
     if copy_images:
         for image in images:
@@ -161,24 +137,3 @@ def node_steps(images, persistence_config):
 
     metadatas = extract_metadatas(images)
     return metadatas
-
-
-def master_steps(metadatas, extraction_radius_pix, persistence_config):
-    """this function executes all persistence steps that should be executed on
-        a master.
-    Args:
-        metadatas: a list of dicts containing info from Image Accessors. This
-                   is returned by the node recipe
-       extraction_radius_pix: (float) Used to calculate the 'skyregion'
-       persistence_config: (dict)  
-    """
-    logger.info("creating dataset in database ...")
-    dataset_id = create_dataset(
-        persistence_config['dataset_id'],
-        persistence_config['description'])
-    logger.info("added dataset with ID %s" % dataset_id)
-
-    logger.info("Storing images")
-    image_ids = store_images(metadatas, extraction_radius_pix, dataset_id)
-    return dataset_id, image_ids
-

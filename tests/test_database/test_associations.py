@@ -2,7 +2,7 @@ import math
 import logging
 from io import BytesIO
 
-import unittest2 as unittest
+import unittest
 
 import tkp.db
 import tkp.db.general as dbgen
@@ -545,10 +545,12 @@ class TestMeridianOne2One(unittest.TestCase):
               ,a.r 
           FROM assocxtrsource a
               ,runningcatalog r 
+              ,extractedsource x
          WHERE a.runcat = r.id 
            AND r.dataset = %(dataset_id)s
-        ORDER BY a.runcat
-                ,a.r
+           AND a.xtrsrc = x.id
+        ORDER BY x.image
+                ,x.ra
         """
         cursor = tkp.db.execute(query, {'dataset_id': dataset.id})
         dr_result = zip(*cursor.fetchall())
@@ -558,14 +560,14 @@ class TestMeridianOne2One(unittest.TestCase):
         dr_radius = dr_result[2]
         
         self.assertEqual(len(runcat), 4)
-        # Ordered by runcat id,so check associations
-        # have performed as expected by checking consecutive pairs:
-        self.assertEqual(runcat[0], runcat[1])
-        self.assertEqual(runcat[2], runcat[3])
-        # New sources are assigned DR=0
+        # Ordered by image and position, since we cannot rely on the  
+        # generated ids by the db.
+        # So we check associations in sequence of images and position.
+        # First image, new source, DR should be zero,
+        # Second image, DR should be as expected from calculation
         self.assertAlmostEqual(dr_radius[0], 0)
-        self.assertAlmostEqual(dr_radius[2], 0)
-        self.assertAlmostEqual(dr_radius[1], expected_dr1)
+        self.assertAlmostEqual(dr_radius[1], 0)
+        self.assertAlmostEqual(dr_radius[2], expected_dr1)
         self.assertAlmostEqual(dr_radius[3], expected_dr2)
         
 

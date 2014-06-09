@@ -37,7 +37,7 @@ of detected sources in the presence of correlated noise in a single map
 
 import os
 
-import unittest2 as unittest
+import unittest
 
 from tkp import accessors
 from tkp.sourcefinder import image
@@ -70,8 +70,8 @@ class test_maps(unittest.TestCase):
                                                   map_with_sources.wcs)
 
     def test_normal(self):
-        self.number_detections_uncorr = len(self.uncorr_image.fd_extract())
-        self.number_detections_corr = len(self.corr_image.fd_extract())
+        self.number_detections_uncorr = len(self.uncorr_image.fd_extract(1e-2))
+        self.number_detections_corr = len(self.corr_image.fd_extract(1e-2))
         self.assertEqual(self.number_detections_uncorr, 0)
         self.assertEqual(self.number_detections_corr, 0)
 

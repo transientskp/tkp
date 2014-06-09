@@ -21,5 +21,4 @@ database used by the TKP library and associated pipeline.
    intro
    schema
    assoc
-   upgrading
-   makeschema
+   howto

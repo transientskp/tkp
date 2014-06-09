@@ -13,7 +13,7 @@ to a particular collection of image pixels) in a table called
 sources are collected together to form a lightcurve by means of the
 :ref:`runningcatalog <schema-runningcatalog>` table (see the :ref:`database
 schema <database-schema>` documentation for details). This terminology "leaks"
-into Trap interfaces, and one will often see references to (for example) a
+into TraP interfaces, and one will often see references to (for example) a
 "runningcatalog source".
 
 The extracted sources are therefore associated with runningcatalog sources.

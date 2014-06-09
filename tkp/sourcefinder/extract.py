@@ -23,6 +23,11 @@ from . import utils
 
 logger = logging.getLogger(__name__)
 
+# This is used as a dummy value, -BIGNUM values will be always be masked.
+# As such, it should be larger than the expected range of real values,
+# since we will get negative values representing real data after
+# background subtraction, etc.
+BIGNUM = 99999.0
 
 class Island(object):
     """
@@ -37,26 +42,30 @@ class Island(object):
     """
 
     def __init__(self, data, rms, chunk, analysis_threshold, detection_map,
-                 beam, rms_orig=None, flux_orig=None, subthrrange=None,
-                 deblend=False, deblend_nthresh=32, deblend_mincont=0.005,
-                 structuring_element=[[0,1,0], [1,1,1], [0,1,0]],
-                 ):
+        beam, deblend_nthresh, deblend_mincont, structuring_element,
+        rms_orig=None, flux_orig=None, subthrrange=None
+    ):
 
-        self.deblend_enabled = deblend
+        # deblend_nthresh is the number of subthresholds used when deblending.
         self.deblend_nthresh = deblend_nthresh
-        self.structuring_element = structuring_element
-        self.deblend_mincont = deblend_mincont
-        self.deblend_nthresh = deblend_nthresh
-
-
         # If we deblend too far, we hit the recursion limit. And it's slow.
-        if self.deblend_enabled and self.deblend_nthresh > 300:
+        if self.deblend_nthresh > 300:
             logger.warn("Limiting to 300 deblending subtresholds")
             self.deblend_nthresh = 300
+        else:
+            logger.debug("Using %d subthresholds", deblend_nthresh)
+
+        # Deblended components of this island must contain at least
+        # deblend_mincont times the total flux of the original to be regarded
+        # as significant.
+        self.deblend_mincont = deblend_mincont
+
+        # The structuring element defines connectivity between pixels.
+        self.structuring_element = structuring_element
 
         # NB we have set all unused data to -(lots) before passing it to
         # Island().
-        mask = numpy.where(data > -9999, 0, 1)
+        mask = numpy.where(data > -BIGNUM / 10.0, 0, 1)
         self.data = numpy.ma.array(data, mask=mask)
         self.rms = rms
         self.chunk = chunk
@@ -78,14 +87,9 @@ class Island(object):
         if isinstance(subthrrange, numpy.ndarray):
             self.subthrrange = subthrrange
         else:
-            self.subthrrange = numpy.logspace(
-                1.0,
-                numpy.log(self.data.max() + 1 - self.data.min()),
-                num=deblend_nthresh+1, # first value == min_orig
-                base=numpy.e,
-                endpoint=False
-            )[1:]
-            self.subthrrange += (self.data.min() - 1)
+            self.subthrrange = utils.generate_subthresholds(
+                self.data.min(), self.data.max(), self.deblend_nthresh
+            )
 
     def deblend(self, niter=0):
         """Return a decomposed numpy array of all the subislands.
@@ -95,6 +99,7 @@ class Island(object):
         separate islands.
         """
 
+        logger.debug("Deblending source")
         for level in self.subthrrange[niter:]:
 
             # The idea is to retain the parent island when no significant
@@ -121,8 +126,10 @@ class Island(object):
                 label = 0
                 for chunk in ndimage.find_objects(labels):
                     label += 1
-                    newdata = numpy.where(labels == label,
-                                          self.data.filled(fill_value=0.0), 0)
+                    newdata = numpy.where(
+                        labels == label,
+                        self.data.filled(fill_value=-BIGNUM), -BIGNUM
+                    )
                     # NB: In class Island(object), rms * analysis_threshold
                     # is taken as the threshold for the bottom of the island.
                     # Everything below that level is masked.
@@ -142,6 +149,9 @@ class Island(object):
                                  1,
                                  self.detection_map[chunk],
                                  self.beam,
+                                 self.deblend_nthresh,
+                                 self.deblend_mincont,
+                                 self.structuring_element,
                                  self.rms_orig[chunk[0].start:chunk[0].stop, chunk[1].start:chunk[1].stop],
                                  self.flux_orig,
                                  self.subthrrange
@@ -978,7 +988,7 @@ class Detection(object):
         """Distance from center"""
         return ((self.x - x)**2 + (self.y - y)**2)**0.5
 
-    def serialize(self):
+    def serialize(self, ew_sys_err, ns_sys_err):
         """Return source properties suitable for database storage.
 
         @rtype: tuple
@@ -999,7 +1009,7 @@ class Detection(object):
             float(self.smaj_asec.value),
             float(self.smin_asec.value),
             float(self.theta_celes.value),
-            float(self.imagedata.ew_sys_err),
-            float(self.imagedata.ns_sys_err),
+            float(ew_sys_err),
+            float(ns_sys_err),
             float(self.error_radius)
         )

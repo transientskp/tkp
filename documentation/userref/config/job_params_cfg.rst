@@ -10,7 +10,7 @@ is essential for achieving scientifically valid results.
 
 The default ``job_params.cfg`` file is as follows:
 
-.. literalinclude:: /../tkp/conf/job_template/job_params.cfg
+.. literalinclude:: /../tkp/config/job_template/job_params.cfg
 
 The file follows the :ref:`standard ConfigParser syntax <configparser>`.
 

@@ -1,13 +1,18 @@
 from operator import attrgetter, itemgetter
+from collections import namedtuple
 
-import unittest2 as unittest
+import unittest
 
 import datetime
 from tkp.testutil.decorators import requires_database
+from tkp.testutil import db_queries
+from tkp.testutil import db_subs
+from tkp.testutil import db_queries
 from tkp.db.orm import DataSet
 from tkp.db.orm import Image
 import tkp.db
 import tkp.db.transients as dbtransients
+from tkp.db.generic import  get_db_rows_as_dicts, columns_from_table
 
 
 class TestLightCurve(unittest.TestCase):
@@ -21,7 +26,7 @@ class TestLightCurve(unittest.TestCase):
 
     @requires_database()
     def test_lightcurve(self):
-        # make 4 * 5 images with different date
+        # make 4 images with different date
         images = []
         for day in [3, 4, 5, 6]:
             data = {'taustart_ts': datetime.datetime(2010, 3, day),
@@ -47,35 +52,24 @@ class TestLightCurve(unittest.TestCase):
             data_list.append({
                 'ra': 111.11 + i,
                 'decl': 11.11 + i,
-                'ra_fit_err': 0.01,
-                'decl_fit_err': 0.01,
-                'ew_sys_err': 20,
-                'ns_sys_err': 20,
-                'i_peak': 10 * i ,
+                'i_peak': 10. * i ,
                 'i_peak_err': 0.1,
-                'error_radius': 10.0
-            #  x=0.11, y=0.22, z=0.33, det_sigma=11.1, zone=i
             })
         # Insert the 3 sources in each image, while further varying the flux
-        for i, image in enumerate(images):
+        lightcurves_sorted_by_ra = [[],[],[]]
+        for im_idx, image in enumerate(images):
             # Create the "source finding results"
             # Note that we reuse 'i_peak' as both peak & integrated flux.
-            sources = []
-            for data in data_list:
-                source = (data['ra'], data['decl'],
-                     data['ra_fit_err'], data['decl_fit_err'],  # Gaussian fit errors
-                     data['i_peak'] * (1 + i), data['i_peak_err'],  # Peak
-                     data['i_peak'] * (1 + i), data['i_peak_err'],  # Integrated
-                     10.,  # Significance level
-                     1, 1,  0, # Beam params (width arcsec major, width arcsec minor, parallactic angle)
-                     data['ew_sys_err'], data['ns_sys_err'],  # Systematic errors
-                     data['error_radius'])
-                sources.append(source)
-
-            # Insert the sources
-            image.insert_extracted_sources(sources)
-
-            # Run the association for each list of source for an image
+            img_sources = []
+            for src_idx, data in enumerate(data_list):
+                src = db_subs.example_extractedsource_tuple(
+                    ra = data['ra'],dec=data['decl'],
+                    peak=data['i_peak']* (1 + im_idx),
+                    flux = data['i_peak']* (1 + im_idx)
+                )
+                lightcurves_sorted_by_ra[src_idx].append(src)
+                img_sources.append(src)
+            image.insert_extracted_sources(img_sources)
             image.associate_extracted_sources(deRuiter_r=3.7)
 
         # updates the dataset and its set of images
@@ -86,10 +80,10 @@ class TestLightCurve(unittest.TestCase):
         for image in self.dataset.images:
             image.update()
             image.update_sources()
-            # Now pick any image, select the first source (smallest RA)
 
+        # Now pick last image, select the first source (smallest RA)
         # and extract its light curve
-        sources = self.dataset.images.pop().sources
+        sources = self.dataset.images[-1].sources
         sources = sorted(sources, key=attrgetter('ra'))
         lightcurve = sources[0].lightcurve()
 
@@ -104,13 +98,40 @@ class TestLightCurve(unittest.TestCase):
         self.assertAlmostEqual(lightcurve[2][2], 30.)
         self.assertAlmostEqual(lightcurve[3][2], 40.)
 
-        # Since the light curves are very similar, only eta_nu is different
-        results = dbtransients._select_updated_variability_indices(self.dataset.images[-1].id)
-        results = sorted(results, key=itemgetter('eta_int'))
-        for result, eta_nu in zip(results, (16666.66666667, 66666.666666667,
-                                            150000.0)):
-            self.assertEqual(result['f_datapoints'], 4)
-            self.assertAlmostEqual(result['eta_int'], eta_nu)
-            self.assertAlmostEqual(result['v_int'], 0.516397779494)
+         #Check the summary statistics (avg flux, etc)
+        query = """\
+        SELECT rf.avg_f_int
+              ,rf.avg_f_int_sq
+              ,avg_weighted_f_int
+              ,avg_f_int_weight
+          FROM runningcatalog r
+              ,runningcatalog_flux rf
+         WHERE r.dataset = %(dataset)s
+           AND r.id = rf.runcat
+        ORDER BY r.wm_ra
+        """
+        self.database.cursor.execute(query, {'dataset': self.dataset.id})
+        runcat_flux_entries = get_db_rows_as_dicts(self.database.cursor)
+        self.assertEqual(len(runcat_flux_entries), len(lightcurves_sorted_by_ra))
+        for idx, flux_summary in enumerate(runcat_flux_entries):
+            py_results = db_subs.lightcurve_metrics(lightcurves_sorted_by_ra[idx])
+            for key in flux_summary.keys():
+                self.assertAlmostEqual(flux_summary[key], py_results[-1][key])
 
+        #Now check the per-timestep statistics (variability indices)
+        sorted_runcat_ids = columns_from_table('runningcatalog',
+                                               where={'dataset':self.dataset.id},
+                                               order='wm_ra')
+        sorted_runcat_ids = [entry['id'] for entry in sorted_runcat_ids]
+
+        for idx, rcid in enumerate(sorted_runcat_ids):
+            db_indices = db_queries.per_timestep_variability_indices(self.database,
+                                                                   rcid)
+            py_indices = db_subs.lightcurve_metrics(lightcurves_sorted_by_ra[idx])
+            self.assertEqual(len(db_indices), len(py_indices))
+            for nstep in range(len(db_indices)):
+                for key in ('v_int', 'eta_int'):
+                    self.assertAlmostEqual(db_indices[nstep][key],
+                                           py_indices[nstep][key],
+                                           places=5)
 

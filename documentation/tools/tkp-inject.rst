@@ -7,7 +7,7 @@ Image Metadata Injection
 Preamble
 --------
 
-In order to images through the Trap, they are required to provide a
+In order to images through the TraP, they are required to provide a
 comprehensive set of metadata, including details such as observation time,
 frequency and the shape of the restoring beam.
 
@@ -27,6 +27,6 @@ named ``inject.cfg`` in the users job directory. See the documentation on
 
 The default ``inject.cfg`` file contains the following settings:
 
-.. literalinclude:: /../tkp/conf/job_template/inject.cfg
+.. literalinclude:: /../tkp/config/job_template/inject.cfg
 
 Any or all of these may be changed by the user to reflect their requirements.

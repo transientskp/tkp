@@ -130,8 +130,7 @@ def handle_args(args=None):
     parser.add_option("--regions", action="store_true", help="Generate DS9 region file(s)")
     parser.add_option("--residuals", action="store_true", help="Generate residual maps")
     parser.add_option("--islands", action="store_true", help="Generate island maps")
-    parser.add_option("--deblend", action="store_true", help="Deblend composite sources")
-    parser.add_option("--deblend-thresholds", default=32, type="int", help="Number of deblending subthresholds")
+    parser.add_option("--deblend-thresholds", default=0, type="int", help="Number of deblending subthresholds; 0 to disable")
     parser.add_option("--bmaj", type="float", help="Major axis of beam (deg)")
     parser.add_option("--bmin", type="float", help="Minor axis of beam (deg)")
     parser.add_option("--bpa", type="float", help="Beam position angle (deg)")
@@ -139,21 +138,19 @@ def handle_args(args=None):
     parser.add_option("--margin", default=0, type="int", help="Margin applied to each edge of image (in pixels)")
     parser.add_option("--radius", default=0, type="float", help="Radius of usable portion of image (in pixels)")
     parser.add_option("--skymodel", action="store_true", help="Generate sky model")
-    parser.add_option("--nproc",default=1, type="int", help="Number of processes to use")
     parser.add_option("--csv", action="store_true", help="Generate csv text file for use in programs such as TopCat")
     parser.add_option("--rmsmap", action="store_true", help="Generate RMS map")
     parser.add_option("--sigmap", action="store_true", help="Generate significance map")
     parser.add_option("--force-beam", action="store_true", help="Force fit axis lengths to beam size")
     parser.add_option("--detection-image", type="string", help="Find islands on different image")
-    m_help = "Specify a list of RA,Dec co-ordinate positions to force-fit " \
-        '(decimal degrees, JSON format e.g. "[[144.2,33.3],[146.1,34.1]]" )'
-    parser.add_option('--fixed', help=m_help, default=None)
-    parser.add_option('--fixed-list',
-        help="Specify a file containing a list of positions to force-fit", default=None
-    )
-    box_help = "Specify forced fitting positional freedom / error-box size, " \
-        "as a multiple of beam width."
-    parser.add_option('--ffbox-in-beampix', type='float', default=3., help=box_help)
+    parser.add_option('--fixed-posns', help="List of coordinate pairs to "  \
+        "force-fit (decimal degrees, JSON, e.g [[123.4,56.7],[359.9,89.9]])",
+        default=None)
+    parser.add_option('--fixed-posn-file',
+        help="Filename containing a list of positions to force-fit",
+        default=None)
+    parser.add_option('--ffbox', type='float', default=3.,
+        help="Forced fitting positional box size as a multiple of beam width.")
     options, files = parser.parse_args(args=args)
 
     # Overwrite 'fixed_coords' with a parsed list of coords
@@ -213,14 +210,10 @@ def get_detection_labels(filename, det, anl, beam, configuration, plane=0):
 
 def get_sourcefinder_configuration(options):
     configuration = {
-        "back_sizex": options.grid,
-        "back_sizey": options.grid,
+        "back_size_x": options.grid,
+        "back_size_y": options.grid,
         "margin": options.margin,
         "radius": options.radius,
-        "deblend": bool(options.deblend),
-        "deblend_nthresh": options.deblend_thresholds,
-        "force_beam": options.force_beam,
-	"nproc" : options.nproc
     }
     if options.residuals or options.islands:
         configuration['residuals'] = True
@@ -270,17 +263,27 @@ def run_sourcefinder(files, options):
 
         if options.mode == "fixed":
             sr = imagedata.fit_fixed_positions(options.fixed_coords,
-                options.ffbox_in_beampix * max(imagedata.beam[0:2])
+                options.ffbox * max(imagedata.beam[0:2])
             )
 
         else:
             if options.mode == "fdr":
                 print "Using False Detection Rate algorithm with alpha = %f" % (options.alpha,)
-                sr = imagedata.fd_extract(options.alpha)
+                sr = imagedata.fd_extract(
+                    alpha=options.alpha,
+                    deblend_nthresh=options.deblend_thresholds,
+                    force_beam=options.force_beam
+                )
             else:
                 if labelled_data is None:
                     print "Thresholding with det = %f sigma, analysis = %f sigma" % (options.detection, options.analysis)
-                sr = imagedata.extract(options.detection, options.analysis, labelled_data=labelled_data, labels=labels)
+
+                sr = imagedata.extract(
+                    det=options.detection, anl=options.analysis,
+                    labelled_data=labelled_data, labels=labels,
+                    deblend_nthresh=options.deblend_thresholds,
+                    force_beam=options.force_beam
+                )
 
         if options.regions:
             regionfile = imagename + ".reg"

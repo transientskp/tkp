@@ -37,8 +37,9 @@ UPDATE transient
     """
     upd = 0
     for tr in transients:
-        cursor = tkp.db.execute(query, tr, commit=True)
+        cursor = tkp.db.execute(query, tr, commit=False)
         upd += cursor.rowcount
+    tkp.db.commit()
     if upd > 0:
         logger.info("Updated %s known transients" % (upd,))
     return upd
@@ -73,8 +74,9 @@ VALUES
     """
     ins = 0
     for entry in transients:
-        cursor = tkp.db.execute(query, entry, commit=True)
+        cursor = tkp.db.execute(query, entry, commit=False)
         ins += cursor.rowcount
+    tkp.db.commit()
     logger.info("Inserted %s new transients in transients table" % (ins,))
 
 
@@ -105,10 +107,10 @@ def _select_updated_variability_indices(image_id):
         v_int, eta_int, trigger_xtrsrc, new_transient }]
     """
 
-#        Note: We cannot trivially calculate an updated 'siglevel' probability,
-#        and selecting it from transients gives the *old* value.
-#        So; we recalculate it later, (using scipy.stats),
-#        and apply a threshold there.
+    #  Note: We cannot trivially calculate an updated 'siglevel' probability,
+    #  and selecting it from transients gives the *old* value.
+    #  So; we recalculate it later, (using scipy.stats),
+    #  and apply a threshold there.
     #  NB We also perform a left outer join with the transient table,
     #  to determine if the source has been inserted into that table yet.
     #  This allows us to distinguish newly identified transients.
@@ -120,8 +122,8 @@ SELECT t1.runcat
       ,t1.wm_decl
       ,t1.wm_uncertainty_ew
       ,t1.wm_uncertainty_ns
-      ,t1.V_int_inter / t1.avg_f_int AS v_int
-      ,t1.eta_int_inter / t1.avg_f_int_weight AS eta_int
+      ,t1.v_int
+      ,t1.eta_int
       ,CASE WHEN tr0.trigger_xtrsrc IS NULL
             THEN t1.xtrsrc
             ELSE tr0.trigger_xtrsrc
@@ -137,22 +139,8 @@ SELECT t1.runcat
               ,wm_decl
               ,wm_uncertainty_ew
               ,wm_uncertainty_ns
-              ,CASE WHEN avg_f_int = 0.0
-                    THEN 0.000001
-                    ELSE avg_f_int
-               END AS avg_f_int
-              ,avg_f_int_weight
-              ,CASE WHEN rf0.f_datapoints = 1 THEN 0
-                    WHEN avg_f_int_sq - avg_f_int * avg_f_int < 0 THEN 0
-                    ELSE SQRT(CAST(rf0.f_datapoints AS DOUBLE PRECISION) * (avg_f_int_sq - avg_f_int * avg_f_int)
-                             / (CAST(rf0.f_datapoints AS DOUBLE PRECISION) - 1.0)
-                             )
-               END AS V_int_inter
-              ,CASE WHEN rf0.f_datapoints = 1
-                    THEN 0
-                    ELSE (CAST(rf0.f_datapoints AS DOUBLE PRECISION) / (CAST(rf0.f_datapoints AS DOUBLE PRECISION) - 1.0))
-                         * (avg_f_int_weight * avg_weighted_f_int_sq - avg_weighted_f_int * avg_weighted_f_int)
-               END AS eta_int_inter
+              ,a0.v_int
+              ,a0.eta_int
               ,a0.xtrsrc
           FROM runningcatalog rc0
               ,runningcatalog_flux rf0
@@ -195,7 +183,6 @@ def multi_epoch_transient_search(image_id,
     variability indices, here.)
 
     Transients are stored in the transient table,
-    as well as in the monitoringlist (done by the association recipe),
     to ensure it is measured even when it drops below the threshold.
 
     Transient behaviour is checked per frequency band,

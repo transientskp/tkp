@@ -1,6 +1,6 @@
-import unittest2 as unittest
+import unittest
 import tkp.db
-from tkp.db import monitoringlist as dbmon
+from tkp.db import nulldetections as dbnd
 from tkp.testutil import db_subs
 from tkp.testutil.decorators import requires_database, duration
 from tkp.db.generic import columns_from_table, get_db_rows_as_dicts
@@ -313,23 +313,19 @@ class TestTransientExclusion(unittest.TestCase):
         imgs.append(tkp.db.Image(dataset=self.dataset, data=im_params[1]))
 
         imgs[0].insert_extracted_sources([lower_steady_src, overlap_steady_src])
-        nd_posns = dbmon.get_nulldetections(imgs[0].id, deRuiter_r=1)
-        self.assertEqual(len(nd_posns), 0)
         imgs[0].associate_extracted_sources(deRuiter_r=0.1)
+        nd_posns = dbnd.get_nulldetections(imgs[0].id)
+        self.assertEqual(len(nd_posns), 0)
 
         imgs[1].insert_extracted_sources([upper_steady_src, overlap_steady_src,
                                           overlap_transient])
-        nd_posns = dbmon.get_nulldetections(imgs[1].id, deRuiter_r=1)
-        self.assertEqual(len(nd_posns), 0)
         imgs[1].associate_extracted_sources(deRuiter_r=0.1)
+        nd_posns = dbnd.get_nulldetections(imgs[1].id)
+        self.assertEqual(len(nd_posns), 0)
 
         runcats = columns_from_table('runningcatalog',
                                 where={'dataset': self.dataset.id})
         self.assertEqual(len(runcats), 4) #sanity check.
-
-        monlist = columns_from_table('monitoringlist',
-                                where={'dataset': self.dataset.id})
-        self.assertEqual(len(monlist), 1)
 
         transients_qry = """\
         SELECT *
@@ -376,25 +372,22 @@ class TestTransientExclusion(unittest.TestCase):
 
         imgs[0].insert_extracted_sources([lower_steady_src, overlap_steady_src,
                                           overlap_transient])
-        nd_posns = dbmon.get_nulldetections(imgs[0].id, deRuiter_r=1)
-        self.assertEqual(len(nd_posns), 0)
         imgs[0].associate_extracted_sources(deRuiter_r=0.1)
+        nd_posns = dbnd.get_nulldetections(imgs[0].id)
+        self.assertEqual(len(nd_posns), 0)
 
         imgs[1].insert_extracted_sources([upper_steady_src, overlap_steady_src])
-        #This time we don't expect to get an immediate transient detection,
-        #but we *do* expect to get a null-source forced extraction request:
-        nd_posns = dbmon.get_nulldetections(imgs[1].id, deRuiter_r=1)
-        self.assertEqual(len(nd_posns), 1)
 
         imgs[1].associate_extracted_sources(deRuiter_r=0.1)
+        #This time we don't expect to get an immediate transient detection,
+        #but we *do* expect to get a null-source forced extraction request:
+        nd_posns = dbnd.get_nulldetections(imgs[1].id)
+        self.assertEqual(len(nd_posns), 1)
 
         runcats = columns_from_table('runningcatalog',
                                 where={'dataset':self.dataset.id})
         self.assertEqual(len(runcats), 4) #sanity check.
 
-#        monlist = columns_from_table('monitoringlist',
-#                                where={'dataset':self.dataset.id})
-#        self.assertEqual(len(monlist), 1)
 
 
 

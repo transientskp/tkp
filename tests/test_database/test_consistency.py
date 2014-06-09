@@ -1,4 +1,4 @@
-import unittest2 as unittest
+import unittest
 import tkp.db.consistency as db_consistency
 import tkp.db
 from tkp.testutil import Mock

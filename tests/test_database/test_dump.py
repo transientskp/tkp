@@ -1,15 +1,15 @@
 import os
-import unittest2 as unittest
+import unittest
 from tempfile import NamedTemporaryFile
-from tkp.config import database_config
+from tkp.config import get_database_config
 from tkp.db.dump import dump_db, dump_monetdb, dump_pg
 from tkp.testutil.decorators import requires_database
 
 class TestDump(unittest.TestCase):
     @requires_database()
-    @unittest.skipUnless(database_config()['engine'] == "postgresql", "Postgres disabled")
+    @unittest.skipUnless(get_database_config()['engine'] == "postgresql", "Postgres disabled")
     def test_database_dump_pg(self):
-        dbconfig = database_config()
+        dbconfig = get_database_config()
         with NamedTemporaryFile() as dumpfile:
             dump_pg(
                 dbconfig['host'], dbconfig['port'], dbconfig['database'],
@@ -25,9 +25,9 @@ class TestDump(unittest.TestCase):
             self.assertEqual(dumpfile.read().strip(), "-- PostgreSQL database dump complete\n--")
 
     @requires_database()
-    @unittest.skipUnless(database_config()['engine'] == "monetdb", "Monet disabled")
+    @unittest.skipUnless(get_database_config()['engine'] == "monetdb", "Monet disabled")
     def test_database_dump_monet(self):
-        dbconfig = database_config()
+        dbconfig = get_database_config()
         with NamedTemporaryFile() as dumpfile:
             dump_monetdb(
                 dbconfig['host'], dbconfig['port'], dbconfig['database'],

@@ -1,17 +1,32 @@
-import unittest2 as unittest
+import unittest
 
 import datetime
 from tkp.testutil.decorators import requires_database
 import tkp.db
 from tkp.db.orm import DataSet, Image
 from tkp.db.database import Database
-
+from copy import copy
 
 class TestBand(unittest.TestCase):
 
     def setUp(self):
         import tkp.db.database
         self.database = tkp.db.database.Database()
+        # Basic template data for each image.
+        self.data = {
+            'taustart_ts': datetime.datetime(1999, 9, 9),
+            'url': '/path/to/image',
+            'tau_time': 0,
+            'beam_smaj_pix': float('inf'),
+            'beam_smin_pix': float('inf'),
+            'beam_pa_rad': float('inf'),
+            'deltax': float(-0.01111),
+            'deltay': float(0.01111),
+            'centre_ra': 0,
+            'centre_decl': 0,
+            'xtr_radius' : 3
+            }
+
 
     def tearDown(self):
         tkp.db.rollback()
@@ -30,21 +45,8 @@ class TestBand(unittest.TestCase):
                 WHERE image.id = %(id)s
             """, {"id": image.id}).fetchone()[0]
 
-        # Basic template data for each image.
-        data = {
-            'taustart_ts': datetime.datetime(1999, 9, 9),
-            'url': '/path/to/image',
-            'tau_time': 0,
-            'beam_smaj_pix': float('inf'),
-            'beam_smin_pix': float('inf'),
-            'beam_pa_rad': float('inf'),
-            'deltax': float(-0.01111),
-            'deltay': float(0.01111),
-            'centre_ra': 0,
-            'centre_decl': 0,
-            'xtr_radius' : 3
-            }
-        dataset1 = DataSet(data={'description': 'dataset with images'},
+        data=copy(self.data)
+        dataset1 = DataSet(data={'description': self._testMethodName},
                            database=self.database)
 
         # Example frequencies/bandwidths supplied in bug report.
@@ -75,6 +77,40 @@ class TestBand(unittest.TestCase):
         image5 = Image(dataset=dataset1, data=data)
         self.assertEqual(get_band_for_image(image1), get_band_for_image(image5))
 
+    @requires_database()
+    def test_frequency_range(self):
+        """
+        Determine range of frequencies supported by DB schema.
+        """
+
+        def get_freq_for_image(image):
+            # Returns the stored frequency corresponding to a particular image.
+            return tkp.db.execute("""
+                SELECT freq_central
+                FROM image
+                    ,frequencyband
+                WHERE image.id = %(id)s
+                  AND image.band = frequencyband.id
+            """, {"id": image.id}).fetchone()[0]
+
+        dataset = DataSet(data={'description': self._testMethodName},
+                   database=self.database)
+        data = copy(self.data)
+
+        data['freq_eff'] = 1e6  # 1MHz
+        data['freq_bw'] = 1e3 # 1KHz
+        mhz_freq_image = Image(dataset=dataset, data=data)
+        self.assertEqual(data['freq_eff'], get_freq_for_image(mhz_freq_image))
+
+        data['freq_eff'] = 100e9  # 100 GHz (e.g. CARMA)
+        data['freq_bw'] = 5e9 # 5GHz
+        ghz_freq_image = Image(dataset=dataset, data=data)
+        self.assertEqual(data['freq_eff'], get_freq_for_image(ghz_freq_image))
+
+        data['freq_eff'] = 5e15  # 5 PHz (e.g. UV obs)
+        data['freq_bw'] = 1e14 # 5GHz
+        phz_freq_image = Image(dataset=dataset, data=data)
+        self.assertEqual(data['freq_eff'], get_freq_for_image(phz_freq_image))
 
 if __name__ == "__main__":
     unittest.main()

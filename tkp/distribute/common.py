@@ -1,39 +1,62 @@
+"""
+Various subroutines used in the main pipeline flow.
+
+We keep them separately to make the pipeline logic easier to read at a glance.
+"""
+
+import datetime
 import ConfigParser
 import logging
 import os
+from pprint import pprint
+from tkp.config import parse_to_dict
+from tkp.db.dump import dump_db
+
 
 logger = logging.getLogger(__name__)
 
 
 def load_job_config(pipe_config):
-    """Adds a predefined list of config files to the pipeline configuration
-
-    Since each file has its own section, these can all be read into a
-    combined ConfigParser object representing the 'job settings', i.e.
-    the parameters relating to this particular data reduction run.
     """
-    job_directory = pipe_config.get('DEFAULT', 'job_directory')
+    Locates the job_params.cfg in 'job_directory' and loads via ConfigParser.
+    """
+    job_directory = pipe_config['DEFAULT']['job_directory']
     job_config = ConfigParser.SafeConfigParser()
     job_config.read(os.path.join(job_directory, 'job_params.cfg'))
-    return job_config
+    return parse_to_dict(job_config)
 
 
-def dump_job_config_to_logdir(log_dir, job_config):
+def dump_configs_to_logdir(log_dir, job_config, pipe_config):
     if not os.path.isdir(log_dir):
         os.makedirs(log_dir)
-    with open(os.path.join(log_dir, 'job_and_pipeline_params.cfg'), 'w') as f:
-        job_config.write(f)
+    with open(os.path.join(log_dir, 'job_params.cfg'), 'w') as f:
+        pprint(job_config, stream=f)
+    with open(os.path.join(log_dir, 'pipeline.cfg'), 'w') as f:
+        pprint(pipe_config, stream=f)
+
+def check_job_configs_match(job_config_1, job_config_2):
+    """
+    Check if job configs match, except dataset_id which we expect to change.
+    """
+    jc_from_file = job_config_1.copy()
+    jc_from_db = job_config_2.copy()
+    del jc_from_file['persistence']['dataset_id']
+    del jc_from_db['persistence']['dataset_id']
+    return jc_from_file==jc_from_db
 
 
-def setup_file_logging(log_file, debug=False):
+
+def setup_log_file(log_dir, debug=False, basename='trap.log'):
     """
     sets up a catch all logging handler which writes to `log_file`.
 
     :param log_file: log file to write
     :param debug: do we want debug level logging?
+    :param basename: basename of the log file
     """
-    if not os.path.isdir(os.path.dirname(log_file)):
-        os.makedirs(os.path.dirname(log_file))
+    if not os.path.isdir(log_dir):
+        os.makedirs(log_dir)
+    log_file = os.path.join(log_dir, basename)
     global_logger = logging.getLogger()
     hdlr = logging.FileHandler(log_file)
     global_logger.addHandler(hdlr)
@@ -47,3 +70,35 @@ def setup_file_logging(log_file, debug=False):
         global_logger.setLevel(logging.DEBUG)
     else:
         global_logger.setLevel(logging.INFO)
+
+def dump_database_backup(db_config, job_dir):
+    if 'dump_backup_copy' in db_config:
+        if db_config['dump_backup_copy']:
+            output_name = os.path.join(
+                job_dir, "%s_%s_%s.dump" % (
+                    db_config['host'], db_config['database'],
+                    datetime.datetime.now().strftime("%Y-%m-%dT%H:%M:%S")
+                )
+            )
+            dump_db(
+                db_config['engine'], db_config['host'], str(db_config['port']),
+                db_config['database'], db_config['user'], db_config['password'],
+                output_name
+            )
+
+
+def group_per_timestep(images):
+    """
+    groups a list of TRAP images per timestep
+    """
+    img_dict = {}
+    for image in images:
+        t = image.taustart_ts
+        if t in img_dict:
+            img_dict[t].append(image)
+        else:
+            img_dict[t] = [image]
+
+    grouped_images = img_dict.items()
+    grouped_images.sort()
+    return grouped_images

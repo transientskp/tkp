@@ -1,11 +1,11 @@
 """
 This is a tool for managing a TKP project. It can be used to initialize a TKP
 project and the jobs inside a project. To start using this tool you first
-create a TRAP project by running:
+create a TraP project by running:
 
   $ tkp-manage.py initproject <projectname>
 
-In the folder where you want to put the TRAP project. To learn more about a
+In the folder where you want to put the TraP project. To learn more about a
 specific `tkp-manage.py` subcommand, run:
 
   $ tkp-manage.py <subcommand> -h
@@ -25,6 +25,7 @@ import logging
 import json
 import tkp
 from tkp.db.sql.populate import populate
+from tkp.main import run
 
 
 logging.basicConfig(level=logging.INFO)
@@ -55,7 +56,7 @@ def get_template_dir():
     """
     Determines where the job and project templates are.
     """
-    return path.join(tkp.__path__[0], 'conf')
+    return path.join(tkp.__path__[0], 'config')
 
 
 def make_writeable(filename):
@@ -208,32 +209,26 @@ def init_job(args):
     return copy_template("job", args.name)
 
 
-def prepare_job(jobname, debug=False):
+def prepare_job(jobname):
     here = os.getcwd()
     jobdir = os.path.join(here, jobname)
     pipelinefile = os.path.join(here, "pipeline.cfg")
     sys.path.append(jobdir)
-    if debug:
-        # show us DEBUG logging
-        sys.argv.append("-d")
-    else:
-        # show us INFO logging
-        sys.argv.append("-v")
 
 
 def celery_cmd(args):
     from celery.bin import celery
-    base = celery.CeleryCommand(app='tkp.distribute.celery.tasks.trap')
+    base = celery.CeleryCommand(app='tkp.distribute.celery.celery_app')
     base.execute_from_commandline(sys.argv[1:])
 
 
 def run_job(args):
     print "running job '%s'" % args.name
-    prepare_job(args.name, args.debug)
+    prepare_job(args.name)
     monitor_coords = parse_monitoringlist_positions(args)
     if args.method == 'celery':
         import tkp.distribute.celery
-        tkp.distribute.celery.run(args.name, monitor_coords)
+        run(args.name, monitor_coords)
     elif args.method == 'test':
         return True
     else:
@@ -242,14 +237,13 @@ def run_job(args):
 
 
 def init_db(options):
-    from tkp.config import initialize_pipeline_config, database_config
+    from tkp.config import initialize_pipeline_config, get_database_config
     cfgfile = os.path.join(os.getcwd(), "pipeline.cfg")
     if os.path.exists(cfgfile):
         pipe_config = initialize_pipeline_config(cfgfile, "notset")
+        dbconfig = get_database_config(pipe_config['database'], apply=False)
     else:
-        pipe_config = None
-    dbconfig = database_config(pipe_config, apply=False)
-
+        dbconfig = get_database_config(None, apply=False)
 
     for field in ['engine', 'database', 'user', 'password', 'host', 'port',
                   'passphrase']:
@@ -323,10 +317,8 @@ environment variables to configure the connection:
                               formatter_class=argparse.RawTextHelpFormatter)
 
     run_parser.add_argument('name', help='Name of job to run')
-    run_parser.add_argument('-d', '--debug', help='enable debug logging',
-                            action='store_true')
-    m_help = 'Specify a list of RA,DEC co-ordinate pairs to monitor (decimal' \
-             ' degrees, no spaces)'
+    m_help = 'a list of RA,DEC coordinates to monitor in JSON format,' \
+             ' example: [[5, 6], [7, 8]]'
     run_parser.add_argument('-m', '--monitor-coords', help=m_help)
     run_parser.add_argument('-l', '--monitor-list',
                             help='Specify a file containing a list of RA,DEC')

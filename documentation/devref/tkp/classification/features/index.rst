@@ -14,4 +14,5 @@ ones available:
    :maxdepth: 2
 
    lightcurve
-   catalogs 
+   catalogs
+   utils

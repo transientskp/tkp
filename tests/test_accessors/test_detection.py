@@ -1,6 +1,6 @@
 import os
 
-import unittest2 as unittest
+import unittest
 
 
 from tkp.accessors.detection import isfits, islofarhdf5, detect, iscasa

@@ -15,7 +15,7 @@ import numpy
 
 from datetime import timedelta
 from tkp.utility.sigmaclip import calcsigma
-from tkp.classification.transient.utils import DateTime
+from tkp.classification.features.utils import DateTime
 from .sql import lightcurve as sql_lightcurve
 
 

@@ -16,8 +16,29 @@ This module contain utilities for the source finding routines
 import numpy
 import math
 import scipy.integrate
-from .gaussian import gaussian
+from tkp.sourcefinder.gaussian import gaussian
 from tkp.utility import coordinates
+
+def generate_subthresholds(min_value, max_value, num_thresholds):
+    """
+    Generate a series of @num_thresholds@ logarithmically spaced values
+    in the range (min_value, max_value) (both exclusive).
+    """
+    # First, we calculate a logarithmically spaced sequence between exp(0.0)
+    # and (max - min + 1). That is, the total range is between 1 and one
+    # greater than the difference between max and min.
+    # We subtract 1 from this to get the range between 0 and (max-min).
+    # We add min to that to get the range between min and max.
+    subthrrange = numpy.logspace(
+        0.0,
+        numpy.log(max_value + 1 - min_value),
+        num=num_thresholds+1, # first value == min_value
+        base=numpy.e,
+        endpoint=False # do not include max_value
+    )[1:]
+    subthrrange += (min_value - 1)
+    return subthrrange
+
 
 def get_error_radius(wcs, x_value, x_error, y_value, y_error):
     # Estimate an absolute angular error on the position (x_value, y_value)
@@ -81,8 +102,8 @@ def generate_result_maps(data, sourcelist):
 
         local_gaussian = gaussian(
             src.peak.value,
-            src.x.value - 1, # -1 offset due to difference between FITS and
-            src.y.value - 1, # NumPy array indexing.
+            src.x.value,
+            src.y.value,
             src.smaj.value,
             src.smin.value,
             src.theta.value

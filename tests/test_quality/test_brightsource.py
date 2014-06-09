@@ -2,7 +2,7 @@ import os
 from math import degrees
 from pyrap.measures import measures
 
-import unittest2 as unittest
+import unittest
 
 from tkp.testutil.decorators import requires_data
 import tkp.quality.brightsource

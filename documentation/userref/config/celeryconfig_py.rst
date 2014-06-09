@@ -9,7 +9,7 @@ The :ref:`management script <tkp-manage>` may be used to start a :ref:`Celery
 ``celeryconfig.py`` in the :ref:`project directory <config-overview>`. The
 default contents of this file are:
 
-.. literalinclude:: /../tkp/conf/project_template/celeryconfig.py
+.. literalinclude:: /../tkp/config/project_template/celeryconfig.py
 
 Note that this file is Python code, and will be parsed as such. In fact, it is
 a fully-fledged Celery configuration file, and the reader is referred to the

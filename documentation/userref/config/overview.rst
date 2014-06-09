@@ -7,8 +7,8 @@ Configuration System Overview
 Preamble
 ========
 
-Users organize their Trap runs into *projects*, which contain high-level
-descriptions of common Trap parameters. For example, a project specifies which
+Users organize their TraP runs into *projects*, which contain high-level
+descriptions of common TraP parameters. For example, a project specifies which
 :ref:`database <database-intro>` to use, and how to connect to a :ref:`Celery
 broker <celery-intro>`. All the configuration and log files relating to a
 particular project are stored in the same directory hierarchy.
@@ -20,7 +20,7 @@ sourcefinder settings, with each analysis constituting a particular job.
 Alternatively, a project might be dedicated to a multi-epoch survey, with each
 job corresponding to a different epoch. The fundamental point is that the
 basic control structures such as the database and task distribution system
-remain the same, but, within those limits, the user is free to oragnize their
+remain the same, but, within those limits, the user is free to organize their
 work as they please.
 
 Creating a Project Directory
@@ -86,19 +86,19 @@ files:
 ``job_params.cfg``
    Configuration for each stage of the pipeline run represented by this job.
    This contains all the end-user tunable parameters which are relevant to
-   Trap operation. :ref:`See here <job_params_cfg>` for details.
+   TraP operation. :ref:`See here <job_params_cfg>` for details.
 
 .. _configparser:
 
 Configuration file syntax
 =========================
 
-Several of the Trap's configuration files -- :ref:`pipeline.cfg
+Several of the TraP's configuration files -- :ref:`pipeline.cfg
 <pipeline_cfg>`, :ref:`inject.cfg <tkp-inject>`, :ref:`job_params.cfg
 <job_params_cfg>` -- use the Python :mod:`ConfigParser` file format. This is
 defined by the Python standard library, and you should refer to its
 documentation for a comprehensive reference. However, it is worth noting a few
-salient points that may be of relevance to the Trap user.
+salient points that may be of relevance to the TraP user.
 
 These files are divided into named sections: the name comes at the top of the
 section, surrounded by square brackets (``[`` and ``]``). Within a section,
@@ -106,7 +106,7 @@ a simple ``name = value`` syntax is used. ``;`` indicates a comment (``#`` may
 also be used for commenting, but only at the start of a line).
 
 Variable substiution is performed using the notation ``%(name)s``: this will
-be exapanded into the value of the variable ``name`` when the file is read.
+be expanded into the value of the variable ``name`` when the file is read.
 Variables used in expansion are taken either from the same section of the
 file, or from the special ``DEFAULT`` section. For example::
 
@@ -119,6 +119,6 @@ file, or from the special ``DEFAULT`` section. For example::
    d = %(b)s
 
 Would set the values of ``a`` and ``c`` to ``1``, and ``b`` and ``d`` to
-``2``.  In some cases, the Trap provides additional variables which may be
+``2``.  In some cases, the TraP provides additional variables which may be
 used in expansions in a particular file: these are noted in the documentation
 for that file.

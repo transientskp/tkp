@@ -1,6 +1,6 @@
 import os
 
-import unittest2 as unittest
+import unittest
 
 import tkp.accessors as accessors
 from tkp.testutil.data import DATAPATH

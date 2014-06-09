@@ -4,7 +4,7 @@ Test functions used for manipulating coordinates in the TKP pipeline.
 
 import pytz
 
-import unittest2 as unittest
+import unittest
 from pyrap.measures import measures
 
 import datetime

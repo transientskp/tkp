@@ -8,8 +8,12 @@ from tkp.testutil.decorators import requires_mongodb
 import tkp.testutil.data as testdata
 from tkp.testutil.decorators import requires_database
 import tkp.db
-from tkp.conf import read_config_section
-from tkp.testutil.data import default_job_config
+import tkp.db.generic
+from ConfigParser import SafeConfigParser
+
+from tkp.config import parse_to_dict, initialize_pipeline_config
+from tkp.testutil.data import default_job_config, default_pipeline_config
+import StringIO
 
 @requires_database()
 class TestPersistence(unittest.TestCase):
@@ -22,8 +26,15 @@ class TestPersistence(unittest.TestCase):
         cls.dataset_id = db_subs.create_dataset_8images()
         cls.images = [testdata.fits_file]
         cls.extraction_radius = 256
-        with open(default_job_config) as f:
-            cls.parset = read_config_section(f, 'persistence')
+        job_config = SafeConfigParser()
+        job_config.read(default_job_config)
+        job_config = parse_to_dict(job_config)
+        cls.persistence_pars = job_config['persistence']
+        pipe_config = initialize_pipeline_config(default_pipeline_config,
+                                                 job_name="test_persistence")
+
+        cls.image_cache_pars = pipe_config['image_cache']
+
 
 
     def test_create_dataset(self):
@@ -35,18 +46,19 @@ class TestPersistence(unittest.TestCase):
 
     def test_store_images(self):
         images_metadata = tkp.steps.persistence.extract_metadatas(self.images)
-        tkp.steps.persistence.store_images(images_metadata,
+        img_ids = tkp.steps.persistence.store_images(images_metadata,
                                            self.extraction_radius,
                                            self.dataset_id)
+        # xtr_radius >=0 is a Postgres constraint, but we should also test
+        # manually, in case running MonetDB:
+        for id in img_ids:
+            image = tkp.db.Image(id=id)
+            skyrgn = tkp.db.generic.columns_from_table('skyregion',
+                                                   where=dict(id=image.skyrgn))
+            self.assertGreaterEqual(skyrgn[0]['xtr_radius'], 0)
 
     def test_node_steps(self):
-        tkp.steps.persistence.node_steps(self.images, self.parset)
-
-    def test_master_steps(self):
-        images_metadata = tkp.steps.persistence.extract_metadatas(self.images)
-        tkp.steps.persistence.master_steps(images_metadata,
-                                           self.extraction_radius, self.parset)
-
+        tkp.steps.persistence.node_steps(self.images, self.image_cache_pars)
 
 
 @requires_mongodb()
@@ -59,28 +71,3 @@ class TestMongoDb(unittest.TestCase):
     def test_image_to_mongodb(self):
         self.assertTrue(tkp.steps.persistence.image_to_mongodb(self.images[0],
                                                     hostname, port, database))
-
-class TestFixReferenceDec(unittest.TestCase):
-    def test_dec_90(self):
-        # Default unit is degrees.
-        self._test_for_reference_dec(90.0)
-
-    def test_dec_minus90(self):
-        # Default unit is degrees.
-        self._test_for_reference_dec(-90.0)
-
-    def test_dec_90_deg(self):
-        self._test_for_reference_dec(90.0, "deg")
-
-    def test_dec_pi_by_2_rad(self):
-        self._test_for_reference_dec(math.pi/2, "rad")
-
-    def _test_for_reference_dec(self, refdec, unit=None):
-        with tempfile.NamedTemporaryFile() as temp_fits:
-            h = pyfits.PrimaryHDU()
-            h.header.update("CRVAL2", refdec)
-            if unit:
-                h.header.update("CUNIT2", unit)
-            h.writeto(temp_fits.name)
-            tkp.steps.persistence.fix_reference_dec(temp_fits.name)
-            self.assertLess(abs(pyfits.getheader(temp_fits.name)['CRVAL2']), abs(refdec))

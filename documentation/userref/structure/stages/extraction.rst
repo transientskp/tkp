@@ -76,7 +76,7 @@ Section ``source_extraction``
 ``analysis_threshold``
    Float. The analysis threshold as a multiple of the RMS noise.
 
-``backsize_x``, ``backsize_y``
+``back_size_x``, ``back_size_y``
    Integers. The size of the background grid parallel to the X and Y axes of
    the pixel grid.
 
@@ -88,19 +88,9 @@ Section ``source_extraction``
    Integer. Pixel data more than ``extraction_radius_pix`` pixels from the
    centre of the image will be excluded from the analysis.
 
-``deblend``
-   Boolean. ``True`` to enable source deblending; ``False`` to disable.
-
 ``deblend_nthresh``
-   Integer. The number of subthresholds to use for deblending. Only applicable
-   if ``deblend`` is ``True``.
-
-``max_degredation``
-   Float. Maxmimum permitted fractional degredation of astrometry due to image
-   projection effects. Areas of the image for which the fractional degredation
-   is higher than ``max_degredation`` are excluded from the analysis. Only
-   used in the case of "SIN" projection images (:ref:`Greisen, 1983
-   <greisen-1983>`).
+   Integer. The number of subthresholds to use for deblending. Set to ``0`` to
+   disable deblending.
 
 ``force_beam``
    Boolean. If ``True``, all detected sources are assumed to have the size and

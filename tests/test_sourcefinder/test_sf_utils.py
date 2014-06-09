@@ -1,10 +1,14 @@
 import numpy
 from numpy.testing import assert_array_equal
+from collections import namedtuple
+from tkp.utility.uncertain import Uncertain
 
-import unittest2 as unittest
+import unittest
 
 from tkp.sourcefinder.utils import maximum_pixel_method_variance, fudge_max_pix
+from tkp.sourcefinder.utils import generate_result_maps
 from tkp.sourcefinder.utils import circular_mask
+from tkp.sourcefinder.utils import generate_subthresholds
 
 
 class TestCircularMask(unittest.TestCase):
@@ -22,6 +26,30 @@ class TestCircularMask(unittest.TestCase):
         for parameters, result in known_results:
             assert_array_equal(circular_mask(*parameters), result)
 
+
+class TestResultMaps(unittest.TestCase):
+    def testPositions(self):
+        # The pixel position x, y of the source should be the same as the
+        # position of the maximum in the generated result map.
+        x_pos = 40
+        y_pos = 60
+
+        empty_data = numpy.zeros((100, 100))
+        SrcMeasurement = namedtuple("SrcMeasurement",
+            ['peak', 'x', 'y', 'smaj', 'smin', 'theta']
+        )
+        src_measurement = SrcMeasurement(
+            peak=Uncertain(10), x=Uncertain(x_pos), y=Uncertain(y_pos),
+            smaj=Uncertain(10), smin=Uncertain(10), theta=Uncertain(0)
+        )
+        gaussian_map, residual_map = generate_result_maps(empty_data, [src_measurement])
+        gaussian_max_x = numpy.where(gaussian_map==gaussian_map.max())[0][0]
+        gaussian_max_y = numpy.where(gaussian_map==gaussian_map.max())[1][0]
+
+        self.assertEqual(gaussian_max_x, x_pos)
+        self.assertEqual(gaussian_max_y, y_pos)
+
+
 class UtilsTest(unittest.TestCase):
     # format: semimajor, semiminor, theta, correction, variance
     def setUp(self):
@@ -38,3 +66,28 @@ class UtilsTest(unittest.TestCase):
         for (semimajor, semiminor, theta, correction, variance) in self.correct_data:
             self.assertAlmostEqual(fudge_max_pix(semimajor, semiminor, theta), correction)
 
+
+class SubthresholdingTest(unittest.TestCase):
+    def test_ranges(self):
+        # For each test range, we have a max, a min, and a number of
+        # thresholds
+        test_ranges = [
+            (0, 1, 10),
+            (0, 10, 10),
+            (-10, 0, 10),
+            (-10, 10, 10),
+            (1.1, 1.2, 100)
+        ]
+        for r in test_ranges:
+            subthr = generate_subthresholds(*r)
+
+            # Check we have the right number of thresholds
+            self.assertEqual(len(subthr), r[2])
+
+            # Falling in the right range
+            self.assertGreater(subthr[0], r[0])
+            self.assertLess(subthr[-1], r[1])
+
+            # And non-linearly spaced
+            for i in xrange(2, len(subthr)):
+                self.assertGreater(subthr[i] - subthr[i-1], subthr[i-1] - subthr[i-2])

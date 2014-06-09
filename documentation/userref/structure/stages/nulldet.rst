@@ -10,30 +10,21 @@ images covering the same field of view) but was in fact not detected by the
 :ref:`blind extraction <stage-extraction>` step.
 
 After the blindly-extracted source measurements have been stored to the
-database, we retrieve from the database a list of all sources which are fall
-within the field of view of the image being processed but which could never be
-associated with any of the blindly-extracted source measurements made. We
-define a "dimensionless distance" :math:`r_{ij}` between two sources
-:math:`r_i` and :math:`r_j` with RA :math:`\alpha` and declination
-:math:`\delta` as:
+database and have been associated with the known sources in the running
+catalogue, the null detection stage starts.
+We retrieve from the database a list of sources that serve as the null detections.
+Sources on this list come from the running catalog and 
 
-.. math::
+* Do not have a counterpart in the extractedsources of the current
+  image after source association has run.
+* Have been seen (in any band) at a timestamp earlier than that of the
+  current image.
 
-  r_{ij} = \sqrt{
-     \frac{(\Delta \alpha)^{2}_{ij}}{\sigma^2_{\Delta \alpha, ij}} +
-     \frac{(\Delta \delta)^{2}_{ij}}{\sigma^2_{\Delta \delta, ij}}
-  }
-
-where :math:`\sigma` indicates a one sigma RMS uncertainty,
-
-.. math::
-
-  \sigma^2_{\Delta \alpha, ij} = \sigma^2_{\alpha, i} + \sigma^2_{\alpha, j}
-
-and :math:`\sigma^2_{\Delta \delta, ij}` is defined analagously
-(:ref:`Scheers, 2011 <scheers-2011>`). We then check for all known sources for
-which the dimensionless distance to all blind extractions is greater than some
-user-defined threshold.
+We determine null detections only as those sources which have been
+seen at earlier times which don't appear in the current image. 
+Sources which have not been seen earlier, and which appear in 
+different bands at the current timestep, are *not* null detections,
+but are considered as "new" sources.
 
 For all sources identified as null detections, we measure fluxes by performing
 a forced elliptical Gaussian fit to the expected source position on the image.
@@ -45,18 +36,33 @@ deblending is performed.
 The results of these "forced" source measurements are marked as such and
 appended to the database.
 
+After being added to the database, the forced fits are matched back to their
+running catalog counterparts in order to append it as a datapoint in the light curve.
+This matching is does not include the De Ruiter radius, since the source position came 
+from the running catalog. 
+It is sufficient to use the weighted positional error as a cone search, since the positions are identical.
+Therefore the forced fit position is not included as 
+an extra datapoint in the position of the running catalog.
+The fluxes, however, are included into the statistical properties and the values are updated.
+
+It is worth emphasizing that the above procedure guarantees that
+every known source will have either a blind detection or a forced-fit
+measurement in every image from the moment it was detected for the 
+first time. 
+
 The following parameters may be configured in the :ref:`job configuration file
 <job_params_cfg>`:
-
-Section ``association``
-^^^^^^^^^^^^^^^^^^^^^^^
-
-``deruiter_radius``
-   Float. The maximum dimensionless distance within which source association
-   is possible.
 
 Section ``source_extraction``
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-``backsize_x``, ``backsize_y``, ``margin``, ``extraction_radius_pix``, ``max_degredation``, ``force_beam``
+``back_size_x``, ``back_size_y``, ``margin``, ``extraction_radius_pix``, ``max_degredation``, ``force_beam``
    Defined as for :ref:`blind extraction <stage-extraction>`.
+
+``box_in_beampix``
+    When a forced fit is being applied to a particular point on the image, it
+    is unnecessary and inefficient to include all of the image pixel data in
+    the minimization procedure. Instead, we only include that within a square
+    region of size ``box_in_beampix`` about the target position.
+    ``box_in_beampix`` is specified in units of the size of the major axis of
+    the restoring beam.

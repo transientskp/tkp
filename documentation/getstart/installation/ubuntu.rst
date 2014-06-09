@@ -71,7 +71,7 @@ and Pyrap::
 Transient Pipeline
 ==================
 
-If you don't have the Trap source code yet, you need to to fetch it::
+If you don't have the TraP source code yet, you need to to fetch it::
 
    $ sudo apt-get install git cmake build-essential python-pip python-numpy \
         python-scipy python-pygresql

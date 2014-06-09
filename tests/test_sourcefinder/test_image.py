@@ -264,7 +264,7 @@ class TestSimpleImageSourceFind(unittest.TestCase):
         ew_sys_err, ns_sys_err = 0.0, 0.0
         fits_results = fits_image.extract(det=5, anl=3)
         fits_results = [result.serialize(ew_sys_err, ns_sys_err) for result in fits_results]
-        casa_results = fits_image.extract(det=5, anl=3)
+        casa_results = casa_image.extract(det=5, anl=3)
         casa_results = [result.serialize(ew_sys_err, ns_sys_err) for result in casa_results]
         self.assertEqual(len(fits_results), 1)
         self.assertEqual(len(casa_results), 1)

@@ -25,7 +25,7 @@ except ImportError:
 setup_event_listening(celery_app)
 
 
-def map(func, iterable, arguments):
+def map(func, iterable, arguments=[]):
     if iterable:
         return group(func.s(i, *arguments) for i in iterable)().get()
     else:

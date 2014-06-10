@@ -19,21 +19,16 @@ class Runner(object):
         """
         logger.debug("Using %s distribution method" % distributor)
         self.distributor = distributor
-        mod_path = __name__ + '.' + distributor
+        self.mod_path = __name__ + '.' + distributor
         try:
-            self.module = importlib.import_module(mod_path)
-            self.tasks = importlib.import_module(mod_path + '.tasks')
+            self.module = importlib.import_module(self.mod_path)
+            self.tasks = importlib.import_module(self.mod_path + '.tasks')
         except ImportError:
-            raise NotImplementedError("%s not found" % mod_path)
+            raise NotImplementedError("%s not found" % self.mod_path)
         if not hasattr(self.module, 'map'):
-            raise NotImplementedError("%s misses map function" % mod_path)
+            raise NotImplementedError("%s misses map function" % self.mod_path)
 
-    def run(self, func_name, *args, **kwargs):
-        logger.debug("Running %s in %s" % (func_name, self.dist_module))
-        func = getattr(self.dist_module, func_name)
-        func(*args, **kwargs)
-
-    def map(self, func_name, iterable, args):
+    def map(self, func_name, iterable, args=[]):
         """
         args:
             func: The function to be called
@@ -46,7 +41,8 @@ class Runner(object):
         return self.module.map(func, iterable, args)
 
     def get_func(self, func_name):
-        return getattr(self.tasks, func_name)
-
-    def __getattr__(self, item):
-        return self.get_func(item)
+        try:
+            return getattr(self.tasks, func_name)
+        except AttributeError:
+            raise NotImplementedError('%s not implemented for %s' %
+                                      (func_name, self.mod_path))

@@ -33,11 +33,12 @@ def forced_fits(detection_set, extraction_params):
                                                    extraction_params)
 
 
-def bogus():
+def bogus(args):
     """
     doesn't do much, only emit some log messages so we can test if the
     logging facilities are working
     """
+    logger.info('bogus called with %s' % str(args))
     logger.info("info from task")
     logger.warning("warning from task")
     logger.error("error from task")

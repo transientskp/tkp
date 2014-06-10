@@ -226,14 +226,7 @@ def run_job(args):
     print "running job '%s'" % args.name
     prepare_job(args.name)
     monitor_coords = parse_monitoringlist_positions(args)
-    if args.method == 'celery':
-        import tkp.distribute.celery
-        run(args.name, monitor_coords)
-    elif args.method == 'test':
-        return True
-    else:
-        sys.stderr.write("Execution method %s unknown" % args.method)
-        sys.exit(1)
+    run(args.name, monitor_coords, args.method)
 
 
 def init_db(options):
@@ -322,8 +315,9 @@ environment variables to configure the connection:
     run_parser.add_argument('-m', '--monitor-coords', help=m_help)
     run_parser.add_argument('-l', '--monitor-list',
                             help='Specify a file containing a list of RA,DEC')
-    run_parser.add_argument('-f', '--method', choices=['celery', ],
-                            default="celery",
+    run_parser.add_argument('-f', '--method', choices=['celery', 'multiproc',
+                                                       'serial'],
+                            default="multiproc",
                             help="what distribution method to use")
     run_parser.set_defaults(func=run_job)
 

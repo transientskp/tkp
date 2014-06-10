@@ -7,8 +7,7 @@ from __future__ import absolute_import
 import warnings
 import logging
 from celery import Celery, group
-from tkp.distribute.celery.log import monitor_events
-
+from tkp.distribute.celery.log import monitor_events, setup_event_listening
 
 local_logger = logging.getLogger(__name__)
 config_module = 'celeryconfig'
@@ -22,6 +21,8 @@ except ImportError:
           config_module
     warnings.warn(msg)
     local_logger.warn(msg)
+
+setup_event_listening(celery_app)
 
 
 def map(func, iterable, arguments):

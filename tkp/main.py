@@ -20,8 +20,6 @@ from tkp.db import monitoringlist as dbmon
 from tkp.db import nulldetections as dbnd
 from tkp.db import associations as dbass
 from tkp.distribute import Runner
-#from tkp.distribute.celery import celery_app
-#from tkp.distribute.celery.log import setup_event_listening
 from tkp.distribute.common import (load_job_config, dump_configs_to_logdir,
                                    check_job_configs_match,
                                    setup_log_file, dump_database_backup,
@@ -34,9 +32,8 @@ from tkp.steps.source_extraction import forced_fits
 logger = logging.getLogger(__name__)
 
 
-def run(job_name, mon_coords):
-    runner = Runner(distributor='multiproc')
-    #setup_event_listening(celery_app)
+def run(job_name, mon_coords=[], distributor='multiproc'):
+    runner = Runner(distributor=distributor)
     pipe_config = initialize_pipeline_config(
         os.path.join(os.getcwd(), "pipeline.cfg"),
         job_name)

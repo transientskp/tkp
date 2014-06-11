@@ -28,7 +28,7 @@ class TestCelery(unittest.TestCase):
     """
 
     @unittest.skip("Enable this if you have broker and worker running")
-    def testRemoteTaskLogging(self):
+    def test_remote_task_logger(self):
         """
         make sure the worker log->event->client log mechanism is working.
         """
@@ -40,7 +40,7 @@ class TestCelery(unittest.TestCase):
         check = {logging.INFO, logging.WARNING, logging.ERROR}
         mock_handler.reset()
         mock_handler.setLevel(logging.INFO)
-        result=bogus()
+        result = bogus()
 
         for record in mock_handler.records:
             if record.name == 'tkp.distribute.celery.tasks':
@@ -48,9 +48,7 @@ class TestCelery(unittest.TestCase):
                 check.remove(record.levelno)
         self.assertFalse(len(check))
 
-
-    @unittest.skip('somehow this fails on build server')
-    def testLocalTaskLogging(self):
+    def test_local_task_logger(self):
         """
         Logging should also work if you run it locally
         """

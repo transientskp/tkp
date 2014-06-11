@@ -17,11 +17,14 @@ celery_app = Celery('trap')
 # try to load the celery config from the pipeline folder
 try:
     celery_app.config_from_object(config_module)
+    celery_app.connection()
 except ImportError:
     msg = "can't find '%s' in your python path, using default config" % \
           config_module
     warnings.warn(msg)
     local_logger.warn(msg)
+    celery_app.config_from_object({})
+
 
 
 

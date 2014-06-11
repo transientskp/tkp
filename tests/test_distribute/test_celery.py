@@ -49,7 +49,7 @@ class TestCelery(unittest.TestCase):
         self.assertFalse(len(check))
 
 
-    @unittest('somehow this fails on build server')
+    @unittest.skip('somehow this fails on build server')
     def testLocalTaskLogging(self):
         """
         Logging should also work if you run it locally

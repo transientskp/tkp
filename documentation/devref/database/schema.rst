@@ -511,6 +511,7 @@ The TraP may add forced-fit entries to this table as well. Then
 
         * ``0``: blind fit
         * ``1``: forced fit to pixel
+        * ``2``: manually monitored position
 
 **node(s)**
     Determine the current and number of nodes in case of a sharded database

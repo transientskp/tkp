@@ -138,6 +138,7 @@ def handle_args(args=None):
     parser.add_option("--margin", default=0, type="int", help="Margin applied to each edge of image (in pixels)")
     parser.add_option("--radius", default=0, type="float", help="Radius of usable portion of image (in pixels)")
     parser.add_option("--skymodel", action="store_true", help="Generate sky model")
+    parser.add_option("--nproc",default=1, type="int", help="Number of processes to use")
     parser.add_option("--csv", action="store_true", help="Generate csv text file for use in programs such as TopCat")
     parser.add_option("--rmsmap", action="store_true", help="Generate RMS map")
     parser.add_option("--sigmap", action="store_true", help="Generate significance map")
@@ -214,6 +215,7 @@ def get_sourcefinder_configuration(options):
         "back_size_y": options.grid,
         "margin": options.margin,
         "radius": options.radius,
+        "nproc": options.nproc 
     }
     if options.residuals or options.islands:
         configuration['residuals'] = True

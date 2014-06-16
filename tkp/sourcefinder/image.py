@@ -3,6 +3,7 @@ Some generic utility routines for number handling and
  calculating (specific) variances
 """
 
+from multiprocessing import Process, Queue
 import time
 import logging
 import itertools
@@ -42,7 +43,7 @@ class ImageData(object):
     """
 
     def __init__(self, data, beam, wcs, margin=0, radius=0, back_size_x=32,
-                 back_size_y=32, residuals=True
+                 back_size_y=32, residuals=True, nproc=1
     ):
         """Sets up an ImageData object.
 
@@ -72,6 +73,7 @@ class ImageData(object):
         self.margin = margin
         self.radius = radius
         self.residuals = residuals
+        self.nproc = nproc
 
 
     ###########################################################################
@@ -203,29 +205,13 @@ class ImageData(object):
     #                                                                         #
     ###########################################################################
 
-    # Private "support" methods
-    def __grids(self):
-        """Calculate background and RMS grids of this image.
+    def process_rows(self, where_data, sx, ex, ydim, queue):
+ 	rmsgrid, bggrid = [], []
+        for startx in xrange(sx, ex, self.back_size_x):
+	    rmsrow, bgrow = [], []
 
-        These grids can be interpolated up to make maps of the original image
-        dimensions: see _interpolate().
-
-        This is called automatically when ImageData.backmap,
-        ImageData.rmsmap or ImageData.fdrmap is first accessed.
-        """
-
-        # there's no point in working with the whole of the data array
-        # if it's masked.
-        useful_chunk = ndimage.find_objects(numpy.where(self.data.mask, 0, 1))
-        assert(len(useful_chunk) == 1)
-        useful_data = self.data[useful_chunk[0]]
-        my_xdim, my_ydim = useful_data.shape
-
-        rmsgrid, bggrid = [], []
-        for startx in xrange(0, my_xdim, self.back_size_x):
-            rmsrow, bgrow = [], []
-            for starty in xrange(0, my_ydim, self.back_size_y):
-                chunk = useful_data[
+            for starty in xrange(0, ydim, self.back_size_y):
+                chunk = self.data[where_data][
                     startx:startx + self.back_size_x,
                     starty:starty + self.back_size_y
                 ].ravel()
@@ -250,16 +236,63 @@ class ImageData(object):
                     # estimator devised by Karl Pearson.
                     if numpy.fabs(mean - median) / sigma >= 0.3:
                         logger.debug(
-                            'bg skewed, %f clipping iterations', num_clip_its)
+                        'bg skewed, %f clipping iterations', num_clip_its)
                         bgrow.append(median)
                     else:
                         logger.debug(
                             'bg not skewed, %f clipping iterations', num_clip_its)
                         bgrow.append(2.5 * median - 1.5 * mean)
+	    rmsgrid.append(rmsrow)
+	    bggrid.append(bgrow)	
 
-            rmsgrid.append(rmsrow)
-            bggrid.append(bgrow)
+	if queue == None: return (rmsgrid,bggrid)
+	else: queue.put((rmsgrid, bggrid))
 
+    # Private "support" methods
+    def __grids(self):
+        """Calculate background and RMS grids of this image.
+
+        These grids can be interpolated up to make maps of the original image
+        dimensions: see _interpolate().
+
+        This is called automatically when ImageData.backmap,
+        ImageData.rmsmap or ImageData.fdrmap is first accesseD.
+        """
+
+        # there's no point in working with the whole of the data array
+        # if it's masked.
+        useful_chunk = ndimage.find_objects(numpy.where(self.data.mask, 0, 1))
+        #print useful_chunk
+        assert(len(useful_chunk) == 1)
+     
+        my_xdim, my_ydim = self.data[useful_chunk[0]].shape
+
+	num_iters = len(xrange(0, my_xdim, self.back_size_x))
+        per_proc = num_iters/self.nproc
+        if num_iters%self.nproc != 0: per_proc += 1
+        rmsgrid, bggrid = [], []
+	process_list = []
+        for startx in xrange(per_proc*self.back_size_x, my_xdim, per_proc*self.back_size_x):
+	    endx = startx+per_proc*self.back_size_x
+	    if endx >= my_xdim: endx = my_xdim	   
+	    q = Queue()
+	    p = Process(target=self.process_rows,args=(useful_chunk[0], startx, endx, my_ydim, q))    
+	    process_list.append((p, q))
+	    p.start()
+	    
+	# Be careful to reconstruct in the correct order
+	# This process does the first few rows
+	endx = per_proc*self.back_size_x
+	(rmsg, bgg) = self.process_rows(useful_chunk[0], 0, endx, my_ydim, None)
+	rmsgrid += rmsg
+        bggrid += bgg
+
+	# Results from other processes
+	for process in process_list:
+	    (rmsg, bgg) = process[1].get()
+	    process[0].join()
+	    rmsgrid += rmsg
+            bggrid += bgg
         rmsgrid = numpy.ma.array(
             rmsgrid, mask=numpy.where(numpy.array(rmsgrid) == False, 1, 0))
         bggrid = numpy.ma.array(
@@ -730,6 +763,89 @@ class ImageData(object):
         return labels_above_det_thr, labelled_data
 
 
+    def process_labels(self, labels, deblend_nthresh, queue):
+    	results_list = []
+	for label in labels:
+            chunk = self.shared_data["slices"][label-1]
+            analysis_threshold = (self.shared_data["analysisthresholdmap"][chunk] /
+                                  self.rmsmap[chunk]).max()
+            # In selected_data only the pixels with the "correct"
+            # (see above) labels are retaineD. Other pixel values are
+            # set to zero.
+            # In this way, disconnected pixels within (rectangular)
+            # slices around islands (paricularly the large ones) do
+            # not affect the source measurements.
+            selected_data = numpy.ma.where(
+                self.shared_data["labelled_data"][chunk] == label,
+                self.data_bgsubbed[chunk].data, -extract.BIGNUM
+            ).filled(fill_value=-extract.BIGNUM)
+
+
+            results_list.append(
+                extract.Island(
+                    selected_data,
+                    self.rmsmap[chunk],
+                    chunk,
+                    analysis_threshold,
+                    self.shared_data["detectionthresholdmap"][chunk],
+                    self.beam,
+                    deblend_nthresh,
+                    DEBLEND_MINCONT,
+                    STRUCTURING_ELEMENT
+                )
+            )
+	    
+	if queue == None: return results_list
+	else: queue.put(results_list)
+
+
+
+
+    def process_islands(self, start, finish, force_beam, queue):
+   
+    	results_list = containers.ExtractionResults()
+        for island in self.shared_data["island_list"][start:finish]:
+       	  
+ 	    if force_beam:
+                fixed = {'semimajor': self.beam[0],
+                         'semiminor': self.beam[1],
+                         'theta': self.beam[2]}
+            else:
+                fixed = None
+
+            fit_results = island.fit(fixed=fixed)
+            if fit_results:
+                measurement, residual = fit_results
+		
+            else:
+                # Failed to fit; drop this island and go to the next.
+	        continue
+	
+            try:
+                det = extract.Detection(measurement, self, chunk=island.chunk)
+                if (det.ra.error == float('inf') or
+                        det.dec.error == float('inf')):
+                    logger.warn('Bad fit from blind extraction at pixel coords:'
+                              '%f %f - measurement discarded'
+                              '(increase fitting margin?)', det.x, det.y )
+		    
+                else:
+
+                    results_list.append(det)
+		    
+                if self.residuals:
+                    self.residuals_from_deblending[island.chunk] -= (
+                        island.data.filled(fill_value=0.))
+                    self.residuals_from_gauss_fitting[island.chunk] += residual
+
+            except RuntimeError:
+                logger.warn("Island not processed; unphysical?")
+                raise
+		
+	
+	if queue == None: return results_list
+	else: queue.put(results_list)
+
     def _pyse(
         self, detectionthresholdmap, analysisthresholdmap,
         deblend_nthresh, force_beam, labelled_data=None, labels=[]
@@ -775,34 +891,34 @@ class ImageData(object):
         # 'None' returned for missing label indices.
         slices = ndimage.find_objects(labelled_data)
 
-        for label in labels:
-            chunk = slices[label-1]
-            analysis_threshold = (analysisthresholdmap[chunk] /
-                                  self.rmsmap[chunk]).max()
-            # In selected_data only the pixels with the "correct"
-            # (see above) labels are retained. Other pixel values are
-            # set to -(bignum).
-            # In this way, disconnected pixels within (rectangular)
-            # slices around islands (particularly the large ones) do
-            # not affect the source measurements.
-            selected_data = numpy.ma.where(
-                labelled_data[chunk] == label,
-                self.data_bgsubbed[chunk].data, -extract.BIGNUM
-            ).filled(fill_value=-extract.BIGNUM)
+ 	num_iters = len(labels)
+        per_proc = num_iters/self.nproc
+        if num_iters%self.nproc != 0: per_proc += 1
 
-            island_list.append(
-                extract.Island(
-                    selected_data,
-                    self.rmsmap[chunk],
-                    chunk,
-                    analysis_threshold,
-                    detectionthresholdmap[chunk],
-                    self.beam,
-                    deblend_nthresh,
-                    DEBLEND_MINCONT,
-                    STRUCTURING_ELEMENT
-                )
-            )
+	self.shared_data = {
+	    # Assume that processes fork without copying data, 
+	    # and that references to the data are stored in this object.
+	    # In that case, we get free shared memory between processes.
+	    "slices" : slices,
+	    "analysisthresholdmap" : analysisthresholdmap,
+	    "labelled_data" : labelled_data,
+	    "detectionthresholdmap" : detectionthresholdmap
+	}
+
+        process_list = []
+	for i in range(1,self.nproc):
+	    q = Queue()
+		# labels is a list of integers, not hugely big even if thousands of sources
+            p = Process(target=self.process_labels, args=(labels[i*per_proc:(i+1)*per_proc],deblend_nthresh,q))
+            process_list.append((p, q))
+            p.start()
+	
+	# This process does the first few in the list
+	island_list += self.process_labels(labels[0:per_proc],deblend_nthresh,None)
+ 	
+        for process in process_list:
+            island_list += process[1].get()
+            process[0].join()
 
         # If required, we can save the 'left overs' from the deblending and
         # fitting processes for later analysis. This needs setting up here:
@@ -822,36 +938,30 @@ class ImageData(object):
         # Iterate over the list of islands and measure the source in each,
         # appending it to the results list.
         results = containers.ExtractionResults()
-        for island in island_list:
-            if force_beam:
-                fixed = {'semimajor': self.beam[0],
-                         'semiminor': self.beam[1],
-                         'theta': self.beam[2]}
-            else:
-                fixed = None
-            fit_results = island.fit(fixed=fixed)
-            if fit_results:
-                measurement, residual = fit_results
-            else:
-                # Failed to fit; drop this island and go to the next.
-                continue
-            try:
-                det = extract.Detection(measurement, self, chunk=island.chunk)
-                if (det.ra.error == float('inf') or
-                        det.dec.error == float('inf')):
-                    logger.warn('Bad fit from blind extraction at pixel coords:'
-                                  '%f %f - measurement discarded'
-                                  '(increase fitting margin?)', det.x, det.y )
-                else:
-                    results.append(det)
+	num_iters = len(island_list)
+        per_proc = num_iters/self.nproc
+        if num_iters%self.nproc != 0: per_proc += 1
 
-                if self.residuals:
-                    self.residuals_from_deblending[island.chunk] -= (
-                        island.data.filled(fill_value=0.))
-                    self.residuals_from_gauss_fitting[island.chunk] += residual
-            except RuntimeError:
-                logger.warn("Island not processed; unphysical?")
-                raise
+	self.shared_data = {
+	    "island_list" : island_list
+	}
+
+	process_list = []
+	for i in range(1,self.nproc):
+	    q = Queue()
+	    p = Process(target=self.process_islands, args=(i*per_proc,(i+1)*per_proc,force_beam,q))
+	    process_list.append((p, q))
+	    p.start()
+	    
+	# This process    
+	for r in self.process_islands(0,per_proc,force_beam,None):
+	    results.append(r)
+	    
+	for process in process_list:
+	    for r in process[1].get():
+		r.imagedata = self    # Not sent, so put back 
+	    	results.append(r)
+	    process[0].join()	
 
         def is_usable(det):
             # Check that both ends of each axis are usable; that is, that they

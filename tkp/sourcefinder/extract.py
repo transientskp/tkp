@@ -729,7 +729,9 @@ class Detection(object):
 
     def __getstate__(self):
         return {
-            'imagedata': self.imagedata,
+          
+	    'eps_ra' : self.eps_ra,
+	    'eps_dec' : self.eps_dec,
             'chunk': (self.chunk[0].start, self.chunk[0].stop,
                       self.chunk[1].start, self.chunk[1].stop),
             'peak': self.peak,
@@ -739,12 +741,31 @@ class Detection(object):
             'smaj': self.smaj,
             'smin': self.smin,
             'theta': self.theta,
+       	    'dc_imposs' : self.dc_imposs,
+            'smaj_dc' : self.smaj_dc,
+            'smin_dc' : self.smin_dc,
+            'theta_dc' : self.theta_dc,
             'sig': self.sig,
-            'error_radius': self.error_radius
+            'error_radius': self.error_radius,
+	
+	    # Created by _physical_coordinates()
+	    'ra' : self.ra,
+	    'dec' : self.dec,
+	    'theta_celes' : self.theta_celes,
+	    'theta_dc_celes' : self.theta_dc_celes,
+            'end_smaj_x' : self.end_smaj_x,
+            'start_smaj_x' : self.start_smaj_x,
+            'end_smaj_y' : self.end_smaj_y,
+            'start_smaj_y' : self.start_smaj_y, 
+            'end_smin_x' : self.end_smin_x,
+            'start_smin_x' : self.start_smin_x, 
+            'end_smin_y' : self.end_smin_y, 
+            'start_smin_y' : self.start_smin_y,
+	    'smaj_asec' : self.smaj_asec,
+	    'smin_asec' : self.smin_asec
             }
 
     def __setstate__(self, attrdict):
-        self.imagedata = attrdict['imagedata']
         self.chunk = (slice(attrdict['chunk'][0], attrdict['chunk'][1]),
                       slice(attrdict['chunk'][2], attrdict['chunk'][3]))
         self.peak = attrdict['peak']
@@ -754,15 +775,26 @@ class Detection(object):
         self.smaj = attrdict['smaj']
         self.smin = attrdict['smin']
         self.theta = attrdict['theta']
+       	self.dc_imposs = attrdict['dc_imposs']
+        self.smaj_dc = attrdict['smaj_dc']
+        self.smin_dc = attrdict['smin_dc']
+        self.theta_dc = attrdict['theta_dc']
         self.sig = attrdict['sig']
         self.error_radius = attrdict['error_radius']
-
-        try:
-            self._physical_coordinates()
-        except RuntimeError, e:
-            logger.warn("Physical coordinates failed at %f, %f" % (
-                self.x, self.y))
-            raise
+	self.ra = attrdict['ra']
+	self.dec = attrdict['dec']
+	self.theta_celes = attrdict['theta_celes']
+	self.theta_dc_celes = attrdict['theta_dc_celes']
+        self.end_smaj_x = attrdict['end_smaj_x']
+        self.start_smaj_x = attrdict['start_smaj_x']
+        self.end_smaj_y = attrdict['end_smaj_y']
+        self.start_smaj_y = attrdict['start_smaj_y'] 
+        self.end_smin_x = attrdict['end_smin_x']
+        self.start_smin_x = attrdict['start_smin_x']
+        self.end_smin_y = attrdict['end_smin_y']
+        self.start_smin_y = attrdict['start_smin_y']
+	self.smin_asec = attrdict['smin_asec']
+	self.smaj_asec = attrdict['smaj_asec']
 
     def __getattr__(self, attrname):
         # Backwards compatibility for "errquantity" attributes

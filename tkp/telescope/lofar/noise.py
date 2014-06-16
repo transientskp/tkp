@@ -14,7 +14,9 @@ import logging
 import warnings
 import scipy.constants
 import scipy.interpolate
-from tkp.lofar import antennaarrays
+
+from tkp.telescope.lofar import antennaarrays
+
 
 logger = logging.getLogger(__name__)
 

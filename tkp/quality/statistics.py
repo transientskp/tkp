@@ -3,6 +3,7 @@ functions for calculating statistical properties of LOFAR images
 """
 import numpy
 
+
 def rms(data):
     """Returns the RMS of the data about the median.
     Args:
@@ -10,6 +11,7 @@ def rms(data):
     """
     data -= numpy.median(data)
     return numpy.sqrt(numpy.power(data, 2).sum()/len(data))
+
 
 def clip(data, sigma=3):
     """Remove all values above a threshold from the array.
@@ -26,6 +28,7 @@ def clip(data, sigma=3):
     else:
         return newdata
 
+
 def subregion(data, f=4):
     """Returns the inner region of a image, according to f.
 
@@ -33,8 +36,9 @@ def subregion(data, f=4):
     Args:
         data: a numpy array
     """
-    x,y = data.shape
+    x, y = data.shape
     return data[(x/2 - x/f):(x/2 + x/f), (y/2 - y/f):(y/2 + y/f)]
+
 
 def rms_with_clipped_subregion(data, sigma=3, f=4):
     """ returns the rms value of a iterative sigma clipped subsection of an image

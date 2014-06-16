@@ -1,9 +1,11 @@
 import unittest
-from tkp.lofar.noise import ANTENNAE_PER_TILE
-from tkp.lofar.noise import TILES_PER_CORE_STATION
-from tkp.lofar.noise import TILES_PER_REMOTE_STATION
-from tkp.lofar.noise import TILES_PER_INTL_STATION
-from tkp.lofar.noise import Aeff_dipole
+
+from tkp.telescope.lofar.noise import ANTENNAE_PER_TILE
+from tkp.telescope.lofar.noise import TILES_PER_CORE_STATION
+from tkp.telescope.lofar.noise import TILES_PER_REMOTE_STATION
+from tkp.telescope.lofar.noise import TILES_PER_INTL_STATION
+from tkp.telescope.lofar.noise import Aeff_dipole
+
 
 class TestHBAStationEffectiveArea(unittest.TestCase):
     """

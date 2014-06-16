@@ -104,7 +104,7 @@ class DataAccessor(object):
         An instance of tkp.coordinates.WCS.
         """
 
-    def rms(self):
+    def rms_avg(self):
         """
         Root mean square value for this image.
         """
@@ -133,5 +133,5 @@ class DataAccessor(object):
             'centre_decl': self.centre_decl,
             'deltax': self.pixelsize[0],
             'deltay': self.pixelsize[1],
-            'rms': self.rms(),
+            'rms_avg': self.rms_avg(),
         }

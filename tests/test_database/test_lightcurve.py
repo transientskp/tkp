@@ -42,7 +42,7 @@ class TestLightCurve(unittest.TestCase):
                     'centre_ra': 111,
                     'centre_decl': 11,
                     'xtr_radius': 3,
-                    'rms': 1,
+                    'rms_avg': 1,
             }
             image = Image(dataset=self.dataset, data=data)
             images.append(image)

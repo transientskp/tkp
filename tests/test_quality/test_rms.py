@@ -7,8 +7,7 @@ from tkp.quality.rms import rms_invalid
 from tkp import accessors
 import tkp.quality
 from tkp.quality import statistics
-import tkp.telescope.lofar.noise
-import tkp.telescope.lofar.antennaarrays
+import tkp.telescope.lofar as lofar
 from tkp.testutil.decorators import requires_data
 from tkp.testutil.data import DATAPATH
 
@@ -59,7 +58,7 @@ class TestRms(unittest.TestCase):
         nintl = 0
         configuration = "LBA_INNER"
 
-        noise = tkp.telescope.lofar.noise.noise_level(frequency, bandwidth, integration_time, configuration, ncore, nremote, nintl)
+        noise = lofar.noise.noise_level(frequency, bandwidth, integration_time, configuration, ncore, nremote, nintl)
         rms_good = statistics.rms_with_clipped_subregion(good_image.data)
         rms_bad = statistics.rms_with_clipped_subregion(bad_image.data)
 
@@ -74,20 +73,20 @@ class TestRms(unittest.TestCase):
 class testDistances(unittest.TestCase):
     def test_distanses(self):
         """check if all precomputed values match with distances in files"""
-        parsed = tkp.telescope.lofar.antennaarrays.parse_antennafile(core_antennas)
+        parsed = lofar.antennaarrays.parse_antennafile(core_antennas)
         for conf in "LBA", "LBA_INNER", "LBA_OUTER", "LBA_SPARSE0", "LBA_SPARSE1":
-            ds = tkp.telescope.lofar.antennaarrays.shortest_distances(parsed[conf], parsed["LBA"])
-            assert_array_almost_equal(ds, tkp.telescope.lofar.antennaarrays.core_dipole_distances[conf], decimal=2)
+            ds = lofar.antennaarrays.shortest_distances(parsed[conf], parsed["LBA"])
+            assert_array_almost_equal(ds, lofar.antennaarrays.core_dipole_distances[conf], decimal=2)
 
-        parsed = tkp.telescope.lofar.antennaarrays.parse_antennafile(intl_antennas)
+        parsed = lofar.antennaarrays.parse_antennafile(intl_antennas)
         for conf in "LBA", "LBA_INNER", "LBA_OUTER":
-            ds = tkp.telescope.lofar.antennaarrays.shortest_distances(parsed[conf], parsed["LBA"])
-            assert_array_almost_equal(ds, tkp.telescope.lofar.antennaarrays.intl_dipole_distances[conf], decimal=2)
+            ds = lofar.antennaarrays.shortest_distances(parsed[conf], parsed["LBA"])
+            assert_array_almost_equal(ds, lofar.antennaarrays.intl_dipole_distances[conf], decimal=2)
 
-        parsed = tkp.telescope.lofar.antennaarrays.parse_antennafile(remote_antennas)
+        parsed = lofar.antennaarrays.parse_antennafile(remote_antennas)
         for conf in "LBA", "LBA_INNER", "LBA_OUTER", "LBA_SPARSE0", "LBA_SPARSE1", "LBA_X", "LBA_X":
-            ds = tkp.telescope.lofar.antennaarrays.shortest_distances(parsed[conf], parsed["LBA"])
-            assert_array_almost_equal(ds, tkp.telescope.lofar.antennaarrays.remote_dipole_distances[conf], decimal=2)
+            ds = lofar.antennaarrays.shortest_distances(parsed[conf], parsed["LBA"])
+            assert_array_almost_equal(ds, lofar.antennaarrays.remote_dipole_distances[conf], decimal=2)
 
 
 if __name__ == '__main__':

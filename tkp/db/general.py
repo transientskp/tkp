@@ -153,15 +153,21 @@ def insert_image(dataset, freq_eff, freq_bw, taustart_ts, tau_time,
                       ,%(rms)s
                       )
     """
-    arguments = {'dataset': dataset, 'tau_time': tau_time, 'freq_eff': freq_eff,
-                 'freq_bw': freq_bw, 'taustart_ts': taustart_ts,
+    arguments = {'dataset': dataset,
+                 'tau_time': tau_time,
+                 'freq_eff': freq_eff,
+                 'freq_bw': freq_bw,
+                 'taustart_ts': taustart_ts,
                  'rb_smaj': substitute_inf(beam_smaj_pix * math.fabs(deltax)),
                  'rb_smin': substitute_inf(beam_smin_pix * math.fabs(deltay)),
                  'rb_pa': substitute_inf(180 * beam_pa_rad / math.pi),
-                 'deltax': deltax, 'deltay': deltay,
+                 'deltax': deltax,
+                 'deltay': deltay,
                  'url': url,
-                 'centre_ra': centre_ra, 'centre_decl': centre_decl,
-                 'xtr_radius': xtr_radius, 'rms': rms}
+                 'centre_ra': centre_ra,
+                 'centre_decl': centre_decl,
+                 'xtr_radius': xtr_radius,
+                 'rms': rms}
     cursor = tkp.db.execute(query, arguments, commit=True)
     image_id = cursor.fetchone()[0]
     return image_id

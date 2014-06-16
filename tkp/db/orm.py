@@ -317,7 +317,7 @@ class DataSet(DBObject):
             try:
                 self._id = insert_dataset(self._data['description'])
             except Exception as e:
-                logger.error("ORM: unkown error inserting dataset,  %s: %s" % (type(e).__name__, str(e)))
+                logger.error("ORM: error inserting dataset,  %s: %s" % (type(e).__name__, str(e)))
                 raise
         return self._id
 
@@ -427,7 +427,8 @@ class Image(DBObject):
                     self._data['rms'],
                 )
             except Exception as e:
-                logger.error("ORM: unkown error inserting image,  %s: %s" % (type(e).__name__, str(e)))
+                logger.error("ORM: error inserting image,  %s: %s" %
+                                (type(e).__name__, str(e)))
                 raise
         return self._id
 

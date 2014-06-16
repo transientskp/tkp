@@ -114,7 +114,8 @@ class Database(object):
         cursor.execute("SELECT value FROM version WHERE name='revision'")
         schema_version = cursor.fetchone()[0]
         if schema_version != DB_VERSION:
-            error = "Database version incompatibility (needed %d, got %d)" % (DB_VERSION, schema_version)
+            error = ("Database version incompatibility (needed %d, got %d)" %
+                        (DB_VERSION, schema_version))
             logger.error(error)
             self._connection.close()
             self._connection = None

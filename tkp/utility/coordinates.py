@@ -97,6 +97,11 @@ def jd2lst(jd, position=None):
 
 
 
+# NB: datetime is not sensitive to leap seconds.
+# However, leap seconds were first introduced in 1972. 
+# So there are no leap seconds between the start of the
+# Modified Julian epoch and the start of the Unix epoch,
+# so this calculation is safe.
 #julian_epoch = datetime.datetime(1858, 11, 17)
 #unix_epoch = datetime.datetime(1970, 1, 1, 0, 0)
 #delta = unix_epoch - julian_epoch

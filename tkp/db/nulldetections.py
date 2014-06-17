@@ -3,9 +3,10 @@ A collection of back end subroutines (mostly SQL queries).
 
 This module contains the routines to deal with null detections.
 """
-import logging
+import logging,sys
 from tkp.db import execute as execute
 from tkp.db.associations import _empty_temprunningcatalog as _del_tempruncat
+from tkp.db.associations import _flag_many_to_many_tempruncat as _flag_m2m_tempruncat
 
 logger = logging.getLogger(__name__)
 
@@ -80,7 +81,12 @@ def associate_nd(image_id):
     Associate the null detections (ie forced fits) of the current image.
 
     They will be inserted in a temporary table, which contains the
-    associations of the forced fits with the running catalog sources.
+    associations of the forced fits with the running-catalog sources.
+    The source pairs will be inspected for many-to-many associations,
+    identical to the normal case, by _flag_m2m_tempruncat(), since
+    there might be cases that runcat source lie close together, just
+    like their forced fits. We will set the pairs farthest away to
+    inactive and continue with the rest.
     Also, the forced fits are appended to the assocxtrsource (light-curve)
     table. The runcat_flux table is updated with the new datapoints if it
     already existed, otherwise it is inserted as a new datapoint.
@@ -90,6 +96,7 @@ def associate_nd(image_id):
 
     _del_tempruncat()
     _insert_tempruncat(image_id)
+    _flag_m2m_tempruncat()
     _insert_1_to_1_assoc()
     _update_runcat_flux()
     _insert_runcat_flux()
@@ -101,9 +108,12 @@ def _insert_tempruncat(image_id):
     Here the associations of forced fits and their runningcatalog counterparts
     are inserted into the temporary table.
 
-    We follow the implementation of the normal association procedure,
-    except that we don't need to match with a De Ruiter radius, since
-    the counterpart pairs are from the same runningcatalog source.
+    We follow the implementation of the normal association procedure.
+    We store the distance and De Ruiter radius between the association
+    pairs in case we have to deal with many-to-many associations.
+    This might occur when two runningcatalog sources lie close together,
+    and their forced fits as well. This will surely happen when the
+    resolution of the images improves.
     """
 
     query = """\
@@ -144,8 +154,8 @@ INSERT INTO temprunningcatalog
   )
   SELECT t0.runcat
         ,t0.xtrsrc
-        ,0 as distance_arcsec
-        ,0 as r
+        ,t0.distance_arcsec
+        ,t0.r
         ,t0.dataset
         ,t0.band
         ,t0.stokes
@@ -230,6 +240,17 @@ INSERT INTO temprunningcatalog
          END AS avg_weighted_f_int_sq
     FROM (SELECT r.id AS runcat
                 ,x.id AS xtrsrc
+                ,3600 * DEGREES(2 * ASIN(SQRT( (r.x - x.x) * (r.x - x.x)
+                                             + (r.y - x.y) * (r.y - x.y)
+                                             + (r.z - x.z) * (r.z - x.z)
+                                             ) / 2)
+                               ) AS distance_arcsec
+                ,SQRT(  (r.wm_ra - x.ra) * COS(RADIANS((r.wm_decl + x.decl)/2))
+                      * (r.wm_ra - x.ra) * COS(RADIANS((r.wm_decl + x.decl)/2))
+                      / (r.wm_uncertainty_ew * r.wm_uncertainty_ew + x.uncertainty_ew * x.uncertainty_ew)
+                     +  (r.wm_decl - x.decl) * (r.wm_decl - x.decl)
+                      / (r.wm_uncertainty_ns * r.wm_uncertainty_ns + x.uncertainty_ns * x.uncertainty_ns)
+                     ) AS r
                 ,x.f_peak
                 ,x.f_peak_err
                 ,x.f_int
@@ -280,6 +301,8 @@ INSERT INTO temprunningcatalog
     logger.info("Inserted %s null detections in tempruncat" % cnt)
 
 
+
+
 def _insert_1_to_1_assoc():
     """
     The null detection forced fits are appended to the assocxtrsource
@@ -298,12 +321,14 @@ INSERT INTO assocxtrsource
   SELECT t.runcat
         ,t.xtrsrc
         ,7 AS type
-        ,0 AS distance_arcsec
-        ,0 AS r
+        ,t.distance_arcsec
+        ,t.r
         ,t.v_int_inter / t.avg_f_int
         ,t.eta_int_inter / t.avg_f_int_weight
     FROM (SELECT runcat
                 ,xtrsrc
+                ,distance_arcsec
+                ,r
                 ,CASE WHEN avg_f_int = 0.0
                       THEN 0.000001
                       ELSE avg_f_int
@@ -327,6 +352,7 @@ INSERT INTO assocxtrsource
                              - avg_weighted_f_int * avg_weighted_f_int)
                  END AS eta_int_inter
             FROM temprunningcatalog
+           WHERE inactive = FALSE
            ) t
 """
     cursor = execute(query, commit=True)
@@ -482,6 +508,7 @@ INSERT INTO runningcatalog_flux
         ,avg_weighted_f_int_sq
     FROM temprunningcatalog
    WHERE f_datapoints = 1
+     AND inactive = FALSE
     """
     cursor = execute(query, commit=True)
     cnt = cursor.rowcount

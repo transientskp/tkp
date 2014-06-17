@@ -121,6 +121,7 @@ class hmstoraTest(unittest.TestCase):
         ((18, 0, 0), 270),
         ((0, 0, 24), 0.1),
         ((0, 4, 0), 1.0),
+        ((0, 0, 59.1), 0.24625),
         )
 
     def testknownValues(self):
@@ -157,7 +158,8 @@ class dmstodecTest(unittest.TestCase):
         ((90, 0, 0), 90),
         ((-90, 0, 0), -90),
         ((0, 30, 0), 0.5),
-        ((0, 0, 1), 1.0/60**2)
+        ((0, 0, 1), 1.0/60**2),
+        ((0, 0, 59.004), 59.004/60**2)
         )
 
     def testknownValues(self):

@@ -3,9 +3,6 @@
 +++++++++++++++++++++++++
 LOFAR Transients Pipeline
 +++++++++++++++++++++++++
-.. |last_updated| last_updated::
-
-*This document last updated:* |last_updated|.
 
 .. toctree::
    :maxdepth: 2

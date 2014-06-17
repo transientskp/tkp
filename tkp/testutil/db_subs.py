@@ -90,7 +90,7 @@ def example_dbimage_datasets(n_images, **kwargs):
                       'centre_ra': 123.,  # Arbitarily picked.
                       'centre_decl': 10.,  # Arbitarily picked.
                       'xtr_radius': 10.,  # (Degrees)
-                      'rms_avg': 1.,
+                      'rms_qc': 1.,
                     }
     init_im_params.update(kwargs)
 

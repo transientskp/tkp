@@ -651,9 +651,9 @@ dataset).
     Determine the current and number of nodes in case of a sharded database
     set-up.
 
-**rms_avg**
-    The sigma-clipped RMS value from the central region of the image, 
-    calculated in the persistence step.
+**rms_qc**
+    RMS for quality-control. This is the sigma-clipped RMS value from the
+    central region of the image, calculated in the persistence step.
 
 
 This table keeps track of zones (declinations) of the stored sources on the

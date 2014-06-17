@@ -104,9 +104,13 @@ class DataAccessor(object):
         An instance of tkp.coordinates.WCS.
         """
 
-    def rms_avg(self):
+    def rms_qc(self):
         """
-        Root mean square value for this image.
+        RMS for quality-control.
+
+        Root mean square value calculated from central region of this image.
+        We sigma-clip the input-data in an attempt to exclude source-pixels
+        and keep only background-pixels.
         """
         return rms_with_clipped_subregion(self.data, sigma=self.sigma, f=self.f)
 
@@ -133,5 +137,5 @@ class DataAccessor(object):
             'centre_decl': self.centre_decl,
             'deltax': self.pixelsize[0],
             'deltay': self.pixelsize[1],
-            'rms_avg': self.rms_avg(),
+            'rms_qc': self.rms_qc(),
         }

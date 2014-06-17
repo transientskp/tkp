@@ -116,7 +116,7 @@ def insert_dataset(description):
 
 def insert_image(dataset, freq_eff, freq_bw, taustart_ts, tau_time,
                  beam_smaj_pix, beam_smin_pix, beam_pa_rad, deltax, deltay, url,
-                 centre_ra, centre_decl, xtr_radius, rms_avg
+                 centre_ra, centre_decl, xtr_radius, rms_qc
                  ):
     """Insert an image for a given dataset with the column values
     given in the argument list.
@@ -150,7 +150,7 @@ def insert_image(dataset, freq_eff, freq_bw, taustart_ts, tau_time,
                       ,%(centre_ra)s
                       ,%(centre_decl)s
                       ,%(xtr_radius)s
-                      ,%(rms_avg)s
+                      ,%(rms_qc)s
                       )
     """
     arguments = {'dataset': dataset,
@@ -167,7 +167,7 @@ def insert_image(dataset, freq_eff, freq_bw, taustart_ts, tau_time,
                  'centre_ra': centre_ra,
                  'centre_decl': centre_decl,
                  'xtr_radius': xtr_radius,
-                 'rms_avg': rms_avg}
+                 'rms_qc': rms_qc}
     cursor = tkp.db.execute(query, arguments, commit=True)
     image_id = cursor.fetchone()[0]
     return image_id

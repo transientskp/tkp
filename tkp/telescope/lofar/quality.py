@@ -21,14 +21,14 @@ def reject_check_lofar(accessor, parset):
         logger.info("image %s REJECTED: tau_time is 0, should be > 0" % accessor.url)
         return tkp.db.quality.reason['tau_time'], "tau_time is 0"
 
-    rms_avg = accessor.rms_avg()
+    rms_qc = accessor.rms_qc()
     noise = noise_level(accessor.freq_eff, accessor.freq_bw, accessor.tau_time,
         accessor.antenna_set, accessor.ncore, accessor.nremote, accessor.nintl
     )
-    rms_check = rms_invalid(rms_avg, noise, low_bound, high_bound)
+    rms_check = rms_invalid(rms_qc, noise, low_bound, high_bound)
     if not rms_check:
         logger.info("image %s accepted: rms: %s, theoretical noise: %s" % \
-                        (accessor.url, nice_format(rms_avg),
+                        (accessor.url, nice_format(rms_qc),
                          nice_format(noise)))
     else:
         logger.info("image %s REJECTED: %s " % (accessor.url, rms_check))

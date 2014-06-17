@@ -25,7 +25,7 @@ class TestBand(unittest.TestCase):
             'centre_ra': 0,
             'centre_decl': 0,
             'xtr_radius': 3,
-            'rms_avg': 1,
+            'rms_qc': 1,
         }
 
     def tearDown(self):

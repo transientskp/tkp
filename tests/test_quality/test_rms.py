@@ -1,15 +1,13 @@
 import os
 import numpy
 from numpy.testing import assert_array_equal, assert_array_almost_equal
-
 import unittest
-from tkp.quality.rms import rms_invalid
 
+from tkp.quality.rms import rms_invalid
 from tkp import accessors
 import tkp.quality
 from tkp.quality import statistics
-import tkp.lofar.noise
-import tkp.lofar.antennaarrays
+import tkp.telescope.lofar as lofar
 from tkp.testutil.decorators import requires_data
 from tkp.testutil.data import DATAPATH
 
@@ -18,8 +16,10 @@ core_antennas = os.path.join(DATAPATH, 'lofar/CS001-AntennaArrays.conf')
 intl_antennas = os.path.join(DATAPATH, 'lofar/DE601-AntennaArrays.conf')
 remote_antennas = os.path.join(DATAPATH, 'lofar/RS106-AntennaArrays.conf')
 
-bad_file = os.path.join(DATAPATH, 'quality/noise/bad/home-pcarrol-msss-3C196a-analysis-band6.corr.fits')
-good_file = os.path.join(DATAPATH, 'quality/noise/good/home-pcarrol-msss-L086+69-analysis-band6.corr.fits')
+bad_file = os.path.join(DATAPATH,
+        'quality/noise/bad/home-pcarrol-msss-3C196a-analysis-band6.corr.fits')
+good_file = os.path.join(DATAPATH,
+       'quality/noise/good/home-pcarrol-msss-L086+69-analysis-band6.corr.fits')
 
 #numpy.seterr(all='raise')
 
@@ -60,7 +60,8 @@ class TestRms(unittest.TestCase):
         nintl = 0
         configuration = "LBA_INNER"
 
-        noise = tkp.lofar.noise.noise_level(frequency, bandwidth, integration_time, configuration, ncore, nremote, nintl)
+        noise = lofar.noise.noise_level(frequency, bandwidth, integration_time,
+                                        configuration, ncore, nremote, nintl)
         rms_good = statistics.rms_with_clipped_subregion(good_image.data)
         rms_bad = statistics.rms_with_clipped_subregion(bad_image.data)
 
@@ -75,20 +76,28 @@ class TestRms(unittest.TestCase):
 class testDistances(unittest.TestCase):
     def test_distanses(self):
         """check if all precomputed values match with distances in files"""
-        parsed = tkp.lofar.antennaarrays.parse_antennafile(core_antennas)
-        for conf in "LBA", "LBA_INNER", "LBA_OUTER", "LBA_SPARSE0", "LBA_SPARSE1":
-            ds = tkp.lofar.antennaarrays.shortest_distances(parsed[conf], parsed["LBA"])
-            assert_array_almost_equal(ds, tkp.lofar.antennaarrays.core_dipole_distances[conf], decimal=2)
+        parsed = lofar.antennaarrays.parse_antennafile(core_antennas)
+        for conf in ("LBA", "LBA_INNER", "LBA_OUTER", "LBA_SPARSE0",
+                     "LBA_SPARSE1"):
+            ds = lofar.antennaarrays.shortest_distances(parsed[conf],
+                                                        parsed["LBA"])
+            assert_array_almost_equal(ds,
+                  lofar.antennaarrays.core_dipole_distances[conf], decimal=2)
 
-        parsed = tkp.lofar.antennaarrays.parse_antennafile(intl_antennas)
-        for conf in "LBA", "LBA_INNER", "LBA_OUTER":
-            ds = tkp.lofar.antennaarrays.shortest_distances(parsed[conf], parsed["LBA"])
-            assert_array_almost_equal(ds, tkp.lofar.antennaarrays.intl_dipole_distances[conf], decimal=2)
+        parsed = lofar.antennaarrays.parse_antennafile(intl_antennas)
+        for conf in ("LBA", "LBA_INNER", "LBA_OUTER"):
+            ds = lofar.antennaarrays.shortest_distances(parsed[conf],
+                                                        parsed["LBA"])
+            assert_array_almost_equal(ds,
+                  lofar.antennaarrays.intl_dipole_distances[conf], decimal=2)
 
-        parsed = tkp.lofar.antennaarrays.parse_antennafile(remote_antennas)
-        for conf in "LBA", "LBA_INNER", "LBA_OUTER", "LBA_SPARSE0", "LBA_SPARSE1", "LBA_X", "LBA_X":
-            ds = tkp.lofar.antennaarrays.shortest_distances(parsed[conf], parsed["LBA"])
-            assert_array_almost_equal(ds, tkp.lofar.antennaarrays.remote_dipole_distances[conf], decimal=2)
+        parsed = lofar.antennaarrays.parse_antennafile(remote_antennas)
+        for conf in ("LBA", "LBA_INNER", "LBA_OUTER", "LBA_SPARSE0",
+                     "LBA_SPARSE1", "LBA_X", "LBA_X"):
+            ds = lofar.antennaarrays.shortest_distances(parsed[conf],
+                                                        parsed["LBA"])
+            assert_array_almost_equal(ds,
+                  lofar.antennaarrays.remote_dipole_distances[conf], decimal=2)
 
 
 if __name__ == '__main__':

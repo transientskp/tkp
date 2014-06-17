@@ -24,9 +24,9 @@ class TestBand(unittest.TestCase):
             'deltay': float(0.01111),
             'centre_ra': 0,
             'centre_decl': 0,
-            'xtr_radius' : 3
-            }
-
+            'xtr_radius': 3,
+            'rms_qc': 1,
+        }
 
     def tearDown(self):
         tkp.db.rollback()
@@ -45,7 +45,7 @@ class TestBand(unittest.TestCase):
                 WHERE image.id = %(id)s
             """, {"id": image.id}).fetchone()[0]
 
-        data=copy(self.data)
+        data = copy(self.data)
         dataset1 = DataSet(data={'description': self._testMethodName},
                            database=self.database)
 

@@ -620,9 +620,7 @@ dataset).
     The timestamp of the start of the observation, originating or read from 
     the CASA LOFAR_OBSERVATION table from the ``OBSERVATION_START`` data field.
 
-
-
-**rb_smaj** 
+**rb_smaj**
     The semi-major axis of the restoring beam, in degrees. 
     Full major axis value originates or is read from the CASA Main table in the imageinfor
     subsection from the ``restoringbeam`` record and is converted at db insertion time.
@@ -644,6 +642,15 @@ dataset).
 
 **fov_degrees**
     The field of view of the image, in square degrees. Not yet stored in table.
+
+**rms_qc**
+    RMS for quality-control. This is the sigma-clipped RMS value from the
+    central region of the image, calculated in the persistence step.
+
+**rms_min, rms_max**
+    The minimum and maximum values of the estimated-RMS-map within the
+    source-extraction region. Used when determining if a newly-detected source
+    is a probable transient, or just due to deeper imaging.
 
 **url** 
     The url of the physical location of the image at the time of processing.

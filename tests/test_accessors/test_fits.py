@@ -3,7 +3,6 @@ Tests for simulated LOFAR datasets.
 """
 
 import os
-
 import unittest
 
 from tkp.testutil.data import DATAPATH

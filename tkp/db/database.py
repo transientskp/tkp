@@ -6,7 +6,7 @@ logger = logging.getLogger(__name__)
 
 # The version of the TKP DB schema which is assumed by the current tree.
 # Increment whenever the schema changes.
-DB_VERSION = 21
+DB_VERSION = 22
 
 class DBExceptions(object):
     """
@@ -114,7 +114,8 @@ class Database(object):
         cursor.execute("SELECT value FROM version WHERE name='revision'")
         schema_version = cursor.fetchone()[0]
         if schema_version != DB_VERSION:
-            error = "Database version incompatibility (needed %d, got %d)" % (DB_VERSION, schema_version)
+            error = ("Database version incompatibility (needed %d, got %d)" %
+                        (DB_VERSION, schema_version))
             logger.error(error)
             self._connection.close()
             self._connection = None

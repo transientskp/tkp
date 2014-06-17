@@ -42,10 +42,10 @@ class TestPersistence(unittest.TestCase):
         tkp.steps.persistence.create_dataset(dataset_id, "test")
 
     def test_extract_metadatas(self):
-        tkp.steps.persistence.extract_metadatas(self.images)
+        tkp.steps.persistence.extract_metadatas(self.images, sigma=4, f=8)
 
     def test_store_images(self):
-        images_metadata = tkp.steps.persistence.extract_metadatas(self.images)
+        images_metadata = tkp.steps.persistence.extract_metadatas(self.images, sigma=4, f=8)
         img_ids = tkp.steps.persistence.store_images(images_metadata,
                                            self.extraction_radius,
                                            self.dataset_id)
@@ -58,7 +58,7 @@ class TestPersistence(unittest.TestCase):
             self.assertGreaterEqual(skyrgn[0]['xtr_radius'], 0)
 
     def test_node_steps(self):
-        tkp.steps.persistence.node_steps(self.images, self.image_cache_pars)
+        tkp.steps.persistence.node_steps(self.images, self.image_cache_pars, sigma=4, f=8)
 
 
 @requires_mongodb()

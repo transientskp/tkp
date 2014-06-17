@@ -643,6 +643,15 @@ dataset).
 **fov_degrees**
     The field of view of the image, in square degrees. Not yet stored in table.
 
+**rms_qc**
+    RMS for quality-control. This is the sigma-clipped RMS value from the
+    central region of the image, calculated in the persistence step.
+
+**rms_min, rms_max**
+    The minimum and maximum values of the estimated-RMS-map within the
+    source-extraction region. Used when determining if a newly-detected source
+    is a probable transient, or just due to deeper imaging.
+
 **url** 
     The url of the physical location of the image at the time of processing.
     NOTE that this needs to be updated when the image is moved.
@@ -650,10 +659,6 @@ dataset).
 **node(s)** 
     Determine the current and number of nodes in case of a sharded database
     set-up.
-
-**rms_qc**
-    RMS for quality-control. This is the sigma-clipped RMS value from the
-    central region of the image, calculated in the persistence step.
 
 
 This table keeps track of zones (declinations) of the stored sources on the

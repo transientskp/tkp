@@ -2,9 +2,15 @@ import logging
 import tkp.accessors
 from tkp.accessors import sourcefinder_image_from_accessor
 import tkp.accessors
-
+from collections import namedtuple
 
 logger = logging.getLogger(__name__)
+
+#Short-lived struct for returning results from the source extraction routine:
+ExtractionResults = namedtuple('ExtractionResults',
+                                   ['sources',
+                                    'rms_min',
+                                    'rms_max'])
 
 
 def extract_sources(image_path, extraction_params):
@@ -47,9 +53,10 @@ def extract_sources(image_path, extraction_params):
     ew_sys_err = extraction_params['ew_sys_err']
     ns_sys_err = extraction_params['ns_sys_err']
     serialized = [r.serialize(ew_sys_err, ns_sys_err) for r in results]
-    return (serialized,
-            data_image.rmsmap.min(),
-            data_image.rmsmap.max())
+    return ExtractionResults(sources=serialized,
+                     rms_min=data_image.rmsmap.min(),
+                     rms_max=data_image.rmsmap.max()
+                     )
 
 
 def forced_fits(image_path, positions, extraction_params):

@@ -2,7 +2,7 @@ import unittest
 import tkp.steps.transient_search
 from tkp.testutil import db_subs, db_queries
 from tkp.testutil.decorators import requires_database
-import tkp.db
+from tkp.db import DataSet
 from ConfigParser import SafeConfigParser
 from tkp.config import parse_to_dict
 from tkp.testutil.data import default_job_config
@@ -15,7 +15,13 @@ class TestTransientSearch(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
-        cls.dataset_id = db_subs.create_dataset_8images(extract_sources=True)
+        dataset = DataSet(data={'description': "Test transient search"})
+        cls.dataset_id = dataset.id
+        # Just insert empty image entries - so we don't expect to find any
+        # transients.
+        # That's ok because we're just syntax-checking here.
+        for dset in db_subs.generate_timespaced_dbimages_data(n_images=4):
+            image = tkp.db.Image(dataset=dataset, data=dset)
         config = SafeConfigParser()
         config.read(default_job_config)
         config = parse_to_dict(config)

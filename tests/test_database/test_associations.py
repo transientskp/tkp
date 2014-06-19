@@ -41,7 +41,7 @@ class TestOne2One(unittest.TestCase):
 
         for im in im_params:
             image = tkp.db.Image(dataset=dataset, data=im)
-            dbgen.insert_extracted_sources(image.id, steady_srcs, 'blind')
+            dbgen.insert_extracted_sources(image.id, steady_srcs,'blind')
             associate_extracted_sources(image.id, deRuiter_r = 3.717)
 
         # Check runningcatalog, runningcatalog_flux, assocxtrsource.

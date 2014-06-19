@@ -58,7 +58,7 @@ provided in the corresponding :ref:`database <database-database>` documentation;
 a typical usage example could look like this::
 
     db_image = DBImage(id=image_id, database=database)
-    db_image.insert_extracted_sources(results)
+    db_image.insert_extracted_sources(results,'blind')
 
 where `database` is the database opened above, and image_id points to an
 existing row in the images table. `results` is obtained from the source finder,

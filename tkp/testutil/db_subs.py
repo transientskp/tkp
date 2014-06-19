@@ -3,10 +3,12 @@ from collections import namedtuple
 
 import datetime, math
 import tkp.db
+from tkp.db.generic import get_db_rows_as_dicts
 from tkp.db.database import Database
 from tkp.db.orm import DataSet, Image
 import tkp.testutil.data as testdata
 
+import tkp.utility.coordinates as coords
 
 ExtractedSourceTuple = namedtuple("ExtractedSourceTuple",
                                 ['ra', 'dec' ,
@@ -91,6 +93,10 @@ def example_dbimage_data_dict(**kwargs):
                       'centre_decl': 10.,  # Arbitarily picked.
                       'xtr_radius': 10.,  # (Degrees)
                       'rms_qc': 1.,
+                      'rms_min': 1e-4, #0.1mJy RMS
+                      'rms_max': 3e-4, #0.3mJy RMS
+                      'detection_thresh': 6,
+                      'analysis_thresh': 3
                     }
     init_im_params.update(kwargs)
     return init_im_params
@@ -217,182 +223,103 @@ def lightcurve_metrics(src_list):
             })
     return metrics
 
-#Used to record the significance levels on a lightcurve.
-MockLCPoint = namedtuple('MockLightCurvePoint',
-                                 'index peak flux sigma')
 
 
-#NB To do: The `MockSource` class is very quick and dirty, currently.
-#A little refinement here would probably go a long way.
 class MockSource(object):
     """Defines a MockSource for generating mock source lists.
 
     (These can be used to test the database routines.)
 
-    When initialised with a transient lightcurve (a list of MockLCPoint tuples),
-    the source lists can be populated with non-detections (zero measurements)
-    at the images for which the lightcurve is not defined.
-
-    When the lightcurve is not provided, the extractedsource tuple serves as
-    the basis for a fixed source.
-    A list of identical measurements will then be generated for the required
-    number of images.
-
-    This makes it much easier to easily generate source lists for testing
-    the database!
-
-     See also: `example_source_lists` for a usage example.
-
+    The lightcurve-dict entries define the times of non-zero
+    flux (we do not support time-ranges here, discretely defined datapoints are
+    sufficiently complex for the current unit-test suite). In this case,
+    any undefined datetimes requested will produce a zero-flux measurement.
+    A defaultdict may be supplied to simulate a steady-flux source.
     """
     def __init__(self,
-                 ex,
-                 lightcurve=None,
+                 template_extractedsource,
+                 lightcurve,
                  ):
         """
-        *Args*
-        `ex`: template `extractedsource`, Defines the position, etc.
-        If no lightcurve is supplied, then these details are used to  model a
-        fixed source.
-
-        `lightcurve`: A list of `MockLightcurvePoint`s, defining a transient
-                        lightcurve.
+        Args:
+        template_extractedsource (ExtractedSourceTuple):
+            This defines everything **except** the flux and significance of the
+            extraction (i.e. position, fit error, beam properties, etc.).
+        lightcurve (dict): A dict mapping datetime -> flux value [Jy].
+            Any undefined datetimes will produce a zero-flux measurement.
+            A defaultdict with constant-valued default may be supplied to
+            represent a steady source, e.g.
+            >>>MockSource(base_source, defaultdict(lambda:steady_flux_val))
         """
-        self.ex = ex
-        self.lc = lightcurve
+        self.base_source = template_extractedsource
+        self.lightcurve = lightcurve
 
-        if self.lc is not None:
-            for p1 in self.lc:
-                for p2 in self.lc:
-                    if (p1.index == p2.index) and (p1 is not p2):
-                        raise ValueError("Two lightcurve points supplied for same"
-                                        "image index.")
+    def value_at_dtime(self, dtime, image_rms):
+        """Returns an `extractedsource` for a given datetime.
 
-    def value_at_image(self, image_index):
-        """Returns an `extractedsource` for a given image index.
-
-        If no lightcurve was supplied, always returns fixed details.
-
-        If lightcurve present, then check for a defined lightcurve point.
-        Otherwise, return the template details with peak, flux, sigma all set
-        to zero.
+        If lightcurve is defined but does not contain the requested datetime,
+        then peak, flux, sigma are all set to zero.
         """
-        if self.lc is None:
-            return self.ex
-        else:
-            for p in self.lc:
-                if p.index == image_index:
-                    return self.ex._replace(peak=p.peak,
-                                            flux=p.flux,
-                                            sigma=p.sigma)
-            return self.ex._replace(peak=0, flux=0, sigma=0)
+        try:
+            fluxval = self.lightcurve[dtime]
+        except KeyError:
+            fluxval = 0
+        return self.base_source._replace(
+                peak=fluxval,flux=fluxval,sigma=fluxval/image_rms)
 
-    def synthesise_measurements(self, n_images, include_non_detections,
-                                non_detection_sigma_threshold=None):
-        """Return a list of measurements corresponding to images.
+    def simulate_extraction(self, db_image, extraction_type,
+                            rms_attribute='rms_min'):
+        """
+        Simulate extraction process, returns extracted source or none.
 
-        If include_non_detections is false, then images where the lightcurve
-        falls below the threshold are represented by a 'None' element
-        in the list.
+        Uses the database image properties (extraction region, rms values)
+        to determine if this source would be extracted in the given image,
+        and return an extraction or None accordingly.
 
+        Args:
+            db_image (int): Database Image object.
+            extraction_type: Valid values are 'blind', 'ff_nd'. If 'blind'
+                then we only return an extracted source if the flux is above
+                rms_value * detection_threshold.
+            rms_attribute (str): Valid values are 'rms_min', 'rms_max'.
+                Determines which rms value we use when deciding if this source
+                will be seen in a blind extraction.
+
+        Returns:
+            ExtractedSourceTuple or None.
         """
 
-        if include_non_detections is False:
-            if non_detection_sigma_threshold is None:
-                raise ValueError('Must supply a non-detection threshold '
-                 'when synthesising a patchy lightcurve.')
+        rms = getattr(db_image, rms_attribute)
+        ex = self.value_at_dtime(db_image.taustart_ts, rms)
 
-        measurements = []
-        for i in xrange(n_images):
-            ex = self.value_at_image(i)
-            if include_non_detections:
-                measurements.append(ex)
+        #First check if source is in this image's extraction region:
+        src_distance_degrees = coords.angsep(
+            ex.ra, ex.dec,db_image.centre_ra, db_image.centre_decl) / 3600.0
+        if src_distance_degrees > db_image.xtr_radius:
+            return None
+
+        if extraction_type == 'ff_nd':
+            return ex
+        elif extraction_type == 'blind':
+            if ex.sigma > db_image.detection_thresh * rms:
+                return ex
             else:
-                if ex.sigma > non_detection_sigma_threshold:
-                    measurements.append(ex)
-                else:
-                    measurements.append(None)
-        assert len(measurements) == n_images
-        return measurements
+                return None
+        else:
+            raise ValueError("Unrecognised extraction type: {}".format(
+                                                            extraction_type))
 
 
-def example_source_lists(n_images, include_non_detections,
-                         non_detection_sigma_threshold=0.0):
+
+def get_transients_for_dataset(dsid):
+    qry = """\
+    SELECT tr.*
+      FROM transient tr
+          ,runningcatalog rc
+      WHERE rc.dataset = %(dsid)s
+        AND tr.runcat = rc.id
     """
-        Return source lists for more than 7 images, 1 fixed source, 3 transients.
-
-        Mock sources are as follows:
-            1 Fixed source, present in all lists returned.
-            2 `fast transients`
-                1 present in images[3], sigma = 15
-                1 present in images[4], sigma = 5
-            1 `slow transient`,
-                present in images indices [5]  (sigma = 4) and [6], (sigma = 3)
-
-       NB To do: The `MockSource` class is very quick and dirty, currently.
-            A little refinement here would probably go a long way.
-    """
-    assert n_images >= 7
-
-    FixedSource = MockSource(example_extractedsource_tuple(ra=123.123, dec=10.5))
-
-
-    WeakSlowTransient = MockSource(example_extractedsource_tuple(ra=123.888, dec=10.5),
-                lightcurve=[MockLCPoint(index=5, peak=4e-3, flux=4e-3, sigma=4),
-                            MockLCPoint(index=6, peak=3e-3, flux=3e-3, sigma=3),
-                            ])
-
-    BrightFastTransient = MockSource(
-                         example_extractedsource_tuple(ra=123.888, dec=15.666),
-                         lightcurve=[MockLCPoint(index=3, peak=30e-3,
-                                                   flux=30e-3, sigma=30)
-                                     ])
-
-    WeakFastTransient = MockSource(
-                         example_extractedsource_tuple(ra=123.000, dec=15.666),
-                         lightcurve=[MockLCPoint(index=4, peak=5e-3,
-                                                   flux=5e-3, sigma=5)
-                                     ])
-
-    all_sources = [FixedSource, WeakSlowTransient, BrightFastTransient,
-                   WeakFastTransient]
-
-    for s1 in all_sources:
-            for s2 in all_sources:
-                if (s1.ex.ra == s2.ex.ra and
-                    s1.ex.dec == s2.ex.dec and
-                    s1 is not s2):
-                    raise ValueError("Oops - Your source list"
-                                    "contains two superimposed sources.")
-
-    img_source_lists = []
-    for i in range(n_images):
-        img_source_lists.append([])
-
-    for s in all_sources:
-        measurements = s.synthesise_measurements(n_images,
-                                                 include_non_detections,
-                                                 non_detection_sigma_threshold)
-        for index, m in enumerate(measurements):
-            if m is not None:
-                img_source_lists[index].append(m)
-    return img_source_lists
-
-
-def create_dataset_8images(database=False, extract_sources=False):
-    """
-    creates a fake dataset with 8 images
-    returns: dataset database id
-    """
-    if not database:
-        database = Database()
-    dataset = DataSet(data={'description': 'testdataset'}, database=database)
-    n_images = 8
-    db_imgs = []
-    im_params = generate_timespaced_dbimages_data(n_images)
-    source_lists = example_source_lists(n_images=8, include_non_detections=True)
-    for i in xrange(n_images):
-        db_imgs.append(Image(data=im_params[i], dataset=dataset))
-        if extract_sources:
-            db_imgs[i].insert_extracted_sources(source_lists[i])
-            db_imgs[i].associate_extracted_sources(deRuiter_r=3.7)
-    return dataset.id
+    cursor = Database().connection.cursor()
+    cursor.execute(qry, {'dsid':dsid})
+    transient_rows_for_dataset = get_db_rows_as_dicts(cursor)
+    return transient_rows_for_dataset

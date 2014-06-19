@@ -7,6 +7,7 @@ from tkp.testutil.data import default_job_config
 from tkp.testutil import Mock
 import tkp.steps.source_extraction
 import tkp.accessors
+from tkp.db import DataSet
 
 
 class MockImage(Mock):
@@ -20,7 +21,9 @@ class MockImage(Mock):
 class TestSourceExtraction(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        cls.dataset_id = db_subs.create_dataset_8images()
+
+        dataset = DataSet(data={'description': "Test source extraction step"})
+        cls.dataset_id = dataset.id
         config = SafeConfigParser()
         config.read(default_job_config)
         config = parse_to_dict(config)

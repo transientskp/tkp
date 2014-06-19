@@ -7,6 +7,7 @@ from tkp.testutil.decorators import requires_database
 from tkp.db.orm import DataSet
 from tkp.db.orm import Image
 import tkp.db
+from tkp.testutil import db_subs
 
 
 class TestLightSurface(unittest.TestCase):
@@ -23,22 +24,11 @@ class TestLightSurface(unittest.TestCase):
         # make 4 * 5 images with different frequencies and date
         for frequency in [80e6, 90e6, 100e6, 110e6, 120e6]:
             for day in [3, 4, 5, 6]:
-                data = {'taustart_ts': datetime.datetime(2010, 3, day),
-                        'tau_time': 3600,
-                        'url': '/',
-                        'freq_eff': frequency,
-                        'freq_bw': 1e6,
-                        'beam_smaj_pix': float(2.7),
-                        'beam_smin_pix': float(2.3),
-                        'beam_pa_rad': float(1.7),
-                        'deltax': float(-0.01111),
-                        'deltay': float(0.01111),
-                        'centre_ra': 111,
-                        'centre_decl': 11,
-                        'xtr_radius': 3,
-                        'rms_qc': 1,
-                }
-                image = Image(dataset=self.dataset, data=data)
+                img_data = db_subs.example_dbimage_data_dict(
+                    taustart_ts=datetime.datetime(2010, 3, day),
+                    freq_eff = frequency
+                )
+                image = Image(dataset=self.dataset, data=img_data)
                 images.append(image)
 
         # 3 sources per image, with different coordinates & flux

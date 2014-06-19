@@ -12,7 +12,7 @@ class TestSourceAssociation(unittest.TestCase):
         self.dataset = DataSet(data={'description': "Src. assoc:" +
                                                     self._testMethodName})
 
-        self.im_params = db_subs.example_dbimage_datasets(n_images=8)
+        self.im_params = db_subs.generate_timespaced_dbimages_data(n_images=8)
         self.db_imgs=[]
 
     def tearDown(self):

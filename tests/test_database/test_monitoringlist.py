@@ -36,7 +36,7 @@ class TestForcedFit(unittest.TestCase):
         freq_effs = [124]
         freq_effs = [f * 1e6 for f in freq_effs]
 
-        im_params = db_subs.example_dbimage_datasets(len(freq_effs)
+        im_params = db_subs.generate_timespaced_dbimages_data(len(freq_effs)
                                                      * len(taustart_tss))
         timestamps = itertools.repeat(taustart_tss, len(freq_effs))
 
@@ -203,7 +203,7 @@ class TestForcedFit(unittest.TestCase):
         freq_effs = [124]
         freq_effs = [f * 1e6 for f in freq_effs]
 
-        im_params = db_subs.example_dbimage_datasets(len(freq_effs)
+        im_params = db_subs.generate_timespaced_dbimages_data(len(freq_effs)
                                                      * len(taustart_tss))
         timestamps = itertools.repeat(taustart_tss, len(freq_effs))
 

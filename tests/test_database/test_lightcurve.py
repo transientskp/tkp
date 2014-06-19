@@ -28,23 +28,12 @@ class TestLightCurve(unittest.TestCase):
     def test_lightcurve(self):
         # make 4 images with different date
         images = []
-        for day in [3, 4, 5, 6]:
-            data = {'taustart_ts': datetime.datetime(2010, 3, day),
-                    'tau_time': 3600,
-                    'url': '/',
-                    'freq_eff': 80e6,
-                    'freq_bw': 1e6,
-                    'beam_smaj_pix': float(2.7),
-                    'beam_smin_pix': float(2.3),
-                    'beam_pa_rad': float(1.7),
-                    'deltax': float(-0.01111),
-                    'deltay': float(0.01111),
-                    'centre_ra': 111,
-                    'centre_decl': 11,
-                    'xtr_radius': 3,
-                    'rms_qc': 1,
-            }
-            image = Image(dataset=self.dataset, data=data)
+        image_datasets = db_subs.generate_timespaced_dbimages_data(n_images=4,
+            taustart_ts= datetime.datetime(2010, 3, 3)
+        )
+
+        for dset in image_datasets:
+            image = Image(dataset=self.dataset, data=dset)
             images.append(image)
 
         # 3 sources per image, with different coordinates & flux

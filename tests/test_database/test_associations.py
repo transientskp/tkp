@@ -30,7 +30,7 @@ class TestOne2One(unittest.TestCase):
     def test_one2one(self):
         dataset = DataSet(data={'description': 'assoc test set: 1-1'})
         n_images = 8
-        im_params = db_subs.example_dbimage_datasets(n_images)
+        im_params = db_subs.generate_timespaced_dbimages_data(n_images)
 
         steady_srcs = []
         n_steady_srcs = 3
@@ -161,7 +161,7 @@ class TestOne2One(unittest.TestCase):
         # dimensionless distance involves weighting by error radius, and hence
         # can cause underflow errors.
         dataset = DataSet(data={'description': 'test_infinite_errors'})
-        im_params = db_subs.example_dbimage_datasets(2)
+        im_params = db_subs.generate_timespaced_dbimages_data(2)
 
         extracted_source = db_subs.example_extractedsource_tuple(error_radius=float('inf'))
 
@@ -195,11 +195,11 @@ class TestMixedSkyregions(unittest.TestCase):
         meaning.
         """
         dataset = DataSet(data={'description': "Test:" + self._testMethodName})
-        im_list = db_subs.example_dbimage_datasets(
+        im_list = db_subs.generate_timespaced_dbimages_data(
             n_images=10, centre_ra=358.125, centre_decl=50.941028000000003, xtr_radius=1.38888888889
         )
         im_list.extend(
-            db_subs.example_dbimage_datasets(
+            db_subs.generate_timespaced_dbimages_data(
                 n_images=1, centre_ra=354.375, centre_decl=50.941028000000003, xtr_radius=1.38888888889
             )
         )
@@ -235,25 +235,16 @@ class TestMixedSkyregions(unittest.TestCase):
         """
         dataset = DataSet(data={'description': "Test:" + self._testMethodName})
 
-        im_list = [
-            db_subs.example_dbimage_datasets(
-                n_images=1, centre_ra=0, centre_decl=0, xtr_radius=10
-            )[0],
-            db_subs.example_dbimage_datasets(
-                n_images=1, centre_ra=0, centre_decl=0, xtr_radius=10
-            )[0],
-            db_subs.example_dbimage_datasets(
-                n_images=1, centre_ra=15, centre_decl=0, xtr_radius=10
-            )[0],
-            db_subs.example_dbimage_datasets(
-                n_images=1, centre_ra=15, centre_decl=0, xtr_radius=10
-            )[0],
-        ]
+        imgs_input_data = db_subs.generate_timespaced_dbimages_data(n_images=4,
+                                centre_ra=0, centre_decl=0,xtr_radius=10)
+        increased_ra = 15
+        imgs_input_data[2]['centre_ra']=increased_ra
+        imgs_input_data[3]['centre_ra']=increased_ra
 
         source_ra = 7.5
         src = db_subs.example_extractedsource_tuple(ra=source_ra, dec=0)
 
-        for im in im_list:
+        for im in imgs_input_data:
             image = tkp.db.Image(dataset=dataset, data=im)
             image.insert_extracted_sources([src])
             associate_extracted_sources(image.id, deRuiter_r=3.717)
@@ -273,7 +264,7 @@ class TestMixedSkyregions(unittest.TestCase):
         dataset = DataSet(data={'description': "Test:" + self._testMethodName})
 
         # 4 images, all pointing at the NCP, with big extraction radii.
-        im_list = db_subs.example_dbimage_datasets(
+        im_list = db_subs.generate_timespaced_dbimages_data(
             n_images=4, centre_ra=0, centre_decl=90, xtr_radius=80
         )
 
@@ -323,7 +314,7 @@ class TestMeridianOne2One(unittest.TestCase):
         """
         dataset = DataSet(data={'description':"Assoc rounding:" + self._testMethodName})
 
-        im_list = db_subs.example_dbimage_datasets(
+        im_list = db_subs.generate_timespaced_dbimages_data(
             n_images=5, centre_ra=0, centre_decl=0, xtr_radius=10
         )
         source = db_subs.example_extractedsource_tuple(ra=0.0, dec=0.0)
@@ -343,7 +334,7 @@ class TestMeridianOne2One(unittest.TestCase):
 
         dataset = DataSet(data={'description':"Assoc 1-to-1:" + self._testMethodName})
         n_images = 3
-        im_params = db_subs.example_dbimage_datasets(n_images, centre_ra=0.5,
+        im_params = db_subs.generate_timespaced_dbimages_data(n_images, centre_ra=0.5,
                                                       centre_decl=10)
         src_list = []
         src0 = db_subs.example_extractedsource_tuple(ra=0.0001, dec=10.5,
@@ -372,7 +363,7 @@ class TestMeridianOne2One(unittest.TestCase):
 
         dataset = DataSet(data={'description':"Assoc 1-to-1:" + self._testMethodName})
         n_images = 3
-        im_params = db_subs.example_dbimage_datasets(n_images, centre_ra=0.5,
+        im_params = db_subs.generate_timespaced_dbimages_data(n_images, centre_ra=0.5,
                                                       centre_decl=10)
         src_list = []
         src0 = db_subs.example_extractedsource_tuple(ra=359.9999, dec=10.5,
@@ -402,7 +393,7 @@ class TestMeridianOne2One(unittest.TestCase):
 
         dataset = DataSet(data={'description':"Assoc 1-to-1:" + self._testMethodName})
         n_images = 3
-        im_params = db_subs.example_dbimage_datasets(n_images, centre_ra=0.5,
+        im_params = db_subs.generate_timespaced_dbimages_data(n_images, centre_ra=0.5,
                                                       centre_decl=10)
         src_list = []
         src0 = db_subs.example_extractedsource_tuple(ra=359.9983, dec=10.5,
@@ -435,7 +426,7 @@ class TestMeridianOne2One(unittest.TestCase):
         dataset = DataSet(data={'description':"Assoc 1-to-1:" +
                                 self._testMethodName})
         n_images = 3
-        im_params = db_subs.example_dbimage_datasets(n_images, centre_ra=0.5,
+        im_params = db_subs.generate_timespaced_dbimages_data(n_images, centre_ra=0.5,
                                                       centre_decl=10)
         src_list = []
         src0 = db_subs.example_extractedsource_tuple(ra=0.0002, dec=10.5,
@@ -463,7 +454,7 @@ class TestMeridianOne2One(unittest.TestCase):
         """Check all the unit conversions are correct"""
         dataset = DataSet(data={'description':"Assoc 1-to-1:" + self._testMethodName})
         n_images = 2
-        im_params = db_subs.example_dbimage_datasets(n_images, centre_ra=10,
+        im_params = db_subs.generate_timespaced_dbimages_data(n_images, centre_ra=10,
                                                      centre_decl=0)
 
 
@@ -506,7 +497,7 @@ class TestMeridianOne2One(unittest.TestCase):
         
         dataset = DataSet(data={'description':"Assoc 1-to-1:" + self._testMethodName})
         
-        im_list = db_subs.example_dbimage_datasets(n_images=2)
+        im_list = db_subs.generate_timespaced_dbimages_data(n_images=2)
         
         # Base positions for each source pair:
         pos1 = (30.0,10.5)
@@ -587,7 +578,7 @@ class TestOne2Many(unittest.TestCase):
     def test_one2many(self):
         dataset = DataSet(data={'description': 'assoc test set: 1-n'})
         n_images = 2
-        im_params = db_subs.example_dbimage_datasets(n_images)
+        im_params = db_subs.generate_timespaced_dbimages_data(n_images)
 
         # image 1
         image = tkp.db.Image(dataset=dataset, data=im_params[0])
@@ -778,7 +769,7 @@ class TestMany2One(unittest.TestCase):
     def test_many2one(self):
         dataset = DataSet(data={'description': 'assoc test set: n-1'})
         n_images = 2
-        im_params = db_subs.example_dbimage_datasets(n_images)
+        im_params = db_subs.generate_timespaced_dbimages_data(n_images)
 
         # image 1
         image = tkp.db.Image(dataset=dataset, data=im_params[0])
@@ -939,7 +930,7 @@ class TestMany2Many(unittest.TestCase):
         self.pos_err_deg = 30 / 3600.
         self.dr_limit = 3.717
 
-        self.im_params = db_subs.example_dbimage_datasets(self.n_images,
+        self.im_params = db_subs.generate_timespaced_dbimages_data(self.n_images,
                                                      centre_ra=123,
                                                      centre_decl=10.5
                                                      )

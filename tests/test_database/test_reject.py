@@ -29,7 +29,7 @@ class TestRejection(unittest.TestCase):
         n_images = 2
         db_imgs = [
             tkp.db.Image(data=im_params, dataset=dataset) for
-            im_params in db_subs.example_dbimage_datasets(n_images)
+            im_params in db_subs.generate_timespaced_dbimages_data(n_images)
         ]
 
        # The first image is rejected for an arbitrary reason

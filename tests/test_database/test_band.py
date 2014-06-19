@@ -2,6 +2,7 @@ import unittest
 
 import datetime
 from tkp.testutil.decorators import requires_database
+from tkp.testutil import db_subs
 import tkp.db
 from tkp.db.orm import DataSet, Image
 from tkp.db.database import Database
@@ -13,20 +14,7 @@ class TestBand(unittest.TestCase):
         import tkp.db.database
         self.database = tkp.db.database.Database()
         # Basic template data for each image.
-        self.data = {
-            'taustart_ts': datetime.datetime(1999, 9, 9),
-            'url': '/path/to/image',
-            'tau_time': 0,
-            'beam_smaj_pix': float('inf'),
-            'beam_smin_pix': float('inf'),
-            'beam_pa_rad': float('inf'),
-            'deltax': float(-0.01111),
-            'deltay': float(0.01111),
-            'centre_ra': 0,
-            'centre_decl': 0,
-            'xtr_radius': 3,
-            'rms_qc': 1,
-        }
+        self.image_data = db_subs.example_dbimage_data_dict()
 
     def tearDown(self):
         tkp.db.rollback()
@@ -45,7 +33,7 @@ class TestBand(unittest.TestCase):
                 WHERE image.id = %(id)s
             """, {"id": image.id}).fetchone()[0]
 
-        data = copy(self.data)
+        data = copy(self.image_data)
         dataset1 = DataSet(data={'description': self._testMethodName},
                            database=self.database)
 
@@ -95,7 +83,7 @@ class TestBand(unittest.TestCase):
 
         dataset = DataSet(data={'description': self._testMethodName},
                    database=self.database)
-        data = copy(self.data)
+        data = copy(self.image_data)
 
         data['freq_eff'] = 1e6  # 1MHz
         data['freq_bw'] = 1e3 # 1KHz

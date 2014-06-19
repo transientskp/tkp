@@ -10,7 +10,7 @@ from tkp.testutil import db_subs
 class TestReject(unittest.TestCase):
     @requires_database()
     def setUp(self):
-        self.fake_images = db_subs.example_dbimage_datasets(n_images=1)
+        self.fake_images = db_subs.generate_timespaced_dbimages_data(n_images=1)
         self.dataset = tkp.db.DataSet(data={'description':
                                                   "Reject:" + self._testMethodName})
         self.image = tkp.db.Image(data=self.fake_images[0],

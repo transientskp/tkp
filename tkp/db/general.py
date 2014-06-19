@@ -167,9 +167,9 @@ def insert_extracted_sources(image_id, results, extract):
     angular on-sky distance to a ra distance at given declination.
 
     Input argument "extract" tells whether the source detections originate from:
-    0: blind source extraction
-    1: from forced fits at null detection locations
-    2: from forced fits at monitoringlist positions
+    'blind': blind source extraction
+    'ff_nd': from forced fits at null detection locations
+    'ff_ms': from forced fits at monitoringlist positions
 
     For all extracted sources additional parameters are calculated,
     and appended to the sourcefinder data. Appended and converted are:

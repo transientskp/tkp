@@ -243,8 +243,10 @@ class TestTransientExclusion(unittest.TestCase):
                 data={'description': "Skyrgn:" + self._testMethodName})
 
     def test_two_field_basic_case(self):
-        """Here we create 2 disjoint image fields, with one source in each,
-        and check that the second source inserted does not get flagged as transient.
+        """
+        Here we create 2 disjoint image fields, with one source at centre of
+        each, and check that the second source inserted does not get flagged as
+        transient.
         """
         n_images = 2
         xtr_radius = 1.5

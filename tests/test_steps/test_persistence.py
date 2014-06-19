@@ -8,6 +8,7 @@ from tkp.testutil.decorators import requires_mongodb
 import tkp.testutil.data as testdata
 from tkp.testutil.decorators import requires_database
 import tkp.db
+from tkp.db import DataSet
 import tkp.db.generic
 from ConfigParser import SafeConfigParser
 
@@ -23,7 +24,8 @@ class TestPersistence(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
-        cls.dataset_id = db_subs.create_dataset_8images()
+        dataset = DataSet(data={'description': "Test persistence"})
+        cls.dataset_id = dataset.id
         cls.images = [testdata.fits_file]
         cls.extraction_radius = 256
         job_config = SafeConfigParser()
@@ -34,7 +36,6 @@ class TestPersistence(unittest.TestCase):
                                                  job_name="test_persistence")
 
         cls.image_cache_pars = pipe_config['image_cache']
-
 
 
     def test_create_dataset(self):

@@ -28,7 +28,7 @@ class TestSourceAssociation(unittest.TestCase):
         """
         for im in self.im_params:
             self.db_imgs.append(Image( data=im, dataset=self.dataset))
-            self.db_imgs[-1].insert_extracted_sources([])
+            self.db_imgs[-1].insert_extracted_sources([],'blind')
             self.db_imgs[-1].associate_extracted_sources(deRuiter_r=3.7)
             running_cat = columns_from_table(table="runningcatalog",
                                            keywords="*",
@@ -58,7 +58,8 @@ class TestSourceAssociation(unittest.TestCase):
             last_img =self.db_imgs[-1]
 
             if first_epoch:
-                last_img.insert_extracted_sources([db_subs.example_extractedsource_tuple()])
+                last_img.insert_extracted_sources(
+                    [db_subs.example_extractedsource_tuple()],'blind')
 
             last_img.associate_extracted_sources(deRuiter_r=3.7)
 
@@ -114,7 +115,8 @@ class TestSourceAssociation(unittest.TestCase):
         for im in self.im_params:
             self.db_imgs.append( Image( data=im, dataset=self.dataset) )
             last_img =self.db_imgs[-1]
-            last_img.insert_extracted_sources([db_subs.example_extractedsource_tuple()])
+            last_img.insert_extracted_sources(
+                [db_subs.example_extractedsource_tuple()],'blind')
             last_img.associate_extracted_sources(deRuiter_r=3.7)
             imgs_loaded+=1
             running_cat = columns_from_table(table="runningcatalog",

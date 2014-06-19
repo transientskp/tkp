@@ -459,7 +459,7 @@ class Image(DBObject):
             sources.add(ExtractedSource(database=self.database, id=result[0]))
         self.sources = sources
 
-    def insert_extracted_sources(self, results):
+    def insert_extracted_sources(self, results, extract='blind'):
         """Insert a list of sources
 
         Args:
@@ -478,11 +478,13 @@ class Image(DBObject):
                 beam parallactic angle
                 ew_sys_err, ns_sys_err,
                 error_radius).
+            extract (str):'blind', 'ff_nd' or 'ff_ms'
+                (see db.general.insert_extracted_sources)
        """
        #To do: Figure out a saner method of passing the results around
        # (Namedtuple, for starters?)
 
-        insert_extracted_sources(self._id, results=results, extract='blind')
+        insert_extracted_sources(self._id, results=results, extract=extract)
 
     def associate_extracted_sources(self, deRuiter_r):
         """Associate sources from the last images with previously

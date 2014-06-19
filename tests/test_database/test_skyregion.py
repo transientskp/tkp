@@ -27,7 +27,7 @@ class TestSkyRegionBasics(unittest.TestCase):
         self.dataset = tkp.db.DataSet(database=self.database,
                 data={'description': "Skyrgn:" + self._testMethodName})
         n_images = 3
-        im_params = db_subs.example_dbimage_datasets(n_images)
+        im_params = db_subs.generate_timespaced_dbimages_data(n_images)
 
         ##First image:
         image0 = tkp.db.Image(dataset=self.dataset, data=im_params[0])
@@ -89,7 +89,7 @@ class TestSkyRegionAssociation(unittest.TestCase):
         Then we add 2 more (empty) images/fields at varying positions.
         """
         n_images = 6
-        im_params = db_subs.example_dbimage_datasets(n_images)
+        im_params = db_subs.generate_timespaced_dbimages_data(n_images)
 
         src_in_img0 = db_subs.example_extractedsource_tuple(
                         ra=im_params[0]['centre_ra'],
@@ -134,7 +134,7 @@ class TestSkyRegionAssociation(unittest.TestCase):
         Then we check that the back-associations to image0 are correct.
         """
         n_images = 6
-        im_params = db_subs.example_dbimage_datasets(n_images)
+        im_params = db_subs.generate_timespaced_dbimages_data(n_images)
 
         #We first create 2 overlapping images,
         #one above the other in dec by 1.0*xtr_radius
@@ -206,7 +206,7 @@ class TestOneToManyAssocUpdates(unittest.TestCase):
         for the source, and check assocskyrgn updates correctly.
        """
         n_images = 2
-        im_params = db_subs.example_dbimage_datasets(n_images)
+        im_params = db_subs.generate_timespaced_dbimages_data(n_images)
 
         idx = 0
         src_a = db_subs.example_extractedsource_tuple(
@@ -248,7 +248,7 @@ class TestTransientExclusion(unittest.TestCase):
         """
         n_images = 2
         xtr_radius = 1.5
-        im_params = db_subs.example_dbimage_datasets(n_images,
+        im_params = db_subs.generate_timespaced_dbimages_data(n_images,
                                                      xtr_radius=xtr_radius)
         im_params[1]['centre_decl'] += xtr_radius * 2 + 0.5
 
@@ -290,7 +290,7 @@ class TestTransientExclusion(unittest.TestCase):
         """
         n_images = 2
         xtr_radius = 1.5
-        im_params = db_subs.example_dbimage_datasets(n_images,
+        im_params = db_subs.generate_timespaced_dbimages_data(n_images,
                                                      xtr_radius=xtr_radius)
         im_params[1]['centre_decl'] += xtr_radius * 1
 
@@ -348,7 +348,7 @@ class TestTransientExclusion(unittest.TestCase):
         """
         n_images = 2
         xtr_radius = 1.5
-        im_params = db_subs.example_dbimage_datasets(n_images,
+        im_params = db_subs.generate_timespaced_dbimages_data(n_images,
                                                      xtr_radius=xtr_radius)
         im_params[1]['centre_decl'] += xtr_radius * 1
 

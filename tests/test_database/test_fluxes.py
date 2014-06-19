@@ -23,7 +23,7 @@ class TestOne2OneFlux(unittest.TestCase):
     def test_one2oneflux(self):
         dataset = tkp.db.DataSet(database=self.database, data={'description': 'flux test set: 1-1'})
         n_images = 3
-        im_params = db_subs.example_dbimage_datasets(n_images)
+        im_params = db_subs.generate_timespaced_dbimages_data(n_images)
 
         src_list = []
         src = db_subs.example_extractedsource_tuple()
@@ -84,7 +84,7 @@ class TestOne2ManyFlux(unittest.TestCase):
         dataset = tkp.db.DataSet(database=self.database,
                                  data={'description': 'flux test set: 1-n'})
         n_images = 2
-        im_params = db_subs.example_dbimage_datasets(n_images)
+        im_params = db_subs.generate_timespaced_dbimages_data(n_images)
         central_ra, central_dec = 123.1235, 10.55,
         position_offset_deg = 100./3600 #100 arcsec = 0.03 deg approx
 
@@ -190,7 +190,7 @@ class TestMany2OneFlux(unittest.TestCase):
         central_ra, central_dec = 123.1235, 10.55,
         position_offset_deg = 100./3600 #100 arcsec = 0.03 deg approx
 
-        im_params = db_subs.example_dbimage_datasets(n_images)
+        im_params = db_subs.generate_timespaced_dbimages_data(n_images)
         # image 1
         image1 = tkp.db.Image(database=self.database, dataset=dataset, data=im_params[0])
         img1_srclist = []
@@ -300,7 +300,7 @@ class TestMany2Many(unittest.TestCase):
         """
         dataset = tkp.db.DataSet(database=self.database, data={'description': 'flux test set: n-m, ' + self._testMethodName})
         n_images = 2
-        im_params = db_subs.example_dbimage_datasets(n_images)
+        im_params = db_subs.generate_timespaced_dbimages_data(n_images)
         centre_ra, centre_dec =  123., 10.5,
         offset_deg = 20 / 3600. #20 arcsec
         tiny_offset_deg = 1 / 3600. #1 arcsec
@@ -404,7 +404,7 @@ class TestMany2Many(unittest.TestCase):
         """
         dataset = tkp.db.DataSet(database=self.database, data={'description': 'flux test set: n-m, ' + self._testMethodName})
         n_images = 2
-        im_params = db_subs.example_dbimage_datasets(n_images)
+        im_params = db_subs.generate_timespaced_dbimages_data(n_images)
         centre_ra, centre_dec =  123., 10.5,
         offset_deg = 20 / 3600. #20 arcsec
         tiny_offset_deg = 1 / 3600. #1 arcsec

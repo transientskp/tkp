@@ -60,15 +60,15 @@ def delete_test_database(database):
         raise
 
 
-def example_dbimage_datasets(n_images, **kwargs):
-    """Generate a list of image data dictionaries.
+def example_dbimage_data_dict(**kwargs):
+    """
+    Defines the canonical default image-data for unit-testing the database.
 
-    These can be used to create known entries in the image table.
+    By defining this in one place we make it simple to make changes.
+    A subset of the default values may be overridden by passing the keys
+    as keyword-args.
 
-    A subset of the defaults may be overridden by passing the relevant
-    dictionary values as keyword args.
-
-    Note that while RA and Dec and extraction radius are arbitrary,
+    Note that while RA, Dec and extraction radius are arbitrary,
     they should (usually) be close enough and large enough to enclose
     the RA and Dec of any fake source extractions inserted, since the
     association routines reject sources outside of designated extraction
@@ -93,11 +93,29 @@ def example_dbimage_datasets(n_images, **kwargs):
                       'rms_qc': 1.,
                     }
     init_im_params.update(kwargs)
+    return init_im_params
 
+
+def generate_timespaced_dbimages_data(n_images,
+                           timedelta_between_images=datetime.timedelta(days=1),
+                           **kwargs):
+    """
+    Generate a list of image data dictionaries.
+
+    The image-data dicts are identical except for having the taustart_ts
+    advanced by a fixed timedelta for each entry.
+
+    These can be used to create known entries in the image table, for
+    unit-testing.
+
+    A subset of the image-data defaults may be overridden by passing the relevant
+    dictionary values as keyword args.
+    """
+    init_im_params = example_dbimage_data_dict(**kwargs)
     im_params = []
     for i in range(n_images):
         im_params.append(init_im_params.copy())
-        init_im_params['taustart_ts'] += time_spacing
+        init_im_params['taustart_ts'] += timedelta_between_images
 
     return im_params
 
@@ -370,7 +388,7 @@ def create_dataset_8images(database=False, extract_sources=False):
     dataset = DataSet(data={'description': 'testdataset'}, database=database)
     n_images = 8
     db_imgs = []
-    im_params = example_dbimage_datasets(n_images)
+    im_params = generate_timespaced_dbimages_data(n_images)
     source_lists = example_source_lists(n_images=8, include_non_detections=True)
     for i in xrange(n_images):
         db_imgs.append(Image(data=im_params[i], dataset=dataset))

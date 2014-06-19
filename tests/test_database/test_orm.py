@@ -68,31 +68,16 @@ class TestImage(unittest.TestCase):
 
     @requires_database()
     def test_create(self):
-        data = {
-            'freq_eff': 80e6,
-            'freq_bw': 1e6,
-            'taustart_ts': datetime.datetime(1999, 9, 9),
-            'url': '/path/to/image',
-            'tau_time': 0,
-            'beam_smaj_pix': float(2.7),
-            'beam_smin_pix': float(2.3),
-            'beam_pa_rad': float(1.7),
-            'deltax': float(-0.01111),
-            'deltay': float(0.01111),
-            'centre_ra': 0,
-            'centre_decl': 0,
-            'xtr_radius': 3,
-            'rms_qc': 1,
-        }
+        image_data_dicts = db_subs.generate_timespaced_dbimages_data(n_images=2)
         dataset1 = DataSet(data={'description': 'dataset with images'},
                            database=self.database)
         #self.assertEqual(dataset1.images, set())
-        image1 = Image(dataset=dataset1, data=data)
+        image1 = Image(dataset=dataset1, data=image_data_dicts[0])
         # Images are automatically added to their dataset
         #self.assertEqual(dataset1.images, set([image1]))
-        self.assertEqual(image1.tau_time, 0)
-        self.assertAlmostEqual(image1.freq_eff, 80e6)
-        image2 = Image(dataset=dataset1, data=data)
+        self.assertEqual(image1.tau_time, image_data_dicts[0]['tau_time'])
+        self.assertAlmostEqual(image1.freq_eff, image_data_dicts[0]['freq_eff'])
+        image2 = Image(dataset=dataset1, data=image_data_dicts[1])
         #self.assertEqual(dataset1.images, set([image1, image2]))
         dataset2 = DataSet(database=self.database, id=dataset1.id)
         # Note that we can't test that dataset2.images = set([image1, image2]),
@@ -100,34 +85,25 @@ class TestImage(unittest.TestCase):
         # with different ids
         #self.assertEqual(len(dataset2.images), 2)
 
-        ##Now, update and try it again:
-        image1.update()
-        self.assertEqual(image1.tau_time, 0)
+
+
 
 
     @requires_database()
     def test_infinite(self):
         # Check that database insertion doesn't choke on infinite beam
         # parameters.
-        data = {
-            'freq_eff': 80e6,
-            'freq_bw': 1e6,
-            'taustart_ts': datetime.datetime(1999, 9, 9),
-            'url': '/path/to/image',
-            'tau_time': 0,
-            'beam_smaj_pix': float('inf'),
-            'beam_smin_pix': float('inf'),
-            'beam_pa_rad': float('inf'),
-            'deltax': float(-0.01111),
-            'deltay': float(0.01111),
-            'centre_ra': 0,
-            'centre_decl': 0,
-            'xtr_radius': 3,
-            'rms_qc': 1,
-            }
+        test_specific_image_data = {'beam_smaj_pix': float('inf'),
+                                    'beam_smin_pix': float('inf'),
+                                    'beam_pa_rad': float('inf'),}
+
+        image_data_dicts = db_subs.generate_timespaced_dbimages_data(n_images=1,
+                                              **test_specific_image_data)
+        image_data = image_data_dicts[0]
+
         dataset1 = DataSet(data={'description': 'dataset with images'},
                            database=self.database)
-        image1 = Image(dataset=dataset1, data=data)
+        image1 = Image(dataset=dataset1, data=image_data)
         bmaj, bmin, bpa = tkp.db.execute("""
             SELECT rb_smaj, rb_smin, rb_pa
             FROM image
@@ -140,54 +116,62 @@ class TestImage(unittest.TestCase):
 
     @requires_database()
     def test_update(self):
+        """
+        Check that ORM-updates work for the Image class.
+        """
+
         dataset1 = DataSet(data={'description':
                                   'dataset with changing images'},
                                   database=self.database)
-        data = dict(tau_time=1000, freq_eff=80e6,
-                    url='/',
-                    taustart_ts=datetime.datetime(2001, 1, 1),
-                    freq_bw=1e6,
-                    beam_smaj_pix=float(2.7),
-                    beam_smin_pix=float(2.3),
-                    beam_pa_rad=float(1.7),
-                    deltax=float(-0.01111),
-                    deltay=float(0.01111),
-                    centre_ra=0,
-                    centre_decl=0,
-                    xtr_radius=3,
-                    rms_qc=1
-        )
-        image1 = Image(dataset=dataset1, data=data)
-        self.assertAlmostEqual(image1.tau_time, 1000.)
-        self.assertAlmostEqual(image1.freq_eff, 80e6)
-        image1.update(tau_time=2000.)
-        self.assertAlmostEqual(image1.tau_time, 2000.)
+        image_data = db_subs.example_dbimage_data_dict()
 
-        # New image, created from the database
+        image1 = Image(dataset=dataset1, data=image_data)
+        # Now, update (without changing anything) and make sure it remains the
+        # same (sanity check):
+        image1.update()
+        self.assertEqual(image1.tau_time, image_data['tau_time'])
+
+        ##This time, change something:
+        tau_time1 = image_data['tau_time'] + 100
+        tau_time2 = tau_time1 + 300
+        tau_time3 = tau_time2 + 300
+        tau_time4 = tau_time3 + 300
+
+        freq_eff1 = image_data['freq_eff']*1.2
+
+        image1.update(tau_time = tau_time1)
+        self.assertEqual(image1.tau_time, tau_time1)
+
+
+        # New 'image' orm-object, created from the database id of image1.
         image2 = Image(dataset=dataset1, id=image1.id)
-        self.assertAlmostEqual(image2.tau_time, 2000.)
-        self.assertAlmostEqual(image2.freq_eff, 80e6)
+        self.assertAlmostEqual(image2.tau_time, tau_time1)
+        self.assertAlmostEqual(image2.freq_eff, image_data['freq_eff'])
         # Same id, so changing image2 changes image1
         # but *only* after calling update()
-        image2.update(tau_time=1500)
-        self.assertAlmostEqual(image1.tau_time, 2000)
+        image2.update(tau_time=tau_time2)
+        self.assertAlmostEqual(image1.tau_time, tau_time1)
         image1.update()
-        self.assertAlmostEqual(image1.tau_time, 1500)
-        image1.update(tau_time=2500)
+        self.assertAlmostEqual(image1.tau_time, tau_time2)
+        image1.update(tau_time=tau_time3)
         image2.update()
-        self.assertAlmostEqual(image2.tau_time, 2500)
-        image1.update(tau_time=1000., freq_eff=90e6)
-        self.assertAlmostEqual(image1.tau_time, 1000)
-        self.assertAlmostEqual(image1.freq_eff, 90e6)
-        self.assertEqual(image1.taustart_ts, datetime.datetime(2001, 1, 1))
-        self.assertEqual(image2.taustart_ts, datetime.datetime(2001, 1, 1))
-        image2.update(taustart_ts=datetime.datetime(2010, 3, 3))
-        self.assertEqual(image1.taustart_ts, datetime.datetime(2001, 1, 1))
-        self.assertEqual(image2.taustart_ts, datetime.datetime(2010, 3, 3))
-        self.assertAlmostEqual(image2.tau_time, 1000)
-        self.assertAlmostEqual(image2.freq_eff, 90e6)
+        self.assertAlmostEqual(image2.tau_time, tau_time3)
+        #Test with multiple items:
+        image1.update(tau_time=tau_time4, freq_eff=freq_eff1)
+        self.assertAlmostEqual(image1.tau_time, tau_time4)
+        self.assertAlmostEqual(image1.freq_eff, freq_eff1)
+
+        #And that datetime conversion roundtrips work correctly:
+        dtime0 = image_data['taustart_ts']
+        dtime1 = dtime0 + datetime.timedelta(days=3)
+        self.assertEqual(image1.taustart_ts, dtime0)
+        self.assertEqual(image2.taustart_ts, dtime0)
+        image2.update(taustart_ts=dtime1)
+        #image1 orm-object not yet updated, still caches old value:
+        self.assertEqual(image1.taustart_ts, dtime0)
+        self.assertEqual(image2.taustart_ts, dtime1)
         image1.update()
-        self.assertEqual(image1.taustart_ts, datetime.datetime(2010, 3, 3))
+        self.assertEqual(image1.taustart_ts, dtime1)
 
 
 class TestExtractedSource(unittest.TestCase):
@@ -204,7 +188,7 @@ class TestExtractedSource(unittest.TestCase):
         # Check that database insertion doesn't choke on infinite errors
         dataset = DataSet(data={'description': 'example dataset'},
                            database=self.database)
-        image = Image(dataset=dataset, data=db_subs.example_dbimage_datasets(1)[0])
+        image = Image(dataset=dataset, data=db_subs.example_dbimage_data_dict())
 
         # Inserting an example extractedsource should be fine
         extracted_source = db_subs.example_extractedsource_tuple()
@@ -222,22 +206,8 @@ class TestExtractedSource(unittest.TestCase):
         # create 4 images, separated by one day each
         image = Image(
                 dataset=dataset,
-                data={'taustart_ts': datetime.datetime(2010, 3, 3),
-                      'tau_time': 3600,
-                      'url': '/',
-                      'freq_eff': 80e6,
-                      'freq_bw': 1e6,
-                      'beam_smaj_pix': float(2.7),
-                      'beam_smin_pix': float(2.3),
-                      'beam_pa_rad': float(1.7),
-                      'deltax': float(-0.01111),
-                      'deltay': float(0.01111),
-                      'centre_ra': 0,
-                      'centre_decl': 0,
-                      'xtr_radius' : 3,
-                      'rms_qc': 1,
-				})
-        data = dict(zone=13,
+                data=db_subs.example_dbimage_data_dict())
+        extracted_source_data = dict(zone=13,
                     ra=12.12, decl=13.13, ra_err=21.1, decl_err=21.09,
                     ra_fit_err=1.12, decl_fit_err=1.23,
                     uncertainty_ew=0.1,uncertainty_ns=0.1,
@@ -245,46 +215,32 @@ class TestExtractedSource(unittest.TestCase):
                     error_radius=10.0,
                     x=0.11, y=0.22, z=0.33,
                     racosdecl=0.44, det_sigma=10.)
-        src1 = ExtractedSource(data=data, image=image)
-        src2 = ExtractedSource(data=data, image=image, database=self.database)
+        src1 = ExtractedSource(data=extracted_source_data, image=image)
+        src2 = ExtractedSource(data=extracted_source_data, image=image, database=self.database)
         self.assertNotEqual(src1.id, src2.id)
 
-        data['image'] = image.id
-        src3 = ExtractedSource(data=data, database=self.database)
-        data['ra'] = 23.23
-        src4 = ExtractedSource(data=data, database=self.database, id=src1.id)
+        extracted_source_data['image'] = image.id
+        src3 = ExtractedSource(data=extracted_source_data, database=self.database)
+        extracted_source_data['ra'] = 23.23
+        src4 = ExtractedSource(data=extracted_source_data, database=self.database, id=src1.id)
         self.assertEqual(src1.id, src4.id)
         self.assertAlmostEqual(src1.ra, src4.ra)
-        del data['x']
+        del extracted_source_data['x']
         self.assertRaisesRegexp(
             AttributeError, "missing required data key: x",
-            ExtractedSource, data=data, database=self.database)
+            ExtractedSource, data=extracted_source_data, database=self.database)
 
     @requires_database()
     def test_create2(self):
-        data = {
-            'freq_eff': 80e6,
-            'freq_bw': 1e6,
-            'taustart_ts': datetime.datetime(1999, 9, 9),
-            'url': '/path/to/image',
-            'tau_time': 0,
-            'beam_smaj_pix': float(2.7),
-            'beam_smin_pix': float(2.3),
-            'beam_pa_rad': float(1.7),
-            'deltax': float(-0.01111),
-            'deltay': float(0.01111),
-            'centre_ra': 0,
-            'centre_decl': 0,
-            'xtr_radius': 3,
-            'rms_qc': 1,
-        }
+
         dataset1 = DataSet(data={'description': 'dataset with images'},
                                  database=self.database)
         self.assertEqual(dataset1.images, set())
-        image1 = Image(dataset=dataset1, data=data)
-        image2 = Image(dataset=dataset1, data=data)
+        image_data = db_subs.example_dbimage_data_dict()
+        image1 = Image(dataset=dataset1, data=image_data)
+        image2 = Image(dataset=dataset1, data=image_data)
 
-        data = {'ra': 123.123, 'decl': 23.23,
+        extractedsource_data = {'ra': 123.123, 'decl': 23.23,
                 'ra_err': 21.1, 'decl_err': 21.09,
                 'ra_fit_err': 0.1, 'decl_fit_err': 0.1,
                 'uncertainty_ew': 0.1, 'uncertainty_ns': 0.1,
@@ -293,11 +249,11 @@ class TestExtractedSource(unittest.TestCase):
                 'det_sigma': 10.0,
                 'ew_sys_err': 20, 'ns_sys_err': 20,
                 'error_radius': 10.0}
-        source1 = ExtractedSource(image=image1, data=data)
-        data['ra'] = 45.45
-        data['decl'] = 55.55
+        source1 = ExtractedSource(image=image1, data=extractedsource_data)
+        extractedsource_data['ra'] = 45.45
+        extractedsource_data['decl'] = 55.55
         source2 = ExtractedSource(
-            image=image1, data=data)
+            image=image1, data=extractedsource_data)
         self.assertEqual(len(image1.sources), 2)
         # Source #3 points to the same source as #2
         source3 = ExtractedSource(id=source2.id, database=self.database)
@@ -315,37 +271,22 @@ class TestExtractedSource(unittest.TestCase):
         srcids = set([source.id for source in image1.sources])
         self.assertEqual(set([source1.id, source2.id]), srcids)
 
-        data['ra'] = 89.89
-        data['decl'] = 78.78
-        source5 = ExtractedSource(image=image2, data=data)
+        extractedsource_data['ra'] = 89.89
+        extractedsource_data['decl'] = 78.78
+        source5 = ExtractedSource(image=image2, data=extractedsource_data)
         self.assertEqual(len(image2.sources), 1)
         self.assertEqual(image2.sources.pop().id, source5.id)
 
 
     @requires_database()
     def test_update(self):
-        data = {
-            'freq_eff': 80e6,
-            'freq_bw': 1e6,
-            'taustart_ts': datetime.datetime(1999, 9, 9),
-            'url': '/path/to/image',
-            'tau_time': 0,
-            'beam_smaj_pix': float(2.7),
-            'beam_smin_pix': float(2.3),
-            'beam_pa_rad': float(1.7),
-            'deltax': float(-0.01111),
-            'deltay': float(0.01111),
-            'centre_ra': 0,
-            'centre_decl': 0,
-            'xtr_radius': 3,
-            'rms_qc': 1,
-        }
+        image_data = db_subs.example_dbimage_data_dict()
         dataset1 = DataSet(data={'description': 'dataset with images'},
                            database=self.database)
         self.assertEqual(dataset1.images, set())
-        image1 = Image(dataset=dataset1, data=data)
-        image2 = Image(dataset=dataset1, data=data)
-        data = {'ra': 123.123, 'decl': 23.23,
+        image1 = Image(dataset=dataset1, data=image_data)
+        image2 = Image(dataset=dataset1, data=image_data)
+        extractedsource_data = {'ra': 123.123, 'decl': 23.23,
                 'ra_err': 21.1, 'decl_err': 21.09,
                 'ra_fit_err': 0.1, 'decl_fit_err': 0.1,
                 'uncertainty_ew': 0.1, 'uncertainty_ns': 0.1,
@@ -354,10 +295,10 @@ class TestExtractedSource(unittest.TestCase):
                 'det_sigma': 11.1,
                 'ew_sys_err': 20, 'ns_sys_err': 20,
                 'error_radius': 10.0}
-        source1 = ExtractedSource(image=image1, data=data)
-        data['ra'] = 45.45
-        data['decl'] = 55.55
-        source2 = ExtractedSource(image=image1, data=data)
+        source1 = ExtractedSource(image=image1, data=extractedsource_data)
+        extractedsource_data['ra'] = 45.45
+        extractedsource_data['decl'] = 55.55
+        source2 = ExtractedSource(image=image1, data=extractedsource_data)
         self.assertEqual(len(image1.sources), 2)
         # Source #3 points to the same source as #2
         source3 = ExtractedSource(id=source2.id, database=self.database)

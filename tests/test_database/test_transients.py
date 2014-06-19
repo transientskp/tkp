@@ -29,7 +29,7 @@ class TestTransientBasics(unittest.TestCase):
                                 data={'description':"Trans:"
                                         + self._testMethodName})
         n_images = 4
-        im_params = db_subs.example_dbimage_datasets(n_images)
+        im_params = db_subs.generate_timespaced_dbimages_data(n_images)
 
         TransientSource = db_subs.MockSource(
              ex=db_subs.example_extractedsource_tuple(),
@@ -125,7 +125,7 @@ class TestTransientRoutines(unittest.TestCase):
                                     database=self.database)
 
         self.n_images = 8
-        self.im_params = db_subs.example_dbimage_datasets(self.n_images)
+        self.im_params = db_subs.generate_timespaced_dbimages_data(self.n_images)
         self.db_imgs = []
 
         #Insert transient source extractions,

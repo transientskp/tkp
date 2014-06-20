@@ -98,7 +98,7 @@ def jd2lst(jd, position=None):
 
 
 # NB: datetime is not sensitive to leap seconds.
-# However, leap seconds were first introduced in 1972. 
+# However, leap seconds were first introduced in 1972.
 # So there are no leap seconds between the start of the
 # Modified Julian epoch and the start of the Unix epoch,
 # so this calculation is safe.
@@ -106,21 +106,38 @@ def jd2lst(jd, position=None):
 #unix_epoch = datetime.datetime(1970, 1, 1, 0, 0)
 #delta = unix_epoch - julian_epoch
 #deltaseconds = delta.total_seconds()
-seconds_between_julian_and_unix_epoc = 3506716800
+#unix_epoch = 3506716800
 
+# The above is equivalent to this:
+unix_epoch = quantity("1970-01-01T00:00:00").get_value('s')
 
 def julian2unix(timestamp):
-    """converts a julian timestamp (number of seconds since 17 November 1858)
-    to unix timestamp (number of seconds since  1 January 1970)
     """
-    return timestamp - seconds_between_julian_and_unix_epoc
+    Convert a modifed julian timestamp (number of seconds since 17 November
+    1858) to Unix timestamp (number of seconds since 1 January 1970).
+
+    Args:
+        timestamp (numbers.Number): Number of seconds since the Unix epoch.
+
+    Returns:
+        numbers.Number: Number of seconds since the modified Julian epoch.
+    """
+    return timestamp - unix_epoch
 
 
 def unix2julian(timestamp):
-    """converts a julian timestamp (number of seconds since 17 November 1858)
-    to unix timestamp (number of seconds since  1 January 1970)
     """
-    return timestamp + seconds_between_julian_and_unix_epoc
+    Convert a Unix timestamp (number of seconds since 1 January 1970) to a
+    modified Julian timestamp (number of seconds since 17 November 1858).
+
+    Args:
+        timestamp (numbers.Number): Number of seconds since the modified
+        Julian epoch.
+
+    Returns:
+        numbers.Number: Number of seconds since the Unix epoch.
+    """
+    return timestamp + unix_epoch
 
 
 def sec2deg(seconds):

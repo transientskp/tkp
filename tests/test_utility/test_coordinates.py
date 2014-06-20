@@ -6,6 +6,7 @@ import pytz
 
 import unittest
 from pyrap.measures import measures
+from pyrap.quanta import quantity
 
 import datetime
 from tkp.utility import coordinates
@@ -294,6 +295,19 @@ class altazTest(unittest.TestCase):
         # broken it completely. This does not check it gives the right
         # results!
         coordinates.altaz(55000 * coordinates.SECONDS_IN_DAY, 1, 1)
+
+
+class UnixToMJDTestCase(unittest.TestCase):
+    def test_unix_epoch(self):
+        # By definition; this is the number of seconds between
+        # 1858-11-17 00:00 and 1970-01-01 00:00:00.
+        self.assertEqual(coordinates.unix_epoch, 3506716800)
+
+    def test_julian2unix(self):
+        self.assertEqual(coordinates.julian2unix(coordinates.unix_epoch), 0)
+
+    def test_unix2julian(self):
+        self.assertEqual(coordinates.unix2julian(0), coordinates.unix_epoch)
 
 
 if __name__ == '__main__':

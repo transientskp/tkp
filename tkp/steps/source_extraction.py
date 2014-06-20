@@ -1,6 +1,6 @@
 import logging
 import tkp.accessors
-from tkp.accessors import sourcefinder_image_from_accessor, detection
+from tkp.accessors import sourcefinder_image_from_accessor
 import tkp.accessors
 from collections import namedtuple
 
@@ -51,7 +51,7 @@ def extract_sources(image_path, extraction_params):
     )
 
     # "blind" extraction of sources
-    detection_thresh =extraction_params['detection_threshold']
+    detection_thresh = extraction_params['detection_threshold']
     analysis_thresh = extraction_params['analysis_threshold']
     results = data_image.extract(
         det=detection_thresh,
@@ -64,7 +64,8 @@ def extract_sources(image_path, extraction_params):
     ew_sys_err = extraction_params['ew_sys_err']
     ns_sys_err = extraction_params['ns_sys_err']
     serialized = [r.serialize(ew_sys_err, ns_sys_err) for r in results]
-    return ExtractionResults(sources=serialized,rms_min=data_image.rmsmap.min(),
+    return ExtractionResults(sources=serialized,
+                     rms_min=data_image.rmsmap.min(),
                      rms_max=data_image.rmsmap.max(),
                      detection_thresh=detection_thresh,
                      analysis_thresh=analysis_thresh,

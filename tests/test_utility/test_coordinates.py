@@ -6,7 +6,6 @@ import pytz
 
 import unittest
 from pyrap.measures import measures
-from pyrap.quanta import quantity
 
 import datetime
 from tkp.utility import coordinates

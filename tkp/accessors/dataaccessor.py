@@ -124,18 +124,20 @@ class DataAccessor(object):
 
         May be extended by subclasses to return additional data.
         """
+        # some values are casted to a standard float since MonetDB cannot
+        # handle numpy.float64
         return {
             'tau_time': self.tau_time,
             'freq_eff': self.freq_eff,
             'freq_bw': self.freq_bw,
             'taustart_ts': self.taustart_ts,
             'url': self.url,
-            'beam_smaj_pix': float(self.beam[0]), ## NB We must cast to a standard python float
-            'beam_smin_pix': float(self.beam[1]), ## as Monetdb converter cannot handle numpy.float64
+            'beam_smaj_pix': float(self.beam[0]),
+            'beam_smin_pix': float(self.beam[1]),
             'beam_pa_rad': float(self.beam[2]),
             'centre_ra': self.centre_ra,
             'centre_decl': self.centre_decl,
             'deltax': self.pixelsize[0],
             'deltay': self.pixelsize[1],
-            'rms_qc': self.rms_qc(),
+            'rms_qc': float(self.rms_qc()),
         }

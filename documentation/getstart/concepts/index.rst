@@ -8,6 +8,5 @@ operation.
 .. toctree::
    :maxdepth: 2
 
-   celery
    database
    mongodb

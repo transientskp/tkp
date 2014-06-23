@@ -37,26 +37,6 @@ properties.  If you don't want to set these properties all the time, you can
 add a ``[database]`` section to your pipeline.cfg.
 
 
-Run Celery workers
-==================
-
-If you want to parallelize TraP operations, you need to run a separate Celery
-worker. This worker will receive jobs from a broker, so it is assumed you
-installed and started a broker in the installation step. Start a Celery worker
-by running::
-
-    % ./manage.py celery worker
-
-If you want to increase the log level add ``--loglevel=info`` or maybe even
-``debug`` to the command. If you dont want to use a Celery worker (run the
-pipeline is serial mode) uncomment this line in the ``celeryconfig.py`` file in
-your pipline directory::
-
-    #CELERY_ALWAYS_EAGER = CELERY_EAGER_PROPAGATES_EXCEPTIONS = True
-
-Note that a running broker is still required.
-
-
 Create and configure a job
 ==========================
 

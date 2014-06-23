@@ -162,8 +162,8 @@ def run(job_name, mon_coords, local=False):
         # source extraction
         for image, results in zip(images, extraction_results):
             image.update(rms_min=results.rms_min, rms_max=results.rms_max,
-                         detection_thresh=results.detection_thresh,
-                         analysis_thresh=results.analysis_thresh)
+                         detection_thresh=se_parset['detection_threshold'],
+                         analysis_thresh=se_parset['analysis_threshold'])
             dbgen.insert_extracted_sources(image.id, results.sources, 'blind')
 
         logger.info("performing database operations")

@@ -7,18 +7,12 @@ from collections import namedtuple
 
 logger = logging.getLogger(__name__)
 
-class ExtractionResults(namedtuple('ExtractionResults',
+
+#Short-lived struct for returning results from the source extraction routine:
+ExtractionResults = namedtuple('ExtractionResults',
                                    ['sources',
                                     'rms_min',
-                                    'rms_max',
-                                    'detection_thresh',
-                                    'analysis_thresh'])):
-    pass
-    """
-    Used for returning a bunch of results from the source extraction routine.
-
-    (In a clear and maintainable fashion.)
-    """
+                                    'rms_max'])
 
 
 
@@ -51,11 +45,9 @@ def extract_sources(image_path, extraction_params):
     )
 
     # "blind" extraction of sources
-    detection_thresh = extraction_params['detection_threshold']
-    analysis_thresh = extraction_params['analysis_threshold']
     results = data_image.extract(
-        det=detection_thresh,
-        anl=analysis_thresh,
+        det=extraction_params['detection_threshold'],
+        anl=extraction_params['analysis_threshold'],
         deblend_nthresh=extraction_params['deblend_nthresh'],
         force_beam=extraction_params['force_beam']
     )
@@ -66,9 +58,7 @@ def extract_sources(image_path, extraction_params):
     serialized = [r.serialize(ew_sys_err, ns_sys_err) for r in results]
     return ExtractionResults(sources=serialized,
                      rms_min=data_image.rmsmap.min(),
-                     rms_max=data_image.rmsmap.max(),
-                     detection_thresh=detection_thresh,
-                     analysis_thresh=analysis_thresh,
+                     rms_max=data_image.rmsmap.max()
                      )
 
 

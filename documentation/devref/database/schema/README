@@ -1,0 +1,8 @@
+You can use this Django project for creating a schema of your database.  On an
+Ubuntu or Debian system, the following procedure should work:
+
+ #. ``sudo-apt-get install python-django-extensions python-pydot``.
+ #. Edit ``settings.py`` to reflect your database settings.
+ #. Run ``update.sh``
+
+ A ``schema.png`` file will be saved to your working directory.

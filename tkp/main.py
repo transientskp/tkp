@@ -155,14 +155,16 @@ def run(job_name, mon_coords, local=False):
         logger.info("performing source extraction")
         urls = [img.url for img in images]
         arguments = [se_parset]
-        extract_sources = runner(tasks.extract_sources, urls, arguments, local)
+        extraction_results = runner(tasks.extract_sources, urls, arguments, local)
 
         logger.info("storing extracted sources to database")
         # we also set the image max,min RMS values which calculated during
         # source extraction
-        for image, (sources, rms_min, rms_max) in zip(images, extract_sources):
-            image.update(rms_min=rms_min, rms_max=rms_max)
-            dbgen.insert_extracted_sources(image.id, sources, 'blind')
+        for image, results in zip(images, extraction_results):
+            image.update(rms_min=results.rms_min, rms_max=results.rms_max,
+                         detection_thresh=se_parset['detection_threshold'],
+                         analysis_thresh=se_parset['analysis_threshold'])
+            dbgen.insert_extracted_sources(image.id, results.sources, 'blind')
 
         logger.info("performing database operations")
         for image in images:

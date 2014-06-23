@@ -652,6 +652,10 @@ dataset).
     source-extraction region. Used when determining if a newly-detected source
     is a probable transient, or just due to deeper imaging.
 
+**detection_thresh, analysis_thresh**
+    The detection and analysis thresholds (as a multiple of the local RMS value)
+    used in the source extraction process for this image.
+
 **url** 
     The url of the physical location of the image at the time of processing.
     NOTE that this needs to be updated when the image is moved.

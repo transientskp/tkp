@@ -37,7 +37,7 @@ def store_config(config, dataset_id):
                 raise TypeError(msg)
 
             values = {'dataset': dataset_id, 'section': section, 'key': key,
-                      'value': value, 'type': type(value).__name__}
+                      'value': str(value), 'type': type(value).__name__}
             execute(store_query, values)
 
 

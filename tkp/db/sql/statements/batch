@@ -17,6 +17,7 @@ tables/transient.sql
 tables/rejectreason.sql
 tables/rejection.sql
 tables/config.sql
+tables/add.fk.extractedsource.sql
 #
 #system functions
 #

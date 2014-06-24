@@ -140,7 +140,7 @@ def insert_image(dataset, freq_eff, freq_bw, taustart_ts, tau_time,
     return image_id
 
 
-def insert_extracted_sources(image_id, results, extract):
+def insert_extracted_sources(image_id, results, extract, ff_runcatids=None):
     """Insert all detections from sourcefinder into the extractedsource table.
 
     Besides the source properties from sourcefinder, we calculate additional
@@ -181,6 +181,13 @@ def insert_extracted_sources(image_id, results, extract):
     'ff_nd': from forced fits at null detection locations
     'ff_ms': from forced fits at monitoringlist positions
 
+    Input argument ff_runcat is not empty in the case of forced fits from
+    null detections. It contains the runningcatalog ids from which the
+    source positions were derived for the forced fits. In that case the
+    runcat ids will be inserted into the extractedsource table as well,
+    to simplify further null-detection processing.
+    For blind extractions this list is empty (None).
+
     For all extracted sources additional parameters are calculated,
     and appended to the sourcefinder data. Appended and converted are:
     - the image id to which the extracted sources belong to
@@ -198,7 +205,7 @@ def insert_extracted_sources(image_id, results, extract):
         return
 
     xtrsrc = []
-    for src in results:
+    for i, src in enumerate(results):
         r = list(src)
         # Use 360 degree rather than infinite uncertainty for
         # unconstrained positions.
@@ -225,10 +232,13 @@ def insert_extracted_sources(image_id, results, extract):
             r.append(2)
         else:
             raise ValueError("Not a valid extractedsource insert type: '%s'" % extract)
+        if ff_runcatids is not None:
+            # If not empty, we add the runcat id as well
+            r.append(ff_runcatids[i])
         xtrsrc.append(r)
     values = [str(tuple(xsrc)) for xsrc in xtrsrc]
 
-    query = """\
+    q_basic = """\
 INSERT INTO extractedsource
   (ra
   ,decl
@@ -258,13 +268,49 @@ INSERT INTO extractedsource
   ,extract_type
   )
 VALUES
-""" + ",".join(values)
+"""
+    q_ff = """\
+INSERT INTO extractedsource
+  (ra
+  ,decl
+  ,ra_fit_err
+  ,decl_fit_err
+  ,f_peak
+  ,f_peak_err
+  ,f_int
+  ,f_int_err
+  ,det_sigma
+  ,semimajor
+  ,semiminor
+  ,pa
+  ,ew_sys_err
+  ,ns_sys_err
+  ,error_radius
+  ,ra_err
+  ,decl_err
+  ,uncertainty_ew
+  ,uncertainty_ns
+  ,image
+  ,zone
+  ,x
+  ,y
+  ,z
+  ,racosdecl
+  ,extract_type
+  ,ff_runcat
+  )
+VALUES
+"""
+    if ff_runcatids is None:
+        query = q_basic + ",".join(values)
+    else:
+        query = q_ff + ",".join(values)
     cursor = tkp.db.execute(query, commit=True)
     insert_num = cursor.rowcount
-    if insert_num == 0:
-            logger.info("No forced-fit sources added to extractedsource for "
-                        "image %s" % (image_id,))
-    elif extract == 'blind':
+    #if insert_num == 0:
+    #    logger.info("No forced-fit sources added to extractedsource for "
+    #                "image %s" % (image_id,))
+    if extract == 'blind':
         logger.info("Inserted %d sources in extractedsource for image %s" %
                     (insert_num, image_id))
     elif extract == 'ff_nd':

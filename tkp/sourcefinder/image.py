@@ -603,7 +603,7 @@ class ImageData(object):
 
         return extract.Detection(measurement, self)
 
-    def fit_fixed_positions(self, sources, boxsize, threshold=None,
+    def fit_fixed_positions(self, sources, boxsize, threshold=None, catids=None,
                             fixed='position+shape'):
         """Convenience function to fit a list of sources at the given positions
 

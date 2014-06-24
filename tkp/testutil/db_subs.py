@@ -6,6 +6,7 @@ import tkp.db
 from tkp.db.generic import get_db_rows_as_dicts
 from tkp.db.database import Database
 from tkp.db.orm import DataSet, Image
+from tkp.db import general as dbgen
 from tkp.db import nulldetections
 import tkp.testutil.data as testdata
 
@@ -339,7 +340,8 @@ def insert_image_and_simulated_sources(dataset, image_params, mock_sources,
     image.insert_extracted_sources(blind_extractions,'blind')
     image.associate_extracted_sources(deRuiter_r=deruiter_radius,
         new_source_sigma_margin=new_source_sigma_margin)
-    nd_posns = nulldetections.get_nulldetections(image.id)
+    nd_ids_posns = nulldetections.get_nulldetections(image.id)
+    nd_posns = [(ra,decl) for ids, ra, decl in nd_ids_posns]
     forced_fits = []
     for posn in nd_posns:
         for src in mock_sources:
@@ -351,7 +353,9 @@ def insert_image_and_simulated_sources(dataset, image_params, mock_sources,
     if len(nd_posns) != len(forced_fits):
         raise LookupError("Something went wrong, nulldetection position did "
                           "not match a mock source.")
-    image.insert_extracted_sources(forced_fits, 'ff_nd')
+    #image.insert_extracted_sources(forced_fits, 'ff_nd')
+    dbgen.insert_extracted_sources(image.id, forced_fits, 'ff_nd',
+                   ff_runcatids=[ids for ids, ra, decl in nd_ids_posns])
     nulldetections.associate_nd(image.id)
 
     return image, blind_extractions, forced_fits

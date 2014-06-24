@@ -68,11 +68,8 @@ SELECT t0.id
 """
     qry_params = {'image_id': image_id}
     cursor = execute(query, qry_params)
-    results = zip(*cursor.fetchall())
-    if len(results) != 0:
-        return zip(list(results[1]), list(results[2]))
-    else:
-        return []
+    res = cursor.fetchall()
+    return res
 
 
 def associate_nd(image_id):
@@ -95,15 +92,21 @@ def associate_nd(image_id):
     _insert_runcat_flux()
     _del_tempruncat()
 
-
 def _insert_tempruncat(image_id):
     """
     Here the associations of forced fits and their runningcatalog counterparts
     are inserted into the temporary table.
 
-    We follow the implementation of the normal association procedure,
-    except that we don't need to match with a De Ruiter radius, since
-    the counterpart pairs are from the same runningcatalog source.
+    We follow the analogies of the normal association procedure.
+    The difference here is that we know what the runcat ids are for the
+    extractedsource.extract_type = 1 (ff_nd) sources are, since these
+    were inserted at the same time as well.
+
+    This is why subtable t0 looks simpler than in the normal case. We
+    still have to do a left outer join with the runcat_flux table (rf),
+    because fluxes might not be detected in other bands.
+    Before being inserted the additional properties are calculated.
+
     """
 
     query = """\
@@ -144,8 +147,8 @@ INSERT INTO temprunningcatalog
   )
   SELECT t0.runcat
         ,t0.xtrsrc
-        ,0 as distance_arcsec
-        ,0 as r
+        ,0 AS distance_arcsec
+        ,0 AS r
         ,t0.dataset
         ,t0.band
         ,t0.stokes
@@ -252,22 +255,14 @@ INSERT INTO temprunningcatalog
                 ,r.x
                 ,r.y
                 ,r.z
-            FROM runningcatalog r
+            FROM extractedsource x
                 ,image i
-                ,extractedsource x
-           WHERE i.id = %(image_id)s
-             AND r.dataset = i.dataset
-             AND x.image = i.id
-             AND x.image = %(image_id)s
+                ,runningcatalog r
+           WHERE x.image = %(image_id)s
              AND x.extract_type = 1
+             AND i.id = x.image
+             AND r.id = x.ff_runcat
              AND r.mon_src = FALSE
-             AND r.zone BETWEEN CAST(FLOOR(x.decl - x.error_radius/3600) AS INTEGER)
-                              AND CAST(FLOOR(x.decl + x.error_radius/3600) AS INTEGER)
-             AND r.wm_decl BETWEEN x.decl - x.error_radius/3600
-                               AND x.decl + x.error_radius/3600
-             AND r.wm_ra BETWEEN x.ra - alpha(x.error_radius/3600, x.decl)
-                             AND x.ra + alpha(x.error_radius/3600, x.decl)
-             AND r.x * x.x + r.y * x.y + r.z * x.z > COS(RADIANS(r.wm_uncertainty_ew))
          ) t0
          LEFT OUTER JOIN runningcatalog_flux rf
          ON t0.runcat = rf.runcat
@@ -284,6 +279,9 @@ def _insert_1_to_1_assoc():
     """
     The null detection forced fits are appended to the assocxtrsource
     (light-curve) table as a type = 7 datapoint.
+    Subtable t1 has to take care of the cases where values and
+    differences might get too small to cause divisions by zero.
+
     """
     query = """\
 INSERT INTO assocxtrsource
@@ -346,7 +344,6 @@ UPDATE runningcatalog_flux
                         WHERE temprunningcatalog.runcat = runningcatalog_flux.runcat
                           AND temprunningcatalog.band = runningcatalog_flux.band
                           AND temprunningcatalog.stokes = runningcatalog_flux.stokes
-                          AND temprunningcatalog.inactive = FALSE
                           AND temprunningcatalog.f_datapoints > 1
                       )
       ,avg_f_peak = (SELECT avg_f_peak
@@ -354,7 +351,6 @@ UPDATE runningcatalog_flux
                       WHERE temprunningcatalog.runcat = runningcatalog_flux.runcat
                         AND temprunningcatalog.band = runningcatalog_flux.band
                         AND temprunningcatalog.stokes = runningcatalog_flux.stokes
-                        AND temprunningcatalog.inactive = FALSE
                         AND temprunningcatalog.f_datapoints > 1
                     )
       ,avg_f_peak_sq = (SELECT avg_f_peak_sq
@@ -362,7 +358,6 @@ UPDATE runningcatalog_flux
                          WHERE temprunningcatalog.runcat = runningcatalog_flux.runcat
                            AND temprunningcatalog.band = runningcatalog_flux.band
                            AND temprunningcatalog.stokes = runningcatalog_flux.stokes
-                           AND temprunningcatalog.inactive = FALSE
                            AND temprunningcatalog.f_datapoints > 1
                        )
       ,avg_f_peak_weight = (SELECT avg_f_peak_weight
@@ -370,7 +365,6 @@ UPDATE runningcatalog_flux
                              WHERE temprunningcatalog.runcat = runningcatalog_flux.runcat
                                AND temprunningcatalog.band = runningcatalog_flux.band
                                AND temprunningcatalog.stokes = runningcatalog_flux.stokes
-                               AND temprunningcatalog.inactive = FALSE
                                AND temprunningcatalog.f_datapoints > 1
                            )
       ,avg_weighted_f_peak = (SELECT avg_weighted_f_peak
@@ -378,7 +372,6 @@ UPDATE runningcatalog_flux
                                WHERE temprunningcatalog.runcat = runningcatalog_flux.runcat
                                  AND temprunningcatalog.band = runningcatalog_flux.band
                                  AND temprunningcatalog.stokes = runningcatalog_flux.stokes
-                                 AND temprunningcatalog.inactive = FALSE
                                  AND temprunningcatalog.f_datapoints > 1
                              )
       ,avg_weighted_f_peak_sq = (SELECT avg_weighted_f_peak_sq
@@ -386,7 +379,6 @@ UPDATE runningcatalog_flux
                                   WHERE temprunningcatalog.runcat = runningcatalog_flux.runcat
                                     AND temprunningcatalog.band = runningcatalog_flux.band
                                     AND temprunningcatalog.stokes = runningcatalog_flux.stokes
-                                    AND temprunningcatalog.inactive = FALSE
                                     AND temprunningcatalog.f_datapoints > 1
                                 )
       ,avg_f_int = (SELECT avg_f_int
@@ -394,7 +386,6 @@ UPDATE runningcatalog_flux
                      WHERE temprunningcatalog.runcat = runningcatalog_flux.runcat
                        AND temprunningcatalog.band = runningcatalog_flux.band
                        AND temprunningcatalog.stokes = runningcatalog_flux.stokes
-                       AND temprunningcatalog.inactive = FALSE
                        AND temprunningcatalog.f_datapoints > 1
                    )
       ,avg_f_int_sq = (SELECT avg_f_int_sq
@@ -402,23 +393,20 @@ UPDATE runningcatalog_flux
                         WHERE temprunningcatalog.runcat = runningcatalog_flux.runcat
                           AND temprunningcatalog.band = runningcatalog_flux.band
                           AND temprunningcatalog.stokes = runningcatalog_flux.stokes
-                          AND temprunningcatalog.inactive = FALSE
                           AND temprunningcatalog.f_datapoints > 1
                       )
       ,avg_f_int_weight = (SELECT avg_f_int_weight
                              FROM temprunningcatalog
-                             WHERE temprunningcatalog.runcat = runningcatalog_flux.runcat
-                               AND temprunningcatalog.band = runningcatalog_flux.band
-                               AND temprunningcatalog.stokes = runningcatalog_flux.stokes
-                               AND temprunningcatalog.inactive = FALSE
-                               AND temprunningcatalog.f_datapoints > 1
+                            WHERE temprunningcatalog.runcat = runningcatalog_flux.runcat
+                              AND temprunningcatalog.band = runningcatalog_flux.band
+                              AND temprunningcatalog.stokes = runningcatalog_flux.stokes
+                              AND temprunningcatalog.f_datapoints > 1
                           )
       ,avg_weighted_f_int = (SELECT avg_weighted_f_int
                                FROM temprunningcatalog
                               WHERE temprunningcatalog.runcat = runningcatalog_flux.runcat
                                 AND temprunningcatalog.band = runningcatalog_flux.band
                                 AND temprunningcatalog.stokes = runningcatalog_flux.stokes
-                                AND temprunningcatalog.inactive = FALSE
                                 AND temprunningcatalog.f_datapoints > 1
                             )
       ,avg_weighted_f_int_sq = (SELECT avg_weighted_f_int_sq
@@ -426,7 +414,6 @@ UPDATE runningcatalog_flux
                                  WHERE temprunningcatalog.runcat = runningcatalog_flux.runcat
                                    AND temprunningcatalog.band = runningcatalog_flux.band
                                    AND temprunningcatalog.stokes = runningcatalog_flux.stokes
-                                   AND temprunningcatalog.inactive = FALSE
                                    AND temprunningcatalog.f_datapoints > 1
                                )
  WHERE EXISTS (SELECT runcat
@@ -434,7 +421,6 @@ UPDATE runningcatalog_flux
                 WHERE temprunningcatalog.runcat = runningcatalog_flux.runcat
                   AND temprunningcatalog.band = runningcatalog_flux.band
                   AND temprunningcatalog.stokes = runningcatalog_flux.stokes
-                  AND temprunningcatalog.inactive = FALSE
                   AND temprunningcatalog.f_datapoints > 1
               )
 """

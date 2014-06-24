@@ -85,6 +85,7 @@ def associate_extracted_sources(image_id, deRuiter_r, new_source_sigma_margin):
     #+-------------------------------------------------------+
     # TODO: Is it? -> Check
     _empty_temprunningcatalog()
+    _update_ff_runcat_extractedsource()
     _delete_inactive_runcat()
 
 ##############################################################################
@@ -1877,7 +1878,7 @@ def _insert_new_transient(image_id, new_source_sigma_margin):
         flux > MIN_OVER_I [ (rms_min_I*(det_I + new_source_sigma_margin) ]
       (where I indexes the images)
       i.e. if it was a steady-source, it should have been detected if
-      it was in the *low-RMS* area of the lowest-RMS previous image overlapping 
+      it was in the *low-RMS* area of the lowest-RMS previous image overlapping
       this position, even allowing for noise fluctuations.
 
     Furthermore, a new source is 'likely transient' (type 1) if it is additionally
@@ -1982,6 +1983,24 @@ INSERT INTO transient
     if ins > 0:
         logger.info("Added %s new sources to transient table" % (ins,))
 
+
+def _update_ff_runcat_extractedsource():
+    """We are about to delete the runcats that are inactivated, and
+    therefore have to set the ff_runcat reference in extractedsource to NULL.
+    """
+    query = """\
+UPDATE extractedsource
+   SET ff_runcat = NULL
+ WHERE EXISTS (SELECT id
+                 FROM runningcatalog
+                WHERE runningcatalog.id = extractedsource.ff_runcat
+                  AND runningcatalog.inactive = TRUE
+              )
+"""
+    cursor = tkp.db.execute(query, commit=True)
+    cnt = cursor.rowcount
+    if cnt > 0:
+        logger.info("Unset ff_runcat for %s extractedsources" % cnt)
 
 def _delete_inactive_runcat():
     """Delete the one-to-many associations from temprunningcatalog,

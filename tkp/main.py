@@ -153,15 +153,19 @@ def run(job_name, mon_coords=[], distributor='multiproc'):
                 image.id,deRuiter_r=deruiter_radius,
                 new_source_sigma_margin=new_src_sigma)
             logger.info("performing null detections")
-            null_detections = dbnd.get_nulldetections(image.id)
-            logger.info("Found %s null detections" % len(null_detections))
+            nd_ids_pos = dbnd.get_nulldetections(image.id)
+            logger.info("Found %s null detections" % len(nd_ids_pos))
             # Only if we found null_detections the next steps are necessary
-            if len(null_detections) > 0:
+            if len(nd_ids_pos) > 0:
                 logger.info("performing forced fits")
+                null_detections = [(ra,decl) for ids, ra, decl in nd_ids_pos]
                 ff_nd = forced_fits(image.url, null_detections, se_parset)
-                dbgen.insert_extracted_sources(image.id, ff_nd, 'ff_nd')
+                runcats = [ids for ids, ra, decl in nd_ids_pos]
+                dbgen.insert_extracted_sources(image.id, ff_nd, 'ff_nd',
+                                               ff_runcatids=runcats)
                 logger.info("adding null detections")
                 dbnd.associate_nd(image.id)
+                #dbnd.associate_nd2(image.id, runcats, ff_nd)
             if len(mon_coords) > 0:
                 logger.info("performing monitoringlist")
                 ff_ms = forced_fits(image.url, mon_coords, se_parset)

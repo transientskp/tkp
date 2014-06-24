@@ -301,7 +301,7 @@ class MockSource(object):
         if extraction_type == 'ff_nd':
             return ex
         elif extraction_type == 'blind':
-            if ex.sigma > db_image.detection_thresh * rms:
+            if ex.sigma > db_image.detection_thresh:
                 return ex
             else:
                 return None

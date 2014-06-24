@@ -9,7 +9,8 @@ import tkp.db
 logger = logging.getLogger(__name__)
 
 
-def associate_extracted_sources(image_id, deRuiter_r, new_source_sigma_margin=3):
+def associate_extracted_sources(image_id, deRuiter_r,
+                                new_source_sigma_margin=3):
     """Associate extracted sources with sources detected in the running
     catalog.
 
@@ -1854,13 +1855,50 @@ INSERT INTO assocxtrsource
     tkp.db.execute(query, {'image_id':image_id}, True)
 
 def _insert_new_transient(image_id, new_source_sigma_margin):
-    """A new source needs to be added to the transient table,
-    except for sources that were detected in an image of skyregion
-    that was surveyed for the first time.
+    """
+    Determines which new-runcat sources are also probably transient.
+
+
+    A new source is 'possibly transient' (type 0) if it
+    passes the following tests:
+     -Was not detected in a skyregion being surveyed for the first time.
+     -Has a flux-value such that:
+        flux > MIN_OVER_I [ (rms_min_I*(det_I + new_source_sigma_margin) ]
+      (where I indexes the images)
+      i.e. if it was a steady-source, it should have been detected if
+      it was in the *low-RMS* area of the lowest-RMS previous image overlapping 
+      this position, even allowing for noise fluctuations.
+
+    Furthermore, a new source is 'likely transient' (type 1) if it is additionally
+    bright enough that, if it were a steady source, it should have been detected
+    even if it was in the *high-RMS* area of the lowest-RMS image overlapping this
+    position, i.e.
+        flux > MIN_OVER_I [ (rms_max_I*(det_I + new_source_sigma_margin) ]
+
+    We use peak flux (f_peak) as the flux value here, since that is likely
+    to be the deciding factor in whether a source gets blindly extracted or not.
+    (NB This is a hunch, rigorous investigation welcome.)
 
     We set the siglevel to 1 and the variability indices 0 for
     new transients.
     """
+
+    # This is another hairy query, but it breaks down like so:
+    #
+    # The innermost SELECT (unassoc_xtr) is a standard query
+    # (NB should probably be a view or a function) that we use to grab
+    # extractedsources from the current image that do not have a candidate
+    # runcat counterpart from previous images. Note that, by the time this
+    # query is run, a new runningcatalog entry has been inserted for them,
+    # and the skyregion matching has been done.
+    #
+    # We then use the runcat -> skyregion information to grab all the
+    # overlapping images which have an earlier timestamp than the current image,
+    # and have not been rejected. For those images we calculate the
+    # per-previous-image RMS thresholds.
+    #
+    # We then take the minimum over those limits and apply the
+    # type-determination logic as described in the docstring above.
 
     query = """\
 INSERT INTO transient
@@ -1870,6 +1908,7 @@ INSERT INTO transient
   ,V_int
   ,eta_int
   ,trigger_xtrsrc
+  ,transient_type
   )
   SELECT r0.id AS runcat
         ,i0.band AS band
@@ -1877,35 +1916,59 @@ INSERT INTO transient
         ,0
         ,0
         ,r0.xtrsrc AS trigger_xtrsrc
+        ,CASE WHEN best_limits.f_peak > best_limits.best_high_thresh
+              THEN 1
+              ELSE 0
+         END as transient_type
     FROM runningcatalog r0
-        ,(SELECT r1.id
-            FROM image i1
-                ,(SELECT x1.id AS xtrsrc
-                    FROM extractedsource x1
-                         LEFT OUTER JOIN temprunningcatalog trc1
-                         ON x1.id = trc1.xtrsrc
-                    WHERE x1.image = %(image_id)s
-                      AND trc1.xtrsrc IS NULL
-                  ) t1
-                ,runningcatalog r1
-                ,assocskyrgn a1
-                ,image i2
-                 LEFT OUTER JOIN rejection rj
-                 ON i2.id = rj.image
-           WHERE i1.id = %(image_id)s
-             AND r1.xtrsrc = t1.xtrsrc
-             AND a1.runcat = r1.id
-             AND i2.dataset = i1.dataset
-             AND i2.skyrgn = a1.skyrgn
-             AND i1.taustart_ts > i2.taustart_ts
-             AND rj.image IS NULL
-          GROUP BY r1.id
-         ) t0
+        ,(SELECT MIN(matched_imgs.low_flux_threshold) AS best_low_thresh
+                ,MIN(matched_imgs.high_flux_threshold) as best_high_thresh
+                ,matched_imgs.id
+                ,matched_imgs.f_peak
+            FROM (SELECT r1.id
+                    ,unassoc_xtr.f_peak
+                    ,(prev_imgs.rms_min *
+                              (prev_imgs.detection_thresh + %(sigma_margin)s))
+                      AS low_flux_threshold
+                    ,(prev_imgs.rms_max *
+                              (prev_imgs.detection_thresh + %(sigma_margin)s))
+                      AS high_flux_threshold
+                FROM image this_img
+                    ,(SELECT x1.id AS xtrsrc_id
+                            ,x1.f_peak
+                        FROM extractedsource x1
+                             LEFT OUTER JOIN temprunningcatalog trc1
+                             ON x1.id = trc1.xtrsrc
+                        WHERE x1.image = %(image_id)s
+                          AND trc1.xtrsrc IS NULL
+                      ) unassoc_xtr
+                    ,runningcatalog r1
+                    ,assocskyrgn a1
+                    ,image prev_imgs
+                     LEFT OUTER JOIN rejection rj
+                     ON prev_imgs.id = rj.image
+               WHERE this_img.id = %(image_id)s
+                 AND r1.xtrsrc = unassoc_xtr.xtrsrc_id
+                 AND a1.runcat = r1.id
+                 AND prev_imgs.dataset = this_img.dataset
+                 AND prev_imgs.skyrgn = a1.skyrgn
+                 AND this_img.taustart_ts > prev_imgs.taustart_ts
+                 AND rj.image IS NULL
+              GROUP BY r1.id
+                      ,low_flux_threshold
+                      ,high_flux_threshold
+                      ,unassoc_xtr.f_peak
+            ) matched_imgs
+            GROUP BY matched_imgs.id
+                    ,matched_imgs.f_peak
+         ) best_limits
         ,image i0
-   WHERE r0.id = t0.id
+   WHERE r0.id = best_limits.id
      AND i0.id = %(image_id)s
+     AND best_limits.f_peak > best_limits.best_low_thresh
 """
-    params = {'image_id': image_id}
+    params = {'image_id': image_id,
+              'sigma_margin': new_source_sigma_margin}
     cursor = tkp.db.execute(query, params, commit=True)
     ins = cursor.rowcount
     if ins > 0:
@@ -1926,3 +1989,4 @@ DELETE
  WHERE inactive = TRUE
 """
     tkp.db.execute(query, commit=True)
+

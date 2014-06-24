@@ -7,6 +7,7 @@ CREATE TABLE transient
   ,eta_int DOUBLE PRECISION NOT NULL
   ,detection_level DOUBLE PRECISION DEFAULT 0
   ,trigger_xtrsrc INT NOT NULL
+  ,transient_type SMALLINT NOT NULL
   ,status INT DEFAULT 0
   ,t_start TIMESTAMP
 {% ifdb postgresql %}

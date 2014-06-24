@@ -774,6 +774,14 @@ obtained from the measurements.
 **trigger_xtrsrc**
     Reference to the extracted source id that caused this transient to be added
 
+**transient_type**
+    Refers to how the transient was discovered, and how certain we are that it
+    is a real transient. Type 0 / 1 transients are discovered when they appear
+    in a previously surveyed sky region. Type 0 transients may be a fluctuating
+    steady source that is located in a high-RMS region, while type 1 transients
+    are bright enough that we can be fairly certain they are really new.
+    Type 2 transients are identified by their variability indices.
+
 **status**
     Currently not set
 

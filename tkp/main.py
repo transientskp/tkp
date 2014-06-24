@@ -81,6 +81,7 @@ def run(job_name, mon_coords, local=False):
     job_config = load_job_config(pipe_config)
     se_parset = job_config.source_extraction
     deruiter_radius = job_config.association.deruiter_radius
+    new_src_sigma = job_config.transient_search.new_source_sigma_margin
 
     all_images = imp.load_source('images_to_process',
                                  os.path.join(job_dir,
@@ -172,8 +173,9 @@ def run(job_name, mon_coords, local=False):
             logger.info("performing DB operations for image %s" % image.id)
 
             logger.info("performing source association")
-            dbass.associate_extracted_sources(image.id,
-                                              deRuiter_r=deruiter_radius)
+            dbass.associate_extracted_sources(
+                image.id,deRuiter_r=deruiter_radius,
+                new_source_sigma_margin=new_src_sigma)
             logger.info("performing null detections")
             null_detections = dbnd.get_nulldetections(image.id)
             logger.info("Found %s null detections" % len(null_detections))

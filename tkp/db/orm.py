@@ -425,6 +425,10 @@ class Image(DBObject):
                     self._data['centre_decl'], #Degrees J2000
                     self._data['xtr_radius'], #Degrees
                     self._data['rms_qc'],
+                    self._data.get('rms_min',None),
+                    self._data.get('rms_max',None),
+                    self._data.get('detection_thresh',None),
+                    self._data.get('analysis_thresh',None),
                 )
             except Exception as e:
                 logger.error("ORM: error inserting image,  %s: %s" %
@@ -458,6 +462,14 @@ class Image(DBObject):
         for result in results:
             sources.add(ExtractedSource(database=self.database, id=result[0]))
         self.sources = sources
+
+
+    def update_extraction_info(self,rms_min, rms_max,
+                               detection_thresh, analysis_thresh):
+        self.update(rms_min=rms_min, rms_max=rms_max,
+                    detection_thresh=detection_thresh,
+                    analysis_thresh=analysis_thresh)
+
 
     def insert_extracted_sources(self, results, extract='blind'):
         """Insert a list of sources

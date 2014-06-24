@@ -11,6 +11,10 @@ from tkp.db.orm import DataSet
 from tkp.testutil import db_subs
 from tkp.testutil.decorators import requires_database
 
+# Use a default argument value for convenience
+from functools import partial
+associate_extracted_sources = partial(dbass.associate_extracted_sources,
+                                      new_source_sigma_margin=3)
 
 @requires_database()
 class TestForcedFit(unittest.TestCase):
@@ -63,7 +67,7 @@ class TestForcedFit(unittest.TestCase):
                 dbgen.insert_extracted_sources(image.id, [src0], 'blind')
 
             for image in images:
-                dbass.associate_extracted_sources(image.id, deRuiter_r=5.68)
+                associate_extracted_sources(image.id, deRuiter_r=5.68)
                 # The monitoring sources are the positional inputs for the forced
                 # fits, which on their turn return additional parameters,
                 # e.g. from src0_mon
@@ -230,7 +234,7 @@ class TestForcedFit(unittest.TestCase):
                 dbgen.insert_extracted_sources(image.id, [src0], 'blind')
 
             for image in images:
-                dbass.associate_extracted_sources(image.id, deRuiter_r=5.68)
+                associate_extracted_sources(image.id, deRuiter_r=5.68)
                 # The monitoring sources are the positional inputs for the forced
                 # fits, which on their turn return additional parameters,
                 # e.g. from src0_mon

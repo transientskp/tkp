@@ -6,6 +6,7 @@ import tkp.db
 from tkp.db.generic import get_db_rows_as_dicts
 from tkp.db.database import Database
 from tkp.db.orm import DataSet, Image
+from tkp.db import nulldetections
 import tkp.testutil.data as testdata
 
 import tkp.utility.coordinates as coords
@@ -309,15 +310,77 @@ class MockSource(object):
             raise ValueError("Unrecognised extraction type: {}".format(
                                                             extraction_type))
 
+def insert_image_and_simulated_sources(dataset, image_params, mock_sources,
+                                       new_source_sigma_margin,
+                                       deruiter_radius=3.7):
+    """
+    Simulates the standard database image-and-source insertion logic using mock
+    sources.
+
+    Args:
+        dataset: The dataset object
+        image_params (dict); Contains the image properties.
+        mock_sources (list of MockSource): The mock sources to simulate.
+        new_source_sigma_margin (float): Parameter passed to source-association
+            routines.
+        deruiter_radius (float): Parameter passed to source-association
+            routines.
+
+    Returns:
+        3-tuple (image, list of blind extractions, list of forced fits).
+
+    """
+    image = tkp.db.Image(data=image_params,dataset=dataset)
+    blind_extractions=[]
+    for src in mock_sources:
+        xtr = src.simulate_extraction(image,extraction_type='blind')
+        if xtr is not None:
+            blind_extractions.append(xtr)
+    image.insert_extracted_sources(blind_extractions,'blind')
+    image.associate_extracted_sources(deRuiter_r=deruiter_radius,
+        new_source_sigma_margin=new_source_sigma_margin)
+    nd_posns = nulldetections.get_nulldetections(image.id)
+    forced_fits = []
+    for posn in nd_posns:
+        for src in mock_sources:
+            if (posn[0]==src.base_source.ra and
+                        posn[1]==src.base_source.dec):
+                forced_fits.append(
+                    src.simulate_extraction(image,extraction_type='ff_nd')
+                )
+    if len(nd_posns) != len(forced_fits):
+        raise LookupError("Something went wrong, nulldetection position did "
+                          "not match a mock source.")
+    image.insert_extracted_sources(forced_fits, 'ff_nd')
+    nulldetections.associate_nd(image.id)
+
+    return image, blind_extractions, forced_fits
 
 
 def get_transients_for_dataset(dsid):
+    """
+    Returns dicts representing all transients for this dataset.
+
+    Args:
+        dsid: Dataset it
+
+    Returns:
+        transient_rows (list of dicts): Each dict represents one transient.
+            The dict keys are all the columns in the transients table, plus
+            the 'taustart_ts' from the image table, which represents the
+            trigger time.
+    """
     qry = """\
     SELECT tr.*
+          ,img.taustart_ts
       FROM transient tr
           ,runningcatalog rc
+          ,extractedsource xtr
+          ,image img
       WHERE rc.dataset = %(dsid)s
         AND tr.runcat = rc.id
+        AND tr.trigger_xtrsrc = xtr.id
+        AND xtr.image = img.id
     """
     cursor = Database().connection.cursor()
     cursor.execute(qry, {'dsid':dsid})

@@ -60,7 +60,8 @@ class TestLightCurve(unittest.TestCase):
                 lightcurves_sorted_by_ra[src_idx].append(src)
                 img_sources.append(src)
             image.insert_extracted_sources(img_sources)
-            image.associate_extracted_sources(deRuiter_r=3.7)
+            image.associate_extracted_sources(deRuiter_r=3.7,
+                                              new_source_sigma_margin=3)
 
         # updates the dataset and its set of images
         self.dataset.update()

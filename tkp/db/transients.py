@@ -45,8 +45,13 @@ UPDATE transient
     return upd
 
 
-def _insert_transients(transients):
-    """Insert newly identified transient sources into the transients table.
+def _insert_variable_source_transients(transients):
+    """
+    Insert newly identified transient sources into the transients table.
+
+    These are specifically transient sources identified through their
+    variability indices - by contrast , 'new-source' transients are 
+    identified at association time. Hence, transient_type = 2.
 
     *Args*:
       - transients: list of dictionaries representing new transient entries.
@@ -62,6 +67,7 @@ INSERT INTO transient
   ,V_int
   ,eta_int
   ,trigger_xtrsrc
+  ,transient_type
   )
 VALUES
   (%(runcat)s
@@ -70,6 +76,7 @@ VALUES
   ,%(v_int)s
   ,%(eta_int)s
   ,%(trigger_xtrsrc)s
+  ,2
   )
     """
     ins = 0
@@ -232,5 +239,5 @@ def multi_epoch_transient_search(image_id,
                         filtered_transients.append(candidate)
 
     new_transients = [entry for entry in filtered_transients if entry['new_transient']]
-    _insert_transients(new_transients)
+    _insert_variable_source_transients(new_transients)
     return filtered_transients

@@ -2,22 +2,36 @@ import unittest
 from collections import defaultdict
 import tkp.db
 from tkp.db.transients import multi_epoch_transient_search
-from tkp.db.transients import _insert_transients
+from tkp.db.transients import _insert_variable_source_transients
 from tkp.db.generic import get_db_rows_as_dicts
 from tkp.db import nulldetections
 from tkp.testutil import db_subs
-from tkp.testutil.db_subs import (MockSource,
-                                  example_extractedsource_tuple,
+from tkp.testutil.db_subs import (example_extractedsource_tuple,
+                                  MockSource,
+                                  insert_image_and_simulated_sources,
                                   get_transients_for_dataset)
-
 from tkp.testutil.decorators import requires_database
 
+# Convenient default values
+deRuiter_r = 3.7
+new_source_sigma_margin = 3
 
 class TestSimplestCases(unittest.TestCase):
     """
     Various basic test-cases of the transient-detection logic.
 
-    In these simple cases we just have one source, and fixed image properties.
+    In these simple cases we just have one source, fixed image properties,
+    and identical min/max image RMS values.
+
+    As a result, we can only test for type 1 / 2 transients here, i.e.
+    -type 1: single-epoch, bright enough that we would previously have seen it
+        wherever in the image it lies, or
+    -type 2: multi-epoch, identified by variability, possibly from forced-fits.
+
+    (Type 0 is a possible single-epoch transient, that might just be a steady
+    source fluctuating in a high-RMS region, or might be real transient
+    if it's seen in the low-RMS region).
+
     """
 
     @requires_database()
@@ -30,17 +44,58 @@ class TestSimplestCases(unittest.TestCase):
         self.n_images = 4
         self.new_source_sigma_margin = 3
         image_rms = 1e-3
+        detection_thresh=10
+
+        self.search_params = dict(eta_lim=1,
+                                  V_lim=0.1,
+                                  probability_threshold=0.7,
+                                  minpoints=1, )
+
+        self.barely_detectable_flux = 1.01*image_rms*(detection_thresh)
+        self.reliably_detectable_flux = (
+            1.01*image_rms*(detection_thresh+self.new_source_sigma_margin))
+
         # 1mJy image RMS, 10-sigma detection threshold = 10mJy threshold.
         test_specific_img_params = dict(rms_qc = image_rms,
                                 rms_min = image_rms,
                                 rms_max = image_rms,
-                                detection_thresh = 10)
+                                detection_thresh = detection_thresh)
 
         self.im_params = db_subs.generate_timespaced_dbimages_data(
             self.n_images,**test_specific_img_params)
 
     def tearDown(self):
         tkp.db.rollback()
+
+    def test_steady_source(self):
+        """
+        Sanity check: Ensure we get no transients for a really steady source.
+        """
+        im_params = self.im_params
+        steady_src = db_subs.MockSource(
+             template_extractedsource=db_subs.example_extractedsource_tuple(
+                 ra=im_params[0]['centre_ra'],
+                 dec=im_params[0]['centre_decl'],
+             ),
+             lightcurve=defaultdict(lambda : self.reliably_detectable_flux)
+        )
+
+        inserted_sources = []
+        for img_pars in im_params:
+            image, _,forced_fits = insert_image_and_simulated_sources(
+                self.dataset,img_pars,[steady_src],
+                self.new_source_sigma_margin)
+
+            #should not have any nulldetections
+            self.assertEqual(len(forced_fits), 0)
+
+            multi_epoch_transient_search(image_id=image.id,
+                                         **self.search_params)
+            transients = get_transients_for_dataset(self.dataset.id)
+
+            #or transients
+            self.assertEqual(len(transients), 0)
+
 
     def test_single_epoch_bright_transient(self):
         """A bright transient appears at field centre in one image."""
@@ -50,20 +105,15 @@ class TestSimplestCases(unittest.TestCase):
                  ra=im_params[0]['centre_ra'],
                  dec=im_params[0]['centre_decl'],
              ),
-             lightcurve={im_params[2]['taustart_ts'] : 200e-3}
+             lightcurve={im_params[2]['taustart_ts'] :
+                             self.reliably_detectable_flux}
         )
 
         for img_pars in im_params[:3]:
-            image = tkp.db.Image(dataset=self.dataset, data=img_pars)
-            blind_extraction = transient_src.simulate_extraction(
-                image, extraction_type='blind')
-            if blind_extraction is not None:
-                image.insert_extracted_sources([blind_extraction], 'blind')
-            image.associate_extracted_sources(deRuiter_r=3.7,
-                new_source_sigma_margin=self.new_source_sigma_margin)
-            #Sanity check - we do not expect any nulldetections requested yet
-            nd_posns = nulldetections.get_nulldetections(image.id)
-            self.assertEqual(nd_posns, [])
+            image, _,forced_fits = insert_image_and_simulated_sources(
+                self.dataset,img_pars,[transient_src],
+                self.new_source_sigma_margin)
+            self.assertEqual(len(forced_fits), 0)
 
         # Check the number of detected transients
         transients = get_transients_for_dataset(self.dataset.id)
@@ -83,47 +133,23 @@ class TestSimplestCases(unittest.TestCase):
         self.assertEqual(transient_properties['v_int'],0)
         self.assertEqual(transient_properties['eta_int'],0)
 
-        # Check that the trigger xtrsrc is linked to correct image (and hence
-        # datetime).
-        query = """\
-        select taustart_ts
-          from extractedsource x
-              ,image i
-         where x.image = i.id
-           and x.id = (select trigger_xtrsrc
-                         from transient t
-                             ,runningcatalog r
-                        where t.runcat = r.id
-                          and r.dataset = %s
-                      )
-        """
-        self.database.cursor.execute(query, (self.dataset.id,))
-        trigger_times = get_db_rows_as_dicts(self.database.cursor)
-        self.assertEqual(len(trigger_times), 1)
-        ts = trigger_times[0]['taustart_ts']
-        self.assertEqual(ts, transient_src.lightcurve.keys()[0])
+        #Bright 'new-source' / single-epoch transients have type 1:
+        self.assertEqual(transient_properties['transient_type'],1)
+
+        #Check the correct trigger xtrsrc was identified:
+        self.assertEqual(transient_properties['taustart_ts'],
+                         transient_src.lightcurve.keys()[0])
 
         # Ok, now add the last image and check that we get a correct forced-fit
         # request:
-        image = tkp.db.Image(dataset=self.dataset, data=im_params[3])
-        image.associate_extracted_sources(deRuiter_r=3.7,
-                new_source_sigma_margin=self.new_source_sigma_margin)
-        nd_posns = nulldetections.get_nulldetections(image.id)
-        self.assertEqual(len(nd_posns),1)
-        self.assertEqual(nd_posns[0][0],transient_src.base_source.ra)
-        self.assertEqual(nd_posns[0][1],transient_src.base_source.dec)
-        image.insert_extracted_sources(
-            [transient_src.simulate_extraction(image, extraction_type='ff_nd')],
-            'ff_nd')
-        nulldetections.associate_nd(image.id)
+        image, _,forced_fits = insert_image_and_simulated_sources(
+                self.dataset,im_params[3],[transient_src],
+                self.new_source_sigma_margin)
+        self.assertEqual(len(forced_fits),1)
 
         #Trigger updating of variability indices
-        transients = multi_epoch_transient_search(
-                                eta_lim=1,
-                                V_lim=0.1,
-                                probability_threshold=0.7,
-                                minpoints=1,
-                                image_id=image.id)
+        transients = multi_epoch_transient_search(image_id=image.id,
+                                                  **self.search_params)
 
         #And now we should have a non-zero variability value:
         transients = get_transients_for_dataset(self.dataset.id)
@@ -133,10 +159,74 @@ class TestSimplestCases(unittest.TestCase):
         self.assertNotAlmostEqual(transient_properties['v_int'],0)
         self.assertNotAlmostEqual(transient_properties['eta_int'],0)
 
+
+    def test_single_epoch_weak_transient(self):
+        """
+        A weak (barely detected in blind extraction) transient appears at
+        field centre in one image, then disappears entirely.
+
+        Because it is a weak extraction, it will not be immediately marked
+        as transient, but it will get flagged up after forced-fitting due to
+        the variability search.
+        """
+        im_params = self.im_params
+
+        transient_src = db_subs.MockSource(
+             template_extractedsource=db_subs.example_extractedsource_tuple(
+                 ra=im_params[0]['centre_ra'],
+                 dec=im_params[0]['centre_decl'],
+             ),
+             lightcurve={im_params[2]['taustart_ts'] :
+                             self.barely_detectable_flux}
+        )
+
+        inserted_sources = []
+
+        for img_pars in im_params[:3]:
+            image, _,forced_fits = insert_image_and_simulated_sources(
+                self.dataset,img_pars,[transient_src],
+                self.new_source_sigma_margin)
+            self.assertEqual(forced_fits, [])
+            #Trigger updating of variability indices
+            transients = multi_epoch_transient_search(image_id=image.id,
+                                          **self.search_params)
+            transients = get_transients_for_dataset(self.dataset.id)
+            self.assertEqual(len(transients), 0)
+
+        #Now, the final, empty image:
+        image, blind_extractions, forced_fits = insert_image_and_simulated_sources(
+                self.dataset,im_params[3],[transient_src],
+                self.new_source_sigma_margin)
+        self.assertEqual(len(blind_extractions),0)
+        self.assertEqual(len(forced_fits), 1)
+        transients = multi_epoch_transient_search(image_id=image.id,
+                                                  **self.search_params)
+
+        transients = get_transients_for_dataset(self.dataset.id)
+        self.assertEqual(len(transients), 1)
+        transient_properties = transients[0]
+        self.assertEqual(transient_properties['transient_type'], 2)
+
+        # Check that the bands for the images are the same as the transient's band
+        freq_bands = self.dataset.frequency_bands()
+        self.assertEqual(len(freq_bands), 1)
+        self.assertEqual(freq_bands[0], transient_properties['band'])
+
+        #Sanity check that the runcat is correctly matched
+        runcats = self.dataset.runcat_entries()
+        self.assertEqual(len(runcats), 1)
+        self.assertEqual(runcats[0]['runcat'], transient_properties['runcat'])
+
+        # Check that the trigger xtrsrc is linked to correct image (and hence
+        # datetime).
+        self.assertEqual(transient_properties['taustart_ts'],
+                         im_params[-1]['taustart_ts'])
+
+
     def test_multi_epoch_source_flare_and_fade(self):
         """
         A steady source (i.e. detected in first image) flares up,
-        then disappears.
+        then fades and finally disappears.
         """
         im_params = self.im_params
         transient_src = db_subs.MockSource(
@@ -145,26 +235,20 @@ class TestSimplestCases(unittest.TestCase):
                  dec=im_params[0]['centre_decl'],
              ),
              lightcurve={
-                 im_params[0]['taustart_ts'] : 15e-3,
-                 im_params[1]['taustart_ts'] : 30e-3,
-                 im_params[2]['taustart_ts'] : 15e-3,
+                 im_params[0]['taustart_ts'] : self.barely_detectable_flux,
+                 im_params[1]['taustart_ts'] : 2*self.barely_detectable_flux,
+                 im_params[2]['taustart_ts'] : self.barely_detectable_flux,
              }
         )
 
         inserted_sources = []
 
         for img_pars in im_params[:2]:
-            image = tkp.db.Image(dataset=self.dataset, data=img_pars)
-            blind_extraction = transient_src.simulate_extraction(
-                image, extraction_type='blind')
-            if blind_extraction is not None:
-                image.insert_extracted_sources([blind_extraction], 'blind')
-            inserted_sources.append(blind_extraction)
-            image.associate_extracted_sources(deRuiter_r=3.7,
-                new_source_sigma_margin=self.new_source_sigma_margin)
-            #Sanity check - we do not expect any nulldetections requested yet
-            nd_posns = nulldetections.get_nulldetections(image.id)
-            self.assertEqual(nd_posns, [])
+            image, blind_xtr,forced_fits = insert_image_and_simulated_sources(
+                self.dataset,img_pars,[transient_src],
+                self.new_source_sigma_margin)
+            self.assertEqual(len(forced_fits), 0)
+            inserted_sources.extend(blind_xtr)
 
         # Check the number of detected transients
         # This should be zero until we trigger a variability search,
@@ -173,12 +257,8 @@ class TestSimplestCases(unittest.TestCase):
         self.assertEqual(len(transients), 0)
 
         #Trigger updating of variability indices
-        transients = multi_epoch_transient_search(
-                                eta_lim=1,
-                                V_lim=0.1,
-                                probability_threshold=0.7,
-                                minpoints=1,
-                                image_id=image.id)
+        transients = multi_epoch_transient_search(image_id=image.id,
+                                          **self.search_params)
 
         transients = get_transients_for_dataset(self.dataset.id)
         self.assertEqual(len(transients), 1)
@@ -195,26 +275,13 @@ class TestSimplestCases(unittest.TestCase):
         self.assertEqual(runcats[0]['runcat'], transient_properties['runcat'])
 
 
+        #'Variable' / multi-epoch transients have type 2:
+        self.assertEqual(transient_properties['transient_type'],2)
+
         # Check that the trigger xtrsrc is linked to correct image (and hence
         # datetime).
-        transient_trigger_times_query = """\
-        select taustart_ts
-          from extractedsource x
-              ,image i
-         where x.image = i.id
-           and x.id = (select trigger_xtrsrc
-                         from transient t
-                             ,runningcatalog r
-                        where t.runcat = r.id
-                          and r.dataset = %s
-                      )
-        """
-        self.database.cursor.execute(transient_trigger_times_query,
-                                     (self.dataset.id,))
-        trigger_times = get_db_rows_as_dicts(self.database.cursor)
-        self.assertEqual(len(trigger_times), 1)
-        ts = trigger_times[0]['taustart_ts']
-        self.assertEqual(ts, transient_src.lightcurve.keys()[1])
+        self.assertEqual(transient_properties['taustart_ts'],
+                         transient_src.lightcurve.keys()[1])
 
         #Check we have sensible variability indices
         # print "\n",transient_properties
@@ -227,57 +294,34 @@ class TestSimplestCases(unittest.TestCase):
 
 
         #Add 3rd image (another blind detection), check everything is sane
-        for img_pars in [im_params[2]]:
-            image = tkp.db.Image(dataset=self.dataset, data=img_pars)
-            blind_extraction = transient_src.simulate_extraction(
-                image, extraction_type='blind')
-            if blind_extraction is not None:
-                image.insert_extracted_sources([blind_extraction], 'blind')
-                inserted_sources.append(blind_extraction)
-            image.associate_extracted_sources(deRuiter_r=3.7,
-                new_source_sigma_margin=self.new_source_sigma_margin)
-            #Sanity check - we do not expect any nulldetections requested yet
-            nd_posns = nulldetections.get_nulldetections(image.id)
-            self.assertEqual(nd_posns, [])
-            transients = multi_epoch_transient_search(
-                                eta_lim=1,
-                                V_lim=0.1,
-                                probability_threshold=0.7,
-                                minpoints=1,
-                                image_id=image.id)
-
+        image, blind_xtr,forced_fits = insert_image_and_simulated_sources(
+            self.dataset,im_params[2],[transient_src],
+            self.new_source_sigma_margin)
+        self.assertEqual(len(forced_fits), 0)
+        inserted_sources.extend(blind_xtr)
+        transients = multi_epoch_transient_search(image_id=image.id,
+                                      **self.search_params)
 
         # Check that the trigger xtrsrc is *still* linked to correct image
-        self.database.cursor.execute(transient_trigger_times_query,
-                                     (self.dataset.id,))
-        trigger_times = get_db_rows_as_dicts(self.database.cursor)
-        self.assertEqual(len(trigger_times), 1)
-        ts = trigger_times[0]['taustart_ts']
-        self.assertEqual(ts, transient_src.lightcurve.keys()[1])
+        transients = get_transients_for_dataset(self.dataset.id)
+        self.assertEqual(len(transients), 1)
+        transient_properties = transients[0]
+        self.assertEqual(transient_properties['taustart_ts'],
+                         transient_src.lightcurve.keys()[1])
 
 
         # Ok, now add the last image and check that we get a correct forced-fit
         # request:
-        image = tkp.db.Image(dataset=self.dataset, data=im_params[3])
-        image.associate_extracted_sources(deRuiter_r=3.7,
-                new_source_sigma_margin=self.new_source_sigma_margin)
-        nd_posns = nulldetections.get_nulldetections(image.id)
-        self.assertEqual(len(nd_posns),1)
-        self.assertEqual(nd_posns[0][0],transient_src.base_source.ra)
-        self.assertEqual(nd_posns[0][1],transient_src.base_source.dec)
-        forced_fit = transient_src.simulate_extraction(image,
-                                                       extraction_type='ff_nd')
-        image.insert_extracted_sources([forced_fit], 'ff_nd')
-        inserted_sources.append(forced_fit)
-        nulldetections.associate_nd(image.id)
+        image, blind_xtr,forced_fits = insert_image_and_simulated_sources(
+                self.dataset,im_params[3],[transient_src],
+                self.new_source_sigma_margin)
+        self.assertEqual(len(blind_xtr),0)
+        self.assertEqual(len(forced_fits),1)
+        inserted_sources.extend(forced_fits)
 
         # Trigger updating of variability indices
-        transients = multi_epoch_transient_search(
-                                eta_lim=1,
-                                V_lim=0.1,
-                                probability_threshold=0.7,
-                                minpoints=1,
-                                image_id=image.id)
+        transients = multi_epoch_transient_search(image_id=image.id,
+                                          **self.search_params)
 
         # Variability indices should take non-detections into account
         transients = get_transients_for_dataset(self.dataset.id)
@@ -291,138 +335,10 @@ class TestSimplestCases(unittest.TestCase):
                              metrics[-1][metric_name])
 
 
-class TestMultipleSourceField(unittest.TestCase):
-    @requires_database()
-    def setUp(self):
-        self.database = tkp.db.Database()
-        self.dataset = tkp.db.DataSet(
-            data={'description':"Trans:" +self._testMethodName},
-            database=self.database)
-
-        self.n_images = 8
-        self.image_rms = 1e-3 # 1mJy
-        self.new_source_sigma_margin = 3
-
-        test_specific_img_params = dict(rms_qc =self.image_rms,
-                                        rms_min = self.image_rms,
-                                        rms_max = self.image_rms,
-                                        detection_thresh = 10)
-
-        self.img_params = db_subs.generate_timespaced_dbimages_data(
-            self.n_images, **test_specific_img_params)
-
-        first_img = self.img_params[0]
-        centre_ra = first_img['centre_ra']
-        centre_decl = first_img['centre_decl']
-        xtr_radius = first_img['xtr_radius']
-
-        # OK, here's the fiddly part:
-        # we want to generate per-image source lists representing a bunch of
-        # transient sources.
-        # Note that we must ensure they all lie within the image-extraction
-        # regions, to keep things realistic.
-
-        # Mock sources are as follows:
-        #     1 Fixed source, present in all lists returned.
-        #     2 `fast transients`
-        #         1 present in images[3], 30 mJy
-        #         1 present in images[4], 5 mJy
-        #     1 `slow transient`,
-        #         present in images indices [5]  (4mJy) and [6], (3mJy)
-
-        #At centre
-        fixed_source = MockSource(
-            example_extractedsource_tuple(ra=centre_ra, dec=centre_decl),
-            lightcurve=defaultdict(lambda: 15e-3))
-
-        imgs = self.img_params
-        #shifted to +ve RA
-        bright_fast_transient = MockSource(
-            example_extractedsource_tuple(ra=centre_ra + xtr_radius * 0.5,
-                                          dec=centre_decl),
-            lightcurve={imgs[3]['taustart_ts']: 30e-3}
-        )
-
-        # shifted to -ve RA
-        weak_fast_transient = MockSource(
-            example_extractedsource_tuple(ra=centre_ra - xtr_radius * 0.5,
-                                          dec=centre_decl),
-            lightcurve={imgs[4]['taustart_ts']: 11e-3}
-        )
-
-        # shifted to +ve Dec
-        weak_slow_transient = MockSource(
-            example_extractedsource_tuple(ra=centre_ra,
-                                          dec=centre_decl + xtr_radius * 0.5),
-            lightcurve={imgs[5]['taustart_ts']: 11e-3,
-                        imgs[6]['taustart_ts']: 5e-3}
-        )
-
-        self.all_mock_sources = [fixed_source, weak_slow_transient,
-                                 bright_fast_transient, weak_fast_transient]
-        self.n_expected_transients = 3
-
-
-    def tearDown(self):
-        tkp.db.rollback()
-
-
-    def test_full_transient_search_routine(self):
-        self.db_imgs = []
-        for i in xrange(self.n_images):
-            img = tkp.db.Image(data=self.img_params[i],dataset=self.dataset)
-            self.db_imgs.append(img)
-            blind_extractions=[]
-            for src in self.all_mock_sources:
-                xtr = src.simulate_extraction(img,extraction_type='blind')
-                if xtr is not None:
-                    blind_extractions.append(xtr)
-            self.db_imgs[i].insert_extracted_sources(blind_extractions,'blind')
-            self.db_imgs[i].associate_extracted_sources(deRuiter_r=3.7,
-                new_source_sigma_margin=self.new_source_sigma_margin)
-
-        #Sanity check that everything went into one band
-        bands = self.dataset.frequency_bands()
-        self.assertEqual(len(bands), 1)
-
-        #First run with lax limits:
-        variability_transients = multi_epoch_transient_search(
-                                 eta_lim=1.1,
-                                 V_lim=0.01,
-                                 probability_threshold=0.01,
-                                 image_id=self.db_imgs[-1].id,
-                                 minpoints=1)
-
-
-        all_transients = get_transients_for_dataset(self.dataset.id)
-        self.assertEqual(len(all_transients),
-                         self.n_expected_transients)
-#        for t in all_transients:
-#            print "V_int:", t['v_int'], "  eta_int:", t['eta_int']
-        #Now test thresholding:
-        more_highly_variable = sum(t['v_int'] > 2.0 for t in all_transients)
-        very_non_flat = sum(t['eta_int'] > 100.0 for t in all_transients)
-
-        transients = multi_epoch_transient_search(
-                 eta_lim=1.1,
-                 V_lim=2.0,
-                 probability_threshold=0.01,
-                 image_id=self.db_imgs[-1].id,
-                 minpoints=1)
-        self.assertEqual(len(transients), more_highly_variable)
-
-        transients = multi_epoch_transient_search(
-                 eta_lim=100,
-                 V_lim=0.01,
-                 probability_threshold=0.01,
-                 image_id=self.db_imgs[-1].id,
-                 minpoints=1)
-        self.assertEqual(len(transients), very_non_flat)
-
 
 class TestDecreasingImageRMS(unittest.TestCase):
     """
-    These unit-tests flesh out the possible cases where we process an image
+    These unit-tests enumerate the possible cases where we process an image
     with a lower RMS value, and see a new source. Is it a transient, or
     just a steady source that was lost in the noise before?
     """
@@ -439,12 +355,28 @@ class TestDecreasingImageRMS(unittest.TestCase):
         self.rms_min_initial = 2e-3 #2mJy
         self.rms_max_initial = 5e-3 #5mJy
         self.new_src_sigma_margin = 3
-        # det_thresh==10 =>
-        # Certain detection requires flux > (50mJy + margin of error)
+        self.detection_thresh=10
+
+
+        dt=self.detection_thresh
+        margin = self.new_src_sigma_margin
+        #These all refer to the first image, they should all be clearly
+        #detected in the second image:
+        self.barely_detectable_flux = 1.01*self.rms_min_initial*dt
+        self.reliably_detected_at_image_centre_flux = (
+                                        1.01*self.rms_min_initial*(dt+ margin))
+        self.always_detectable_flux = 1.01*self.rms_max_initial*(dt+ margin)
+
+        self.search_params = dict(eta_lim=1,
+                                  V_lim=0.1,
+                                  probability_threshold=0.7,
+                                  minpoints=1, )
+
+
         test_specific_img_params = dict(rms_qc = self.rms_min_initial,
                                 rms_min = self.rms_min_initial,
                                 rms_max = self.rms_max_initial,
-                                detection_thresh = 10)
+                                detection_thresh = self.detection_thresh)
 
         self.img_params = db_subs.generate_timespaced_dbimages_data(
             self.n_images, **test_specific_img_params)
@@ -470,7 +402,8 @@ class TestDecreasingImageRMS(unittest.TestCase):
         bright_transient = MockSource(
             example_extractedsource_tuple(ra=img_params[0]['centre_ra'],
                                           dec=img_params[0]['centre_decl']),
-            lightcurve={img_params[1]['taustart_ts']: 100e-3}
+            lightcurve={img_params[1]['taustart_ts']:
+                            self.always_detectable_flux}
         )
         #First, check that we've set up the test correctly:
         rms_max0 = img_params[0]['rms_max']
@@ -484,15 +417,14 @@ class TestDecreasingImageRMS(unittest.TestCase):
                                                        extraction_type='blind')
             if xtr is not None:
                 img.insert_extracted_sources([xtr],'blind')
-            img.associate_extracted_sources(deRuiter_r=3.7)
+            img.associate_extracted_sources(deRuiter_r, new_source_sigma_margin)
         transients = get_transients_for_dataset(self.dataset.id)
 
         #Should have one 'definite' transient
         self.assertEqual(len(transients),1)
-        #With a 'type' column
-        self.assertTrue('type' in transients[0])
-        # so 0=> Certain, 1=> Maybe?
-        self.assertEqual(transients[0]['type'], 0)
+        #With a 'transient_type' column
+        self.assertTrue('transient_type' in transients[0])
+        self.assertEqual(transients[0]['transient_type'], 1)
 
     def test_marginal_transient(self):
         """
@@ -520,13 +452,12 @@ class TestDecreasingImageRMS(unittest.TestCase):
 
         #Must pick flux value carefully to fire correct logic branch:
         img0 = img_params[0]
-        marginal_transient_flux = (img0['rms_min']*
-               (img0['detection_thresh'] + self.new_src_sigma_margin + 0.5))
+        marginal_transient_flux = self.reliably_detected_at_image_centre_flux
 
         marginal_transient = MockSource(
             example_extractedsource_tuple(ra=img_params[0]['centre_ra'],
                                           dec=img_params[0]['centre_decl']),
-            lightcurve={img_params[1]['taustart_ts']: marginal_transient_flux}
+            lightcurve={img_params[1]['taustart_ts'] : marginal_transient_flux}
         )
 
 
@@ -545,15 +476,14 @@ class TestDecreasingImageRMS(unittest.TestCase):
                                                        extraction_type='blind')
             if xtr is not None:
                 img.insert_extracted_sources([xtr],'blind')
-            img.associate_extracted_sources(deRuiter_r=3.7)
+            img.associate_extracted_sources(deRuiter_r, new_source_sigma_margin)
         transients = get_transients_for_dataset(self.dataset.id)
 
         #Should have one 'possible' transient
         self.assertEqual(len(transients),1)
-        #With a 'type' column
-        self.assertTrue('type' in transients[0])
-        # Set to a significant value. so 0=> Certain, 1=> Maybe?
-        self.assertEqual(transients[0]['type'], 1)
+        #With a 'transient_type' column
+        self.assertTrue('transient_type' in transients[0])
+        self.assertEqual(transients[0]['transient_type'], 0)
 
 
     def test_probably_not_a_transient(self):
@@ -571,8 +501,7 @@ class TestDecreasingImageRMS(unittest.TestCase):
         img_params = self.img_params
 
         img0 = img_params[0]
-        marginal_steady_src_flux = (img0['rms_min']*
-                                (img0['detection_thresh'] + 0.001))
+        marginal_steady_src_flux = self.barely_detectable_flux
 
         # This time around, we just manually exclude the steady src from
         # the first image detections.
@@ -583,7 +512,6 @@ class TestDecreasingImageRMS(unittest.TestCase):
                                           ),
             lightcurve=defaultdict(lambda :marginal_steady_src_flux)
         )
-
 
         #First, check that we've set up the test correctly:
         rms_min0 = img_params[0]['rms_min']
@@ -598,7 +526,7 @@ class TestDecreasingImageRMS(unittest.TestCase):
         xtr = marginal_steady_src.simulate_extraction(img1,
                                                     extraction_type='blind')
         img1.insert_extracted_sources([xtr],'blind')
-        img1.associate_extracted_sources(deRuiter_r=3.7)
+        img1.associate_extracted_sources(deRuiter_r, new_source_sigma_margin)
         transients = get_transients_for_dataset(self.dataset.id)
 
         #Should have no marked transients
@@ -618,13 +546,16 @@ class TestIncreasingImageRMS(unittest.TestCase):
         self.n_images = 2
         self.rms_min_initial = 2e-3 #2mJy
         self.rms_max_initial = 5e-3 #5mJy
-        self.new_src_sigma_margin= 3
-        # det_thresh==10 =>
-        # Certain detection requires flux > (50mJy + margin of error)
+        self.new_source_sigma_margin = 3
+        self.detection_thresh=10
+
+        dt=self.detection_thresh
+        self.barely_detectable_flux = 1.01*dt*self.rms_min_initial
+
         test_specific_img_params = dict(rms_qc = self.rms_min_initial,
                                 rms_min = self.rms_min_initial,
                                 rms_max = self.rms_max_initial,
-                                detection_thresh = 10)
+                                detection_thresh = self.detection_thresh)
 
         self.img_params = db_subs.generate_timespaced_dbimages_data(
             self.n_images, **test_specific_img_params)
@@ -635,6 +566,10 @@ class TestIncreasingImageRMS(unittest.TestCase):
         self.img_params[1]['rms_min']*=rms_increase_factor
         self.img_params[1]['rms_max']*=rms_increase_factor
 
+        self.search_params = dict(eta_lim=1,
+                          V_lim=0.1,
+                          probability_threshold=0.7,
+                          minpoints=1, )
 
     def tearDown(self):
         tkp.db.rollback()
@@ -643,41 +578,267 @@ class TestIncreasingImageRMS(unittest.TestCase):
         """
         If we do not blindly extract a steady source due to increased RMS,
         then we expect a null-detection forced-fit to be triggered.
-        """
-        img_pars = self.img_params
 
-        img0 = img_pars[0]
-        steady_src_flux = (img0['rms_min']* (img0['detection_thresh'] + 0.001))
+        However, if the source properties are steady, this should not
+        result in the source being identified as transient.
+        """
+
+        img0 = self.img_params[0]
+        steady_src_flux = self.barely_detectable_flux
         steady_src = MockSource(
-            example_extractedsource_tuple(ra=img_pars[0]['centre_ra'],
-                                          dec=img_pars[0]['centre_decl']
+            example_extractedsource_tuple(ra=img0['centre_ra'],
+                                          dec=img0['centre_decl']
                                           ),
             lightcurve=defaultdict(lambda :steady_src_flux)
         )
 
-        #Insert first image
-        img0= tkp.db.Image(data=img_pars[0],dataset=self.dataset)
-        xtr = steady_src.simulate_extraction(img0,extraction_type='blind')
-        #Check MockSource working correctly and parameters all set right:
-        self.assertIsNotNone(xtr)
-        img0.insert_extracted_sources([xtr],'blind')
-        img0.associate_extracted_sources(deRuiter_r=3.7,
-                 new_source_sigma_margin=self.new_src_sigma_margin)
+
+        image, blind_xtr,forced_fits = insert_image_and_simulated_sources(
+                self.dataset,self.img_params[0],[steady_src],
+                self.new_source_sigma_margin)
+        self.assertEqual(len(blind_xtr),1)
+        self.assertEqual(len(forced_fits),0)
+
+        image, blind_xtr,forced_fits = insert_image_and_simulated_sources(
+                self.dataset,self.img_params[1],[steady_src],
+                self.new_source_sigma_margin)
+        self.assertEqual(len(blind_xtr),0)
+        self.assertEqual(len(forced_fits),1)
+        multi_epoch_transient_search(image_id=image.id,
+                                    **self.search_params)
+
+        transients=get_transients_for_dataset(self.dataset.id)
+        self.assertEqual(len(transients),0)
+
+
+
+class TestMultipleFrequencyBands(unittest.TestCase):
+    """
+    We expect to see some steady sources in only one frequency band,
+    due to steep spectral indices. We don't want to misclassify these as
+    transient without any proof of variability!
+    """
+    def shortDescription(self):
+         return None
+    @requires_database()
+    def setUp(self):
+        self.database = tkp.db.Database()
+        self.dataset = tkp.db.DataSet(
+            data={'description':"Trans:" +self._testMethodName},
+            database=self.database)
+
+        self.n_images = 2
+        self.rms_min = 1e-3 #1mJy
+        self.rms_max = 2e-3 #2mJy
+        self.new_src_sigma_margin = 3
+        self.detection_thresh=10
+
+        self.first_image_freq = 250e6 # 250 MHz
+        self.second_image_freq = 50e6 # 50 MHz
+
+
+        dt=self.detection_thresh
+        margin = self.new_src_sigma_margin
+        self.always_detectable_flux = 1.01*self.rms_max*(dt+ margin)
+
+        self.search_params = dict(eta_lim=1,
+                                  V_lim=0.1,
+                                  probability_threshold=0.7,
+                                  minpoints=1, )
+
+        test_specific_img_params = dict(
+            freq_eff = self.first_image_freq,
+            rms_qc = self.rms_min,
+            rms_min = self.rms_min,
+            rms_max = self.rms_max,
+            detection_thresh = self.detection_thresh)
+
+        self.img_params = db_subs.generate_timespaced_dbimages_data(
+            self.n_images, **test_specific_img_params)
+
+        self.img_params[1]['freq_eff']=self.second_image_freq
+
+
+    def tearDown(self):
+        tkp.db.rollback()
+
+    def test_probably_not_a_transient(self):
+        """
+        No source at 250MHz, but we detect a source at 50MHz.
+        Not necessarily a transient.
+        Should trivially ignore 250MHz data when looking at a new 50MHz source.
+        """
+        img_params = self.img_params
+
+        img0 = img_params[0]
+
+        # This time around, we just manually exclude the steady src from
+        # the first image detections.
+        steady_low_freq_src = MockSource(
+            example_extractedsource_tuple(ra=img_params[0]['centre_ra'],
+                                          dec=img_params[0]['centre_decl']
+                                          ),
+            lightcurve=defaultdict(lambda :self.always_detectable_flux)
+        )
+
+        #Insert first image, no sources.
+        tkp.db.Image(data=img_params[0],dataset=self.dataset)
         #Now set up second image.
-        img1 = tkp.db.Image(data=img_pars[1],dataset=self.dataset)
-        xtr = steady_src.simulate_extraction(img1, extraction_type='blind')
+        img1 = tkp.db.Image(data=img_params[1],dataset=self.dataset)
+        xtr = steady_low_freq_src.simulate_extraction(img1,
+                                                    extraction_type='blind')
+        img1.insert_extracted_sources([xtr],'blind')
+        img1.associate_extracted_sources(deRuiter_r, new_source_sigma_margin)
+        transients = get_transients_for_dataset(self.dataset.id)
 
-        #Check MockSource working correctly and parameters all set right:
-        self.assertIsNone(xtr) #So no insertion / association to do.
+        #Should have no marked transients
+        self.assertEqual(len(transients),0)
 
-        #Check we still get a null-detection request
-        # (This should be simple logic - no-detection, and in-field? Then
-        # trigger a forced-fit. But it's still worth unit-testing.)
-        nd_posns = nulldetections.get_nulldetections(img1.id)
-        self.assertEqual(len(nd_posns),1)
-        self.assertEqual(nd_posns[0][0],steady_src.base_source.ra)
-        self.assertEqual(nd_posns[0][1],steady_src.base_source.dec)
 
+class TestMultipleSourceField(unittest.TestCase):
+    """
+    By testing a field with multiple sources, we at least go some way
+    to ensuring there is no misclassification in the SQL queries
+    when we have multiple transient candidates in play.
+    """
+    @requires_database()
+    def setUp(self):
+        self.database = tkp.db.Database()
+        self.dataset = tkp.db.DataSet(
+            data={'description':"Trans:" +self._testMethodName},
+            database=self.database)
+
+        self.n_images = 8
+        self.image_rms = 1e-3 # 1mJy
+        self.new_source_sigma_margin = 3
+        self.search_params = dict(eta_lim=1,
+                                  V_lim=0.1,
+                                  probability_threshold=0.7,
+                                  minpoints=1, )
+        detection_thresh=10
+
+        barely_detectable_flux = 1.01*self.image_rms*(detection_thresh)
+        reliably_detectable_flux = (
+            1.01*self.image_rms*(detection_thresh+self.new_source_sigma_margin))
+
+        test_specific_img_params = dict(rms_qc =self.image_rms,
+                                        rms_min = self.image_rms,
+                                        rms_max = self.image_rms,
+                                        detection_thresh = detection_thresh)
+
+        self.img_params = db_subs.generate_timespaced_dbimages_data(
+            self.n_images, **test_specific_img_params)
+        imgs=self.img_params
+        first_img = imgs[0]
+        centre_ra = first_img['centre_ra']
+        centre_decl = first_img['centre_decl']
+        xtr_radius = first_img['xtr_radius']
+
+
+        #At centre
+        fixed_source = MockSource(
+            example_extractedsource_tuple(ra=centre_ra, dec=centre_decl),
+            lightcurve=defaultdict(lambda: barely_detectable_flux))
+
+        #How many transients should we know about after each image?
+        self.n_transients_after_image = defaultdict(lambda:0)
+        self.n_transient_types = defaultdict(lambda:0)
+
+        #Should be immediately flagged as type-0 (almost certain) transient
+        #shifted to +ve RA
+        bright_fast_transient = MockSource(
+            example_extractedsource_tuple(ra=centre_ra + xtr_radius * 0.5,
+                                          dec=centre_decl),
+            lightcurve={imgs[3]['taustart_ts']: reliably_detectable_flux}
+        )
+        #Detect immediately
+        for img_idx in range(3,self.n_images):
+            self.n_transients_after_image[img_idx]+=1
+        #Type 0
+        self.n_transient_types[1]+=1
+
+        # Should not be flagged as transient until forced-fit in image[4]
+        # shows high-variance
+        # shifted to -ve RA
+        weak_fast_transient = MockSource(
+            example_extractedsource_tuple(ra=centre_ra - xtr_radius * 0.5,
+                                          dec=centre_decl),
+            lightcurve={imgs[3]['taustart_ts']: barely_detectable_flux}
+        )
+        #Detect after one forced-fit in image 4
+        for img_idx in range(4,self.n_images):
+            self.n_transients_after_image[img_idx]+=1
+        #Type 2
+        self.n_transient_types[2]+=1
+
+        # shifted to +ve Dec
+        # Should not be flagged as transient until forced-fit in image[7]
+        # shows high-variance
+        weak_slow_transient = MockSource(
+            example_extractedsource_tuple(ra=centre_ra,
+                                          dec=centre_decl + xtr_radius * 0.5),
+            lightcurve={imgs[5]['taustart_ts']: barely_detectable_flux,
+                        imgs[6]['taustart_ts']: barely_detectable_flux*0.95}
+        )
+        #Detect after sudden drop in forced-fit value, image 7
+        for img_idx in range(7,self.n_images):
+            self.n_transients_after_image[img_idx]+=1
+        #Type 2
+        self.n_transient_types[2]+=1
+
+        self.all_mock_sources = [fixed_source, weak_slow_transient,
+                                 bright_fast_transient, weak_fast_transient]
+
+
+    def tearDown(self):
+        tkp.db.rollback()
+
+
+    def test_full_transient_search_routine(self):
+        inserted_imgs = []
+        for img_idx in xrange(self.n_images):
+            image, _,_ = insert_image_and_simulated_sources(
+                self.dataset,self.img_params[img_idx],self.all_mock_sources,
+                self.new_source_sigma_margin)
+            inserted_imgs.append(image)
+            transients = multi_epoch_transient_search(image_id=image.id,
+                                  **self.search_params)
+            discovered_transients = get_transients_for_dataset(self.dataset.id)
+            self.assertEqual(len(discovered_transients),
+                             self.n_transients_after_image[img_idx])
+
+        #Sanity check that everything went into one band
+        bands = self.dataset.frequency_bands()
+        self.assertEqual(len(bands), 1)
+
+        all_transients = get_transients_for_dataset(self.dataset.id)
+
+        transient_type_results = [t['transient_type'] for t in all_transients]
+        for type_num in self.n_transient_types:
+            self.assertEqual(transient_type_results.count(type_num),
+                             self.n_transient_types[type_num])
+
+#        for t in all_transients:
+#            print "V_int:", t['v_int'], "  eta_int:", t['eta_int']
+        #Now test thresholding:
+        more_highly_variable = sum(t['v_int'] > 2.0 for t in all_transients)
+        very_non_flat = sum(t['eta_int'] > 100.0 for t in all_transients)
+
+        high_v_transients = multi_epoch_transient_search(
+                 eta_lim=1.1,
+                 V_lim=2.0,
+                 probability_threshold=0.01,
+                 image_id=inserted_imgs[-1].id,
+                 minpoints=1)
+        self.assertEqual(len(high_v_transients), more_highly_variable)
+
+        high_eta_transients = multi_epoch_transient_search(
+                 eta_lim=100,
+                 V_lim=0.01,
+                 probability_threshold=0.01,
+                 image_id=inserted_imgs[-1].id,
+                 minpoints=1)
+        self.assertEqual(len(high_eta_transients), very_non_flat)
 
 
 
@@ -719,4 +880,4 @@ class TestIssue4306(unittest.TestCase):
                 self.database.exceptions.IntegrityError
             )
             with self.assertRaises(possible_errors):
-                _insert_transients(transients)
+                _insert_variable_source_transients(transients)

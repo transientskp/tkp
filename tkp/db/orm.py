@@ -498,7 +498,7 @@ class Image(DBObject):
 
         insert_extracted_sources(self._id, results=results, extract=extract)
 
-    def associate_extracted_sources(self, deRuiter_r, new_source_sigma_margin=3):
+    def associate_extracted_sources(self, deRuiter_r, new_source_sigma_margin):
         """Associate sources from the last images with previously
         extracted sources within the same dataset
 

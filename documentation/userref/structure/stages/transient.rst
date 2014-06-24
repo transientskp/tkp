@@ -63,17 +63,27 @@ Section ``transient_search``
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 ``V_lim``
-   Float. :math:`V_{\nu}` must be greater than ``V_lim`` for a source
-   to be identified as transient.
+    Float. :math:`V_{\nu}` must be greater than ``V_lim`` for a source
+    to be identified as transient.
 
 ``eta_lim``
-   Float. :math:`\eta_{\nu}` must be greater than ``eta_lim`` for a source
-   to be identified as transient.
+    Float. :math:`\eta_{\nu}` must be greater than ``eta_lim`` for a source
+    to be identified as transient.
 
 ``threshold``
-   Float. The probability of a source not being flat must be above this threshold for
-   it to be identified as transient.
+    Float. The probability of a source not being flat must be above this
+    threshold for it to be identified as transient.
 
 ``minpoints``
-   Integer. The lightcurve must contain at least ``minpoints`` measurements
-   for it to be identified as transient.
+    Integer. The lightcurve must contain at least ``minpoints`` measurements
+    for it to be identified as transient.
+
+``new_source_sigma_margin``
+    Float. A newly detected source is considered transient if it is
+    significantly above the best (lowest) previous detection limit for that
+    point on-sky. 'Significantly above' is defined by a 'margin of error,'
+    intended to screen out steady sources that just happen to be fluctuating
+    around the detection threshold due to measurement noise.
+    This value sets that margin as a multiple of the RMS of the previous-best
+    image.
+

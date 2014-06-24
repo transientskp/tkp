@@ -325,7 +325,8 @@ class TestMultipleSourceField(unittest.TestCase):
 
         #At centre
         fixed_source = MockSource(
-            example_extractedsource_tuple(ra=centre_ra, dec=centre_decl))
+            example_extractedsource_tuple(ra=centre_ra, dec=centre_decl),
+            lightcurve=defaultdict(lambda: 15e-3))
 
         imgs = self.img_params
         #shifted to +ve RA

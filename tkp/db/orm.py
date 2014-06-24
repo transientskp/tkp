@@ -498,7 +498,7 @@ class Image(DBObject):
 
         insert_extracted_sources(self._id, results=results, extract=extract)
 
-    def associate_extracted_sources(self, deRuiter_r):
+    def associate_extracted_sources(self, deRuiter_r, new_source_sigma_margin=3):
         """Associate sources from the last images with previously
         extracted sources within the same dataset
 
@@ -508,7 +508,8 @@ class Image(DBObject):
                 association. The default value is set through the
                 tkp.config module
         """
-        associate_extracted_sources(self._id, deRuiter_r)
+        associate_extracted_sources(self._id, deRuiter_r,
+                                    new_source_sigma_margin)
 
 
 class ExtractedSource(DBObject):

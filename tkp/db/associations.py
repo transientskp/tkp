@@ -9,7 +9,7 @@ import tkp.db
 logger = logging.getLogger(__name__)
 
 
-def associate_extracted_sources(image_id, deRuiter_r):
+def associate_extracted_sources(image_id, deRuiter_r, new_source_sigma_margin=3):
     """Associate extracted sources with sources detected in the running
     catalog.
 
@@ -77,7 +77,7 @@ def associate_extracted_sources(image_id, deRuiter_r):
     _insert_new_runcat_flux(image_id)
     _insert_new_runcat_skyrgn_assocs(image_id)
     _insert_new_assoc(image_id)
-    _insert_new_transient(image_id)
+    _insert_new_transient(image_id, new_source_sigma_margin)
 
     #+-------------------------------------------------------+
     #| New sources are added to transient table as well, but |
@@ -1853,7 +1853,7 @@ INSERT INTO assocxtrsource
 """
     tkp.db.execute(query, {'image_id':image_id}, True)
 
-def _insert_new_transient(image_id):
+def _insert_new_transient(image_id, new_source_sigma_margin):
     """A new source needs to be added to the transient table,
     except for sources that were detected in an image of skyregion
     that was surveyed for the first time.

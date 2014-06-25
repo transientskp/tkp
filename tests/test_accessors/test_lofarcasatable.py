@@ -13,9 +13,9 @@ from tkp.testutil.data import DATAPATH
 
 casatable = os.path.join(DATAPATH, 'casatable/L55596_000TO009_skymodellsc_wmax6000_noise_mult10_cell40_npix512_wplanes215.img.restored.corr')
 
-@requires_data(casatable)
 class TestLofarCasaImage(unittest.TestCase):
     @classmethod
+    @requires_data(casatable)
     def setUpClass(cls):
         cls.accessor = LofarCasaImage(casatable)
 

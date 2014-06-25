@@ -1,20 +1,17 @@
+import os
 import unittest
-import pyfits
-import math
-import tempfile
 import tkp.steps.persistence
-from tkp.testutil import db_subs
 from tkp.testutil.decorators import requires_mongodb
 import tkp.testutil.data as testdata
-from tkp.testutil.decorators import requires_database
+from tkp.testutil.decorators import requires_database, requires_data
 import tkp.db
-from tkp.db import DataSet
 import tkp.db.generic
 from ConfigParser import SafeConfigParser
 
 from tkp.config import parse_to_dict, initialize_pipeline_config
 from tkp.testutil.data import default_job_config, default_pipeline_config
-import StringIO
+
+datafile = os.path.join(testdata.DATAPATH, "sourcefinder/NCP_sample_image_1.fits")
 
 @requires_database()
 class TestPersistence(unittest.TestCase):
@@ -23,10 +20,11 @@ class TestPersistence(unittest.TestCase):
         tkp.db.rollback()
 
     @classmethod
+    @requires_data(datafile)
     def setUpClass(cls):
-        dataset = DataSet(data={'description': "Test persistence"})
+        dataset = tkp.db.DataSet(data={'description': "Test persistence"})
         cls.dataset_id = dataset.id
-        cls.images = [testdata.fits_file]
+        cls.images = [datafile]
         cls.extraction_radius = 256
         job_config = SafeConfigParser()
         job_config.read(default_job_config)
@@ -66,7 +64,7 @@ class TestPersistence(unittest.TestCase):
 class TestMongoDb(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        cls.images = [testdata.fits_file]
+        cls.images = [datafile]
 
     @unittest.skip("disabled for now since no proper way to configure (yet)")
     def test_image_to_mongodb(self):

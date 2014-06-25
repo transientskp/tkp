@@ -8,10 +8,10 @@ import tkp.bin.pyse
 from tkp.accessors import FitsImage
 from tkp.accessors import sourcefinder_image_from_accessor
 from tkp.testutil.data import DATAPATH
-from tkp.testutil import Mock
+from tkp.testutil.mock import Mock
 
 
-orig_fits_file = os.path.join(DATAPATH, 'NCP_sample_image_1.fits')
+orig_fits_file = os.path.join(DATAPATH, 'sourcefinder/NCP_sample_image_1.fits')
 
 
 class AttributeDict(dict):

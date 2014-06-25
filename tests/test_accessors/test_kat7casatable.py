@@ -11,9 +11,9 @@ from tkp.testutil.data import DATAPATH
 
 casatable = os.path.join(DATAPATH, 'accessors/kat7.image')
 
-@requires_data(casatable)
 class TestKat7CasaImage(unittest.TestCase):
     @classmethod
+    @requires_data(casatable)
     def setUpClass(cls):
         cls.accessor = Kat7CasaImage(casatable)
 

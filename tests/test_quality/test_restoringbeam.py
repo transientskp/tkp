@@ -1,35 +1,28 @@
 import os
-
 import unittest
 from tkp.quality.restoringbeam import beam_invalid
 
-from tkp.testutil.decorators import requires_data
-from tkp import accessors
-from tkp.testutil.data import DATAPATH
-
-
-fits_file = os.path.join(DATAPATH,
-    'quality/noise/bad/home-pcarrol-msss-3C196a-analysis-band6.corr.fits')
-
-@requires_data(fits_file)
 class TestRestoringBeam(unittest.TestCase):
-    def test_header(self):
-        image = accessors.open(fits_file)
-        (semimaj, semimin, theta) = image.beam
-        self.assertFalse(beam_invalid(semimaj, semimin, theta))
+    # semimaj, semimin give semi-axis lengths in pixels.
+    def test_undersampled(self):
+        semimaj, semimin, theta = 0.1, 0.1, 0.0
+        self.assertTrue(beam_invalid(semimaj, semimin, theta))
 
-        # TODO: this is for FOV calculation and checking
-        #data = tkp.quality.restoringbeam.parse_fits(image)
-        #frequency = image.freq_eff
-        #wavelength = scipy.constants.c/frequency
-        #d = 32.25
-        #fwhm = tkp.lofar.beam.fwhm(wavelength, d)
-        #fov = tkp.lofar.beam.fov(fwhm)
+    def test_oversampled(self):
+        semimaj, semimin, theta = 100, 100, 0.0
+        self.assertTrue(beam_invalid(semimaj, semimin, theta))
+
+    def test_elliptical(self):
+        semimaj, semimin, theta = 100, 0.1, 0.0
+        self.assertTrue(beam_invalid(semimaj, semimin, theta))
 
     def test_infinite(self):
         smaj, smin, theta = float('inf'), float('inf'), float('inf')
         self.assertTrue(beam_invalid(smaj, smin, theta))
 
+    def test_ok(self):
+        semimaj, semimin, theta = 10, 5, 0.0
+        self.assertFalse(beam_invalid(semimaj, semimin, theta))
 
 if __name__ == '__main__':
     unittest.main()

@@ -17,12 +17,9 @@ from tkp.testutil.data import DATAPATH
 # measured flux.
 FUDGEFACTOR = 0.5
 
-# The different sections (observed, corrected, model) of the
-# MeasurementSet contain different simulations.
-
-corrected_fits = os.path.join(DATAPATH, 'L15_12h_const/corrected-all.fits')
-observed_fits = os.path.join(DATAPATH, 'L15_12h_const/observed-all.fits')
-all_fits = os.path.join(DATAPATH, 'L15_12h_const/model-all.fits')
+corrected_fits = os.path.join(DATAPATH, 'sourcefinder/L15_12h_const/corrected-all.fits')
+observed_fits = os.path.join(DATAPATH, 'sourcefinder/L15_12h_const/observed-all.fits')
+all_fits = os.path.join(DATAPATH, 'sourcefinder/L15_12h_const/model-all.fits')
 
 class L15_12hConstObs(unittest.TestCase):
     # Single, constant 1 Jy source at centre of image.

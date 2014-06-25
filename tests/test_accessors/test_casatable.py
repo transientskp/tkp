@@ -6,9 +6,7 @@ import tkp.accessors as accessors
 from tkp.testutil.data import DATAPATH
 from tkp.testutil.decorators import requires_data
 
-
-
-casatable = os.path.join(DATAPATH, 'L21641_SB098.restored.image')
+casatable = os.path.join(DATAPATH, 'accessors/casa.table')
 
 @requires_data(casatable)
 class TestLofarCasaImage(unittest.TestCase):

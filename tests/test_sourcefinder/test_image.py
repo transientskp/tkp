@@ -9,12 +9,12 @@ from tkp.sourcefinder import image as sfimage
 from tkp import accessors
 from tkp.utility.uncertain import Uncertain
 from tkp.testutil.data import DATAPATH
-
-
+from tkp.testutil.data import fits_file
 
 BOX_IN_BEAMPIX = 10 #HARDCODING - FIXME! (see also monitoringlist recipe)
 
-#
+GRB120422A = os.path.join(DATAPATH, "sourcefinder/GRB120422A-120429.fits")
+
 class TestNumpySubroutines(unittest.TestCase):
     def testBoxSlicing(self):
         """
@@ -46,7 +46,7 @@ class TestNumpySubroutines(unittest.TestCase):
 class TestFitFixedPositions(unittest.TestCase):
     """Test various fitting cases where the pixel position is predetermined"""
 
-    @requires_data(os.path.join(DATAPATH, 'NCP_sample_image_1.fits'))
+    @requires_data(os.path.join(DATAPATH, 'sourcefinder/NCP_sample_image_1.fits'))
     def setUp(self):
         """
         NB the required image has been committed to the tkp/data subversion repository.
@@ -56,7 +56,7 @@ class TestFitFixedPositions(unittest.TestCase):
         Source positions / background positions were simply picked out by eye in DS9
         """
         self.image = accessors.sourcefinder_image_from_accessor(
-                       accessors.open(os.path.join(DATAPATH, 'NCP_sample_image_1.fits'))
+                       accessors.open(os.path.join(DATAPATH, 'sourcefinder/NCP_sample_image_1.fits'))
                        )
         self.assertListEqual(list(self.image.data.shape),[1024,1024])
         self.boxsize = BOX_IN_BEAMPIX*max(self.image.beam[0], self.image.beam[1])
@@ -188,13 +188,7 @@ class TestFitFixedPositions(unittest.TestCase):
 
 class TestSimpleImageSourceFind(unittest.TestCase):
     """Now lets test drive the routines which find new sources"""
-
-#    def setUp(self):
-#        """NB the required image has been committed to the tkp/data subversion repository.
-#            (See tkp/data/unittests/tkp_lib for a full copy of all the unittest data).
-#        """
-
-    @requires_data(os.path.join(DATAPATH, 'GRB120422A/GRB120422A-120429.fits'))
+    @requires_data(GRB120422A)
     def testSingleSourceExtraction(self):
         """
         Single source extaction
@@ -214,8 +208,7 @@ class TestSimpleImageSourceFind(unittest.TestCase):
             5.181697175052841 #error_radius
         )
         self.image = accessors.sourcefinder_image_from_accessor(
-                       accessors.FitsImage(os.path.join(DATAPATH,
-                                        'GRB120422A/GRB120422A-120429.fits')))
+            accessors.FitsImage(GRB120422A))
 
         results = self.image.extract(det=5, anl=3)
         results = [result.serialize(ew_sys_err, ns_sys_err) for result in results]
@@ -225,7 +218,7 @@ class TestSimpleImageSourceFind(unittest.TestCase):
         for i in range(len(r)):
             self.assertAlmostEqual(r[i], known_result[i], places=5)
 
-    @requires_data(os.path.join(DATAPATH, 'GRB120422A/GRB120422A-120429.fits'))
+    @requires_data(GRB120422A)
     def testForceSourceShape(self):
         """
         Force source shape to beam
@@ -235,16 +228,13 @@ class TestSimpleImageSourceFind(unittest.TestCase):
         major/minor axes to be held constant when fitting.
         """
         self.image = accessors.sourcefinder_image_from_accessor(
-           accessors.FitsImage(
-               os.path.join(DATAPATH, 'GRB120422A/GRB120422A-120429.fits')
-            ),
-        )
+            accessors.FitsImage(GRB120422A))
         results = self.image.extract(det=5, anl=3, force_beam=True)
         self.assertEqual(results[0].smaj.value, self.image.beam[0])
         self.assertEqual(results[0].smin.value, self.image.beam[1])
 
-    @requires_data(os.path.join(DATAPATH, 'GRB130828A/SWIFT_554620-130504.fits'))
-    @requires_data(os.path.join(DATAPATH, 'GRB130828A/SWIFT_554620-130504.image'))
+    @requires_data(os.path.join(DATAPATH, 'sourcefinder/GRB130828A/SWIFT_554620-130504.fits'))
+    @requires_data(os.path.join(DATAPATH, 'sourcefinder/GRB130828A/SWIFT_554620-130504.image'))
     def testWcsConversionConsistency(self):
         """
         Check that extracting a source from FITS and CASA versions of the
@@ -253,13 +243,13 @@ class TestSimpleImageSourceFind(unittest.TestCase):
 
         fits_image = accessors.sourcefinder_image_from_accessor(
                        accessors.FitsImage(os.path.join(DATAPATH,
-                                        'GRB130828A/SWIFT_554620-130504.fits')))
+                         'sourcefinder/GRB130828A/SWIFT_554620-130504.fits')))
         # Abuse the KAT7 CasaImage class here, since we just want to access
         # the pixel data and the WCS:
         casa_image = accessors.sourcefinder_image_from_accessor(
                accessors.kat7casaimage.Kat7CasaImage(
                      os.path.join(DATAPATH,
-                                  'GRB130828A/SWIFT_554620-130504.image')))
+                         'sourcefinder/GRB130828A/SWIFT_554620-130504.image')))
 
         ew_sys_err, ns_sys_err = 0.0, 0.0
         fits_results = fits_image.extract(det=5, anl=3)
@@ -272,7 +262,7 @@ class TestSimpleImageSourceFind(unittest.TestCase):
         casa_src = casa_results[0]
         self.assertEqual(fits_src, casa_src)
 
-    @requires_data(os.path.join(DATAPATH, 'GRB120422A/GRB120422A-120429.fits'))
+    @requires_data(GRB120422A)
     def testNoLabelledIslandsCase(self):
         """
         If an image is in fact very boring and flat/empty, then we may not even
@@ -283,9 +273,7 @@ class TestSimpleImageSourceFind(unittest.TestCase):
         this avoids requiring additional data).
         """
         self.image = accessors.sourcefinder_image_from_accessor(
-                       accessors.FitsImage(os.path.join(DATAPATH,
-                                        'GRB120422A/GRB120422A-120429.fits')))
-
+            accessors.FitsImage(GRB120422A))
         results = self.image.extract(det=5e10, anl=5e10)
         results = [result.serialize() for result in results]
         self.assertEqual(len(results), 0)
@@ -299,20 +287,19 @@ class TestMaskedSource(unittest.TestCase):
     of the image.
     """
 
-    @requires_data(os.path.join(DATAPATH, 'GRB120422A/GRB120422A-120429.fits'))
+    @requires_data(GRB120422A)
     def testWholeSourceMasked(self):
         """
         Source in masked region
         """
 
         self.image = accessors.sourcefinder_image_from_accessor(
-                       accessors.FitsImage(os.path.join(DATAPATH,
-                                        'GRB120422A/GRB120422A-120429.fits')))
+            accessors.FitsImage(GRB120422A))
         self.image.data[250:280, 250:280] = np.ma.masked
         results = self.image.extract(det=5, anl=3)
         self.assertFalse(results)
 
-    @requires_data(os.path.join(DATAPATH, 'GRB120422A/GRB120422A-120429.fits'))
+    @requires_data(GRB120422A)
     def testWholeSourceMasked(self):
         """
         Part of source masked
@@ -321,8 +308,7 @@ class TestMaskedSource(unittest.TestCase):
         """
 
         self.image = accessors.sourcefinder_image_from_accessor(
-                       accessors.FitsImage(os.path.join(DATAPATH,
-                                        'GRB120422A/GRB120422A-120429.fits')))
+            accessors.FitsImage(GRB120422A))
         self.image.data[266:269, 263:266] = np.ma.masked
         results = self.image.extract(det=5, anl=3)
         self.assertFalse(results)
@@ -330,23 +316,19 @@ class TestMaskedSource(unittest.TestCase):
 
 class TestMaskedBackground(unittest.TestCase):
     # We force the mask by setting the usable region << grid size.
-    @requires_data(os.path.join(DATAPATH, "L41391_0.img.restored.corr.fits"))
+    @requires_data(fits_file)
     def testMaskedBackgroundForcedFit(self):
         """
         Background at forced fit is masked
         """
         self.image = accessors.sourcefinder_image_from_accessor(
-            accessors.open(os.path.join(DATAPATH, "L41391_0.img.restored.corr.fits")),
-            radius=1.0,
-        )
+            accessors.open(fits_file), radius=1.0)
         result = self.image.fit_to_point(256, 256, 10, 0, None)
         self.assertFalse(result)
 
-    @requires_data(os.path.join(DATAPATH, "L41391_0.img.restored.corr.fits"))
+    @requires_data(fits_file)
     def testMaskedBackgroundBlind(self):
         self.image = accessors.sourcefinder_image_from_accessor(
-            accessors.open(os.path.join(DATAPATH, "L41391_0.img.restored.corr.fits")),
-            radius=1.0,
-        )
+            accessors.open(fits_file), radius=1.0)
         result = self.image.extract(det=10.0, anl=3.0)
         self.assertFalse(result)

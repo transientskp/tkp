@@ -13,9 +13,9 @@ from tkp.testutil.data import DATAPATH
 
 
 lofarcasatable = os.path.join(DATAPATH, 'casatable/L55596_000TO009_skymodellsc_wmax6000_noise_mult10_cell40_npix512_wplanes215.img.restored.corr')
-casatable = os.path.join(DATAPATH, 'L21641_SB098.restored.image')
-fitsfile = os.path.join(DATAPATH, 'lofar15_12hr-corrected-I-mfs.fits')
-hdf5file = os.path.join(DATAPATH, 'lofar.h5')
+casatable = os.path.join(DATAPATH, 'accessors/casa.table')
+fitsfile = os.path.join(DATAPATH, 'accessors/lofar.fits')
+hdf5file = os.path.join(DATAPATH, 'accessors/lofar.h5')
 antennafile = os.path.join(DATAPATH, 'lofar/CS001-AntennaArrays.conf')
 
 class TestAutodetect(unittest.TestCase):

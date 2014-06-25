@@ -40,7 +40,8 @@ BG_STD = 5.3480336747739079
 class SourceParameters(unittest.TestCase):
 
     def setUp(self):
-        fitsfile = tkp.accessors.open(os.path.join(DATAPATH, 'TEST_DECONV.FITS'))
+        fitsfile = tkp.accessors.open(os.path.join(DATAPATH,
+            'sourcefinder/simulations/deconvolved.fits'))
         img = image.ImageData(fitsfile.data, fitsfile.beam,
                               fitsfile.wcs)
 
@@ -77,8 +78,10 @@ class SourceParameters(unittest.TestCase):
         self.deconv_smajaxes = np.array(deconv_smajaxes)
         self.deconv_sminaxes = np.array(deconv_sminaxes)
         self.deconv_bpas = np.array(deconv_bpas)
+
     @duration(100)
-    @requires_data(os.path.join(DATAPATH, 'TEST_DECONV.FITS'))
+    @requires_data(os.path.join(DATAPATH,
+            'sourcefinder/simulations/deconvolved.fits'))
     def testAllParameters(self):
         # Test all deconvolved
         self.assertEqual(

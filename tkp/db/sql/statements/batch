@@ -6,10 +6,7 @@ tables/frequencyband.sql
 tables/dataset.sql
 tables/skyregion.sql
 tables/image.sql
-tables/catalog.sql
-tables/catalogedsource.sql
 tables/extractedsource.sql
-tables/assoccatsource.sql
 tables/runningcatalog.sql
 tables/assocxtrsource.sql
 tables/assocskyrgn.sql
@@ -17,7 +14,6 @@ tables/runningcatalog_flux.sql
 tables/temprunningcatalog.sql
 tables/node.sql
 tables/transient.sql
-tables/classification.sql
 tables/rejectreason.sql
 tables/rejection.sql
 tables/config.sql
@@ -38,11 +34,3 @@ procedures/BuildNodes.sql
 # initialisation
 #
 init/tables.sql
-#
-# catalogs
-#
-#load/vlss.sql
-#load/wenss.sql
-#load/nvss.sql
-#load/exo.sql
-

@@ -7,12 +7,9 @@ Database
 
    The information on this page is old and, in places, outdated.
 
-This section concerns the (MonetDB) database that is used to store
-extracted sources and determine variable sources. In addition, it
-stores catalogs from previous surveys, which can be used for creating
-a sky model for BBS, and it stores some characteristics of
-(classified) transient sources. It does not deal with the PostgreSQL
-database used by BBS.
+This section concerns the (MonetDB or PostgreSQL) database that is used to
+store extracted sources and determine variable sources. It does not deal with
+the PostgreSQL database used by BBS.
 
 The default scratch database, both on heastro1 and CEP, is simply
 called tkp; the login and password are both tkp as well. On heastro1,
@@ -71,9 +68,7 @@ directory(:file:`/opt/tkp/tkp/database/batches` on heastro1 and
 (Again, this requires a correct :file:`~/.monetdb` file.)
 The :option:`--no-create-database` will prevent the script from completely
 deleting and recreating the database, and instead it will just create
-the necessary tables and functions. It will also load various catalogs
-(NVSS, WENSS, VLSS); this may take a while, so if the script seems to
-pause for a while, it is probably loading those catalogs.
+the necessary tables and functions.
 
 You can check if everything went correct (assuming you didn't see any
 errors in the output from the setup.db.batch script in the first
@@ -82,15 +77,7 @@ place) by logging in to your database (:command:`$> mclient -lsql -d<dbname>
 
     sql> select * from versions;
 
-    sql> select * from catalogs;
-
-    sql> select count(*) from catalogedsources;
-
-The first command should show a creation date of today. The second
-command will tell you which catalogs have been loaded (currently,
-March 2011, there are four, since the WENSS comes in two parts). The
-third command will tell you how many catalog sources there are (March
-2011, 2071205 sources).
+The first command should show a creation date of today.
 
 Finally, for the latest-greatest and possibly unstable version of the database
 setup, use `tkpdev` instead of `tkp`. This database gets wiped every night and

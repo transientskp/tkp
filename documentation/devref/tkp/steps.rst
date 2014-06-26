@@ -17,9 +17,9 @@ Main logic flow
    (unsuitable for further processing). Subsequent recipes only act on 'good'
    images.
  * :py:mod:`source_extraction.py`  Performs blind extraction and source association.
- * :py:mod:`monitoringlist.py` Performs forced fits for the user-provided source
-   positions to be monitored. Associates the monitoring sources 1-to-1 with 
-   the known monitoring sources in the runningcatalog 
+ * :py:mod:`monitoringlist.py` Performs forced fits for the user-provided
+   source positions to be monitored. Associates the monitoring sources
+   1-to-1 with the known monitoring sources in the runningcatalog
    (:py:func:`monitoringlist.associate_ms`).
  * :py:mod:`transient_search.py` First selects sources from the runningcatalog which
    satisfy the user-supplied criteria for variability indices.
@@ -44,22 +44,22 @@ some will make little sense. The steps are:
 
 - **Source extraction, database storage and source association.** This
   will detect sources in the current image, stores the sources in a
-  database and associates the sources with 1) previously detected
-  sources from the same dataset and 2) existing catalogs.
+  database and associates the sources with previously detected
+  sources from the same dataset.
 
   Note: currently, this is one step (recipe), though it may be split
   up into two steps for clarity (extraction and association are quite
   different steps).
 
-- **Null detections.** This takes care of measuring source properties 
-  of undetected sources in the current image, because the source is known 
-  in the runningcatalog. A forced fit at this catalog position serves 
+- **Null detections.** This takes care of measuring source properties
+  of undetected sources in the current image, because the source is known
+  in the runningcatalog. A forced fit at this catalog position serves
   as input for association with the known catalog sources, so
   that the light curve now has upper limits at those timestamps.
 
-- **Monitor user-added sources.** This step takes care of sources 
-  that were obtained from a user-specified list, such as a new X-ray 
-  source: the pipeline will now monitor this position so the full 
+- **Monitor user-added sources.** This step takes care of sources
+  that were obtained from a user-specified list, such as a new X-ray
+  source: the pipeline will now monitor this position so the full
   LOFAR light curve for this source can be measured.
 
 - **Transient detection.** All existing light curves (ie, associated sources from

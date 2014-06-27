@@ -41,7 +41,8 @@ class TestLightCurve(unittest.TestCase):
                     'deltay': float(0.01111),
                     'centre_ra': 111,
                     'centre_decl': 11,
-                    'xtr_radius' : 3
+                    'xtr_radius': 3,
+                    'rms_qc': 1,
             }
             image = Image(dataset=self.dataset, data=data)
             images.append(image)

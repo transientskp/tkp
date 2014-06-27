@@ -97,25 +97,47 @@ def jd2lst(jd, position=None):
 
 
 
+# NB: datetime is not sensitive to leap seconds.
+# However, leap seconds were first introduced in 1972.
+# So there are no leap seconds between the start of the
+# Modified Julian epoch and the start of the Unix epoch,
+# so this calculation is safe.
 #julian_epoch = datetime.datetime(1858, 11, 17)
 #unix_epoch = datetime.datetime(1970, 1, 1, 0, 0)
 #delta = unix_epoch - julian_epoch
 #deltaseconds = delta.total_seconds()
-seconds_between_julian_and_unix_epoc = 3506716800
+#unix_epoch = 3506716800
 
+# The above is equivalent to this:
+unix_epoch = quantity("1970-01-01T00:00:00").get_value('s')
 
 def julian2unix(timestamp):
-    """converts a julian timestamp (number of seconds since 17 November 1858)
-    to unix timestamp (number of seconds since  1 January 1970)
     """
-    return timestamp - seconds_between_julian_and_unix_epoc
+    Convert a modifed julian timestamp (number of seconds since 17 November
+    1858) to Unix timestamp (number of seconds since 1 January 1970).
+
+    Args:
+        timestamp (numbers.Number): Number of seconds since the Unix epoch.
+
+    Returns:
+        numbers.Number: Number of seconds since the modified Julian epoch.
+    """
+    return timestamp - unix_epoch
 
 
 def unix2julian(timestamp):
-    """converts a julian timestamp (number of seconds since 17 November 1858)
-    to unix timestamp (number of seconds since  1 January 1970)
     """
-    return timestamp + seconds_between_julian_and_unix_epoc
+    Convert a Unix timestamp (number of seconds since 1 January 1970) to a
+    modified Julian timestamp (number of seconds since 17 November 1858).
+
+    Args:
+        timestamp (numbers.Number): Number of seconds since the modified
+        Julian epoch.
+
+    Returns:
+        numbers.Number: Number of seconds since the Unix epoch.
+    """
+    return timestamp + unix_epoch
 
 
 def sec2deg(seconds):
@@ -224,6 +246,32 @@ def dectodms(decdegs):
     return (decd, decm, decs)
 
 
+def propagate_sign(val1, val2, val3):
+    """
+    casacore (reasonably enough) demands that a minus sign (if required)
+    comes at the start of the quantity. Thus "-0D30M" rather than "0D-30M".
+    Python regards "-0" as equal to "0"; we need to split off a separate sign
+    field.
+
+    If more than one of our inputs is negative, it's not clear what the user
+    meant: we raise.
+
+    Args:
+        val1, val2, val3 (numeric): input values (hour/min/sec or deg/min/sec)
+
+    Returns:
+        sign (str): "+" or "-"
+        val1, val2, val3 (numeric): absolute values of inputs.
+    """
+    signs = [x<0 for x in (val1, val2, val3)]
+    if signs.count(True) == 0:
+        sign = "+"
+    elif signs.count(True) == 1:
+        sign, val1, val2, val3 = "-", abs(val1), abs(val2), abs(val3)
+    else:
+        raise ValueError("Too many negative coordinates")
+    return sign, val1, val2, val3
+
 def hmstora(rah, ram, ras):
     """Convert RA in hours, minutes, seconds format to decimal
     degrees format.
@@ -235,14 +283,11 @@ def hmstora(rah, ram, ras):
     radegs -- RA in decimal degrees
 
     """
-    if rah > 360 or ram > 59 or ras > 59:
-        raise ValueError("coordinate out of range")
-    if rah < 0 or ram < 0 or ras < 0:
-        raise ValueError("coordinate out of range")
-    hrs = (float(rah)+(float(ram)/60)+(float(ras)/3600.0))
-    if hrs > 24:
-        raise ValueError("coordinate out of range")
-    return 15 * hrs
+    sign, rah, ram, ras = propagate_sign(rah, ram, ras)
+    ra = quantity("%s%dH%dM%f" % (sign, rah, ram, ras)).get_value()
+    if abs(ra) >= 360:
+        raise ValueError("coordinates out of range")
+    return ra
 
 
 def dmstodec(decd, decm, decs):
@@ -256,18 +301,11 @@ def dmstodec(decd, decm, decs):
     decdegs -- Dec in decimal degrees
 
     """
-    if decd > 90 or decd < -90:
-        raise ValueError("degrees out of range")
-    if decm > 59 or decm < -59:
-        raise ValueError("minutes out of range")
-    if decs > 59 or decs < -59:
-        raise ValueError("seconds out of range")
-    sign = -1 if decd < 0 or decm < 0 or decs < 0 else 1
-    decdegs = abs(decd) + abs(decm) / 60. + abs(decs) / 3600.
-    if decdegs > 90:
+    sign, decd, decm, decs = propagate_sign(decd, decm, decs)
+    dec = quantity("%s%dD%dM%f" % (sign, decd, decm, decs)).get_value()
+    if abs(dec) > 90:
         raise ValueError("coordinates out of range")
-
-    return sign * decdegs
+    return dec
 
 
 def angsep(ra1, dec1, ra2, dec2):

@@ -1,4 +1,5 @@
 import unittest
+import numpy as np
 from tkp.testutil import db_subs, data
 from ConfigParser import SafeConfigParser
 from tkp.config import parse_to_dict
@@ -7,9 +8,14 @@ from tkp.testutil import Mock
 import tkp.steps.source_extraction
 import tkp.accessors
 
+
 class MockImage(Mock):
     def extract(self, *args, **kwargs):
         return self.__call__(*args, **kwargs)
+    @property
+    def rmsmap(self, *args, **kwargs):
+        return np.zeros((1))
+
 
 class TestSourceExtraction(unittest.TestCase):
     @classmethod

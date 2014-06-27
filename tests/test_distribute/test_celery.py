@@ -28,7 +28,7 @@ class TestCelery(unittest.TestCase):
     """
 
     @unittest.skip("Enable this if you have broker and worker running")
-    def testRemoteTaskLogging(self):
+    def test_remote_task_logger(self):
         """
         make sure the worker log->event->client log mechanism is working.
         """
@@ -48,7 +48,7 @@ class TestCelery(unittest.TestCase):
                 check.remove(record.levelno)
         self.assertFalse(len(check))
 
-    def testLocalTaskLogging(self):
+    def test_local_task_logger(self):
         """
         Logging should also work if you run it locally
         """

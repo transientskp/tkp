@@ -12,7 +12,7 @@ The algorithm employed is:
 
 #. The image is divided into a square grid of user defined size.
 
-#. Within each cell, the data is :math:`\sigma` clipped to remove the effect of
+#. Within each cell, the data is sigma-clipped to remove the effect of
    bright sources.
 
 #. The median pixel value within each clipped cell is calculated, and

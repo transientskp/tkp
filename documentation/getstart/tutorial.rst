@@ -46,13 +46,19 @@ to define various properties used during processing. To initialise a job run::
 
     $ ./manage.py initjob <jobname>
 
-This will create a subdirectory in your pipeline directory. This directory
-contains a a file names ``images_to_process.py``. This is a python script that
-is used to generate a list of paths to images. You will need to adjust this to
-point to your data files.
+This will create a job subdirectory within your pipeline directory. This
+directory contains three files:
 
-There is also a subdirectory named ``parsets`` which contains the parset files
-described above.
+``images_to_process.py``
+    This is a Python script that is used to generate a list of paths to
+    images. You will need to adjust this to point to your data files.
+
+``job_params.cfg``
+    The :ref:`parameters configuration file <job_params_cfg>` for this job.
+
+``inject.cfg``
+    Configuration for :ref:`image metadata injection <tkp-inject>`.
+
 
 Run the pipeline
 ================

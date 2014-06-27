@@ -50,49 +50,6 @@ UPDATE dataset
 """
 
 
-
-def filter_userdetections_extracted_sources(image_id, deRuiter_r, assoc_theta=0.03):
-    """Remove the forced-fit user-entry sources, that have a counterpart
-    with another extractedsource
-
-    """
-    filter_ud_xtrsrcs_query = """\
-DELETE
-  FROM extractedsource
- WHERE id IN (SELECT x0.id
-                FROM extractedsource x0
-                    ,extractedsource x1
-               WHERE x0.image = %(image_id)s
-                 AND x0.extract_type = 3
-                 AND x1.image = %(image_id)s
-                 AND x1.extract_type IN (0, 1, 2)
-                 AND x1.zone BETWEEN CAST(FLOOR(x0.decl - %(assoc_theta)s) as INTEGER)
-                                 AND CAST(FLOOR(x0.decl + %(assoc_theta)s) as INTEGER)
-                 AND x1.decl BETWEEN x0.decl - %(assoc_theta)s
-                                 AND x0.decl + %(assoc_theta)s
-                 AND x1.ra BETWEEN x0.ra - alpha(%(assoc_theta)s, x0.decl)
-                               AND x0.ra + alpha(%(assoc_theta)s, x0.decl)
-                 AND SQRT(  (x0.ra - x1.ra) * COS(RADIANS((x0.decl + x1.decl)/2))
-                          * (x0.ra - x1.ra) * COS(RADIANS((x0.decl + x1.decl)/2))
-                          / (x0.uncertainty_ew * x0.uncertainty_ew + x1.uncertainty_ew * x1.uncertainty_ew)
-                         +  (x0.decl - x1.decl) * (x0.decl - x1.decl)
-                          / (x0.uncertainty_ns * x0.uncertainty_ns + x1.uncertainty_ns * x1.uncertainty_ns)
-                         ) < %(deRuiter_r)s
-             )
-    """
-    args = {'image_id': image_id,
-            'assoc_theta': assoc_theta,
-            'deRuiter_r': deRuiter_r
-    }
-    cursor = tkp.db.execute(filter_ud_xtrsrcs_query, args, True)
-    if cursor.rowcount == 0:
-        logger.info("No user-entry sources removed from extractedsource for "
-                    "image %s" % (image_id,))
-    else:
-        logger.info("Removed %d sources from extractedsource for image %s" %
-                    (cursor.rowcount, image_id))
-
-
 def update_dataset_process_end_ts(dataset_id):
     """Update dataset start-of-processing timestamp.
 
@@ -116,7 +73,7 @@ def insert_dataset(description):
 
 def insert_image(dataset, freq_eff, freq_bw, taustart_ts, tau_time,
                  beam_smaj_pix, beam_smin_pix, beam_pa_rad, deltax, deltay, url,
-                 centre_ra, centre_decl, xtr_radius
+                 centre_ra, centre_decl, xtr_radius, rms_qc
                  ):
     """Insert an image for a given dataset with the column values
     given in the argument list.
@@ -150,17 +107,24 @@ def insert_image(dataset, freq_eff, freq_bw, taustart_ts, tau_time,
                       ,%(centre_ra)s
                       ,%(centre_decl)s
                       ,%(xtr_radius)s
+                      ,%(rms_qc)s
                       )
     """
-    arguments = {'dataset': dataset, 'tau_time': tau_time, 'freq_eff': freq_eff,
-                 'freq_bw': freq_bw, 'taustart_ts': taustart_ts,
+    arguments = {'dataset': dataset,
+                 'tau_time': tau_time,
+                 'freq_eff': freq_eff,
+                 'freq_bw': freq_bw,
+                 'taustart_ts': taustart_ts,
                  'rb_smaj': substitute_inf(beam_smaj_pix * math.fabs(deltax)),
                  'rb_smin': substitute_inf(beam_smin_pix * math.fabs(deltay)),
                  'rb_pa': substitute_inf(180 * beam_pa_rad / math.pi),
-                 'deltax': deltax, 'deltay': deltay,
+                 'deltax': deltax,
+                 'deltay': deltay,
                  'url': url,
-                 'centre_ra': centre_ra, 'centre_decl': centre_decl,
-                 'xtr_radius': xtr_radius}
+                 'centre_ra': centre_ra,
+                 'centre_decl': centre_decl,
+                 'xtr_radius': xtr_radius,
+                 'rms_qc': rms_qc}
     cursor = tkp.db.execute(query, arguments, commit=True)
     image_id = cursor.fetchone()[0]
     return image_id

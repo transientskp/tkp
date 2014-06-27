@@ -74,7 +74,7 @@ def example_dbimage_datasets(n_images, **kwargs):
     association routines reject sources outside of designated extraction
     regions.
     """
-    starttime = datetime.datetime(2012, 1, 1) #Happy new year
+    starttime = datetime.datetime(2012, 1, 1)  # Happy new year
     time_spacing = datetime.timedelta(seconds=600)
 
     init_im_params = {'tau_time':300,
@@ -86,10 +86,11 @@ def example_dbimage_datasets(n_images, **kwargs):
                       'beam_pa_rad': float(1.7),
                       'deltax': float(-0.01111),
                       'deltay': float(0.01111),
-                      'url':testdata.fits_file, # just an arbitrary existing fits file
-                      'centre_ra': 123., #Arbitarily picked.
-                      'centre_decl': 10., #Arbitarily picked.
-                      'xtr_radius' : 10. # (Degrees)
+                      'url':testdata.fits_file,  # just an arbitrary existing fits file
+                      'centre_ra': 123.,  # Arbitarily picked.
+                      'centre_decl': 10.,  # Arbitarily picked.
+                      'xtr_radius': 10.,  # (Degrees)
+                      'rms_qc': 1.,
                     }
     init_im_params.update(kwargs)
 
@@ -100,7 +101,8 @@ def example_dbimage_datasets(n_images, **kwargs):
 
     return im_params
 
-def example_extractedsource_tuple(ra=123.123, dec=10.5, #Arbitrarily picked defaults
+
+def example_extractedsource_tuple(ra=123.123, dec=10.5,  # Arbitrarily picked defaults
                                   ra_fit_err=5. / 3600, dec_fit_err=6. / 3600,
                                   peak=15e-3, peak_err=5e-4,
                                   flux=15e-3, flux_err=5e-4,
@@ -127,7 +129,8 @@ def example_extractedsource_tuple(ra=123.123, dec=10.5, #Arbitrarily picked defa
                                 beam_angle=beam_angle,
                                 ew_sys_err=ew_sys_err, ns_sys_err=ns_sys_err,
                                 error_radius=error_radius
-                               )
+    )
+
 
 def deRuiter_radius(src1, src2):
     """Calculates the De Ruiter radius for two sources"""
@@ -150,6 +153,7 @@ def deRuiter_radius(src1, src2):
     dr = math.sqrt(ra_fac + dec_fac)
     return dr
 
+
 def lightcurve_metrics(src_list):
     """
     Calculates various metrics for a lightcurve made up of source extractions
@@ -169,8 +173,7 @@ def lightcurve_metrics(src_list):
     correct - less chance of making the same mistakes in two languages!
 
     """
-
-    metrics=[]
+    metrics = []
     for i, src in enumerate(src_list):
         N = i + 1
         avg_int_flux = sum(src.flux for src in src_list[0:N]) / N
@@ -186,21 +189,20 @@ def lightcurve_metrics(src_list):
             eta = N * (avg_w_f_int_sq - avg_w_f_int**2/avg_w) / (N - 1.)
 
         metrics.append({
-            'v_int':v,
-            'eta_int':eta,
-            'avg_f_int':avg_int_flux,
-            'avg_f_int_sq':avg_int_flux_sq,
-            'avg_f_int_weight': avg_w,
-            'avg_weighted_f_int': avg_w_f_int,
-            'avg_weighted_f_int_sq': avg_w_f_int_sq,
+                'v_int': v,
+                'eta_int': eta,
+                'avg_f_int': avg_int_flux,
+                'avg_f_int_sq': avg_int_flux_sq,
+                'avg_f_int_weight': avg_w,
+                'avg_weighted_f_int': avg_w_f_int,
+                'avg_weighted_f_int_sq': avg_w_f_int_sq,
             })
-
-
     return metrics
 
 #Used to record the significance levels on a lightcurve.
 MockLCPoint = namedtuple('MockLightCurvePoint',
                                  'index peak flux sigma')
+
 
 #NB To do: The `MockSource` class is very quick and dirty, currently.
 #A little refinement here would probably go a long way.

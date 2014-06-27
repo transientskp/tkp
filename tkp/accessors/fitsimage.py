@@ -24,6 +24,7 @@ class FitsImage(DataAccessor):
     header.
     """
     def __init__(self, url, plane=None, beam=None, hdu=0):
+        super(FitsImage, self).__init__()
         self._url = url
         header = self._get_header(hdu)
         self._wcs = parse_coordinates(header)

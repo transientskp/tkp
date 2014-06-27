@@ -113,6 +113,24 @@ class dectodmsTest(unittest.TestCase):
     def testRange(self):
         self.assertRaises(ValueError, coordinates.dectodms, 91)
 
+class propagate_signTest(unittest.TestCase):
+    knownValues = (
+        ((0, 0, 0), ("+", 0, 0, 0)),
+        ((1, 0, 0), ("+", 1, 0, 0)),
+        ((0, 1, 0), ("+", 0, 1, 0)),
+        ((0, 0, 1), ("+", 0, 0, 1)),
+        ((0, 0, -1), ("-", 0, 0, 1)),
+        ((0, -1, 0), ("-", 0, 1, 0)),
+        ((-1, 0, 0), ("-", 1, 0, 0))
+    )
+
+    def testknownValues(self):
+        for input, output in self.knownValues:
+            result = coordinates.propagate_sign(*input)
+            self.assertEqual(result, output)
+
+    def testCrazyInput(self):
+        self.assertRaises(ValueError, coordinates.propagate_sign, -1, -1, -1)
 
 class hmstoraTest(unittest.TestCase):
     knownValues = (((0, 0, 0), 0),
@@ -121,12 +139,13 @@ class hmstoraTest(unittest.TestCase):
         ((18, 0, 0), 270),
         ((0, 0, 24), 0.1),
         ((0, 4, 0), 1.0),
+        ((0, 0, 59.1), 0.24625),
         )
 
     def testknownValues(self):
         for input, output in self.knownValues:
             result = coordinates.hmstora(*input)
-            self.assertEqual(result, output)
+            self.assertAlmostEqual(result, output)
 
     def testTypes(self):
         self.assertRaises(TypeError, coordinates.hmstora, 'a')
@@ -144,11 +163,6 @@ class hmstoraTest(unittest.TestCase):
     def testRange(self):
         self.assertRaises(ValueError, coordinates.hmstora, 24, 0, 1)
         self.assertRaises(ValueError, coordinates.hmstora, 25, 0, 0)
-        self.assertRaises(ValueError, coordinates.hmstora, -1, 0, 0)
-        self.assertRaises(ValueError, coordinates.hmstora, 0, -1, 0)
-        self.assertRaises(ValueError, coordinates.hmstora, -1, 0, -1)
-        self.assertRaises(ValueError, coordinates.hmstora, 12, 60, 0)
-        self.assertRaises(ValueError, coordinates.hmstora, 12, 0, 60)
 
 class dmstodecTest(unittest.TestCase):
     knownValues = (((0, 0, 0), 0),
@@ -157,13 +171,14 @@ class dmstodecTest(unittest.TestCase):
         ((90, 0, 0), 90),
         ((-90, 0, 0), -90),
         ((0, 30, 0), 0.5),
-        ((0, 0, 1), 1.0/60**2)
+        ((0, 0, 1), 1.0/60**2),
+        ((0, 0, 59.004), 59.004/60**2)
         )
 
     def testknownValues(self):
         for input, output in self.knownValues:
             result = coordinates.dmstodec(*input)
-            self.assertEqual(result, output)
+            self.assertAlmostEqual(result, output)
 
     def testTypes(self):
         self.assertRaises(TypeError, coordinates.dmstodec, 'a')
@@ -192,8 +207,6 @@ class dmstodecTest(unittest.TestCase):
         self.assertRaises(ValueError, coordinates.dmstodec, 91, 0, 0)
         self.assertRaises(ValueError, coordinates.dmstodec, 90, 0, 1)
         self.assertRaises(ValueError, coordinates.dmstodec, -90, 0, 1)
-        self.assertRaises(ValueError, coordinates.dmstodec, 0, 60, 0)
-        self.assertRaises(ValueError, coordinates.dmstodec, 0, 0, 60)
 
 
 class juliandate(unittest.TestCase):
@@ -281,6 +294,19 @@ class altazTest(unittest.TestCase):
         # broken it completely. This does not check it gives the right
         # results!
         coordinates.altaz(55000 * coordinates.SECONDS_IN_DAY, 1, 1)
+
+
+class UnixToMJDTestCase(unittest.TestCase):
+    def test_unix_epoch(self):
+        # By definition; this is the number of seconds between
+        # 1858-11-17 00:00 and 1970-01-01 00:00:00.
+        self.assertEqual(coordinates.unix_epoch, 3506716800)
+
+    def test_julian2unix(self):
+        self.assertEqual(coordinates.julian2unix(coordinates.unix_epoch), 0)
+
+    def test_unix2julian(self):
+        self.assertEqual(coordinates.unix2julian(0), coordinates.unix_epoch)
 
 
 if __name__ == '__main__':

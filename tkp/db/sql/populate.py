@@ -126,15 +126,19 @@ def recreate(dbconfig):
         con.close()
 
     elif dbconfig['engine'] == 'postgresql':
+        import psycopg2
+        con = psycopg2.connect(user=dbconfig['user'],
+                               password=dbconfig['password'],
+                               port=dbconfig['port'], host=dbconfig['host'],
+                               database='postgres')
+        con.autocommit = True
+        cur = con.cursor()
         print "destroying database %(database)s on %(host)s..." % params
-        call('dropdb -h %(host)s -U %(username)s %(database)s' % params,
-             shell=True)
+        cur.execute('DROP DATABASE %s' % dbconfig['database'])
         print "creating database %(database)s on %(host)s..." % params
-        if call('createdb -h %(host)s -U %(username)s %(database)s' % params,
-                shell=True) != 0:
-            raise Exception("can't create a new postgresql database!")
+        cur.execute('CREATE DATABASE %s' % dbconfig['database'])
     else:
-        raise NotImplementedError
+        raise NotImplementedError("we only support monetdb & postgresql")
 
 
 def populate(dbconfig):

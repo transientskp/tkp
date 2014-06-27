@@ -1,8 +1,9 @@
 import abc
 import logging
-import warnings
+from tkp.quality.statistics import rms_with_clipped_subregion
 
 logger = logging.getLogger(__name__)
+
 
 class DataAccessor(object):
     __metaclass__ = abc.ABCMeta
@@ -21,6 +22,15 @@ class DataAccessor(object):
     components are required to degrade gracefully in the absence of this
     optional properties.
     """
+    def __init__(self):
+        """
+        Initialise the `sigma` and `f` properties used for calculating the
+        RMS value of the data. See `tkp.quality.statistics` for details.
+        """
+        self.sigma = 3
+        self.f = 4
+
+
     @abc.abstractproperty
     def beam(self):
         """
@@ -94,6 +104,16 @@ class DataAccessor(object):
         An instance of tkp.coordinates.WCS.
         """
 
+    def rms_qc(self):
+        """
+        RMS for quality-control.
+
+        Root mean square value calculated from central region of this image.
+        We sigma-clip the input-data in an attempt to exclude source-pixels
+        and keep only background-pixels.
+        """
+        return rms_with_clipped_subregion(self.data, sigma=self.sigma, f=self.f)
+
     def extract_metadata(self):
         """
         Massage the class attributes into a flat dictionary with
@@ -104,17 +124,20 @@ class DataAccessor(object):
 
         May be extended by subclasses to return additional data.
         """
+        # some values are casted to a standard float since MonetDB cannot
+        # handle numpy.float64
         return {
             'tau_time': self.tau_time,
             'freq_eff': self.freq_eff,
             'freq_bw': self.freq_bw,
             'taustart_ts': self.taustart_ts,
             'url': self.url,
-            'beam_smaj_pix': float(self.beam[0]), ## NB We must cast to a standard python float
-            'beam_smin_pix': float(self.beam[1]), ## as Monetdb converter cannot handle numpy.float64
+            'beam_smaj_pix': float(self.beam[0]),
+            'beam_smin_pix': float(self.beam[1]),
             'beam_pa_rad': float(self.beam[2]),
             'centre_ra': self.centre_ra,
             'centre_decl': self.centre_decl,
             'deltax': self.pixelsize[0],
             'deltay': self.pixelsize[1],
+            'rms_qc': float(self.rms_qc()),
         }

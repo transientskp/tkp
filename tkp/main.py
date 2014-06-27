@@ -90,7 +90,11 @@ def run(job_name, mon_coords=[], distributor='multiproc'):
     logger.info("performing persistence step")
     image_cache_params = pipe_config.image_cache
     imgs = [[img] for img in all_images]
-    metadatas = runner.map("persistence_node_step", imgs, [image_cache_params])
+    
+    sigma = job_config.persistence.sigma
+    f = job_config.persistence.f
+    metadatas = runner.map("persistence_node_step", imgs,
+                           [image_cache_params, sigma, f])
     metadatas = [m[0] for m in metadatas]
 
     logger.info("Storing images")
@@ -126,14 +130,18 @@ def run(job_name, mon_coords=[], distributor='multiproc'):
         logger.info("performing source extraction")
         urls = [img.url for img in images]
         arguments = [se_parset]
-        extract_sources = runner.map("extract_sources", urls, arguments)
+        extraction_results = runner.map("extract_sources", urls, arguments)
 
-        logger.info("storing extracted to database")
-        for image, sources in zip(images, extract_sources):
-            dbgen.insert_extracted_sources(image.id, sources, 'blind')
+        logger.info("storing extracted sources to database")
+        # we also set the image max,min RMS values which calculated during
+        # source extraction
+        for image, results in zip(images, extraction_results):
+            image.update(rms_min=results.rms_min, rms_max=results.rms_max,
+                         detection_thresh=se_parset['detection_threshold'],
+                         analysis_thresh=se_parset['analysis_threshold'])
+            dbgen.insert_extracted_sources(image.id, results.sources, 'blind')
 
         logger.info("performing database operations")
-
         for image in images:
             logger.info("performing DB operations for image %s" % image.id)
 

@@ -312,11 +312,11 @@ class ImageData(object):
         # utterly baffling API...)
         slicex = slice(-0.5, -0.5+xratio, 1j*my_xdim)
         slicey = slice(-0.5, -0.5+yratio, 1j*my_ydim)
-        my_map = numpy.zeros(self.data.shape)
+        my_map = numpy.ma.MaskedArray(numpy.zeros(self.data.shape),
+                                      mask = self.data.mask)
         my_map[useful_chunk[0]] = ndimage.map_coordinates(
             grid, numpy.mgrid[slicex, slicey],
             mode='nearest', order=INTERPOLATE_ORDER)
-        my_map = numpy.ma.array(my_map)
 
         # If the input grid was entirely masked, then the output map must
         # also be masked: there's no useful data here. We don't search for
@@ -686,7 +686,7 @@ class ImageData(object):
         RMS_FILTER = 0.001
         clipped_data = numpy.ma.where(
             (self.data_bgsubbed > analysisthresholdmap) &
-            (self.rmsmap >= (RMS_FILTER * numpy.median(self.rmsmap))),
+            (self.rmsmap >= (RMS_FILTER * numpy.ma.median(self.rmsmap))),
             1, 0
         ).filled(fill_value=0)
         labelled_data, num_labels = ndimage.label(clipped_data, STRUCTURING_ELEMENT)

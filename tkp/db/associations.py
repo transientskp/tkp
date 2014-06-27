@@ -1858,6 +1858,16 @@ def _insert_new_transient(image_id, new_source_sigma_margin):
     """
     Determines which new-runcat sources are also probably transient.
 
+    Looks up previous images relevant to this source-position, using the
+    following criteria - images must:
+     - overlap the new-source position, according to the skyregion information
+     - be in the same dataset
+     - be in the same frequency band
+     - have an earlier timestamp than the current image,
+     - have not been rejected.
+
+    For those images we calculate the per-previous-image detection-thresholds,
+    which are defined as follows.
 
     A new source is 'possibly transient' (type 0) if it
     passes the following tests:
@@ -1893,9 +1903,7 @@ def _insert_new_transient(image_id, new_source_sigma_margin):
     # and the skyregion matching has been done.
     #
     # We then use the runcat -> skyregion information to grab all the
-    # overlapping images which have an earlier timestamp than the current image,
-    # and have not been rejected. For those images we calculate the
-    # per-previous-image RMS thresholds.
+    # matching images as outlined in the docstring above.
     #
     # We then take the minimum over those limits and apply the
     # type-determination logic as described in the docstring above.
@@ -1955,6 +1963,7 @@ INSERT INTO transient
                   AND asky1.runcat = runcat1.id
                   AND prev_imgs.dataset = this_img.dataset
                   AND prev_imgs.skyrgn = asky1.skyrgn
+                  AND prev_imgs.band = this_img.band
                   AND this_img.taustart_ts > prev_imgs.taustart_ts
                   AND rj.image IS NULL
             ) matched_imgs

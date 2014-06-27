@@ -610,6 +610,89 @@ class TestIncreasingImageRMS(unittest.TestCase):
 
 
 
+class TestMultipleFrequencyBands(unittest.TestCase):
+    """
+    We expect to see some steady sources in only one frequency band,
+    due to steep spectral indices. We don't want to misclassify these as
+    transient without any proof of variability!
+    """
+    def shortDescription(self):
+         return None
+    @requires_database()
+    def setUp(self):
+        self.database = tkp.db.Database()
+        self.dataset = tkp.db.DataSet(
+            data={'description':"Trans:" +self._testMethodName},
+            database=self.database)
+
+        self.n_images = 2
+        self.rms_min = 1e-3 #1mJy
+        self.rms_max = 2e-3 #2mJy
+        self.new_src_sigma_margin = 3
+        self.detection_thresh=10
+
+        self.first_image_freq = 250e6 # 250 MHz
+        self.second_image_freq = 50e6 # 50 MHz
+
+
+        dt=self.detection_thresh
+        margin = self.new_src_sigma_margin
+        self.always_detectable_flux = 1.01*self.rms_max*(dt+ margin)
+
+        self.search_params = dict(eta_lim=1,
+                                  V_lim=0.1,
+                                  probability_threshold=0.7,
+                                  minpoints=1, )
+
+        test_specific_img_params = dict(
+            freq_eff = self.first_image_freq,
+            rms_qc = self.rms_min,
+            rms_min = self.rms_min,
+            rms_max = self.rms_max,
+            detection_thresh = self.detection_thresh)
+
+        self.img_params = db_subs.generate_timespaced_dbimages_data(
+            self.n_images, **test_specific_img_params)
+
+        self.img_params[1]['freq_eff']=self.second_image_freq
+
+
+    def tearDown(self):
+        tkp.db.rollback()
+
+    def test_probably_not_a_transient(self):
+        """
+        No source at 250MHz, but we detect a source at 50MHz.
+        Not necessarily a transient.
+        Should trivially ignore 250MHz data when looking at a new 50MHz source.
+        """
+        img_params = self.img_params
+
+        img0 = img_params[0]
+
+        # This time around, we just manually exclude the steady src from
+        # the first image detections.
+        steady_low_freq_src = MockSource(
+            example_extractedsource_tuple(ra=img_params[0]['centre_ra'],
+                                          dec=img_params[0]['centre_decl']
+                                          ),
+            lightcurve=defaultdict(lambda :self.always_detectable_flux)
+        )
+
+        #Insert first image, no sources.
+        tkp.db.Image(data=img_params[0],dataset=self.dataset)
+        #Now set up second image.
+        img1 = tkp.db.Image(data=img_params[1],dataset=self.dataset)
+        xtr = steady_low_freq_src.simulate_extraction(img1,
+                                                    extraction_type='blind')
+        img1.insert_extracted_sources([xtr],'blind')
+        img1.associate_extracted_sources(deRuiter_r=3.7)
+        transients = get_transients_for_dataset(self.dataset.id)
+
+        #Should have no marked transients
+        self.assertEqual(len(transients),0)
+
+
 class TestMultipleSourceField(unittest.TestCase):
     """
     By testing a field with multiple sources, we at least go some way

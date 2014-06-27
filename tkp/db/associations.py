@@ -1090,6 +1090,7 @@ INSERT INTO transient
   ,trigger_xtrsrc
   ,status
   ,t_start
+  ,transient_type
   )
   SELECT r.id
         ,tr.band
@@ -1100,6 +1101,7 @@ INSERT INTO transient
         ,tr.trigger_xtrsrc
         ,tr.status
         ,tr.t_start
+        ,tr.transient_type
     FROM (SELECT runcat
             FROM temprunningcatalog
            WHERE inactive = FALSE

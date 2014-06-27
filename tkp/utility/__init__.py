@@ -39,6 +39,7 @@ class adict(dict):
         try:
             return self[key]
         except KeyError:
-            raise AttributeError
+            msg = "can't find %s, please check your settings file"
+            raise AttributeError(msg % key)
 
     __setattr__ = dict.__setitem__

@@ -4,9 +4,8 @@ import shutil
 import tempfile
 import argparse
 import json
-
+from tkp.testutil import Mock, nostderr
 import tkp.management
-from tkp.testutil import nostderr
 
 
 project_name = 'test_project'
@@ -49,7 +48,6 @@ class TestManagement(unittest.TestCase):
         self.assertRaises(tkp.management.CommandError,
                     tkp.management.init_project, namespace)
 
-
     def test_init_job(self):
         """
         test the creation of a TraP job
@@ -91,8 +89,11 @@ class TestManagement(unittest.TestCase):
         runjob_args = tkp.management.parse_arguments(['run',
                                                        job_name,
                                                        "--method=celery"])
-        runjob_args.method = "test"  # Kludge to avoid booting up celery
+        runjob_args.method = "serial"  # Kludge to avoid booting up celery
+
+        tkp.management.run = Mock()
         runjob_args.func(runjob_args)
+        self.assertEqual(tkp.management.run.callcount, 1)
 
     def test_check_if_exists(self):
         file = tempfile.NamedTemporaryFile()

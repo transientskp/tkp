@@ -6,9 +6,8 @@ using tkp.distribute.celery.celery_app
 from __future__ import absolute_import
 import warnings
 import logging
-from celery import Celery
-from tkp.distribute.celery.log import monitor_events
-
+from celery import Celery, group
+from tkp.distribute.celery.log import monitor_events, setup_event_listening
 
 local_logger = logging.getLogger(__name__)
 config_module = 'celeryconfig'
@@ -26,7 +25,20 @@ except ImportError:
     celery_app.config_from_object({})
 
 
+setup_event_listening(celery_app)
 
 
+def map(func, iterable, arguments=[]):
+    if iterable:
+        return group(func.s(i, *arguments) for i in iterable)().get()
+    else:
+        # group()() returns None if group is called with no arguments,
+        # leading to an AttributeError with get().
+        return []
 
 
+def set_cores(cores=0):
+    """
+    doesn't do anything for celery
+    """
+    pass

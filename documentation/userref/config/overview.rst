@@ -9,9 +9,8 @@ Preamble
 
 Users organize their TraP runs into *projects*, which contain high-level
 descriptions of common TraP parameters. For example, a project specifies which
-:ref:`database <database-intro>` to use, and how to connect to a :ref:`Celery
-broker <celery-intro>`. All the configuration and log files relating to a
-particular project are stored in the same directory hierarchy.
+:ref:`database <database-intro>` to use. All the configuration and log files
+relating to a particular project are stored in the same directory hierarchy.
 
 Within a project, the user is able to start multiple pipeline runs, which are
 referred to as *jobs*. For example, the user could use a single project to

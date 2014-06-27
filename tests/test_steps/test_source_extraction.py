@@ -3,7 +3,7 @@ import numpy as np
 from ConfigParser import SafeConfigParser
 from tkp.config import parse_to_dict
 from tkp.testutil.data import default_job_config
-from tkp.testutil.decorators import requires_data
+from tkp.testutil.decorators import requires_data, requires_database
 from tkp.testutil.mock import Mock
 import tkp.steps.source_extraction
 from tkp.db import DataSet
@@ -20,6 +20,7 @@ class MockImage(Mock):
 
 class TestSourceExtraction(unittest.TestCase):
     @classmethod
+    @requires_database()
     def setUpClass(cls):
         dataset = DataSet(data={'description': "Test source extraction step"})
         cls.dataset_id = dataset.id

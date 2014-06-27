@@ -6,6 +6,7 @@ from tkp.db.general import update_dataset_process_end_ts
 from tkp.db import execute as db_query
 from tkp.testutil.decorators import requires_database
 
+@requires_database()
 class TestProcessTime(unittest.TestCase):
     def test_set_process_timestamps(self):
         dataset = DataSet(data={'description': 'test dataset'})

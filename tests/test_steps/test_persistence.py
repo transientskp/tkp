@@ -13,7 +13,6 @@ from tkp.testutil.data import default_job_config, default_pipeline_config
 
 datafile = os.path.join(testdata.DATAPATH, "sourcefinder/NCP_sample_image_1.fits")
 
-@requires_database()
 class TestPersistence(unittest.TestCase):
 
     def tearDown(self):
@@ -21,6 +20,7 @@ class TestPersistence(unittest.TestCase):
 
     @classmethod
     @requires_data(datafile)
+    @requires_database()
     def setUpClass(cls):
         dataset = tkp.db.DataSet(data={'description': "Test persistence"})
         cls.dataset_id = dataset.id

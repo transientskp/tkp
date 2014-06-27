@@ -14,6 +14,7 @@ class TestTransientSearch(unittest.TestCase):
         tkp.db.rollback()
 
     @classmethod
+    @requires_database()
     def setUpClass(cls):
         dataset = DataSet(data={'description': "Test transient search"})
         cls.dataset_id = dataset.id

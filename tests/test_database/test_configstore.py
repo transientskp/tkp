@@ -2,6 +2,7 @@ import unittest
 from tkp.db.configstore import store_config, fetch_config
 from tkp.db import rollback, execute, Database
 from tkp.db.general import insert_dataset
+from tkp.testutil.decorators import requires_database
 
 
 config = {'section1': {'key1': 'value1', 'key2': 2},
@@ -9,6 +10,7 @@ config = {'section1': {'key1': 'value1', 'key2': 2},
           'section3': {'key5': 0.20192, 'key4': 0.000001}}
 
 
+@requires_database()
 class TestConfigStore(unittest.TestCase):
     def setUp(self):
         description = "TestConfigStore"

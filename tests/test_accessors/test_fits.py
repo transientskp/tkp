@@ -18,9 +18,6 @@ from tkp.testutil.decorators import requires_database
 
 class PyfitsFitsImage(unittest.TestCase):
 
-    def tearDown(self):
-        tkp.db.rollback()
-
     @requires_data(os.path.join(DATAPATH, 'sourcefinder/L15_12h_const/observed-all.fits'))
     @requires_data(os.path.join(DATAPATH, 'sourcefinder/simulations/correlated_noise.fits'))
     def testOpen(self):
@@ -60,9 +57,6 @@ class PyfitsFitsImage(unittest.TestCase):
 
 class TestFitsImage(unittest.TestCase):
 
-    def tearDown(self):
-        tkp.db.rollback()
-
     @requires_data(os.path.join(DATAPATH, 'sourcefinder/L15_12h_const/observed-all.fits'))
     @requires_data(os.path.join(DATAPATH, 'sourcefinder/simulations/correlated_noise.fits'))
     def testOpen(self):
@@ -100,6 +94,7 @@ class TestFitsImage(unittest.TestCase):
         sfimage = accessors.sourcefinder_image_from_accessor(image)
 
 
+@requires_database()
 class DataBaseImage(unittest.TestCase):
     """TO DO: split this into an accessor test and a database test.
                 Move the database part to the database unit-tests"""

@@ -49,19 +49,7 @@ def extract_sources(url, extraction_params):
 
 
 @celery_app.task
-def forced_fits(detection_set, extraction_params):
-    """
-    :param detection_set: should be (url, detections) tuple
-    :param extraction_params: null detections extraction_params
-    :return:
-    """
-    worker_logger.info("running forced fits task")
-    url, detections = detection_set
-    return tkp.steps.source_extraction.forced_fits(url, detections,
-                                                   extraction_params)
-
-@celery_app.task
-def bogus():
+def test_log():
     """
     doesn't do much, only emit some log messages so we can test if the
     logging facilities are working
@@ -70,4 +58,3 @@ def bogus():
     worker_logger.warning("warning from task")
     worker_logger.error("error from task")
     worker_logger.debug("debug from task")
-    return "love"

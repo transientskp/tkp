@@ -32,3 +32,10 @@ def map(func, iterable, arguments=[]):
         # group()() returns None if group is called with no arguments,
         # leading to an AttributeError with get().
         return []
+
+
+def set_cores(cores=0):
+    """
+    doesn't do anything for celery
+    """
+    pass

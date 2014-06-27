@@ -19,28 +19,3 @@ def quality_reject_check(url, job_config):
 def extract_sources(url, extraction_params):
     logger.info("running extracted sources task")
     return tkp.steps.source_extraction.extract_sources(url, extraction_params)
-
-
-def forced_fits(detection_set, extraction_params):
-    """
-    :param detection_set: should be (url, detections) tuple
-    :param extraction_params: null detections extraction_params
-    :return:
-    """
-    logger.info("running forced fits task")
-    url, detections = detection_set
-    return tkp.steps.source_extraction.forced_fits(url, detections,
-                                                   extraction_params)
-
-
-def bogus(args):
-    """
-    doesn't do much, only emit some log messages so we can test if the
-    logging facilities are working
-    """
-    logger.info('bogus called with %s' % str(args))
-    logger.info("info from task")
-    logger.warning("warning from task")
-    logger.error("error from task")
-    logger.debug("debug from task")
-    return "love"

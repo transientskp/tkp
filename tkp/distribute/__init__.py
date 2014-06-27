@@ -12,7 +12,7 @@ logger = logging.getLogger(__name__)
 
 
 class Runner(object):
-    def __init__(self, distributor):
+    def __init__(self, distributor, cores=0):
         """
         Args:
             distributor: the name of the distribution method, example multiproc
@@ -27,6 +27,7 @@ class Runner(object):
             raise NotImplementedError("%s not found" % self.mod_path)
         if not hasattr(self.module, 'map'):
             raise NotImplementedError("%s misses map function" % self.mod_path)
+        self.module.set_cores(cores)
 
     def map(self, func_name, iterable, args=[]):
         """
@@ -46,3 +47,10 @@ class Runner(object):
         except AttributeError:
             raise NotImplementedError('%s not implemented for %s' %
                                       (func_name, self.mod_path))
+
+
+def set_cores(cores=0):
+    """
+    doesn't do anything for celery
+    """
+    pass

@@ -33,10 +33,11 @@ logger = logging.getLogger(__name__)
 
 
 def run(job_name, mon_coords=[], distributor='multiproc'):
-    runner = Runner(distributor=distributor)
     pipe_config = initialize_pipeline_config(
         os.path.join(os.getcwd(), "pipeline.cfg"),
         job_name)
+
+    runner = Runner(distributor=distributor, cores=pipe_config.multiproc.cores)
 
     debug = pipe_config.logging.debug
     #Setup logfile before we do anything else
@@ -132,6 +133,7 @@ def run(job_name, mon_coords=[], distributor='multiproc'):
             dbgen.insert_extracted_sources(image.id, sources, 'blind')
 
         logger.info("performing database operations")
+
         for image in images:
             logger.info("performing DB operations for image %s" % image.id)
 

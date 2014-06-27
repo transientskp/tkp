@@ -1,9 +1,5 @@
 *.pyc
-tests/data
 documentation/build/
 build
-database/catalog/nvss/nvss.csv
-database/catalog/vlss/vlss.csv
-database/catalog/wenss/wenss.csv
 vagrantproject/
 .vagrant/

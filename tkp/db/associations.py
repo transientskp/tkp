@@ -1910,31 +1910,33 @@ INSERT INTO transient
   ,trigger_xtrsrc
   ,transient_type
   )
-  SELECT r0.id AS runcat
-        ,i0.band AS band
+  SELECT best_limits.new_src_runcat_id AS runcat
+        ,best_limits.new_src_band AS band
         ,1
         ,0
         ,0
-        ,r0.xtrsrc AS trigger_xtrsrc
-        ,CASE WHEN best_limits.f_peak > best_limits.best_high_thresh
+        ,best_limits.new_src_xtr_id AS trigger_xtrsrc
+        ,CASE WHEN best_limits.new_src_flux > best_limits.best_high_thresh
               THEN 1
               ELSE 0
          END as transient_type
-    FROM runningcatalog r0
-        ,(SELECT MIN(matched_imgs.low_flux_threshold) AS best_low_thresh
+    FROM (SELECT MIN(matched_imgs.low_flux_threshold) AS best_low_thresh
                 ,MIN(matched_imgs.high_flux_threshold) as best_high_thresh
-                ,matched_imgs.id
-                ,matched_imgs.f_peak
-            FROM (SELECT r1.id
-                    ,unassoc_xtr.f_peak
-                    ,(prev_imgs.rms_min *
+                ,matched_imgs.new_src_runcat_id
+                ,matched_imgs.new_src_xtr_id
+                ,matched_imgs.new_src_flux
+                ,matched_imgs.new_src_band
+            FROM (SELECT runcat1.id as new_src_runcat_id
+                        ,unassoc_xtr.xtrsrc_id as new_src_xtr_id
+                        ,unassoc_xtr.f_peak as new_src_flux
+                        ,this_img.band as new_src_band
+                        ,(prev_imgs.rms_min *
                               (prev_imgs.detection_thresh + %(sigma_margin)s))
-                      AS low_flux_threshold
-                    ,(prev_imgs.rms_max *
+                          AS low_flux_threshold
+                        ,(prev_imgs.rms_max *
                               (prev_imgs.detection_thresh + %(sigma_margin)s))
-                      AS high_flux_threshold
-                FROM image this_img
-                    ,(SELECT x1.id AS xtrsrc_id
+                          AS high_flux_threshold
+                  FROM (SELECT x1.id AS xtrsrc_id
                             ,x1.f_peak
                         FROM extractedsource x1
                              LEFT OUTER JOIN temprunningcatalog trc1
@@ -1942,30 +1944,26 @@ INSERT INTO transient
                         WHERE x1.image = %(image_id)s
                           AND trc1.xtrsrc IS NULL
                       ) unassoc_xtr
-                    ,runningcatalog r1
-                    ,assocskyrgn a1
-                    ,image prev_imgs
-                     LEFT OUTER JOIN rejection rj
-                     ON prev_imgs.id = rj.image
-               WHERE this_img.id = %(image_id)s
-                 AND r1.xtrsrc = unassoc_xtr.xtrsrc_id
-                 AND a1.runcat = r1.id
-                 AND prev_imgs.dataset = this_img.dataset
-                 AND prev_imgs.skyrgn = a1.skyrgn
-                 AND this_img.taustart_ts > prev_imgs.taustart_ts
-                 AND rj.image IS NULL
-              GROUP BY r1.id
-                      ,low_flux_threshold
-                      ,high_flux_threshold
-                      ,unassoc_xtr.f_peak
+                     ,runningcatalog runcat1
+                     ,assocskyrgn asky1
+                     ,image this_img
+                     ,image prev_imgs
+                        LEFT OUTER JOIN rejection rj
+                        ON prev_imgs.id = rj.image
+                  WHERE this_img.id = %(image_id)s
+                  AND runcat1.xtrsrc = unassoc_xtr.xtrsrc_id
+                  AND asky1.runcat = runcat1.id
+                  AND prev_imgs.dataset = this_img.dataset
+                  AND prev_imgs.skyrgn = asky1.skyrgn
+                  AND this_img.taustart_ts > prev_imgs.taustart_ts
+                  AND rj.image IS NULL
             ) matched_imgs
-            GROUP BY matched_imgs.id
-                    ,matched_imgs.f_peak
+            GROUP BY matched_imgs.new_src_runcat_id
+                    ,matched_imgs.new_src_xtr_id
+                    ,matched_imgs.new_src_flux
+                    ,matched_imgs.new_src_band
          ) best_limits
-        ,image i0
-   WHERE r0.id = best_limits.id
-     AND i0.id = %(image_id)s
-     AND best_limits.f_peak > best_limits.best_low_thresh
+   WHERE best_limits.new_src_flux > best_limits.best_low_thresh
 """
     params = {'image_id': image_id,
               'sigma_margin': new_source_sigma_margin}

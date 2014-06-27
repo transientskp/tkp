@@ -13,6 +13,10 @@ from tkp.db.generic import columns_from_table, get_db_rows_as_dicts
 from tkp.testutil import db_subs
 from tkp.testutil.decorators import requires_database
 
+# Use a default argument value for convenience
+from functools import partial
+associate_extracted_sources = partial(associate_extracted_sources,
+                                      new_source_sigma_margin=3)
 
 @requires_database()
 class TestOne2One(unittest.TestCase):
@@ -494,11 +498,11 @@ class TestMeridianOne2One(unittest.TestCase):
 
     def TestDeRuiterWrapping(self):
         """Check identical DR for source pair rotated over RA"""
-        
+
         dataset = DataSet(data={'description':"Assoc 1-to-1:" + self._testMethodName})
-        
+
         im_list = db_subs.generate_timespaced_dbimages_data(n_images=2)
-        
+
         # Base positions for each source pair:
         pos1 = (30.0,10.5)
         pos2 = (pos1[0]+270.0, pos1[1])
@@ -510,7 +514,7 @@ class TestMeridianOne2One(unittest.TestCase):
         image = tkp.db.Image(dataset=dataset, data=im_list[0])
         image.insert_extracted_sources(sources1)
         associate_extracted_sources(image.id, deRuiter_r=3.717)
-        
+
         # Now shift the positions to be associated in both RA and Dec,
         # then make sure we get the same result at both base RA's:
         delta_ra = 50 / 3600.0

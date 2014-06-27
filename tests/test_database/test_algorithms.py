@@ -5,6 +5,9 @@ from tkp.testutil.decorators import requires_database
 from tkp.testutil import db_subs
 from tkp.db.generic import columns_from_table
 
+# Convenient default values
+deRuiter_r = 3.7
+new_source_sigma_margin = 3
 
 class TestSourceAssociation(unittest.TestCase):
     @requires_database()
@@ -29,7 +32,8 @@ class TestSourceAssociation(unittest.TestCase):
         for im in self.im_params:
             self.db_imgs.append(Image( data=im, dataset=self.dataset))
             self.db_imgs[-1].insert_extracted_sources([],'blind')
-            self.db_imgs[-1].associate_extracted_sources(deRuiter_r=3.7)
+            self.db_imgs[-1].associate_extracted_sources(deRuiter_r,
+                                                        new_source_sigma_margin)
             running_cat = columns_from_table(table="runningcatalog",
                                            keywords="*",
                                            where={"dataset":self.dataset.id})
@@ -61,7 +65,8 @@ class TestSourceAssociation(unittest.TestCase):
                 last_img.insert_extracted_sources(
                     [db_subs.example_extractedsource_tuple()],'blind')
 
-            last_img.associate_extracted_sources(deRuiter_r=3.7)
+            last_img.associate_extracted_sources(deRuiter_r,
+                                                 new_source_sigma_margin)
 
             #First, check the runcat has been updated correctly:
             running_cat = columns_from_table(table="runningcatalog",
@@ -117,7 +122,8 @@ class TestSourceAssociation(unittest.TestCase):
             last_img =self.db_imgs[-1]
             last_img.insert_extracted_sources(
                 [db_subs.example_extractedsource_tuple()],'blind')
-            last_img.associate_extracted_sources(deRuiter_r=3.7)
+            last_img.associate_extracted_sources(deRuiter_r,
+                                                 new_source_sigma_margin)
             imgs_loaded+=1
             running_cat = columns_from_table(table="runningcatalog",
                                            keywords=['id', 'datapoints'],

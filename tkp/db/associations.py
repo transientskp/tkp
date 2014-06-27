@@ -9,8 +9,7 @@ import tkp.db
 logger = logging.getLogger(__name__)
 
 
-def associate_extracted_sources(image_id, deRuiter_r,
-                                new_source_sigma_margin=3):
+def associate_extracted_sources(image_id, deRuiter_r, new_source_sigma_margin):
     """Associate extracted sources with sources detected in the running
     catalog.
 

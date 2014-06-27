@@ -69,7 +69,8 @@ class TestForcedFit(unittest.TestCase):
                     pass
 
             for image in images:
-                dbass.associate_extracted_sources(image.id, deRuiter_r=5.68)
+                dbass.associate_extracted_sources(image.id, deRuiter_r=5.68,
+                                                  new_source_sigma_margin=3)
                 null_detections = dbnd.get_nulldetections(image.id)
                 # The null_detections are the positional inputs for the forced
                 #  fits, which on their turn return additional parameters,

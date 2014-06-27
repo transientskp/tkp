@@ -44,7 +44,8 @@ class TestRejection(unittest.TestCase):
         db_imgs[1].insert_extracted_sources([source])
 
         # Standard source association procedure etc.
-        associate_extracted_sources(db_imgs[1].id, 3.7)
+        associate_extracted_sources(db_imgs[1].id, deRuiter_r=3.7,
+                                    new_source_sigma_margin=3)
 
         # Our source should _not_ be a transient. That is, there should be no
         # entries in the transient table for this dataset.

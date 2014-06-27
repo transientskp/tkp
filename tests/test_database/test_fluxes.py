@@ -7,6 +7,11 @@ from tkp.testutil import db_subs
 from tkp.testutil import db_queries
 from tkp.testutil.decorators import requires_database
 
+# Use a default argument value for convenience
+from functools import partial
+associate_extracted_sources = partial(associate_extracted_sources,
+                                      new_source_sigma_margin=3)
+
 class TestOne2OneFlux(unittest.TestCase):
     """
     These tests will check the statistical fluxes of a 1-to-1 source associations

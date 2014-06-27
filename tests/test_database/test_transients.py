@@ -10,9 +10,11 @@ from tkp.testutil.db_subs import (example_extractedsource_tuple,
                                   MockSource,
                                   insert_image_and_simulated_sources,
                                   get_transients_for_dataset)
-
 from tkp.testutil.decorators import requires_database
 
+# Convenient default values
+deRuiter_r = 3.7
+new_source_sigma_margin = 3
 
 class TestSimplestCases(unittest.TestCase):
     """
@@ -415,7 +417,7 @@ class TestDecreasingImageRMS(unittest.TestCase):
                                                        extraction_type='blind')
             if xtr is not None:
                 img.insert_extracted_sources([xtr],'blind')
-            img.associate_extracted_sources(deRuiter_r=3.7)
+            img.associate_extracted_sources(deRuiter_r, new_source_sigma_margin)
         transients = get_transients_for_dataset(self.dataset.id)
 
         #Should have one 'definite' transient
@@ -474,7 +476,7 @@ class TestDecreasingImageRMS(unittest.TestCase):
                                                        extraction_type='blind')
             if xtr is not None:
                 img.insert_extracted_sources([xtr],'blind')
-            img.associate_extracted_sources(deRuiter_r=3.7)
+            img.associate_extracted_sources(deRuiter_r, new_source_sigma_margin)
         transients = get_transients_for_dataset(self.dataset.id)
 
         #Should have one 'possible' transient
@@ -524,7 +526,7 @@ class TestDecreasingImageRMS(unittest.TestCase):
         xtr = marginal_steady_src.simulate_extraction(img1,
                                                     extraction_type='blind')
         img1.insert_extracted_sources([xtr],'blind')
-        img1.associate_extracted_sources(deRuiter_r=3.7)
+        img1.associate_extracted_sources(deRuiter_r, new_source_sigma_margin)
         transients = get_transients_for_dataset(self.dataset.id)
 
         #Should have no marked transients
@@ -686,7 +688,7 @@ class TestMultipleFrequencyBands(unittest.TestCase):
         xtr = steady_low_freq_src.simulate_extraction(img1,
                                                     extraction_type='blind')
         img1.insert_extracted_sources([xtr],'blind')
-        img1.associate_extracted_sources(deRuiter_r=3.7)
+        img1.associate_extracted_sources(deRuiter_r, new_source_sigma_margin)
         transients = get_transients_for_dataset(self.dataset.id)
 
         #Should have no marked transients

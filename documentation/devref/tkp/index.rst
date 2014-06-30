@@ -20,7 +20,6 @@ Subpackages
    database/index
    sourcefinder/index
    utility/index
-   classification/index
    config/index
    distribute/index
    lofar/index

@@ -6,9 +6,10 @@ import tkp.steps
 logger = logging.getLogger(__name__)
 
 
-def persistence_node_step(images, image_cache_config):
+def persistence_node_step(images, image_cache_config, sigma, f):
     logger.info("running persistence task")
-    return tkp.steps.persistence.node_steps(images, image_cache_config)
+    return tkp.steps.persistence.node_steps(images, image_cache_config,
+                                            sigma, f)
 
 
 def quality_reject_check(url, job_config):

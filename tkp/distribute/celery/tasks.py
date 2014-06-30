@@ -33,7 +33,8 @@ def setup_task_log_emitter(sender=None, logger=None, loglevel=None,
 @celery_app.task
 def persistence_node_step(images, image_cache_config, sigma, f):
     worker_logger.info("running persistence task")
-    return tkp.steps.persistence.node_steps(images, image_cache_config, sigma, f)
+    return tkp.steps.persistence.node_steps(images, image_cache_config, sigma,
+                                            f)
 
 
 @celery_app.task

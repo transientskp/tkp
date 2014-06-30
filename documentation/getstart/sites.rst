@@ -128,6 +128,13 @@ Optionally, run Celery workers
 
    What happens if there are other Celery workers already running on heastro1?
 
+.. Note::
+
+   You most likely don't want to run celery workers, unless you want to
+   distribute work over multiple machines. TRAP runs in parallel by default
+   now, no extra action is required.
+
+
 You may parallelize some pipeline operations by distributing them over a
 number of Celery "worker" nodes. You can start one or more Celery workers by
 running::

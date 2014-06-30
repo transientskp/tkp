@@ -1,7 +1,7 @@
 import unittest
 import tkp.db.consistency as db_consistency
 import tkp.db
-from tkp.testutil import Mock
+from tkp.testutil.mock import Mock
 
 class MockResult(object):
     def __init__(self, result):

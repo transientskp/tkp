@@ -14,14 +14,14 @@ for the convolved image, image.fd_extract will not find any sources for any
 reasonable value of alpha.
 
 A similar conclusion was drawn in paragraph 3.8 of Spreeuw's thesis although
-these maps were made in a slightly different manner, i.e., by adding
-Gaussian noise to the visibilities and, subsequently, an FFT.  Here the
-Gaussian noise in an image was convolved with a dirty beam, although FFTs
-were used to speed things up (I used scipy.signal.fftconvolve).  We adjusted
-the header of UNCORRELATED_NOISE.FITS, by adding values for BMAJ and BMIN
-(and BPA, but that is redundant) to make sure that 0.25 * pi* BMAJ * BMIN =
--CDELT1 * CDELT2, i.e., that the correlated area (with the default equations
-from config.py) equals the area of exactly one pixel.
+these maps were made in a slightly different manner, i.e., by adding Gaussian
+noise to the visibilities and, subsequently, an FFT.  Here the Gaussian noise
+in an image was convolved with a dirty beam, although FFTs were used to speed
+things up (I used scipy.signal.fftconvolve).  We adjusted the header of
+sourcefinder/simulations/uncorrelated_noise.fits, by adding values for BMAJ
+and BMIN (and BPA, but that is redundant) to make sure that 0.25 * pi* BMAJ *
+BMIN = -CDELT1 * CDELT2, i.e., that the correlated area (with the default
+equations from config.py) equals the area of exactly one pixel.
 
 Strictly speaking the FDR algorithm applies to the number of falsely
 detected pixels as a fraction of all detected pixels.  in the presence of
@@ -48,18 +48,19 @@ from tkp.testutil.data import DATAPATH
 NUMBER_INSERTED = float(3969)
 
 
-@requires_data(os.path.join(DATAPATH, 'UNCORRELATED_NOISE.FITS'))
-@requires_data(os.path.join(DATAPATH, 'CORRELATED_NOISE.FITS'))
-@requires_data(os.path.join(DATAPATH, 'TEST_DECONV.FITS'))
+uncorr_path = os.path.join(DATAPATH, 'sourcefinder/simulations/uncorrelated_noise.fits')
+corr_path = os.path.join(DATAPATH, 'sourcefinder/simulations/correlated_noise.fits')
+deconv_path = os.path.join(DATAPATH, 'sourcefinder/simulations/deconvolved.fits')
+
+@requires_data(uncorr_path)
+@requires_data(corr_path)
+@requires_data(deconv_path)
 @duration(100)
 class test_maps(unittest.TestCase):
     def setUp(self):
-        uncorr_map = accessors.open(os.path.join(DATAPATH,
-                                                 'UNCORRELATED_NOISE.FITS'))
-        corr_map = accessors.open(os.path.join(DATAPATH,
-                                               'CORRELATED_NOISE.FITS'))
-        map_with_sources = accessors.open(os.path.join(DATAPATH,
-                                                       'TEST_DECONV.FITS'))
+        uncorr_map = accessors.open(uncorr_path)
+        corr_map = accessors.open(corr_path)
+        map_with_sources = accessors.open(deconv_path)
 
         self.uncorr_image = image.ImageData(uncorr_map.data, uncorr_map.beam,
                                             uncorr_map.wcs)

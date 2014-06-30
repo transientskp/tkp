@@ -1,13 +1,13 @@
 import unittest
 import numpy as np
-from tkp.testutil import db_subs, data
 from ConfigParser import SafeConfigParser
 from tkp.config import parse_to_dict
 from tkp.testutil.data import default_job_config
-from tkp.testutil import Mock
+from tkp.testutil.decorators import requires_data, requires_database
+from tkp.testutil.mock import Mock
 import tkp.steps.source_extraction
-import tkp.accessors
 from tkp.db import DataSet
+from tkp.testutil.data import fits_file
 
 
 class MockImage(Mock):
@@ -20,8 +20,8 @@ class MockImage(Mock):
 
 class TestSourceExtraction(unittest.TestCase):
     @classmethod
+    @requires_database()
     def setUpClass(cls):
-
         dataset = DataSet(data={'description': "Test source extraction step"})
         cls.dataset_id = dataset.id
         config = SafeConfigParser()
@@ -29,17 +29,19 @@ class TestSourceExtraction(unittest.TestCase):
         config = parse_to_dict(config)
         cls.parset = config['source_extraction']
 
+    @requires_data(fits_file)
     def test_extract_sources(self):
-        image_path = data.fits_file
+        image_path = fits_file
         tkp.steps.source_extraction.extract_sources(image_path, self.parset)
 
+    @requires_data(fits_file)
     def test_for_appropriate_arguments(self):
         # sourcefinder_image_from_accessor() should get a single positional
         # argument, which is the accessor, and four kwargs: back_sizex,
         # back_sizey, margin and radius.
         # The object it returns has an extract() method, which should have
         # been called with det, anl, force_beam and deblend_nthresh kwargs.
-        image_path = data.fits_file
+        image_path = fits_file
         mock_method = Mock(MockImage([]))
         orig_method = tkp.steps.source_extraction.sourcefinder_image_from_accessor
         tkp.steps.source_extraction.sourcefinder_image_from_accessor = mock_method

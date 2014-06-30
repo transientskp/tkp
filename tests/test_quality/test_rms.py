@@ -11,20 +11,10 @@ import tkp.telescope.lofar as lofar
 from tkp.testutil.decorators import requires_data
 from tkp.testutil.data import DATAPATH
 
-
 core_antennas = os.path.join(DATAPATH, 'lofar/CS001-AntennaArrays.conf')
 intl_antennas = os.path.join(DATAPATH, 'lofar/DE601-AntennaArrays.conf')
 remote_antennas = os.path.join(DATAPATH, 'lofar/RS106-AntennaArrays.conf')
 
-bad_file = os.path.join(DATAPATH,
-        'quality/noise/bad/home-pcarrol-msss-3C196a-analysis-band6.corr.fits')
-good_file = os.path.join(DATAPATH,
-       'quality/noise/good/home-pcarrol-msss-L086+69-analysis-band6.corr.fits')
-
-#numpy.seterr(all='raise')
-
-@requires_data(bad_file)
-@requires_data(good_file)
 class TestRms(unittest.TestCase):
     def test_subrgion(self):
         sub = statistics.subregion(numpy.ones((800, 800)))
@@ -47,29 +37,31 @@ class TestRms(unittest.TestCase):
         rms = statistics.rms(clip)
         self.assertEqual(rms, statistics.rms_with_clipped_subregion(o))
 
-    def test_theoreticalnoise(self):
-        good_image = accessors.open(good_file)
-        bad_image = accessors.open(bad_file)
-        frequency = good_image.freq_eff
-
-        # this stuff should be in the header of a LOFAR image some day
-        integration_time = 18654.3 # s, should be self.good_image.tau_time some day
-        bandwidth = 200 * 10**3 # Hz, shoud probably be self.good_image.freq_bw some day
-        ncore = 23 # ~
-        nremote = 8 # ~
+    def test_calculate_theoreticalnoise(self):
+        # Sample data from a LOFAR image header.
+        integration_time = 18654.3 # s
+        bandwidth = 200 * 10**3 # Hz
+        frequency = 66308593.75 # Hz
+        ncore = 23
+        nremote = 8
         nintl = 0
         configuration = "LBA_INNER"
 
-        noise = lofar.noise.noise_level(frequency, bandwidth, integration_time,
-                                        configuration, ncore, nremote, nintl)
-        rms_good = statistics.rms_with_clipped_subregion(good_image.data)
-        rms_bad = statistics.rms_with_clipped_subregion(bad_image.data)
+        self.assertEqual(
+            lofar.noise.noise_level(frequency, bandwidth, integration_time,
+                                    configuration, ncore, nremote, nintl),
+            0.01590154516819521 # with a calculator!
+        )
 
-        self.assertFalse(rms_invalid(rms_good, noise))
-        self.assertTrue(rms_invalid(rms_bad, noise))
+    def test_rms_valid(self):
+        theoretical_noise = 1
+        measured_rms = 1e-9
+        self.assertTrue(rms_invalid(measured_rms, theoretical_noise))
 
-    def test_rms_fits(self):
-        accessors.open(good_file)
+    def test_rms_invalid(self):
+        theoretical_noise = 1
+        measured_rms = 1e9
+        self.assertTrue(rms_invalid(measured_rms, theoretical_noise))
 
 
 @requires_data(core_antennas)

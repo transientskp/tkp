@@ -12,7 +12,7 @@ from tkp.testutil.data import default_header_inject_config
 from tkp.accessors.lofaraccessor import LofarAccessor
 from tkp.accessors.dataaccessor import DataAccessor
 
-fits_file = os.path.join(DATAPATH, 'missingheaders.fits')
+fits_file = os.path.join(DATAPATH, 'inject/missingheaders.fits')
 
 class TestInject(unittest.TestCase):
     @classmethod

@@ -4,7 +4,8 @@ import shutil
 import tempfile
 import argparse
 import json
-from tkp.testutil import Mock, nostderr
+from tkp.testutil.mock import Mock
+from tkp.testutil import nostderr
 import tkp.management
 
 

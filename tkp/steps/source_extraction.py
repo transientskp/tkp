@@ -54,9 +54,9 @@ def extract_sources(image_path, extraction_params):
     ns_sys_err = extraction_params['ns_sys_err']
     serialized = [r.serialize(ew_sys_err, ns_sys_err) for r in results]
     return ExtractionResults(sources=serialized,
-                     rms_min=data_image.rmsmap.min(),
-                     rms_max=data_image.rmsmap.max()
-                     )
+                             rms_min=float(data_image.rmsmap.min()),
+                             rms_max=float(data_image.rmsmap.max())
+                             )
 
 
 def forced_fits(image_path, positions, extraction_params):

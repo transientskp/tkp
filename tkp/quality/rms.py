@@ -3,7 +3,7 @@ from tkp.utility import nice_format
 
 def rms_invalid(rms, noise, low_bound=1, high_bound=50):
     """
-    Is the RMS value of an image too high?
+    Is the RMS value of an image outside the plausible range?
 
     :param rms: RMS value of an image, can be computed with
                 tkp.quality.statistics.rms

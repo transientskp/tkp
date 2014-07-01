@@ -53,15 +53,19 @@ class TestRms(unittest.TestCase):
             0.01590154516819521 # with a calculator!
         )
 
-    def test_rms_valid(self):
+    def test_rms_too_low(self):
         theoretical_noise = 1
         measured_rms = 1e-9
         self.assertTrue(rms_invalid(measured_rms, theoretical_noise))
 
-    def test_rms_invalid(self):
+    def test_rms_too_high(self):
         theoretical_noise = 1
         measured_rms = 1e9
         self.assertTrue(rms_invalid(measured_rms, theoretical_noise))
+
+    def test_rms_valid(self):
+        measured_rms = theoretical_noise = 1
+        self.assertFalse(rms_invalid(measured_rms, theoretical_noise))
 
 
 @requires_data(core_antennas)

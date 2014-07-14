@@ -205,13 +205,37 @@ class ImageData(object):
     #                                                                         #
     ###########################################################################
 
-    def process_rows(self, where_data, sx, ex, ydim, queue):
+    def process_rows(self, bounds, sx, ex, ydim, queue):
+        """
+        Find the mean background and noise RMS background for multiple rows 
+	of an image. Called from grids(). 
+
+        Args:
+
+            bounds: The image region in which useful data exists
+	    sx: start row - an image is divided into rows and columns based
+		on the number of grid boxes. A row is back_size_x pixels in 
+		width. This function many do many rows.
+            ex: end row (+1)
+            ydim: y image dimension in pixels
+            queue: if None, then return the results, otherwise multiple 
+		processes are running and the results are sent to the master
+		through this queue
+
+        Returns: 
+
+            (rmsgrid,bggrid): grids containing noise and background values over
+            	the rows of interest
+
+	This is the same loop that was in the sequential PySE, but modified
+	to operate on specific rows.
+        """
  	rmsgrid, bggrid = [], []
         for startx in xrange(sx, ex, self.back_size_x):
 	    rmsrow, bgrow = [], []
 
             for starty in xrange(0, ydim, self.back_size_y):
-                chunk = self.data[where_data][
+                chunk = self.data[bounds][
                     startx:startx + self.back_size_x,
                     starty:starty + self.back_size_y
                 ].ravel()
@@ -257,6 +281,14 @@ class ImageData(object):
 
         This is called automatically when ImageData.backmap,
         ImageData.rmsmap or ImageData.fdrmap is first accesseD.
+
+        If multiple processes are used, then each process calculates the values
+	for certain rows of the image, which are then later combined. A row
+	is a line of grid boxes from one side of the image to another. This
+	functionality is achieved by taking the loop that was in the sequential
+	grid(), placing it in this function, and modifying it to process
+	only certains rows. The grid function then works how how to split
+	up the rows, which can be processed by other processes.
         """
 
         # there's no point in working with the whole of the data array
@@ -267,11 +299,19 @@ class ImageData(object):
      
         my_xdim, my_ydim = self.data[useful_chunk[0]].shape
 
+	# Calculate how many rows will be done per process
 	num_iters = len(xrange(0, my_xdim, self.back_size_x))
         per_proc = num_iters/self.nproc
         if num_iters%self.nproc != 0: per_proc += 1
+
         rmsgrid, bggrid = [], []
 	process_list = []
+
+        # Begin parallel processing
+
+	# Fire off processes and tell each one which rows it is going to 
+	# process. All calulated from knowledge of the image width, the box
+	# width, and how many rows per process. 
         for startx in xrange(per_proc*self.back_size_x, my_xdim, per_proc*self.back_size_x):
 	    endx = startx+per_proc*self.back_size_x
 	    if endx >= my_xdim: endx = my_xdim	   
@@ -280,19 +320,23 @@ class ImageData(object):
 	    process_list.append((p, q))
 	    p.start()
 	    
-	# Be careful to reconstruct in the correct order
-	# This process does the first few rows
+	# This "master" process does the first few rows, or all of them if
+	# nproc=1
 	endx = per_proc*self.back_size_x
 	(rmsg, bgg) = self.process_rows(useful_chunk[0], 0, endx, my_ydim, None)
 	rmsgrid += rmsg
         bggrid += bgg
 
-	# Results from other processes
+	# Results from other processes are read from their queue, in the right
+	# order, so that the whole can be contructed. Proceses are killed.
 	for process in process_list:
 	    (rmsg, bgg) = process[1].get()
 	    process[0].join()
 	    rmsgrid += rmsg
             bggrid += bgg
+
+       # Parallel processing finished
+
         rmsgrid = numpy.ma.array(
             rmsgrid, mask=numpy.where(numpy.array(rmsgrid) == False, 1, 0))
         bggrid = numpy.ma.array(
@@ -764,7 +808,48 @@ class ImageData(object):
 
 
     def process_labels(self, labels, deblend_nthresh, queue):
+	"""
+	Extracts the islands corresponding to some of the labels found by 
+	foundobjects(). Which labels to operate with is determined by 
+	the _pyse() function, which calls this one.
+
+	Args:
+	
+	    labels: a list of labels (integers) to process
+	    deblend_nthresh: deblending threshold passed though _pyse(), needed
+		when creating an Island
+	    queue:  if None, then return the results, otherwise multiple 
+		processes are running and the results are sent to the master
+		through this queue
+
+	Shared Data:
+
+	    Data is shared between processes by storing it in a tuple before
+	    processes are created. The data is expected to be readonly by this
+	    routine, which means the OS will not copy it (that's the theory).
+	    Shared data is used for data that can be large, and would incur
+	    significant overhead in sending it to a process calling this
+	    function. The policy is that any image-sized objects, and 
+	    collections of Python structured objects, should be shared data. 		    "labels" is just a list of integers so it is passed.
+	
+	    The data:
+            slices: a list of regions where objects are
+            analysisthresholdmap: analysisthresholdmap (image)
+            labelled_data: labelled_data (image)
+            detectionthresholdmap : detectionthresholdmap (image)
+
+	Returns:
+
+	    results_list: a list of Island objects for these labels
+
+	This is the same loop that was in the sequential PySE, but modified to
+	work on specific labels.
+	"""
+
+
     	results_list = []
+	# Loop through the specified labels, extracting the islands 
+	# corresponding to them.
 	for label in labels:
             chunk = self.shared_data["slices"][label-1]
             analysis_threshold = (self.shared_data["analysisthresholdmap"][chunk] /
@@ -802,7 +887,44 @@ class ImageData(object):
 
 
     def process_islands(self, start, finish, force_beam, queue):
-   
+	"""
+        Processes some of the islands  that have been found in the image.
+        Which islands to operate on is determined by the _pyse() function, 
+	which calls this one.
+
+        Args:
+        
+            labels: start index into the list of islands
+	    finish: last index into the list of islands (+1). This function 
+		processes indices from start to finish
+            force_beam: passed through from _pyse(), need for island processing
+            queue:  if None, then return the results, otherwise multiple 
+                processes are running and the results are sent to the master
+                through this queue
+
+        Shared Data:
+
+            Data is shared between processes by storing it in a tuple before
+            processes are created. The data is expected to be readonly by this
+            routine, which means the OS will not copy it (that's the theory).
+            Shared data is used for data that can be large, and would incur
+            significant overhead in sending it to a process calling this
+            function. The policy is that any image-sized objects, and 
+	    collections of Python structured objects, should be shared data.
+
+	    The data:
+	    island_list: a list of all the island objects in the image, only
+		some are processed here
+
+       Returns:
+
+            results_list: a list of Detections for these Islands
+
+        This is the same loop that was in the sequential PySE, but modified to
+        work on specific islands.
+        """
+
+
     	results_list = containers.ExtractionResults()
         for island in self.shared_data["island_list"][start:finish]:
        	  
@@ -891,20 +1013,26 @@ class ImageData(object):
         # 'None' returned for missing label indices.
         slices = ndimage.find_objects(labelled_data)
 
+        # Begin parallel processing
+
+	# Calculate how many labels can be done per process
  	num_iters = len(labels)
         per_proc = num_iters/self.nproc
         if num_iters%self.nproc != 0: per_proc += 1
 
+        # Setup shared data
 	self.shared_data = {
-	    # Assume that processes fork without copying data, 
-	    # and that references to the data are stored in this object.
-	    # In that case, we get free shared memory between processes.
+	    # Assume that processes fork without copying data,
+	    # as long as it is never written to. 
+	    # In that case, if we don't write to this data, we get free shared 
+	    # readonly memory between processes.
 	    "slices" : slices,
 	    "analysisthresholdmap" : analysisthresholdmap,
 	    "labelled_data" : labelled_data,
 	    "detectionthresholdmap" : detectionthresholdmap
 	}
 
+	# Fire off processes, telling them which labels to use.
         process_list = []
 	for i in range(1,self.nproc):
 	    q = Queue()
@@ -913,12 +1041,17 @@ class ImageData(object):
             process_list.append((p, q))
             p.start()
 	
-	# This process does the first few in the list
+	# This process does the first few in the list, or all of them if 
+	# nproc=1
 	island_list += self.process_labels(labels[0:per_proc],deblend_nthresh,None)
  	
+	# Get the results from the other processes and form a single list. The
+	# processes will be killed here. 
         for process in process_list:
             island_list += process[1].get()
             process[0].join()
+
+         # Parallel processing is finished for this code section
 
         # If required, we can save the 'left overs' from the deblending and
         # fitting processes for later analysis. This needs setting up here:
@@ -929,7 +1062,8 @@ class ImageData(object):
                 self.residuals_from_deblending[island.chunk] += (
                     island.data.filled(fill_value=0.))
 
-        # Deblend each of the islands to its consituent parts, if necessary
+        # Deblend each of the islands to its consituent parts, if necessary.
+	# This could be parallelized?.
         if deblend_nthresh:
             deblended_list = map(lambda x: x.deblend(), island_list)
             #deblended_list = [x.deblend() for x in island_list]
@@ -938,14 +1072,25 @@ class ImageData(object):
         # Iterate over the list of islands and measure the source in each,
         # appending it to the results list.
         results = containers.ExtractionResults()
+
+        # Being parallel processing again. Similar steps from 
+	# previous code section.
+
+	# Calculate how many islands can be done by each process.
 	num_iters = len(island_list)
         per_proc = num_iters/self.nproc
         if num_iters%self.nproc != 0: per_proc += 1
 
 	self.shared_data = {
+	    # Assume that processes fork without copying data,
+	    # as long as it is never written to.     
+	    # In that case, if we don't write to this data, we get free shared
+	    # readonly memory between processes.
+   
 	    "island_list" : island_list
 	}
 
+	# Fire off other processes, telling them what to do
 	process_list = []
 	for i in range(1,self.nproc):
 	    q = Queue()
@@ -953,7 +1098,7 @@ class ImageData(object):
 	    process_list.append((p, q))
 	    p.start()
 	    
-	# This process    
+	# This process does some
 	for r in self.process_islands(0,per_proc,force_beam,None):
 	    results.append(r)
 	    
@@ -962,6 +1107,8 @@ class ImageData(object):
 		r.imagedata = self    # Not sent, so put back 
 	    	results.append(r)
 	    process[0].join()	
+
+        # Parallel processing finished
 
         def is_usable(det):
             # Check that both ends of each axis are usable; that is, that they

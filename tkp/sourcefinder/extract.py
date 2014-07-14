@@ -692,7 +692,19 @@ def source_profile_and_errors(data, threshold, noise, beam, fixed=None, residual
 
 
 class Detection(object):
-    """The result of a measurement at a given position in a given image."""
+    """
+        The result of a measurement at a given position in a given image.
+
+        Changes for the parallel version:
+        physical_coordinates is called on the object before it is returned. 
+	This is due to pickling issues that would require more changes to the 
+	object. This also means that the values that _physical _coordinates 
+	calculates have to be sent and received
+
+        The image that this Detection was obtained from is not attached to the 
+	object here so that it is not sent between processes, which could be a 
+	large overhead. The image is restored at the receiving end.
+    """
 
     def __init__(self, paramset, imagedata, chunk=None, eps_ra=0, eps_dec=0):
 

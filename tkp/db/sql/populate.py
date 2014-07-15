@@ -144,7 +144,7 @@ def recreate_postgresql(dbconfig):
     print "creating database %(database)s on %(host)s..." % dbconfig
     cur.execute('CREATE DATABASE %s' % dbconfig['database'])
     if dbconfig['database'] != dbconfig['user']:
-        # TODO (Gijs): This is a bad idea and should be solved.
+        # TODO (Gijs - #5991): This is a bad idea and should be solved.
         print "creating a SUPERUSER with name %(database)s on %(host)s..." %\
               dbconfig
 

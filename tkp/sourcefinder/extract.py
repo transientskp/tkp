@@ -742,8 +742,8 @@ class Detection(object):
     def __getstate__(self):
         return {
           
-	    'eps_ra' : self.eps_ra,
-	    'eps_dec' : self.eps_dec,
+            'eps_ra' : self.eps_ra,
+            'eps_dec' : self.eps_dec,
             'chunk': (self.chunk[0].start, self.chunk[0].stop,
                       self.chunk[1].start, self.chunk[1].stop),
             'peak': self.peak,
@@ -759,12 +759,12 @@ class Detection(object):
             'theta_dc' : self.theta_dc,
             'sig': self.sig,
             'error_radius': self.error_radius,
-	
-	    # Created by _physical_coordinates()
-	    'ra' : self.ra,
-	    'dec' : self.dec,
-	    'theta_celes' : self.theta_celes,
-	    'theta_dc_celes' : self.theta_dc_celes,
+
+            # Created by _physical_coordinates()
+            'ra' : self.ra,
+            'dec' : self.dec,
+            'theta_celes' : self.theta_celes,
+            'theta_dc_celes' : self.theta_dc_celes,
             'end_smaj_x' : self.end_smaj_x,
             'start_smaj_x' : self.start_smaj_x,
             'end_smaj_y' : self.end_smaj_y,
@@ -773,8 +773,8 @@ class Detection(object):
             'start_smin_x' : self.start_smin_x, 
             'end_smin_y' : self.end_smin_y, 
             'start_smin_y' : self.start_smin_y,
-	    'smaj_asec' : self.smaj_asec,
-	    'smin_asec' : self.smin_asec
+            'smaj_asec' : self.smaj_asec,
+            'smin_asec' : self.smin_asec
             }
 
     def __setstate__(self, attrdict):

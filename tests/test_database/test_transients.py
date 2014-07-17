@@ -151,13 +151,17 @@ class TestSimplestCases(unittest.TestCase):
         transients = multi_epoch_transient_search(image_id=image.id,
                                                   **self.search_params)
 
-        #And now we should have a non-zero variability value:
         transients = get_transients_for_dataset(self.dataset.id)
         self.assertEqual(len(transients), 1)
         transient_properties = transients[0]
+        #
+        #And now we should have a non-zero variability value:
         # print "\n",transient_properties
         self.assertNotAlmostEqual(transient_properties['v_int'],0)
         self.assertNotAlmostEqual(transient_properties['eta_int'],0)
+        # But the 'transient_type' remains the same to signify the trigger
+        # conditions
+        self.assertEqual(transient_properties['transient_type'],1)
 
 
     def test_single_epoch_weak_transient(self):
@@ -344,6 +348,7 @@ class TestDecreasingImageRMS(unittest.TestCase):
     """
     def shortDescription(self):
          return None
+
     @requires_database()
     def setUp(self):
         self.database = tkp.db.Database()
@@ -451,7 +456,6 @@ class TestDecreasingImageRMS(unittest.TestCase):
         img_params = self.img_params
 
         #Must pick flux value carefully to fire correct logic branch:
-        img0 = img_params[0]
         marginal_transient_flux = self.reliably_detected_at_image_centre_flux
 
         marginal_transient = MockSource(
@@ -693,6 +697,112 @@ class TestMultipleFrequencyBands(unittest.TestCase):
 
         #Should have no marked transients
         self.assertEqual(len(transients),0)
+
+
+class TestPreviousLimitsImageId(unittest.TestCase):
+    """
+    If we have several previous images with non-detections at a position,
+    and then we find a new source, we should store the ID of the image with
+    the best previous upper limits, so we can later run queries to see how
+    decisively 'new' (i.e. how much brighter than previous limits)
+    the new source is.
+    """
+    def shortDescription(self):
+         return None
+
+    @requires_database()
+    def setUp(self):
+        self.database = tkp.db.Database()
+        self.dataset = tkp.db.DataSet(
+            data={'description':"Trans:" +self._testMethodName},
+            database=self.database)
+
+        self.n_images = 8
+        self.rms_min_initial = 2e-3 #2mJy
+        self.rms_max_initial = 5e-3 #5mJy
+        self.new_source_sigma_margin = 3
+        self.detection_thresh=10
+
+
+        dt=self.detection_thresh
+        margin = self.new_source_sigma_margin
+
+        self.always_detectable_flux = 1.01*(dt+ margin)*self.rms_max_initial
+        self.search_params = dict(eta_lim=1,
+                                  V_lim=0.1,
+                                  probability_threshold=0.7,
+                                  minpoints=1, )
+
+
+        test_specific_img_params = dict(rms_qc = self.rms_min_initial,
+                                rms_min = self.rms_min_initial,
+                                rms_max = self.rms_max_initial,
+                                detection_thresh = self.detection_thresh)
+
+        self.img_params = db_subs.generate_timespaced_dbimages_data(
+            self.n_images, **test_specific_img_params)
+
+
+        #Raise RMS in images 0,1,2,6
+        rms_keys = ['rms_qc', 'rms_min', 'rms_max']
+        rms_increase_factor = 1.2
+        for img_index in (0,1,2,6):
+            for k in rms_keys:
+                self.img_params[img_index][k]*=rms_increase_factor
+
+        # Now, images 3,4,5 are equally good. But if we raise the rms_max in
+        # images, 3,5 (leave rms_min equal) then we should pick 4 as the best.
+        # (NB Careful ordering - ensures we're not just picking the best by
+        # default due to it being first or last in the matching set.)
+        for img_index in (3,5):
+            self.img_params[img_index]['rms_max']*=rms_increase_factor
+
+        #Drop RMS significantly in last image so we get a detection. (index=7)
+        rms_decrease_factor = 0.5
+        for k in rms_keys:
+                self.img_params[-1][k]*=rms_decrease_factor
+
+
+    def tearDown(self):
+        tkp.db.rollback()
+
+    def test_previous_image_id(self):
+        img_params = self.img_params
+
+        mock_sources=[]
+        mock_sources.append( MockSource(
+            example_extractedsource_tuple(ra=img_params[0]['centre_ra'],
+                                          dec=img_params[0]['centre_decl']),
+            lightcurve={img_params[-1]['taustart_ts']:
+                            self.always_detectable_flux}
+        ))
+
+        mock_sources.append( MockSource(
+            example_extractedsource_tuple(ra=img_params[0]['centre_ra']+1,
+                                          dec=img_params[0]['centre_decl']),
+            lightcurve={img_params[-1]['taustart_ts']:
+                            self.always_detectable_flux}
+        ))
+
+
+        image_ids={}
+
+        for img_idx in xrange(self.n_images):
+            image, _,_ = insert_image_and_simulated_sources(
+                self.dataset,self.img_params[img_idx],mock_sources,
+                self.new_source_sigma_margin)
+            image_ids[img_idx]=image.id
+            transients = multi_epoch_transient_search(image_id=image.id,
+                                  **self.search_params)
+
+
+        transients = get_transients_for_dataset(self.dataset.id)
+
+        self.assertEqual(len(transients),len(mock_sources))
+        transient_properties = transients[0]
+        print "Image IDs:", image_ids
+        self.assertEqual(transient_properties['previous_limits_image'],
+                         image_ids[4])
 
 
 class TestMultipleSourceField(unittest.TestCase):

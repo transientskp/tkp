@@ -1,6 +1,8 @@
 #!/bin/bash
 
-export TKP_TESTPATH=/data2/repos/tkp-data/unittests/tkp_lib 
+THIS_SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd)"
+
+export TKP_TESTPATH=${THIS_SCRIPT_DIR}/data
 export TKP_DBNAME=testdb
 export TKP_MAXTESTDURATION=5
 

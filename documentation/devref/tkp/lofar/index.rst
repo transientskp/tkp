@@ -2,25 +2,25 @@
 Lofar
 +++++
 
-.. automodule:: tkp.lofar
+.. automodule:: tkp.telescope.lofar
   :members:
 
 
 Antenna arrays
 ==============
 
-.. automodule:: tkp.lofar.antennaarrays
+.. automodule:: tkp.telescope.lofar.antennaarrays
   :members:
 
 Beam
 ====
 
-.. automodule:: tkp.lofar.beam
+.. automodule:: tkp.telescope.lofar.beam
   :members:
 
 
 noise
 =====
 
-.. automodule:: tkp.lofar.noise
+.. automodule:: tkp.telescope.lofar.noise
   :members:

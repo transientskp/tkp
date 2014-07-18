@@ -4,7 +4,7 @@
 Database package
 ++++++++++++++++
 
-Modules from the ``tkp.database`` package.
+Modules from the :mod:`tkp.db` package.
 
 .. toctree::
    :maxdepth: 2
@@ -15,5 +15,6 @@ Modules from the ``tkp.database`` package.
    general
    generic
    monitoringlist
+   nulldetections
    orm
    transients

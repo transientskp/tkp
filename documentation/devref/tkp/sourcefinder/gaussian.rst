@@ -1,8 +1,8 @@
 .. _sourcefinder-gaussian:
 
-+++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-:mod:`tkp.sourcefinder.gaussian` -- Gaussian fit routines
-+++++++++++++++++++++++++++++++++++++++++++++++++++++++++
++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+:mod:`tkp.sourcefinder.gaussian` -- defines a two dimensional Gaussian function
++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 
 .. automodule:: tkp.sourcefinder.gaussian

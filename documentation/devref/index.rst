@@ -18,5 +18,5 @@ It is assumed that the reader is already familiar with the :ref:`userref`.
   procedure
   developing
   testing
-  tkp/index
   database/index
+  tkp/index

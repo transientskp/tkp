@@ -2,7 +2,7 @@
 
 """
 
-.. module:: sigmaclip
+.. module:: tkp.utility.sigmaclip
    :synopsis: Generic sigmaclip routine
 .. moduleauthor:: TKP, Evert Rol <discovery@transientskp.org>
 

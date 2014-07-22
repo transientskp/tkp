@@ -11,3 +11,4 @@ Getting Started
    concepts/index
    tutorial
    sites
+   vagrant

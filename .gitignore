@@ -3,3 +3,4 @@ documentation/build/
 build
 vagrantproject/
 .vagrant/
+vagrant/data/*

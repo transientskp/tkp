@@ -54,17 +54,24 @@ def associate_extracted_sources(image_id, deRuiter_r, new_source_sigma_margin):
         logger.error("Error caught around _insert_1_to_many_runcat - "
                  "possible 'RhombusError'. See Issue #4778. Will now re-raise.")
         raise e
-    _insert_1_to_many_runcat_flux()
-    _insert_1_to_many_basepoint_assoc()
-    _insert_1_to_many_replacement_assoc()
-    _insert_1_to_many_skyrgn()
-    _insert_1_to_many_transient()
-    _delete_1_to_many_inactive_assoc()
-    _delete_1_to_many_inactive_runcat_flux()
+
     _flag_1_to_many_inactive_runcat()
-    _flag_1_to_many_inactive_tempruncat()
+
+    _insert_1_to_many_runcat_flux()
+    _delete_1_to_many_inactive_runcat_flux()
+
+    _insert_1_to_many_basepoint_assocxtrsource()
+    _insert_1_to_many_replacement_assocxtrsource()
+    _delete_1_to_many_inactive_assocxtrsource()
+
+    _insert_1_to_many_assocskyrgn()
     _delete_1_to_many_inactive_assocskyrgn()
+
+    _insert_1_to_many_transient()
     _delete_1_to_many_inactive_transient()
+
+    _flag_1_to_many_inactive_tempruncat()
+
     #+-----------------------------------------------------+
     #| Here we process the one-to-one associations         |
     #+-----------------------------------------------------+
@@ -745,14 +752,6 @@ def _flag_many_to_many_tempruncat():
     processing to one-to-many and many-to-one (identical to one-to-one)
     relationships
 
-    **Before:**
-        temprunningcatalog contains many candidate associations, all marked
-        ``inactive == False``
-
-
-    **After:**
-        Discarded candidates are marked ``inactive == True``
-
     """
 
     # This one selects the farthest out of the many-to-many assocs
@@ -943,8 +942,8 @@ INSERT INTO runningcatalog_flux
     tkp.db.execute(query, commit=True)
 
 
-def _insert_1_to_many_basepoint_assoc():
-    """Insert base points for one-to-many associations
+def _insert_1_to_many_basepoint_assocxtrsource():
+    """Insert 'base points' for one-to-many associations
 
     Before continuing, we have to insert the 'base points' of the associations,
     i.e. the links between the new runningcatalog entries
@@ -1017,7 +1016,7 @@ INSERT INTO assocxtrsource
     tkp.db.execute(query, commit=True)
 
 
-def _insert_1_to_many_replacement_assoc():
+def _insert_1_to_many_replacement_assocxtrsource():
     """Insert links into the association table between the new runcat
     entries and the old extractedsources.
     (New to New ('basepoint') links have been added earlier).
@@ -1076,7 +1075,7 @@ INSERT INTO assocxtrsource
     tkp.db.execute(query, commit=True)
 
 
-def _insert_1_to_many_skyrgn():
+def _insert_1_to_many_assocskyrgn():
     """
     Copy skyregion associations from old runcat entries for new one-to-many
     runningcatalog entries.
@@ -1155,8 +1154,8 @@ INSERT INTO transient
         ,transient tr
    WHERE tmprc.runcat = one_to_many.old_runcat_id
      AND tmprc.inactive = FALSE
+     AND tr.runcat = one_to_many.old_runcat_id
      AND r.xtrsrc = tmprc.xtrsrc
-     AND tr.runcat = tmprc.runcat
 """
     tkp.db.execute(query, commit=True)
 
@@ -1169,11 +1168,13 @@ def _delete_1_to_many_inactive_assocskyrgn():
     """
     query = """\
 DELETE
-  FROM assocskyrgn
- WHERE runcat IN (SELECT r.id as runcat
-                FROM runningcatalog r
-               WHERE r.inactive = TRUE
-             )
+    FROM assocskyrgn
+    WHERE runcat IN (SELECT runcat
+                       FROM temprunningcatalog
+                       WHERE inactive = FALSE
+                       GROUP BY runcat
+                       HAVING COUNT(*) > 1
+                    )
 """
     tkp.db.execute(query, commit=True)
 
@@ -1186,18 +1187,18 @@ def _delete_1_to_many_inactive_transient():
     """
     query = """\
 DELETE
-  FROM transient
- WHERE id IN (SELECT tr.id
-                FROM transient tr
-                    ,runningcatalog r
-               WHERE tr.runcat = r.id
-                 AND r.inactive = TRUE
-             )
+    FROM transient
+    WHERE runcat IN (SELECT runcat
+                       FROM temprunningcatalog
+                       WHERE inactive = FALSE
+                       GROUP BY runcat
+                       HAVING COUNT(*) > 1
+                    )
 """
     tkp.db.execute(query, commit=True)
 
 
-def _delete_1_to_many_inactive_assoc():
+def _delete_1_to_many_inactive_assocxtrsource():
     """Delete the association pairs of the old runcat from assocxtrsource
 
     NOTE: It might sound confusing, but those are not qualified
@@ -1216,13 +1217,13 @@ def _delete_1_to_many_inactive_assoc():
     #superceded runcat entries.
     query = """\
 DELETE
-  FROM assocxtrsource
- WHERE runcat IN (SELECT runcat
-                    FROM temprunningcatalog
+    FROM assocxtrsource
+    WHERE runcat IN (SELECT runcat
+                   FROM temprunningcatalog
                    WHERE inactive = FALSE
-                  GROUP BY runcat
-                  HAVING COUNT(*) > 1
-                 )
+                   GROUP BY runcat
+                   HAVING COUNT(*) > 1
+                )
     """
     tkp.db.execute(query, commit=True)
 
@@ -1236,13 +1237,13 @@ def _delete_1_to_many_inactive_runcat_flux():
     """
     query = """\
 DELETE
-  FROM runningcatalog_flux
- WHERE runcat IN (SELECT runcat
-                    FROM temprunningcatalog
+    FROM runningcatalog_flux
+    WHERE runcat IN (SELECT runcat
+                   FROM temprunningcatalog
                    WHERE inactive = FALSE
-                  GROUP BY runcat
-                  HAVING COUNT(*) > 1
-                 )
+                   GROUP BY runcat
+                   HAVING COUNT(*) > 1
+                )
 """
     tkp.db.execute(query, commit=True)
 
@@ -1250,9 +1251,8 @@ DELETE
 def _flag_1_to_many_inactive_runcat():
     """Flag the old runcat ids in the runningcatalog to inactive
 
-    We do not delete them yet, because we need them later on.
-    Since we replaced this runcat.id with multiple new one, we first
-    flag it as inactive, after which we delete it from the runningcatalog
+    We do not delete them yet, because we still need to clear up all the
+    superseded entries in assocskyrgn, etc.
     """
     query = """\
 UPDATE runningcatalog
@@ -1268,20 +1268,16 @@ UPDATE runningcatalog
 
 
 def _flag_1_to_many_inactive_tempruncat():
-    """Delete the one-to-many associations from temprunningcatalog,
-    and delete the inactive rows from runningcatalog.
+    """
+    Flag the one-to-many associations from temprunningcatalog.
 
-    We do not delete them yet, because we need them later on.
-    After the one-to-many associations have been processed,
-    they can be deleted from the temporary table and
-    the runningcatalog.
+    (Since we are done processing them, now.)
+
+    We do not delete them yet- if we did,
+    we would not be able to cross-match extractedsources to determine
+    which sources did not have a match in temprunningcatalog ('new' sources).
 
     """
-    # TODO: When we delete the many from the 1-to-many assocs here,
-    #       it will later on pop up again in the list of extracted
-    #       sources that did not have a match in temprunningcatalog
-    #
-    # See also comments at _insert_new_runcat()
     query = """\
 UPDATE temprunningcatalog
    SET inactive = TRUE
@@ -2035,7 +2031,8 @@ INSERT INTO transient
 
 
 def _update_ff_runcat_extractedsource():
-    """We are about to delete the runcats that are inactivated, and
+    """
+    We are about to delete the runcats that are inactivated, and
     therefore have to set the ff_runcat reference in extractedsource to NULL.
     """
     query = """\

@@ -7,3 +7,4 @@
 
 .. automodule:: tkp.utility.sigmaclip
    :members:
+   :noindex:

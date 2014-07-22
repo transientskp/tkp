@@ -79,12 +79,18 @@ or n-1.
    NULL if not calculated (:ref:`Scheers, 2011 <scheers-2011>`, chapter 3).
 
 **v_int**
-    The first variability index, :math:`V_{\nu}`, based on the integrated flux
-    values.
+    The 'normalised standard deviation' variability index, :math:`V_{\nu}`,
+    based on the integrated flux values up to this datapoint.
 
 **eta_int**
-    The second variability index, :math:`\eta_{\nu}`, based on the integrated
-    flux values.
+    The 'reduced chi-squared' variability index,
+    :math:`\eta_{\nu}`,
+    based on the integrated flux values up to this datapoint.
+
+**f_datapoints**
+    The number of flux datapoints (including the extractedsource
+    referenced in this entry) used to calculate the variability indices.
+
 
 .. _schema-assocskyrgn:
 

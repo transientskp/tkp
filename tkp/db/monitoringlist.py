@@ -621,6 +621,7 @@ INSERT INTO assocxtrsource
   ,r
   ,v_int
   ,eta_int
+  ,f_datapoints
   )
   SELECT r0.id AS runcat
         ,r0.xtrsrc
@@ -629,6 +630,7 @@ INSERT INTO assocxtrsource
         ,0 AS r
         ,0 AS v_int
         ,0 AS eta_int
+        ,1 as f_datapoints
     FROM (SELECT x1.id AS xtrsrc
             FROM extractedsource x1
                  LEFT OUTER JOIN temprunningcatalog trc1

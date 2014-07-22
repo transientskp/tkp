@@ -8,6 +8,7 @@ CREATE TABLE assocxtrsource
   ,loglr DOUBLE PRECISION NULL
   ,v_int DOUBLE PRECISION NOT NULL
   ,eta_int DOUBLE PRECISION NOT NULL
+  ,f_datapoints INT NOT NULL
   ,UNIQUE (runcat, xtrsrc)
   ,FOREIGN KEY (runcat) REFERENCES runningcatalog (id)
   ,FOREIGN KEY (xtrsrc) REFERENCES extractedsource (id)

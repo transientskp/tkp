@@ -1,8 +1,8 @@
 .. _database-assoc:
 
-******************
-Source Association
-******************
+************************
+Source Association Logic
+************************
 .. |last_updated| last_updated::
 
 Source association—the process by which individual measurements recorded from

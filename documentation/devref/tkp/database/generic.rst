@@ -1,9 +1,9 @@
 .. _database-generic:
 
-+++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-:mod:`tkp.database.generic` -- generic database functions
-+++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+:mod:`tkp.db.generic` -- generic data-query generation functions
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 .. automodule:: tkp.db.generic
    :synopsis: generic database stuff
-       :members:
+   :members:

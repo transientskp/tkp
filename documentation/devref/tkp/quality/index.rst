@@ -5,6 +5,7 @@ Quality
 +++++++
 
 .. automodule:: tkp.quality
+  :synopsis: Quality control checks
   :members:
 
 

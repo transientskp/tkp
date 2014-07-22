@@ -33,9 +33,9 @@ the TraP manage ``initdb`` subcommand can be used (from the project directory)::
   $ ./manage.py initdb
 
 Use the ``-h`` flag to see an explanation about how to set the various
-properties.  If you don't want to set these properties all the time, you can
-add a ``[database]`` section to your pipeline.cfg.
-
+properties. They can also be configured throught the :ref:`pipeline_cfg`. Note
+that the semantics vary slightly depending on the database system in use: see
+the :ref:`database documentation <database-section>` for details.
 
 Create and configure a job
 ==========================

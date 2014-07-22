@@ -52,7 +52,9 @@ Run will start a job. It needs a job name as argument.
 initdb
 ------
 
-Initialise a database with the TKP schema.
+Initialise a database with the TKP schema. The semantics of this command vary
+depending on the database system in use; see the :ref:`relevant section
+<database-section>` for details.
 
 .. program-output:: python ../tkp/bin/tkp-manage.py initdb -h
 

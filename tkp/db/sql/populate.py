@@ -72,71 +72,99 @@ def connect(dbconfig):
         sys.stderr.write("engine %s is not implemented" % dbconfig['engine'])
         raise NotImplementedError
 
-auth_query = """
-ALTER USER "monetdb" RENAME TO "%(username)s";
+
+monetdb_auth_query = """
+ALTER USER "monetdb" RENAME TO "%(user)s";
 ALTER USER SET PASSWORD '%(password)s' USING OLD PASSWORD 'monetdb';
-CREATE SCHEMA "%(database)s" AUTHORIZATION "%(username)s";
-ALTER USER "%(username)s" SET SCHEMA "%(database)s";
+CREATE SCHEMA "%(database)s" AUTHORIZATION "%(user)s";
+ALTER USER "%(user)s" SET SCHEMA "%(database)s";
 """
+
+
+def recreate_monetdb(dbconfig):
+    """
+    Destroys and creates a new MonetDB database.
+
+    WARNING: this will DESTROY your database!
+
+    args:
+        dbconfig: a dict containing the database configuration
+    """
+    import monetdb.sql
+    import monetdb.control
+    control = monetdb.control.Control(dbconfig['host'], dbconfig['port'],
+                                      dbconfig['passphrase'])
+
+    database = dbconfig['database']
+    print("stopping %s" % database)
+    try:
+        control.stop(database)
+    except monetdb.sql.OperationalError, e:
+        print("database not running")
+    print "destroying %s" % database
+    try:
+        control.destroy(database)
+    except monetdb.sql.OperationalError, e:
+        print("can't destroy database: %s" % str(e))
+
+    control.create(database)
+    control.release(database)
+    control.start(database)
+
+    con = monetdb.sql.connect(username='monetdb', password='monetdb',
+                              hostname=dbconfig['host'], port=dbconfig['port'],
+                              database=dbconfig['database'])
+    cur = con.cursor()
+    cur.execute(monetdb_auth_query % dbconfig)
+    con.commit()
+    con.close()
+
+
+def recreate_postgresql(dbconfig):
+    """
+    Destroys and creates a new PostgreSQL database.
+
+    WARNING: this will DESTROY your database!
+
+    args:
+        dbconfig: a dict containing the database configuration
+    """
+    import psycopg2
+    con = psycopg2.connect(user=dbconfig['user'],
+                           password=dbconfig['password'],
+                           port=dbconfig['port'], host=dbconfig['host'],
+                           database='postgres')
+    con.autocommit = True
+    cur = con.cursor()
+    print "destroying database %(database)s on %(host)s..." % dbconfig
+    try:
+        cur.execute('DROP DATABASE %s' % dbconfig['database'])
+    except psycopg2.ProgrammingError:
+        pass
+    print "creating database %(database)s on %(host)s..." % dbconfig
+    cur.execute('CREATE DATABASE %s' % dbconfig['database'])
+    if dbconfig['database'] != dbconfig['user']:
+        # TODO (Gijs - #5991): This is a bad idea and should be solved.
+        print "creating a SUPERUSER with name %(database)s on %(host)s..." %\
+              dbconfig
+
+        cur.execute("CREATE USER %s WITH PASSWORD '%s' SUPERUSER" %
+                    (dbconfig['database'], dbconfig['database']))
+
 
 def recreate(dbconfig):
     """
     Destroys and creates a new database.
 
-    :param options: a argparse namespace generated with tkp.management
-
     WARNING: this will DESTROY your database!
 
-    Note: this will raise an Exception ONLY when the creation of the database
-          fails
+    args:
+        dbconfig: a dict containing the database configuration
     """
-    params = {'username': dbconfig['user'],
-              'password': dbconfig['password'],
-              'database': dbconfig['database'],
-              'host': dbconfig['host']
-              }
     if dbconfig['engine'] == 'monetdb':
-        import monetdb.sql
-        import monetdb.control
-        control = monetdb.control.Control(dbconfig['host'], dbconfig['port'],
-                                          dbconfig['passphrase'])
-
-        database = dbconfig['database']
-        print("stopping %s" % database)
-        try:
-            control.stop(database)
-        except monetdb.sql.OperationalError, e:
-            print("database not running")
-        print "destroying %s" % database
-        try:
-            control.destroy(database)
-        except monetdb.sql.OperationalError, e:
-            print("can't destroy database: %s" % str(e))
-
-        control.create(database)
-        control.release(database)
-        control.start(database)
-
-        con = monetdb.sql.connect(username='monetdb', password='monetdb',
-                                  hostname=dbconfig['host'], port=dbconfig['port'],
-                                  database=dbconfig['database'])
-        cur = con.cursor()
-        cur.execute(auth_query % params)
-        con.commit()
-        con.close()
-
+        recreate_monetdb(dbconfig)
     elif dbconfig['engine'] == 'postgresql':
-        import psycopg2
-        con = psycopg2.connect(user=dbconfig['user'],
-                               password=dbconfig['password'],
-                               port=dbconfig['port'], host=dbconfig['host'],
-                               database='postgres')
-        con.autocommit = True
-        cur = con.cursor()
-        print "destroying database %(database)s on %(host)s..." % params
-        cur.execute('DROP DATABASE %s' % dbconfig['database'])
-        print "creating database %(database)s on %(host)s..." % params
-        cur.execute('CREATE DATABASE %s' % dbconfig['database'])
+        recreate_postgresql(dbconfig)
     else:
         raise NotImplementedError("we only support monetdb & postgresql")
 

@@ -13,6 +13,18 @@ To install the TraP you must:
 #. Install the core pipeline dependencies;
 #. Build and install the TraP itself.
 
+Some details on each of these steps is provided below.
+
+Note, though, that the overall procedure is complex, and correctly configuring
+all the various components can be difficult. It is possible instead to use
+`Vagrant <http://www.vagrantup.com/>`_ to quickly and easily set up a virtual
+machine which provides a fully configured and working ready-to-go pipeline and
+supporting tools. This is a quick and easy way to get up and running for
+testing purposes or when simplicity is preferable to ultimately high
+performance. Refer to the `Vagrant TraP
+<https://github.com/transientskp/vagrant_trap>`_ repository for details and
+instructions.
+
 Back-end Database
 =================
 

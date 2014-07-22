@@ -365,17 +365,10 @@ which does what it says on the tin.
 Generate a list of candidate runningcatalog-extractedsource associations
 ------------------------------------------------------------------------
 
-::
 
- _insert_temprunningcatalog(image_id, deRuiter_r, radius=0.03)
- Select matched sources
+Performed by: :py:func:`tkp.db.associations._insert_temprunningcatalog`
 
- Here we select the extractedsource that have a positional match
- with the sources in the running catalogue table (runningcatalog).
- Those sources which *do* have a potential match, will be inserted into the
- temporary running catalogue table (temprunningcatalog).
-
-(See also: :ref:`database_temprunningcatalog`. )
+(See also: :ref:`database_temprunningcatalog` table. )
 
 This function generates a temporary table listing possible associations with
 previously catalogued sources. 
@@ -399,20 +392,13 @@ For a given image_id,
    
 Trim the 'many-to-many' links to prevent exponentional database growth
 ----------------------------------------------------------------------
+Performed by: :py:func:`tkp.db.associations._flag_many_to_many_tempruncat`
+
 Especially if we employ a large DeRuiter radius limit, we may generate
 a large number of candidate associations which result in a complex 
 web of possible lightcurves. We reduce this to a more manageable situation
-by trimming some of the 'weaker' candidate associations:
+by trimming some of the 'weaker' candidate associations.
 
-::
-
- _flag_many_to_many_tempruncat()
- Select the many-to-many association pairs in temprunningcatalog.
-
- By flagging the many-to-many associations, we reduce the
- processing to one-to-many and many-to-one (identical to one-to-one)
- relationships
- 
 First, inspect the temprunningcatalog table: 
  - Select entries for which the extractedsource is listed more than once.
  - Of these entries, select those for which the runcat id is listed more than 
@@ -433,66 +419,41 @@ Or, in pseudo-mathematical terms, tempruncat describes the edges of a graph,
 linking nodes (sources) from two spaces 
 (previous runcat entries, newly extracted entries). 
 (There are no intra-space links).
-``_flag_many_to_many_tempruncat()`` trims this graph using 
-the DeRuiter radius as a weeding tool, to ensure that any connected sub-graph 
+:py:func:`._flag_many_to_many_tempruncat` trims this graph using
+the DeRuiter radius as a ranking metric, to ensure that any connected sub-graph
 has multiple nodes in *at most* one of the two spaces.
 
 Deal with the  'one-to-many' runcat-to-extractedsource link sub-graphs
 ----------------------------------------------------------------------
+Performed by:
+
+ - :py:func:`tkp.db.associations._insert_1_to_many_runcat`
+ - :py:func:`tkp.db.associations._insert_1_to_many_runcat_flux`
+ - :py:func:`tkp.db.associations._insert_1_to_many_basepoint_assoc`
+ - :py:func:`tkp.db.associations._insert_1_to_many_replacement_assoc`
+
 When we observe two new sources in the region of a previous known source,
 it is unclear if this is due to increased resolution, or a new source.
 To resolve this, we hedge our bets and replace the old single runcat entry
 with two new entries - these are identical up to the current 'fork'.
 
-::
-
-	_insert_1_to_many_runcat
-
-    Insert new entries for the extracted sources that belong to one-to-many
-    associations in the runningcatalog. 
-    
-    (These entries will be assigned new runcat ids).
-    
-
-    Since for the one-to-many associations (i.e. one runcat source
-    associated with multiple extracted sources) we cannot a priori
-    decide which counterpart pair is the correct one, or whether all
-    are correct (in the case of a higher-resolution image),
-    all extracted sources are added as a new source to
-    the runningcatalog, and they will replace the (old; lower resolution)
-    runcat source of the association.
-
-    As a consequence of this, the resolution of the runningcatalog
-    is increasing over time.
-
-
-::
-
-	_insert_1_to_many_runcat_flux(conn):
-    Insert the fluxes of the extracted sources that belong
-    to a one-to-many association in the runningcatalog.
-
-    Analogous to the runningcatalog, extracted source properties
-    are added to the runningcatalog_flux table.
-
-
-These insert the candidate runningcatalog entries which are in one-to-many sets
+:py:func:`._insert_1_to_many_runcat` and
+:py:func:`._insert_1_to_many_runcat_flux`
+insert the candidate runningcatalog entries which are in one-to-many sets
 as multiple new entries in the runningcatalog (and runningcatalog_flux). 
 We will come back later and delete those old entries we have superceded.
 Note that each new runcat entry links one (new) runcat id, and one 
 extractedsource id, so the database constraints are satisfied. 
 
 
-``_insert_1_to_many_basepoint_assoc`` and ``_insert_1_to_many_assoc``
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 We now start updating the assocxtrsource table to account for our 1-to-many 
 associations.
 
-``_insert_1_to_many_basepoint_assoc`` adds entries linking the newly inserted 
-entries in the runningcatalog, with the newly associated extractedsources. 
+:py:func:`._insert_1_to_many_basepoint_assoc` adds entries linking the newly
+inserted entries in the runningcatalog, with the newly associated extractedsources.
 These are ``type=2``, i.e. marked as part of 1-to-many sets. 
 
-``_insert_1_to_many_assoc`` then inserts new entries into the 
+:py:func:`._insert_1_to_many_replacement_assoc` then inserts new entries into the
 assocxtrsource table, which link the *new* runcat ids with all the 
 old extractedsource ids, which (from previous association runs) 
 are associated with the (now superceded) runningcatalog 
@@ -500,25 +461,35 @@ entries. These association links are marked as ``type=6``.
 
 Clean up database entries superceded by one-to-many forks
 ---------------------------------------------------------
+
+Performed by:
+
+ - :py:func:`tkp.db.associations._delete_1_to_many_inactive_assoc`
+ - :py:func:`tkp.db.associations._delete_1_to_many_inactive_runcat_flux`
+ - :py:func:`tkp.db.associations._flag_1_to_many_inactive_runcat`
+ - :py:func:`tkp.db.associations._flag_1_to_many_inactive_tempruncat`
+ - :py:func:`tkp.db.associations._delete_1_to_many_inactive_transient`
+
 Now we clean up all references to runcat entries superceded during our 
 processing of 1-to-many sets.
 
-``delete_1_to_many_inactive_assoc`` now deletes the assocxtrsource entries
+:py:func:`._delete_1_to_many_inactive_assoc`
+now deletes the assocxtrsource entries
 referring to superceded runnincatalog ids. We do this by filtering 
 temprunningcatalog for the old runcat ids in 1-to-many sets,
 which we have since processed.
 
-``delete_1_to_many_inactive_runcat_flux`` does the same thing, acting on 
-the runningcatalog_flux table.
+:py:func:`._delete_1_to_many_inactive_runcat_flux` does the same thing, acting
+on the runningcatalog_flux table.
 
-``_flag_1_to_many_inactive_runcat`` now uses the same information to set the 
+:py:func:`._flag_1_to_many_inactive_runcat` now uses the same information to set the
 superceded runcat entries as ``inactive = TRUE``.
 
-Next, ``_flag_1_to_many_inactive_tempruncat`` sets the remaining
+Next, :py:func:`._flag_1_to_many_inactive_tempruncat` sets the remaining
 'active' temprunningcatalog entries in 1-to-many sets to ``inactive = TRUE``,
 as we've now finished processing them.
 
-``_delete_1_to_many_inactive_transient``: using the fact that 
+:py:func:`._delete_1_to_many_inactive_transient`: using the fact that
 we have set the superceded runningcatalog entries as inactive = TRUE, 
 we now delete the old transients.
 We don't attempt any update / re-insertion here, instead relying on the 
@@ -532,36 +503,46 @@ next ``transient_search`` execution to re-identify any valid transients.
 
 Process all remaining associations
 ----------------------------------
+Performed by:
+
+ - :py:func:`tkp.db.associations._insert_1_to_1_assoc`
+ - :py:func:`tkp.db.associations._update_1_to_1_runcat`
+ - :py:func:`tkp.db.associations._update_1_to_1_runcat_flux`
+ - :py:func:`tkp.db.associations._insert_1_to_1_runcat_flux`
+
 We now process all the remaining active associations listed in temprunningcatalog.
-:: 
 
-	_insert_1_to_1_assoc:
-	Insert remaining associations from temprunningcatalog into assocxtrsource.
-
-``_insert_1_to_1_assoc`` Inserts all the remaining active links listed in tempruncat, into 
-assocxtrsource. These links all refer to a still-valid runningcatalog entry
+:py:func:`._insert_1_to_1_assoc` Inserts all the remaining active links
+listed in tempruncat, into assocxtrsource.
+These links all refer to a still-valid runningcatalog entry
 from a previous source association run.
 (This actually includes those candidate links in 'many-to-one'
 sets, e.g. sources merged due to a lower-resolution image - hence we set 
 ``type = 3``).
 
-``_update_1_to_1_runcat`` then performs the corresponding update on the
+:py:func:`._update_1_to_1_runcat` then performs the corresponding update on the
 runningcatalog table, copying across the values calculated during the generation
 of temprunningcatalog.
 
-``_select_for_update_1_to_1_runcat_flux`` grabs all the columns relevant to 
-the runnincatalog_flux entries, from the still active entries in temprunningcatalog.
-Each of these entries is then fed, one-by-one, (room for optimization here) to 
-``_insert_or_update_1_to_1_runcat_flux``. This checks for a pre-existing 
-entry in runningcatalog_flux with the same runcat_band_stokes identifying triple,
-and then either updates it or inserts a new one, accordingly.
+:py:func:`._update_1_to_1_runcat_flux` grabs all the columns relevant to
+the runnincatalog_flux entries, from the still active entries in
+temprunningcatalog, and updates the ``runningcatalog_flux`` table accordingly.
+
 
 Process remaining extractedsources (those without associations)
 ---------------------------------------------------------------
+Performed by:
+
+ - :py:func:`tkp.db.associations._insert_new_runcat`
+ - :py:func:`tkp.db.associations._insert_new_runcat_flux`
+ - :py:func:`tkp.db.associations._insert_new_runcat_skyrgn_assocs`
+ - :py:func:`tkp.db.associations._insert_new_assocxtrsource`
+
+
 We still need to insert the 'new' sources, i.e. those extractions without 
 an identified association.
 
-``_insert_new_runcat(image_id)`` is run first, since the database constraints 
+:py:func:`._insert_new_runcat` is run first, since the database constraints
 are already satisfied (pre-existent xtrsrc and dataset-id). 
 First, we pre-select those extractedsources which were discovered in the 
 current image. 
@@ -573,29 +554,36 @@ temprunningcatalog
 We initialise the averages (position, flux, etc) by pulling in the relevant values from 
 extractedsource, and the dataset id from the image table.
 
-``_insert_new_runcat_flux(image_id)`` performs a similar trick to select the 
+:py:func:`._insert_new_runcat_flux` performs a similar trick to select the
 'new-source' extractsources, then cross-matches against the xtrsrc id to select
 the new runcat entries. 
 With these in hand it's easy to insert new runcat_flux entries, pulling in the
 relevant id from runningcatalog, band and stokes from image table, and flux
 values from extractedsource.
+
+:py:func:`tkp.db.associations._insert_new_runcat_skyrgn_assocs` performs
+a positional check against all known skyregions to see which regions this
+source lies within, and inserts links in the ``assocskyrgn`` table accordingly.
  
-``_insert_new_assoc(image_id)``
+:py:func:`._insert_new_assoc`
 Performs the same routine of grab 'new-source' entries, match new runcat entries,
-as  ``_insert_new_runcat_flux`` - it's then trival to insert the relevant entries
+as  :py:func:`._insert_new_runcat_flux` - it's then trival to insert the relevant entries
 in assocxtrsource. These are then marked as a ``type = 4`` association.
+
+Determine if a new source is a likely transient
+-----------------------------------------------
+Performed by :py:func:`tkp.db.associations._determine_newsource_previous_limits`
 
 Cleanup
 -------
+Performed by:
+
+ - :py:func:`tkp.db.associations._empty_temprunningcatalog`
+ - :py:func:`tkp.db.associations._delete_inactive_runcat`
+
 Now that all the new extractions have been dealt with, we take care of some 
 loose ends. 
-We ``_empty_temprunningcatalog``, and finally ``_delete_inactive_runcat``
-deletes those runningcatalog entries which we have now superceded, via a simple
-``inactive = TRUE`` filter.
-
-.. warning:: 
-
-	It's unclear to me why we leave this until last - I don't see where we need
-	the inactive runcat entries after ``_delete_1_to_many_inactive_transient``.
-	(Though there's no real harm in leaving it till last).
+We delete all rows from the ``temprunningcatalog`` table,
+and finally delete those runningcatalog entries which we have now superceded,
+via a simple ``inactive = TRUE`` filter.
 

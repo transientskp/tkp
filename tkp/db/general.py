@@ -141,7 +141,8 @@ def insert_image(dataset, freq_eff, freq_bw, taustart_ts, tau_time,
 
 
 def insert_extracted_sources(image_id, results, extract, ff_runcatids=None):
-    """Insert all detections from sourcefinder into the extractedsource table.
+    """
+    Insert all detections from sourcefinder into the extractedsource table.
 
     Besides the source properties from sourcefinder, we calculate additional
     attributes that are increase performance in other tasks.
@@ -190,14 +191,15 @@ def insert_extracted_sources(image_id, results, extract, ff_runcatids=None):
 
     For all extracted sources additional parameters are calculated,
     and appended to the sourcefinder data. Appended and converted are:
-    - the image id to which the extracted sources belong to
-    - the zone in which an extracted source falls is calculated, based
-      on its declination. We adopt a zoneheight of 1 degree, so
-      the floor of the declination represents the zone.
-    - the positional errors are converted from degrees to arcsecs
-    - the Cartesian coordinates of the source position
-    - ra * cos(radians(decl)), this is very often being used in
-      source-distance calculations
+
+        - the image id to which the extracted sources belong to
+        - the zone in which an extracted source falls is calculated, based
+          on its declination. We adopt a zoneheight of 1 degree, so
+          the floor of the declination represents the zone.
+        - the positional errors are converted from degrees to arcsecs
+        - the Cartesian coordinates of the source position
+        - ra * cos(radians(decl)), this is very often being used in
+          source-distance calculations
     """
     if not len(results):
         logger.info("No extract_type=%s sources added to extractedsource for"

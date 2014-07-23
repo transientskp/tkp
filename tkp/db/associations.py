@@ -1091,6 +1091,7 @@ INSERT INTO transient
   ,status
   ,t_start
   ,transient_type
+  ,previous_limits_image
   )
   SELECT r.id
         ,tr.band
@@ -1102,6 +1103,7 @@ INSERT INTO transient
         ,tr.status
         ,tr.t_start
         ,tr.transient_type
+        ,tr.previous_limits_image
     FROM (SELECT runcat
             FROM temprunningcatalog
            WHERE inactive = FALSE
@@ -1877,15 +1879,27 @@ def _insert_new_transient(image_id, new_source_sigma_margin):
      -Has a flux-value such that:
         flux > MIN_OVER_I [ (rms_min_I*(det_I + new_source_sigma_margin) ]
       (where I indexes the images)
-      i.e. if it was a steady-source, it should have been detected if
-      it was in the *low-RMS* area of the lowest-RMS previous image overlapping
-      this position, even allowing for noise fluctuations.
+      i.e. if it was a steady-source, it should have been already detected if
+      it was in the *low-RMS* area of the previous image with best detection
+      threshold, even allowing for noise fluctuations.
 
     Furthermore, a new source is 'likely transient' (type 1) if it is additionally
     bright enough that, if it were a steady source, it should have been detected
-    even if it was in the *high-RMS* area of the lowest-RMS image overlapping this
-    position, i.e.
-        flux > MIN_OVER_I [ (rms_max_I*(det_I + new_source_sigma_margin) ]
+    even if it was in the *high-RMS* area of the aforementioned 'low rms_min'
+    image, i.e.
+        flux > (rms_max_I*(det_I + new_source_sigma_margin))
+
+    Note that, once we have located the image with best 'low rms threshold',
+    we then use that image to *also* generate the 'high rms threshold'.
+    Strictly speaking, this is non-optimal - we should run a fresh search
+    against all images to find the best 'high rms threshold'. However, I'm
+    working on the assumption that most of
+    the time the image with best low-threshold will also have best
+    high-threshold, and even when that is not the case we won't lose too much
+    accuracy. The benefits of this assumption are simplicity, and possibly
+    faster performance, but this might need to be re-examined in future,
+    especially if we start ingesting images of wildly differing sizes and
+    noise non-uniformity characteristics (e.g. single pointings vs mosaics) etc.
 
     We use peak flux (f_peak) as the flux value here, since that is likely
     to be the deciding factor in whether a source gets blindly extracted or not.
@@ -1898,17 +1912,25 @@ def _insert_new_transient(image_id, new_source_sigma_margin):
     # This is another hairy query, but it breaks down like so:
     #
     # The innermost SELECT (unassoc_xtr) is a standard query
-    # (NB should probably be a view or a function) that we use to grab
-    # extractedsources from the current image that do not have a candidate
-    # runcat counterpart from previous images. Note that, by the time this
-    # query is run, a new runningcatalog entry has been inserted for them,
-    # and the skyregion matching has been done.
+    # that we use to grab extractedsources from the current image that
+    # do not have a candidate  runcat counterpart from previous images.
+    # Note that, by the time this query is run, a new runningcatalog entry has
+    # been inserted for them, and the skyregion matching has been done.
     #
-    # We then use the runcat -> skyregion information to grab all the
-    # matching images as outlined in the docstring above.
+    # Next, we match those new sources with previous images overlapping
+    # their position according to the criteria in the docstring above,
+    # and calculate detection thresholds for each of those images.
     #
-    # We then take the minimum over those limits and apply the
-    # type-determination logic as described in the docstring above.
+    # We then thinly wrap the resulting 'matched_imgs' set in a query
+    # to sort them by low_flux_threshold, with high_flux_threshold as the
+    # secondary criteria in case of a tie ('ordered_matched_imgs').
+    #
+    # Finally, we pull out the results we want - new source flux above the low
+    # threshold, image ID of the 'best' previous image according to the sorting,
+    # and run a final CASE to determine if the new source also passes the
+    # high flux threshold.
+    #
+
 
     query = """\
 INSERT INTO transient
@@ -1919,62 +1941,64 @@ INSERT INTO transient
   ,eta_int
   ,trigger_xtrsrc
   ,transient_type
+  ,previous_limits_image
   )
-  SELECT best_limits.new_src_runcat_id AS runcat
-        ,best_limits.new_src_band AS band
-        ,1
-        ,0
-        ,0
-        ,best_limits.new_src_xtr_id AS trigger_xtrsrc
-        ,CASE WHEN best_limits.new_src_flux > best_limits.best_high_thresh
-              THEN 1
-              ELSE 0
-         END as transient_type
-    FROM (SELECT MIN(matched_imgs.low_flux_threshold) AS best_low_thresh
-                ,MIN(matched_imgs.high_flux_threshold) as best_high_thresh
-                ,matched_imgs.new_src_runcat_id
-                ,matched_imgs.new_src_xtr_id
-                ,matched_imgs.new_src_flux
-                ,matched_imgs.new_src_band
-            FROM (SELECT runcat1.id as new_src_runcat_id
-                        ,unassoc_xtr.xtrsrc_id as new_src_xtr_id
-                        ,unassoc_xtr.f_peak as new_src_flux
-                        ,this_img.band as new_src_band
-                        ,(prev_imgs.rms_min *
-                              (prev_imgs.detection_thresh + %(sigma_margin)s))
-                          AS low_flux_threshold
-                        ,(prev_imgs.rms_max *
-                              (prev_imgs.detection_thresh + %(sigma_margin)s))
-                          AS high_flux_threshold
-                  FROM (SELECT x1.id AS xtrsrc_id
-                            ,x1.f_peak
-                        FROM extractedsource x1
-                             LEFT OUTER JOIN temprunningcatalog trc1
-                             ON x1.id = trc1.xtrsrc
-                        WHERE x1.image = %(image_id)s
-                          AND trc1.xtrsrc IS NULL
-                      ) unassoc_xtr
-                     ,runningcatalog runcat1
-                     ,assocskyrgn asky1
-                     ,image this_img
-                     ,image prev_imgs
-                        LEFT OUTER JOIN rejection rj
-                        ON prev_imgs.id = rj.image
-                  WHERE this_img.id = %(image_id)s
-                  AND runcat1.xtrsrc = unassoc_xtr.xtrsrc_id
-                  AND asky1.runcat = runcat1.id
-                  AND prev_imgs.dataset = this_img.dataset
-                  AND prev_imgs.skyrgn = asky1.skyrgn
-                  AND prev_imgs.band = this_img.band
-                  AND this_img.taustart_ts > prev_imgs.taustart_ts
-                  AND rj.image IS NULL
-            ) matched_imgs
-            GROUP BY matched_imgs.new_src_runcat_id
-                    ,matched_imgs.new_src_xtr_id
-                    ,matched_imgs.new_src_flux
-                    ,matched_imgs.new_src_band
-         ) best_limits
-   WHERE best_limits.new_src_flux > best_limits.best_low_thresh
+  SELECT new_src_runcat_id AS runcat
+         ,band AS band
+         ,1 AS siglevel
+         ,0 AS v_int
+         ,0 AS eta_int
+         ,new_src_xtr_id AS trigger_xtrsrc
+         ,CASE WHEN new_src_flux > high_flux_threshold
+               THEN 1
+               ELSE 0
+          END as transient_type
+         ,prev_img_id AS previous_limits_image
+  FROM ( SELECT  new_src_runcat_id
+                ,new_src_xtr_id
+                ,new_src_flux
+                ,band
+                ,prev_img_id
+                ,low_flux_threshold
+                ,high_flux_threshold
+                ,ROW_NUMBER() OVER (
+                         PARTITION BY new_src_xtr_id
+                         ORDER BY low_flux_threshold ASC,
+                                  high_flux_threshold ASC
+                         ) AS row_num
+         FROM ( SELECT runcat1.id as new_src_runcat_id
+                      ,unassoc_xtr.xtrsrc_id as new_src_xtr_id
+                      ,unassoc_xtr.f_peak as new_src_flux
+                      ,this_img.band
+                      ,prev_imgs.id as prev_img_id
+                      ,(prev_imgs.rms_min *
+                            (prev_imgs.detection_thresh + %(sigma_margin)s))
+                        AS low_flux_threshold
+                      ,(prev_imgs.rms_max *
+                            (prev_imgs.detection_thresh + %(sigma_margin)s))
+                        AS high_flux_threshold
+                FROM (SELECT x1.id AS xtrsrc_id
+                          ,x1.f_peak
+                      FROM extractedsource x1
+                      WHERE x1.image = %(image_id)s
+                      AND x1.id NOT IN (SELECT xtrsrc FROM temprunningcatalog)
+                    ) unassoc_xtr
+                   ,runningcatalog runcat1
+                   ,assocskyrgn asky1
+                   ,image this_img
+                   ,image prev_imgs
+                WHERE this_img.id = %(image_id)s
+                AND runcat1.xtrsrc = unassoc_xtr.xtrsrc_id
+                AND asky1.runcat = runcat1.id
+                AND prev_imgs.dataset = this_img.dataset
+                AND prev_imgs.skyrgn = asky1.skyrgn
+                AND prev_imgs.band = this_img.band
+                AND this_img.taustart_ts > prev_imgs.taustart_ts
+                AND prev_imgs.id NOT IN (select image from rejection)
+         ) matched_imgs
+  ) ordered_matched_imgs
+  WHERE row_num = 1
+    AND new_src_flux > low_flux_threshold
 """
     params = {'image_id': image_id,
               'sigma_margin': new_source_sigma_margin}

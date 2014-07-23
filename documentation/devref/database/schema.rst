@@ -83,12 +83,12 @@ This table records which :ref:`runningcatalog <schema-runningcatalog>` sources
 we expect to see in any given skyregion. This serves two purposes: 
 it allows us to determine when we *do not* see previously detected sources, 
 presumably because they have dropped in flux 
-(see :py:func:`tkp.db.nd.get_nulldetections`). 
+(see :py:func:`.get_nulldetections`).
 It also allows us to determine whether a new runningcatalog entry (i.e. 
 a newly detected source without associated historical detections) is being 
 detected for the first time because it is actually a new transient, or 
 if it is simply the first time that region of sky has been surveyed
-(see :py:func:`tkp.db.associations._insert_new_transient`).
+(see :py:func:`._insert_new_transient`).
 
 This table is updated under 2 circumstances:
 
@@ -96,7 +96,7 @@ This table is updated under 2 circumstances:
   runcat entries (see SQL function ``updateSkyRgnMembers``).
 - A new runningcatalog source is added, and must be associated with pre-existing
   skyregions 
-  (see :py:func:`tkp.db.associations._insert_new_runcat_skyrgn_assocs`).
+  (see :py:func:`._insert_new_runcat_skyrgn_assocs`).
 
 **runcat**
    References the associated runningcatalog ID.
@@ -781,6 +781,12 @@ obtained from the measurements.
     steady source that is located in a high-RMS region, while type 1 transients
     are bright enough that we can be fairly certain they are really new.
     Type 2 transients are identified by their variability indices.
+
+**previous_limits_image**
+    The ID of the previous image with the best upper limits on previous
+    detections of this source. Can be used to calculate the significance
+    level of the new-source detection.
+    (See :py:func:`._insert_new_transient` for details.)
 
 **status**
     Currently not set

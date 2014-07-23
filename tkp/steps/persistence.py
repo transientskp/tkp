@@ -83,18 +83,27 @@ def create_dataset(dataset_id, description):
 
 def extract_metadatas(images, sigma, f):
     """
+    returns the metadata extracted from the list of images.
+
     args:
         images: list of image urls
         sigma: used for RMS calculation, see `tkp.quality.statistics`
         f: used for RMS calculation, see `tkp.quality.statistics`
+
+    a list of metadata's. The metadata will be False if extraction failed.
     """
     results = []
     for image in images:
         logger.info("Extracting metadata from %s" % image)
-        accessor = tkp.accessors.open(image)
-        accessor.sigma = sigma
-        accessor.f = f
-        results.append(accessor.extract_metadata())
+        try:
+            accessor = tkp.accessors.open(image)
+        except TypeError as e:
+            logging.error("Can't open image %s: %s" % (image, e))
+            results.append(False)
+        else:
+            accessor.sigma = sigma
+            accessor.f = f
+            results.append(accessor.extract_metadata())
     return results
 
 

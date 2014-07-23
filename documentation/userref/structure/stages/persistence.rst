@@ -14,15 +14,10 @@ Optionally, a copy of the image pixel data may be stored to a :ref:`MongoDB
 <mongodb-intro>` instance at the same time. This is configured in
 the :ref:`image_cache section <pipeline_cfg_image_cache>` of the pipeline config.
 
-Image RMS
----------
-
-The central subsection of the image is iteratively sigma-clipped
-until it reaches a user-defined convergence. The RMS of the clipped value is
-compared to the theoretically expected image noise based on the LOFAR
-configuration in use. The image is rejected if the noise is signifcantly
-greater than expected.
-
+Note that only images which meet the :ref:`data accessor <accessors>`
+requirements are stored in the database. Any other data provided to the
+pipeline will be processed: an error will be logged, and that data will not be
+included in further processing.
 
 Section ``persistence``
 -----------------------

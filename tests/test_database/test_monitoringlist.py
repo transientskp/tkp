@@ -127,7 +127,7 @@ class TestForcedFit(unittest.TestCase):
         # We should also have two lightcurves for both sources,
         # where both sources have three datapoints.
         # The association types of the "normal" source are
-        # 3 (first) or 4 (later ones), while the monitoring source
+        # 4 (first) or 3 (later ones), while the monitoring source
         # association types are 8 (first) or 9 (later ones).
         query = """\
         SELECT a.runcat

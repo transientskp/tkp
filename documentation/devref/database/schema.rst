@@ -35,19 +35,31 @@ or n-1.
     runningcatalog sources, and m the number of extractedsources. (The
     assignment of numbers is to association types is arbitrary.)
 
-    ``type = 3``
-        1-1 association
-
     ``type = 2``
-        base point of a 1-n (one-to-many) association (relates to ``type = 6``)
+        Base point of a 1-n (one-to-many) association (relates to ``type = 6``)
 
-    ``type = 6``
-        associations of 1-n (one-to-many) type. These are updates of
-        pre-existing associations, due to the 1-n case (relates to ``type =
-        2`` association)
+    ``type = 3``
+        1-1 association.
 
     ``type = 4``
         0-1 (zero-to-one) association, i.e. a new source.
+
+    ``type = 6``
+        Associations of 1-n (one-to-many) type. These are updates of
+        pre-existing associations, due to the 1-n case (relates to ``type =
+        2`` association).
+
+    ``type = 7``
+        Forced-fit to position of the null detection of a known source.
+
+    ``type = 8``
+        Initial forced fit to a monitoring list position.
+
+    ``type = 9``
+        Subsequent forced fit to a monitoring list position (relates to
+        ``type = 8``.
+
+
 
     Note that many-to-1 relations reduce to 1-to-1 and 1-to-many associations.
     Therefore, there is no type specifying such a case.

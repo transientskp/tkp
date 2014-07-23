@@ -1943,79 +1943,62 @@ INSERT INTO transient
   ,transient_type
   ,previous_limits_image
   )
-  SELECT runcat
-        ,band
-        ,siglevel
-        ,v_int
-        ,eta_int
-        ,trigger_xtrsrc
-        ,transient_type
-        ,previous_limits_image
-    FROM(
-        SELECT  new_src_runcat_id AS runcat
-                ,band AS band
-                ,1 AS siglevel
-                ,0 AS v_int
-                ,0 AS eta_int
-                ,new_src_xtr_id AS trigger_xtrsrc
-                ,CASE WHEN new_src_flux > high_flux_threshold
-                      THEN 1
-                      ELSE 0
-                 END as transient_type
-                ,prev_img_id AS previous_limits_image
-        FROM (  SELECT  new_src_runcat_id
-                       ,new_src_xtr_id
-                       ,new_src_flux
-                       ,band
-                       ,prev_img_id
-                       ,low_flux_threshold
-                       ,high_flux_threshold
-                       ,ROW_NUMBER() OVER (
-                                PARTITION BY new_src_xtr_id
-                                ORDER BY low_flux_threshold ASC,
-                                         high_flux_threshold ASC
-                                ) AS row_num
-                FROM (SELECT runcat1.id as new_src_runcat_id
-                            ,unassoc_xtr.xtrsrc_id as new_src_xtr_id
-                            ,unassoc_xtr.f_peak as new_src_flux
-                            ,this_img.band
-                            ,prev_imgs.id as prev_img_id
-                            ,(prev_imgs.rms_min *
-                                  (prev_imgs.detection_thresh + %(sigma_margin)s))
-                              AS low_flux_threshold
-                            ,(prev_imgs.rms_max *
-                                  (prev_imgs.detection_thresh + %(sigma_margin)s))
-                              AS high_flux_threshold
-                      FROM (SELECT x1.id AS xtrsrc_id
-                                ,x1.f_peak
-                            FROM extractedsource x1
-                                 LEFT OUTER JOIN temprunningcatalog trc1
-                                 ON x1.id = trc1.xtrsrc
-                            WHERE x1.image = %(image_id)s
-                              AND trc1.xtrsrc IS NULL
-                          ) unassoc_xtr
-                         ,runningcatalog runcat1
-                         ,assocskyrgn asky1
-                         ,image this_img
-                         ,image prev_imgs
-                            LEFT OUTER JOIN rejection rj
-                            ON prev_imgs.id = rj.image
-                      WHERE this_img.id = %(image_id)s
-                      AND runcat1.xtrsrc = unassoc_xtr.xtrsrc_id
-                      AND asky1.runcat = runcat1.id
-                      AND prev_imgs.dataset = this_img.dataset
-                      AND prev_imgs.skyrgn = asky1.skyrgn
-                      AND prev_imgs.band = this_img.band
-                      AND this_img.taustart_ts > prev_imgs.taustart_ts
-                      AND rj.image IS NULL
-                ) matched_imgs
-        ) ordered_matched_imgs
-        WHERE row_num = 1
-          AND new_src_flux > low_flux_threshold
-       ) best_limits
-
-
-
+  SELECT new_src_runcat_id AS runcat
+         ,band AS band
+         ,1 AS siglevel
+         ,0 AS v_int
+         ,0 AS eta_int
+         ,new_src_xtr_id AS trigger_xtrsrc
+         ,CASE WHEN new_src_flux > high_flux_threshold
+               THEN 1
+               ELSE 0
+          END as transient_type
+         ,prev_img_id AS previous_limits_image
+  FROM ( SELECT  new_src_runcat_id
+                ,new_src_xtr_id
+                ,new_src_flux
+                ,band
+                ,prev_img_id
+                ,low_flux_threshold
+                ,high_flux_threshold
+                ,ROW_NUMBER() OVER (
+                         PARTITION BY new_src_xtr_id
+                         ORDER BY low_flux_threshold ASC,
+                                  high_flux_threshold ASC
+                         ) AS row_num
+         FROM ( SELECT runcat1.id as new_src_runcat_id
+                      ,unassoc_xtr.xtrsrc_id as new_src_xtr_id
+                      ,unassoc_xtr.f_peak as new_src_flux
+                      ,this_img.band
+                      ,prev_imgs.id as prev_img_id
+                      ,(prev_imgs.rms_min *
+                            (prev_imgs.detection_thresh + %(sigma_margin)s))
+                        AS low_flux_threshold
+                      ,(prev_imgs.rms_max *
+                            (prev_imgs.detection_thresh + %(sigma_margin)s))
+                        AS high_flux_threshold
+                FROM (SELECT x1.id AS xtrsrc_id
+                          ,x1.f_peak
+                      FROM extractedsource x1
+                      WHERE x1.image = %(image_id)s
+                      AND x1.id NOT IN (SELECT xtrsrc FROM temprunningcatalog)
+                    ) unassoc_xtr
+                   ,runningcatalog runcat1
+                   ,assocskyrgn asky1
+                   ,image this_img
+                   ,image prev_imgs
+                WHERE this_img.id = %(image_id)s
+                AND runcat1.xtrsrc = unassoc_xtr.xtrsrc_id
+                AND asky1.runcat = runcat1.id
+                AND prev_imgs.dataset = this_img.dataset
+                AND prev_imgs.skyrgn = asky1.skyrgn
+                AND prev_imgs.band = this_img.band
+                AND this_img.taustart_ts > prev_imgs.taustart_ts
+                AND prev_imgs.id NOT IN (select image from rejection)
+         ) matched_imgs
+  ) ordered_matched_imgs
+  WHERE row_num = 1
+    AND new_src_flux > low_flux_threshold
 """
     params = {'image_id': image_id,
               'sigma_margin': new_source_sigma_margin}

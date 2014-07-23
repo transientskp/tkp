@@ -344,8 +344,12 @@ To that end, we suggest the following:
 ===================
 Detailed logic flow
 ===================
-Herein we give an algorithmic description of how the source association routines
-work.
+
+.. All the functions below are relative to this module.
+.. py:currentmodule:: tkp.db.associations
+
+Herein we give an algorithmic description of how the source association
+routines work.
 
 .. warning::
 
@@ -365,66 +369,76 @@ which does what it says on the tin.
 Generate a list of candidate runningcatalog-extractedsource associations
 ------------------------------------------------------------------------
 
-
 Performed by: :py:func:`tkp.db.associations._insert_temprunningcatalog`
 
 (See also: :ref:`database_temprunningcatalog` table. )
 
 This function generates a temporary table listing possible associations with
-previously catalogued sources. 
+previously catalogued sources.
 
-For a given image_id,
+For a given ``image_id``:
+
  - Select all the relevant extractedsource entries, and
+
  - For each extractedsource, create a bunch of table entries detailing
    candidate associations with runningcatalog entries which are:
-   
+
    - In the same declination zone as the extractedsource
+
    - Have a weighted mean position for which the RA and DEC are within a box
-     of half-width ``radius`` degrees from the extractedsource. 
+     of half-width ``radius`` degrees from the extractedsource.
      (This places a hard limit on the maximum association radius).
-   - Have a weighted mean position within a user-specified DeRuiter radius of 
+
+   - Have a weighted mean position within a user-specified DeRuiter radius of
      the extractedsource.
+
  - Each of these rows representing a candidate association is populated with all
-   the values which would represent an update to the corresponding 
+   the values which would represent an update to the corresponding
    runningcatalog and runningcatalog_flux entries, if the association is later
-   determined to be definitive. 
-   
-   
+   determined to be definitive.
+
+
 Trim the 'many-to-many' links to prevent exponentional database growth
 ----------------------------------------------------------------------
+
 Performed by: :py:func:`tkp.db.associations._flag_many_to_many_tempruncat`
 
-Especially if we employ a large DeRuiter radius limit, we may generate
-a large number of candidate associations which result in a complex 
-web of possible lightcurves. We reduce this to a more manageable situation
-by trimming some of the 'weaker' candidate associations.
+Especially if we employ a large DeRuiter radius limit, we may generate a large
+number of candidate associations which result in a complex web of possible
+lightcurves. We reduce this to a more manageable situation by trimming some of
+the 'weaker' candidate associations.
 
-First, inspect the temprunningcatalog table: 
+First, inspect the temprunningcatalog table:
+
  - Select entries for which the extractedsource is listed more than once.
- - Of these entries, select those for which the runcat id is listed more than 
+
+ - Of these entries, select those for which the runcat id is listed more than
    once in temprunningcatalog.
- - Use this selection to determine the runningcatalog id of minimum 
-   DeRuiter radius, for each extracted source which is part of a many-to-many
-   set.
- - Then, using this per-extractedsource minimum DR radius, reapply the above 
-   filters to select multiply-associated entries, and select all entries 
-   for which the runcat id  has a larger than  minimum DR radius to the 
+
+ - Use this selection to determine the runningcatalog id of minimum DeRuiter
+   radius, for each extracted source which is part of a many-to-many set.
+
+ - Then, using this per-extractedsource minimum DR radius, reapply the above
+   filters to select multiply-associated entries, and select all entries for
+   which the runcat id  has a larger than  minimum DR radius to the
    extractedsource.
- - Return the runcat-extractedsource identifying pair values for all 
+
+ - Return the runcat-extractedsource identifying pair values for all
    non-optimal entries in many-to-many sets.
- 
+
 Finally, use these identifiers to set all these entries as ``inactive = TRUE``.
 
-Or, in pseudo-mathematical terms, tempruncat describes the edges of a graph, 
-linking nodes (sources) from two spaces 
-(previous runcat entries, newly extracted entries). 
-(There are no intra-space links).
-:py:func:`._flag_many_to_many_tempruncat` trims this graph using
-the DeRuiter radius as a ranking metric, to ensure that any connected sub-graph
-has multiple nodes in *at most* one of the two spaces.
+Or, in pseudo-mathematical terms, tempruncat describes the edges of a graph,
+linking nodes (sources) from two spaces (previous runcat entries, newly
+extracted entries).  (There are no intra-space links).
+:py:func:`_flag_many_to_many_tempruncat` trims this graph using the DeRuiter
+radius as a ranking metric, to ensure that any connected sub-graph has
+multiple nodes in *at most* one of the two spaces.
+
 
 Deal with the  'one-to-many' runcat-to-extractedsource link sub-graphs
 ----------------------------------------------------------------------
+
 When we observe two new sources in the region of a previous known source,
 it is unclear if this is due to increased resolution, or a new source.
 To resolve this, we hedge our bets and replace the old single runcat entry
@@ -466,19 +480,17 @@ Performed by:
 
 We now process all the remaining active associations listed in temprunningcatalog.
 
-:py:func:`._insert_1_to_1_assoc` Inserts all the remaining active links
-listed in tempruncat, into assocxtrsource.
-These links all refer to a still-valid runningcatalog entry
-from a previous source association run.
-(This actually includes those candidate links in 'many-to-one'
-sets, e.g. sources merged due to a lower-resolution image - hence we set 
-``type = 3``).
+:py:func:`_insert_1_to_1_assoc` Inserts all the remaining
+active links listed in tempruncat, into assocxtrsource.  These links all refer
+to a still-valid runningcatalog entry from a previous source association run.
+(This actually includes those candidate links in 'many-to-one' sets, e.g.
+sources merged due to a lower-resolution image - hence we set ``type = 3``).
 
-:py:func:`._update_1_to_1_runcat` then performs the corresponding update on the
+:py:func:`_update_1_to_1_runcat` then performs the corresponding update on the
 runningcatalog table, copying across the values calculated during the generation
 of temprunningcatalog.
 
-:py:func:`._update_1_to_1_runcat_flux` grabs all the columns relevant to
+:py:func:`_update_1_to_1_runcat_flux` grabs all the columns relevant to
 the runnincatalog_flux entries, from the still active entries in
 temprunningcatalog, and updates the ``runningcatalog_flux`` table accordingly.
 
@@ -493,36 +505,34 @@ Performed by:
  - :py:func:`tkp.db.associations._insert_new_assocxtrsource`
 
 
-We still need to insert the 'new' sources, i.e. those extractions without 
-an identified association.
+We still need to insert the 'new' sources, i.e. those extractions without an
+identified association.
 
-:py:func:`._insert_new_runcat` is run first, since the database constraints
-are already satisfied (pre-existent xtrsrc and dataset-id). 
-First, we pre-select those extractedsources which were discovered in the 
-current image. 
-Then we filter to just those which do not have any associations, 
-by selecting those extractedsources listed in the image but not in the 
-temprunningcatalog  
-(A left outer join on xtrsrc where temprunningcatalog.xtrsrc is NULL). 
-  
-We initialise the averages (position, flux, etc) by pulling in the relevant values from 
-extractedsource, and the dataset id from the image table.
+:py:func:`_insert_new_runcat` is run first, since the database constraints are
+already satisfied (pre-existent xtrsrc and dataset-id).  First, we pre-select
+those extractedsources which were discovered in the current image.  Then we
+filter to just those which do not have any associations, by selecting those
+extractedsources listed in the image but not in the temprunningcatalog  (A
+left outer join on xtrsrc where temprunningcatalog.xtrsrc is NULL).
 
-:py:func:`._insert_new_runcat_flux` performs a similar trick to select the
-'new-source' extractsources, then cross-matches against the xtrsrc id to select
-the new runcat entries. 
-With these in hand it's easy to insert new runcat_flux entries, pulling in the
-relevant id from runningcatalog, band and stokes from image table, and flux
-values from extractedsource.
+We initialise the averages (position, flux, etc) by pulling in the relevant
+values from extractedsource, and the dataset id from the image table.
 
-:py:func:`tkp.db.associations._insert_new_runcat_skyrgn_assocs` performs
-a positional check against all known skyregions to see which regions this
-source lies within, and inserts links in the ``assocskyrgn`` table accordingly.
- 
-:py:func:`._insert_new_assoc`
-Performs the same routine of grab 'new-source' entries, match new runcat entries,
-as  :py:func:`._insert_new_runcat_flux` - it's then trival to insert the relevant entries
-in assocxtrsource. These are then marked as a ``type = 4`` association.
+:py:func:`_insert_new_runcat_flux` performs a similar trick to select the
+'new-source' extractsources, then cross-matches against the xtrsrc id to
+select the new runcat entries.  With these in hand it's easy to insert new
+runcat_flux entries, pulling in the relevant id from runningcatalog, band and
+stokes from image table, and flux values from extractedsource.
+
+:py:func:`_insert_new_runcat_skyrgn_assocs` performs a positional check
+against all known skyregions to see which regions this source lies within, and
+inserts links in the ``assocskyrgn`` table accordingly.
+
+:py:func:`_insert_new_assocxtrsource` Performs the same routine of grab
+'new-source' entries, match new runcat entries, as
+:py:func:`_insert_new_runcat_flux` - it's then trival to insert the relevant
+entries in assocxtrsource. These are then marked as a ``type = 4``
+association.
 
 Determine if a new source is a likely transient
 -----------------------------------------------

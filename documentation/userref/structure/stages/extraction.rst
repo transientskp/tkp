@@ -32,7 +32,9 @@ The algorithm employed is:
 
 #. The source pixel groups are (optionally) "deblended": multi-component
    sources are split into their constituent parts by a multi-thresholding
-   technique.
+   technique. The method is based upon that described by :ref:`Bertin & Arnouts
+   (1996) <bertin-1996>`; see :ref:`Spreeuw (2010) <spreeuw-2010>` for a
+   discussion of the differences.
 
 #. An estimate of the source parameters are made based on the source pixels.
    The barycentre is taken as the position of the source, and the moments about

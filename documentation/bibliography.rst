@@ -4,6 +4,11 @@
 Bibliography
 ++++++++++++
 
+.. _bertin-1996:
+
+Bertin, E. and Arnouts, S. *SExtractor: Software for source extraction*, A&AS
+117, 393--404, 1996.
+
 .. _scheers-2011:
 
 Scheers, L.H.A. *Transient and variable radio sources in the LOFAR sky: An

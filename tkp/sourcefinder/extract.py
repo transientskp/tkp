@@ -378,7 +378,7 @@ class ParamSet(DictMixin):
         help1 = (errorsmaj/smaj)**2
         help2 = (errorsmin/smin)**2
         help3 = theta_B * theta_b / (4. * smaj * smin)
-        errorflux = flux*numpy.sqrt(errorpeaksq/peak**2+help3*(help1+help2))
+        errorflux = numpy.abs(flux)*numpy.sqrt(errorpeaksq/peak**2+help3*(help1+help2))
 
         self['peak'] = Uncertain(peak, errorpeak)
         self['flux'].error = errorflux
@@ -402,12 +402,23 @@ class ParamSet(DictMixin):
         smin = self['semiminor'].value
         theta = self['theta'].value
 
+        # This analysis is only possible if the peak flux is >= 0. This
+        # follows from the definition of eq. 2.81 in Spreeuw's thesis. In that
+        # situation, we set all errors to be infinite
+        if peak < 0:
+            self['peak'].error = float('inf')
+            self['flux'].error = float('inf')
+            self['semimajor'].error = float('inf')
+            self['semiminor'].error = float('inf')
+            self['theta'].error = float('inf')
+            return self
+
         clean_bias_error = self.clean_bias_error
         frac_flux_cal_error = self.frac_flux_cal_error
         theta_B, theta_b = utils.calculate_correlation_lengths(
             beam[0], beam[1])
 
-        # This formula was derived in Spreeuw's Ph.D. thesis.
+        # This is eq. 2.81 from Spreeuw's thesis.
         rho_sq = ((16. * smaj * smin /
                   (numpy.log(2.) * theta_B * theta_b*noise**2))
                   * ((peak - threshold) /

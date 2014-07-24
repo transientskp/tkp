@@ -1293,14 +1293,10 @@ UPDATE temprunningcatalog
     tkp.db.execute(query, commit=True)
 
 
-def _insert_1_to_1_assoc():
-    """
-    Insert remaining associations from temprunningcatalog into assocxtrsource.
-
-    We also calculate the variability indices at the timestamp of the
-    the current image.
-    """
-    query = """\
+# This is the "master" 1-to-1 association query. We reuse it for associating
+# both null detections and monitoring list sources, tweaking the type as
+# appropriate.
+ONE_TO_ONE_ASSOC_QUERY = """\
 INSERT INTO assocxtrsource
   (runcat
   ,xtrsrc
@@ -1312,7 +1308,7 @@ INSERT INTO assocxtrsource
   )
   SELECT t0.runcat
         ,t0.xtrsrc
-        ,3
+        ,%(type)s
         ,t0.distance_arcsec
         ,t0.r
         ,t0.v_int_inter / t0.avg_f_int
@@ -1344,18 +1340,18 @@ INSERT INTO assocxtrsource
                              - tmprc.avg_weighted_f_int * tmprc.avg_weighted_f_int)
                  END AS eta_int_inter
             FROM temprunningcatalog tmprc
-                ,runningcatalog r
-                ,extractedsource x
-           WHERE tmprc.runcat = r.id
-             AND tmprc.inactive = FALSE
-             AND tmprc.xtrsrc = x.id
-                 ) t0
-        """
-    #print "Q:\n",query
-    #answer = raw_input("Do you want to continue? [y/N]: ")
-    #if answer.lower() != 'y':
-    #    sys.exit(1)
-    tkp.db.execute(query, commit=True)
+           WHERE tmprc.inactive = FALSE
+           ) t0
+"""
+
+def _insert_1_to_1_assoc():
+    """
+    Insert remaining associations from temprunningcatalog into assocxtrsource.
+
+    We also calculate the variability indices at the timestamp of the
+    the current image.
+    """
+    tkp.db.execute(ONE_TO_ONE_ASSOC_QUERY, {'type': 3}, commit=True)
 
 
 def _update_1_to_1_runcat():

@@ -6,6 +6,7 @@ This module contains the routines to deal with null detections.
 import logging
 from tkp.db import execute as execute
 from tkp.db.associations import _empty_temprunningcatalog as _del_tempruncat
+from tkp.db.associations import ONE_TO_ONE_ASSOC_QUERY
 
 logger = logging.getLogger(__name__)
 
@@ -283,51 +284,7 @@ def _insert_1_to_1_assoc():
     differences might get too small to cause divisions by zero.
 
     """
-    query = """\
-INSERT INTO assocxtrsource
-  (runcat
-  ,xtrsrc
-  ,type
-  ,distance_arcsec
-  ,r
-  ,v_int
-  ,eta_int
-  )
-  SELECT t.runcat
-        ,t.xtrsrc
-        ,7 AS type
-        ,0 AS distance_arcsec
-        ,0 AS r
-        ,t.v_int_inter / t.avg_f_int
-        ,t.eta_int_inter / t.avg_f_int_weight
-    FROM (SELECT runcat
-                ,xtrsrc
-                ,CASE WHEN avg_f_int = 0.0
-                      THEN 0.000001
-                      ELSE avg_f_int
-                 END AS avg_f_int
-                ,avg_f_int_weight
-                ,CASE WHEN f_datapoints = 1
-                      THEN 0
-                      ELSE CASE WHEN ABS(avg_f_int_sq - avg_f_int * avg_f_int) < 8e-14
-                                THEN 0
-                                ELSE SQRT(CAST(f_datapoints AS DOUBLE PRECISION)
-                                         * (avg_f_int_sq - avg_f_int * avg_f_int)
-                                         / (CAST(f_datapoints AS DOUBLE PRECISION) - 1.0)
-                                         )
-                           END
-                 END AS v_int_inter
-                ,CASE WHEN f_datapoints = 1
-                      THEN 0
-                      ELSE (CAST(f_datapoints AS DOUBLE PRECISION)
-                            / (CAST(f_datapoints AS DOUBLE PRECISION) - 1.0))
-                           * (avg_f_int_weight * avg_weighted_f_int_sq
-                             - avg_weighted_f_int * avg_weighted_f_int)
-                 END AS eta_int_inter
-            FROM temprunningcatalog
-           ) t
-"""
-    cursor = execute(query, commit=True)
+    cursor = execute(ONE_TO_ONE_ASSOC_QUERY, {'type': 7}, commit=True)
     cnt = cursor.rowcount
     logger.info("Inserted %s 1-to-1 null detections in assocxtrsource" % cnt)
 

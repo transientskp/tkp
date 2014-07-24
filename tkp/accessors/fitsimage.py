@@ -122,8 +122,9 @@ def parse_coordinates(header):
         wcs.crpix = header['crpix1'] - 1, header['crpix2'] - 1
         wcs.cdelt = header['cdelt1'], header['cdelt2']
     except KeyError:
-        logger.warn("Coordinate system not specified in FITS")
-        raise
+        msg = "Coordinate system not specified in FITS"
+        logger.error(msg)
+        raise TypeError(msg)
     try:
         wcs.ctype = header['ctype1'], header['ctype2']
     except KeyError:
@@ -135,9 +136,13 @@ def parse_coordinates(header):
     try:
         wcs.cunit = header['cunit1'], header['cunit2']
     except KeyError:
-        # Blank values default to degrees.
-        logger.warning("WCS units unknown; using defaults")
-        wcs.cunit = '', ''
+        # The "Definition of the Flexible Image Transport System", version
+        # 3.0, tells us that "units for celestial coordinate systems defined
+        # in this Standard must be degrees", so we assume that if nothing else
+        # is specifiedj
+        msg = "WCS units unknown; using degrees"
+        logger.warning(msg)
+        wcs.cunit = 'deg', 'deg'
 
     wcs.wcsset()
     return wcs
@@ -174,7 +179,10 @@ def parse_frequency(header):
                     freq_eff = header['restfreq']
                     freq_bw = 0.0
         except KeyError:
-            logger.warn("Frequency not specified in FITS")
+            msg = "Frequency not specified in FITS"
+            logger.error(msg)
+            raise TypeError(msg)
+
         return freq_eff, freq_bw
 
 # AIPS FITS file; stored in the history section
@@ -248,8 +256,8 @@ def parse_times(header):
     try:
         end = dateutil.parser.parse(header['end_utc'])
     except KeyError:
-        logger.warn("End time not specified or unreadable:"
-                    " using dummy (zero-valued) integration time")
+        msg = "End time not specified or unreadable"
+        logger.warning(msg)
         end = start
 
     delta = end - start

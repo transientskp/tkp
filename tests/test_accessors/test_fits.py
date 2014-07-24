@@ -119,12 +119,10 @@ class DataBaseImage(unittest.TestCase):
 class FrequencyInformation(unittest.TestCase):
     @requires_data(os.path.join(DATAPATH, 'accessors/missing_metadata.fits'))
     def testFreqinfo(self):
-        # image without frequency information
-        image = FitsImage(os.path.join(DATAPATH, 'accessors/missing_metadata.fits'))
-        # Which the sourcefinder does not require
-        self.assertListEqual(
-            list(accessors.sourcefinder_image_from_accessor(image).data.shape),
-            [3, 2])
+        # Frequency information is required by the data accessor.
+        self.assertRaises(TypeError, FitsImage,
+                          os.path.join(DATAPATH, 'accessors/missing_metadata.fits'))
+
 
 if __name__ == '__main__':
     unittest.main()

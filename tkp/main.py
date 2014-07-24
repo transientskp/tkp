@@ -96,7 +96,7 @@ def run(job_name, mon_coords=[], distributor='multiproc'):
     f = job_config.persistence.f
     metadatas = runner.map("persistence_node_step", imgs,
                            [image_cache_params, sigma, f])
-    metadatas = [m[0] for m in metadatas]
+    metadatas = [m[0] for m in metadatas if m]
 
     logger.info("Storing images")
     image_ids = store_images(metadatas,

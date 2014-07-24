@@ -28,11 +28,9 @@ class TestInject(unittest.TestCase):
         shutil.rmtree(cls.temp_dir)
 
     def test_no_injection(self):
-        # Without injection the file cannot be opened as a LOFAR image
-        # We fall back to opening it as plain DataAccessor.
-        accessor = tkp.accessors.open(fits_file)
-        self.assertTrue(isinstance(accessor, DataAccessor))
-        self.assertFalse(isinstance(accessor, LofarAccessor))
+        # Without injection the file cannot be opened because the frequency
+        # isn't specified.
+        self.assertRaises(TypeError, tkp.accessors.open, fits_file)
 
     def test_injection(self):
         c = SafeConfigParser()

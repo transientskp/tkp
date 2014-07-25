@@ -3,14 +3,13 @@
 import os
 from distutils.core import setup
 from distutils.command.install import INSTALL_SCHEMES
+from Cython.Build import cythonize
 
 tkp_scripts = [
     "tkp/bin/pyse.py",
     "tkp/bin/tkp-manage.py",
     "tkp/bin/tkp-inject.py",
-
     ]
-
 
 def fullsplit(path, result=None):
     """
@@ -56,5 +55,5 @@ setup(
     author = "TKP Discovery WG",
     author_email = "discovery@transientskp.org",
     url = "http://www.transientskp.org/",
+    ext_modules = cythonize('tkp/sourcefinder/deconv.pyx')
 )
-

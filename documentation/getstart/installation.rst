@@ -82,6 +82,7 @@ To build the TraP, you will need:
 
 * C++ and Fortran compilers (tested with `GCC <http://gcc.gnu.org/>`_)
 * `CMake <http://www.cmake.org/>`_
+* `Cython <http://cython.org/>`_
 * `GNU Make <https://www.gnu.org/software/make/>`_
 * `Python <https://www.python.org/>`_ (2.7.x series *only*, including header files)
 * `NumPy <http://www.numpy.org/>`_ (at least version 1.3.0)

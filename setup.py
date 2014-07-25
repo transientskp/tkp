@@ -8,9 +8,7 @@ tkp_scripts = [
     "tkp/bin/pyse.py",
     "tkp/bin/tkp-manage.py",
     "tkp/bin/tkp-inject.py",
-
     ]
-
 
 def fullsplit(path, result=None):
     """
@@ -57,4 +55,3 @@ setup(
     author_email = "discovery@transientskp.org",
     url = "http://www.transientskp.org/",
 )
-

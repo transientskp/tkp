@@ -7,7 +7,6 @@ set(Python_ADDITIONAL_VERSIONS 2.7)
 include (FindPythonInterp)
 include (FindPythonLibs)
 include (${PROJECT_SOURCE_DIR}/cmake/SetPythonPackagesDir.cmake)
-include (${PROJECT_SOURCE_DIR}/cmake/FindF2Py.cmake)
 include (${PROJECT_SOURCE_DIR}/cmake/FindWCSLIB.cmake)
 
 add_subdirectory (external)

@@ -32,9 +32,6 @@ the library.
 
 A few "external" modules exists. These are:
 
-- deconv: the AIPS `DECONV` routine. This is built into a Python
-  module :mod:`deconv`. The build is accomplished using :file:`f2py`.
-
 - python-wcslib: this forms a (minimal) binding between the wcslib
   library and Python, and is built into the Python module
   :mod:`wcslib`. The binding is accomplished using the `boost-python`

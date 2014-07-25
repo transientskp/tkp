@@ -14,7 +14,7 @@ try:
     import ndimage
 except ImportError:
     from scipy import ndimage
-from deconv import deconv
+from tkp.sourcefinder.deconv import deconv
 from ..utility import coordinates
 from ..utility.uncertain import Uncertain
 from .gaussian import gaussian

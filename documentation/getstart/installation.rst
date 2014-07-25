@@ -87,6 +87,7 @@ To build the TraP, you will need:
 * `NumPy <http://www.numpy.org/>`_ (at least version 1.3.0)
 * `Boost Python <http://www.boost.org/doc/libs/release/libs/python/doc/>`_
 * `WCSLIB <http://www.atnf.csiro.au/people/mcalabre/WCS/>`_
+* `pywcs <http://stsdas.stsci.edu/astrolib/pywcs/>`_
 
 In addition to the above, to run the TraP you will need:
 

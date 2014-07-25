@@ -95,8 +95,6 @@ def parse_coordinates(table):
     # Rotation, units? We better set a default
     wcs.crota = (0., 0.)
     wcs.cunit = table.getkeyword('coords')['direction0']['units']
-    # Update WCS
-    wcs.wcsset()
     return wcs
 
 def parse_frequency(table):

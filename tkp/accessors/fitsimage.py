@@ -143,8 +143,6 @@ def parse_coordinates(header):
         msg = "WCS units unknown; using degrees"
         logger.warning(msg)
         wcs.cunit = 'deg', 'deg'
-
-    wcs.wcsset()
     return wcs
 
 

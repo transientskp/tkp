@@ -32,7 +32,8 @@ class PyfitsFitsImage(unittest.TestCase):
         self.assertAlmostEqual(image.wcs.crpix[1], 1440.)
         self.assertAlmostEqual(image.wcs.cdelt[0], -0.03333333)
         self.assertAlmostEqual(image.wcs.cdelt[1], 0.03333333)
-        self.assertTupleEqual(image.wcs.ctype, ('RA---SIN', 'DEC--SIN'))
+        self.assertEqual(image.wcs.ctype[0], 'RA---SIN')
+        self.assertEqual(image.wcs.ctype[1], 'DEC--SIN')
         # Beam included in image
         fits_file = os.path.join(DATAPATH, 'sourcefinder/simulations/correlated_noise.fits')
         image = FitsImage(fits_file)
@@ -45,7 +46,8 @@ class PyfitsFitsImage(unittest.TestCase):
         self.assertAlmostEqual(image.wcs.crpix[1], 128.)
         self.assertAlmostEqual(image.wcs.cdelt[0], -0.003333333414)
         self.assertAlmostEqual(image.wcs.cdelt[1], 0.003333333414)
-        self.assertTupleEqual(image.wcs.ctype, ('RA---SIN', 'DEC--SIN'))
+        self.assertEqual(image.wcs.ctype[0], 'RA---SIN')
+        self.assertEqual(image.wcs.ctype[1], 'DEC--SIN')
 
     @requires_data(os.path.join(DATAPATH, 'sourcefinder/L15_12h_const/observed-all.fits'))
     def testSFImageFromFITS(self):
@@ -73,7 +75,9 @@ class TestFitsImage(unittest.TestCase):
         self.assertAlmostEqual(image.wcs.crpix[1], 1440.)
         self.assertAlmostEqual(image.wcs.cdelt[0], -0.03333333)
         self.assertAlmostEqual(image.wcs.cdelt[1], 0.03333333)
-        self.assertTupleEqual(image.wcs.ctype, ('RA---SIN', 'DEC--SIN'))
+        self.assertEqual(image.wcs.ctype[0], 'RA---SIN')
+        self.assertEqual(image.wcs.ctype[1], 'DEC--SIN')
+
         # Beam included in image
         image = FitsImage(os.path.join(DATAPATH, 'sourcefinder/simulations/correlated_noise.fits'))
         self.assertAlmostEqual(image.beam[0], 2.7977999)
@@ -85,7 +89,8 @@ class TestFitsImage(unittest.TestCase):
         self.assertAlmostEqual(image.wcs.crpix[1], 128.)
         self.assertAlmostEqual(image.wcs.cdelt[0], -0.003333333414)
         self.assertAlmostEqual(image.wcs.cdelt[1], 0.003333333414)
-        self.assertTupleEqual(image.wcs.ctype, ('RA---SIN', 'DEC--SIN'))
+        self.assertEqual(image.wcs.ctype[0], 'RA---SIN')
+        self.assertEqual(image.wcs.ctype[1], 'DEC--SIN')
 
     @requires_data(os.path.join(DATAPATH, 'sourcefinder/L15_12h_const/observed-all.fits'))
     def testSFImageFromFITS(self):

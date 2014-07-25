@@ -72,7 +72,6 @@ class TestPositionErrors(unittest.TestCase):
         self.ncp_image.wcs.crval = (15.0, 90.0) # Celestial position of reference
         self.ncp_image.wcs.ctype = ('RA---SIN', 'DEC--SIN')
         self.ncp_image.wcs.cunit = ('deg', 'deg')
-        self.ncp_image.wcs.wcsset()
 
         # And an otherwise identical one at the equator
         self.equator_image = DummyImage()
@@ -83,7 +82,6 @@ class TestPositionErrors(unittest.TestCase):
         self.equator_image.wcs.crval = (15.0, 0.0) # Celestial position of reference
         self.equator_image.wcs.ctype = self.ncp_image.wcs.ctype
         self.equator_image.wcs.cunit = self.ncp_image.wcs.cunit
-        self.equator_image.wcs.wcsset()
 
         self.p = get_paramset()
 

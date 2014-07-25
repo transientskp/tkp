@@ -1,5 +1,4 @@
 *.pyc
+deconv.c
 documentation/build/
 build
-vagrantproject/
-.vagrant/

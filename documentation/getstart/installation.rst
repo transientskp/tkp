@@ -86,14 +86,15 @@ To build the TraP, you will need:
 * `Python <https://www.python.org/>`_ (2.7.x series *only*, including header files)
 * `NumPy <http://www.numpy.org/>`_ (at least version 1.3.0)
 * `Boost Python <http://www.boost.org/doc/libs/release/libs/python/doc/>`_
-* `WCSLIB <http://www.atnf.csiro.au/people/mcalabre/WCS/>`
+* `WCSLIB <http://www.atnf.csiro.au/people/mcalabre/WCS/>`_
 
 In addition to the above, to run the TraP you will need:
 
 * `SciPy <http://www.scipy.org/>`_ (at least version 0.7.0)
 * `Celery <http://www.celeryproject.org/>`_ (at least version 3.0)
 * `python-dateutil <http://labix.org/python-dateutil>`_ (at least version 1.4.1)
-* `pyrap <https://code.google.com/p/pyrap/>`_ and `casacore * <https://code.google.com/p/casacore/>`_
+* `pyrap <https://code.google.com/p/pyrap/>`_ and
+  `casacore <https://code.google.com/p/casacore/>`_ (including measures data)
 
 To work with the pipeline database, you will need at least one of:
 

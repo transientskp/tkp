@@ -27,6 +27,7 @@ CREATE TABLE extractedsource
   ,f_int DOUBLE PRECISION NULL
   ,f_int_err DOUBLE PRECISION NULL
   ,extract_type SMALLINT NULL
+  ,fit_type SMALLINT NULL
   ,ff_runcat INT NULL 
   ,node SMALLINT NOT NULL DEFAULT %NODE%
   ,nodes SMALLINT NOT NULL DEFAULT %NODES%

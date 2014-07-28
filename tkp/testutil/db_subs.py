@@ -20,7 +20,7 @@ ExtractedSourceTuple = namedtuple("ExtractedSourceTuple",
                                  'sigma',
                                  'beam_maj', 'beam_min', 'beam_angle',
                                  'ew_sys_err', 'ns_sys_err',
-                                 'error_radius'
+                                 'error_radius', 'fit_type'
                                 ])
 
 
@@ -135,7 +135,7 @@ def example_extractedsource_tuple(ra=123.123, dec=10.5,  # Arbitrarily picked de
                                   sigma=15,
                                   beam_maj=100, beam_min=100, beam_angle=45,
                                   ew_sys_err=20, ns_sys_err=20,
-                                  error_radius=10.0):
+                                  error_radius=10.0, fit_type=0):
     """Generates an example 'fake extraction' for unit testing.
 
     Note that while RA and Dec are arbitrary, they should (usually) be close
@@ -154,7 +154,7 @@ def example_extractedsource_tuple(ra=123.123, dec=10.5,  # Arbitrarily picked de
                                 beam_maj=beam_maj, beam_min=beam_min,
                                 beam_angle=beam_angle,
                                 ew_sys_err=ew_sys_err, ns_sys_err=ns_sys_err,
-                                error_radius=error_radius
+                                error_radius=error_radius, fit_type=fit_type
     )
 
 

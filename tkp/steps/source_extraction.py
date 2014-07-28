@@ -23,7 +23,8 @@ def extract_sources(image_path, extraction_params):
             analysis threshold and the association radius, the last one a
             multiplication factor of the de Ruiter radius.
     returns:
-        list of source measurements, min RMS value, max RMS value
+        list of ExtractionResults named tuples containing source measurements,
+        min RMS value and max RMS value
     """
     logger.info("Extracting image: %s" % image_path)
     accessor = tkp.accessors.open(image_path)

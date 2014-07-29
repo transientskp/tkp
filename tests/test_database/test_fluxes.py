@@ -496,3 +496,66 @@ class TestMany2Many(unittest.TestCase):
                 for key in ('v_int', 'eta_int'):
                     self.assertAlmostEqual(db_indices[nstep][key],
                                            py_indices[nstep][key])
+
+
+@unittest.skip("Needs fixing")
+@requires_database()
+class TestInfiniteErrorFluxes(unittest.TestCase):
+    """
+    What happens if we perform a forced fit, it doesn't converge, and we
+    get an 'infinite' error-bar? Do we handle this correctly?
+    """
+    @requires_database()
+    def setUp(self):
+
+        self.database = tkp.db.Database()
+
+    def tearDown(self):
+        """remove all stuff after the test has been run"""
+        self.database.close()
+
+    def test_one2one_flux_infinite_error(self):
+        dataset = tkp.db.DataSet(database=self.database, data={'description': 'flux test set: 1-1'})
+        n_images = 3
+        im_params = db_subs.generate_timespaced_dbimages_data(n_images)
+
+        src_list = []
+        src = db_subs.example_extractedsource_tuple()
+        src0 = src._replace(flux=2.0)
+        src_list.append(src0)
+        src1 = src._replace(flux=2.5)
+        src_list.append(src1)
+        src2 = src._replace(flux=0.0001, flux_err=float('inf'),
+                            peak=0.0001, peak_err=float('inf'))
+        src_list.append(src2)
+
+        for idx, im in enumerate(im_params):
+            image = tkp.db.Image(database=self.database, dataset=dataset, data=im)
+            image.insert_extracted_sources([src_list[idx]])
+            associate_extracted_sources(image.id, deRuiter_r=3.717)
+
+        # query = """\
+        # SELECT rf.avg_f_int
+        #   FROM runningcatalog r
+        #       ,runningcatalog_flux rf
+        #  WHERE r.dataset = %(dataset)s
+        #    AND r.id = rf.runcat
+        # """
+        # self.database.cursor.execute(query, {'dataset': dataset.id})
+        # result = zip(*self.database.cursor.fetchall())
+        # avg_f_int = result[0]
+        # self.assertEqual(len(avg_f_int), 1)
+        # py_metrics = db_subs.lightcurve_metrics(src_list)
+        # self.assertAlmostEqual(avg_f_int[0], py_metrics[-1]['avg_f_int'])
+        # runcat_id = columns_from_table('runningcatalog',
+        #                                where={'dataset':dataset.id})
+        # self.assertEqual(len(runcat_id),1)
+        # runcat_id = runcat_id[0]['id']
+        # # Check evolution of variability indices
+        # db_metrics = db_queries.per_timestep_variability_indices(self.database,
+        #                                                    runcat_id)
+        # self.assertEqual(len(db_metrics), n_images)
+        # # Compare the python- and db-calculated values
+        # for i in range(len(db_metrics)):
+        #     for key in ('v_int','eta_int'):
+        #         self.assertAlmostEqual(db_metrics[i][key], py_metrics[i][key])

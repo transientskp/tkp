@@ -195,7 +195,9 @@ class TestExtractedSource(unittest.TestCase):
         image.insert_extracted_sources([extracted_source])
 
         # But it should also be fine if the source has infinite errors
-        extracted_source = db_subs.example_extractedsource_tuple(error_radius=float('inf'))
+        extracted_source = db_subs.example_extractedsource_tuple(error_radius=float('inf'),
+                                                                 peak_err=float('inf'),
+                                                                 flux_err=float('inf'))
         image.insert_extracted_sources([extracted_source])
 
     @requires_database()

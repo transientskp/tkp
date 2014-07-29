@@ -1,40 +1,10 @@
 import logging
 import numpy
-from tkp.db.database import Database
+from tkp.db.database import Database, sanitize_db_inputs
 from tkp.db.orm import DataSet, Image, ExtractedSource
-from tkp.utility import substitute_inf
+
 
 logger = logging.getLogger(__name__)
-
-def sanitize_db_inputs(params):
-    """
-    Replace values in params with alternatives suitable for database insertion.
-
-    That includes:
-
-        * Convert numpy.floating types into Python floats;
-        * Convert infs into the string "Infinity".
-
-    Args:
-        params (dict/list/tuple): (Potentially) dirty database inputs
-
-    Returns:
-        cleaned (dict/list/tuple): Sanitized database inputs
-    """
-    def sanitize(val):
-        val = substitute_inf(val)
-        if isinstance(val, numpy.floating):
-            val = float(val)
-        return val
-
-    # According to the DB-API, params could be a dict-alike (ie, has key-value
-    # pairs) or a list-alike (an ordered sequence).
-    if hasattr(params, "iteritems"):
-        cleaned = {k: sanitize(v) for k, v in params.iteritems()}
-    else:
-        cleaned = [sanitize(v) for v in params]
-
-    return cleaned
 
 def execute(query, parameters={}, commit=False):
     """

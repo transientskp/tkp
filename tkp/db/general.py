@@ -12,6 +12,7 @@ import math
 import logging
 
 import tkp.db
+from tkp.db.database import sanitize_db_inputs
 from tkp.utility.coordinates import eq_to_cart
 from tkp.utility.coordinates import alpha_inflate
 from tkp.utility import substitute_inf
@@ -237,7 +238,7 @@ def insert_extracted_sources(image_id, results, extract, ff_runcatids=None):
             # If not empty, we add the runcat id as well
             r.append(ff_runcatids[i])
         xtrsrc.append(r)
-    values = [str(tuple(xsrc)) for xsrc in xtrsrc]
+    values = [str(tuple(sanitize_db_inputs(xsrc))) for xsrc in xtrsrc]
 
     q_basic = """\
 INSERT INTO extractedsource

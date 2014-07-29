@@ -26,7 +26,6 @@ from tkp.distribute.common import (load_job_config, dump_configs_to_logdir,
                                    group_per_timestep)
 from tkp.db.configstore import store_config, fetch_config
 from tkp.steps.persistence import create_dataset, store_images
-from tkp.steps.transient_search import search_transients
 from tkp.steps.source_extraction import forced_fits
 
 logger = logging.getLogger(__name__)
@@ -172,6 +171,4 @@ def run(job_name, mon_coords=[], distributor='multiproc'):
                 dbgen.insert_extracted_sources(image.id, ff_ms, 'ff_ms')
                 logger.info("adding monitoring sources")
                 dbmon.associate_ms(image.id)
-            transients = search_transients(image.id,
-                                           job_config['transient_search'])
         dbgen.update_dataset_process_end_ts(dataset_id)

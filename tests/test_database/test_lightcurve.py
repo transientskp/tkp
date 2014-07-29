@@ -11,7 +11,6 @@ from tkp.testutil import db_queries
 from tkp.db.orm import DataSet
 from tkp.db.orm import Image
 import tkp.db
-import tkp.db.transients as dbtransients
 from tkp.db.generic import  get_db_rows_as_dicts, columns_from_table
 
 

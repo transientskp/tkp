@@ -49,7 +49,6 @@ UPDATE dataset
  WHERE id = %(dataset_id)s
 """
 
-
 def update_dataset_process_end_ts(dataset_id):
     """Update dataset start-of-processing timestamp.
 
@@ -120,9 +119,9 @@ def insert_image(dataset, freq_eff, freq_bw, taustart_ts, tau_time,
                  'freq_eff': freq_eff,
                  'freq_bw': freq_bw,
                  'taustart_ts': taustart_ts,
-                 'rb_smaj': substitute_inf(beam_smaj_pix * math.fabs(deltax)),
-                 'rb_smin': substitute_inf(beam_smin_pix * math.fabs(deltay)),
-                 'rb_pa': substitute_inf(180 * beam_pa_rad / math.pi),
+                 'rb_smaj': beam_smaj_pix * math.fabs(deltax),
+                 'rb_smin': beam_smin_pix * math.fabs(deltay),
+                 'rb_pa': 180 * beam_pa_rad / math.pi,
                  'deltax': deltax,
                  'deltay': deltay,
                  'url': url,

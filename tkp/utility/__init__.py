@@ -9,10 +9,12 @@ def nice_format(f):
 
 
 def substitute(value, sub, test_f):
-    if test_f(value):
-        return sub
-    else:
-        return value
+    try:
+        if test_f(value):
+            return sub
+    except TypeError:
+        pass
+    return value
 
 
 def substitute_inf(value, sub="Infinity"):

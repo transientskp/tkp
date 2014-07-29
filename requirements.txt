@@ -3,6 +3,7 @@ scipy>=0.7.0
 pyfits>=2.3.1
 python-dateutil>=1.4.1
 pytz
+pywcs
 #pyrap>=1.1.0  # not available on pip
 celery>=3.1.11
 

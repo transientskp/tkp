@@ -30,14 +30,6 @@ At the root of the package, there is also the :mod:`config` module,
 which deals with the setup and configuration of the various modules in
 the library.
 
-A few "external" modules exists. These are:
-
-- python-wcslib: this forms a (minimal) binding between the wcslib
-  library and Python, and is built into the Python module
-  :mod:`wcslib`. The binding is accomplished using the `boost-python`
-  library.
-
-
 For practical usage, start with reading through the transient pipeline
 documentation instead. For details on the various TKP modules and
 functions, see the rest of this documentation: most of the modules and

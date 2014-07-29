@@ -6,7 +6,7 @@ General purpose astronomical coordinate handling routines.
 
 import sys
 import math
-import wcslib
+import pywcs
 import logging
 import datetime
 import pytz
@@ -597,45 +597,74 @@ def convert_coordsystem(ra, dec, insys, outsys):
     return ra, dec
 
 
-class WCS(wcslib.wcs):
+class WCS(object):
     """
-    wcslib.wcs, extended to support different coordinate systems.
-    """
+    Wrapper around pywcs.WCS.
 
-    # A signal to use for message passing.
-    change = "WCS changed"
+    This is primarily to preserve API compatibility with the earlier,
+    home-brewed python-wcslib wrapper. It includes:
+
+      * A fix for the reference pixel lying at the zenith;
+      * Raises ValueError if coordinates are invalid.
+    """
+    # ORIGIN is the upper-left corner of the image. pywcs supports both 0
+    # (NumPy, C-style) or 1 (FITS, Fortran-style). The TraP uses 1.
+    ORIGIN = 1
+
+    # We can set these attributes on the pywcs.WCS().wcs object to configure
+    # the coordinate system.
+    WCS_ATTRS = ("crpix", "cdelt", "crval", "ctype", "cunit", "crota")
+
+    def __init__(self):
+        # Currently, we only support two dimensional images.
+        self.wcs = pywcs.WCS(naxis=2)
 
     def __setattr__(self, attrname, value):
-        if attrname == "coordsys" or attrname == "outputsys":
-            wcslib.wcs.__setattr__(self, attrname, coordsystem(value))
-            # Notify any objects which depend on this that their parameters
-            # have changed.
-        else:
+        if attrname in self.WCS_ATTRS:
             # Account for arbitrary coordinate rotations in images pointing at
             # the North Celestial Pole. We set the reference direction to
             # infintesimally less than 90 degrees to avoid any ambiguity. See
             # discussion at #4599.
             if attrname == "crval" and (value[1] == 90 or value[1] == math.pi/2):
                 value = (value[0], value[1] * (1 - sys.float_info.epsilon))
-            wcslib.wcs.__setattr__(self, attrname, value)
+            self.wcs.wcs.__setattr__(attrname, value)
+        else:
+            super(WCS, self).__setattr__(attrname, value)
+
+    def __getattr__(self, attrname):
+        if attrname in  self.WCS_ATTRS:
+            return getattr(self.wcs.wcs, attrname)
+        else:
+            super(WCS, self).__getattr__(attrname)
 
     def p2s(self, pixpos):
-        ra, dec = wcslib.wcs.p2s(self, pixpos)
-        try:
-            if self.outputsys != self.coordsys:
-                ra, dec = convert_coordsystem(ra, dec,
-                    self.coordsys, self.outputsys)
-        except AttributeError:
-            logger.debug("Equinox conversion undefined.")
-        return [ra, dec]
+        """
+        Pixel to Spatial coordinate conversion.
+
+        Args:
+            pixpos (list):  [x, y] pixel position
+
+        Returns:
+            ra (float):     Right ascension corresponding to position [x, y]
+            dec (float):    Declination corresponding to position [x, y]
+        """
+        [ra], [dec] =  self.wcs.wcs_pix2sky(pixpos[0], pixpos[1], self.ORIGIN)
+        if math.isnan(ra) or math.isnan(dec):
+            raise RuntimeError("Spatial position is not a number")
+        return ra, dec
 
     def s2p(self, spatialpos):
-        ra, dec = spatialpos
-        try:
-            if self.outputsys != self.coordsys:
-                ra, dec = convert_coordsystem(ra, dec,
-                    self.outputsys, self.coordsys)
-        except AttributeError:
-            logger.debug("Equinox conversion undefined.")
-        x, y = wcslib.wcs.s2p(self, [ra, dec])
-        return [x, y]
+        """
+        Spatial to Pixel coordinate conversion.
+
+        Args:
+            pixpos (list):  [ra, dec] spatial position
+
+        Returns:
+            x (float):      X pixel value corresponding to position [ra, dec]
+            y (float):      Y pixel value corresponding to position [ra, dec]
+        """
+        [x], [y] =  self.wcs.wcs_sky2pix(spatialpos[0], spatialpos[1], self.ORIGIN)
+        if math.isnan(x) or math.isnan(y):
+            raise RuntimeError("Pixel position is not a number")
+        return x, y

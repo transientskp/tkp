@@ -157,6 +157,7 @@ def insert_extracted_sources(image_id, results, extract, ff_runcatids=None):
     (9) beam major width (arcsec), (10) - minor width (arcsec), (11) - parallactic angle [deg],
     (12) ew_sys_err [arcsec], (13) ns_sys_err [arcsec],
     (14) error_radius [arcsec]
+    (15) gaussian fit (bool)
 
     ra_fit_err and decl_fit_err are the 1-sigma errors from the gaussian fit,
     in degrees. Note that for a source located towards the poles the ra_fit_err
@@ -212,6 +213,7 @@ def insert_extracted_sources(image_id, results, extract, ff_runcatids=None):
         # Use 360 degree rather than infinite uncertainty for
         # unconstrained positions.
         r[14] = substitute_inf(r[14], 360.0)
+        r[15] = int(r[15])
         # ra_err: sqrt of quadratic sum of fitted and systematic errors.
         r.append(math.sqrt(r[2]**2 + alpha_inflate(r[12]/3600., r[1])**2))
         # decl_err: sqrt of quadratic sum of fitted and systematic errors.
@@ -257,6 +259,7 @@ INSERT INTO extractedsource
   ,ew_sys_err
   ,ns_sys_err
   ,error_radius
+  ,fit_type
   ,ra_err
   ,decl_err
   ,uncertainty_ew
@@ -288,6 +291,7 @@ INSERT INTO extractedsource
   ,ew_sys_err
   ,ns_sys_err
   ,error_radius
+  ,fit_type
   ,ra_err
   ,decl_err
   ,uncertainty_ew

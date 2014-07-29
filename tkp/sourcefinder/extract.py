@@ -728,6 +728,7 @@ class Detection(object):
         self.smin_dc = paramset['semimin_deconv']
         self.theta_dc = paramset['theta_deconv']
         self.error_radius = None
+        self.gaussian = paramset.gaussian
 
         self.sig = paramset.sig
 
@@ -751,8 +752,9 @@ class Detection(object):
             'smin': self.smin,
             'theta': self.theta,
             'sig': self.sig,
-            'error_radius': self.error_radius
-            }
+            'error_radius': self.error_radius,
+            'gaussian': self.gaussian,
+        }
 
     def __setstate__(self, attrdict):
         self.imagedata = attrdict['imagedata']
@@ -767,6 +769,7 @@ class Detection(object):
         self.theta = attrdict['theta']
         self.sig = attrdict['sig']
         self.error_radius = attrdict['error_radius']
+        self.gaussian = attrdict['gaussian']
 
         try:
             self._physical_coordinates()
@@ -964,14 +967,17 @@ class Detection(object):
         return ((self.x - x)**2 + (self.y - y)**2)**0.5
 
     def serialize(self, ew_sys_err, ns_sys_err):
-        """Return source properties suitable for database storage.
-
-        @rtype: tuple
         """
-        # The database doesn't recognize numpy.float64 values, so
+        Return source properties suitable for database storage.
+
+        We manually add ew_sys_err, ns_sys_err
+
+        returns: a list of tuples containing all relevant fields
+        """
+        # MonetDB doesn't recognize numpy.float64 values, so
         # in order to let the database accept the values, we convert them
         # to float
-        return (
+        return [
             float(self.ra.value),
             float(self.dec.value),
             float(self.ra.error),
@@ -986,5 +992,6 @@ class Detection(object):
             float(self.theta_celes.value),
             float(ew_sys_err),
             float(ns_sys_err),
-            float(self.error_radius)
-        )
+            float(self.error_radius),
+            self.gaussian
+        ]

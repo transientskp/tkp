@@ -336,6 +336,13 @@ The TraP may add forced-fit entries to this table as well. Then
         * ``1``: forced fit to pixel
         * ``2``: manually monitored position
 
+**fitting_type**
+    Reports what fitting type was used by sourcefinder (Hanno's thesis).
+     Currently implemented values are:
+
+        * ``0``: moments-based analysis
+        * ``1``: Gaussian fitting
+
 **node(s)**
     Determine the current and number of nodes in case of a sharded database
     set-up.

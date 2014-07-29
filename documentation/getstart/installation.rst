@@ -81,7 +81,6 @@ Core Dependencies
 To build the TraP, you will need:
 
 * C++ and Fortran compilers (tested with `GCC <http://gcc.gnu.org/>`_)
-* `CMake <http://www.cmake.org/>`_
 * `GNU Make <https://www.gnu.org/software/make/>`_
 * `Python <https://www.python.org/>`_ (2.7.x series *only*, including header files)
 * `NumPy <http://www.numpy.org/>`_ (at least version 1.3.0)
@@ -122,10 +121,8 @@ Once all dependencies have been satisfied, building should be
 straightforward::
 
   $ git clone https://github.com/transientskp/tkp.git
-  $ mkdir tkp/build
-  $ cmake ..
-  $ make
-  $ sudo make install
+  $ cd tkp
+  $ python setup.py install
 
 Following installation, including setting up and configuring the database,
 follow the :ref:`test procedure <testing>` to ensure that everything is

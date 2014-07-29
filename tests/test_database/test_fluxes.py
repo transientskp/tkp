@@ -496,3 +496,4 @@ class TestMany2Many(unittest.TestCase):
                 for key in ('v_int', 'eta_int'):
                     self.assertAlmostEqual(db_indices[nstep][key],
                                            py_indices[nstep][key])
+

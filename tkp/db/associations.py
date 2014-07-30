@@ -406,23 +406,41 @@ INSERT INTO temprunningcatalog
                     + t0.f_peak * t0.f_peak)
                    / (rf0.f_datapoints + 1)
          END AS avg_f_peak_sq
-        ,CASE WHEN rf0.f_datapoints IS NULL
-              THEN 1 / (t0.f_peak_err * t0.f_peak_err)
-              ELSE (rf0.f_datapoints * rf0.avg_f_peak_weight
-                    + 1 / (t0.f_peak_err * t0.f_peak_err))
-                   / (rf0.f_datapoints + 1)
+        ,CASE WHEN t0.f_peak_err = 'Infinity'
+              THEN CASE WHEN rf0.f_datapoints IS NULL
+                        THEN 0
+                        ELSE (rf0.f_datapoints * rf0.avg_f_peak_weight) / (rf0.f_datapoints + 1)
+                   END
+              ELSE CASE WHEN rf0.f_datapoints IS NULL
+                        THEN 1 / (t0.f_peak_err * t0.f_peak_err)
+                        ELSE (rf0.f_datapoints * rf0.avg_f_peak_weight
+                              + 1 / (t0.f_peak_err * t0.f_peak_err))
+                              / (rf0.f_datapoints + 1)
+                   END
          END AS avg_f_peak_weight
-        ,CASE WHEN rf0.f_datapoints IS NULL
-              THEN t0.f_peak / (t0.f_peak_err * t0.f_peak_err)
-              ELSE (rf0.f_datapoints * rf0.avg_weighted_f_peak
-                    + t0.f_peak / (t0.f_peak_err * t0.f_peak_err))
-                   / (rf0.f_datapoints + 1)
+        ,CASE WHEN t0.f_peak_err = 'Infinity'
+              THEN CASE WHEN rf0.f_datapoints IS NULL
+                        THEN 0
+                        ELSE (rf0.f_datapoints * rf0.avg_weighted_f_peak) / (rf0.f_datapoints + 1)
+                   END
+              ELSE CASE WHEN rf0.f_datapoints IS NULL
+                        THEN t0.f_peak / (t0.f_peak_err * t0.f_peak_err)
+                        ELSE (rf0.f_datapoints * rf0.avg_weighted_f_peak
+                              + t0.f_peak / (t0.f_peak_err * t0.f_peak_err))
+                             / (rf0.f_datapoints + 1)
+                   END
          END AS avg_weighted_f_peak
-        ,CASE WHEN rf0.f_datapoints IS NULL
-              THEN t0.f_peak * t0.f_peak / (t0.f_peak_err * t0.f_peak_err)
-              ELSE (rf0.f_datapoints * rf0.avg_weighted_f_peak_sq
-                    + (t0.f_peak * t0.f_peak) / (t0.f_peak_err * t0.f_peak_err))
-                   / (rf0.f_datapoints + 1)
+        ,CASE WHEN t0.f_peak_err = 'Infinity'
+              THEN CASE WHEN rf0.f_datapoints IS NULL
+                        THEN 0
+                        ELSE (rf0.f_datapoints * rf0.avg_weighted_f_peak_sq) / (rf0.f_datapoints + 1)
+                   END
+              ELSE CASE WHEN rf0.f_datapoints IS NULL
+                        THEN t0.f_peak * t0.f_peak / (t0.f_peak_err * t0.f_peak_err)
+                        ELSE (rf0.f_datapoints * rf0.avg_weighted_f_peak_sq
+                              + (t0.f_peak * t0.f_peak) / (t0.f_peak_err * t0.f_peak_err))
+                              / (rf0.f_datapoints + 1)
+                   END
          END AS avg_weighted_f_peak_sq
         ,CASE WHEN rf0.f_datapoints IS NULL
               THEN t0.f_int
@@ -436,23 +454,41 @@ INSERT INTO temprunningcatalog
                     + t0.f_int * t0.f_int)
                    / (rf0.f_datapoints + 1)
          END AS avg_f_int_sq
-        ,CASE WHEN rf0.f_datapoints IS NULL
-              THEN 1 / (t0.f_int_err * t0.f_int_err)
-              ELSE (rf0.f_datapoints * rf0.avg_f_int_weight
-                    + 1 / (t0.f_int_err * t0.f_int_err))
-                   / (rf0.f_datapoints + 1)
+        ,CASE WHEN t0.f_int_err = 'Infinity'
+              THEN CASE WHEN rf0.f_datapoints IS NULL
+                        THEN 0
+                        ELSE (rf0.f_datapoints * rf0.avg_f_int_weight) / (rf0.f_datapoints + 1)
+                   END
+              ELSE CASE WHEN rf0.f_datapoints IS NULL
+                        THEN 1 / (t0.f_int_err * t0.f_int_err)
+                        ELSE (rf0.f_datapoints * rf0.avg_f_int_weight
+                              + 1 / (t0.f_int_err * t0.f_int_err))
+                              / (rf0.f_datapoints + 1)
+              END
          END AS avg_f_int_weight
-        ,CASE WHEN rf0.f_datapoints IS NULL
-              THEN t0.f_int / (t0.f_int_err * t0.f_int_err)
-              ELSE (rf0.f_datapoints * rf0.avg_weighted_f_int
-                    + t0.f_int / (t0.f_int_err * t0.f_int_err))
-                   / (rf0.f_datapoints + 1)
+        ,CASE WHEN t0.f_int_err = 'Infinity'
+              THEN CASE WHEN rf0.f_datapoints IS NULL
+                        THEN 0
+                        ELSE (rf0.f_datapoints * rf0.avg_weighted_f_int) / (rf0.f_datapoints + 1)
+                   END
+              ELSE CASE WHEN rf0.f_datapoints IS NULL
+                        THEN t0.f_int / (t0.f_int_err * t0.f_int_err)
+                        ELSE (rf0.f_datapoints * rf0.avg_weighted_f_int
+                              + t0.f_int / (t0.f_int_err * t0.f_int_err))
+                             / (rf0.f_datapoints + 1)
+                   END
          END AS avg_weighted_f_int
-        ,CASE WHEN rf0.f_datapoints IS NULL
-              THEN t0.f_int * t0.f_int / (t0.f_int_err * t0.f_int_err)
-              ELSE (rf0.f_datapoints * rf0.avg_weighted_f_int_sq
-                    + (t0.f_int * t0.f_int) / (t0.f_int_err * t0.f_int_err))
-                   / (rf0.f_datapoints + 1)
+        ,CASE WHEN t0.f_int_err = 'Infinity'
+              THEN CASE WHEN rf0.f_datapoints IS NULL
+                        THEN 0
+                        ELSE (rf0.f_datapoints * rf0.avg_weighted_f_int_sq) / (rf0.f_datapoints + 1)
+                   END
+              ELSE CASE WHEN rf0.f_datapoints IS NULL
+                        THEN t0.f_int * t0.f_int / (t0.f_int_err * t0.f_int_err)
+                        ELSE (rf0.f_datapoints * rf0.avg_weighted_f_int_sq
+                              + (t0.f_int * t0.f_int) / (t0.f_int_err * t0.f_int_err))
+                              / (rf0.f_datapoints + 1)
+                   END
          END AS avg_weighted_f_int_sq
     FROM (SELECT rc0.id as runcat
                 ,x0.id as xtrsrc
@@ -610,23 +646,41 @@ INSERT INTO temprunningcatalog
                     + t0.f_peak * t0.f_peak)
                    / (rf0.f_datapoints + 1)
          END AS avg_f_peak_sq
-        ,CASE WHEN rf0.f_datapoints IS NULL
-              THEN 1 / (t0.f_peak_err * t0.f_peak_err)
-              ELSE (rf0.f_datapoints * rf0.avg_f_peak_weight
-                    + 1 / (t0.f_peak_err * t0.f_peak_err))
-                   / (rf0.f_datapoints + 1)
+        ,CASE WHEN t0.f_peak_err = 'Infinity'
+              THEN CASE WHEN rf0.f_datapoints IS NULL
+                        THEN 0
+                        ELSE (rf0.f_datapoints * rf0.avg_f_peak_weight) / (rf0.f_datapoints + 1)
+                   END
+              ELSE CASE WHEN rf0.f_datapoints IS NULL
+                        THEN 1 / (t0.f_peak_err * t0.f_peak_err)
+                        ELSE (rf0.f_datapoints * rf0.avg_f_peak_weight
+                              + 1 / (t0.f_peak_err * t0.f_peak_err))
+                              / (rf0.f_datapoints + 1)
+                   END
          END AS avg_f_peak_weight
-        ,CASE WHEN rf0.f_datapoints IS NULL
-              THEN t0.f_peak / (t0.f_peak_err * t0.f_peak_err)
-              ELSE (rf0.f_datapoints * rf0.avg_weighted_f_peak
-                    + t0.f_peak / (t0.f_peak_err * t0.f_peak_err))
-                   / (rf0.f_datapoints + 1)
+        ,CASE WHEN t0.f_peak_err = 'Infinity'
+              THEN CASE WHEN rf0.f_datapoints IS NULL
+                        THEN 0
+                        ELSE (rf0.f_datapoints * rf0.avg_weighted_f_peak) / (rf0.f_datapoints + 1)
+                   END
+              ELSE CASE WHEN rf0.f_datapoints IS NULL
+                        THEN t0.f_peak / (t0.f_peak_err * t0.f_peak_err)
+                        ELSE (rf0.f_datapoints * rf0.avg_weighted_f_peak
+                              + t0.f_peak / (t0.f_peak_err * t0.f_peak_err))
+                             / (rf0.f_datapoints + 1)
+                   END
          END AS avg_weighted_f_peak
-        ,CASE WHEN rf0.f_datapoints IS NULL
-              THEN t0.f_peak * t0.f_peak / (t0.f_peak_err * t0.f_peak_err)
-              ELSE (rf0.f_datapoints * rf0.avg_weighted_f_peak_sq
-                    + (t0.f_peak * t0.f_peak) / (t0.f_peak_err * t0.f_peak_err))
-                   / (rf0.f_datapoints + 1)
+        ,CASE WHEN t0.f_peak_err = 'Infinity'
+              THEN CASE WHEN rf0.f_datapoints IS NULL
+                        THEN 0
+                        ELSE (rf0.f_datapoints * rf0.avg_weighted_f_peak_sq) / (rf0.f_datapoints + 1)
+                   END
+              ELSE CASE WHEN rf0.f_datapoints IS NULL
+                        THEN t0.f_peak * t0.f_peak / (t0.f_peak_err * t0.f_peak_err)
+                        ELSE (rf0.f_datapoints * rf0.avg_weighted_f_peak_sq
+                              + (t0.f_peak * t0.f_peak) / (t0.f_peak_err * t0.f_peak_err))
+                              / (rf0.f_datapoints + 1)
+                   END
          END AS avg_weighted_f_peak_sq
         ,CASE WHEN rf0.f_datapoints IS NULL
               THEN t0.f_int
@@ -640,23 +694,41 @@ INSERT INTO temprunningcatalog
                     + t0.f_int * t0.f_int)
                    / (rf0.f_datapoints + 1)
          END AS avg_f_int_sq
-        ,CASE WHEN rf0.f_datapoints IS NULL
-              THEN 1 / (t0.f_int_err * t0.f_int_err)
-              ELSE (rf0.f_datapoints * rf0.avg_f_int_weight
-                    + 1 / (t0.f_int_err * t0.f_int_err))
-                   / (rf0.f_datapoints + 1)
+        ,CASE WHEN t0.f_int_err = 'Infinity'
+              THEN CASE WHEN rf0.f_datapoints IS NULL
+                        THEN 0
+                        ELSE (rf0.f_datapoints * rf0.avg_f_int_weight) / (rf0.f_datapoints + 1)
+                   END
+              ELSE CASE WHEN rf0.f_datapoints IS NULL
+                        THEN 1 / (t0.f_int_err * t0.f_int_err)
+                        ELSE (rf0.f_datapoints * rf0.avg_f_int_weight
+                              + 1 / (t0.f_int_err * t0.f_int_err))
+                              / (rf0.f_datapoints + 1)
+              END
          END AS avg_f_int_weight
-        ,CASE WHEN rf0.f_datapoints IS NULL
-              THEN t0.f_int / (t0.f_int_err * t0.f_int_err)
-              ELSE (rf0.f_datapoints * rf0.avg_weighted_f_int
-                    + t0.f_int / (t0.f_int_err * t0.f_int_err))
-                   / (rf0.f_datapoints + 1)
+        ,CASE WHEN t0.f_int_err = 'Infinity'
+              THEN CASE WHEN rf0.f_datapoints IS NULL
+                        THEN 0
+                        ELSE (rf0.f_datapoints * rf0.avg_weighted_f_int) / (rf0.f_datapoints + 1)
+                   END
+              ELSE CASE WHEN rf0.f_datapoints IS NULL
+                        THEN t0.f_int / (t0.f_int_err * t0.f_int_err)
+                        ELSE (rf0.f_datapoints * rf0.avg_weighted_f_int
+                              + t0.f_int / (t0.f_int_err * t0.f_int_err))
+                             / (rf0.f_datapoints + 1)
+                   END
          END AS avg_weighted_f_int
-        ,CASE WHEN rf0.f_datapoints IS NULL
-              THEN t0.f_int * t0.f_int / (t0.f_int_err * t0.f_int_err)
-              ELSE (rf0.f_datapoints * rf0.avg_weighted_f_int_sq
-                    + (t0.f_int * t0.f_int) / (t0.f_int_err * t0.f_int_err))
-                   / (rf0.f_datapoints + 1)
+        ,CASE WHEN t0.f_int_err = 'Infinity'
+              THEN CASE WHEN rf0.f_datapoints IS NULL
+                        THEN 0
+                        ELSE (rf0.f_datapoints * rf0.avg_weighted_f_int_sq) / (rf0.f_datapoints + 1)
+                   END
+              ELSE CASE WHEN rf0.f_datapoints IS NULL
+                        THEN t0.f_int * t0.f_int / (t0.f_int_err * t0.f_int_err)
+                        ELSE (rf0.f_datapoints * rf0.avg_weighted_f_int_sq
+                              + (t0.f_int * t0.f_int) / (t0.f_int_err * t0.f_int_err))
+                              / (rf0.f_datapoints + 1)
+                   END
          END AS avg_weighted_f_int_sq
     FROM (SELECT rc0.id as runcat
                 ,x0.id as xtrsrc

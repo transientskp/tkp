@@ -389,7 +389,7 @@ For a given ``image_id``:
      of half-width ``radius`` degrees from the extractedsource.
      (This places a hard limit on the maximum association radius).
 
-   - Have a weighted mean position within a user-specified DeRuiter radius of
+   - Have a weighted mean position within a user-specified De Ruiter radius of
      the extractedsource.
 
  - Each of these rows representing a candidate association is populated with all
@@ -403,7 +403,7 @@ Trim the 'many-to-many' links to prevent exponentional database growth
 
 Performed by: :py:func:`tkp.db.associations._flag_many_to_many_tempruncat`
 
-Especially if we employ a large DeRuiter radius limit, we may generate a large
+Especially if we employ a large De Ruiter radius limit, we may generate a large
 number of candidate associations which result in a complex web of possible
 lightcurves. We reduce this to a more manageable situation by trimming some of
 the 'weaker' candidate associations.
@@ -415,7 +415,7 @@ First, inspect the temprunningcatalog table:
  - Of these entries, select those for which the runcat id is listed more than
    once in temprunningcatalog.
 
- - Use this selection to determine the runningcatalog id of minimum DeRuiter
+ - Use this selection to determine the runningcatalog id of minimum De Ruiter
    radius, for each extracted source which is part of a many-to-many set.
 
  - Then, using this per-extractedsource minimum DR radius, reapply the above
@@ -431,7 +431,7 @@ Finally, use these identifiers to set all these entries as ``inactive = TRUE``.
 Or, in pseudo-mathematical terms, tempruncat describes the edges of a graph,
 linking nodes (sources) from two spaces (previous runcat entries, newly
 extracted entries).  (There are no intra-space links).
-:py:func:`_flag_many_to_many_tempruncat` trims this graph using the DeRuiter
+:py:func:`_flag_many_to_many_tempruncat` trims this graph using the De Ruiter
 radius as a ranking metric, to ensure that any connected sub-graph has
 multiple nodes in *at most* one of the two spaces.
 

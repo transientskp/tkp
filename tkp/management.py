@@ -238,12 +238,6 @@ def init_db(options):
     else:
         dbconfig = get_database_config(None, apply=False)
 
-    for field in ['engine', 'database', 'user', 'password', 'host', 'port',
-                  'passphrase']:
-        value = getattr(options, field)
-        if value:
-            dbconfig[field] = value
-
     if 'engine' not in dbconfig or not dbconfig['engine']:
         dbconfig['engine'] = 'postgresql'
 
@@ -266,9 +260,7 @@ def init_db(options):
         dbconfig['host'] = 'localhost'
 
     dbconfig['yes'] = options.yes
-
-    if 'passphrase' not in dbconfig:
-        dbconfig['passphrase'] = ""
+    dbconfig['destroy'] = options.destroy
 
     populate(dbconfig)
 
@@ -322,20 +314,12 @@ environment variables to configure the connection:
     run_parser.set_defaults(func=run_job)
 
     #initdb
-    username = getpass.getuser()
     initdb_parser = parser_subparsers.add_parser('initdb')
-    initdb_parser.add_argument('-d', '--database', help='database name')
-    initdb_parser.add_argument('-u', '--user', type=str, help='user')
-    initdb_parser.add_argument('-p', '--password', type=str, help='password')
-    initdb_parser.add_argument('-H', '--host', type=str, help='host')
-    initdb_parser.add_argument('-P', '--port', type=int, help='port')
-    initdb_parser.add_argument('-s', '--passphrase', type=str,
-                               help='database management passphrase')
-    initdb_parser.add_argument('-e', '--engine', choices=["monetdb",
-                                                           'postgresql'],
-                               help="what database backend to use")
     initdb_parser.add_argument('-y', '--yes',
                                help="don't ask for confirmation",
+                               action="store_true")
+    initdb_parser.add_argument('-d', '--destroy',
+                               help="remove all tables before population",
                                action="store_true")
     initdb_parser.set_defaults(func=init_db)
 

@@ -21,7 +21,6 @@ tables/add.fk.extractedsource.sql
 #
 #system functions
 #
-functions/degrad.sql
 functions/alpha.sql
 functions/cartesian.sql
 functions/getBand.sql

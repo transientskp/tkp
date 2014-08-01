@@ -43,9 +43,13 @@ def requires_test_db_managed():
     """
     This decorator is used to disable tests that do potentially low level
     database management operations like destroy and create. You can enable
-    these tests by setting the TKP_TESTDBMANAGMENT environment variable.
+    these tests by setting the TKP_TESTDBMANAGEMENT environment variable.
     """
-    if os.environ.get("TKP_TESTDBMANAGMENT", False):
+    if os.environ.get('TKP_DBENGINE', 'postgresql') == 'monetdb':
+        return unittest.skip("DB management tests not supported for Monetdb,"
+                             "must be tested manually.")
+
+    if os.environ.get("TKP_TESTDBMANAGEMENT", False):
         return lambda func: func
-    return unittest.skip("DB management tests disabled, TKP_TESTDBMANAGMENT"
+    return unittest.skip("DB management tests disabled, TKP_TESTDBMANAGEMENT"
                          " not set")

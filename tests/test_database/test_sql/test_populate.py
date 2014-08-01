@@ -6,7 +6,7 @@ import getpass
 
 
 config = {
-    'engine': 'postgresql',
+    'engine':  os.environ.get('TKP_DBENGINE', 'postgresql'),
     'database': 'test_management',
     'user': os.environ.get('TKP_DBUSER', getpass.getuser()),
     'password': os.environ.get('TKP_DBPASSWORD', getpass.getuser()),
@@ -35,6 +35,7 @@ class TestPopulate(unittest.TestCase):
         tkp.db.sql.populate.get_input = lambda x: "y"
         tkp.db.sql.populate.verify(config)
 
+    @requires_test_db_managed()
     def test_connect(self):
         tkp.db.sql.populate.connect(config)
 
@@ -61,3 +62,4 @@ class TestPopulate(unittest.TestCase):
     @requires_test_db_managed()
     def test_populate(self):
         tkp.db.sql.populate.populate(config)
+

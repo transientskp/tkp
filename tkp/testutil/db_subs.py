@@ -222,6 +222,7 @@ def lightcurve_metrics(src_list):
                 'avg_f_int_weight': avg_w,
                 'avg_weighted_f_int': avg_w_f_int,
                 'avg_weighted_f_int_sq': avg_w_f_int_sq,
+                'f_datapoints': N
             })
     return metrics
 

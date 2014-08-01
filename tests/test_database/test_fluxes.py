@@ -169,7 +169,7 @@ class TestOne2ManyFlux(unittest.TestCase):
             py_indices = db_subs.lightcurve_metrics(lightcurves_sorted_by_ra[idx])
             self.assertEqual(len(db_indices), len(py_indices))
             for nstep in range(len(db_indices)):
-                for key in ('v_int', 'eta_int'):
+                for key in ('v_int', 'eta_int', 'f_datapoints'):
                     self.assertAlmostEqual(db_indices[nstep][key],
                                            py_indices[nstep][key])
 
@@ -272,7 +272,7 @@ class TestMany2OneFlux(unittest.TestCase):
             py_indices = db_subs.lightcurve_metrics(lightcurves_sorted_by_ra[idx])
             self.assertEqual(len(db_indices), len(py_indices))
             for nstep in range(len(db_indices)):
-                for key in ('v_int', 'eta_int'):
+                for key in ('v_int', 'eta_int', 'f_datapoints'):
                     self.assertAlmostEqual(db_indices[nstep][key],
                                            py_indices[nstep][key])
 
@@ -390,7 +390,7 @@ class TestMany2Many(unittest.TestCase):
             py_indices = db_subs.lightcurve_metrics(lightcurves_sorted_by_ra_dec[idx])
             self.assertEqual(len(db_indices), len(py_indices))
             for nstep in range(len(db_indices)):
-                for key in ('v_int', 'eta_int'):
+                for key in ('v_int', 'eta_int', 'f_datapoints'):
                     self.assertAlmostEqual(db_indices[nstep][key],
                                            py_indices[nstep][key])
 
@@ -493,7 +493,7 @@ class TestMany2Many(unittest.TestCase):
             py_indices = db_subs.lightcurve_metrics(lightcurves_sorted_by_ra[idx])
             self.assertEqual(len(db_indices), len(py_indices))
             for nstep in range(len(db_indices)):
-                for key in ('v_int', 'eta_int'):
+                for key in ('v_int', 'eta_int', 'f_datapoints'):
                     self.assertAlmostEqual(db_indices[nstep][key],
                                            py_indices[nstep][key])
 

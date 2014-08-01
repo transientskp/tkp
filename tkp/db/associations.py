@@ -966,6 +966,7 @@ INSERT INTO assocxtrsource
   ,r
   ,v_int
   ,eta_int
+  ,f_datapoints
   )
   SELECT t0.new_runcat_id
         ,t0.xtrsrc
@@ -974,10 +975,12 @@ INSERT INTO assocxtrsource
         ,t0.r
         ,t0.v_int_inter / t0.avg_f_int
         ,t0.eta_int_inter / t0.avg_f_int_weight
+        ,t0.f_datapoints
     FROM (SELECT runcat.id AS new_runcat_id
                 ,tmprc.xtrsrc
                 ,tmprc.distance_arcsec
                 ,tmprc.r
+                ,tmprc.f_datapoints
                 ,CASE WHEN tmprc.avg_f_int = 0.0
                       THEN 0.000001
                       ELSE avg_f_int
@@ -1050,6 +1053,7 @@ INSERT INTO assocxtrsource
   ,r
   ,v_int
   ,eta_int
+  ,f_datapoints
   )
   SELECT r.id AS new_runcat_id
         ,a.xtrsrc
@@ -1058,6 +1062,7 @@ INSERT INTO assocxtrsource
         ,a.r
         ,a.v_int
         ,a.eta_int
+        ,a.f_datapoints
     FROM (SELECT runcat as old_runcat_id
             FROM temprunningcatalog
            WHERE inactive = FALSE
@@ -1305,6 +1310,7 @@ INSERT INTO assocxtrsource
   ,r
   ,v_int
   ,eta_int
+  ,f_datapoints
   )
   SELECT t0.runcat
         ,t0.xtrsrc
@@ -1313,10 +1319,12 @@ INSERT INTO assocxtrsource
         ,t0.r
         ,t0.v_int_inter / t0.avg_f_int
         ,t0.eta_int_inter / t0.avg_f_int_weight
+        ,t0.f_datapoints
     FROM (SELECT tmprc.runcat
                 ,tmprc.xtrsrc
                 ,tmprc.distance_arcsec
                 ,tmprc.r
+                ,tmprc.f_datapoints
                 ,CASE WHEN tmprc.avg_f_int = 0.0
                       THEN 0.000001
                       ELSE avg_f_int
@@ -1608,27 +1616,17 @@ INSERT INTO runningcatalog_flux
 
 
 def _insert_new_runcat(image_id):
-    """Insert new sources into the running catalog
+    """Insert previously unknown sources into the ``runningcatalog`` table.
 
     Extractedsources for which no counterpart was found in the
     runningcatalog (i.e. no pair exists in tempruncat),
     will be added as a new source to the assocxtrsource,
     runningcatalog and runningcatalog_flux tables.
-    This function inserts the new source in the runningcatalog table,
-    where xtrsrc is the id of the new extractedsource.
-    This is the first of the series, since the other insertions have
-    references to the runningcatalog table.
+
     """
-    # Unfortunately, this does not work,
-    # since we previous deleted the extractedsources from the
-    # tempruncat table that had the same runcat counterpart
-    # (1-to-many assocs).
-    # To get it working we need to not to delete the tempruncat entries,
-    # but set them to inactive and empty the table (and the inactive
-    # runningcatalog sources) at the end of image processing
-    #
-    # NOTE: Here we include all (inactive TRUE&FALSE) tempruncat
-    # source to have the original assocs available
+
+    # NOTE: Here we select all (inactive TRUE&FALSE) tempruncat entries
+    # source in order to exclude all extractedsources that have been associated.
     query = """\
 INSERT INTO runningcatalog
   (xtrsrc
@@ -1649,23 +1647,23 @@ INSERT INTO runningcatalog
   ,y
   ,z
   )
-  SELECT t0.xtrsrc
-        ,t0.dataset
-        ,t0.datapoints
-        ,t0.zone
-        ,t0.wm_ra
-        ,t0.wm_decl
-        ,t0.avg_ra_err
-        ,t0.avg_decl_err
-        ,t0.wm_uncertainty_ew
-        ,t0.wm_uncertainty_ns
-        ,t0.avg_wra
-        ,t0.avg_wdecl
-        ,t0.avg_weight_ra
-        ,t0.avg_weight_decl
-        ,t0.x
-        ,t0.y
-        ,t0.z
+  SELECT new_src.xtrsrc
+        ,new_src.dataset
+        ,new_src.datapoints
+        ,new_src.zone
+        ,new_src.wm_ra
+        ,new_src.wm_decl
+        ,new_src.avg_ra_err
+        ,new_src.avg_decl_err
+        ,new_src.wm_uncertainty_ew
+        ,new_src.wm_uncertainty_ns
+        ,new_src.avg_wra
+        ,new_src.avg_wdecl
+        ,new_src.avg_weight_ra
+        ,new_src.avg_weight_decl
+        ,new_src.x
+        ,new_src.y
+        ,new_src.z
     FROM (SELECT x0.id AS xtrsrc
                 ,i0.dataset
                 ,1 AS datapoints
@@ -1687,9 +1685,9 @@ INSERT INTO runningcatalog
                 ,image i0
            WHERE x0.image = i0.id
              AND x0.image = %s
-         ) t0
+         ) new_src
          LEFT OUTER JOIN temprunningcatalog tmprc
-         ON t0.xtrsrc = tmprc.xtrsrc
+         ON new_src.xtrsrc = tmprc.xtrsrc
    WHERE tmprc.xtrsrc IS NULL
 """
     cursor = tkp.db.execute(query, (image_id,), True)
@@ -1700,13 +1698,11 @@ INSERT INTO runningcatalog
 
 
 def _insert_new_runcat_flux(image_id):
-    """Insert new sources into the runningicatalog_flux
+    """Insert previously unknown sources into the ``runningcatalog_flux`` table.
 
     Extractedsources for which not a counterpart was found in the
     runningcatalog, will be added as a new source to the assocxtrsource,
     runningcatalog and runningcatalog_flux tables.
-    This function inserts the new source in the runningcatalog table,
-    where xtrsrc is the id of the new extractedsource.
 
     """
     query = """\
@@ -1747,11 +1743,11 @@ INSERT INTO runningcatalog_flux
                  ON x1.id = tmprc.xtrsrc
             WHERE x1.image = %(image_id)s
               AND tmprc.xtrsrc IS NULL
-          ) t0
+          ) new_src
         ,runningcatalog r0
         ,extractedsource x0
    WHERE i0.id = %(image_id)s
-     AND r0.xtrsrc = t0.xtrsrc
+     AND r0.xtrsrc = new_src.xtrsrc
      AND x0.id = r0.xtrsrc
 """
     tkp.db.execute(query, {'image_id': image_id}, True)
@@ -1773,7 +1769,7 @@ def _insert_new_runcat_skyrgn_assocs(image_id):
         This could be made more efficient, at the cost of added complexity,
         by tracking which skyregions overlap,
         and then only testing for membership of overlapping regions.
-        (That's a job for another day!)
+
     """
 
     # First, mark membership in the skyregion of the image of initial detection.
@@ -1850,22 +1846,10 @@ SELECT new_src.runcat as runcatid
 
 
 def _insert_new_assocxtrsource(image_id):
-    """Insert new associations for unknown sources
-
-    Extractedsources for which no counterpart was found in the
-    runningcatalog will be added as a new source to the assocxtrsource,
-    runningcatalog and runningcatalog_flux tables.
-    This function inserts the new source in the assocxtrsource table,
-    where the runcat and xtrsrc ids are identical to each other
-    in order to have this data point included in the light curve.
-
-    The left outer join in combination with the tmprc.xtrsrc is null,
-    selects the extracted sources that were not present in
-    temprunningcatalog, i.e. did not have a counterpart in the runningcatalog.
-    These were just inserted as new sources in the runningcatalog
-    of which we want to use the ids to have them
-    in the assocxtrsource as well.
     """
+    Insert new associations for previously unknown sources.
+    """
+
     query = """\
 INSERT INTO assocxtrsource
   (runcat
@@ -1875,6 +1859,7 @@ INSERT INTO assocxtrsource
   ,r
   ,v_int
   ,eta_int
+  ,f_datapoints
   )
   SELECT r0.id AS runcat
         ,r0.xtrsrc
@@ -1883,15 +1868,16 @@ INSERT INTO assocxtrsource
         ,0
         ,0
         ,0
+        ,1
     FROM (SELECT x1.id AS xtrsrc
             FROM extractedsource x1
                  LEFT OUTER JOIN temprunningcatalog tmprc
                  ON x1.id = tmprc.xtrsrc
             WHERE x1.image = %(image_id)s
               AND tmprc.xtrsrc IS NULL
-          ) t0
+          ) new_src
         ,runningcatalog r0
-   WHERE r0.xtrsrc = t0.xtrsrc
+   WHERE r0.xtrsrc = new_src.xtrsrc
 """
     tkp.db.execute(query, {'image_id':image_id}, True)
 

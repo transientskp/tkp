@@ -141,7 +141,7 @@ SELECT t1.runcat
        END AS new_transient
   FROM (SELECT rf0.runcat
               ,rf0.band
-              ,f_datapoints
+              ,rf0.f_datapoints
               ,wm_ra
               ,wm_decl
               ,wm_uncertainty_ew

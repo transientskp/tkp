@@ -1,11 +1,8 @@
-#!/usr/bin/env python
 """
-initialises a PostgreSQL database with TKP tables.
+initialises or removes TRAP tables in a database.
 """
-
 import os
 import sys
-from subprocess import call
 import tkp
 from tkp.db.database import DB_VERSION
 
@@ -19,12 +16,15 @@ from tkp.db.sql.preprocessor import dialectise
 tokens = (
     ('%NODE%', '1'),
     ('%NODES%', '1'),
-    ('%VLSS%', os.path.join(tkp_folder, '../database/catalog/vlss/vlss.csv')),
-    ('%WENSS%', os.path.join(tkp_folder, '../database/catalog/wenss/wenss.csv')),
-    ('%NVSS%', os.path.join(tkp_folder, '../database/catalog/nvss/nvss.csv')),
-    ('%EXO%', os.path.join(tkp_folder, '../database/catalog/exoplanets/exo.csv')),
     ('%VERSION%', str(DB_VERSION))
 )
+
+
+def get_input(text):
+    """
+    We take this out of verify() so we can mock it in the test.
+    """
+    return raw_input(text)
 
 
 def verify(dbconfig):
@@ -33,21 +33,22 @@ def verify(dbconfig):
 
     :param parsed: a argparse namespace
     """
-    print("This script will populate a database with these settings:")
+    print("\nThis script will populate a database with these settings:")
     print("")
-    print("\tengine:    " + (dbconfig['engine'] or ""))
+    print("\tengine:     " + (dbconfig['engine'] or ""))
     print("\tdatabase:   " + (dbconfig['database'] or ""))
     print("\tuser:       " + (dbconfig['user'] or ""))
     print("\tpassword:   " + (dbconfig['password'] or ""))
     print("\thost:       " + (dbconfig['host'] or ""))
     print("\tport:       " + str(dbconfig['port']))
-    print("\tpassphrase: " + (dbconfig['passphrase'] or ""))
-    print("")
-    print("!!! WARNING !!! This will REMOVE all data in '%s'" % dbconfig['database'])
-    print("")
-    answer = raw_input("Do you want to continue? [y/N]: ")
+
+    if dbconfig['destroy']:
+        print("\n!!! WARNING !!! This will first REMOVE all data in '%s'"
+              % dbconfig['database'])
+
+    answer = get_input("\nDo you want to continue? [y/N]: ")
     if answer.lower() != 'y':
-        sys.stderr.write("Aborting.")
+        sys.stderr.write("Aborting.\n")
         sys.exit(1)
 
 
@@ -55,8 +56,11 @@ def connect(dbconfig):
     """
     Connect to the database
 
-    :param parsed: an argparse namespace
-    :returns: a database connection
+    args:
+        parsed: an argparse namespace
+
+    returns:
+        a database connection
     """
     if dbconfig['engine'] == "postgresql":
         import psycopg2
@@ -73,112 +77,89 @@ def connect(dbconfig):
         raise NotImplementedError
 
 
-monetdb_auth_query = """
-ALTER USER "monetdb" RENAME TO "%(user)s";
-ALTER USER SET PASSWORD '%(password)s' USING OLD PASSWORD 'monetdb';
-CREATE SCHEMA "%(database)s" AUTHORIZATION "%(user)s";
-ALTER USER "%(user)s" SET SCHEMA "%(database)s";
+def destroy_postgres(connection):
+    """
+    Destroys the content of a PostgreSQL database.
+
+    !! WARNING !! DESTROYS ALL CONTENTS OF THE DATABASE
+
+    args:
+        connection: A monetdb DB connection
+    """
+
+    # both queries below generate a resultset with rows containing SQL queries
+    # which can be executed to drop the db content
+    postgres_gen_drop_tables = """
+select 'drop table if exists "' || tablename || '" cascade;'
+  from pg_tables
+ where schemaname = 'public';
+"""
+    postgres_gen_drop_functions = """
+select 'drop function ' || ns.nspname || '.' || proname
+       || '(' || oidvectortypes(proargtypes) || ');'
+from pg_proc inner join pg_namespace ns on (pg_proc.pronamespace = ns.oid)
+where ns.nspname = 'public'  order by proname;
 """
 
+    for big_query in postgres_gen_drop_tables, postgres_gen_drop_functions:
+        cursor = connection.cursor()
+        cursor.execute(big_query)
+        queries = [row[0] for row in cursor.fetchall()]
+        for query in queries:
+            print query
+            cursor.execute(query)
+        connection.commit()
 
-def recreate_monetdb(dbconfig):
+
+def destroy_monetdb():
     """
-    Destroys and creates a new MonetDB database.
+    Maybe some day destroys the content of a MonetDB database.
+    """
 
-    WARNING: this will DESTROY your database!
+    msg = """
+tkp-manage.py doesn't support the removal of all db content at the moment, you
+need to do this manually by destroying and recreating the database. Please refer
+to the TKP manual on how to recreate a TKP database. When you recreate the
+database manually you should run tkp-manage.py initdb again without the -d
+flag.
+"""
+    sys.stderr.write(msg)
+    sys.exit(1)
+
+
+def destroy(dbconfig):
+    """
+    Destroys the content of a database defined by settings in dbconfig dict.
+
+    !! WARNING !! DESTROYS ALL CONTENT
 
     args:
-        dbconfig: a dict containing the database configuration
+        dbconfig: a dict containing connection params for database
     """
-    import monetdb.sql
-    import monetdb.control
-    control = monetdb.control.Control(dbconfig['host'], dbconfig['port'],
-                                      dbconfig['passphrase'])
-
-    database = dbconfig['database']
-    print("stopping %s" % database)
-    try:
-        control.stop(database)
-    except monetdb.sql.OperationalError, e:
-        print("database not running")
-    print "destroying %s" % database
-    try:
-        control.destroy(database)
-    except monetdb.sql.OperationalError, e:
-        print("can't destroy database: %s" % str(e))
-
-    control.create(database)
-    control.release(database)
-    control.start(database)
-
-    con = monetdb.sql.connect(username='monetdb', password='monetdb',
-                              hostname=dbconfig['host'], port=dbconfig['port'],
-                              database=dbconfig['database'])
-    cur = con.cursor()
-    cur.execute(monetdb_auth_query % dbconfig)
-    con.commit()
-    con.close()
-
-
-def recreate_postgresql(dbconfig):
-    """
-    Destroys and creates a new PostgreSQL database.
-
-    WARNING: this will DESTROY your database!
-
-    args:
-        dbconfig: a dict containing the database configuration
-    """
-    import psycopg2
-    con = psycopg2.connect(user=dbconfig['user'],
-                           password=dbconfig['password'],
-                           port=dbconfig['port'], host=dbconfig['host'],
-                           database='postgres')
-    con.autocommit = True
-    cur = con.cursor()
-    print "destroying database %(database)s on %(host)s..." % dbconfig
-    try:
-        cur.execute('DROP DATABASE %s' % dbconfig['database'])
-    except psycopg2.ProgrammingError:
-        pass
-    print "creating database %(database)s on %(host)s..." % dbconfig
-    cur.execute('CREATE DATABASE %s' % dbconfig['database'])
-    if dbconfig['database'] != dbconfig['user']:
-        # TODO (Gijs - #5991): This is a bad idea and should be solved.
-        print "creating a SUPERUSER with name %(database)s on %(host)s..." %\
-              dbconfig
-
-        cur.execute("CREATE USER %s WITH PASSWORD '%s' SUPERUSER" %
-                    (dbconfig['database'], dbconfig['database']))
-
-
-def recreate(dbconfig):
-    """
-    Destroys and creates a new database.
-
-    WARNING: this will DESTROY your database!
-
-    args:
-        dbconfig: a dict containing the database configuration
-    """
-    if dbconfig['engine'] == 'monetdb':
-        recreate_monetdb(dbconfig)
-    elif dbconfig['engine'] == 'postgresql':
-        recreate_postgresql(dbconfig)
-    else:
-        raise NotImplementedError("we only support monetdb & postgresql")
+    assert(dbconfig['destroy'])
+    if dbconfig['engine'] == 'postgresql':
+        connection = connect(dbconfig)
+        destroy_postgres(connection)
+    elif dbconfig['engine'] == 'monetdb':
+        destroy_monetdb()
 
 
 def populate(dbconfig):
     """
-    Populates a database
-    :param dbconfig: a dict containing db connection settings
+    Populates a database with TRAP tables.
+
+    args:
+        dbconfig: a dict containing db connection settings
+
+    raises an exception when one of the tables already exists.
     """
 
     if not dbconfig['yes']:
         verify(dbconfig)
 
-    recreate(dbconfig)
+    if dbconfig['destroy']:
+        destroy(dbconfig)
+
     conn = connect(dbconfig)
     cur = conn.cursor()
 
@@ -190,6 +171,9 @@ def populate(dbconfig):
             conn.rollback()
 
     batch_file = os.path.join(sql_repo, 'batch')
+
+    error = "\nproblem processing \"%s\".\nMaybe the DB is already populated. "\
+            "Try -d/--destroy argument for initdb cmd.\n\n"
 
     for line in [l.strip() for l in open(batch_file) if not l.startswith("#")]:
         if not line:  # skip empty lines
@@ -206,7 +190,7 @@ def populate(dbconfig):
             try:
                 cur.execute(dialected)
             except Exception as e:
-                sys.stderr.write("\nproblem with file \"%s\"\n\n" % sql_file)
+                sys.stderr.write(error % sql_file)
                 raise
     if dbconfig['engine'] == 'postgresql':
         conn.commit()

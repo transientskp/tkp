@@ -20,46 +20,43 @@ example, different databases could correspond to different science projects,
 or to different end users.
 
 The procedure for creating a database varies slightly between PostgreSQL and
-MonetDB.
+MonetDB. You need to create the database manually. The database then needs
+to be populated with the TRAP database schema before it can be used.
 
 MonetDB
 +++++++
 
-Set the details of the database you would like to create in the ``database``
-section of your :ref:`pipeline_cfg`. These include the host and port number of
-the system running the database management system, the name of the database,
-and the username and password of a user that will have access to that
-database. The last three are all at your discretion: choose appropriate
-database and user names, and make sure the password is secure.
+The instructions for creating MonetDB databases differ per operating system
+and environment. The `MonetDB online documentation
+<https://www.monetdb.org/Documentation/monetdbd>`_
+explains how to create a database.
 
-In addition, when configuring MonetDB, you will have set a passphrase. This
-passphrase provides the appropriate administrative access to create new
-databases and users on the database management system. Specify it in the
-pipeline configuration.
-
-Finally, run::
-
-  $ tkp-manage.py initdb
-
-Your database will be created, and is then available for use.
 
 PostgreSQL
 ++++++++++
 
-When installing PostgreSQL, you will have created a user with administrative
-powers. In order to create a new database, you must log in as that user.
-Therefore, edit the ``database`` section of your :ref:`pipeline_cfg`. Set the
-host name and port number of the system running the database management
-system, provide the username and password of the administrative user, and set
-the database name to the name of the database you wish to create. Then run::
+The instructions for creating PostgreSQL databases differ per operating system
+and environment. The `PostreSQL online documentation
+<http://www.postgresql.org/docs/9.3/static/sql-createdatabase.html>`_
+explains how to create a database.
 
-  $ tkp-manage.py initdb
 
-This will create a database with the name you have requested. It will also
-create a new user which has username and password equal to the database name,
-and which has access to the database. You should use this user to access the
-database when running pipeline jobs. Therefore, you will need to edit your
-pipeline configuration and replace the name and password of the superuser with
-the name of the newly created database.
+Populating the database
+-----------------------
 
-Your database is now available for use.
+Set the details of the database you have created in the ``database``
+section of your :ref:`pipeline_cfg`. These include the host and port number of
+the system running the database management system, the name of the database,
+and the username and password of a user that will have access to that
+database.
+
+When you created a database and you've added the database connection parameters
+to your pipeline.cfg you can populate the database with the TKP schema. You can
+use the tkp-manage.py initdb subcommand for this.
+
+inside your project folder run::
+
+  $   $ tkp-manage.py initdb
+
+For PostgreSQL there is the optional **-d** flag, which removes all content
+before populating the database.

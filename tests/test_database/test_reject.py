@@ -48,9 +48,9 @@ class TestRejection(unittest.TestCase):
                                     new_source_sigma_margin=3)
 
         # Our source should _not_ be a transient. That is, there should be no
-        # entries in the transient table for this dataset.
+        # entries in the newsource table for this dataset.
         cursor = tkp.db.execute("""\
-            SELECT t.id FROM transient t, runningcatalog rc
+            SELECT t.id FROM newsource t, runningcatalog rc
                     WHERE t.runcat = rc.id
                       AND rc.dataset = %(ds_id)s
             """, {"ds_id": dataset.id}

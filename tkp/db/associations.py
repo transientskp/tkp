@@ -67,8 +67,8 @@ def associate_extracted_sources(image_id, deRuiter_r, new_source_sigma_margin):
     _insert_1_to_many_assocskyrgn()
     _delete_1_to_many_inactive_assocskyrgn()
 
-    _insert_1_to_many_transient()
-    _delete_1_to_many_inactive_transient()
+    _insert_1_to_many_newsource()
+    _delete_1_to_many_inactive_newsource()
 
     _flag_1_to_many_inactive_tempruncat()
 
@@ -1115,9 +1115,9 @@ INSERT INTO assocskyrgn
     tkp.db.execute(query, commit=True)
 
 
-def _insert_1_to_many_transient():
+def _insert_1_to_many_newsource():
     """Update the runcat id for the one-to-many associations,
-    and delete the transient entries of the old runcat id
+    and delete the newsource entries of the old runcat id
     (the new ones have been added earlier).
 
     In this case, new entries in the runningcatalog and runningcatalog_flux
@@ -1126,7 +1126,7 @@ def _insert_1_to_many_transient():
     Therefore, we have to update the references to these new ids as well.
     """
     query = """\
-INSERT INTO transient
+INSERT INTO newsource
   (runcat
   ,band
   ,siglevel
@@ -1136,7 +1136,7 @@ INSERT INTO transient
   ,trigger_xtrsrc
   ,status
   ,t_start
-  ,transient_type
+  ,newsource_type
   ,previous_limits_image
   )
   SELECT r.id as new_runcat_id
@@ -1148,7 +1148,7 @@ INSERT INTO transient
         ,tr.trigger_xtrsrc
         ,tr.status
         ,tr.t_start
-        ,tr.transient_type
+        ,tr.newsource_type
         ,tr.previous_limits_image
     FROM (SELECT runcat as old_runcat_id
             FROM temprunningcatalog
@@ -1158,7 +1158,7 @@ INSERT INTO transient
          ) one_to_many
         ,temprunningcatalog tmprc
         ,runningcatalog r
-        ,transient tr
+        ,newsource tr
    WHERE tmprc.runcat = one_to_many.old_runcat_id
      AND tmprc.inactive = FALSE
      AND tr.runcat = one_to_many.old_runcat_id
@@ -1186,15 +1186,15 @@ DELETE
     tkp.db.execute(query, commit=True)
 
 
-def _delete_1_to_many_inactive_transient():
-    """Delete the transient sources of the old runcat
+def _delete_1_to_many_inactive_newsource():
+    """Delete the newsource sources of the old runcat
 
     Since we replaced this runcat.id with multiple new ones, we now
     delete the old one.
     """
     query = """\
 DELETE
-    FROM transient
+    FROM newsource
     WHERE runcat IN (SELECT runcat
                        FROM temprunningcatalog
                        WHERE inactive = FALSE
@@ -1935,7 +1935,7 @@ def _determine_newsource_previous_limits(image_id, new_source_sigma_margin):
     (NB This is a hunch, rigorous investigation welcome.)
 
     We set the siglevel to 1 and the variability indices 0 for
-    new transients.
+    newsources.
     """
 
     # This is another hairy query, but it breaks down like so:
@@ -1962,14 +1962,14 @@ def _determine_newsource_previous_limits(image_id, new_source_sigma_margin):
 
 
     query = """\
-INSERT INTO transient
+INSERT INTO newsource
   (runcat
   ,band
   ,siglevel
   ,V_int
   ,eta_int
   ,trigger_xtrsrc
-  ,transient_type
+  ,newsource_type
   ,previous_limits_image
   )
   SELECT new_src_runcat_id AS runcat
@@ -1981,7 +1981,7 @@ INSERT INTO transient
          ,CASE WHEN new_src_flux > high_flux_threshold
                THEN 1
                ELSE 0
-          END as transient_type
+          END as newsource_type
          ,prev_img_id AS previous_limits_image
   FROM ( SELECT  new_src_runcat_id
                 ,new_src_xtr_id
@@ -2034,7 +2034,7 @@ INSERT INTO transient
     cursor = tkp.db.execute(query, params, commit=True)
     ins = cursor.rowcount
     if ins > 0:
-        logger.info("Added %s new sources to transient table" % (ins,))
+        logger.info("Added %s new sources to newsource table" % (ins,))
 
 
 def _update_ff_runcat_extractedsource():

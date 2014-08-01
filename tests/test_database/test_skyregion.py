@@ -249,7 +249,7 @@ class TestTransientExclusion(unittest.TestCase):
         """
         Here we create 2 disjoint image fields, with one source at centre of
         each, and check that the second source inserted does not get flagged as
-        transient.
+        newsource.
         """
         n_images = 2
         xtr_radius = 1.5
@@ -275,16 +275,16 @@ class TestTransientExclusion(unittest.TestCase):
 
         self.assertEqual(len(runcats), 2) #Just a sanity check.
 
-        transients_qry = """\
+        newsources_qry = """\
         SELECT *
-          FROM transient tr
+          FROM newsource tr
               ,runningcatalog rc
         WHERE rc.dataset = %s
           AND tr.runcat = rc.id
         """
-        self.database.cursor.execute(transients_qry, (self.dataset.id,))
-        transients = get_db_rows_as_dicts(self.database.cursor)
-        self.assertEqual(len(transients), 0)
+        self.database.cursor.execute(newsources_qry, (self.dataset.id,))
+        newsources = get_db_rows_as_dicts(self.database.cursor)
+        self.assertEqual(len(newsources), 0)
 
     def test_two_field_overlap_new_transient(self):
         """Now for something more interesting - two overlapping fields, 4 sources:
@@ -334,16 +334,16 @@ class TestTransientExclusion(unittest.TestCase):
                                 where={'dataset': self.dataset.id})
         self.assertEqual(len(runcats), 4) #sanity check.
 
-        transients_qry = """\
+        newsources_qry = """\
         SELECT *
-          FROM transient tr
+          FROM newsource tr
               ,runningcatalog rc
         WHERE rc.dataset = %s
           AND tr.runcat = rc.id
         """
-        self.database.cursor.execute(transients_qry, (self.dataset.id,))
-        transients = get_db_rows_as_dicts(self.database.cursor)
-        self.assertEqual(len(transients), 1)
+        self.database.cursor.execute(newsources_qry, (self.dataset.id,))
+        newsources = get_db_rows_as_dicts(self.database.cursor)
+        self.assertEqual(len(newsources), 1)
 
     def test_two_field_overlap_nulling_src(self):
         """Similar to above, but one source disappears:

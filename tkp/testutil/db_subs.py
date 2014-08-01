@@ -45,7 +45,7 @@ def delete_test_database(database):
         tkp.db.execute(query, commit=True)
         query = "DELETE from temprunningcatalog"
         tkp.db.execute(query, commit=True)
-        query = "DELETE from transient"
+        query = "DELETE from newsource"
         tkp.db.execute(query, commit=True)
         query = "DELETE from runningcatalog"
         tkp.db.execute(query, commit=True)
@@ -371,7 +371,7 @@ def get_newsources_for_dataset(dsid):
 
     Returns:
         newsource_rows (list of dicts): Each dict represents one newsource.
-            The dict keys are all the columns in the transients table, plus
+            The dict keys are all the columns in the newsources table, plus
             the 'taustart_ts' from the image table, which represents the
             trigger time.
     """
@@ -387,7 +387,7 @@ def get_newsources_for_dataset(dsid):
                / limits_image.rms_min) AS low_thresh_sigma
            , ((ex.f_peak - limits_image.detection_thresh*limits_image.rms_max)
                / limits_image.rms_max) AS high_thresh_sigma
-      FROM transient tr
+      FROM newsource tr
           ,runningcatalog rc
           ,extractedsource ex
           ,image img

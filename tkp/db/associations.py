@@ -1922,8 +1922,6 @@ def _determine_newsource_previous_limits(image_id, new_source_sigma_margin):
     to be the deciding factor in whether a source gets blindly extracted or not.
     (NB This is a hunch, rigorous investigation welcome.)
 
-    We set the siglevel to 1 and the variability indices 0 for
-    newsources.
     """
 
     # This is another hairy query, but it breaks down like so:

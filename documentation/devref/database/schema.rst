@@ -101,12 +101,12 @@ This table records which :ref:`runningcatalog <schema-runningcatalog>` sources
 we expect to see in any given skyregion. This serves two purposes: 
 it allows us to determine when we *do not* see previously detected sources, 
 presumably because they have dropped in flux 
-(see :py:func:`.get_nulldetections`).
+(see :py:func:`tkp.db.nulldetections.get_nulldetections`).
 It also allows us to determine whether a new runningcatalog entry (i.e. 
 a newly detected source without associated historical detections) is being 
 detected for the first time because it is actually a new transient, or 
 if it is simply the first time that region of sky has been surveyed
-(see :py:func:`._insert_new_transient`).
+(see :py:func:`tkp.db.associations._determine_newsource_previous_limits`).
 
 This table is updated under 2 circumstances:
 
@@ -114,7 +114,7 @@ This table is updated under 2 circumstances:
   runcat entries (see SQL function ``updateSkyRgnMembers``).
 - A new runningcatalog source is added, and must be associated with pre-existing
   skyregions 
-  (see :py:func:`._insert_new_runcat_skyrgn_assocs`).
+  (see :py:func:`tkp.db.associations._insert_new_runcat_skyrgn_assocs`).
 
 **runcat**
    References the associated runningcatalog ID.
@@ -748,7 +748,7 @@ Those without direct counterparts in those tables are listed below.
 
 
 
-.. _schema-transient:
+.. _schema-newsource:
 
 newsource
 =========
@@ -761,23 +761,21 @@ variability statistics until at least a second measurement
 This table tracks new sources, in the hopes that new sources considered
 sufficiently bright enough to be interesting may be flagged up immediately.
 
-See :py:mod:`tkp.db.associations._determine_newsource_previous_limits` for
+See :py:func:`tkp.db.associations._determine_newsource_previous_limits` for
 details on how these values are assigned.
 
 **id**
-    Every source in the transient table gets a unique id, set by the database
+    Unique id, set by the database.
 
 **runcat**
-    Reference to the runningcatalog source to which this transient belongs to.
-    Since every transient has an entry in the runningcatalog this cannot be
-    NULL.
+    Reference to the associated runningcatalog entry.
 
 **band**
-    The frequency band in which the transient was found, and for which th
-    evariability are calculated
+    The frequency band in which the newsource was found.
 
 **trigger_xtrsrc**
-    Reference to the extracted source id that caused this transient to be added
+    Reference to the extracted source id that caused insertion of this
+    newsource.
 
 **newsource_type**
     Refers to how certain we are that the newly discovered source is
@@ -795,7 +793,6 @@ details on how these values are assigned.
     The ID of the previous image with the best upper limits on previous
     detections of this source. Can be used to calculate the significance
     level of the new-source detection.
-    (See :py:func:`._insert_new_transient` for details.)
 
 version
 =======

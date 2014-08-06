@@ -1129,25 +1129,13 @@ def _insert_1_to_many_newsource():
 INSERT INTO newsource
   (runcat
   ,band
-  ,siglevel
-  ,v_int
-  ,eta_int
-  ,detection_level
   ,trigger_xtrsrc
-  ,status
-  ,t_start
   ,newsource_type
   ,previous_limits_image
   )
   SELECT r.id as new_runcat_id
         ,tr.band
-        ,tr.siglevel
-        ,tr.v_int
-        ,tr.eta_int
-        ,tr.detection_level
         ,tr.trigger_xtrsrc
-        ,tr.status
-        ,tr.t_start
         ,tr.newsource_type
         ,tr.previous_limits_image
     FROM (SELECT runcat as old_runcat_id
@@ -1965,18 +1953,12 @@ def _determine_newsource_previous_limits(image_id, new_source_sigma_margin):
 INSERT INTO newsource
   (runcat
   ,band
-  ,siglevel
-  ,V_int
-  ,eta_int
   ,trigger_xtrsrc
   ,newsource_type
   ,previous_limits_image
   )
   SELECT new_src_runcat_id AS runcat
          ,band AS band
-         ,1 AS siglevel
-         ,0 AS v_int
-         ,0 AS eta_int
          ,new_src_xtr_id AS trigger_xtrsrc
          ,CASE WHEN new_src_flux > high_flux_threshold
                THEN 1

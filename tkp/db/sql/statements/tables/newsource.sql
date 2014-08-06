@@ -2,15 +2,9 @@ CREATE TABLE newsource
   (id SERIAL
   ,runcat INT NOT NULL
   ,band SMALLINT NOT NULL
-  ,siglevel DOUBLE PRECISION DEFAULT 0
-  ,v_int DOUBLE PRECISION NOT NULL
-  ,eta_int DOUBLE PRECISION NOT NULL
-  ,detection_level DOUBLE PRECISION DEFAULT 0
   ,trigger_xtrsrc INT NOT NULL
   ,newsource_type SMALLINT NOT NULL
   ,previous_limits_image INT NOT NULL
-  ,status INT DEFAULT 0
-  ,t_start TIMESTAMP
 {% ifdb postgresql %}
   ,PRIMARY KEY (id)
 {% endifdb %}

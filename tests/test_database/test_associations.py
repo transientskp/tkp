@@ -411,6 +411,8 @@ class TestMeridianOne2One(unittest.TestCase):
         self.assertEqual(len(runcat), 1)
         self.assertEqual(runcat[0]['datapoints'], 3)
         avg_ra = ((src0.ra+180)%360 + (src1.ra+180)%360 + (src2.ra+180)%360)/3 - 180
+        #Ensure our Python calculation is wrapped to positive:
+        avg_ra = (avg_ra + 360.0)%360.0
         self.assertAlmostEqual(runcat[0]['wm_ra'], avg_ra)
 
     def TestMeridianCrossHighLowEdgeCase(self):
@@ -424,7 +426,7 @@ class TestMeridianOne2One(unittest.TestCase):
         src0 = db_subs.example_extractedsource_tuple(ra=359.9999, dec=10.5,
                                              ra_fit_err=0.01, dec_fit_err=0.01)
         src_list.append(src0)
-        src1 = src0._replace(ra=0.0003)
+        src1 = src0._replace(ra=359.999)
         src_list.append(src1)
         src2 = src0._replace(ra=0.0001)
         src_list.append(src2)
@@ -441,6 +443,8 @@ class TestMeridianOne2One(unittest.TestCase):
         self.assertEqual(len(runcat), 1)
         self.assertEqual(runcat[0]['datapoints'], 3)
         avg_ra = ((src0.ra+180)%360 + (src1.ra+180)%360 + (src2.ra+180)%360)/3 - 180
+        #Ensure our Python calculation is wrapped to positive:
+        avg_ra = (avg_ra + 360.0)%360.0
         self.assertAlmostEqual(runcat[0]['wm_ra'], avg_ra)
 
     def TestMeridianHigherEdgeCase(self):
@@ -470,6 +474,8 @@ class TestMeridianOne2One(unittest.TestCase):
         self.assertEqual(len(runcat), 1)
         self.assertEqual(runcat[0]['datapoints'], 3)
         avg_ra = (src0.ra + src1.ra +src2.ra)/3
+        #Ensure our Python calculation is wrapped to positive:
+        avg_ra = (avg_ra + 360.0)%360.0
         self.assertAlmostEqual(runcat[0]['wm_ra'], avg_ra)
 
     def TestMeridianLowerEdgeCase(self):
@@ -503,6 +509,8 @@ class TestMeridianOne2One(unittest.TestCase):
         self.assertEqual(len(runcat), 1)
         self.assertEqual(runcat[0]['datapoints'], 3)
         avg_ra = (src0.ra + src1.ra +src2.ra)/3
+        #Ensure our Python calculation is wrapped to positive:
+        avg_ra = (avg_ra + 360.0)%360.0
         self.assertAlmostEqual(runcat[0]['wm_ra'], avg_ra)
 
     def TestDeRuiterCalculation(self):

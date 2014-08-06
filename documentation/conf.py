@@ -251,3 +251,6 @@ autoclass_content = 'both'
 intersphinx_mapping = {
     'python': ('http://docs.python.org/', None)
     }
+
+#Warn when function references cannot be resolved:
+nitpicky=True

@@ -317,9 +317,10 @@ def _insert_temprunningcatalog(image_id, deRuiter_r, mw):
     # cartesian coordinates will handle the distance checking in case of
     # meridian wrapping.
     #
-    # The ra values are translated to the opposite site of the sphere, where
-    # we can easily work with the modulo values to calculate the ra position
-    # (but this is of course translated back) and de Ruiter radius.
+    # The RA values for sources with 270 < wm_ra < 90 are translated to the
+    # opposite site of the sphere, where we can easily work with the modulo
+    # values to calculate the ra position (but this is of course translated
+    # back) and de Ruiter radius.
     #
     # Note that a weighted mean RA in the range [-8e-14, 0) is snapped to
     # zero. This accounts for dynamic range issues with doubles: if we end up
@@ -461,12 +462,22 @@ INSERT INTO temprunningcatalog
                                              + (rc0.z - x0.z) * (rc0.z - x0.z)
                                              ) / 2)
                                ) AS distance_arcsec
-                ,SQRT(  (MOD(CAST(rc0.wm_ra + 180 AS NUMERIC(11,8)), 360) - MOD(CAST(x0.ra + 180 AS NUMERIC(11,8)), 360)) * COS(RADIANS((rc0.wm_decl + x0.decl)/2))
-                      * (MOD(CAST(rc0.wm_ra + 180 AS NUMERIC(11,8)), 360) - MOD(CAST(x0.ra + 180 AS NUMERIC(11,8)), 360)) * COS(RADIANS((rc0.wm_decl + x0.decl)/2))
-                      / (rc0.wm_uncertainty_ew * rc0.wm_uncertainty_ew + x0.uncertainty_ew * x0.uncertainty_ew)
-                     + (rc0.wm_decl - x0.decl) * (rc0.wm_decl - x0.decl)
-                      / (rc0.wm_uncertainty_ns * rc0.wm_uncertainty_ns + x0.uncertainty_ns * x0.uncertainty_ns)
-                    ) AS r
+                ,CASE WHEN rc0.wm_ra < 90 OR rc0.wm_ra > 270
+                      THEN
+                           SQRT(  (MOD(CAST(rc0.wm_ra + 180 AS NUMERIC(11,8)), 360) - MOD(CAST(x0.ra + 180 AS NUMERIC(11,8)), 360)) * COS(RADIANS((rc0.wm_decl + x0.decl)/2))
+                                 * (MOD(CAST(rc0.wm_ra + 180 AS NUMERIC(11,8)), 360) - MOD(CAST(x0.ra + 180 AS NUMERIC(11,8)), 360)) * COS(RADIANS((rc0.wm_decl + x0.decl)/2))
+                                 / (rc0.wm_uncertainty_ew * rc0.wm_uncertainty_ew + x0.uncertainty_ew * x0.uncertainty_ew)
+                                 + (rc0.wm_decl - x0.decl) * (rc0.wm_decl - x0.decl)
+                                 / (rc0.wm_uncertainty_ns * rc0.wm_uncertainty_ns + x0.uncertainty_ns * x0.uncertainty_ns)
+                               )
+                      ELSE
+                           SQRT(  (rc0.wm_ra - x0.ra) * COS(RADIANS((rc0.wm_decl + x0.decl)/2))
+                                 * (rc0.wm_ra - x0.ra) * COS(RADIANS((rc0.wm_decl + x0.decl)/2))
+                                 / (rc0.wm_uncertainty_ew * rc0.wm_uncertainty_ew + x0.uncertainty_ew * x0.uncertainty_ew)
+                                 +  (rc0.wm_decl - x0.decl) * (rc0.wm_decl - x0.decl)
+                                 / (rc0.wm_uncertainty_ns * rc0.wm_uncertainty_ns + x0.uncertainty_ns * x0.uncertainty_ns)
+                                )
+                 END AS r
                 ,x0.f_peak
                 ,x0.f_peak_err
                 ,x0.f_int
@@ -475,10 +486,15 @@ INSERT INTO temprunningcatalog
                 ,i0.band
                 ,i0.stokes
                 ,rc0.datapoints + 1 AS datapoints
-                ,(datapoints * rc0.avg_weight_ra * MOD(CAST(rc0.wm_ra + 180 AS NUMERIC(11,8)), 360) + MOD(CAST(x0.ra + 180 AS NUMERIC(11,8)), 360) / (x0.uncertainty_ew * x0.uncertainty_ew) )
-                 /
-                 (datapoints * rc0.avg_weight_ra + 1 / (x0.uncertainty_ew * x0.uncertainty_ew) ) - 180
-                 AS wm_ra
+                ,CASE WHEN rc0.wm_ra < 90 OR rc0.wm_ra > 270
+                      THEN (datapoints * rc0.avg_weight_ra * MOD(CAST(rc0.wm_ra + 180 AS NUMERIC(11,8)), 360) + MOD(CAST(x0.ra + 180 AS NUMERIC(11,8)), 360) / (x0.uncertainty_ew * x0.uncertainty_ew) )
+                           /
+                           (datapoints * rc0.avg_weight_ra + 1 / (x0.uncertainty_ew * x0.uncertainty_ew) ) - 180
+                      ELSE
+                           (datapoints * rc0.avg_wra + x0.ra /(x0.uncertainty_ew * x0.uncertainty_ew) )
+                           /
+                           (datapoints * rc0.avg_weight_ra + 1 / (x0.uncertainty_ew * x0.uncertainty_ew) )
+                 END AS wm_ra
                 ,(datapoints * rc0.avg_weight_decl * rc0.wm_decl + x0.decl / (x0.uncertainty_ns * x0.uncertainty_ns))
                  /
                  (datapoints * rc0.avg_weight_decl + 1 / (x0.uncertainty_ns * x0.uncertainty_ns))
@@ -495,16 +511,21 @@ INSERT INTO temprunningcatalog
                      ) AS wm_uncertainty_ns
                 ,(datapoints * rc0.avg_ra_err + x0.ra_err) / (datapoints + 1) AS avg_ra_err
                 ,(datapoints * rc0.avg_decl_err + x0.decl_err) / (datapoints + 1) AS avg_decl_err
-                ,((datapoints * rc0.avg_weight_ra * MOD(CAST(rc0.wm_ra + 180 AS NUMERIC(11,8)), 360) + MOD(CAST(x0.ra + 180 AS NUMERIC(11,8)), 360) / (x0.uncertainty_ew * x0.uncertainty_ew)
-                   - datapoints * avg_weight_ra * 180 - 180 / (x0.uncertainty_ew * x0.uncertainty_ew))
-                   / (datapoints + 1))
-                 - 360 * (datapoints * rc0.avg_weight_ra + 1 / (x0.uncertainty_ew * x0.uncertainty_ew)) / (datapoints + 1)
-                 * FLOOR(
-                    ((datapoints * avg_weight_ra * MOD(CAST(rc0.wm_ra + 180 AS NUMERIC(11,8)), 360) + MOD(CAST(x0.ra + 180 AS NUMERIC(11,8)), 360) / (x0.uncertainty_ew * x0.uncertainty_ew)
-                      - datapoints * avg_weight_ra * 180 - 180 / (x0.uncertainty_ew * x0.uncertainty_ew))
-                      / (datapoints + 1))
-                    / (360 * (datapoints * rc0.avg_weight_ra + 1 / (x0.uncertainty_ew * x0.uncertainty_ew)) / (datapoints + 1))
-                    ) AS avg_wra
+                ,CASE WHEN rc0.wm_ra < 90 OR rc0.wm_ra > 270
+                      THEN ((datapoints * rc0.avg_weight_ra * MOD(CAST(rc0.wm_ra + 180 AS NUMERIC(11,8)), 360) + MOD(CAST(x0.ra + 180 AS NUMERIC(11,8)), 360) / (x0.uncertainty_ew * x0.uncertainty_ew)
+                              - datapoints * avg_weight_ra * 180 - 180 / (x0.uncertainty_ew * x0.uncertainty_ew))
+                              / (datapoints + 1))
+                            - 360 * (datapoints * rc0.avg_weight_ra + 1 / (x0.uncertainty_ew * x0.uncertainty_ew)) / (datapoints + 1)
+                            * FLOOR(
+                               ((datapoints * avg_weight_ra * MOD(CAST(rc0.wm_ra + 180 AS NUMERIC(11,8)), 360) + MOD(CAST(x0.ra + 180 AS NUMERIC(11,8)), 360) / (x0.uncertainty_ew * x0.uncertainty_ew)
+                                 - datapoints * avg_weight_ra * 180 - 180 / (x0.uncertainty_ew * x0.uncertainty_ew))
+                                 / (datapoints + 1))
+                               / (360 * (datapoints * rc0.avg_weight_ra + 1 / (x0.uncertainty_ew * x0.uncertainty_ew)) / (datapoints + 1))
+                               )
+                      ELSE
+                            (datapoints * rc0.avg_wra + x0.ra / (x0.uncertainty_ew * x0.uncertainty_ew))
+                             / (datapoints + 1)
+                 END AS avg_wra
                 ,(datapoints * rc0.avg_wdecl + x0.decl / (x0.uncertainty_ns * x0.uncertainty_ns))
                  / (datapoints + 1) AS avg_wdecl
                 ,(datapoints * rc0.avg_weight_ra + 1 / (x0.uncertainty_ew * x0.uncertainty_ew))
@@ -524,12 +545,20 @@ INSERT INTO temprunningcatalog
              AND rc0.wm_decl BETWEEN x0.decl - i0.rb_smaj
                                  AND x0.decl + i0.rb_smaj
              AND rc0.x*x0.x + rc0.y*x0.y + rc0.z*x0.z > cos(radians(i0.rb_smaj))
-             AND SQRT(  (MOD(CAST(rc0.wm_ra + 180 AS NUMERIC(11,8)), 360) - MOD(CAST(x0.ra + 180 AS NUMERIC(11,8)), 360)) * COS(RADIANS((rc0.wm_decl + x0.decl)/2))
-                      * (MOD(CAST(rc0.wm_ra + 180 AS NUMERIC(11,8)), 360) - MOD(CAST(x0.ra + 180 AS NUMERIC(11,8)), 360)) * COS(RADIANS((rc0.wm_decl + x0.decl)/2))
-                      / (x0.uncertainty_ew * x0.uncertainty_ew + rc0.wm_uncertainty_ew * rc0.wm_uncertainty_ew)
-                     + (x0.decl - rc0.wm_decl) * (x0.decl - rc0.wm_decl)
-                      / (x0.uncertainty_ns * x0.uncertainty_ns + rc0.wm_uncertainty_ns * rc0.wm_uncertainty_ns)
-                     ) < %(deRuiter)s
+             AND CASE WHEN rc0.wm_ra < 90 OR rc0.wm_ra > 270
+                      THEN SQRT(  (MOD(CAST(rc0.wm_ra + 180 AS NUMERIC(11,8)), 360) - MOD(CAST(x0.ra + 180 AS NUMERIC(11,8)), 360)) * COS(RADIANS((rc0.wm_decl + x0.decl)/2))
+                          * (MOD(CAST(rc0.wm_ra + 180 AS NUMERIC(11,8)), 360) - MOD(CAST(x0.ra + 180 AS NUMERIC(11,8)), 360)) * COS(RADIANS((rc0.wm_decl + x0.decl)/2))
+                          / (x0.uncertainty_ew * x0.uncertainty_ew + rc0.wm_uncertainty_ew * rc0.wm_uncertainty_ew)
+                          + (x0.decl - rc0.wm_decl) * (x0.decl - rc0.wm_decl)
+                          / (x0.uncertainty_ns * x0.uncertainty_ns + rc0.wm_uncertainty_ns * rc0.wm_uncertainty_ns)
+                         )
+                      ELSE SQRT(  (rc0.wm_ra - x0.ra) * COS(RADIANS((rc0.wm_decl + x0.decl)/2))
+                           * (rc0.wm_ra - x0.ra) * COS(RADIANS((rc0.wm_decl + x0.decl)/2))
+                           / (x0.uncertainty_ew * x0.uncertainty_ew + rc0.wm_uncertainty_ew * rc0.wm_uncertainty_ew)
+                           + (x0.decl - rc0.wm_decl) * (x0.decl - rc0.wm_decl)
+                           / (x0.uncertainty_ns * x0.uncertainty_ns + rc0.wm_uncertainty_ns * rc0.wm_uncertainty_ns)
+                          )
+                 END < %(deRuiter)s
          ) t0
          LEFT OUTER JOIN runningcatalog_flux rf0
          ON t0.runcat = rf0.runcat

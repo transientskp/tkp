@@ -332,6 +332,57 @@ class TestMeridianOne2One(unittest.TestCase):
         )
         self.assertEqual(runcat[0]['wm_ra'], 0.0)
 
+    def TestNCPWrap(self):
+        """
+        This simulates an NCP-like observation, where we point at a dec of +90
+        and thereby include sources at a wide range of RAs.
+
+        We detect sources at RAs near each of [0, 90, 180, 270] in consecutive
+        images. Source association should therefore result in four running
+        catalogue sources, and they should be distinct (ie, they shouldn't be
+        associated with each other).
+        """
+        dataset = DataSet(data={'description': "Test:" + self._testMethodName})
+
+        # 2 images, pointing at the NCP, with big extraction radii.
+        im1, im2 = db_subs.generate_timespaced_dbimages_data(
+            n_images=2, centre_ra=0, centre_decl=90, xtr_radius=80
+        )
+
+        # We use the increasing declinations to check that the right things
+        # get associated -- if a source with dec 85 gets associated with a
+        # source with dec 87 (say), then the wm_decl will be 86. We can spot
+        # this, because we know that ra 0 corresponds to dec 85, etc.
+        ra_delta, err = 0.00001, 0.01
+        ras = [0, 90, 180, 270]
+        decs = [85, 86, 87, 88]
+        im1_srcs = [db_subs.example_extractedsource_tuple(ra=(ra-ra_delta)%360,
+                                      dec=dec, ra_fit_err=err, dec_fit_err=err)
+                                      for ra,dec in zip(ras, decs)]
+        im2_srcs = [db_subs.example_extractedsource_tuple(ra=(ra+ra_delta)%360,
+                                      dec=dec, ra_fit_err=err, dec_fit_err=err)
+                                      for ra, dec in zip(ras, decs)]
+
+        image1 = tkp.db.Image(dataset=dataset, data=im1)
+        image1.insert_extracted_sources(im1_srcs)
+        associate_extracted_sources(image1.id, deRuiter_r=3.717)
+        image2 = tkp.db.Image(dataset=dataset, data=im2)
+        image2.insert_extracted_sources(im2_srcs)
+        associate_extracted_sources(image2.id, deRuiter_r=3.717)
+
+        runcat = columns_from_table('runningcatalog', ['wm_ra', 'wm_decl'],
+            where={'dataset': dataset.id}
+        )
+        # We should recover the four sources.
+        self.assertEqual(len(runcat), 4)
+
+        # And their declinations should be correct, indicating the right
+        # measurements were associated.
+        for src in runcat:
+            ra = int(src['wm_ra'] + 0.5) % 360
+            dec = int(src['wm_decl'] + 0.5) % 360
+            self.assertIn(ra, ras)
+            self.assertEqual(decs[ras.index(ra)], dec)
 
     def TestMeridianCrossLowHighEdgeCase(self):
         """What happens if a source is right on the meridian?"""
@@ -360,6 +411,8 @@ class TestMeridianOne2One(unittest.TestCase):
         self.assertEqual(len(runcat), 1)
         self.assertEqual(runcat[0]['datapoints'], 3)
         avg_ra = ((src0.ra+180)%360 + (src1.ra+180)%360 + (src2.ra+180)%360)/3 - 180
+        #Ensure our Python calculation is wrapped to positive:
+        avg_ra = (avg_ra + 360.0)%360.0
         self.assertAlmostEqual(runcat[0]['wm_ra'], avg_ra)
 
     def TestMeridianCrossHighLowEdgeCase(self):
@@ -373,7 +426,7 @@ class TestMeridianOne2One(unittest.TestCase):
         src0 = db_subs.example_extractedsource_tuple(ra=359.9999, dec=10.5,
                                              ra_fit_err=0.01, dec_fit_err=0.01)
         src_list.append(src0)
-        src1 = src0._replace(ra=0.0003)
+        src1 = src0._replace(ra=359.999)
         src_list.append(src1)
         src2 = src0._replace(ra=0.0001)
         src_list.append(src2)
@@ -390,6 +443,8 @@ class TestMeridianOne2One(unittest.TestCase):
         self.assertEqual(len(runcat), 1)
         self.assertEqual(runcat[0]['datapoints'], 3)
         avg_ra = ((src0.ra+180)%360 + (src1.ra+180)%360 + (src2.ra+180)%360)/3 - 180
+        #Ensure our Python calculation is wrapped to positive:
+        avg_ra = (avg_ra + 360.0)%360.0
         self.assertAlmostEqual(runcat[0]['wm_ra'], avg_ra)
 
     def TestMeridianHigherEdgeCase(self):
@@ -419,6 +474,8 @@ class TestMeridianOne2One(unittest.TestCase):
         self.assertEqual(len(runcat), 1)
         self.assertEqual(runcat[0]['datapoints'], 3)
         avg_ra = (src0.ra + src1.ra +src2.ra)/3
+        #Ensure our Python calculation is wrapped to positive:
+        avg_ra = (avg_ra + 360.0)%360.0
         self.assertAlmostEqual(runcat[0]['wm_ra'], avg_ra)
 
     def TestMeridianLowerEdgeCase(self):
@@ -452,6 +509,8 @@ class TestMeridianOne2One(unittest.TestCase):
         self.assertEqual(len(runcat), 1)
         self.assertEqual(runcat[0]['datapoints'], 3)
         avg_ra = (src0.ra + src1.ra +src2.ra)/3
+        #Ensure our Python calculation is wrapped to positive:
+        avg_ra = (avg_ra + 360.0)%360.0
         self.assertAlmostEqual(runcat[0]['wm_ra'], avg_ra)
 
     def TestDeRuiterCalculation(self):

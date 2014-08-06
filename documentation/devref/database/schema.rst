@@ -654,9 +654,6 @@ indices, V and eta.
 **f_datapoints**   :math:`=N_I`  
     the number of *flux* datapoints for which the flux averages were calculated.
 
-**resolution**
-    Not used.
-
 **avg_f_peak**  :math:`=\overline{I}` 
    Average of peak flux
 

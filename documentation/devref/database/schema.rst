@@ -770,9 +770,6 @@ details on how these values are assigned.
 **runcat**
     Reference to the associated runningcatalog entry.
 
-**band**
-    The frequency band in which the newsource was found.
-
 **trigger_xtrsrc**
     Reference to the extracted source id that caused insertion of this
     newsource.

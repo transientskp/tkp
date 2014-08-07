@@ -101,12 +101,12 @@ This table records which :ref:`runningcatalog <schema-runningcatalog>` sources
 we expect to see in any given skyregion. This serves two purposes: 
 it allows us to determine when we *do not* see previously detected sources, 
 presumably because they have dropped in flux 
-(see :py:func:`.get_nulldetections`).
+(see :py:func:`tkp.db.nulldetections.get_nulldetections`).
 It also allows us to determine whether a new runningcatalog entry (i.e. 
 a newly detected source without associated historical detections) is being 
 detected for the first time because it is actually a new transient, or 
 if it is simply the first time that region of sky has been surveyed
-(see :py:func:`._insert_new_transient`).
+(see :py:func:`tkp.db.associations._determine_newsource_previous_limits`).
 
 This table is updated under 2 circumstances:
 
@@ -114,7 +114,7 @@ This table is updated under 2 circumstances:
   runcat entries (see SQL function ``updateSkyRgnMembers``).
 - A new runningcatalog source is added, and must be associated with pre-existing
   skyregions 
-  (see :py:func:`._insert_new_runcat_skyrgn_assocs`).
+  (see :py:func:`tkp.db.associations._insert_new_runcat_skyrgn_assocs`).
 
 **runcat**
    References the associated runningcatalog ID.
@@ -654,9 +654,6 @@ indices, V and eta.
 **f_datapoints**   :math:`=N_I`  
     the number of *flux* datapoints for which the flux averages were calculated.
 
-**resolution**
-    Not used.
-
 **avg_f_peak**  :math:`=\overline{I}` 
    Average of peak flux
 
@@ -751,73 +748,48 @@ Those without direct counterparts in those tables are listed below.
 
 
 
-.. _schema-transient:
+.. _schema-newsource:
 
-transient
+newsource
 =========
 
-This table contains the detected transients and their characteristics. Based on
-the values of the variability indices a source is considered a transient and
-appended to the transient table.
+For discovering transient or variable sources, our primary tools are variability
+statistics. However, a bright single-epoch source cannot sensibly be assigned
+variability statistics until at least a second measurement
+(possibly non-detection) has been made.
 
-We choose to test the null hypothesis, :math:`H_0`, that the source under
-consideration is not variable. Contributing terms to :math:`\eta_{\nu}` in the
-sum will be of the order of unity, giving a value of roughly one after
-:math:`N` measurements.  With the integral probability, we can quantify the
-probability of having a value equal to or larger than the :math:`\eta_{\nu}`
-obtained from the measurements.
+This table tracks new sources, in the hopes that new sources considered
+sufficiently bright enough to be interesting may be flagged up immediately.
 
+See :py:func:`tkp.db.associations._determine_newsource_previous_limits` for
+details on how these values are assigned.
 
 **id**
-    Every source in the transient table gets a unique id, set by the database
+    Unique id, set by the database.
 
 **runcat**
-    Reference to the runningcatalog source to which this transient belongs to.
-    Since every trasient has an entry in th erunningcatalog this cannot be
-    NULL.
-
-**band**
-    The frequency band in which the transient was found, and for which th
-    evariability are calculated
-
-**siglevel**
-    The significance level of the 2nd variability index value. Calculated by
-    the scipy module chisqprob(), where we use :math:`N-1` as the degree of
-    freedom
-
-**v_int**
-    The first variability index, :math:`V_{\nu}`, based on the integrated flux
-    values.
-
-**eta_int**
-    The second variability index, :math:`\eta_{\nu}`, based on the integrated
-    flux values.
-
-**detection_level**
-    Currently not set
+    Reference to the associated runningcatalog entry.
 
 **trigger_xtrsrc**
-    Reference to the extracted source id that caused this transient to be added
+    Reference to the extracted source id that caused insertion of this
+    newsource.
 
-**transient_type**
-    Refers to how the transient was discovered, and how certain we are that it
-    is a real transient. Type 0 / 1 transients are discovered when they appear
-    in a previously surveyed sky region. Type 0 transients may be a fluctuating
-    steady source that is located in a high-RMS region, while type 1 transients
-    are bright enough that we can be fairly certain they are really new.
-    Type 2 transients are identified by their variability indices.
+**newsource_type**
+    Refers to how certain we are that the newly discovered source is
+    really "physically new", i.e. transient. Since we do not store fine-grained
+    noise-maps in the database, we must be fairly conservative in our labelling
+    here.
+    Type 0 sources may be a steady source located in a high-RMS region,
+    newly detected due to noise fluctuations, or may be a real
+    transient in a low-RMS region.
+    Type 1 sources are bright enough that we can be fairly certain
+    they are really new - they are significantly brighter than the ``rms_max``
+    in the previous image with best detection limits.
 
 **previous_limits_image**
     The ID of the previous image with the best upper limits on previous
     detections of this source. Can be used to calculate the significance
     level of the new-source detection.
-    (See :py:func:`._insert_new_transient` for details.)
-
-**status**
-    Currently not set
-
-**t_start**
-    Currently not set
 
 version
 =======

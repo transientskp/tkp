@@ -53,7 +53,7 @@ Source are then identified as transients if they meet *all* of these criteria:
 * The number of source measurements in the lightcurve is above a
   user-specified threshold.
 
-Once a source has been identified, it is stored in the :ref:`schema-transient`
+Once a source has been identified, it is stored in the :ref:`schema-newsource`
 table in the database.
 
 The following parameters may be configured in the :ref:`job configuration file

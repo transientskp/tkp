@@ -13,7 +13,7 @@ tables/assocskyrgn.sql
 tables/runningcatalog_flux.sql
 tables/temprunningcatalog.sql
 tables/node.sql
-tables/transient.sql
+tables/newsource.sql
 tables/rejectreason.sql
 tables/rejection.sql
 tables/config.sql

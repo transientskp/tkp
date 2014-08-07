@@ -1,7 +1,3 @@
-/*
- * TODO: The resolution element (from images table) is not implemented yet
-*/
-
 CREATE TABLE runningcatalog
   (id SERIAL
   ,xtrsrc INT NOT NULL

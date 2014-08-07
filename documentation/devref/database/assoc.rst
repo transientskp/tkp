@@ -461,8 +461,8 @@ the outdated rows; see
  - :py:func:`tkp.db.associations._insert_1_to_many_assocskyrgn`
  - :py:func:`tkp.db.associations._delete_1_to_many_inactive_assocskyrgn`
 
- - :py:func:`tkp.db.associations._insert_1_to_many_transient`
- - :py:func:`tkp.db.associations._delete_1_to_many_inactive_transient`
+ - :py:func:`tkp.db.associations._insert_1_to_many_newsource`
+ - :py:func:`tkp.db.associations._delete_1_to_many_inactive_newsource`
 
 Finally, :py:func:`tkp.db.associations._flag_1_to_many_inactive_tempruncat`
 flags the one-to-many associations in ``temprunningcatalog`` as inactive,

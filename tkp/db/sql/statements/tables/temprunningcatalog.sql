@@ -1,6 +1,3 @@
-/* TODO: The resolution element (from images table) is not implemented yet
-*/
-
 CREATE TABLE temprunningcatalog
   (id SERIAL
   ,runcat INT NOT NULL

@@ -45,7 +45,7 @@ def delete_test_database(database):
         tkp.db.execute(query, commit=True)
         query = "DELETE from temprunningcatalog"
         tkp.db.execute(query, commit=True)
-        query = "DELETE from transient"
+        query = "DELETE from newsource"
         tkp.db.execute(query, commit=True)
         query = "DELETE from runningcatalog"
         tkp.db.execute(query, commit=True)
@@ -362,32 +362,107 @@ def insert_image_and_simulated_sources(dataset, image_params, mock_sources,
     return image, blind_extractions, forced_fits
 
 
-def get_transients_for_dataset(dsid):
+def get_newsources_for_dataset(dsid):
     """
-    Returns dicts representing all transients for this dataset.
+    Returns dicts representing all newsources for this dataset.
 
     Args:
-        dsid: Dataset it
+        dsid: Dataset id
 
     Returns:
-        transient_rows (list of dicts): Each dict represents one transient.
-            The dict keys are all the columns in the transients table, plus
+        newsource_rows (list of dicts): Each dict represents one newsource.
+            The dict keys are all the columns in the newsources table, plus
             the 'taustart_ts' from the image table, which represents the
             trigger time.
     """
     qry = """\
-    SELECT tr.*
+    SELECT tr.id
+          ,tr.previous_limits_image
+          ,rc.id as runcat_id
           ,img.taustart_ts
-      FROM transient tr
+          ,img.band
+          ,ax.v_int
+          ,ax.eta_int
+          , ((ex.f_peak - limits_image.detection_thresh*limits_image.rms_min)
+               / limits_image.rms_min) AS low_thresh_sigma
+           , ((ex.f_peak - limits_image.detection_thresh*limits_image.rms_max)
+               / limits_image.rms_max) AS high_thresh_sigma
+      FROM newsource tr
           ,runningcatalog rc
-          ,extractedsource xtr
+          ,extractedsource ex
           ,image img
+          ,assocxtrsource ax
+          ,image limits_image
       WHERE rc.dataset = %(dsid)s
         AND tr.runcat = rc.id
-        AND tr.trigger_xtrsrc = xtr.id
-        AND xtr.image = img.id
+        AND tr.trigger_xtrsrc = ex.id
+        AND ex.image = img.id
+        AND ax.runcat = rc.id
+        AND ax.xtrsrc = ex.id
+        AND tr.previous_limits_image = limits_image.id
     """
     cursor = Database().connection.cursor()
     cursor.execute(qry, {'dsid':dsid})
-    transient_rows_for_dataset = get_db_rows_as_dicts(cursor)
-    return transient_rows_for_dataset
+    newsource_rows_for_dataset = get_db_rows_as_dicts(cursor)
+    return newsource_rows_for_dataset
+
+def get_sources_filtered_by_final_variability(dataset_id,
+                     eta_min,
+                     v_min,
+                     # minpoints
+    ):
+    """
+    Search the database to find high-variability lightcurves.
+
+    Uses the variability associated with the last datapoint in a lightcurve
+    as the key criteria.
+
+    Args:
+        dataset_id (int): Dataset to search
+        eta_min (float): Minimum value of eta-index to return.
+        v_min (float): Minimum value of V-index to return.
+
+    Returns:
+        transients (list of dicts): A list of dicts representing
+            runningcatalog_flux entries with high variability.
+
+    """
+
+    query = """\
+SELECT rc.id as runcat_id
+      ,image.band
+      ,ax.v_int
+      ,ax.eta_int
+FROM runningcatalog as rc
+    JOIN assocxtrsource as ax ON ax.runcat = rc.id
+    JOIN extractedsource as ex ON ax.xtrsrc = ex.id
+    JOIN image ON ex.image = image.id
+    JOIN (
+        -- Determine which are the most recent variability values
+        -- for each lightcurve.
+        SELECT
+            a.runcat as runcat_id,
+            i.band as band,
+            max(i.taustart_ts) as MaxTimestamp
+        FROM
+            assocxtrsource a
+            JOIN extractedsource e ON a.xtrsrc = e.id
+            JOIN image i ON e.image = i.id
+        GROUP BY
+            runcat_id, band
+        ) last_timestamps
+    ON  rc.id = last_timestamps.runcat_id
+    AND image.band = last_timestamps.band
+    AND image.taustart_ts = last_timestamps.MaxTimestamp
+WHERE rc.dataset = %(dataset_id)s
+  AND eta_int >= %(eta_min)s
+  AND v_int >= %(v_min)s
+"""
+    cursor = tkp.db.Database().connection.cursor()
+    cursor.execute(query, {'dataset_id': dataset_id,
+                           'eta_min':eta_min,
+                           'v_min':v_min,
+                           })
+    transients = get_db_rows_as_dicts(cursor)
+
+    return transients

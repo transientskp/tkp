@@ -8,10 +8,36 @@ import logging, sys
 
 from tkp.db import execute as execute
 from tkp.db.associations import _empty_temprunningcatalog as _del_tempruncat
-from tkp.db.associations import ONE_TO_ONE_ASSOC_QUERY
+from tkp.db.associations import (
+    _update_1_to_1_runcat,
+    ONE_TO_ONE_ASSOC_QUERY,
+    _insert_1_to_1_runcat_flux,
+    _update_1_to_1_runcat_flux)
 
 logger = logging.getLogger(__name__)
 
+def get_monitor_entries(dataset_id):
+    """
+    Returns the ``monitor`` entries relevant to this dataset.
+
+    Args:
+        dataset_id (int)
+
+    Returns:
+        list of tuples [(monitor_id, ra, decl)]
+    """
+
+    query = """\
+SELECT id
+      ,ra
+      ,decl
+  FROM monitor
+ WHERE dataset = %(dataset_id)s
+"""
+    qry_params = {'dataset_id': dataset_id}
+    cursor = execute(query, qry_params)
+    res = cursor.fetchall()
+    return res
 
 def associate_ms(image_id):
     """
@@ -32,23 +58,27 @@ def associate_ms(image_id):
     """
 
     _del_tempruncat()
+
     _insert_tempruncat(image_id)
-    #+-------------------------------------------------------------+
-    #| First, we process the monitoring sources that are already   |
-    #| known by position in the runningcatalog. Note that a source |
-    #| might be known by position, but is new in a frequency band. |
-    #+-------------------------------------------------------------+
-    _update_runcat()
-    _update_runcat_flux() # update flux in existing band
-    _insert_runcat_flux() # insert flux for new band
+
     _insert_1_to_1_assoc()
-    #+-------------------------------------------------------------+
-    #| Then we process the new sources, i.e., those that           |
-    #| were fitted for the first time.                             |
-    #+-------------------------------------------------------------+
+    _update_1_to_1_runcat()
+
+    n_updated = _update_1_to_1_runcat_flux()
+    if n_updated:
+        logger.debug("Updated flux for %s monitor sources" % n_updated)
+    n_inserted = _insert_1_to_1_runcat_flux()
+    if n_inserted:
+        logger.debug("Inserted new-band flux measurement for %s monitor sources"
+                    % n_inserted)
+
     _insert_new_runcat(image_id)
     _insert_new_runcat_flux(image_id)
+
     _insert_new_1_to_1_assoc(image_id)
+
+    _update_monitor_runcats(image_id)
+
     _del_tempruncat()
 
 def _insert_tempruncat(image_id):
@@ -116,7 +146,7 @@ INSERT INTO temprunningcatalog
   ,avg_weighted_f_int
   ,avg_weighted_f_int_sq
   )
-  SELECT t0.runcat
+  SELECT t0.runcat_id
         ,t0.xtrsrc
         ,0 as distance_arcsec
         ,0 as r
@@ -202,7 +232,7 @@ INSERT INTO temprunningcatalog
                     + (t0.f_int * t0.f_int) / (t0.f_int_err * t0.f_int_err))
                    / (rf.f_datapoints + 1)
          END AS avg_weighted_f_int_sq
-    FROM (SELECT r.id AS runcat
+    FROM (SELECT mon.runcat AS runcat_id
                 ,x.id AS xtrsrc
                 ,x.f_peak
                 ,x.f_peak_err
@@ -226,207 +256,27 @@ INSERT INTO temprunningcatalog
                 ,r.x
                 ,r.y
                 ,r.z
-            FROM runningcatalog r
-                ,image i
-                ,extractedsource x
-           WHERE i.id = %(image_id)s
-             AND r.dataset = i.dataset
-             AND x.image = i.id
+            FROM monitor mon
+             JOIN extractedsource x
+               ON mon.id = x.ff_monitor
+             JOIN runningcatalog r
+               ON mon.runcat = r.id
+             JOIN image i
+               ON x.image = i.id
+           WHERE mon.runcat IS NOT NULL
              AND x.image = %(image_id)s
              AND x.extract_type = 2
-             AND r.mon_src = TRUE
-             AND r.zone BETWEEN CAST(FLOOR(x.decl - x.error_radius/3600) AS INTEGER)
-                              AND CAST(FLOOR(x.decl + x.error_radius/3600) AS INTEGER)
-             AND r.wm_decl BETWEEN x.decl - x.error_radius/3600
-                               AND x.decl + x.error_radius/3600
-             AND r.wm_ra BETWEEN x.ra - alpha(x.error_radius/3600, x.decl)
-                             AND x.ra + alpha(x.error_radius/3600, x.decl)
-             AND r.x * x.x + r.y * x.y + r.z * x.z > COS(RADIANS(r.wm_uncertainty_ew))
          ) t0
          LEFT OUTER JOIN runningcatalog_flux rf
-         ON t0.runcat = rf.runcat
+         ON t0.runcat_id = rf.runcat
          AND t0.band = rf.band
          AND t0.stokes = rf.stokes
 """
     qry_params = {'image_id': image_id}
     cursor = execute(query, qry_params, commit=True)
     cnt = cursor.rowcount
-    if cnt > 0:
-        logger.info("Inserted %s monitoring-runcat candidate pairs in tempruncat" % cnt)
+    logger.debug("Inserted %s monitoring-runcat pairs in tempruncat" % cnt)
 
-def _update_runcat():
-    """Update the running catalog (positional) properties of the
-    monitoring sources with the values in temprunningcatalog"""
-
-    query = """\
-        UPDATE runningcatalog
-           SET datapoints = (SELECT datapoints
-                               FROM temprunningcatalog
-                              WHERE temprunningcatalog.runcat = runningcatalog.id
-                            )
-              ,zone = (SELECT zone
-                         FROM temprunningcatalog
-                        WHERE temprunningcatalog.runcat = runningcatalog.id
-                      )
-              ,wm_ra = (SELECT wm_ra
-                          FROM temprunningcatalog
-                         WHERE temprunningcatalog.runcat = runningcatalog.id
-                       )
-              ,wm_decl = (SELECT wm_decl
-                            FROM temprunningcatalog
-                           WHERE temprunningcatalog.runcat = runningcatalog.id
-                         )
-              ,avg_ra_err = (SELECT avg_ra_err
-                              FROM temprunningcatalog
-                             WHERE temprunningcatalog.runcat = runningcatalog.id
-                           )
-              ,avg_decl_err = (SELECT avg_decl_err
-                                FROM temprunningcatalog
-                               WHERE temprunningcatalog.runcat = runningcatalog.id
-                             )
-              ,wm_uncertainty_ew = (SELECT wm_uncertainty_ew
-                                FROM temprunningcatalog
-                               WHERE temprunningcatalog.runcat = runningcatalog.id
-                             )
-              ,wm_uncertainty_ns = (SELECT wm_uncertainty_ns
-                                FROM temprunningcatalog
-                               WHERE temprunningcatalog.runcat = runningcatalog.id
-                             )
-              ,avg_wra = (SELECT avg_wra
-                            FROM temprunningcatalog
-                           WHERE temprunningcatalog.runcat = runningcatalog.id
-                         )
-              ,avg_wdecl = (SELECT avg_wdecl
-                              FROM temprunningcatalog
-                             WHERE temprunningcatalog.runcat = runningcatalog.id
-                           )
-              ,avg_weight_ra = (SELECT avg_weight_ra
-                                  FROM temprunningcatalog
-                                 WHERE temprunningcatalog.runcat = runningcatalog.id
-                               )
-              ,avg_weight_decl = (SELECT avg_weight_decl
-                                    FROM temprunningcatalog
-                                   WHERE temprunningcatalog.runcat = runningcatalog.id
-                                 )
-              ,x = (SELECT x
-                      FROM temprunningcatalog
-                     WHERE temprunningcatalog.runcat = runningcatalog.id
-                   )
-              ,y = (SELECT y
-                      FROM temprunningcatalog
-                     WHERE temprunningcatalog.runcat = runningcatalog.id
-                   )
-              ,z = (SELECT z
-                      FROM temprunningcatalog
-                     WHERE temprunningcatalog.runcat = runningcatalog.id
-                   )
-         WHERE EXISTS (SELECT runcat
-                         FROM temprunningcatalog
-                        WHERE temprunningcatalog.runcat = runningcatalog.id
-                      )
-"""
-    cursor = execute(query, commit=True)
-    cnt = cursor.rowcount
-    if cnt > 0:
-        logger.info("Updated %s monitoring sources in runcat" % cnt)
-
-def _update_runcat_flux():
-    """We only have to update those runcat fluxes that already had a fit,
-    so their f_datapoints is larger than 1. The ones had a fit in
-    another band, but not in this are handled by the _insert_runcat_flux().
-
-    """
-    query = """\
-UPDATE runningcatalog_flux
-   SET f_datapoints = (SELECT f_datapoints
-                         FROM temprunningcatalog
-                        WHERE temprunningcatalog.runcat = runningcatalog_flux.runcat
-                          AND temprunningcatalog.band = runningcatalog_flux.band
-                          AND temprunningcatalog.stokes = runningcatalog_flux.stokes
-                          AND temprunningcatalog.f_datapoints > 1
-                      )
-      ,avg_f_peak = (SELECT avg_f_peak
-                       FROM temprunningcatalog
-                      WHERE temprunningcatalog.runcat = runningcatalog_flux.runcat
-                        AND temprunningcatalog.band = runningcatalog_flux.band
-                        AND temprunningcatalog.stokes = runningcatalog_flux.stokes
-                        AND temprunningcatalog.f_datapoints > 1
-                    )
-      ,avg_f_peak_sq = (SELECT avg_f_peak_sq
-                          FROM temprunningcatalog
-                         WHERE temprunningcatalog.runcat = runningcatalog_flux.runcat
-                           AND temprunningcatalog.band = runningcatalog_flux.band
-                           AND temprunningcatalog.stokes = runningcatalog_flux.stokes
-                           AND temprunningcatalog.f_datapoints > 1
-                       )
-      ,avg_f_peak_weight = (SELECT avg_f_peak_weight
-                              FROM temprunningcatalog
-                             WHERE temprunningcatalog.runcat = runningcatalog_flux.runcat
-                               AND temprunningcatalog.band = runningcatalog_flux.band
-                               AND temprunningcatalog.stokes = runningcatalog_flux.stokes
-                               AND temprunningcatalog.f_datapoints > 1
-                           )
-      ,avg_weighted_f_peak = (SELECT avg_weighted_f_peak
-                                FROM temprunningcatalog
-                               WHERE temprunningcatalog.runcat = runningcatalog_flux.runcat
-                                 AND temprunningcatalog.band = runningcatalog_flux.band
-                                 AND temprunningcatalog.stokes = runningcatalog_flux.stokes
-                                 AND temprunningcatalog.f_datapoints > 1
-                             )
-      ,avg_weighted_f_peak_sq = (SELECT avg_weighted_f_peak_sq
-                                   FROM temprunningcatalog
-                                  WHERE temprunningcatalog.runcat = runningcatalog_flux.runcat
-                                    AND temprunningcatalog.band = runningcatalog_flux.band
-                                    AND temprunningcatalog.stokes = runningcatalog_flux.stokes
-                                    AND temprunningcatalog.f_datapoints > 1
-                                )
-      ,avg_f_int = (SELECT avg_f_int
-                      FROM temprunningcatalog
-                     WHERE temprunningcatalog.runcat = runningcatalog_flux.runcat
-                       AND temprunningcatalog.band = runningcatalog_flux.band
-                       AND temprunningcatalog.stokes = runningcatalog_flux.stokes
-                       AND temprunningcatalog.f_datapoints > 1
-                   )
-      ,avg_f_int_sq = (SELECT avg_f_int_sq
-                         FROM temprunningcatalog
-                        WHERE temprunningcatalog.runcat = runningcatalog_flux.runcat
-                          AND temprunningcatalog.band = runningcatalog_flux.band
-                          AND temprunningcatalog.stokes = runningcatalog_flux.stokes
-                          AND temprunningcatalog.f_datapoints > 1
-                      )
-      ,avg_f_int_weight = (SELECT avg_f_int_weight
-                             FROM temprunningcatalog
-                             WHERE temprunningcatalog.runcat = runningcatalog_flux.runcat
-                               AND temprunningcatalog.band = runningcatalog_flux.band
-                               AND temprunningcatalog.stokes = runningcatalog_flux.stokes
-                               AND temprunningcatalog.f_datapoints > 1
-                          )
-      ,avg_weighted_f_int = (SELECT avg_weighted_f_int
-                               FROM temprunningcatalog
-                              WHERE temprunningcatalog.runcat = runningcatalog_flux.runcat
-                                AND temprunningcatalog.band = runningcatalog_flux.band
-                                AND temprunningcatalog.stokes = runningcatalog_flux.stokes
-                                AND temprunningcatalog.f_datapoints > 1
-                            )
-      ,avg_weighted_f_int_sq = (SELECT avg_weighted_f_int_sq
-                                  FROM temprunningcatalog
-                                 WHERE temprunningcatalog.runcat = runningcatalog_flux.runcat
-                                   AND temprunningcatalog.band = runningcatalog_flux.band
-                                   AND temprunningcatalog.stokes = runningcatalog_flux.stokes
-                                   AND temprunningcatalog.f_datapoints > 1
-                               )
- WHERE EXISTS (SELECT runcat
-                 FROM temprunningcatalog
-                WHERE temprunningcatalog.runcat = runningcatalog_flux.runcat
-                  AND temprunningcatalog.band = runningcatalog_flux.band
-                  AND temprunningcatalog.stokes = runningcatalog_flux.stokes
-                  AND temprunningcatalog.f_datapoints > 1
-              )
-"""
-    cursor = execute(query, commit=True)
-    cnt = cursor.rowcount
-    if cnt > 0:
-        logger.info("Updated fluxes for %s monitoring sources in runcat_flux" % cnt)
 
 def _insert_runcat_flux():
     """Monitoring sources that were not yet fitted in this frequency band before,
@@ -470,18 +320,8 @@ INSERT INTO runningcatalog_flux
     cursor = execute(query, commit=True)
     cnt = cursor.rowcount
     if cnt > 0:
-        logger.info("Inserted new-band fluxes for %s monitoring sources in runcat_flux" % cnt)
+        logger.debug("Inserted new-band fluxes for %s monitoring sources in runcat_flux" % cnt)
 
-
-def _insert_1_to_1_assoc():
-    """
-    The runcat-monitoring pairs are appended to the assocxtrsource
-    (light-curve) table as a type = 9 datapoint.
-    """
-    cursor = execute(ONE_TO_ONE_ASSOC_QUERY, {'type': 9}, commit=True)
-    cnt = cursor.rowcount
-    if cnt > 0:
-        logger.info("Inserted %s runcat-monitoring source pairs in assocxtrsource" % cnt)
 
 
 def _insert_new_runcat(image_id):
@@ -529,18 +369,48 @@ INSERT INTO runningcatalog
         ,x.z
         ,TRUE
     FROM image i
-        ,extractedsource x
-         LEFT OUTER JOIN temprunningcatalog t
-         ON t.xtrsrc = x.id
+         JOIN extractedsource x
+           ON i.id = x.image
+         JOIN monitor mon
+           ON x.ff_monitor = mon.id
    WHERE i.id = %(image_id)s
-     AND x.image = i.id
      AND x.extract_type = 2
-     AND t.xtrsrc IS NULL
+     AND mon.runcat IS NULL
 """
     cursor = execute(query, {'image_id': image_id}, commit=True)
     ins = cursor.rowcount
     if ins > 0:
-        logger.info("Added %s new monitoring sources to runningcatalog" % ins)
+        logger.debug("Added %s new monitoring sources to runningcatalog" % ins)
+
+def _update_monitor_runcats(image_id):
+    """
+    Update ``runcat`` col of ``monitor`` table for newly extracted positions.
+    """
+    query ="""\
+UPDATE monitor
+   SET runcat = (SELECT rc.id
+                   FROM runningcatalog rc
+                   JOIN extractedsource ex
+                     ON rc.xtrsrc = ex.id
+                  WHERE monitor.runcat is NULL
+                    AND ex.image = %(image_id)s
+                    AND ex.ff_monitor = monitor.id
+                  )
+    WHERE EXISTS (SELECT rc.id
+                   FROM runningcatalog rc
+                   JOIN extractedsource ex
+                     ON rc.xtrsrc = ex.id
+                  WHERE monitor.runcat is NULL
+                    AND ex.image = %(image_id)s
+                    AND ex.ff_monitor = monitor.id
+                    )
+
+    """
+
+    cursor = execute(query, {'image_id': image_id}, commit=True)
+    up = cursor.rowcount
+    logger.debug("Updated runcat cols for %s newly monitored sources" % up)
+
 
 
 def _insert_new_runcat_flux(image_id):
@@ -570,40 +440,35 @@ INSERT INTO runningcatalog_flux
   ,avg_weighted_f_int
   ,avg_weighted_f_int_sq
   )
-  SELECT r0.id
-        ,i0.band
-        ,i0.stokes
+  SELECT rc.id
+        ,i.band
+        ,i.stokes
         ,1 AS f_datapoints
-        ,x0.f_peak
-        ,x0.f_peak * x0.f_peak
-        ,1 / (x0.f_peak_err * x0.f_peak_err)
-        ,x0.f_peak / (x0.f_peak_err * x0.f_peak_err)
-        ,x0.f_peak * x0.f_peak / (x0.f_peak_err * x0.f_peak_err)
-        ,x0.f_int
-        ,x0.f_int * x0.f_int
-        ,1 / (x0.f_int_err * x0.f_int_err)
-        ,x0.f_int / (x0.f_int_err * x0.f_int_err)
-        ,x0.f_int * x0.f_int / (x0.f_int_err * x0.f_int_err)
-    FROM image i0
-        ,(SELECT x1.id AS xtrsrc
-            FROM extractedsource x1
-                 LEFT OUTER JOIN temprunningcatalog trc1
-                 ON x1.id = trc1.xtrsrc
-            WHERE x1.image = %(image_id)s
-              AND x1.extract_type = 2
-              AND trc1.xtrsrc IS NULL
-          ) t0
-        ,runningcatalog r0
-        ,extractedsource x0
-   WHERE i0.id = %(image_id)s
-     AND r0.xtrsrc = t0.xtrsrc
-     AND x0.id = r0.xtrsrc
-     AND x0.extract_type = 2
+        ,x.f_peak
+        ,x.f_peak * x.f_peak
+        ,1 / (x.f_peak_err * x.f_peak_err)
+        ,x.f_peak / (x.f_peak_err * x.f_peak_err)
+        ,x.f_peak * x.f_peak / (x.f_peak_err * x.f_peak_err)
+        ,x.f_int
+        ,x.f_int * x.f_int
+        ,1 / (x.f_int_err * x.f_int_err)
+        ,x.f_int / (x.f_int_err * x.f_int_err)
+        ,x.f_int * x.f_int / (x.f_int_err * x.f_int_err)
+  FROM image i
+    JOIN extractedsource x
+      ON i.id = x.image
+    JOIN monitor mon
+      ON x.ff_monitor = mon.id
+    JOIN runningcatalog rc
+      ON rc.xtrsrc = x.id
+   WHERE i.id = %(image_id)s
+     AND x.extract_type = 2
+     AND mon.runcat IS NULL
 """
     cursor = execute(query, {'image_id': image_id}, commit=True)
     ins = cursor.rowcount
     if ins > 0:
-        logger.info("Added %s new monitoring fluxes to runningcatalog_flux" % ins)
+        logger.debug("Added %s new monitoring fluxes to runningcatalog_flux" % ins)
 
 
 def _insert_new_1_to_1_assoc(image_id):
@@ -612,6 +477,8 @@ def _insert_new_1_to_1_assoc(image_id):
     are appended to the assocxtrsource (light-curve) table
     as a type = 8 datapoint.
     """
+
+
     query = """\
 INSERT INTO assocxtrsource
   (runcat
@@ -623,29 +490,38 @@ INSERT INTO assocxtrsource
   ,eta_int
   ,f_datapoints
   )
-  SELECT r0.id AS runcat
-        ,r0.xtrsrc
+  SELECT rc.id
+        ,rc.xtrsrc
         ,8 AS type
-        ,0 AS distance_arcsec
-        ,0 AS r
+        ,0
+        ,0
         ,0 AS v_int
         ,0 AS eta_int
         ,1 as f_datapoints
-    FROM (SELECT x1.id AS xtrsrc
-            FROM extractedsource x1
-                 LEFT OUTER JOIN temprunningcatalog trc1
-                 ON x1.id = trc1.xtrsrc
-            WHERE x1.image = %(image_id)s
-              AND x1.extract_type = 2
-              AND trc1.xtrsrc IS NULL
-         ) t0
-        ,runningcatalog r0
-   WHERE r0.xtrsrc = t0.xtrsrc
+    FROM runningcatalog rc
+    JOIN extractedsource x
+      ON rc.xtrsrc = x.id
+    JOIN image i
+      on x.image = i.id
+    JOIN monitor mon
+      ON x.ff_monitor = mon.id
+   WHERE i.id = %(image_id)s
+    AND mon.runcat IS NULL
+    AND x.extract_type = 2
     """
     cursor = execute(query, {'image_id': image_id}, commit=True)
     cnt = cursor.rowcount
     if cnt > 0:
-        logger.info("Inserted %s new runcat-monitoring source pairs in assocxtrsource" % cnt)
+        logger.debug("Inserted %s new runcat-monitoring source pairs in assocxtrsource" % cnt)
+
+def _insert_1_to_1_assoc():
+    """
+    The runcat-monitoring pairs are appended to the assocxtrsource
+    (light-curve) table as a type = 9 datapoint.
+    """
+    cursor = execute(ONE_TO_ONE_ASSOC_QUERY, {'type': 9}, commit=True)
+    cnt = cursor.rowcount
+    logger.debug("Inserted %s runcat-monitoring source pairs in assocxtrsource" % cnt)
 
 
 

@@ -21,7 +21,7 @@ def convert_to_cartesian(conn, ra, decl):
     curs.execute(qry, (ra, decl))
     return curs.fetchone()
 
-def per_timestep_variability_indices(db, runcat_id):
+def get_assoc_entries(db, runcat_id):
     """
     Return the full history of variability indices for a runcat entry,
     ordered by time.
@@ -29,10 +29,13 @@ def per_timestep_variability_indices(db, runcat_id):
     query = """\
     select a.runcat
           ,a.xtrsrc
+          ,x.extract_type
           ,i.taustart_ts
           ,a.v_int
           ,a.eta_int
           ,a.f_datapoints
+          ,a.type
+          ,r.mon_src
       from assocxtrsource a
           ,extractedsource x
           ,image i

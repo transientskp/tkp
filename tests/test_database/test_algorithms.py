@@ -114,27 +114,34 @@ class TestSourceAssociation(unittest.TestCase):
         - Check runcat, assocxtrsource.
         """
 
-        imgs_loaded = 0
-        first_image = True
         fixed_src_runcat_id = None
-        for im in self.im_params:
+        for img_idx, im in enumerate(self.im_params):
             self.db_imgs.append( Image( data=im, dataset=self.dataset) )
             last_img =self.db_imgs[-1]
             last_img.insert_extracted_sources(
                 [db_subs.example_extractedsource_tuple()],'blind')
             last_img.associate_extracted_sources(deRuiter_r,
                                                  new_source_sigma_margin)
-            imgs_loaded+=1
+
             running_cat = columns_from_table(table="runningcatalog",
                                            keywords=['id', 'datapoints'],
                                            where={"dataset":self.dataset.id})
             self.assertEqual(len(running_cat), 1)
-            self.assertEqual(running_cat[0]['datapoints'], imgs_loaded)
-            if first_image:
+            self.assertEqual(running_cat[0]['datapoints'], img_idx+1)
+
+            #Check runcat ID does not change for a steady single source
+            if img_idx == 0:
                 fixed_src_runcat_id = running_cat[0]['id']
                 self.assertIsNotNone(fixed_src_runcat_id, "No runcat id assigned to source")
             self.assertEqual(running_cat[0]['id'], fixed_src_runcat_id,
                              "Multiple runcat ids for same fixed source")
+
+
+            runcat_flux = columns_from_table(table="runningcatalog_flux",
+                               keywords=['f_datapoints'],
+                               where={"runcat":fixed_src_runcat_id})
+            self.assertEqual(len(runcat_flux),1)
+            self.assertEqual(img_idx+1, runcat_flux[0]['f_datapoints'])
 
             last_img.update()
             last_img.update_sources()
@@ -152,7 +159,7 @@ class TestSourceAssociation(unittest.TestCase):
 #            if len(assocxtrsrcs_rows):
 #                print "Associated source:", assocxtrsrcs_rows[0]['xtrsrc']
             self.assertEqual(len(assocxtrsrcs_rows),1,
-                             msg="No entries in assocxtrsrcs for image number "+str(imgs_loaded))
+                             msg="No entries in assocxtrsrcs for image number "+str(img_idx))
             self.assertEqual(assocxtrsrcs_rows[0]['runcat'], fixed_src_runcat_id,
                              "Mismatched runcat id in assocxtrsrc table")
 

@@ -347,12 +347,26 @@ The TraP may add forced-fit entries to this table as well. Then
         * ``1``: forced fit to pixel
         * ``2``: manually monitored position
 
-**fitting_type**
+**fit_type**
     Reports what fitting type was used by sourcefinder (Hanno's thesis).
      Currently implemented values are:
 
         * ``0``: moments-based analysis
         * ``1``: Gaussian fitting
+
+**ff_runcat**
+    Null, except when the extractedsource is a forced fit
+    requested due to a null-detection. In that case, it is used to link
+    null-detection extractions to their appropriate runningcatalog entry
+    via the ``assocxtrsource`` table. It will initially point to the
+    runningcatalog id which was null-detected, but may change back to Null later
+    on (after the initial association is recorded in assocxtrsource)
+    if the runningcatalog entry forks due to a one-to-many association.
+
+**ff_monitor**
+    Null, except when the extractedsource is a forced fit requested for a
+    position in the ``monitor`` table. In that case, it identifies the
+    relevant ``monitor`` entry, and is used in the association process.
 
 **node(s)**
     Determine the current and number of nodes in case of a sharded database
@@ -547,6 +561,38 @@ have this table, but with different content.
    The following sections on the ``runningcatalog``, ``runningcatalog_flux`` and
    ``temprunningcatalog_flux`` are annotated using the style of mathematical
    notations developed in the :ref:`Appendix <mathematical-diversion>`.
+
+
+.. _schema-monitor:
+
+monitor
+=======
+
+This table stores the user-requested monitoring positions for a dataset.
+
+**id**
+    Every position in the monitor table gets a unique id.
+
+**dataset**
+    The relevant dataset id - monitor positions are dataset-specific.
+
+**ra, decl**
+    The position coordinates in decimal degrees.
+
+**runcat**
+    Initially Null. When a forced-fit is first made to a monitoring position,
+    this column is updated to point to the relevant entry in the runningcatalog.
+
+**name**
+    A short descriptive name, e.g. GRB140101A or SNe150101, for more
+    user-friendly display of results.
+    This functionality is not currently implemented, but the presence of this
+    column allows it to be trivially implemented in future without requiring
+    a database migration.
+
+
+
+
 
 .. _schema-runningcatalog:
 

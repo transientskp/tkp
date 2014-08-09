@@ -6,15 +6,17 @@ This module contains the routines to deal with null detections.
 import logging
 from tkp.db import execute as execute
 from tkp.db.associations import _empty_temprunningcatalog as _del_tempruncat
-from tkp.db.associations import ONE_TO_ONE_ASSOC_QUERY
+from tkp.db.associations import (
+    ONE_TO_ONE_ASSOC_QUERY, _insert_1_to_1_runcat_flux,
+    _update_1_to_1_runcat_flux)
 
 logger = logging.getLogger(__name__)
-
 
 def get_nulldetections(image_id):
     """
     Returns the runningcatalog sources which:
 
+      * Are associated with the skyregion of the current image.
       * Do not have a counterpart in the extractedsources of the current
         image after source association has run.
       * Have been seen (in any band) at a timestamp earlier than that of the
@@ -89,8 +91,14 @@ def associate_nd(image_id):
     _del_tempruncat()
     _insert_tempruncat(image_id)
     _insert_1_to_1_assoc()
-    _update_runcat_flux()
-    _insert_runcat_flux()
+
+    n_updated = _update_1_to_1_runcat_flux()
+    if n_updated:
+        logger.debug("Updated flux for %s null_detections" % n_updated)
+    n_inserted = _insert_1_to_1_runcat_flux()
+    if n_inserted:
+        logger.debug("Inserted new-band flux measurement for %s null_detections"
+                    % n_inserted)
     _del_tempruncat()
 
 def _insert_tempruncat(image_id):
@@ -273,7 +281,7 @@ INSERT INTO temprunningcatalog
     qry_params = {'image_id': image_id}
     cursor = execute(query, qry_params, commit=True)
     cnt = cursor.rowcount
-    logger.info("Inserted %s null detections in tempruncat" % cnt)
+    logger.debug("Inserted %s null detections in tempruncat" % cnt)
 
 
 def _insert_1_to_1_assoc():
@@ -286,148 +294,4 @@ def _insert_1_to_1_assoc():
     """
     cursor = execute(ONE_TO_ONE_ASSOC_QUERY, {'type': 7}, commit=True)
     cnt = cursor.rowcount
-    logger.info("Inserted %s 1-to-1 null detections in assocxtrsource" % cnt)
-
-
-def _update_runcat_flux():
-    """We only have to update those runcat sources that already had a detection,
-    so their f_datapoints is larger than 1.
-
-    """
-    query = """\
-UPDATE runningcatalog_flux
-   SET f_datapoints = (SELECT f_datapoints
-                         FROM temprunningcatalog
-                        WHERE temprunningcatalog.runcat = runningcatalog_flux.runcat
-                          AND temprunningcatalog.band = runningcatalog_flux.band
-                          AND temprunningcatalog.stokes = runningcatalog_flux.stokes
-                          AND temprunningcatalog.f_datapoints > 1
-                      )
-      ,avg_f_peak = (SELECT avg_f_peak
-                       FROM temprunningcatalog
-                      WHERE temprunningcatalog.runcat = runningcatalog_flux.runcat
-                        AND temprunningcatalog.band = runningcatalog_flux.band
-                        AND temprunningcatalog.stokes = runningcatalog_flux.stokes
-                        AND temprunningcatalog.f_datapoints > 1
-                    )
-      ,avg_f_peak_sq = (SELECT avg_f_peak_sq
-                          FROM temprunningcatalog
-                         WHERE temprunningcatalog.runcat = runningcatalog_flux.runcat
-                           AND temprunningcatalog.band = runningcatalog_flux.band
-                           AND temprunningcatalog.stokes = runningcatalog_flux.stokes
-                           AND temprunningcatalog.f_datapoints > 1
-                       )
-      ,avg_f_peak_weight = (SELECT avg_f_peak_weight
-                              FROM temprunningcatalog
-                             WHERE temprunningcatalog.runcat = runningcatalog_flux.runcat
-                               AND temprunningcatalog.band = runningcatalog_flux.band
-                               AND temprunningcatalog.stokes = runningcatalog_flux.stokes
-                               AND temprunningcatalog.f_datapoints > 1
-                           )
-      ,avg_weighted_f_peak = (SELECT avg_weighted_f_peak
-                                FROM temprunningcatalog
-                               WHERE temprunningcatalog.runcat = runningcatalog_flux.runcat
-                                 AND temprunningcatalog.band = runningcatalog_flux.band
-                                 AND temprunningcatalog.stokes = runningcatalog_flux.stokes
-                                 AND temprunningcatalog.f_datapoints > 1
-                             )
-      ,avg_weighted_f_peak_sq = (SELECT avg_weighted_f_peak_sq
-                                   FROM temprunningcatalog
-                                  WHERE temprunningcatalog.runcat = runningcatalog_flux.runcat
-                                    AND temprunningcatalog.band = runningcatalog_flux.band
-                                    AND temprunningcatalog.stokes = runningcatalog_flux.stokes
-                                    AND temprunningcatalog.f_datapoints > 1
-                                )
-      ,avg_f_int = (SELECT avg_f_int
-                      FROM temprunningcatalog
-                     WHERE temprunningcatalog.runcat = runningcatalog_flux.runcat
-                       AND temprunningcatalog.band = runningcatalog_flux.band
-                       AND temprunningcatalog.stokes = runningcatalog_flux.stokes
-                       AND temprunningcatalog.f_datapoints > 1
-                   )
-      ,avg_f_int_sq = (SELECT avg_f_int_sq
-                         FROM temprunningcatalog
-                        WHERE temprunningcatalog.runcat = runningcatalog_flux.runcat
-                          AND temprunningcatalog.band = runningcatalog_flux.band
-                          AND temprunningcatalog.stokes = runningcatalog_flux.stokes
-                          AND temprunningcatalog.f_datapoints > 1
-                      )
-      ,avg_f_int_weight = (SELECT avg_f_int_weight
-                             FROM temprunningcatalog
-                            WHERE temprunningcatalog.runcat = runningcatalog_flux.runcat
-                              AND temprunningcatalog.band = runningcatalog_flux.band
-                              AND temprunningcatalog.stokes = runningcatalog_flux.stokes
-                              AND temprunningcatalog.f_datapoints > 1
-                          )
-      ,avg_weighted_f_int = (SELECT avg_weighted_f_int
-                               FROM temprunningcatalog
-                              WHERE temprunningcatalog.runcat = runningcatalog_flux.runcat
-                                AND temprunningcatalog.band = runningcatalog_flux.band
-                                AND temprunningcatalog.stokes = runningcatalog_flux.stokes
-                                AND temprunningcatalog.f_datapoints > 1
-                            )
-      ,avg_weighted_f_int_sq = (SELECT avg_weighted_f_int_sq
-                                  FROM temprunningcatalog
-                                 WHERE temprunningcatalog.runcat = runningcatalog_flux.runcat
-                                   AND temprunningcatalog.band = runningcatalog_flux.band
-                                   AND temprunningcatalog.stokes = runningcatalog_flux.stokes
-                                   AND temprunningcatalog.f_datapoints > 1
-                               )
- WHERE EXISTS (SELECT runcat
-                 FROM temprunningcatalog
-                WHERE temprunningcatalog.runcat = runningcatalog_flux.runcat
-                  AND temprunningcatalog.band = runningcatalog_flux.band
-                  AND temprunningcatalog.stokes = runningcatalog_flux.stokes
-                  AND temprunningcatalog.f_datapoints > 1
-              )
-"""
-    cursor = execute(query, commit=True)
-    cnt = cursor.rowcount
-    if cnt > 0:
-        logger.info("Updated flux for %s null_detections" % cnt)
-
-
-def _insert_runcat_flux():
-    """Sources that were not yet detected in this frequency band before,
-    will be appended to it. Those have their first f_datapoint.
-    """
-
-    query = """\
-INSERT INTO runningcatalog_flux
-  (runcat
-  ,band
-  ,stokes
-  ,f_datapoints
-  ,avg_f_peak
-  ,avg_f_peak_sq
-  ,avg_f_peak_weight
-  ,avg_weighted_f_peak
-  ,avg_weighted_f_peak_sq
-  ,avg_f_int
-  ,avg_f_int_sq
-  ,avg_f_int_weight
-  ,avg_weighted_f_int
-  ,avg_weighted_f_int_sq
-  )
-  SELECT runcat
-        ,band
-        ,stokes
-        ,f_datapoints
-        ,avg_f_peak
-        ,avg_f_peak_sq
-        ,avg_f_peak_weight
-        ,avg_weighted_f_peak
-        ,avg_weighted_f_peak_sq
-        ,avg_f_int
-        ,avg_f_int_sq
-        ,avg_f_int_weight
-        ,avg_weighted_f_int
-        ,avg_weighted_f_int_sq
-    FROM temprunningcatalog
-   WHERE f_datapoints = 1
-    """
-    cursor = execute(query, commit=True)
-    cnt = cursor.rowcount
-    if cnt > 0:
-        logger.info("Inserted fluxes for %s null_detections" % cnt)
-
+    logger.debug("Inserted %s 1-to-1 null detections in assocxtrsource" % cnt)

@@ -16,8 +16,6 @@ from tkp.config import initialize_pipeline_config, get_database_config
 from tkp.db import consistency as dbconsistency
 from tkp.db import Image
 from tkp.db import general as dbgen
-from tkp.db import monitoringlist as dbmon
-from tkp.db import nulldetections as dbnd
 from tkp.db import associations as dbass
 from tkp.distribute import Runner
 from tkp.distribute.common import (load_job_config, dump_configs_to_logdir,
@@ -26,12 +24,13 @@ from tkp.distribute.common import (load_job_config, dump_configs_to_logdir,
                                    group_per_timestep)
 from tkp.db.configstore import store_config, fetch_config
 from tkp.steps.persistence import create_dataset, store_images
-from tkp.steps.source_extraction import forced_fits
+import tkp.steps.forced_fitting as steps_ff
+
 
 logger = logging.getLogger(__name__)
 
 
-def run(job_name, mon_coords=[], distributor='multiproc'):
+def run(job_name, supplied_mon_coords=[], distributor='multiproc'):
     pipe_config = initialize_pipeline_config(
         os.path.join(os.getcwd(), "pipeline.cfg"),
         job_name)
@@ -74,6 +73,8 @@ def run(job_name, mon_coords=[], distributor='multiproc'):
 
     if job_config.persistence.dataset_id == -1:
         store_config(job_config, dataset_id)  # new data set
+        if supplied_mon_coords:
+            dbgen.insert_monitor_positions(dataset_id,supplied_mon_coords)
     else:
         job_config_from_db = fetch_config(dataset_id)  # existing data set
         if check_job_configs_match(job_config, job_config_from_db):
@@ -84,6 +85,9 @@ def run(job_name, mon_coords=[], distributor='multiproc'):
             logger.warn("Using job config settings loaded from database, see "
                         "log dir for details")
         job_config = job_config_from_db
+        if supplied_mon_coords:
+            logger.warn("Monitor positions supplied will be ignored. "
+                        "(Previous dataset specified)")
 
     dump_configs_to_logdir(log_dir, job_config, pipe_config)
 
@@ -151,24 +155,14 @@ def run(job_name, mon_coords=[], distributor='multiproc'):
             dbass.associate_extracted_sources(
                 image.id,deRuiter_r=deruiter_radius,
                 new_source_sigma_margin=new_src_sigma)
-            logger.info("performing null detections")
-            nd_ids_pos = dbnd.get_nulldetections(image.id)
-            logger.info("Found %s null detections" % len(nd_ids_pos))
-            # Only if we found null_detections the next steps are necessary
-            if len(nd_ids_pos) > 0:
-                logger.info("performing forced fits")
-                null_detections = [(ra,decl) for ids, ra, decl in nd_ids_pos]
-                ff_nd = forced_fits(image.url, null_detections, se_parset)
-                runcats = [ids for ids, ra, decl in nd_ids_pos]
-                dbgen.insert_extracted_sources(image.id, ff_nd, 'ff_nd',
-                                               ff_runcatids=runcats)
-                logger.info("adding null detections")
-                dbnd.associate_nd(image.id)
-                #dbnd.associate_nd2(image.id, runcats, ff_nd)
-            if len(mon_coords) > 0:
-                logger.info("performing monitoringlist")
-                ff_ms = forced_fits(image.url, mon_coords, se_parset)
-                dbgen.insert_extracted_sources(image.id, ff_ms, 'ff_ms')
-                logger.info("adding monitoring sources")
-                dbmon.associate_ms(image.id)
+
+            all_fit_posns, all_fit_ids = steps_ff.get_forced_fit_requests(image)
+            if all_fit_posns:
+                successful_fits, successful_ids = steps_ff.perform_forced_fits(
+                    all_fit_posns, all_fit_ids, image.url, se_parset)
+
+                steps_ff.insert_and_associate_forced_fits(image.id,successful_fits,
+                                                          successful_ids)
+
+
         dbgen.update_dataset_process_end_ts(dataset_id)

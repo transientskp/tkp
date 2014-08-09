@@ -21,7 +21,7 @@ def associate_extracted_sources(image_id, deRuiter_r, new_source_sigma_margin):
     "De Ruiter radius", see Chapters 2 & 3 of Scheers' thesis.
     """
 
-    logger.info("Using a De Ruiter radius of %s" % (deRuiter_r,))
+    logger.debug("Using a De Ruiter radius of %s" % (deRuiter_r,))
     ##This is used as a check that everything from the sourcefinder is sensible.
     ##Currently switched off as it's incompatible with sources about the meridian.
 #    _delete_bad_blind_extractions(conn, image_id)
@@ -78,8 +78,12 @@ def associate_extracted_sources(image_id, deRuiter_r, new_source_sigma_margin):
     # _process_1_to_1()
     _insert_1_to_1_assoc()
     _update_1_to_1_runcat()
-    _update_1_to_1_runcat_flux()  # update flux in existing band
-    _insert_1_to_1_runcat_flux()  # insert flux for new band
+    n_updated_rf = _update_1_to_1_runcat_flux()  # update flux in existing band
+    if n_updated_rf:
+        logger.debug("Updated 1-to-1 fluxes for %s sources" % n_updated_rf)
+    n_new_rf = _insert_1_to_1_runcat_flux()  # insert flux for new band
+    if n_new_rf:
+        logger.debug("Inserted new fluxes for %s sources" % n_new_rf)
     #+-------------------------------------------------------+
     #| Here we take care of the extracted sources that could |
     #| not be associated with any runningcatalog source      |
@@ -767,7 +771,7 @@ INSERT INTO temprunningcatalog
 """
     #mw = _check_meridian_wrap(conn, image_id)
     if mw['q_across'] == True:
-        logger.info("Search across 0/360 meridian: %s" % mw)
+        logger.debug("Search across 0/360 meridian: %s" % mw)
         query = q_across_ra0
 
     args = {'image_id': image_id, 'deRuiter': deRuiter_r}
@@ -1470,10 +1474,6 @@ def _update_1_to_1_runcat_flux():
 
     If the runcat, band, stokes entry does exist in runcat_flux,
     it will be updated with the values from tempruncat.
-
-    NOTE: It is important to guarantee the sequence:
-          First update the existing entries,
-          then the insert the new entries (next function).
     """
     query = """\
 UPDATE runningcatalog_flux
@@ -1560,12 +1560,12 @@ UPDATE runningcatalog_flux
                   AND temprunningcatalog.band = runningcatalog_flux.band
                   AND temprunningcatalog.stokes = runningcatalog_flux.stokes
                   AND temprunningcatalog.inactive = FALSE
+                  AND temprunningcatalog.f_datapoints > 1
               )
 """
     cursor = tkp.db.execute(query, commit=True)
-    cnt = cursor.rowcount
-    if cnt > 0:
-        logger.info("Updated flux for %s sources" % cnt)
+    return cursor.rowcount
+
 
 
 def _insert_1_to_1_runcat_flux():
@@ -1578,8 +1578,6 @@ def _insert_1_to_1_runcat_flux():
     but not in the current band, so there does not exist an entry
     for this band.
 
-    NOTE: It is important to guarantee the sequence:
-          First do the update (previous function), then the insert.
     """
 
     query = """\
@@ -1615,19 +1613,11 @@ INSERT INTO runningcatalog_flux
         ,avg_weighted_f_int_sq
     FROM temprunningcatalog
    WHERE inactive = FALSE
-     AND NOT EXISTS (SELECT rf.runcat
-                       FROM runningcatalog_flux rf
-                           ,temprunningcatalog tr
-                      WHERE rf.runcat = tr.runcat
-                        AND rf.band = tr.band
-                        AND rf.stokes = tr.stokes
-                        AND tr.inactive = FALSE
-                    )
+     AND f_datapoints=1
 """
     cursor = tkp.db.execute(query, commit=True)
-    cnt = cursor.rowcount
-    if cnt > 0:
-        logger.info("Inserted new fluxes for %s sources" % cnt)
+    return cursor.rowcount
+
 
 
 def _insert_new_runcat(image_id):
@@ -1700,6 +1690,7 @@ INSERT INTO runningcatalog
                 ,image i0
            WHERE x0.image = i0.id
              AND x0.image = %s
+             AND x0.extract_type = 0
          ) new_src
          LEFT OUTER JOIN temprunningcatalog tmprc
          ON new_src.xtrsrc = tmprc.xtrsrc
@@ -1708,17 +1699,15 @@ INSERT INTO runningcatalog
     cursor = tkp.db.execute(query, (image_id,), True)
     ins = cursor.rowcount
     if ins > 0:
-        logger.info("Added %s new sources to runningcatalog" % ins)
+        logger.debug("Added %s new sources to runningcatalog" % ins)
 
 
 
 def _insert_new_runcat_flux(image_id):
-    """Insert previously unknown sources into the ``runningcatalog_flux`` table.
+    """
+	Insert previously unknown sources into the ``runningcatalog_flux`` table.
 
-    Extractedsources for which not a counterpart was found in the
-    runningcatalog, will be added as a new source to the assocxtrsource,
-    runningcatalog and runningcatalog_flux tables.
-
+	(i.e. those without *any* previous runcat-counterpart)
     """
     query = """\
 INSERT INTO runningcatalog_flux
@@ -1757,6 +1746,7 @@ INSERT INTO runningcatalog_flux
                  LEFT OUTER JOIN temprunningcatalog tmprc
                  ON x1.id = tmprc.xtrsrc
             WHERE x1.image = %(image_id)s
+              AND x1.extract_type = 0
               AND tmprc.xtrsrc IS NULL
           ) new_src
         ,runningcatalog r0
@@ -1889,6 +1879,7 @@ INSERT INTO assocxtrsource
                  LEFT OUTER JOIN temprunningcatalog tmprc
                  ON x1.id = tmprc.xtrsrc
             WHERE x1.image = %(image_id)s
+              AND x1.extract_type = 0
               AND tmprc.xtrsrc IS NULL
           ) new_src
         ,runningcatalog r0
@@ -2014,6 +2005,7 @@ INSERT INTO newsource
                       FROM extractedsource x1
                       WHERE x1.image = %(image_id)s
                       AND x1.id NOT IN (SELECT xtrsrc FROM temprunningcatalog)
+                      AND x1.extract_type = 0
                     ) unassoc_xtr
                    ,runningcatalog runcat1
                    ,assocskyrgn asky1
@@ -2037,7 +2029,7 @@ INSERT INTO newsource
     cursor = tkp.db.execute(query, params, commit=True)
     ins = cursor.rowcount
     if ins > 0:
-        logger.info("Added %s new sources to newsource table" % (ins,))
+        logger.debug("Added %s new sources to newsource table" % (ins,))
 
 
 def _update_ff_runcat_extractedsource():
@@ -2057,7 +2049,7 @@ UPDATE extractedsource
     cursor = tkp.db.execute(query, commit=True)
     cnt = cursor.rowcount
     if cnt > 0:
-        logger.info("Unset ff_runcat for %s extractedsources" % cnt)
+        logger.debug("Unset ff_runcat for %s extractedsources" % cnt)
 
 def _delete_inactive_runcat():
     """Delete the one-to-many associations from temprunningcatalog,

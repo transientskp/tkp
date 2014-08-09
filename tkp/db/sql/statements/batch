@@ -8,6 +8,7 @@ tables/skyregion.sql
 tables/image.sql
 tables/extractedsource.sql
 tables/runningcatalog.sql
+tables/monitor.sql
 tables/assocxtrsource.sql
 tables/assocskyrgn.sql
 tables/runningcatalog_flux.sql

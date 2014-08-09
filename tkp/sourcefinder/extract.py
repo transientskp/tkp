@@ -974,24 +974,21 @@ class Detection(object):
 
         returns: a list of tuples containing all relevant fields
         """
-        # MonetDB doesn't recognize numpy.float64 values, so
-        # in order to let the database accept the values, we convert them
-        # to float
         return [
-            float(self.ra.value),
-            float(self.dec.value),
-            float(self.ra.error),
-            float(self.dec.error),
-            float(self.peak.value),
-            float(self.peak.error),
-            float(self.flux.value),
-            float(self.flux.error),
-            float(self.sig),
-            float(self.smaj_asec.value),
-            float(self.smin_asec.value),
-            float(self.theta_celes.value),
-            float(ew_sys_err),
-            float(ns_sys_err),
-            float(self.error_radius),
+            self.ra.value,
+            self.dec.value,
+            self.ra.error,
+            self.dec.error,
+            self.peak.value,
+            self.peak.error,
+            self.flux.value,
+            self.flux.error,
+            self.sig,
+            self.smaj_asec.value,
+            self.smin_asec.value,
+            self.theta_celes.value,
+            ew_sys_err,
+            ns_sys_err,
+            self.error_radius,
             self.gaussian
         ]

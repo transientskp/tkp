@@ -96,24 +96,26 @@ or n-1.
 
 assocskyrgn
 ===========
+
 (See also :ref:`skyregion table <schema-skyregion>`.)
+
 This table records which :ref:`runningcatalog <schema-runningcatalog>` sources
-we expect to see in any given skyregion. This serves two purposes: 
-it allows us to determine when we *do not* see previously detected sources, 
-presumably because they have dropped in flux 
-(see :py:func:`tkp.db.nulldetections.get_nulldetections`).
-It also allows us to determine whether a new runningcatalog entry (i.e. 
-a newly detected source without associated historical detections) is being 
-detected for the first time because it is actually a new transient, or 
-if it is simply the first time that region of sky has been surveyed
-(see :py:func:`tkp.db.associations._determine_newsource_previous_limits`).
+we expect to see in any given skyregion. This serves two purposes: it allows
+us to determine when we *do not* see previously detected sources, presumably
+because they have dropped in flux (see
+:py:func:`tkp.db.nulldetections.get_nulldetections`).  It also allows us to
+determine whether a new runningcatalog entry (i.e.  a newly detected source
+without associated historical detections) is being detected for the first time
+because it is actually a new transient, or if it is simply the first time that
+region of sky has been surveyed (see
+:py:func:`tkp.db.associations._determine_newsource_previous_limits`).
 
 This table is updated under 2 circumstances:
 
 - A new skyregion is processed, and associations must be made with pre-existing
   runcat entries (see SQL function ``updateSkyRgnMembers``).
 - A new runningcatalog source is added, and must be associated with pre-existing
-  skyregions 
+  skyregions
   (see :py:func:`tkp.db.associations._insert_new_runcat_skyrgn_assocs`).
 
 **runcat**
@@ -125,6 +127,7 @@ This table is updated under 2 circumstances:
 **distance_deg**
    Records the angular separation between the runningcatalog source and the
    skyregion centre, at time of first association.
+
 
 .. _dataset:
 
@@ -241,51 +244,53 @@ The TraP may add forced-fit entries to this table as well. Then
     sourcefinder procedures.
 
 **ra_err**
-    The 1-sigma error on ra [in degrees], ie. the square root of the 
-    quadratic sum of the fitted error (``ra_fit_err``) and the systematic 
-    error (``ew_sys_err``) after the latter has been corrected for 
-    ra inflation depending on declination. 
-    It is calculated by the database at insertion time.
-    Note that this error is declination dependent and the source
-    lies in the range [ra - ra_err, ra + ra_err].
+    The 1-sigma error on ra [in degrees], ie. the square root of the quadratic
+    sum of the fitted error (``ra_fit_err``) and the systematic error
+    (``ew_sys_err``) after the latter has been corrected for ra inflation
+    depending on declination.  It is calculated by the database at insertion
+    time.  Note that this error is declination dependent and the source lies
+    in the range [ra - ra_err, ra + ra_err].
 
 **decl_err**
-    The 1-sigma error on declination [in degrees], ie. the square root of the 
-    quadratic sum of the fitted error (``decl_fit_err``) and the systematic error
-    (``ns_sys_err``), calculated by the database at insertion time.
-    Note that the source lies in the range [decl - decl_err, decl + decl_err]
+    The 1-sigma error on declination [in degrees], ie. the square root of the
+    quadratic sum of the fitted error (``decl_fit_err``) and the systematic
+    error (``ns_sys_err``), calculated by the database at insertion time.
+    Note that the source lies in the range [``decl - decl_err``, ``decl +
+    decl_err``]
 
 **uncertainty_ew**
-    The 1-sigma on-sky error on ra (in the east-west direction) [in degrees], 
-    ie. the square root of the quadratic sum of the error radius (``error_radius``) 
-    and the systematic error (``ew_sys_err``).
-    It is calculated by the database at insertion time.
-    Note that this is a positional uncertainty and is declination independent. 
-    This error is being used in the De Ruiter calculations.
+    The 1-sigma on-sky error on ``ra`` (in the east-west direction) [in degrees],
+    ie. the square root of the quadratic sum of the error radius
+    (``error_radius``) and the systematic error (``ew_sys_err``).  It is
+    calculated by the database at insertion time.  Note that this is a
+    positional uncertainty and is declination independent.  This error is
+    being used in the De Ruiter calculations.
 
 **uncertainty_ns**
     Analogous to uncertainty_ew.
 
 **ra_fit_err**
-    The 1-sigma error on ra [in degrees] from the source gaussian fitting, calculated by the
-    sourcefinder procedures. It is important to note that a source's fitted ra error increases
-    towards the poles, and is thus declination dependent (see also error_radius). 
+    The 1-sigma error on ``ra`` [degrees] from the source gaussian fitting,
+    calculated by the sourcefinder procedures. It is important to note that a
+    source's fitted ra error increases towards the poles, and is thus
+    declination dependent (see also error_radius).
 
 **decl_fit_err**
     The 1-sigma error from the source fitting for declination [in degrees],
-    calculated by the sourcefinder procedures (see also error_radius). 
+    calculated by the sourcefinder procedures (see also error_radius).
 
 **ew_sys_err**
-    The systematic error on RA [arcsec]. 
-	(As an on-sky angular uncertainty, independent of Declination.)
-	It is a telescope dependent error and is provided by the user in the parset file.
+    The systematic error on RA [arcsec].  (As an on-sky angular uncertainty,
+    independent of Declination.) It is a telescope dependent error and is
+    provided by the user in the parset file.
 
 **ns_sys_err**
     Analogous to ew_sys_err.
 
 **error_radius**
-    Estimate of the absolute angular error on a source's central position [arcsec]. 
-    It is a pessimistic estimate, because it takes the sum of the error along the X and Y axes.
+    Estimate of the absolute angular error on a source's central position
+    [arcsec].  It is a pessimistic estimate, because it takes the sum of the
+    error along the X and Y axes.
 
 **x, y, z**
     Cartesian coordinate representation of (ra,decl), calculated by the
@@ -382,7 +387,6 @@ the nearest MHz, and assuming a band width of 1 MHz.
     The high end of the frequency band (Hz).
 
 
-
 image
 =====
 
@@ -432,45 +436,44 @@ dataset).
     The char value is converted by the database to one of the four (tiny)
     integers.
 
-**tau_time** 
-    The integration time (in seconds) of the image. 
-    The value originates or is read from the CASA LOFAR_OBSERVATION table 
-    by differencing the ``OBSERVATION_END`` and ``OBSERVATION_START`` data
-    fields. 
+**tau_time**
+    The integration time (in seconds) of the image.  The value originates or
+    is read from the CASA LOFAR_OBSERVATION table by differencing the
+    ``OBSERVATION_END`` and ``OBSERVATION_START`` data fields.
 
-**freq_eff** 
-    The effective frequency (or synonymously rest frequency) (in Hz) at 
-    which the observation was carried out. 
-    The value originates or is read from the CASA Main table in the coords
-    subsection from the ``spectralX`` record and the ``crval`` field. 
-    Note that in the case of FITS files the header keywords representing the
-    effective frequency are not uniquely defined and may differ per FITS file. 
+**freq_eff**
+    The effective frequency (or synonymously rest frequency) (in Hz) at which
+    the observation was carried out.  The value originates or is read from the
+    CASA Main table in the coords subsection from the ``spectralX`` record and
+    the ``crval`` field.  Note that in the case of FITS files the header
+    keywords representing the effective frequency are not uniquely defined and
+    may differ per FITS file.
 
-**freq_bw** 
-    The frequency bandwidth (in Hz) of the observation. 
-    Value originates or is read from the CASA Main table in the coords
-    subsection from the ``spectralX`` record and the ``cdelt`` field. N
-    This is a required value and when it is not available an error is thrown.
+**freq_bw**
+    The frequency bandwidth (in Hz) of the observation.  Value originates or
+    is read from the CASA Main table in the coords subsection from the
+    ``spectralX`` record and the ``cdelt`` field. N This is a required value
+    and when it is not available an error is thrown.
 
-**taustart_ts** 
-    The timestamp of the start of the observation, originating or read from 
+**taustart_ts**
+    The timestamp of the start of the observation, originating or read from
     the CASA LOFAR_OBSERVATION table from the ``OBSERVATION_START`` data field.
 
 **rb_smaj**
-    The semi-major axis of the restoring beam, in degrees. 
+    The semi-major axis of the restoring beam, in degrees.
     Full major axis value originates or is read from the CASA Main table in the imageinfor
     subsection from the ``restoringbeam`` record and is converted at db insertion time.
 
-**rb_smin** 
-    The semi-minor axis of the restoring beam, in degrees. 
+**rb_smin**
+    The semi-minor axis of the restoring beam, in degrees.
     Full minor axis value originates or is read from the CASA Main table in the imageinfor
     subsection from the ``restoringbeam`` record and is converted at db insertion time.
 
-**rb_pa** 
+**rb_pa**
     The position angle of the restoring beam (from north to east to the major
-    axis), in degrees. 
+    axis), in degrees.
     Value originates or is read from the CASA Main table in the imageinfor
-    subsection from the ``restoringbeam`` record. 
+    subsection from the ``restoringbeam`` record.
 
 **fwhm_arcsec**
     The full width half maximum of the primary beam, in arcsec. Value not yet
@@ -492,14 +495,17 @@ dataset).
     The detection and analysis thresholds (as a multiple of the local RMS value)
     used in the source extraction process for this image.
 
-**url** 
+**url**
     The url of the physical location of the image at the time of processing.
     NOTE that this needs to be updated when the image is moved.
 
-**node(s)** 
+**node(s)**
     Determine the current and number of nodes in case of a sharded database
     set-up.
 
+
+node
+====
 
 This table keeps track of zones (declinations) of the stored sources on the
 nodes in a sharded database configuration. Every node in such a set-up will

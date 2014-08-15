@@ -7,11 +7,8 @@ CREATE VIEW augmented_runningcatalog
         r.*,
         a.v_int v_int,
         a.eta_int eta_int,
-        n.id newsource,
-
         (e2.f_int / i.rms_max) as sigma_max,
         (e2.f_int / i.rms_min) as sigma_min
-
     FROM
         -- second get the peak flux per runcat and band
         (SELECT

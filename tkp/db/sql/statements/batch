@@ -34,3 +34,7 @@ procedures/BuildNodes.sql
 # initialisation
 #
 init/tables.sql
+#
+# views
+#
+views/augmented_runningcatalog.sql

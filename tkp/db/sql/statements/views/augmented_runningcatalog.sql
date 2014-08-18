@@ -5,8 +5,8 @@ CREATE VIEW augmented_runningcatalog
     AS SELECT
         -- and finally construct the final table
         r.*,
-        a.v_int v_int,
-        a.eta_int eta_int,
+        a.v_int as v_int,
+        a.eta_int as eta_int,
         (e2.f_int / i.rms_max) as sigma_max,
         (e2.f_int / i.rms_min) as sigma_min
     FROM
@@ -17,9 +17,9 @@ CREATE VIEW augmented_runningcatalog
         FROM
             -- first get the maximum timestamps per runcat and band
             (SELECT
-                a.runcat runcat_id,
-                i.band band,
-                max(i.taustart_ts) moment
+                a.runcat as runcat_id,
+                i.band as band,
+                max(i.taustart_ts) as moment
             FROM
                 assocxtrsource a
                     JOIN extractedsource as e ON a.xtrsrc = e.id

@@ -255,5 +255,13 @@ intersphinx_mapping = {
 #    'scipy': ('http://docs.scipy.org/doc/scipy/reference/', None),
     }
 
-#Warn when function references cannot be resolved:
-nitpicky=True
+# Warn when references cannot be resolved:
+nitpicky = True
+nitpick_ignore = [
+    ("py:obj", "numpy.ndarray"),
+    ("py:obj", "dict/list/tuple"),
+    ("py:obj", "3-tuple of float"),
+    ("py:obj", "3-tuple"),
+    ("py:obj", "pyrap.images.image"),
+    ("py:obj", "pyrap.tables.table")
+]

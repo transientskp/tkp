@@ -1,5 +1,8 @@
-import math
+"""
+TKP utility routines.
+"""
 
+import math
 
 def nice_format(f):
     if f > 9999 or f < 0.01:

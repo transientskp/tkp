@@ -1,15 +1,6 @@
-# -*- coding: utf-8 -*-
-#
-# LOFAR Transients Key Project
-#
-# Hanno Spreeuw
-#
-# discovery@transientskp.org
-#
-#
-# Some generic utility routines for number handling and
-# calculating (specific) variances
-#
+"""
+Definition of a two dimensional elliptical Gaussian.
+"""
 
 from numpy import exp, log, cos, sin
 

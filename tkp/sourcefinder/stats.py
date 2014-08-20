@@ -1,13 +1,7 @@
-# -*- coding: utf-8 -*-
-#
-# LOFAR Transients Key Project
-#
-# discovery@transientskp.org
-#
-#
-# Some generic utility routines for number handling and
-# calculating (specific) variances
-#
+"""
+Generic utility routines for number handling and calculating (specific)
+variances used by the TKP sourcefinder.
+"""
 
 import numpy
 from numpy.ma import MaskedArray
@@ -32,7 +26,6 @@ def var_helper(N):
 
 
 def indep_pixels(N, beam):
-    """ """
     corlengthlong, corlengthshort = calculate_correlation_lengths(
         beam[0], beam[1])
     correlated_area = 0.25 * numpy.pi * corlengthlong * corlengthshort

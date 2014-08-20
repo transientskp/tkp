@@ -62,7 +62,7 @@ master_doc = 'index'
 project = u'LOFAR Transients Pipeline'
 author = u'LOFAR Transients Key Science Project'
 import datetime
-start_year = 2011
+start_year = 2006
 if datetime.datetime.now().year == start_year:
     years = u"%d" % start_year
 else:

@@ -1,26 +1,14 @@
 """
+This package contains the Python modules used by the LOFAR Transients Pipeline
+(TraP). This includes:
 
-.. moduleauthor:: TKP <discovery@transientskp.org>
-copyright 2011, LOFAR Transients Key Project
+- Pipeline configuration management;
+- Task distribution;
+- Image loading and quality control;
+- Source detection and measurement;
+- Storing and associating sources in the database.
 
-
-The TKP package contains python modules used by the LOFAR Transients
-Key Project. These modules perform operations necessary to:
-
-- extract sources from (radio) images
-- store these sources in a database
-- match sources with cataloged sources
-- detect variable sources
-- classify variable sources
-
-
-The division in subpackages follows these steps roughly:
-
-- sourcefinder routines
-- database routines (storage, association, variable detection)
-- classification routines
-- utility routines
-
+For details, see http://docs.transientskp.org/.
 """
 
 __version__ = "2.0-pre"

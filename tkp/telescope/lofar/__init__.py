@@ -1,5 +1,5 @@
 """
-functions for calculating LOFAR hardware specific properties.
+Functions for calculating LOFAR hardware specific properties.
 """
 import tkp.telescope.lofar.antennaarrays
 import tkp.telescope.lofar.beam

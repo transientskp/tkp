@@ -1,29 +1,12 @@
-# -*- coding: utf-8 -*-
-
 """
-
-.. module:: tkp.utility.sigmaclip
-   :synopsis: Generic sigmaclip routine
-.. moduleauthor:: TKP, Evert Rol <discovery@transientskp.org>
+Generic kappa-sigma clipping routine.
 
 Note: this does *not* replace the specialized sigma_clip function in
 utilities.py
-
 """
 
 from __future__ import division
-
-
-__author__ = 'Evert Rol / TKP software group'
-__email__ = 'evert.astro@gmail.com'
-__contact__ = __author__ + ', ' + __email__
-__copyright__ = '2010, University of Amsterdam'
-__version__ = '0.2'
-__last_modification__ = '2010-08-12'
-
-
 import numpy
-
 
 def clip(data, mean, sigma, siglow, sighigh, indices=None):
     """Perform kappa-sigma clipping of data around mean

@@ -10,6 +10,7 @@ Modules from the :mod:`tkp.db` package.
    :maxdepth: 2
 
    introduction
+   root
    database
    association
    general

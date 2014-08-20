@@ -16,7 +16,7 @@ Subpackages
    :maxdepth: 2
 
 
-   accessors
+   accessors/index
    database/index
    sourcefinder/index
    utility/index

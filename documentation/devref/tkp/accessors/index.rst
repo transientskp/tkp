@@ -96,6 +96,6 @@ metadata which must be provided for LOFAR quality control:
 API Documentation
 -----------------
 
-.. automodule:: tkp.accessors
-   :synopsis: Accessor (image container) classes
-   :members:
+.. toctree::
+   utility
+   accessor_types

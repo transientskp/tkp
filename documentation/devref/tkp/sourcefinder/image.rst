@@ -9,7 +9,7 @@ overhead. The Image class handles the actual data (a (2D) numpy
 array), the world coordinate system (a tkp.utility.coordinates.WCS
 instance) and the beam information. While these three objects are
 supplied upon instantiation of an Image, one can use a
-:class:`tkp.accessors.DataAccessor` object to automatically
+:class:`tkp.accessors.dataaccessor.DataAccessor` object to automatically
 derive these from the image file itself (provided the header
 information in the file is correct).
  

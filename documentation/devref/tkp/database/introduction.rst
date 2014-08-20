@@ -17,14 +17,15 @@ main three modules are:
 Database
 ========
 
-The database module provides a single class, :py:class:`Database`, which takes
-care of the connection to the database. It provides a `connection` and
-a `cursor` object to the database, as well as a few shortcut utility functions
-for executing SQL queries.
+The database module provides a single class,
+:py:class:`tkp.db.database.Database`, which takes care of the connection to
+the database. It provides a `connection` and a `cursor` object to the
+database, as well as a few shortcut utility functions for executing SQL
+queries.
 
-The most typical use for the :py:class:`Database` class is something as follows,
-assuming the default login settings (taking from the tkp configuration file)
-are appropriate::
+The most typical use for the :py:class:`tkp.db.database.Database` class is
+something as follows, assuming the default login settings (taking from the tkp
+configuration file) are appropriate::
 
     from contextlib import closing
 

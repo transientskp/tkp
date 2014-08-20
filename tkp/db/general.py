@@ -325,13 +325,17 @@ VALUES
 
 
 def lightcurve(xtrsrcid):
-    """Obtain a light curve for a specific extractedsource
+    """
+    Obtain a light curve for a specific extractedsource
+
     Args:
-        xtrsrcid (int): the source identifier that corresponds to a
-        point on the light curve. Note that the point does not have to
-        be the start (first) point of the light curve.
+
+        xtrsrcid (int): the source identifier that corresponds to a point on
+            the light curve. Note that the point does not have to be the start
+            (first) point of the light curve.
+
     Returns:
-        A list of tuples, each tuple containing (in order):
+        list: a list of tuples, each containing:
             - observation start time as a datetime.datetime object
             - integration time (float)
             - integrated flux (float)

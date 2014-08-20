@@ -247,11 +247,12 @@ man_pages = [
 # Autoclass configuration
 autoclass_content = 'both'
 
-# Example configuration for intersphinx: refer to the Python standard library.
+# NumPy and SciPy docs appear to have been down for ~ a week as of late August
+# 2014, disabling for now.
 intersphinx_mapping = {
     'python': ('http://docs.python.org/', None),
-    'numpy': ('http://docs.scipy.org/doc/numpy/', None),
-    'scipy': ('http://docs.scipy.org/doc/scipy/reference/', None),
+#    'numpy': ('http://docs.scipy.org/doc/numpy/', None),
+#    'scipy': ('http://docs.scipy.org/doc/scipy/reference/', None),
     }
 
 #Warn when function references cannot be resolved:

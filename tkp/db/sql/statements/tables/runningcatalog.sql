@@ -1,6 +1,6 @@
 CREATE TABLE runningcatalog
   (id SERIAL
-  ,xtrsrc INT NOT NULL
+  ,xtrsrc INT 
   ,dataset INT NOT NULL
   ,datapoints INT NOT NULL
   ,zone INT NOT NULL
@@ -22,7 +22,7 @@ CREATE TABLE runningcatalog
 {% ifdb postgresql %}
   ,PRIMARY KEY(id)
 {% endifdb %}
-  ,UNIQUE (xtrsrc)
+--  ,UNIQUE (xtrsrc)
   ,FOREIGN KEY (xtrsrc) REFERENCES extractedsource (id)
   ,FOREIGN KEY (dataset) REFERENCES dataset (id)
   )

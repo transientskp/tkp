@@ -29,6 +29,7 @@ CREATE TABLE extractedsource
   ,extract_type SMALLINT NULL
   ,fit_type SMALLINT NULL
   ,ff_runcat INT NULL 
+  ,ff_monitor INT NULL 
   ,node SMALLINT NOT NULL DEFAULT %NODE%
   ,nodes SMALLINT NOT NULL DEFAULT %NODES%
 {% ifdb postgresql %}

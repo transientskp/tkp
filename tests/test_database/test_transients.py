@@ -584,7 +584,6 @@ class TestIncreasingImageRMS(unittest.TestCase):
             lightcurve=defaultdict(lambda :steady_src_flux)
         )
 
-
         image, blind_xtr,forced_fits = insert_image_and_simulated_sources(
                 self.dataset,self.img_params[0],[steady_src],
                 self.new_source_sigma_margin)
@@ -596,6 +595,7 @@ class TestIncreasingImageRMS(unittest.TestCase):
                 self.new_source_sigma_margin)
         self.assertEqual(len(blind_xtr),0)
         self.assertEqual(len(forced_fits),1)
+
         get_sources_filtered_by_final_variability(dataset_id=self.dataset.id,
                                     **self.search_params)
 
@@ -786,7 +786,6 @@ class TestPreviousLimitsImageId(unittest.TestCase):
 
         self.assertEqual(len(newsources),len(mock_sources))
         newsource_properties = newsources[0]
-        print "Image IDs:", image_ids
         self.assertEqual(newsource_properties['previous_limits_image'],
                          image_ids[4])
 

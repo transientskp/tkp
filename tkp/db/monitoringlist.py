@@ -4,14 +4,51 @@ A collection of back end subroutines (mostly SQL queries).
 This module contains the routines to deal with the monitoring
 sources, provided by the user via the command line.
 """
-import logging, sys
+import logging, sys, math
 
 from tkp.db import execute as execute
 from tkp.db.associations import _empty_temprunningcatalog as _del_tempruncat
 from tkp.db.associations import ONE_TO_ONE_ASSOC_QUERY
+from tkp.db.database import sanitize_db_inputs
+from tkp.utility.coordinates import eq_to_cart
 
 logger = logging.getLogger(__name__)
 
+def get_monitor_entries(image_id):
+    """
+    Returns the monitoring sources relevant to this image:
+
+      * The sources to be monitored for every dataset are
+        registered in the runningcatalog table as mon_src = TRUE
+      * Furthermore, they should fall within the skyregion
+        of the image, and within the image extraction radius
+
+    NB This runs *after* the source association.
+
+    Returns: list of tuples [(runcatid, ra, decl)]
+    """
+
+    # For now, we keep the positional lookup simple,
+    # by only using the dot product,
+    # assuming the number of monitoring sources is small.
+
+    query = """\
+SELECT r.id
+      ,r.wm_ra
+      ,r.wm_decl
+  FROM image i
+      ,skyregion s
+      ,runningcatalog r
+ WHERE i.id = %(image_id)s
+   AND i.skyrgn = s.id
+   AND r.dataset = i.dataset
+   AND r.mon_src = TRUE
+   AND r.x * s.x + r.y * s.y + r.z * s.z > COS(radians(s.xtr_radius))
+"""
+    qry_params = {'image_id': image_id}
+    cursor = execute(query, qry_params)
+    res = cursor.fetchall()
+    return res
 
 def associate_ms(image_id):
     """
@@ -26,8 +63,7 @@ def associate_ms(image_id):
     the new datapoints if the (monitoring) source already existed,
     otherwise they are inserted as a new source.
     The source pair is appended to the light-curve table
-    (assocxtrsource), with a type = 8 (for the first occurence)
-    or type = 9 (for existing runcat sources).
+    (assocxtrsource), with a type = 8.
     After all this, the temporary table is emptied again.
     """
 
@@ -39,6 +75,7 @@ def associate_ms(image_id):
     #| might be known by position, but is new in a frequency band. |
     #+-------------------------------------------------------------+
     _update_runcat()
+    _update_runcat_xtrsrc()
     _update_runcat_flux() # update flux in existing band
     _insert_runcat_flux() # insert flux for new band
     _insert_1_to_1_assoc()
@@ -46,9 +83,9 @@ def associate_ms(image_id):
     #| Then we process the new sources, i.e., those that           |
     #| were fitted for the first time.                             |
     #+-------------------------------------------------------------+
-    _insert_new_runcat(image_id)
-    _insert_new_runcat_flux(image_id)
-    _insert_new_1_to_1_assoc(image_id)
+    #_insert_new_runcat(image_id)
+    #_insert_new_runcat_flux(image_id)
+    #_insert_new_1_to_1_assoc(image_id)
     _del_tempruncat()
 
 def _insert_tempruncat(image_id):
@@ -226,22 +263,15 @@ INSERT INTO temprunningcatalog
                 ,r.x
                 ,r.y
                 ,r.z
-            FROM runningcatalog r
+            FROM extractedsource x
                 ,image i
-                ,extractedsource x
-           WHERE i.id = %(image_id)s
-             AND r.dataset = i.dataset
-             AND x.image = i.id
-             AND x.image = %(image_id)s
+                ,runningcatalog r
+           WHERE x.image = %(image_id)s
              AND x.extract_type = 2
+             AND i.id = x.image
+             AND r.dataset = i.dataset
+             AND r.id = x.ff_monitor
              AND r.mon_src = TRUE
-             AND r.zone BETWEEN CAST(FLOOR(x.decl - x.error_radius/3600) AS INTEGER)
-                              AND CAST(FLOOR(x.decl + x.error_radius/3600) AS INTEGER)
-             AND r.wm_decl BETWEEN x.decl - x.error_radius/3600
-                               AND x.decl + x.error_radius/3600
-             AND r.wm_ra BETWEEN x.ra - alpha(x.error_radius/3600, x.decl)
-                             AND x.ra + alpha(x.error_radius/3600, x.decl)
-             AND r.x * x.x + r.y * x.y + r.z * x.z > COS(RADIANS(r.wm_uncertainty_ew))
          ) t0
          LEFT OUTER JOIN runningcatalog_flux rf
          ON t0.runcat = rf.runcat
@@ -330,9 +360,33 @@ def _update_runcat():
     if cnt > 0:
         logger.info("Updated %s monitoring sources in runcat" % cnt)
 
+def _update_runcat_xtrsrc():
+    """
+    Update the xtrsrc reference for the running catalog's first-time recording
+    """
+
+    query = """\
+        UPDATE runningcatalog
+           SET xtrsrc = (SELECT xtrsrc
+                           FROM temprunningcatalog
+                          WHERE temprunningcatalog.runcat = runningcatalog.id
+                            AND temprunningcatalog.datapoints = 1
+                        )
+         WHERE EXISTS (SELECT runcat
+                         FROM temprunningcatalog
+                        WHERE temprunningcatalog.runcat = runningcatalog.id
+                          AND temprunningcatalog.datapoints = 1
+                      )
+"""
+    cursor = execute(query, commit=True)
+    cnt = cursor.rowcount
+    if cnt > 0:
+        logger.info("Updated %s monitoring sources first entries in runcat" % cnt)
+
 def _update_runcat_flux():
-    """We only have to update those runcat fluxes that already had a fit,
-    so their f_datapoints is larger than 1. The ones had a fit in
+    """
+    We only have to update those runcat fluxes that already had a fit,
+    so their f_datapoints is larger than 1. The ones that had a fit in
     another band, but not in this are handled by the _insert_runcat_flux().
 
     """
@@ -429,7 +483,8 @@ UPDATE runningcatalog_flux
         logger.info("Updated fluxes for %s monitoring sources in runcat_flux" % cnt)
 
 def _insert_runcat_flux():
-    """Monitoring sources that were not yet fitted in this frequency band before,
+    """
+    Monitoring sources that were not yet fitted in this frequency band before,
     will be appended to it. Those have their first f_datapoint.
     """
 
@@ -476,9 +531,9 @@ INSERT INTO runningcatalog_flux
 def _insert_1_to_1_assoc():
     """
     The runcat-monitoring pairs are appended to the assocxtrsource
-    (light-curve) table as a type = 9 datapoint.
+    (light-curve) table as a type = 8 datapoint.
     """
-    cursor = execute(ONE_TO_ONE_ASSOC_QUERY, {'type': 9}, commit=True)
+    cursor = execute(ONE_TO_ONE_ASSOC_QUERY, {'type': 8}, commit=True)
     cnt = cursor.rowcount
     if cnt > 0:
         logger.info("Inserted %s runcat-monitoring source pairs in assocxtrsource" % cnt)
@@ -647,5 +702,67 @@ INSERT INTO assocxtrsource
     if cnt > 0:
         logger.info("Inserted %s new runcat-monitoring source pairs in assocxtrsource" % cnt)
 
+def insert_monitor_positions(ds_id, positions):
+    """
+    Add monitoring sources to the ``runningcatalog`` table. Only sources that do not
+    yet exist are added, which particularly might happen when rerunning datasets.
 
+    Args:
+        dataset_id (int): Positions will only be monitored when processing this
+                          dataset.
+        positions (list of tuples): List of (RA, decl) tuples in decimal degrees.
+    """
+
+    query0 = """\
+SELECT wm_ra
+      ,wm_decl
+  FROM runningcatalog
+ WHERE dataset = %(ds_id)s
+   AND mon_src = TRUE
+"""
+    qry_params = {'ds_id': ds_id}
+    cursor = execute(query0, qry_params)
+    existpos = cursor.fetchall()
+
+    monsrc = []
+    for pos in positions:
+        p = list(pos)
+        if (p[0],p[1]) not in existpos:
+            p.append(ds_id)                     # dataset id
+            p.append(0)                         # datapoints
+            p.append(int(math.floor(p[1])))     # zone
+            p.extend(eq_to_cart(p[0], p[1]))    # Cartesian x,y,z
+            p.extend((0,0))                     # wm_uncertainties ew,ns
+            p.extend((0,0,0,0,0,0))             # avg_*
+            p.append(True)                      # mon_src
+            monsrc.append(p)
+
+    values = [str(tuple(sanitize_db_inputs(msrc))) for msrc in monsrc]
+
+    query = """\
+INSERT INTO runningcatalog
+  (wm_ra
+  ,wm_decl
+  ,dataset
+  ,datapoints
+  ,zone
+  ,x
+  ,y
+  ,z
+  ,wm_uncertainty_ew
+  ,wm_uncertainty_ns
+  ,avg_ra_err
+  ,avg_decl_err
+  ,avg_wra
+  ,avg_wdecl
+  ,avg_weight_ra
+  ,avg_weight_decl
+  ,mon_src
+  )
+VALUES
+""" + ",".join(values)
+
+    cursor = execute(query, commit=True)
+    insert_num = cursor.rowcount
+    logger.info("Inserted %d monitoring sources in runningcatalog" % insert_num)
 

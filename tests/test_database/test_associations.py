@@ -289,7 +289,6 @@ class TestMixedSkyregions(unittest.TestCase):
             self.assertAlmostEqual(wm_ras[ctr], ra)
 
 
-#@unittest.skip
 @requires_database()
 class TestMeridianOne2One(unittest.TestCase):
     """
@@ -479,7 +478,7 @@ class TestMeridianOne2One(unittest.TestCase):
         self.assertAlmostEqual(runcat[0]['wm_ra'], avg_ra)
 
     def TestMeridianLowerEdgeCase(self):
-        """Checking that source measurements that flip around the 
+        """Checking that source measurements that flip around the
         meridian are being associated.
         See TestNCP for sources right on the meridian
         """
@@ -583,24 +582,24 @@ class TestMeridianOne2One(unittest.TestCase):
 
         sources2 = [db_subs.example_extractedsource_tuple(ra=p[0], dec=p[1])
                     for p in positions]
-        
+
         expected_dr1 = db_subs.deRuiter_radius(sources1[0], sources2[0])
         expected_dr2 = db_subs.deRuiter_radius(sources1[1], sources2[1])
 
         image = tkp.db.Image(dataset=dataset, data=im_list[1])
         image.insert_extracted_sources(sources2)
         associate_extracted_sources(image.id, deRuiter_r=1e6)
-        
+
         # Now inspect the contents of assocxtrsource:
         # Order results by runningcatalog id, then DR radius.
         query = """\
         SELECT a.runcat
               ,a.xtrsrc
-              ,a.r 
+              ,a.r
           FROM assocxtrsource a
-              ,runningcatalog r 
+              ,runningcatalog r
               ,extractedsource x
-         WHERE a.runcat = r.id 
+         WHERE a.runcat = r.id
            AND r.dataset = %(dataset_id)s
            AND a.xtrsrc = x.id
         ORDER BY x.image
@@ -612,9 +611,9 @@ class TestMeridianOne2One(unittest.TestCase):
         runcat = dr_result[0]
         xtrsrc = dr_result[1]
         dr_radius = dr_result[2]
-        
+
         self.assertEqual(len(runcat), 4)
-        # Ordered by image and position, since we cannot rely on the  
+        # Ordered by image and position, since we cannot rely on the
         # generated ids by the db.
         # So we check associations in sequence of images and position.
         # First image, new source, DR should be zero,
@@ -623,7 +622,7 @@ class TestMeridianOne2One(unittest.TestCase):
         self.assertAlmostEqual(dr_radius[1], 0)
         self.assertAlmostEqual(dr_radius[2], expected_dr1)
         self.assertAlmostEqual(dr_radius[3], expected_dr2)
-        
+
 
 class TestOne2Many(unittest.TestCase):
     """
@@ -972,13 +971,13 @@ class TestMany2One(unittest.TestCase):
 
 class TestMany2Many(unittest.TestCase):
     """
-    These tests will check the many-to-many source associations, 
-    i.e. many extractedsources that has two (or more) counterparts in the 
+    These tests will check the many-to-many source associations,
+    i.e. many extractedsources that has two (or more) counterparts in the
     runningcatalog.
-    
-    Here we are effectively checking the behaviour of the graph 'pruning' 
+
+    Here we are effectively checking the behaviour of the graph 'pruning'
     query; _flag_many_to_many_tempruncat(), and also the way those flagged
-    associations are then dealt with, e.g. in 
+    associations are then dealt with, e.g. in
     _insert_1_to_many_basepoint_assoc and _insert_1_to_many_assoc.
 
     """
@@ -1020,15 +1019,15 @@ class TestMany2Many(unittest.TestCase):
     def tearDown(self):
         """remove all stuff after the test has been run"""
         tkp.db.rollback()
-        
+
 
     def insert_many_to_many_sources(self, dataset, im_params,
                                     image1_srcs, image2_srcs, dr_limit):
         """
         Load 2 images in the database according to im_params,
         then populate with image1_srcs / image2_srcs accordingly, and
-        associate. 
-        
+        associate.
+
         Return dicts representing relevant runcat, and extractedsource
         entries. The 'runcat' dicts have a nested 'assoc' dict added,
         representing their association table entries.
@@ -1131,16 +1130,16 @@ class TestMany2Many(unittest.TestCase):
 
     def test_many2many_reduced_to_two_1_to_many_one_1to1(self):
         """This handles the case where we have two sources in first image
-        and two in second image. 
+        and two in second image.
         The two sources in the second image can be associated with one source
-        from the first image, whereas the other source is not assocaited with 
+        from the first image, whereas the other source is not assocaited with
         any from the second image.
         Both sources in the second image can be associated with both sources
-        in the first image. However, checking the DR radius reduces the 
+        in the first image. However, checking the DR radius reduces the
         associations to be two of the type 1-to-many and one source in the first
-        image that is left unassociated. 
+        image that is left unassociated.
         The runcat will end up with 3 sources.
-        All sources are candidate associations with each other (1-3, 1-4, 2-3, 2-4, 
+        All sources are candidate associations with each other (1-3, 1-4, 2-3, 2-4,
         where '*' is a runcat source and 'o' the lastest extracted sources)
 
              3
@@ -1164,9 +1163,9 @@ class TestMany2Many(unittest.TestCase):
         Here, runcat 1 is left unassociated (to be forced fit later), and extracted sources
         3 and 4 are associated with runcat 2. Because it is a 1-to-many association, runcat
         source 2 is replaced by 3 and 4.
-        
+
         Note that, in this case, assoc-links 3-2, 4-2 have *identical* DR
-        radius values, but that's OK - one runcat entry can have multiple 
+        radius values, but that's OK - one runcat entry can have multiple
         associated extractedsources (1-to-many).
         """
 
@@ -1347,3 +1346,81 @@ class TestMany2Many(unittest.TestCase):
 
         # We want to be sure that the error has been appropriately logged.
         self.assertIn("RhombusError", iostream.getvalue())
+
+        # Since this RhombusError interrupts the association procedure, we
+        # end up with two entries flagged as inactive remain in the runcat,
+        # which have references to other tables. This needs to be cleaned up,
+        # in a new connection.
+        self.database.close()
+        self.database.connect()
+
+        # We explicitly don't use the dataset column, since that is the way it
+        # is being used in the association procedure.
+        query = """\
+        SELECT COUNT(*)
+          FROM runningcatalog
+         WHERE inactive = TRUE
+        """
+        #self.db = tkp.db.Database()
+        self.database.cursor.execute(query)
+        inactive_runcats = zip(*self.database.cursor.fetchall())
+        self.assertEqual(len(inactive_runcats), 1)
+        self.assertEqual(inactive_runcats[0][0], 2)
+
+        # Before we can delete these inactive entries, we have to delete
+        # the entries in depending tables.
+        query = """\
+        DELETE
+          FROM temprunningcatalog
+         WHERE runcat IN (SELECT id
+                            FROM runningcatalog
+                           WHERE inactive = TRUE
+                         )
+        """
+        deleted_tempruncats = tkp.db.execute(query, commit=True)
+        self.assertEqual(deleted_tempruncats.rowcount, 4)
+
+        query = """\
+        DELETE
+          FROM runningcatalog_flux
+         WHERE runcat IN (SELECT id
+                            FROM runningcatalog
+                           WHERE inactive = TRUE
+                         )
+        """
+        deleted_runcats_flux = tkp.db.execute(query, commit=True)
+        self.assertEqual(deleted_runcats_flux.rowcount, 2)
+
+        query = """\
+        DELETE
+          FROM assocskyrgn
+         WHERE runcat IN (SELECT id
+                            FROM runningcatalog
+                           WHERE inactive = TRUE
+                         )
+        """
+        assoc_skyrgns = tkp.db.execute(query, commit=True)
+        self.assertEqual(assoc_skyrgns.rowcount, 2)
+
+        query = """\
+        DELETE
+          FROM assocxtrsource
+         WHERE runcat IN (SELECT id
+                            FROM runningcatalog
+                           WHERE inactive = TRUE
+                         )
+        """
+        assoc_xtrsrcs = tkp.db.execute(query, commit=True)
+        self.assertEqual(assoc_xtrsrcs.rowcount, 2)
+
+        query = """\
+        DELETE
+          FROM runningcatalog
+         WHERE inactive = TRUE
+        """
+        deleted_runcats = tkp.db.execute(query, commit=True)
+        self.assertEqual(deleted_runcats.rowcount, 2)
+
+        # After this point the database is ready for further use
+
+

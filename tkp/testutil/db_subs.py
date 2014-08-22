@@ -1,7 +1,7 @@
 import logging
 from collections import namedtuple
 
-import datetime, math
+import datetime, math,sys
 import tkp.db
 from tkp.db.generic import get_db_rows_as_dicts
 from tkp.db.database import Database
@@ -333,31 +333,40 @@ def insert_image_and_simulated_sources(dataset, image_params, mock_sources,
 
     """
     image = tkp.db.Image(data=image_params,dataset=dataset)
+    print "image.id =",image.id
     blind_extractions=[]
     for src in mock_sources:
         xtr = src.simulate_extraction(image,extraction_type='blind')
         if xtr is not None:
             blind_extractions.append(xtr)
+    print "blind_extractions =",blind_extractions
     image.insert_extracted_sources(blind_extractions,'blind')
     image.associate_extracted_sources(deRuiter_r=deruiter_radius,
         new_source_sigma_margin=new_source_sigma_margin)
-    nd_ids_posns = nulldetections.get_nulldetections(image.id)
-    nd_posns = [(ra,decl) for ids, ra, decl in nd_ids_posns]
+    nd_requested_fits = nulldetections.get_nulldetections(image.id)
+    print "nd_requested_fits=",nd_requested_fits
     forced_fits = []
-    for posn in nd_posns:
-        for src in mock_sources:
-            if (posn[0]==src.base_source.ra and
-                        posn[1]==src.base_source.dec):
-                forced_fits.append(
-                    src.simulate_extraction(image,extraction_type='ff_nd')
-                )
-    if len(nd_posns) != len(forced_fits):
-        raise LookupError("Something went wrong, nulldetection position did "
-                          "not match a mock source.")
-    #image.insert_extracted_sources(forced_fits, 'ff_nd')
-    dbgen.insert_extracted_sources(image.id, forced_fits, 'ff_nd',
-                   ff_runcatids=[ids for ids, ra, decl in nd_ids_posns])
-    nulldetections.associate_nd(image.id)
+    successful_ids = []
+    # We only do something when there are results
+    if len(nd_requested_fits) > 0:
+        for posn in nd_requested_fits:
+            for src in mock_sources:
+                print "posn[0],posn[1],posn[2]=",posn[0],posn[1],posn[2]
+                print "src.base_source=",src.base_source
+                if (posn[1]==src.base_source.ra and
+                        posn[2]==src.base_source.dec):
+                    forced_fits.append(
+                        src.simulate_extraction(image,extraction_type='ff_nd')
+                    )
+                    successful_ids.append(posn[0])
+        if len(nd_requested_fits) != len(forced_fits):
+            raise LookupError("Something went wrong, nulldetection position did "
+                              "not match a mock source.")
+        print "ffs =",forced_fits
+        print "successful_ids =",successful_ids
+        dbgen.insert_extracted_sources(image.id, forced_fits, 'ff_nd',
+                       ff_runcatids=successful_ids)
+        nulldetections.associate_nd(image.id)
 
     return image, blind_extractions, forced_fits
 

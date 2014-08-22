@@ -62,7 +62,7 @@ class TestOne2OneFlux(unittest.TestCase):
         self.assertEqual(len(runcat_id),1)
         runcat_id = runcat_id[0]['id']
         # Check evolution of variability indices
-        db_metrics = db_queries.per_timestep_variability_indices(self.database,
+        db_metrics = db_queries.get_assoc_entries(self.database,
                                                            runcat_id)
         self.assertEqual(len(db_metrics), n_images)
         # Compare the python- and db-calculated values
@@ -164,7 +164,7 @@ class TestOne2ManyFlux(unittest.TestCase):
         sorted_runcat_ids = [entry['id'] for entry in sorted_runcat_ids]
 
         for idx, rcid in enumerate(sorted_runcat_ids):
-            db_indices = db_queries.per_timestep_variability_indices(self.database,
+            db_indices = db_queries.get_assoc_entries(self.database,
                                                                    rcid)
             py_indices = db_subs.lightcurve_metrics(lightcurves_sorted_by_ra[idx])
             self.assertEqual(len(db_indices), len(py_indices))
@@ -267,7 +267,7 @@ class TestMany2OneFlux(unittest.TestCase):
         sorted_runcat_ids = [entry['id'] for entry in sorted_runcat_ids]
 
         for idx, rcid in enumerate(sorted_runcat_ids):
-            db_indices = db_queries.per_timestep_variability_indices(self.database,
+            db_indices = db_queries.get_assoc_entries(self.database,
                                                                    rcid)
             py_indices = db_subs.lightcurve_metrics(lightcurves_sorted_by_ra[idx])
             self.assertEqual(len(db_indices), len(py_indices))
@@ -385,7 +385,7 @@ class TestMany2Many(unittest.TestCase):
         sorted_runcat_ids = [entry['id'] for entry in sorted_runcat_ids]
 
         for idx, rcid in enumerate(sorted_runcat_ids):
-            db_indices = db_queries.per_timestep_variability_indices(self.database,
+            db_indices = db_queries.get_assoc_entries(self.database,
                                                                    rcid)
             py_indices = db_subs.lightcurve_metrics(lightcurves_sorted_by_ra_dec[idx])
             self.assertEqual(len(db_indices), len(py_indices))
@@ -488,7 +488,7 @@ class TestMany2Many(unittest.TestCase):
         sorted_runcat_ids = [entry['id'] for entry in sorted_runcat_ids]
 
         for idx, rcid in enumerate(sorted_runcat_ids):
-            db_indices = db_queries.per_timestep_variability_indices(self.database,
+            db_indices = db_queries.get_assoc_entries(self.database,
                                                                    rcid)
             py_indices = db_subs.lightcurve_metrics(lightcurves_sorted_by_ra[idx])
             self.assertEqual(len(db_indices), len(py_indices))

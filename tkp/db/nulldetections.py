@@ -3,7 +3,7 @@ A collection of back end subroutines (mostly SQL queries).
 
 This module contains the routines to deal with null detections.
 """
-import logging
+import logging,sys
 from tkp.db import execute as execute
 from tkp.db.associations import _empty_temprunningcatalog as _del_tempruncat
 from tkp.db.associations import ONE_TO_ONE_ASSOC_QUERY
@@ -68,6 +68,9 @@ SELECT t0.id
  WHERE t1.runcat IS NULL
 """
     qry_params = {'image_id': image_id}
+    #if image_id == 7:
+    #    print query % qry_params
+    #    sys.exit()
     cursor = execute(query, qry_params)
     res = cursor.fetchall()
     return res

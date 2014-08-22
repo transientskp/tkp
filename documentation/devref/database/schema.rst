@@ -53,11 +53,7 @@ or n-1.
         Forced-fit to position of the null detection of a known source.
 
     ``type = 8``
-        Initial forced fit to a monitoring list position.
-
-    ``type = 9``
-        Subsequent forced fit to a monitoring list position (relates to
-        ``type = 8``.
+        Forced fit to a monitoring list position.
 
 
 
@@ -347,12 +343,27 @@ The TraP may add forced-fit entries to this table as well. Then
         * ``1``: forced fit to pixel
         * ``2``: manually monitored position
 
-**fitting_type**
+**fit_type**
     Reports what fitting type was used by sourcefinder (Hanno's thesis).
      Currently implemented values are:
 
         * ``0``: moments-based analysis
         * ``1``: Gaussian fitting
+
+**ff_runcat**
+    Null, except when the extractedsource is a forced fit
+    requested due to a null-detection. In that case, it is used to link
+    null-detection extractions to their appropriate runningcatalog entry
+    via the ``assocxtrsource`` table. It will initially point to the
+    runningcatalog id which was null-detected, but may change back to Null later
+    on (after the initial association is recorded in assocxtrsource)
+    if the runningcatalog entry forks due to a one-to-many association.
+
+**ff_monitor**
+    Null, except when the extractedsource is a forced fit requested for a
+    position in the ``runningcatalog`` table. In that case, it identifies the
+    relevant ``runningcatalog`` entry, and is used in the association process.
+
 
 **node(s)**
     Determine the current and number of nodes in case of a sharded database
@@ -573,12 +584,20 @@ datapoint.
 If no counterpart could be found for an extracted sources, it is appended to
 ``runningcatalog`` as a "new" source (datapoint=1).
 
+The monitoring sources, user-specified source positions to be monitored,
+are also stored in this table. Initially the source is flagged as a ``mon_src``, 
+does not have a reference to an extracted source and has zero datapoints. 
+Note that this may be the case until the end 
+of a pipeline run, when the provided source position falls outside all the images.
+As soon as the position falls inside an image ``xtrsrc`` refers to the forced
+fit measurements in ``extractedsource``.
+
 **id**
     Every source in the running catalog gets a unique id.
 
 **xtrsrc**
     The id of the extractedsource for which this runningcatalog source was
-    detected for the first time.
+    detected for the first time. 
 
 **dataset**
     The dataset to which the runningcatalog source belongs to.

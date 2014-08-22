@@ -486,7 +486,7 @@ class Image(DBObject):
        #To do: Figure out a saner method of passing the results around
        # (Namedtuple, for starters?)
 
-        insert_extracted_sources(self._id, results=results, extract=extract)
+        insert_extracted_sources(self._id, results=results, extract_type=extract)
 
     def associate_extracted_sources(self, deRuiter_r, new_source_sigma_margin):
         """Associate sources from the last images with previously

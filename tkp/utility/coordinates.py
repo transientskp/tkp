@@ -381,10 +381,10 @@ def alpha(l, m, alpha0, delta0):
 
 def alpha_inflate(theta, decl):
     """Compute the ra expansion for a given theta at a given declination
-    
+
     Keyword arguments:
     theta, decl are both in decimal degrees.
-    
+
     Return value:
     alpha -- RA inflation in decimal degrees
 

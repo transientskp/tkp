@@ -137,7 +137,8 @@ def insert_image(dataset, freq_eff, freq_bw, taustart_ts, tau_time,
     return image_id
 
 
-def insert_extracted_sources(image_id, results, extract, ff_runcatids=None):
+def insert_extracted_sources(image_id, results, extract_type,
+                             ff_runcat_ids=None, ff_monitor_ids=None):
     """
     Insert all detections from sourcefinder into the extractedsource table.
 
@@ -201,7 +202,7 @@ def insert_extracted_sources(image_id, results, extract, ff_runcatids=None):
     """
     if not len(results):
         logger.info("No extract_type=%s sources added to extractedsource for"
-                    " image %s" % (extract, image_id))
+                    " image %s" % (extract_type, image_id))
         return
 
     xtrsrc = []
@@ -225,53 +226,31 @@ def insert_extracted_sources(image_id, results, extract, ff_runcatids=None):
         r.append(int(math.floor(r[1]))) # zone
         r.extend(eq_to_cart(r[0], r[1])) # Cartesian x,y,z
         r.append(r[0] * math.cos(math.radians(r[1]))) # ra * cos(radians(decl))
-        if extract == 'blind':
+        if extract_type == 'blind':
             r.append(0)
-        elif extract == 'ff_nd':
+        elif extract_type == 'ff_nd':
             r.append(1)
-        elif extract == 'ff_ms':
+        elif extract_type == 'ff_ms':
             r.append(2)
         else:
-            raise ValueError("Not a valid extractedsource insert type: '%s'" % extract)
-        if ff_runcatids is not None:
-            # If not empty, we add the runcat id as well
-            r.append(ff_runcatids[i])
+            raise ValueError("Not a valid extractedsource insert type: '%s'"
+                             % extract_type)
+        if ff_runcat_ids is not None:
+            assert len(results)==len(ff_runcat_ids)
+            r.append(ff_runcat_ids[i][1])
+        else:
+            r.append(None)
+
+        if ff_monitor_ids is not None:
+            assert len(results)==len(ff_monitor_ids)
+            r.append(ff_monitor_ids[i][1])
+        else:
+            r.append(None)
+
         xtrsrc.append(r)
     values = [str(tuple(sanitize_db_inputs(xsrc))) for xsrc in xtrsrc]
 
-    q_basic = """\
-INSERT INTO extractedsource
-  (ra
-  ,decl
-  ,ra_fit_err
-  ,decl_fit_err
-  ,f_peak
-  ,f_peak_err
-  ,f_int
-  ,f_int_err
-  ,det_sigma
-  ,semimajor
-  ,semiminor
-  ,pa
-  ,ew_sys_err
-  ,ns_sys_err
-  ,error_radius
-  ,fit_type
-  ,ra_err
-  ,decl_err
-  ,uncertainty_ew
-  ,uncertainty_ns
-  ,image
-  ,zone
-  ,x
-  ,y
-  ,z
-  ,racosdecl
-  ,extract_type
-  )
-VALUES
-"""
-    q_ff = """\
+    query = """\
 INSERT INTO extractedsource
   (ra
   ,decl
@@ -301,25 +280,26 @@ INSERT INTO extractedsource
   ,racosdecl
   ,extract_type
   ,ff_runcat
+  ,ff_monitor
   )
 VALUES
-"""
-    if ff_runcatids is None:
-        query = q_basic + ",".join(values)
-    else:
-        query = q_ff + ",".join(values)
+""" + ",".join(values)
+
+    # Be aware that the replace statement only works if we don't insert
+    # strings that contain a substring None. That's what we have.
+    query = query.replace('None', 'NULL')
     cursor = tkp.db.execute(query, commit=True)
     insert_num = cursor.rowcount
     #if insert_num == 0:
     #    logger.info("No forced-fit sources added to extractedsource for "
     #                "image %s" % (image_id,))
-    if extract == 'blind':
+    if extract_type == 'blind':
         logger.info("Inserted %d sources in extractedsource for image %s" %
                     (insert_num, image_id))
-    elif extract == 'ff_nd':
+    elif extract_type == 'ff_nd':
         logger.info("Inserted %d forced-fit null detections in extractedsource"
                     " for image %s" % (insert_num, image_id))
-    elif extract == 'ff_ms':
+    elif extract_type == 'ff_ms':
         logger.info("Inserted %d forced-fit for monitoring sourcs in extractedsource"
                     " for image %s" % (insert_num, image_id))
 

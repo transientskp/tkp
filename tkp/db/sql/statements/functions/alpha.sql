@@ -9,7 +9,7 @@
  * http://research.microsoft.com/apps/pubs/default.aspx?id=64524
  */
 {% ifdb monetdb %}
-DROP FUNCTION alpha;
+--DROP FUNCTION alpha;
 {% endifdb %}
 
 CREATE FUNCTION alpha(theta DOUBLE PRECISION, decl DOUBLE PRECISION)

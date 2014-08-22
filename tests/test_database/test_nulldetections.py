@@ -406,7 +406,8 @@ class TestForcedFit(unittest.TestCase):
 
                 # And here we have to associate the null detections with the
                 # runcat sources...
-                dbnd.associate_nd(image.id)
+                if len(nd_ids_pos) > 0:
+                    dbnd.associate_nd(image.id)
 
         query = """\
         SELECT id

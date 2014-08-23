@@ -459,6 +459,9 @@ dataset).
     The timestamp of the start of the observation, originating or read from
     the CASA LOFAR_OBSERVATION table from the ``OBSERVATION_START`` data field.
 
+**skyrgn**
+    The sky region to which the image belongs.
+
 **rb_smaj**
     The semi-major axis of the restoring beam, in degrees.
     Full major axis value originates or is read from the CASA Main table in the imageinfor
@@ -474,6 +477,9 @@ dataset).
     axis), in degrees.
     Value originates or is read from the CASA Main table in the imageinfor
     subsection from the ``restoringbeam`` record.
+
+**deltax, deltay**
+    Pixel sizes along the X & Y axes in degrees.
 
 **fwhm_arcsec**
     The full width half maximum of the primary beam, in arcsec. Value not yet

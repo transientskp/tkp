@@ -1,3 +1,7 @@
+"""
+Utility routines to help in the construction of test cases. Not required for
+core pipeline functionality.
+"""
 import contextlib
 import sys
 

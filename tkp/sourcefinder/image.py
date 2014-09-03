@@ -1,6 +1,6 @@
 """
 Some generic utility routines for number handling and
- calculating (specific) variances
+calculating (specific) variances
 """
 
 import time

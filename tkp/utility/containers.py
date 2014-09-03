@@ -1,8 +1,3 @@
-# -*- coding: utf-8 -*-
-
-#
-# LOFAR Transients Key Project
-#
 """
 Container classes for the TKP pipeline.
 

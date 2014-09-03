@@ -81,4 +81,4 @@ for all of the scientific choices made in the pipeline design. It is the
 position of the author that achieving high quality results requires
 understanding *both* the technical and the scientific choices made. For help
 with the latter, the reader is referred to :ref:`Swinbank et al
-<swinbank-2014>`>
+<swinbank-2014>`.

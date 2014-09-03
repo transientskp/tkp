@@ -1,15 +1,6 @@
-# -*- coding: utf-8 -*-
-#
-# LOFAR Transients Key Project
-#
-# Hanno Spreeuw
-#
-# discovery@transientskp.org
-#
-#
-# Source fitting algorithms
-#
-
+"""
+Source fitting routines.
+"""
 
 import math
 import numpy
@@ -17,9 +8,7 @@ import scipy.optimize
 from .gaussian import gaussian
 import utils
 
-
 FIT_PARAMS = ('peak', 'xbar', 'ybar', 'semimajor', 'semiminor', 'theta')
-
 
 def moments(data, beam, threshold=0):
     """Calculate source positional values using moments

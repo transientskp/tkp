@@ -14,10 +14,7 @@ are certainly parts in common, several are not).
 The current setup is done in large part to keep the database and
 sourcefinder (and other parts of the TKP package) separate; tightly
 integrated database tables/sourcefinder images/disk files make it more
-difficult to improve the code or distribute parts separately. While
-not tested, it seems unlikely this will have a noticeable influence on
-the functioning of the actual TKP pipeline (TraP).
-
+difficult to improve the code or distribute parts separately.
 
 Usage
 =====

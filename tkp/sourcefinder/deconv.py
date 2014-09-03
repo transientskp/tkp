@@ -1,3 +1,7 @@
+"""
+Gaussian deconvolution.
+"""
+
 from math import sin, cos, atan, sqrt, pi
 
 def deconv(fmaj, fmin, fpa, cmaj, cmin, cpa):
@@ -65,6 +69,6 @@ def deconv(fmaj, fmin, fpa, cmaj, cmin, cpa):
     if not abs(rmaj):
         rpa = 0.0
     elif not abs(rmin) and (45.0 < abs(rpa-fpa) < 135.0):
-            rpa = (rpa + 450.0) % 180.0
+        rpa = (rpa + 450.0) % 180.0
 
     return rmaj, rmin, rpa, ierr

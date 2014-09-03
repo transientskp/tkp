@@ -1,16 +1,5 @@
-# -*- coding: utf-8 -*-
-#
-# LOFAR Transients Key Project
-#
-# discovery@transientskp.org
-#
-#
-# Source finder utilities
-#
 """
-
 This module contain utilities for the source finding routines
-
 """
 
 import numpy

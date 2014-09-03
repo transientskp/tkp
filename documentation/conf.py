@@ -62,7 +62,7 @@ master_doc = 'index'
 project = u'LOFAR Transients Pipeline'
 author = u'LOFAR Transients Key Science Project'
 import datetime
-start_year = 2011
+start_year = 2006
 if datetime.datetime.now().year == start_year:
     years = u"%d" % start_year
 else:
@@ -247,8 +247,7 @@ man_pages = [
 # Autoclass configuration
 autoclass_content = 'both'
 
-# NumPy and SciPy docs appear to have been down for ~ a week as of late August
-# 2014, disabling for now.
+# Example configuration for intersphinx: refer to the Python standard library.
 intersphinx_mapping = {
     'python': ('http://docs.python.org/', None),
 #    'numpy': ('http://docs.scipy.org/doc/numpy/', None),

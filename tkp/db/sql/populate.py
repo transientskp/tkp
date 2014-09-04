@@ -20,6 +20,9 @@ tokens = (
 )
 
 
+
+
+
 def get_input(text):
     """
     We take this out of verify() so we can mock it in the test.
@@ -144,6 +147,18 @@ def destroy(dbconfig):
         destroy_monetdb()
 
 
+def set_monetdb_schema(cur, dbconfig):
+    """
+    create custom schema. use with MonetDB only.
+    """
+    schema_query = """
+CREATE SCHEMA "%(database)s" AUTHORIZATION "%(user)s";
+ALTER USER "%(user)s" SET SCHEMA "%(database)s";
+"""
+    print schema_query % dbconfig
+    cur.execute(schema_query % dbconfig)
+
+
 def populate(dbconfig):
     """
     Populates a database with TRAP tables.
@@ -169,6 +184,12 @@ def populate(dbconfig):
             cur.execute("CREATE LANGUAGE plpgsql;")
         except conn.ProgrammingError:
             conn.rollback()
+    if dbconfig['engine'] == 'monetdb':
+        set_monetdb_schema(cur, dbconfig)
+        # reconnect to switch to schema
+        conn.close()
+        conn = connect(dbconfig)
+        cur = conn.cursor()
 
     batch_file = os.path.join(sql_repo, 'batch')
 

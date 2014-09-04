@@ -8,10 +8,6 @@
  * For a derivation, see MSR TR 2006 52, Section 2.1
  * http://research.microsoft.com/apps/pubs/default.aspx?id=64524
  */
-{% ifdb monetdb %}
-DROP FUNCTION alpha;
-{% endifdb %}
-
 CREATE FUNCTION alpha(theta DOUBLE PRECISION, decl DOUBLE PRECISION)
 RETURNS DOUBLE PRECISION
 

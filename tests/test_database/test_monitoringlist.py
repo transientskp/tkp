@@ -92,10 +92,11 @@ class TestMonitor(unittest.TestCase):
                 self.assertAlmostEqual(mon_requests[idx][2], mon_srcs[idx].dec)
 
             #Insert fits for the in-field sources and then associate
+            print "mon_requests=", mon_requests
             dbgen.insert_extracted_sources(img.id,
                        [superimposed_mon_src, mon_src_in_field],
                        'ff_ms',
-                       ff_monitor_ids=[mon_requests[0][0], mon_requests[1][0]])
+                       ff_monitor_ids=[('ff_ms',ids) for ids, ra, decl in mon_requests])
             dbmon.associate_ms(img.id)
 
         # Check that we have three light curves: one for the blind source

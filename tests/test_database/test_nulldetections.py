@@ -82,14 +82,14 @@ class TestForcedFit(unittest.TestCase):
                     # src0 is a null detection at the second timestep
                     self.assertEqual(len(nd_ids_pos), 1)
                     dbgen.insert_extracted_sources(image.id, [src0], 'ff_nd',
-                           ff_runcatids=[ids for ids, ra, decl in nd_ids_pos])
+                           ff_runcat_ids=[('ff_nd',ids) for ids, ra, decl in nd_ids_pos])
                 else:
                     # All other images have two null detections.
                     self.assertEqual(len(nd_ids_pos), 2)
+                    print "nd_ids_pos=", nd_ids_pos
                     dbgen.insert_extracted_sources(image.id, [src0, src1],
                                                    'ff_nd',
-                           ff_runcatids=[ids for ids, ra, decl in nd_ids_pos])
-
+                           ff_runcat_ids=[('ff_nd',ids) for ids, ra, decl in nd_ids_pos])
                 # And here we have to associate the null detections with the
                 # runcat sources...
                 dbnd.associate_nd(image.id)
@@ -394,15 +394,16 @@ class TestForcedFit(unittest.TestCase):
                 elif image.taustart_ts == taustart_tss[1]:
                     # src0 & src1 are null detections at the second timestep
                     self.assertEqual(len(nd_ids_pos), 2)
+                    print "nd_ids_pos=", nd_ids_pos
                     dbgen.insert_extracted_sources(image.id, [src0,src1],
                                                    'ff_nd',
-                          ff_runcatids=[ids for ids, ra, decl in nd_ids_pos])
+                          ff_runcat_ids=[('ff_nd',ids) for ids, ra, decl in nd_ids_pos])
                 else:
                     # All other images have two null detections.
                     self.assertEqual(len(nd_ids_pos), 2)
                     dbgen.insert_extracted_sources(image.id, [src0, src1],
                                                    'ff_nd',
-                          ff_runcatids=[ids for ids, ra, decl in nd_ids_pos])
+                          ff_runcat_ids=[('ff_nd',ids) for ids, ra, decl in nd_ids_pos])
 
                 # And here we have to associate the null detections with the
                 # runcat sources...

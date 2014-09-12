@@ -365,7 +365,7 @@ def insert_image_and_simulated_sources(dataset, image_params, mock_sources,
         print "ffs =",forced_fits
         print "successful_ids =",successful_ids
         dbgen.insert_extracted_sources(image.id, forced_fits, 'ff_nd',
-                       ff_runcatids=successful_ids)
+                       ff_runcat_ids=[('ff_nd',ids) for ids in successful_ids])
         nulldetections.associate_nd(image.id)
 
     return image, blind_extractions, forced_fits

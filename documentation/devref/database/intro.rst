@@ -56,7 +56,31 @@ use the tkp-manage.py initdb subcommand for this.
 
 inside your project folder run::
 
-  $   $ tkp-manage.py initdb
+  $ tkp-manage.py initdb
 
-For PostgreSQL there is the optional **-d** flag, which removes all content
-before populating the database.
+
+Recreating the database schema
+------------------------------
+
+PostgreSQL
+++++++++++
+For PostgreSQL there is the optional **-d** flag for the initdb subcommand,
+which removes all content before populating the database.
+
+MonetDB
++++++++
+
+In the case of MonetDB you need to do this manually. You can do this with the
+following commands, where **${dbname}** should be replaced with the database
+name::
+
+    monetdb stop ${dbname}
+    monetdb destroy -f ${dbname}
+    monetdb create ${dbname}
+    monetdb start ${dbname}
+    monetdb release ${dbname}
+
+For security reasons you should change the default password::
+
+    mclient -d ${dbname} -s"ALTER USER \"monetdb\" RENAME TO \"${uname}\";
+    ALTER USER SET PASSWORD '${passw}' USING OLD PASSWORD 'monetdb';"

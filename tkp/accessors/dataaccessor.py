@@ -7,26 +7,26 @@ logger = logging.getLogger(__name__)
 
 class DataAccessor(object):
     __metaclass__ = abc.ABCMeta
-    """
-    Base class for accessors used with :class:`..sourcefinder.image.ImageData`.
-
-    Data accessors provide a uniform way for the ImageData class (ie, generic
-    image representation) to access the various ways in which images may be
-    stored (FITS files, arrays in memory, potentially HDF5, etc).
-
-    This class cannot be instantiated directly, but should be subclassed and
-    the abstract properties provided. Note that all abstract properties are
-    required to provide a valid accessor.
-
-    Additional properties may also be provided by subclasses. However, TraP
-    components are required to degrade gracefully in the absence of this
-    optional properties.
-    """
     def __init__(self):
         """
-        Initialise the `sigma` and `f` properties used for calculating the
-        RMS value of the data. See `tkp.quality.statistics` for details.
+        Base class for accessors used with
+        :class:`tkp.sourcefinder.image.ImageData`.
+
+        Data accessors provide a uniform way for the ImageData class (ie,
+        generic image representation) to access the various ways in which
+        images may be stored (FITS files, arrays in memory, potentially HDF5,
+        etc).
+
+        This class cannot be instantiated directly, but should be subclassed
+        and the abstract properties provided. Note that all abstract
+        properties are required to provide a valid accessor.
+
+        Additional properties may also be provided by subclasses. However,
+        TraP components are required to degrade gracefully in the absence of
+        this optional properties.
         """
+        # Initialise the `sigma` and `f` properties used for calculating the
+        # RMS value of the data. See `tkp.quality.statistics` for details.
         self.sigma = 3
         self.f = 4
 

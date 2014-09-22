@@ -2,58 +2,52 @@
 Data Accessor Variants
 ======================
 
-:mod:`tkp.accessors.dataaccessor` -- Base data accessor class
-+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+Basic data accessors
+++++++++++++++++++++
 
 .. module:: tkp.accessors.dataaccessor
 
 .. autoclass:: tkp.accessors.dataaccessor.DataAccessor
    :members:
 
-:mod:`tkp.accessors.lofaraccessor` -- LOFAR Specific data accessor class
-++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+The following acessors are derived from the basic :class:`DataAccessor` class:
+
+.. module:: tkp.accessors.fitsimage
+
+.. class:: tkp.accessors.fitsimage.FitsImage
+
+   Generic FITS data access.
+
+.. module:: tkp.accessors.casaimage
+
+.. class:: tkp.accessors.casaimage.CasaImage
+
+   Generic CASA image access.
+
+.. module:: tkp.accessors.kat7casaimage
+
+.. class:: tkp.accessors.kat7casaimage.Kat7CasaImage
+
+   KAT-7 specific CASA image access.
+
+LOFAR-specific data accessors
+++++++++++++++++++++++++++++++++++
 
 .. module:: tkp.accessors.lofaraccessor
 
 .. autoclass:: tkp.accessors.lofaraccessor.LofarAccessor
    :members:
 
-:mod:`tkp.accessors.fitsimage` -- FITS Image Access
-+++++++++++++++++++++++++++++++++++++++++++++++++++
-
-.. module:: tkp.accessors.fitsimage
-
-.. autoclass:: tkp.accessors.fitsimage.FitsImage
-   :members:
-
-:mod:`tkp.accessors.lofarfitsimage` -- LOFAR Specific FITS Image Access
-+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+The following accessors are derived from the generic :class:`LofarAccessor`:
 
 .. module:: tkp.accessors.lofarfitsimage
 
-.. autoclass:: tkp.accessors.lofarfitsimage.LofarFitsImage
-   :members:
+.. class:: tkp.accessors.lofarfitsimage.LofarFitsImage
 
-:mod:`tkp.accessors.casaimage` -- CASA Image Access
-++++++++++++++++++++++++++++++++++++++++++++++++++++++
-
-.. module:: tkp.accessors.casaimage
-
-.. autoclass:: tkp.accessors.casaimage.CasaImage
-   :members:
-
-:mod:`tkp.accessors.kat7casaimage` -- KAT-7 CASA image access
-+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-
-.. module:: tkp.accessors.kat7casaimage
-
-.. autoclass:: tkp.accessors.kat7casaimage.Kat7CasaImage
-   :members:
-
-:mod:`tkp.accessors.lofarcasaimage` -- LOFAR CASA image access
-++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+   LOFAR FITS access.
 
 .. module:: tkp.accessors.lofarcasaimage
 
-.. autoclass:: tkp.accessors.lofarcasaimage.LofarCasaImage
-   :members:
+.. class:: tkp.accessors.lofarcasaimage.LofarCasaImage
+
+   LOFAR CASA image access.

@@ -6,5 +6,5 @@
 
 
 .. automodule:: tkp.utility.sigmaclip
+   :synopsis: Generic sigma clipping routine
    :members:
-   :noindex:

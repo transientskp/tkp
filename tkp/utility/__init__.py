@@ -1,7 +1,6 @@
 """
-TKP utility routines.
+Root level :mod:`tkp.utility` functions that don't justify a submodule:
 """
-
 import math
 
 def nice_format(f):

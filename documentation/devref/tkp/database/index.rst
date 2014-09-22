@@ -18,4 +18,3 @@ Modules from the :mod:`tkp.db` package.
    monitoringlist
    nulldetections
    orm
-   transients

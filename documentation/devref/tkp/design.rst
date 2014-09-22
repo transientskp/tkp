@@ -26,7 +26,7 @@ The modules are separated into four subpackages:
 - utility: this subpackage contains a variety of utility functions,
   such as (image) data file handlers and coordinate functions.
 
-At the root of the package, there is also the :mod:`config` module,
+At the root of the package, there is also the :mod:`tkp.config` module,
 which deals with the setup and configuration of the various modules in
 the library.
 

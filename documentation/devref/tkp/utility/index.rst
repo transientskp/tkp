@@ -4,8 +4,7 @@
 Utility package
 +++++++++++++++
 
-Modules from ``tkp.utility``
-
+**Submodules:**
 
 .. toctree::
    :maxdepth: 2
@@ -16,3 +15,8 @@ Modules from ``tkp.utility``
    sigmaclip
    fits
    memoize
+
+
+.. automodule:: tkp.utility
+    :members:
+    :synopsis: Small utility functions that don't fit elsewhere.

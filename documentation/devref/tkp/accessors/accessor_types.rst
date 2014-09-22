@@ -50,4 +50,4 @@ The following accessors are derived from the generic :class:`LofarAccessor`:
 
 .. class:: tkp.accessors.lofarcasaimage.LofarCasaImage
 
-   LOFAR CASA iamge access.
+   LOFAR CASA image access.

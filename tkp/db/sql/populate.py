@@ -76,8 +76,9 @@ def connect(dbconfig):
                                    password=dbconfig['password'], host=dbconfig['host'],
                                    port=dbconfig['port'], autocommit=True)
     else:
-        sys.stderr.write("engine %s is not implemented" % dbconfig['engine'])
-        raise NotImplementedError
+        msg = "engine %s is not implemented" % dbconfig['engine']
+        sys.stderr.write(msg)
+        raise NotImplementedError(msg)
 
 
 def destroy_postgres(connection):

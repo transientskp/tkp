@@ -9,6 +9,7 @@ import ConfigParser
 import logging
 import os
 from pprint import pprint
+
 from tkp.config import parse_to_dict
 from tkp.db.dump import dump_db
 
@@ -34,6 +35,7 @@ def dump_configs_to_logdir(log_dir, job_config, pipe_config):
     with open(os.path.join(log_dir, 'pipeline.cfg'), 'w') as f:
         pprint(pipe_config, stream=f)
 
+
 def check_job_configs_match(job_config_1, job_config_2):
     """
     Check if job configs match, except dataset_id which we expect to change.
@@ -43,7 +45,6 @@ def check_job_configs_match(job_config_1, job_config_2):
     del jc_from_file['persistence']['dataset_id']
     del jc_from_db['persistence']['dataset_id']
     return jc_from_file==jc_from_db
-
 
 
 def setup_log_file(log_dir, debug=False, basename='trap.log'):
@@ -71,6 +72,7 @@ def setup_log_file(log_dir, debug=False, basename='trap.log'):
     else:
         global_logger.setLevel(logging.INFO)
 
+
 def dump_database_backup(db_config, job_dir):
     if 'dump_backup_copy' in db_config:
         if db_config['dump_backup_copy']:
@@ -87,18 +89,3 @@ def dump_database_backup(db_config, job_dir):
             )
 
 
-def group_per_timestep(images):
-    """
-    groups a list of TRAP images per timestep
-    """
-    img_dict = {}
-    for image in images:
-        t = image.taustart_ts
-        if t in img_dict:
-            img_dict[t].append(image)
-        else:
-            img_dict[t] = [image]
-
-    grouped_images = img_dict.items()
-    grouped_images.sort()
-    return grouped_images

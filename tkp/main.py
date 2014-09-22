@@ -10,7 +10,6 @@ The exceptions are a couple of celery-specific subroutines.
 """
 import imp
 import logging
-
 import os
 from tkp import steps
 from tkp.config import initialize_pipeline_config, get_database_config
@@ -32,12 +31,17 @@ import tkp.steps.forced_fitting as steps_ff
 logger = logging.getLogger(__name__)
 
 
-def run(job_name, supplied_mon_coords=[], distributor='multiproc'):
+def run(job_name, supplied_mon_coords=[]):
     pipe_config = initialize_pipeline_config(
         os.path.join(os.getcwd(), "pipeline.cfg"),
         job_name)
 
-    runner = Runner(distributor=distributor, cores=pipe_config.multiproc.cores)
+    # get parallelise props. Defaults to multiproc with autodetect num cores
+    parallelise = pipe_config.get('parallelise', {})
+    distributor = os.environ.get('TKP_PARALLELISE', parallelise.get('method',
+                                                                    'multiproc'))
+    runner = Runner(distributor=distributor,
+                    cores=parallelise.get('cores', 0))
 
     debug = pipe_config.logging.debug
     #Setup logfile before we do anything else

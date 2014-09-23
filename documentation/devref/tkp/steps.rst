@@ -3,9 +3,6 @@
 ************************
 TraP logic flow overview
 ************************
-.. |last_updated| last_updated::
-
-:Last updated: |last_updated|
 
 Main logic flow
 ---------------

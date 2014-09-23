@@ -72,3 +72,15 @@ class TestAugmentedRunningcatalog(unittest.TestCase):
         self.assertAlmostEqual(sigma_min, 13.13)
         self.assertAlmostEqual(lightcurve_max, 0.01313)
         self.assertAlmostEqual(lightcurve_avg, 0.006565)
+
+    def test_count(self):
+        """
+        make sure the augmented view has the same row count as the runcat table
+        """
+        q1 = "select count(id) from runningcatalog"
+        q2 = "select count(id) from augmented_runningcatalog"
+
+        r1 = tkp.db.execute(q1).fetchall()[0][0]
+        r2 = tkp.db.execute(q2).fetchall()[0][0]
+
+        self.assertEqual(r1, r2)

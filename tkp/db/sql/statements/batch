@@ -29,6 +29,7 @@ functions/updateSkyRgnMembers.sql
 functions/getSkyRgn.sql
 functions/insertImage.sql
 functions/insertDataset.sql
+functions/median.sql
 procedures/BuildFrequencyBands.sql
 procedures/BuildNodes.sql
 #

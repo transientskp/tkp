@@ -10,41 +10,57 @@
 -- (stored in newsource.previous_limits_image) to obtain sigma_max and sigma_min.
 
 CREATE VIEW augmented_runningcatalog AS
- SELECT
-    -- and finally construct the final table
-    r.*,
-    a.v_int,
-    a.eta_int,
-    n.id as newsource,
-    e2.f_int / i.rms_max AS sigma_max,
-    e2.f_int / i.rms_min AS sigma_min,
-    MAX(e3.f_int) AS lightcurve_max,
-    AVG(e3.f_int) AS lightcurve_avg
-   FROM ( SELECT a_1.runcat AS runcat_id,
-          -- second get the peak flux per runcat and band
-
-            max(e_1.f_int) AS max_flux
-           FROM ( SELECT max(a_2.id) AS assoc_id
-                   -- first get the maximum timestamps per runcat and band
+ SELECT r.id
+    /* and finally construct the final table */
+       ,r.wm_ra
+       ,r.wm_decl
+       ,r.wm_uncertainty_ew
+       ,r.wm_uncertainty_ns
+       ,r.xtrsrc
+       ,r.dataset
+       ,r.datapoints
+       ,a.v_int
+       ,a.eta_int
+       ,n.id as newsource
+       ,e2.f_int / i.rms_max AS sigma_max
+       ,e2.f_int / i.rms_min AS sigma_min
+       ,MAX(e3.f_int) AS lightcurve_max
+       ,AVG(e3.f_int) AS lightcurve_avg
+    FROM (SELECT
+         /* second get the peak flux per runcat and band */
+                a_1.runcat AS runcat_id
+               ,MAX(e_1.f_int) AS max_flux
+           FROM (SELECT
+                 /* first get the maximum timestamps per runcat and band */
+                        MAX(a_2.id) AS assoc_id
                    FROM assocxtrsource a_2
-                     JOIN runningcatalog r_1 ON a_2.runcat = r_1.id
-                     JOIN extractedsource e_2 ON a_2.xtrsrc = e_2.id
-                     JOIN image i_2 ON e_2.image = i_2.id
-                  GROUP BY r_1.id, i_2.band) m  -- m for moment
-             JOIN assocxtrsource a_1 ON a_1.id = m.assoc_id
-             JOIN extractedsource e_1 ON a_1.xtrsrc = e_1.id
-             JOIN image i_1 ON e_1.image = i_1.id
-          GROUP BY a_1.runcat) p  -- p for peak flux
-     JOIN assocxtrsource a ON a.runcat = p.runcat_id
-     JOIN extractedsource e ON a.xtrsrc = e.id AND e.f_int = p.max_flux
-     JOIN runningcatalog r ON r.id = p.runcat_id
-     LEFT JOIN newsource n ON n.runcat = r.id
-
-     -- we need to join these again to calculate sigma
-     LEFT JOIN extractedsource e2 ON e2.id = n.trigger_xtrsrc
-     LEFT JOIN image i ON i.id = n.previous_limits_image
-
-     -- and we need to join these again to calculate max and avg for lightcurve
-     JOIN assocxtrsource a2 ON r.id = a2.runcat
-     JOIN extractedsource e3 ON a2.xtrsrc = e3.id
-   GROUP BY r.id, a.v_int, a.eta_int, n.id, e2.f_int, i.rms_max, e2.f_int, i.rms_min
+                        JOIN runningcatalog r_1 ON a_2.runcat = r_1.id
+                        JOIN extractedsource e_2 ON a_2.xtrsrc = e_2.id
+                        JOIN image i_2 ON e_2.image = i_2.id
+                 GROUP BY r_1.id, i_2.band
+                ) m  /* m for moment */
+                JOIN assocxtrsource a_1 ON a_1.id = m.assoc_id
+                JOIN extractedsource e_1 ON a_1.xtrsrc = e_1.id
+                JOIN image i_1 ON e_1.image = i_1.id
+         GROUP BY a_1.runcat
+        ) p  /* p for peak flux */
+        JOIN assocxtrsource a ON a.runcat = p.runcat_id
+        JOIN extractedsource e ON a.xtrsrc = e.id AND e.f_int = p.max_flux
+        JOIN runningcatalog r ON r.id = p.runcat_id
+        LEFT JOIN newsource n ON n.runcat = r.id
+        /* we need to join these again to calculate sigma */
+        LEFT JOIN extractedsource e2 ON e2.id = n.trigger_xtrsrc
+        LEFT JOIN image i ON i.id = n.previous_limits_image
+        /* and we need to join these again to calculate max and avg for lightcurve */
+        JOIN assocxtrsource a2 ON r.id = a2.runcat
+        JOIN extractedsource e3 ON a2.xtrsrc = e3.id
+        GROUP BY r.id
+          ,r.wm_ra
+          ,r.wm_decl
+          ,r.wm_uncertainty_ew
+          ,r.wm_uncertainty_ns
+          ,r.xtrsrc
+          ,r.dataset
+          ,r.datapoints
+          ,a.v_int, a.eta_int, n.id, e2.f_int, i.rms_max, e2.f_int, i.rms_min
+;

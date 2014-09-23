@@ -31,12 +31,17 @@ from tkp.steps.source_extraction import forced_fits
 logger = logging.getLogger(__name__)
 
 
-def run(job_name, mon_coords=[], distributor='multiproc'):
+def run(job_name, mon_coords=[]):
     pipe_config = initialize_pipeline_config(
         os.path.join(os.getcwd(), "pipeline.cfg"),
         job_name)
 
-    runner = Runner(distributor=distributor, cores=pipe_config.multiproc.cores)
+    # get parallelise props. Defaults to multiproc with autodetect num cores
+    parallelise = pipe_config.get('parallelise', {})
+    distributor = os.environ.get('TKP_PARALLELISE', parallelise.get('method',
+                                                                    'multiproc'))
+    runner = Runner(distributor=distributor,
+                    cores=parallelise.get('cores', 0))
 
     debug = pipe_config.logging.debug
     #Setup logfile before we do anything else

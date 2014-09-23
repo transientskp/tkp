@@ -15,8 +15,6 @@ It is assumed that the reader is already familiar with the :ref:`userref`.
 .. toctree::
   :maxdepth: 2
 
-  procedure
-  developing
-  testing
+  procedures/index
   database/index
   tkp/index

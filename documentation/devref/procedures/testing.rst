@@ -1,8 +1,7 @@
 .. _testing:
 
-+++++++
-Testing
-+++++++
+Testing & Continuous Integration
+================================
 
 The ``tests`` directory contains a (reasonably) comprehensive TraP test suite.
 Tests are written following the `Python unittest
@@ -11,8 +10,21 @@ can be run using just the standard Python library tools, you might find that
 `nose <https://nose.readthedocs.org/en/latest/>`_ provides a more convenient
 interface.
 
+Requirements
+------------
+
+Whenever any changes are made to the code, all pre-extant tests *must*
+continue to pass. If the change involves changing the result of one or more
+tests, any such changes must be clearly explained and check during
+:ref:`code-review`.
+
+New features and bug fixes must be accompanied by appropriate tests. These
+should both demonstrate the correct operation of the code with good input data
+as well as demonstrating how it responds to bad inputs. Again, the code
+reviewer should check that the tests provided are clear and comprehensive.
+
 Test data
-+++++++++
+---------
 
 Many of the tests require data files which are distributed separately from the
 TraP. Having cloned the TraP repository (into the directory ``tkp`` in this
@@ -36,7 +48,7 @@ test suite should still complete successfully; note that your copy of the TraP
 will not be fully tested.
 
 Database
-++++++++
+--------
 
 Many of the tests require interaction with the :ref:`pipeline database
 <database-intro>`. A convient way to configure the database is by using
@@ -56,7 +68,7 @@ should still complete successfully, but your copy of the TraP will not be
 fully tested.
 
 Running the tests
-+++++++++++++++++
+-----------------
 
 Within the ``tests`` directory, use the ``runtests.py`` script to start the
 test suite using ``nose``::
@@ -77,3 +89,13 @@ the root of the development tree::
   $ export PYTHONPATH=$(pwd):${PYTHONPATH}
   $ cd tests
   $ python runtests.py -v
+
+
+Continuous integration
+----------------------
+
+There is a Jenkins instance at https://jenkins.transientskp.org/ which builds
+and tests all code committed to the ``master`` branch as well as any incoming
+pull requests. This constitutes the reference system on which tests are
+required to pass: a failure here should result in a change being rejected,
+regardless of its successful operation on some other system.

@@ -1,12 +1,14 @@
 import unittest
-
 import datetime
+import logging
+from io import BytesIO
 from tkp.testutil.decorators import requires_database
 import tkp.db
 from tkp.db.orm import DataSet, Image
 from tkp.db.database import Database
 from tkp.db.orm import ExtractedSource
 from tkp.testutil import db_subs
+from tkp.db.generic import columns_from_table
 
 # We're cheating here: a unit test shouldn't really depend on an
 # external dependency like the database being up and running
@@ -185,20 +187,43 @@ class TestExtractedSource(unittest.TestCase):
 
     @requires_database()
     def test_infinite(self):
-        # Check that database insertion doesn't choke on infinite errors
+        # Check that database insertion doesn't choke on infinite errors.
+
         dataset = DataSet(data={'description': 'example dataset'},
                            database=self.database)
         image = Image(dataset=dataset, data=db_subs.example_dbimage_data_dict())
 
-        # Inserting an example extractedsource should be fine
+        # Inserting a standard example extractedsource should be fine
         extracted_source = db_subs.example_extractedsource_tuple()
         image.insert_extracted_sources([extracted_source])
+        inserted = columns_from_table('extractedsource',
+                                      where= {'image' : image.id})
+        self.assertEqual(len(inserted), 1)
 
-        # But it should also be fine if the source has infinite errors
+        # But if the source has infinite errors we drop it and log a warning
         extracted_source = db_subs.example_extractedsource_tuple(error_radius=float('inf'),
                                                                  peak_err=float('inf'),
                                                                  flux_err=float('inf'))
+
+                # We will add a handler to the root logger which catches all log
+        # output in a buffer.
+        iostream = BytesIO()
+        hdlr = logging.StreamHandler(iostream)
+        logging.getLogger().addHandler(hdlr)
+
         image.insert_extracted_sources([extracted_source])
+
+        logging.getLogger().removeHandler(hdlr)
+        # We want to be sure that the error has been appropriately logged.
+        self.assertIn("Dropped source fit with infinite flux errors",
+                      iostream.getvalue())
+
+        inserted = columns_from_table('extractedsource',
+                                      where= {'image' : image.id})
+        self.assertEqual(len(inserted), 1)
+
+
+
 
     @requires_database()
     def test_create(self):

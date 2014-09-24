@@ -115,7 +115,7 @@ class TestLightCurve(unittest.TestCase):
         sorted_runcat_ids = [entry['id'] for entry in sorted_runcat_ids]
 
         for idx, rcid in enumerate(sorted_runcat_ids):
-            db_indices = db_queries.per_timestep_variability_indices(self.database,
+            db_indices = db_queries.get_assoc_entries(self.database,
                                                                    rcid)
             py_indices = db_subs.lightcurve_metrics(lightcurves_sorted_by_ra[idx])
             self.assertEqual(len(db_indices), len(py_indices))

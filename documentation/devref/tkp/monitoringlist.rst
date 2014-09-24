@@ -44,7 +44,7 @@ The database tables concerned are three:
 
 - assocxtrsource: the light curve of the monitoring sources are maintained
   in this table. All associations are of the type 1-to-1, so monitoring sources
-  not associated or mixed up with the blind and/or null detections.
+  are not associated or mixed up with the blind and/or null detections.
 
 
 Program flow
@@ -56,7 +56,7 @@ indicated.
 
 1. Recipe: monitoringlist
 
-  a. It should be noted that the monitoring list procedures run a
+  a. It should be noted that the monitoring list procedures run 
      after the `normal` association procedures of the blindly extracted
      sources and null detections are completed.
   

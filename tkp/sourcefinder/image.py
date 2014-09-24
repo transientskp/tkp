@@ -3,11 +3,9 @@ Some generic utility routines for number handling and
 calculating (specific) variances
 """
 
-import time
 import logging
 import itertools
 import numpy
-import scipy.stats
 from tkp.utility import containers
 from tkp.utility.memoize import Memoize
 from tkp.sourcefinder import utils
@@ -603,28 +601,49 @@ class ImageData(object):
 
         return extract.Detection(measurement, self)
 
-    def fit_fixed_positions(self, sources, boxsize, threshold=None,
-                            fixed='position+shape'):
+    def fit_fixed_positions(self, positions, boxsize, threshold=None,
+                            fixed='position+shape',
+                            ids=None):
         """Convenience function to fit a list of sources at the given positions
 
         This function wraps around fit_to_point().
 
-        Sources is a list of (ra, dec) tuples (not pixel coordinates).
+        Args:
+            positions (list of (RA, Dec) tuples): Positions to be fit,
+                in decimal degrees.
+            boxsize: See :py:func:`fit_to_point`
+            threshold: as above.
+            fixed: as above.
+            ids (list): A list of identifiers. If not None, then must match
+                the length and order of the ``requested_fits``. Any
+                successfully fit positions will be returned in a tuple
+                along with the matching id. As these are simply passed back to
+                calling code they can be a string, tuple or whatever.
 
-        All other arguments are the same as in fit_to_point(). In
-        particular, boxsize is in pixel coordinates as in
+        In particular, boxsize is in pixel coordinates as in
         fit_to_point, not in sky coordinates.
+
+        Returns:
+            A list of successful fits.
+            If ``ids`` is None, returns a single list of
+            :class:`tkp.sourcefinder.extract.Detection`s.
+            Otherwise, returns a tuple of two matched lists:
+                ([detections], [matching_ids]).
         """
 
-        detections = []
-        for source in sources:
+        if ids is not None:
+            assert len(ids)==len(positions)
+
+        successful_fits = []
+        successful_ids = []
+        for idx, posn in enumerate(positions):
             try:
-                x, y, = self.wcs.s2p(source)
+                x, y, = self.wcs.s2p((posn[0], posn[1]))
             except RuntimeError, e:
                 if (str(e).startswith("wcsp2s error: 8:") or
                     str(e).startswith("wcsp2s error: 9:")):
                     logger.warning("Input coordinates (%.2f, %.2f) invalid: ",
-                                    source[0], source[1])
+                                    posn[0], posn[1])
                 else:
                     raise
             else:
@@ -635,18 +654,24 @@ class ImageData(object):
                                                 fixed=fixed)
                     if not fit_results:
                         # We were unable to get a good fit
+                        logging.warning("Unable to get a good fit for "
+                            "source",idx,posn)
                         continue
                     if ( fit_results.ra.error == float('inf') or
                           fit_results.dec.error == float('inf')):
                         logging.warning("position errors extend outside image")
                     else:
-                        detections.append(fit_results)
+                        successful_fits.append(fit_results)
+                        if ids:
+                            successful_ids.append(ids[idx])
+
                 except IndexError as e:
                     logger.warning("Input pixel coordinates (%.2f, %.2f) "
                                     "could not be fit because: " + e.message,
-                                    source[0], source[1])
-
-        return detections
+                                    posn[0], posn[1])
+        if ids:
+            return successful_fits, successful_ids
+        return successful_fits
 
     def label_islands(self, detectionthresholdmap, analysisthresholdmap):
         """

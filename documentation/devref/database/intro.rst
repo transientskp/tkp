@@ -1,10 +1,10 @@
-.. _database-section:
+.. _database-config:
 
-Database
-========
+Configuration
+=============
 
-This section concerns the (MonetDB or PostgreSQL) database that is used to
-store extracted sources and determine variable sources.
+This section describes how to configure the MonetDB or PostgreSQL database
+that the TraP uses to store extracted sources and determine variable sources.
 
 Creating a database
 -------------------
@@ -27,19 +27,19 @@ MonetDB
 +++++++
 
 The instructions for creating MonetDB databases differ per operating system
-and environment. The `MonetDB online documentation
-<https://www.monetdb.org/Documentation/monetdbd>`_
-explains how to create a database.
+and environment. The `MonetDB online documentation`_ explains how to create a
+database.
 
+.. _MonetDB online documentation: https://www.monetdb.org/Documentation/monetdbd
 
 PostgreSQL
 ++++++++++
 
 The instructions for creating PostgreSQL databases differ per operating system
-and environment. The `PostreSQL online documentation
-<http://www.postgresql.org/docs/9.3/static/sql-createdatabase.html>`_
-explains how to create a database.
+and environment. The `PostgreSQL online documentation`_ explains how to create
+a database.
 
+.. _PostgreSQL online documentation: http://www.postgresql.org/docs/9.3/static/sql-createdatabase.html
 
 Populating the database
 -----------------------
@@ -57,7 +57,6 @@ use the tkp-manage.py initdb subcommand for this.
 inside your project folder run::
 
   $ tkp-manage.py initdb
-
 
 Recreating the database schema
 ------------------------------

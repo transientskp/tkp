@@ -1,11 +1,11 @@
 .. _database_background:
 
-++++++++++++++++++++++++++++++
-Overview of the TKP Database
-++++++++++++++++++++++++++++++
+=====================
+The Pipeline Database
+=====================
 
 This section presents material related to the structure and maintenance of the
-database used by the TKP library and associated pipeline.
+database used by the TraP.
 
 .. toctree::
    :maxdepth: 2

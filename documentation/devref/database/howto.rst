@@ -1,9 +1,9 @@
-+++++
-HOWTO
-+++++
+==============================
+"How-To" notes on common tasks
+==============================
 
 Recover from disappearing clients
-=================================
+---------------------------------
 
 Current (as of April 2014) versions of the MonetDB server do not check for
 clients timing out. That is, if a remote client connects to the server and
@@ -31,7 +31,7 @@ Future versions of MonetDB (unreleased as of April 2014) will include
 by enabling ``SO_KEEPALIVE`` on the TCP socket.
 
 Create a schema diagram
-=======================
+-----------------------
 
 As shown in the :ref:`schema documentation <database-schema>`.
 

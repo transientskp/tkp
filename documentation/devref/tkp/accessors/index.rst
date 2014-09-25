@@ -3,9 +3,6 @@
 +++++++++++++++++++++++++++++++++++++++++++++++
 :mod:`tkp.accessors` -- Image container classes
 +++++++++++++++++++++++++++++++++++++++++++++++
-.. |last_updated| last_updated::
-
-*This document last updated:* |last_updated|.
 
 Introduction
 ------------

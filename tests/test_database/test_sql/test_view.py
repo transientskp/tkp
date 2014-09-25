@@ -53,7 +53,9 @@ class TestAugmentedRunningcatalog(unittest.TestCase):
     def test_extra_columns(self):
         query = """
         SELECT
-            v_int, eta_int, sigma_max, sigma_min, lightcurve_max, lightcurve_avg
+            v_int, eta_int,
+            sigma_rms_max, sigma_rms_min,
+            lightcurve_max, lightcurve_avg
         FROM
             augmented_runningcatalog
         WHERE

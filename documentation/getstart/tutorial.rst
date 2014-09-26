@@ -76,7 +76,7 @@ the TraP manage ``initdb`` subcommand can be used (from the project directory)::
 Use the ``-h`` flag to see an explanation about how to set the various
 properties. They can also be configured throught the :ref:`pipeline_cfg`. Note
 that the semantics vary slightly depending on the database system in use: see
-the :ref:`database documentation <database-section>` for details.
+the :ref:`database documentation <database-config>` for details.
 
 Create and configure a job
 ==========================

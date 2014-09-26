@@ -2,11 +2,6 @@
 
 Monitoring list
 ===============
-.. |last_updated| last_updated::
-
-:author: Evert Rol
-:Last updated: |last_updated|
-
 
 Introduction
 ------------

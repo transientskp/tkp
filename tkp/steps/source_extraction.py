@@ -60,32 +60,4 @@ def extract_sources(image_path, extraction_params):
                              )
 
 
-def forced_fits(image_path, positions, extraction_params):
-    """
-    Perform forced source measurements on an image based on a list of
-    positions.
 
-    :param image_path: path to image for measurements.
-    :param positions: list of (ra, dec) pairs for measurement.
-    :param extraction_params: source extraction parameters, as a dictionary.
-    """
-    logger.info("Forced fitting in image: %s" % (image_path))
-    fitsimage = tkp.accessors.open(image_path)
-
-    data_image = sourcefinder_image_from_accessor(fitsimage,
-                    margin=extraction_params['margin'],
-                    radius=extraction_params['extraction_radius_pix'],
-                    back_size_x=extraction_params['back_size_x'],
-                    back_size_y=extraction_params['back_size_y'])
-
-    if len(positions):
-        boxsize = extraction_params['box_in_beampix'] * max(data_image.beam[0],
-                                                 data_image.beam[1])
-        forced_fits = data_image.fit_fixed_positions(positions, boxsize)
-        return [
-            forced_fit.serialize(
-                extraction_params['ew_sys_err'], extraction_params['ns_sys_err']
-            ) for forced_fit in forced_fits
-        ]
-    else:
-        return []

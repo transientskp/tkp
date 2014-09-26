@@ -262,5 +262,8 @@ nitpick_ignore = [
     ("py:obj", "3-tuple of float"),
     ("py:obj", "3-tuple"),
     ("py:obj", "pyrap.images.image"),
-    ("py:obj", "pyrap.tables.table")
+    ("py:obj", "pyrap.tables.table"),
+    ("py:obj", "list of (RA, Dec) tuples"),
+    ("py:obj", "list of tuples")
+
 ]

@@ -72,7 +72,7 @@ class TestFitFixedPositions(unittest.TestCase):
     def testSourceAtGivenPosition(self):
         posn = self.bright_src_posn
         img=self.image
-        results = self.image.fit_fixed_positions(sources = [posn],
+        results = self.image.fit_fixed_positions(positions= [posn],
                                        boxsize = self.boxsize,
                                        threshold=0.0)[0]
         self.assertAlmostEqual(results.ra.value, self.known_fit_results[0],
@@ -91,7 +91,7 @@ class TestFitFixedPositions(unittest.TestCase):
         """
         posn = self.bright_src_posn
         img=self.image
-        low_thresh_results = self.image.fit_fixed_positions(sources = [posn],
+        low_thresh_results = self.image.fit_fixed_positions(positions= [posn],
                                    boxsize = BOX_IN_BEAMPIX*max(img.beam[0], img.beam[1]),
                                    threshold = -1e20)[0]
         self.assertAlmostEqual(low_thresh_results.ra.value, self.known_fit_results[0],
@@ -111,7 +111,7 @@ class TestFitFixedPositions(unittest.TestCase):
         posn = self.bright_src_posn
         img=self.image
         with self.assertRaises(ValueError):
-            results = self.image.fit_fixed_positions(sources = [posn],
+            results = self.image.fit_fixed_positions(positions= [posn],
                                        boxsize = BOX_IN_BEAMPIX*max(img.beam[0], img.beam[1]),
                                        threshold = 1e20)
 
@@ -127,7 +127,7 @@ class TestFitFixedPositions(unittest.TestCase):
 
         img=self.image
         results = self.image.fit_fixed_positions(
-                                     sources = [self.background_posn],
+                                     positions= [self.background_posn],
                                      boxsize = BOX_IN_BEAMPIX*max(img.beam[0], img.beam[1]),
                                      threshold = None
                                      )[0]
@@ -140,7 +140,7 @@ class TestFitFixedPositions(unittest.TestCase):
         p1 = img.wcs.p2s((0,0))
         p2 = img.wcs.p2s((img.data.shape[0], img.data.shape[1]))
         posn_out_of_img = (p1[0] - 10.0 / 3600.0 , (p1[1] + p2[1] / 2.0) )
-        results = self.image.fit_fixed_positions(sources = [posn_out_of_img],
+        results = self.image.fit_fixed_positions(positions= [posn_out_of_img],
                                        boxsize = BOX_IN_BEAMPIX*max(img.beam[0], img.beam[1]))
         self.assertListEqual([], results)
 
@@ -150,7 +150,7 @@ class TestFitFixedPositions(unittest.TestCase):
         boxsize = BOX_IN_BEAMPIX*max(img.beam[0], img.beam[1])
         edge_posn = img.wcs.p2s((0 + boxsize/2 -2, img.data.shape[1]/2.0))
         results = self.image.fit_fixed_positions(
-                                    sources = [edge_posn],
+                                    positions= [edge_posn],
                                     boxsize = boxsize,
                                     threshold = -1e10
                                     )

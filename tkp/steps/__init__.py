@@ -7,4 +7,4 @@ import persistence
 import prettyprint
 import quality
 import source_extraction
-import null_detections
+import forced_fitting

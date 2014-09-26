@@ -346,8 +346,9 @@ def insert_image_and_simulated_sources(dataset, image_params, mock_sources,
     forced_fits = []
     for posn in nd_posns:
         for src in mock_sources:
-            if (posn[0]==src.base_source.ra and
-                        posn[1]==src.base_source.dec):
+            eps = 1e-13
+            if (math.fabs(posn[0] - src.base_source.ra)<eps and
+                        math.fabs(posn[1] - src.base_source.dec)<eps ):
                 forced_fits.append(
                     src.simulate_extraction(image,extraction_type='ff_nd')
                 )
@@ -356,7 +357,7 @@ def insert_image_and_simulated_sources(dataset, image_params, mock_sources,
                           "not match a mock source.")
     #image.insert_extracted_sources(forced_fits, 'ff_nd')
     dbgen.insert_extracted_sources(image.id, forced_fits, 'ff_nd',
-                   ff_runcatids=[ids for ids, ra, decl in nd_ids_posns])
+                   ff_runcat_ids=[ids for ids, ra, decl in nd_ids_posns])
     nulldetections.associate_nd(image.id)
 
     return image, blind_extractions, forced_fits

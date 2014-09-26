@@ -53,7 +53,9 @@ class TestAugmentedRunningcatalog(unittest.TestCase):
     def test_extra_columns(self):
         query = """
         SELECT
-            v_int, eta_int, sigma_max, sigma_min, lightcurve_max, lightcurve_avg
+            v_int, eta_int,
+            sigma_rms_max, sigma_rms_min,
+            lightcurve_max, lightcurve_avg
         FROM
             augmented_runningcatalog
         WHERE
@@ -75,12 +77,15 @@ class TestAugmentedRunningcatalog(unittest.TestCase):
 
     def test_count(self):
         """
-        make sure the augmented view has the same row count as the runcat table
+        make sure the augmented view has a reasonable number of rows.
         """
-        q1 = "select count(id) from runningcatalog"
-        q2 = "select count(id) from augmented_runningcatalog"
+        n_runcats_qry = "select count(id) from runningcatalog"
+        n_runcat_flux_qry = "select count(id) from runningcatalog_flux"
+        n_in_view_qry = "select count(id) from augmented_runningcatalog"
 
-        r1 = tkp.db.execute(q1).fetchall()[0][0]
-        r2 = tkp.db.execute(q2).fetchall()[0][0]
+        n_runcats = tkp.db.execute(n_runcats_qry).fetchall()[0][0]
+        n_runcat_flux = tkp.db.execute(n_runcat_flux_qry).fetchall()[0][0]
+        n_in_view = tkp.db.execute(n_in_view_qry).fetchall()[0][0]
 
-        self.assertEqual(r1, r2)
+        self.assertGreaterEqual(n_in_view, n_runcats)
+        self.assertGreaterEqual(n_runcat_flux, n_in_view)

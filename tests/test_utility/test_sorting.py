@@ -2,7 +2,7 @@ import unittest
 from collections import namedtuple
 from datetime import datetime, timedelta
 import random
-from tkp.utility.sorting import group_per_timestep
+from tkp.steps.misc import group_per_timestep
 
 MockOrmImage = namedtuple('MockOrmImage', ['taustart_ts', 'freq_eff', 'stokes'])
 

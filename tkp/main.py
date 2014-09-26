@@ -21,11 +21,12 @@ from tkp.db import associations as dbass
 from tkp.distribute import Runner
 from tkp.steps.misc import (load_job_config, dump_configs_to_logdir,
                                    check_job_configs_match,
-                                   setup_log_file, dump_database_backup)
+                                   setup_log_file, dump_database_backup,
+                                group_per_timestep
+                            )
 from tkp.db.configstore import store_config, fetch_config
 from tkp.steps.persistence import create_dataset, store_images
 import tkp.steps.forced_fitting as steps_ff
-from tkp.utility.sorting import group_per_timestep
 
 
 logger = logging.getLogger(__name__)

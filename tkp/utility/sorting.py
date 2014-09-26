@@ -2,6 +2,7 @@
 Logic for sorting the TRAP input data
 """
 
+from collections import defaultdict
 
 def group_per_timestep(images):
     """
@@ -17,21 +18,26 @@ def group_per_timestep(images):
         * f is frequency sorted from low to high
         * s is stokes, sorted by ID as defined in the database schema
 
+    Args:
+        List of images.
+
+    Returns:
+        List of tuples: The list is sorted by timestamp.
+            Each tuple has the timestamp as a first element,
+            and a list of images sorted by frequency and then stokes
+            as the second element.
+
     """
-    img_dict = {}
+    timestamp_to_images_map = defaultdict(list)
     for image in images:
-        t = image.taustart_ts
-        if t in img_dict:
-            img_dict[t].append(image)
-        else:
-            img_dict[t] = [image]
+        timestamp_to_images_map[image.taustart_ts].append(image)
 
-    grouped_images = img_dict.items()
+    #List of (timestamp, [images_at_timestamp]) tuples:
+    grouped_images = timestamp_to_images_map.items()
 
-    # sort the timestamps
+    # sort the tuples by first element (timestamps)
     grouped_images.sort()
 
     # and then sort the nested items per freq and stokes
     [l[1].sort(key=lambda x: (x.freq_eff, x.stokes)) for l in grouped_images]
-    
     return grouped_images

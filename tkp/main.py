@@ -10,6 +10,7 @@ The exceptions are a couple of celery-specific subroutines.
 """
 import imp
 import logging
+
 import os
 from tkp import steps
 from tkp.config import initialize_pipeline_config, get_database_config
@@ -18,10 +19,11 @@ from tkp.db import Image
 from tkp.db import general as dbgen
 from tkp.db import associations as dbass
 from tkp.distribute import Runner
-from tkp.distribute.common import (load_job_config, dump_configs_to_logdir,
+from tkp.steps.misc import (load_job_config, dump_configs_to_logdir,
                                    check_job_configs_match,
                                    setup_log_file, dump_database_backup,
-                                   group_per_timestep)
+                                group_per_timestep
+                            )
 from tkp.db.configstore import store_config, fetch_config
 from tkp.steps.persistence import create_dataset, store_images
 import tkp.steps.forced_fitting as steps_ff

@@ -26,6 +26,12 @@ CREATE VIEW augmented_runningcatalog AS
        ,e2.f_int / i.rms_min AS sigma_min
        ,MAX(e3.f_int) AS lightcurve_max
        ,AVG(e3.f_int) AS lightcurve_avg
+      {% ifdb postgresql %}
+       ,median(e3.f_int) AS lightcurve_median
+      {% endifdb %}
+      {% ifdb monetdb %}
+       ,sys.median(e3.f_int) AS lightcurve_median
+      {% endifdb %}
     FROM (SELECT
          /* second get the peak flux per runcat and band */
                 a_1.runcat AS runcat_id

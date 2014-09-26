@@ -19,13 +19,14 @@ CREATE VIEW augmented_runningcatalog AS
        ,r.xtrsrc
        ,r.dataset
        ,r.datapoints
-       ,matched_assoc.v_int
-       ,matched_assoc.eta_int
+       ,match_assoc.v_int
+       ,match_assoc.eta_int
+       ,match_img.band
        ,newsrc_trigger.id as newsource
        ,newsrc_trigger.sigma_rms_max
        ,newsrc_trigger.sigma_rms_min
-       ,MAX(e3.f_int) AS lightcurve_max
-       ,AVG(e3.f_int) AS lightcurve_avg
+       ,MAX(agg_ex.f_int) AS lightcurve_max
+       ,AVG(agg_ex.f_int) AS lightcurve_avg
     FROM ( /* Select peak flux per runcat at last timestep (over all bands) */
            SELECT a_1.runcat AS runcat_id
                ,MAX(e_1.f_int) AS max_flux
@@ -42,11 +43,12 @@ CREATE VIEW augmented_runningcatalog AS
         ) last_ts_fmax
         /* Pull out the matching var. indices. at last timestep,
           matched via runcat id, flux val: */
-        JOIN assocxtrsource matched_assoc
-             ON matched_assoc.runcat = last_ts_fmax.runcat_id
-        JOIN extractedsource e
-             ON matched_assoc.xtrsrc = e.id AND e.f_int = last_ts_fmax.max_flux
+        JOIN assocxtrsource match_assoc
+             ON match_assoc.runcat = last_ts_fmax.runcat_id
+        JOIN extractedsource match_ex
+             ON match_assoc.xtrsrc = match_ex.id AND match_ex.f_int = last_ts_fmax.max_flux
         JOIN runningcatalog r ON r.id = last_ts_fmax.runcat_id
+        JOIN image match_img on match_ex.image = match_img.id
         LEFT JOIN (
             /* Grab newsource /trigger details where possible */
             SELECT  n.id
@@ -59,8 +61,11 @@ CREATE VIEW augmented_runningcatalog AS
           ) as newsrc_trigger
           ON newsrc_trigger.rc_id = r.id
         /* and we need to join these again to calculate max and avg for lightcurve */
-        JOIN assocxtrsource a2 ON r.id = a2.runcat
-        JOIN extractedsource e3 ON a2.xtrsrc = e3.id
+        /* I.e. the aggregate values */
+        JOIN assocxtrsource agg_assoc ON r.id = agg_assoc.runcat
+        JOIN extractedsource agg_ex ON agg_assoc.xtrsrc = agg_ex.id
+        JOIN image agg_img ON agg_ex.image = agg_img.id
+                           AND agg_img.band = match_img.band
         GROUP BY r.id
           ,r.wm_ra
           ,r.wm_decl
@@ -69,8 +74,9 @@ CREATE VIEW augmented_runningcatalog AS
           ,r.xtrsrc
           ,r.dataset
           ,r.datapoints
-          ,matched_assoc.v_int
-          ,matched_assoc.eta_int
+          ,match_assoc.v_int
+          ,match_assoc.eta_int
+          ,match_img.band
           ,newsrc_trigger.id
           ,newsrc_trigger.sigma_rms_max
           ,newsrc_trigger.sigma_rms_min

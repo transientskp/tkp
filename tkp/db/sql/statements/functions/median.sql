@@ -1,5 +1,10 @@
 {% ifdb postgresql %}
 
+/*
+  Defines 'median' aggregate function, cf.
+  https://wiki.postgresql.org/wiki/Aggregate_Median
+*/
+
 CREATE FUNCTION _final_median(anyarray) RETURNS float8 AS $$
   WITH q AS
   (

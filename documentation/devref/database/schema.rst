@@ -334,6 +334,11 @@ The TraP may add forced-fit entries to this table as well. Then
     1-sigma error (Jy) of ``f_int``, calculated by the sourcefinder
     procedures.
 
+**chisq, reduced_chisq**
+    Goodness of fit metrics for fitted Gaussian profiles.
+    (NB. These are not yet implemented, but have been placed in the schema
+    in advance, to avoid extra database migrations.)
+
 **extract_type**
     Reports how the source was extracted by sourcefinder (:ref:`Spreeuw (2010)
     <spreeuw-2010>`), Currently implemented values are:

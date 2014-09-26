@@ -26,6 +26,8 @@ CREATE TABLE extractedsource
   ,f_peak_err DOUBLE PRECISION NULL
   ,f_int DOUBLE PRECISION NULL
   ,f_int_err DOUBLE PRECISION NULL
+  ,chisq DOUBLE PRECISION NULL
+  ,reduced_chisq DOUBLE PRECISION NULL
   ,extract_type SMALLINT NULL
   ,fit_type SMALLINT NULL
   ,ff_runcat INT NULL

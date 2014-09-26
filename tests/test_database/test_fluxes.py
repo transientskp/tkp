@@ -498,7 +498,6 @@ class TestMany2Many(unittest.TestCase):
                                            py_indices[nstep][key])
 
 
-@unittest.skip("Needs fixing")
 @requires_database()
 class TestInfiniteErrorFluxes(unittest.TestCase):
     """
@@ -534,28 +533,21 @@ class TestInfiniteErrorFluxes(unittest.TestCase):
             image.insert_extracted_sources([src_list[idx]])
             associate_extracted_sources(image.id, deRuiter_r=3.717)
 
-        # query = """\
-        # SELECT rf.avg_f_int
-        #   FROM runningcatalog r
-        #       ,runningcatalog_flux rf
-        #  WHERE r.dataset = %(dataset)s
-        #    AND r.id = rf.runcat
-        # """
-        # self.database.cursor.execute(query, {'dataset': dataset.id})
-        # result = zip(*self.database.cursor.fetchall())
-        # avg_f_int = result[0]
-        # self.assertEqual(len(avg_f_int), 1)
-        # py_metrics = db_subs.lightcurve_metrics(src_list)
-        # self.assertAlmostEqual(avg_f_int[0], py_metrics[-1]['avg_f_int'])
-        # runcat_id = columns_from_table('runningcatalog',
-        #                                where={'dataset':dataset.id})
-        # self.assertEqual(len(runcat_id),1)
-        # runcat_id = runcat_id[0]['id']
-        # # Check evolution of variability indices
-        # db_metrics = db_queries.per_timestep_variability_indices(self.database,
-        #                                                    runcat_id)
-        # self.assertEqual(len(db_metrics), n_images)
-        # # Compare the python- and db-calculated values
-        # for i in range(len(db_metrics)):
-        #     for key in ('v_int','eta_int'):
-        #         self.assertAlmostEqual(db_metrics[i][key], py_metrics[i][key])
+        query = """\
+        SELECT rf.avg_f_int
+              ,rf.f_datapoints
+          FROM runningcatalog r
+              ,runningcatalog_flux rf
+        WHERE r.dataset = %(dataset)s
+           AND r.id = rf.runcat
+        """
+        cursor = tkp.db.execute(query, {'dataset': dataset.id})
+        results = db_subs.get_db_rows_as_dicts(cursor)
+
+        self.assertEqual(len(results),1)
+
+        self.assertEqual(results[0]['f_datapoints'],2)
+        self.assertAlmostEqual(results[0]['avg_f_int'],
+                               (src0.flux + src1.flux)/2.0 )
+
+

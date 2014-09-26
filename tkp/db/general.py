@@ -241,6 +241,11 @@ def insert_extracted_sources(image_id, results, extract_type,
     xtrsrc = []
     for i, src in enumerate(results):
         r = list(src)
+        # Drop any fits with infinite flux errors
+        if math.isinf(r[5]) or math.isinf(r[7]):
+            logger.warn("Dropped source fit with infinite flux errors "
+                        "at position %s %s" % (r[0], r[1]))
+            continue
         # Use 360 degree rather than infinite uncertainty for
         # unconstrained positions.
         r[14] = substitute_inf(r[14], 360.0)
@@ -316,27 +321,28 @@ INSERT INTO extractedsource
   )
 VALUES {placeholder}
 """
-    cols_per_row = len(xtrsrc[0])
-    placeholder_per_row = '('+ ','.join(['%s']*cols_per_row) +')'
+    if xtrsrc:
+        cols_per_row = len(xtrsrc[0])
+        placeholder_per_row = '('+ ','.join(['%s']*cols_per_row) +')'
 
-    placeholder_full = ','.join([placeholder_per_row]*len(xtrsrc))
+        placeholder_full = ','.join([placeholder_per_row]*len(xtrsrc))
 
-    query = insertion_query.format(placeholder= placeholder_full)
-    cursor = tkp.db.execute(query, tuple(itertools.chain.from_iterable(xtrsrc)),
-                            commit=True)
-    insert_num = cursor.rowcount
-    #if insert_num == 0:
-    #    logger.info("No forced-fit sources added to extractedsource for "
-    #                "image %s" % (image_id,))
-    if extract_type == 'blind':
-        logger.info("Inserted %d sources in extractedsource for image %s" %
-                    (insert_num, image_id))
-    elif extract_type == 'ff_nd':
-        logger.info("Inserted %d forced-fit null detections in extractedsource"
-                    " for image %s" % (insert_num, image_id))
-    elif extract_type == 'ff_ms':
-        logger.info("Inserted %d forced-fit for monitoring in extractedsource"
-                    " for image %s" % (insert_num, image_id))
+        query = insertion_query.format(placeholder= placeholder_full)
+        cursor = tkp.db.execute(query, tuple(itertools.chain.from_iterable(xtrsrc)),
+                                commit=True)
+        insert_num = cursor.rowcount
+        #if insert_num == 0:
+        #    logger.info("No forced-fit sources added to extractedsource for "
+        #                "image %s" % (image_id,))
+        if extract_type == 'blind':
+            logger.info("Inserted %d sources in extractedsource for image %s" %
+                        (insert_num, image_id))
+        elif extract_type == 'ff_nd':
+            logger.info("Inserted %d forced-fit null detections in extractedsource"
+                        " for image %s" % (insert_num, image_id))
+        elif extract_type == 'ff_ms':
+            logger.info("Inserted %d forced-fit for monitoring in extractedsource"
+                        " for image %s" % (insert_num, image_id))
 
 
 def lightcurve(xtrsrcid):

@@ -99,8 +99,8 @@ select 'drop table if exists "' || tablename || '" cascade;'
  where schemaname = 'public';
 """
     postgres_gen_drop_functions = """
-select 'drop function if exists ' || ns.nspname || '.' || proname
-       || '(' || oidvectortypes(proargtypes) || ') cascade;'
+select 'drop function ' || ns.nspname || '.' || proname
+       || '(' || oidvectortypes(proargtypes) || ');'
 from pg_proc inner join pg_namespace ns on (pg_proc.pronamespace = ns.oid)
 where ns.nspname = 'public'  order by proname;
 """

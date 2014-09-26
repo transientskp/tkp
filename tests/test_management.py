@@ -88,10 +88,7 @@ class TestManagement(unittest.TestCase):
         images_file.write("images=[]\n")
         images_file.close()
         runjob_args = tkp.management.parse_arguments(['run',
-                                                       job_name,
-                                                       "--method=celery"])
-        runjob_args.method = "serial"  # Kludge to avoid booting up celery
-
+                                                       job_name])
         tkp.management.run = Mock()
         runjob_args.func(runjob_args)
         self.assertEqual(tkp.management.run.callcount, 1)

@@ -55,10 +55,10 @@ name. Within that directory, there are four files:
 Creating a Job
 ==============
 
-Use the ``manage.py`` script in your project directory to create a job::
+Use the ``tkp-manage.py`` script to create a job::
 
   $ cd ./<projectname>
-  $ ./manage.py initjob <jobname>
+  $ tkp-manage.py initjob <jobname>
 
 This creates a job directory as a subdirectory of your project directory,
 named according to the job name. Within that directory, there are three

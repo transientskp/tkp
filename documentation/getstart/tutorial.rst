@@ -71,7 +71,7 @@ Initialize a database
 The pipeline requires a database for storing data. To initialise a database
 the TraP manage ``initdb`` subcommand can be used (from the project directory)::
 
-  $ ./manage.py initdb
+  $ tkp-manage.py initdb
 
 Use the ``-h`` flag to see an explanation about how to set the various
 properties. They can also be configured throught the :ref:`pipeline_cfg`. Note
@@ -85,7 +85,7 @@ Your pipeline project directory can contain multiple jobs. Jobs are a list of
 files to process, and a set of "parset" (parameter set) files that can be used
 to define various properties used during processing. To initialise a job run::
 
-    $ ./manage.py initjob <jobname>
+    $ tkp-manage.py initjob <jobname>
 
 This will create a job subdirectory within your pipeline directory. This
 directory contains three files:
@@ -106,7 +106,7 @@ Run the pipeline
 
 To start crunshing your data run (from your pipeline directory)::
 
-    $ ./manage.py run <jobname>
+    $ tkp-manage.py run <jobname>
 
 Note that you need to supply the database (see ``-h``) configuration if you
 didn't add it it the ``pipeline.cfg`` file (or if you are not happy with the

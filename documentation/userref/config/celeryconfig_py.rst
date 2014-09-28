@@ -75,7 +75,7 @@ separate Celery worker. This worker will receive jobs from a broker, so it is
 assumed you installed and started a broker in the installation step. Start a
 Celery worker by running::
 
-    % ./manage.py celery worker
+    % tkp-manage.py celery worker
 
 If you want to increase the log level add ``--loglevel=info`` or maybe even
 ``debug`` to the command. If you dont want to use a Celery worker (run the

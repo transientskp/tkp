@@ -30,9 +30,6 @@ configured jobs. When a project is initialised it is populated with a generic
 setup that hopefully works for your setup, but probably the modification of
 some of the configuration files is required.
 
-A new project contains a ``manage.py`` script, which has the same functionality
-as the ``tkp-manage.py``. People familiar with the Django framework will
-recognize this.
 
 .. program-output:: python ../tkp/bin/tkp-manage.py  initproject -h
 

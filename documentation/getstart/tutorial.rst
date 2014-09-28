@@ -12,78 +12,99 @@ Install the software
 First of all, the software should be installed on your system. See :ref:`the
 installation manual <installation>`.
 
-Configure the ephemeris
-=======================
+.. note::
+    Issues with the `casacore <https://code.google.com/p/casacore/>`_
+    installation can occasionally require a per-user fix (placing a small
+    config file in your home directory). If you see errors along the lines of::
 
-Note that as part of the installation you (or your system administrator) will
-have installed the casacore "measures data". This includes information
-essential to carrying out astronomical calculations, such as a list of leap
-seconds and a set of solar system ephemerides (which specify the positions of
-the planets at any given time). Data for the ephemerides are ultimately
-supplied by `NASA JPL`_; they have been converted into a format that casacore
-can use. Any given ephemeris is only valid for a limited time (usually on the
-order of centuries), determined by the accuracy with which it was calculated.
+        WARN    MeasTable::Planetary(MeasTable::Types, Double)
+        (file /build/buildd/casacore-1.7.0/measures/Measures/MeasTable.cc, line 4056)
+        Cannot find the planetary data for MeasJPL object number 3 at UT day 57023 in
+        table DE200
 
-By default, casacore will use the ``DE 200`` ephemeris. Although the version
-of ``DE 200`` supplied by JPL is valid until 2169, *some versions converted
-for use with casacore are not*, and may not provide coverage of the dates of
-your observation. A simple Python script can be used to check::
+    or::
 
-  $ cat check_ephemeris.py
-  import sys
-  from  pyrap.measures import measures
-  dm = measures()
-  dm.do_frame(dm.epoch('UTC', sys.argv[1]))
-  dm.separation(dm.direction('SUN'), dm.direction('SUN'))
-  $ python check_ephemeris.py 1990/01/01
-  $ python check_ephemeris.py 2015/01/01
-  WARN    MeasTable::Planetary(MeasTable::Types, Double)
-    (file /build/buildd/casacore-1.7.0/measures/Measures/MeasTable.cc, line 4056)
-    Cannot find the planetary data for MeasJPL object number 3 at UT day 57023 in
-    table DE200
+      SEVERE  gaincal::MeasTable::dUTC(Double) ...
+      Leap second table TAI_UTC seems out-of-date.
 
-If no warning is printed, there is no problem; otherwise, you should use a
-different ephemeris. For example, the ``DE 405`` ephemeris should be valid
-until at least early 2015::
+    Then consult your sysadmin or see :ref:`this note <casacore-measures>`.
 
-  $ cat > ~/.casarc
-  measures.jpl.ephemeris: DE405
-  $ python check_ephemeris.py 2015/01/01
-  # No warnings
-
-.. _NASA JPL: http://iau-comm4.jpl.nasa.gov/README.html
 
 Create a pipeline project directory
 ===================================
 
-Create a project directory which is a container of your pipeline settings and job
-files. Run these command to initialise a project directory in your home
-directory::
+First, create a project directory: this will contain your pipeline settings and
+job directories. To create a project folder in your current working directory,
+type::
 
-    $ cd ~
     $ tkp-manage.py initproject <projectname>
 
+(substituting ``<projectname>`` for your chosen directory name).
+
 .. _getstart-initdb:
+
+Create a database
+=================
+
+The pipeline requires a database for storing data, which needs to be created
+manually. The database then needs to be initialised with the TRAP database
+schema before it can be used.
+
+Depending on your site configuration, creating a database may require sysadmin
+rights. Refer to the relevant documentation for your installed database engine
+on creating a database:
+
+* `MonetDB online documentation`_
+* `PostgreSQL online documentation`_
 
 Initialize a database
 =====================
 
-The pipeline requires a database for storing data. To initialise a database
-the TraP manage ``initdb`` subcommand can be used (from the project directory)::
+To initialise a database the TraP manage ``initdb`` subcommand can be used.
+Set the details of the database you have created in the ``database``
+section of your :ref:`pipeline_cfg`. These include the host and port number of
+the system running the database management system, the name of the database,
+and the username and password.
+Then, from the project directory, type::
 
   $ tkp-manage.py initdb
 
-Use the ``-h`` flag to see an explanation about how to set the various
-properties. They can also be configured throught the :ref:`pipeline_cfg`. Note
-that the semantics vary slightly depending on the database system in use: see
-the :ref:`database documentation <database-config>` for details.
+
+Resetting a TraP database
+=========================
+You may wish to reset a previously used TraP database to an empty state.
+
+.. warning::
+    As you might expect, this may incur irreversible data loss. Be careful!
+
+**PostgreSQL**
+  For PostgreSQL there is the optional **-d** flag for the ``initdb`` subcommand,
+  which removes all content before populating the database.
+
+**MonetDB**
+  In the case of MonetDB you need to do this manually. You can do this with the
+  following commands, where **${dbname}** should be replaced with the database
+  name::
+
+    monetdb stop ${dbname}
+    monetdb destroy -f ${dbname}
+    monetdb create ${dbname}
+    monetdb start ${dbname}
+    monetdb release ${dbname}
+
+  For security reasons you should change the default password::
+
+    mclient -d ${dbname} -s"ALTER USER \"monetdb\" RENAME TO \"${username}\";
+    ALTER USER SET PASSWORD '${password}' USING OLD PASSWORD 'monetdb';"
+
 
 Create and configure a job
 ==========================
 
-Your pipeline project directory can contain multiple jobs. Jobs are a list of
-files to process, and a set of "parset" (parameter set) files that can be used
-to define various properties used during processing. To initialise a job run::
+Your pipeline project directory can contain multiple jobs, each represented by
+a subdirectory. Job directories contain a list of files to process, and config
+file that can be used to define various properties used during processing.
+To initialise a job directory run::
 
     $ tkp-manage.py initjob <jobname>
 
@@ -104,10 +125,10 @@ directory contains three files:
 Run the pipeline
 ================
 
-To start crunshing your data run (from your pipeline directory)::
+To start processing your data run (from your pipeline directory)::
 
     $ tkp-manage.py run <jobname>
 
-Note that you need to supply the database (see ``-h``) configuration if you
-didn't add it it the ``pipeline.cfg`` file (or if you are not happy with the
-defaults).
+
+.. _MonetDB online documentation: https://www.monetdb.org/Documentation/monetdbd
+.. _PostgreSQL online documentation: http://www.postgresql.org/docs/9.1/static/app-createdb.html

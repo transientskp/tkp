@@ -114,6 +114,13 @@ mainstream distributions. They can be compiled from source, or users of
 Ubuntu-based distributions might find the `SKA South Africa Launchpad page
 <https://launchpad.net/~ska-sa>`_ useful.
 
+.. warning::
+
+    See also the note on :ref:`casacore measures data <casacore-measures>`,
+    which can often cause confusing errors if out-of-date or incorrectly
+    configured.
+
+
 Build and Install
 =================
 

@@ -51,7 +51,7 @@ initdb
 
 Initialise a database with the TKP schema. The semantics of this command vary
 depending on the database system in use; see the :ref:`relevant section
-<database-config>` for details.
+<getstart-initdb>` for details.
 
 .. program-output:: python ../tkp/bin/tkp-manage.py initdb -h
 

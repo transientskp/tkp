@@ -8,6 +8,7 @@ Getting Started
    :maxdepth: 2
 
    installation
+   casacore-measures-data
    concepts/index
    tutorial
    sites

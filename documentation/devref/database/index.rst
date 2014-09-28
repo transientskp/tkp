@@ -10,7 +10,6 @@ database used by the TraP.
 .. toctree::
    :maxdepth: 2
 
-   intro
    schema
    assoc
    howto

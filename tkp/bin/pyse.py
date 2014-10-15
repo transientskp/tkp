@@ -143,11 +143,13 @@ def handle_args(args=None):
     parser.add_option("--sigmap", action="store_true", help="Generate significance map")
     parser.add_option("--force-beam", action="store_true", help="Force fit axis lengths to beam size")
     parser.add_option("--detection-image", type="string", help="Find islands on different image")
-    parser.add_option('--fixed-posns', help="List of coordinate pairs to "  \
-        "force-fit (decimal degrees, JSON, e.g [[123.4,56.7],[359.9,89.9]])",
+    parser.add_option('--fixed-posns', help="List of position coordinates to "
+        "force-fit (decimal degrees, JSON, e.g [[123.4,56.7],[359.9,89.9]]) "
+        "(Will not perform blind extraction in this mode)"              ,
         default=None)
-    parser.add_option('--fixed-posn-file',
-        help="Filename containing a list of positions to force-fit",
+    parser.add_option('--fixed-posns-file',
+        help="Path to file containing a list of positions to force-fit "
+             "(Will not perform blind extraction in this mode)",
         default=None)
     parser.add_option('--ffbox', type='float', default=3.,
         help="Forced fitting positional box size as a multiple of beam width.")
@@ -156,7 +158,7 @@ def handle_args(args=None):
     # Overwrite 'fixed_coords' with a parsed list of coords
     # collated from both command line and file.
     options.fixed_coords = parse_monitoringlist_positions(
-        options, str_name="fixed", list_name="fixed_list"
+        options, str_name="fixed_posns", list_name="fixed_posns_file"
     )
     # Quick & dirty check that the position list looks plausible
     if options.fixed_coords:

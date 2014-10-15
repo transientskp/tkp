@@ -162,7 +162,7 @@ It is possible to configure PySE to perform a fit to user-specified positions
 in the image _rather_ than "blindly" locating sources and attempting to fit
 them. (Note that it is not possible to do both at once: that requires invoking
 PySE twice.) This mode may be invoked either by using either of the
-``--fixed-posns`` or ``--fixed-posn-file`` options. The former directly reads a
+``--fixed-posns`` or ``--fixed-posns-file`` options. The former directly reads a
 list of positions from the command line; the latter accepts a filename, and
 reads the positions to fit from that. In both cases, the positions themselves
 are provided in `JSON <http://json.org/>`_ format, and should consist of a

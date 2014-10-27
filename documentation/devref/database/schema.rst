@@ -527,6 +527,77 @@ dataset).
 
 .. _CASA image description for LOFAR: http://www.lofar.org/operations/lib/exe/fetch.php?media=public:documents:casa_image_for_lofar_0.03.00.pdf>`_
 
+
+.. _schema-monitor:
+
+monitor
+=======
+
+This table stores the user-requested monitoring positions for a dataset.
+
+**id**
+    Every position in the monitor table gets a unique id.
+
+**dataset**
+    The relevant dataset ID - monitoring positions are dataset-specific.
+
+**ra, decl**
+    The position coordinates (J2000 degrees).
+
+**runcat**
+    Initially ``NULL``. When a forced-fit is first made to a monitoring position,
+    this column is updated to point to the relevant entry in the runningcatalog.
+
+**name**
+    A short descriptive name, e.g. GRB140101A or SNe150101, for more
+    user-friendly display of results.
+    This functionality is not currently implemented, but the presence of this
+    column allows it to be trivially implemented in future without requiring
+    a database migration.
+
+newsource
+=========
+
+For discovering transient or variable sources, our primary tools are variability
+statistics. However, a bright single-epoch source cannot sensibly be assigned
+variability statistics until at least a second measurement
+(possibly non-detection) has been made.
+
+This table tracks new sources, in the hopes that new sources considered
+sufficiently bright enough to be interesting may be flagged up immediately.
+
+See :py:func:`tkp.db.associations._determine_newsource_previous_limits` for
+details on how these values are assigned.
+
+**id**
+    Unique identifier, set by the database.
+
+**runcat**
+    Reference to the associated ``runningcatalog`` entry.
+
+**trigger_xtrsrc**
+    Reference to the extracted source that caused insertion of this
+    newsource.
+
+**newsource_type**
+    Refers to how certain we are that the newly discovered source is
+    really "physically new", i.e. transient. Since we do not store fine-grained
+    noise-maps in the database, we must be fairly conservative in our labelling
+    here.
+
+    Type 0 sources may be a steady source located in a high-RMS region,
+    newly detected due to noise fluctuations, or may be a real
+    transient in a low-RMS region.
+
+    Type 1 sources are bright enough that we can be fairly certain
+    they are really new - they are significantly brighter than the ``rms_max``
+    in the previous image with best detection limits.
+
+**previous_limits_image**
+    The ID of the previous image with the best upper limits on previous
+    detections of this source. Can be used to calculate the significance
+    level of the new-source detection.
+
 node
 ====
 
@@ -562,45 +633,47 @@ have this table, but with different content.
 
    The following sections on the ``runningcatalog``, ``runningcatalog_flux`` and
    ``temprunningcatalog_flux`` are annotated using the style of mathematical
-   notations developed in the :ref:`Appendix <mathematical-diversion>`.
+   notations developed in the :ref:`Appendix <schema-appendices>`.
 
 
-.. _schema-monitor:
+rejection
+=========
 
-monitor
-=======
-
-This table stores the user-requested monitoring positions for a dataset.
+This table contains all rejected images and a reference to the reason.
 
 **id**
-    Every position in the monitor table gets a unique id.
+    The database ID of the rejection.
 
-**dataset**
-    The relevant dataset ID - monitoring positions are dataset-specific.
+**image**
+    A foreign key relationship to the image ID of the rejected image.
 
-**ra, decl**
-    The position coordinates (J2000 degrees).
+**rejectreason**
+    A foreign key relationship to the ID of the rejection reason.
 
-**runcat**
-    Initially ``NULL``. When a forced-fit is first made to a monitoring position,
-    this column is updated to point to the relevant entry in the runningcatalog.
-
-**name**
-    A short descriptive name, e.g. GRB140101A or SNe150101, for more
-    user-friendly display of results.
-    This functionality is not currently implemented, but the presence of this
-    column allows it to be trivially implemented in future without requiring
-    a database migration.
+**comment**
+    A textfield with more details about the reason for rejection. For example
+    in the case of a rejection because of RMS value to high, this field will
+    contain the theoretical noise value and the calculated RMS value of the
+    image.
 
 
+rejectreason
+============
 
+This table contains all the possible reasons for rejecting an image.
+
+**id**
+    The database ID of the rejection reason.
+
+**description**
+    An description of the rejection.
 
 
 .. _schema-runningcatalog:
 
 runningcatalog
 ==============
-(See :ref:`mathematical-diversion` for explanation of mathematical notation.)
+(See :ref:`schema-appendices` for explanation of mathematical notation.)
 
 While a single entry in ``extractedsource`` corresponds to an individual
 source measurement, a single entry in ``runningcatalog`` corresponds to a
@@ -808,48 +881,7 @@ tables are listed below.
 
 .. _schema-newsource:
 
-newsource
-=========
 
-For discovering transient or variable sources, our primary tools are variability
-statistics. However, a bright single-epoch source cannot sensibly be assigned
-variability statistics until at least a second measurement
-(possibly non-detection) has been made.
-
-This table tracks new sources, in the hopes that new sources considered
-sufficiently bright enough to be interesting may be flagged up immediately.
-
-See :py:func:`tkp.db.associations._determine_newsource_previous_limits` for
-details on how these values are assigned.
-
-**id**
-    Unique identifier, set by the database.
-
-**runcat**
-    Reference to the associated ``runningcatalog`` entry.
-
-**trigger_xtrsrc**
-    Reference to the extracted source that caused insertion of this
-    newsource.
-
-**newsource_type**
-    Refers to how certain we are that the newly discovered source is
-    really "physically new", i.e. transient. Since we do not store fine-grained
-    noise-maps in the database, we must be fairly conservative in our labelling
-    here.
-
-    Type 0 sources may be a steady source located in a high-RMS region,
-    newly detected due to noise fluctuations, or may be a real
-    transient in a low-RMS region.
-
-    Type 1 sources are bright enough that we can be fairly certain
-    they are really new - they are significantly brighter than the ``rms_max``
-    in the previous image with best detection limits.
-
-**previous_limits_image**
-    The ID of the previous image with the best upper limits on previous
-    detections of this source. Can be used to calculate the significance
-    level of the new-source detection.
 
 version
 =======
@@ -864,43 +896,11 @@ upgrade will increment the value by 1.
     The version number, which increments after every database change.
 
 
-rejectreason
-============
 
-This table contains all the possible reasons for rejecting an image.
-
-**id**
-    The database ID of the rejection reason.
-
-**description**
-    An description of the rejection.
-
-
-rejection
-=========
-
-This table contains all rejected images and a reference to the reason.
-
-**id**
-    The database ID of the rejection.
-
-**image**
-    A foreign key relationship to the image ID of the rejected image.
-
-**rejectreason**
-    A foreign key relationship to the ID of the rejection reason.
-
-**comment**
-    A textfield with more details about the reason for rejection. For example
-    in the case of a rejection because of RMS value to high, this field will
-    contain the theoretical noise value and the calculated RMS value of the
-    image.
-
+.. _schema-appendices:
 
 Appendices
 ^^^^^^^^^^
-
-.. _mathematical-diversion:
 
 On iteratively updated weighted means
 =====================================

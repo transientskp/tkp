@@ -50,6 +50,9 @@ no significant variability) is then the integral of the distribution from the
 measured value of :math:`\eta_{\nu}` to :math:`\infty`; the probability that
 it *isn't* flat is thus 1 minus this quantity.
 
+See also the :ref:`appendices on the database schema <schema-appendices>`
+for details of how these are iteratively updated.
+
 
 'New source' detection
 ----------------------

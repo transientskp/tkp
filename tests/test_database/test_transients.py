@@ -89,11 +89,12 @@ class TestSimplestCases(unittest.TestCase):
             #should not have any nulldetections
             self.assertEqual(len(forced_fits), 0)
 
-            get_sources_filtered_by_final_variability(dataset_id=self.dataset.id,
-                                         **self.search_params)
+            transients = get_sources_filtered_by_final_variability(
+                dataset_id=self.dataset.id, **self.search_params)
             newsources = get_newsources_for_dataset(self.dataset.id)
 
-            #or newsources
+            #or newsources, high variability sources
+            self.assertEqual(len(transients), 0)
             self.assertEqual(len(newsources), 0)
 
 
@@ -352,11 +353,6 @@ class TestDecreasingImageRMS(unittest.TestCase):
         self.reliably_detected_at_image_centre_flux = (
                                         1.01*self.rms_min_initial*(dt+ margin))
         self.always_detectable_flux = 1.01*self.rms_max_initial*(dt+ margin)
-
-        self.search_params = dict(eta_min=1,
-                                  v_min=0.1,
-                                  # minpoints=1,
-                                  )
 
 
         test_specific_img_params = dict(rms_qc = self.rms_min_initial,

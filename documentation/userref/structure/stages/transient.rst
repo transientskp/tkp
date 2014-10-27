@@ -1,22 +1,30 @@
 .. _stage-transient:
 
-===================
-Transient detection
-===================
+====================================
+Variability and new-source detection
+====================================
+
+Variability index calculation
+-----------------------------
 
 After all images for a given timestep have been processed and the resulting
 source measurements have been assigned to :ref:`runningcatalog
-<schema-runningcatalog>` entries (effectively lightcurves), the resulting data
-is searched for transients. Note that a single runningcatalog source may
-contain entries from multiple independent frequency band, but currently these
-are treated independently for the purposes of transient identification.
+<schema-runningcatalog>` entries (effectively lightcurves), variability
+indices are calculated for the most recent timestep, and stored as part of the
+association recorded in the :ref:`schema-assocxtrsource` table.
+
+Note that a single runningcatalog source may
+contain entries from multiple independent frequency bands. The
+variability indices are calculated independently for each frequency band, hence the
+:math:`\nu` suffix in the calculations below.
 
 For a comprehensive discussion of the transient and variability detection
 algorithms currently being employed, see :ref:`Scheers (2011) <scheers-2011>`
 chapter 3. Here, we provide a brief outline.
 
-We define two metrics for identifying variability in a lightcurve. The first,
-:math:`V_\nu`, is defined as
+We define two metrics for identifying variability in a lightcurve.
+The flux `coefficient of variation <coeff-of-var_>`_, which we
+denote :math:`V_\nu`, is defined as
 
 .. math::
 
@@ -26,8 +34,6 @@ We define two metrics for identifying variability in a lightcurve. The first,
 where :math:`\overline{I_{\nu}}` is the mean flux of all measurements in the
 lightcurve at frequency :math:`\nu`, :math:`s_{\nu}` is the standard deviation
 of those flux measurements and :math:`N` is the number of measurements.
-:math:`V_\nu` is the ratio of the variability of the source to its absolute
-flux.
 
 The second metric is :math:`\eta_{\nu}`, which is defined based on reduced
 :math:`\chi^2` statistics as
@@ -44,39 +50,29 @@ no significant variability) is then the integral of the distribution from the
 measured value of :math:`\eta_{\nu}` to :math:`\infty`; the probability that
 it *isn't* flat is thus 1 minus this quantity.
 
-Source are then identified as transients if they meet *all* of these criteria:
+See also the :ref:`appendices on the database schema <schema-appendices>`
+for details of how these are iteratively updated.
 
-* :math:`V_{\nu}` is above a user-specified threshold;
-* :math:`\eta_{\nu}` is above a user-specified threshold;
-* The probability of the source not being flat is above a user-specified
-  threshold;
-* The number of source measurements in the lightcurve is above a
-  user-specified threshold.
 
-Once a source has been identified, it is stored in the :ref:`schema-newsource`
-table in the database.
+'New source' detection
+----------------------
 
-The following parameters may be configured in the :ref:`job configuration file
-<job_params_cfg>`:
+We also attempt to identify any newly extracted sources which we suspect
+are intrinsically variable in nature (i.e. they are getting brighter, as
+opposed to our observations getting deeper or even simply looking at a
+previously unobserved patch of sky). The algorithm for evaluating new
+sources is encoded by
+:func:`tkp.db.associations._determine_newsource_previous_limits`.
+Sources we deem to be intrinsically 'new' are then recorded in the
+:ref:`schema-newsource` table.
+
+
+
 
 Section ``transient_search``
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-``V_lim``
-    Float. :math:`V_{\nu}` must be greater than ``V_lim`` for a source
-    to be identified as transient.
-
-``eta_lim``
-    Float. :math:`\eta_{\nu}` must be greater than ``eta_lim`` for a source
-    to be identified as transient.
-
-``threshold``
-    Float. The probability of a source not being flat must be above this
-    threshold for it to be identified as transient.
-
-``minpoints``
-    Integer. The lightcurve must contain at least ``minpoints`` measurements
-    for it to be identified as transient.
+The following parameters may be configured in the :ref:`job configuration file
+<job_params_cfg>`:
 
 ``new_source_sigma_margin``
     Float. A newly detected source is considered transient if it is
@@ -87,3 +83,5 @@ Section ``transient_search``
     This value sets that margin as a multiple of the RMS of the previous-best
     image.
 
+
+.. _coeff-of-var: http://en.wikipedia.org/wiki/Coefficient_of_variation

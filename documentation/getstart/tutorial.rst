@@ -30,11 +30,25 @@ installation manual <installation>`.
     Then consult your sysadmin or see :ref:`this note <casacore-measures>`.
 
 
+``tkp-manage.py``
+=================
+The main tool for configuring and running TraP is :ref:`tkp-manage`, which
+should be available to you as a command-line utility after installing the TraP.
+You may need to consult your sysadmin for details of how to access
+your local TraP installation. You can remind yourself of the options available
+to you by running::
+
+    $ tkp-manage.py -h
+
+Or you can consult the :ref:`documentation <tkp-manage>` for details.
+
+
 Create a pipeline project directory
 ===================================
 
-First, create a project directory: this will contain your pipeline settings and
-job directories. To create a project folder in your current working directory,
+To get started using TraP, you should first create a project directory:
+this will contain your pipeline settings and job directories.
+To create a project folder in your current working directory,
 type::
 
     $ tkp-manage.py initproject <projectname>

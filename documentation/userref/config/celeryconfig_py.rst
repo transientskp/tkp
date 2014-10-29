@@ -3,9 +3,9 @@
 .. _celery-intro:
 
 
-++++++++++++++++++++++++++++
-Task distribution via Celery
-++++++++++++++++++++++++++++
+++++++++++++++++++++++++++++++++++++++++++++++++++
+``celeryconfig.py`` - Task distribution via Celery
+++++++++++++++++++++++++++++++++++++++++++++++++++
 
 .. Warning::
 

@@ -1,8 +1,8 @@
 .. _job_params_cfg:
 
-++++++++++++++++++++++++++++
-Job Parameters Configuration
-++++++++++++++++++++++++++++
++++++++++++++++++++++++++++++++++++++++++++++++++
+``job_params.cfg`` - Job Parameters Configuration
++++++++++++++++++++++++++++++++++++++++++++++++++
 
 The job parameters file provides the detailed, scientifically-motivated
 settings for each pipeline step. Providing the appropriate configuration here

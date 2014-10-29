@@ -76,7 +76,8 @@ Initialize a database
 
 To initialise a database the TraP manage ``initdb`` subcommand can be used.
 Set the details of the database you have created in the ``database``
-section of your :ref:`pipeline_cfg`. These include the host and port number of
+section of your :ref:`pipeline config file<pipeline_cfg>`.
+These include the host and port number of
 the system running the database management system, the name of the database,
 and the username and password.
 Then, from the project directory, type::

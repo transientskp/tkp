@@ -1,8 +1,8 @@
 .. _pipeline_cfg:
 
-++++++++++++++++++++++++++
-Project Configuration File
-++++++++++++++++++++++++++
++++++++++++++++++++++++++++++++++++++++++++++
+``pipeline.cfg`` - Project Configuration File
++++++++++++++++++++++++++++++++++++++++++++++
 
 The project configuration file provides a common configuration to all pipeline
 runs which are part of a particular :ref:`project <config-overview>`. Through

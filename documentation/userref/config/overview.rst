@@ -7,12 +7,13 @@ Configuration System Overview
 Preamble
 ========
 
-Users organize their TraP runs into *projects*, which contain high-level
-descriptions of common TraP parameters. For example, a project specifies which
-:ref:`database <database-intro>` to use. All the configuration and log files
+Users organize their TraP runs into *projects*, which define the basic
+operational TraP parameters, for example which
+:ref:`database <database-intro>` to use.
+All the configuration and log files
 relating to a particular project are stored in the same directory hierarchy.
 
-Within a project, the user is able to start multiple pipeline runs, which are
+Within a project, the user is able to configure multiple pipeline runs, which are
 referred to as *jobs*. For example, the user could use a single project to
 repeatedly re-analyse a particular set of images with a range of different
 sourcefinder settings, with each analysis constituting a particular job.
@@ -25,37 +26,28 @@ work as they please.
 Creating a Project Directory
 ============================
 
-Use the :ref:`tkp-manage.py <tkp-manage>` to create a project directory::
+Use :ref:`tkp-manage.py <tkp-manage>` to create a project directory::
 
-  $ tkp-manage.py initproject <projectname>
+  $ tkp-manage.py initproject <directory-name>
 
-This will create a skeleton directory structure named according to the project
-name. Within that directory, there are four files:
+The created directory will contain the following configuration files:
 
 ``pipeline.cfg``
-   The overall pipeline configuration file. This configures the database which
-   will be used for this project, as well as specifying where and how to store
-   log files. :ref:`See here <pipeline_cfg>` for a full description.
+   The overall :ref:`pipeline configuration file <pipeline_cfg>`.
+   This configures the database which will be used for this project,
+   as well as specifying where and how to store log files.
+   :ref:`See here <pipeline_cfg>` for a full description.
 
 ``celeryconfig.py``
    Configuration of the :ref:`Celery <celery-intro>` task distribution system.
    :ref:`See here <celeryconfig_py>` for a full description.
-
-``manage.py``
-   An interface to the TKP management system. By default, invoking this is
-   functionally equivalent to invoking ``tkp-manage.py``, but it may be
-   customized by an end user who requires some pipeline management facility
-   that is not provided by default.
-
-``README.md``
-   A basic guide to the project directory text format.
 
 .. _config-job:
 
 Creating a Job
 ==============
 
-Use the ``tkp-manage.py`` script to create a job::
+From within a project directory, use the ``tkp-manage.py`` script to create a job::
 
   $ cd ./<projectname>
   $ tkp-manage.py initjob <jobname>

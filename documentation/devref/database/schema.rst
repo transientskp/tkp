@@ -140,7 +140,7 @@ initiate a particular TraP processing run.
 This provides provenance and reproducibility for any given dataset.
 
 
-.. _dataset:
+.. _schema-dataset:
 
 dataset
 =======
@@ -570,6 +570,8 @@ This table stores the user-requested monitoring positions for a dataset.
     column allows it to be trivially implemented in future without requiring
     a database migration.
 
+.. _schema-newsource:
+
 newsource
 =========
 
@@ -857,7 +859,7 @@ See also :ref:`assocskyrgn <schema-assocskyrgn>`.
     The Cartesian coordinates of ``centre_ra`` and ``centre_decl``.
 
 
-.. _database_temprunningcatalog:
+.. _schema-temprunningcatalog:
 
 temprunningcatalog
 ==================
@@ -894,7 +896,7 @@ tables are listed below.
     Not currently used.
 
 
-.. _schema-newsource:
+
 
 
 

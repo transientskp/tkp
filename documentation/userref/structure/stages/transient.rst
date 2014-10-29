@@ -15,8 +15,9 @@ association recorded in the :ref:`schema-assocxtrsource` table.
 
 Note that a single runningcatalog source may
 contain entries from multiple independent frequency bands. The
-variability indices are calculated independently for each frequency band, hence the
-:math:`\nu` suffix in the calculations below.
+variability indices are calculated independently for each frequency band,
+hence the :math:`\nu` suffix in the calculations below denotes an index over
+the different bands.
 
 For a comprehensive discussion of the transient and variability detection
 algorithms currently being employed, see :ref:`Scheers (2011) <scheers-2011>`

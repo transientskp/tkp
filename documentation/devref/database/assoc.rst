@@ -370,7 +370,7 @@ Generate a list of candidate runningcatalog-extractedsource associations
 
 Performed by: :py:func:`tkp.db.associations._insert_temprunningcatalog`
 
-(See also: :ref:`database_temprunningcatalog` table. )
+(See also: :ref:`schema-temprunningcatalog` table. )
 
 This function generates a temporary table listing possible associations with
 previously catalogued sources.

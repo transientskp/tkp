@@ -5,7 +5,7 @@ Persistence
 +++++++++++
 
 A record of all images to be processed is made in the database. Within the
-database, images are sorted into :ref:`datasets <dataset>`, which group
+database, images are sorted into :ref:`datasets <schema-dataset>`, which group
 related images together for processing: searches for transients are performed
 between images in a single databset, for instance. All images being processed
 are added to the same dataset.

@@ -11,4 +11,3 @@ Getting Started
    casacore-measures-data
    concepts/index
    tutorial
-   sites

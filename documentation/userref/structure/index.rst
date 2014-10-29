@@ -45,8 +45,6 @@ re-order images provided to it in the :ref:`images_to_process.py file
 combined in a single dataset, the user must ensure that the runs are in an
 appropriate sequence.*
 
-It is worth noting the ordering of images across *frequency* is not important.
-
 .. _stages:
 
 Pipeline stages

@@ -3,7 +3,7 @@ Tutorial Overview
 +++++++++++++++++
 
 This page walks you through setting up a complete, stand-alone TraP
-environment running on your own system. 
+environment running on your own system.
 
 Install the software
 ====================

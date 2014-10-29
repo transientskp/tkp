@@ -18,11 +18,10 @@ class Mock(object):
 
 
 class MockImage(DataAccessor):
-    """
-    Quick and dirty mocking of a data accessor for use in tests.
-    """
     def __init__(self, keywords, wcs):
         """
+        Quick and dirty mocking of a data accessor for use in tests.
+
         Args:
             kewords (dict): key-value metadata pairs. Should reflect the
                 DataAccessor properties, but we don't enforce this.

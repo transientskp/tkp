@@ -7,6 +7,6 @@ User's Reference Guide
 .. toctree::
    :maxdepth: 2
 
-   scripts
+   tkp-manage
    config/index
    structure/index

@@ -94,5 +94,5 @@ API Documentation
 -----------------
 
 .. toctree::
-   utility
+   api
    accessor_types

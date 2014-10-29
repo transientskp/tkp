@@ -229,30 +229,34 @@ def lightcurve_metrics(src_list):
 
 
 class MockSource(object):
-    """Defines a MockSource for generating mock source lists.
 
-    (These can be used to test the database routines.)
-
-    The lightcurve-dict entries define the times of non-zero
-    flux (we do not support time-ranges here, discretely defined datapoints are
-    sufficiently complex for the current unit-test suite). In this case,
-    any undefined datetimes requested will produce a zero-flux measurement.
-    A defaultdict may be supplied to simulate a steady-flux source.
-    """
     def __init__(self,
                  template_extractedsource,
                  lightcurve,
                  ):
         """
+
+        Defines a MockSource for generating mock source lists.
+
+        (These can be used to test the database routines.)
+
+        The lightcurve-dict entries define the times of non-zero
+        flux (we do not support time-ranges here, discretely defined datapoints are
+        sufficiently complex for the current unit-test suite). In this case,
+        any undefined datetimes requested will produce a zero-flux measurement.
+        A defaultdict may be supplied to simulate a steady-flux source.
+
         Args:
-        template_extractedsource (ExtractedSourceTuple):
-            This defines everything **except** the flux and significance of the
-            extraction (i.e. position, fit error, beam properties, etc.).
-        lightcurve (dict): A dict mapping datetime -> flux value [Jy].
-            Any undefined datetimes will produce a zero-flux measurement.
-            A defaultdict with constant-valued default may be supplied to
-            represent a steady source, e.g.
-            >>>MockSource(base_source, defaultdict(lambda:steady_flux_val))
+            template_extractedsource (ExtractedSourceTuple): This defines
+                everything **except** the flux and significance of the
+                extraction (i.e. position, fit error, beam properties, etc.).
+            lightcurve (dict): A dict mapping datetime -> flux value [Jy].
+                Any undefined datetimes will produce a zero-flux measurement.
+                A defaultdict with constant-valued default may be supplied to
+                represent a steady source, e.g.
+
+                    >>>MockSource(base_source, defaultdict(lambda:steady_flux_val))
+
         """
         self.base_source = template_extractedsource
         self.lightcurve = lightcurve
@@ -371,7 +375,7 @@ def get_newsources_for_dataset(dsid):
         dsid: Dataset id
 
     Returns:
-        newsource_rows (list of dicts): Each dict represents one newsource.
+        list of dicts: Each dict represents one newsource.
             The dict keys are all the columns in the newsources table, plus
             the 'taustart_ts' from the image table, which represents the
             trigger time.
@@ -424,8 +428,8 @@ def get_sources_filtered_by_final_variability(dataset_id,
         v_min (float): Minimum value of V-index to return.
 
     Returns:
-        transients (list of dicts): A list of dicts representing
-            runningcatalog_flux entries with high variability.
+        list of dicts: Each dict represents a runningcatalog_flux entry matching
+            the filter criteria.
 
     """
 

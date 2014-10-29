@@ -4,7 +4,7 @@
 Source association
 ==================
 
-After all :ref:`blind <stage-extraction>` and :ref:`forced <stage-nulldet>`
+After all :ref:`blind <stage-extraction>`
 source measurements have been inserted into the database, they are
 "associated" with existing sources to form lightcurves. A word on the database
 nomenclature may be helpful: we store source measurements (the result of a fit

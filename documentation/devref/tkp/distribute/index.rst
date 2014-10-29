@@ -1,6 +1,5 @@
-++++++++++
-distribute
-++++++++++
+:mod:`tkp.distribute` -- routines for running on distributed nodes
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-The distribute module contains all code related to running the TKP in a
-distributed way.
+.. automodule:: tkp.distribute
+  :members:

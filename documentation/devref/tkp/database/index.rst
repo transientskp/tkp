@@ -1,8 +1,8 @@
 .. _database_module:
 
-++++++++++++++++
-Database package
-++++++++++++++++
+++++++++++++++++++++++++++++++++++
+:mod:`tkp.db` -- Database routines
+++++++++++++++++++++++++++++++++++
 
 Modules from the :mod:`tkp.db` package.
 

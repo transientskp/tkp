@@ -1,6 +1,6 @@
-================
-Utility Routines
-================
+==================================
+:mod:`tkp.accessors` API reference
+==================================
 
 :mod:`tkp.accessors` -- Base data accessor utilities
 ++++++++++++++++++++++++++++++++++++++++++++++++++++

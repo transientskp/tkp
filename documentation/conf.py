@@ -264,6 +264,8 @@ nitpick_ignore = [
     ("py:obj", "pyrap.images.image"),
     ("py:obj", "pyrap.tables.table"),
     ("py:obj", "list of (RA, Dec) tuples"),
-    ("py:obj", "list of tuples")
+    ("py:obj", "list of tuples"),
+    ("py:obj", "ExtractedSourceTuple"),
+    ("py:obj", "list of MockSource"),
 
 ]

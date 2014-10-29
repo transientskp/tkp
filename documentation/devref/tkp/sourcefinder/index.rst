@@ -1,8 +1,8 @@
 .. _sourcefinder_module:
 
-++++++++++++++++++++
-Sourcefinder package
-++++++++++++++++++++
+++++++++++++++++++++++++++++++++++++++++++++++++++
+``tkp.sourcefinder`` -- source finding and fitting
+++++++++++++++++++++++++++++++++++++++++++++++++++
 
 
 .. toctree::

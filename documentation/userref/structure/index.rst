@@ -59,5 +59,5 @@ Pipeline stages
    stages/quality
    stages/extraction
    stages/association
-   stages/nulldet
+   stages/forcedfits
    stages/transient

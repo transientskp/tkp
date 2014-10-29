@@ -1,8 +1,8 @@
 .. _utility-package:
 
-+++++++++++++++
-Utility package
-+++++++++++++++
+++++++++++++++++++++++++++++++++++++++++++++++++++++
+:mod:`tkp.utility` -- miscellaneous utility routines
+++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 **Submodules:**
 

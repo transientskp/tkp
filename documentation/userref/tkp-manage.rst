@@ -37,6 +37,8 @@ populated with a set of templates you need to modify.
 
 .. program-output:: python ../tkp/bin/tkp-manage.py initjob -h
 
+.. _tkp-manage-run:
+
 run
 ---
 Run will start a job. It needs a job name as argument.

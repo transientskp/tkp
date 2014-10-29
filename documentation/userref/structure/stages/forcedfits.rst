@@ -1,8 +1,15 @@
+
+
+Forced source-fitting
+=====================
+When the :ref:`source association <stage-association>` stage is complete,
+the pipeline proceeds to handle forced-fits. These may be required either for
+measuring 'null detections' or sources added to the monitoringlist.
+
 .. _stage-nulldet:
 
-=======================
 Null detection handling
-=======================
+-----------------------
 
 A "null detection" is the term used to describe a source which was expected to
 be measured in a particular image (because it has been observed in previous
@@ -13,7 +20,7 @@ After the blindly-extracted source measurements have been stored to the
 database and have been associated with the known sources in the running
 catalogue, the null detection stage starts.
 We retrieve from the database a list of sources that serve as the null detections.
-Sources on this list come from the running catalog and 
+Sources on this list come from the :ref:`schema-runningcatalog` and
 
 * Do not have a counterpart in the extractedsources of the current
   image after source association has run.
@@ -50,19 +57,18 @@ every known source will have either a blind detection or a forced-fit
 measurement in every image from the moment it was detected for the 
 first time. 
 
-The following parameters may be configured in the :ref:`job configuration file
-<job_params_cfg>`:
+Null-detection depends upon the same
+:ref:`job configuration file <job_params_cfg>` parameters as the
+:ref:`"blind" source-extraction stage<stage-extraction>`.
 
-Section ``source_extraction``
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.. _stage-monitoringlist:
 
-``back_size_x``, ``back_size_y``, ``margin``, ``extraction_radius_pix``, ``max_degredation``, ``force_beam``
-   Defined as for :ref:`blind extraction <stage-extraction>`.
-
-``box_in_beampix``
-    When a forced fit is being applied to a particular point on the image, it
-    is unnecessary and inefficient to include all of the image pixel data in
-    the minimization procedure. Instead, we only include that within a square
-    region of size ``box_in_beampix`` about the target position.
-    ``box_in_beampix`` is specified in units of the size of the major axis of
-    the restoring beam.
+Monitoringlist
+--------------
+If monitoringlist positions have been specified when
+:ref:`running a job<tkp-manage-run>`,
+then these are always force-fitted whenever an image's source-extraction region
+contains the designated co-ordinates.
+These forced fits are used to build up a special
+:ref:`schema-runningcatalog` entry which is excluded from association with
+regular extractions.

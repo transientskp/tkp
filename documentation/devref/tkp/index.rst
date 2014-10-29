@@ -1,29 +1,21 @@
 ++++++++++++++++++++++++++++++++
-TKP Package Reference
+TKP Package API Reference
 ++++++++++++++++++++++++++++++++
-
-.. toctree::
-   :maxdepth: 2
-
-   design
-   steps
-
 
 Subpackages
 ===========
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 1
 
 
    accessors/index
-   database/index
-   sourcefinder/index
-   utility/index
    config/index
+   database/index
    distribute/index
-   lofar/index
+   telescope
    quality/index
-   alerts
-   monitoringlist
+   sourcefinder/index
    testutil
+   utility/index
+

@@ -1,6 +1,15 @@
-++++++++++++++++++++++++++++++++++
-:mod:`tkp.config` -- Configuration
-++++++++++++++++++++++++++++++++++
++++++++++++++++++++++++++++++++++++++++++++
+:mod:`tkp.config` -- Pipeline Configuration
++++++++++++++++++++++++++++++++++++++++++++
+
+
+Outline
+=======
+The tkp.config folder contains the job configuration file templates, and
+code for handling config files.
+
+API
+===
 
 .. automodule:: tkp.config
   :synopsis: Configuration settings and project / job config file templates.
@@ -8,13 +17,7 @@
 
 
 :mod:`tkp.config.parse` -- Magic ConfigParser to dict functionality
-====================================================================
+-------------------------------------------------------------------
 .. automodule:: tkp.config.parse
   :members:
 
-
-Template files for creating a new project
-=========================================
-
-Template files for creating a new job
-=====================================

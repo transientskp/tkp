@@ -35,7 +35,7 @@ For more details, see the :ref:`database <database-database>` section.
 
 
 General: dataset, image, extracted sources
-=================================
+==========================================
 
 The dataset module provides a miniature object relation mapper (ORM) interface
 to the database. This interface is not fully complete, but it does allow one to

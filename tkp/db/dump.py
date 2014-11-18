@@ -1,3 +1,6 @@
+"""
+Dump database schema and content
+"""
 import logging
 import subprocess
 import tempfile
@@ -6,6 +9,18 @@ import os
 logger = logging.getLogger(__name__)
 
 def dump_db(engine, hostname, port, dbname, dbuser, dbpass, output):
+    """
+    Dumps a database
+
+    Args:
+        engine: the name of the database system (either monetdb or postgresql)
+        hostname: the hostname of the database
+        port: the port of the database server
+        dbname: the database name to be dumped
+        dbuser: the user authorised to do the dump
+        dbpass: the pw for the user
+        output: the output file to which the dump is written
+    """
     if engine == "monetdb":
         return dump_monetdb(hostname, port, dbname, dbuser, dbpass, output)
     elif engine == "postgresql":
@@ -14,6 +29,9 @@ def dump_db(engine, hostname, port, dbname, dbuser, dbpass, output):
         raise NotImplementedError("Not able to dump %s" % (engine,))
 
 def dump_monetdb(hostname, port, dbname, dbuser, dbpass, output_filename):
+    """
+    Dumps a MonetDB database in specified output file
+    """
     mclient_executable = "mclient"
 
     with tempfile.NamedTemporaryFile() as dotmonetdb, \
@@ -44,6 +62,9 @@ def dump_monetdb(hostname, port, dbname, dbuser, dbpass, output_filename):
             raise
 
 def dump_pg(hostname, port, dbname, dbuser, dbpass, output_filename):
+    """
+    Dumps a PostgreSQL database in specified output file
+    """
     pg_dump_executable = "pg_dump"
 
     try:

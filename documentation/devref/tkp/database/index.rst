@@ -12,9 +12,9 @@ Modules from the :mod:`tkp.db` package.
    introduction
    root
    database
-   association
+   orm
    general
    generic
-   monitoringlist
+   association
    nulldetections
-   orm
+   monitoringlist

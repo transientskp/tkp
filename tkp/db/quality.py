@@ -1,3 +1,6 @@
+"""
+check image quality
+"""
 import logging
 from collections import namedtuple
 import tkp.db

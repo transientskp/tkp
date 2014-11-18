@@ -32,17 +32,34 @@ def execute(query, parameters={}, commit=False):
     return cursor
 
 def commit():
+    """
+    A generic wrapper to commit a query transaction
+
+    It saves the changes involved by a transaction
+    """
     database = Database()
     return database.connection.commit()
 
 def rollback():
+    """
+    A generic wrapper to rollback a query transaction
+
+    Undo changes involved by a transaction that have not been saved
+    """
     database = Database()
     return database.connection.rollback()
 
 def connect():
+    """
+    A generic wrapper to connect to the configured database
+    """
     database = Database()
     return database.connect()
 
 def connection():
+    """
+    A generic wrapper to create a connection to the database if
+    it does not exist
+    """
     database = Database()
     return database.connection

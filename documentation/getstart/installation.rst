@@ -9,7 +9,6 @@ To install the TraP you must:
 #. Install and configure a suitable back-end database;
 #. Optionally, install and configure `MongoDB <http://www.mongodb.org/>`_
    as a :ref:`pixel store <mongodb-intro>`;
-#. Optionally, install a :ref:`Celery <celery-intro>` broker;
 #. Install the core pipeline dependencies;
 #. Build and install the TraP itself.
 
@@ -67,13 +66,6 @@ reference (e.g. via the `Banana <https://github.com/transientskp/banana>`_ web
 interface). This naturally requires that a MongoDB daemon is installed and
 configured to accept requests from TraP clients.
 
-Celery Broker
-=============
-
-It is possible to run the TraP without a :ref:`Celery <celery-intro>` broker,
-but it can only run in a serial, non-distributed fashion. Multiple different
-options for Celery brokers are available; refer to the Celery documentation
-for details. We have had success with `RabbitMQ <http://www.rabbitmq.com/>`_.
 
 Core Dependencies
 =================
@@ -91,7 +83,6 @@ To build the TraP, you will need:
 In addition to the above, to run the TraP you will need:
 
 * `SciPy <http://www.scipy.org/>`_ (at least version 0.7.0)
-* `Celery <http://www.celeryproject.org/>`_ (at least version 3.0)
 * `python-dateutil <http://labix.org/python-dateutil>`_ (at least version 1.4.1)
 * `pyrap <https://code.google.com/p/pyrap/>`_ and
   `casacore <https://code.google.com/p/casacore/>`_ (including measures data)
@@ -134,3 +125,17 @@ straightforward::
 Following installation, including setting up and configuring the database,
 follow the :ref:`test procedure <testing>` to ensure that everything is
 working and ready for use.
+
+Distributed processing via Celery
+=================================
+If you wish to run a TraP job across multiple machines, you may optionally
+also install a :ref:`Celery <celery-intro>` broker (at least version 3.0);
+see the `Celery website <http://www.celeryproject.org/>`_ for further details
+of the Celery package.
+
+Multiple different options for Celery brokers are available;
+refer to the Celery documentation for details.
+We have had success with `RabbitMQ <http://www.rabbitmq.com/>`_.
+
+This functionality is currently not well supported
+and should be considered experimental.

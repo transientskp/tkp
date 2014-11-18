@@ -9,9 +9,10 @@
 
 .. Warning::
 
-    TRAP runs in parallel by default now, no extra action like running celery
-    workers is required. You should only try to use celery if you want to
-    distribute work over multiple machines.
+    TRAP runs in parallel on a single multi-core machine by default now,
+    using the standard multiprocessing functionality.
+    As such, you should only try to use celery if you want to
+    distribute a single job over multiple machines.
 
 
 `Celery <http://celeryproject.org/>`_ provides a mechanism for distributing

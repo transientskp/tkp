@@ -90,6 +90,13 @@ the root of the development tree::
   $ cd tests
   $ python runtests.py -v
 
+Alternatively, you may choose to work with a virtualenv_ and install the
+TraP in 'development mode'::
+
+    $ pip install --editable .
+
+.. _virtualenv: http://virtualenv.readthedocs.org/en/latest/
+
 
 Continuous integration
 ----------------------

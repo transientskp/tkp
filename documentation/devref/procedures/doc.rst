@@ -7,10 +7,10 @@ Requirements
 All parts of the TraP should be documented *both* at a level that is suitable
 for end users using the pipeline and for developers who wish to understand,
 fix and extend the codebase. Broadly, that distinction reflects the structure
-of this manual. Note that we expect that developers will benefit both
-automatically generated API documentation, making use of appropriate
+of this manual. Note that we expect that developers will benefit from both
+automatically generated API documentation making use of appropriate
 docstrings in the code, and higher-level descriptions of system architecture
-and functionality: both should be provided.
+and functionality.
 
 All new features or changes *must* be accompanied by appropriate
 documentation. Reviewers are required to check that pull requests are well

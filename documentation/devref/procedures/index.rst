@@ -11,10 +11,7 @@ making any changes to the code.
 .. toctree::
   :maxdepth: 2
 
-  access
-  planning
-  tracker
-  standards
+  basics
   testing
   doc
   review

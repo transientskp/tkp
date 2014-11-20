@@ -5,13 +5,12 @@ Introduction
 ++++++++++++
 
 
-The database subpackage consists of three modules. There are a few extra
-modules (and a number of old modules that are not really used anymore), but the
-main three modules are:
+The database subpackage consists of several modules dedicated to their tasks. 
+The main modules are:
 
 * database
 
-* utils
+* general
 
 
 Database
@@ -24,23 +23,19 @@ database, as well as a few shortcut utility functions for executing SQL
 queries.
 
 The most typical use for the :py:class:`tkp.db.database.Database` class is
-something as follows, assuming the default login settings (taking from the tkp
+something as follows, assuming the default login settings (taken from the tkp
 configuration file) are appropriate::
 
-    from contextlib import closing
+    from tkp.db import execute as execute
 
-    with closing(Database()) as database:
-        database.execute(<sql query>, <args>)
-        results = database.fetchall()
-        # or, more explicity:
-        database.cursor.execute(<sql query>, <args>)
-        results = database.cursor.fetchall()
+    cursor = execute(<sql query>, <args>)
+    results = cursor.fetchall()
 
 For more details, see the :ref:`database <database-database>` section.
 
 
-Dataset
-=======
+General: dataset, image, extracted sources
+==========================================
 
 The dataset module provides a miniature object relation mapper (ORM) interface
 to the database. This interface is not fully complete, but it does allow one to
@@ -54,9 +49,8 @@ The mapped tables and their classes are:
 * extractedsource: ExtractedSource
 
 Each of these classes inherits from the DBOject class. This class provides
-a few general methods to interface with the underlying database. Details are
-provided in the corresponding :ref:`database <database-database>` documentation;
-a typical usage example could look like this::
+a few general methods to interface with the underlying database. 
+A typical usage example could look like this::
 
     db_image = DBImage(id=image_id, database=database)
     db_image.insert_extracted_sources(results,'blind')
@@ -69,24 +63,32 @@ instead supply a `data` keyword argument that is a dictionary with the
 necessary information (again, see the :ref:`database documentation
 <database-database>`).
 
+Currently, the usage described above is sometimes used in the unittest code. In the pipeline
+code we try to restrict the usage of the orm, since it can get quite complex. 
+Inserting the extracted sources for a particular image looks like this::
 
-Utils
+    from tkp.db import general as dbgen
+    dbgen.insert_extracted_sources(image.id, results.sources, 'blind')
+
+where image.id is the id of the image to which the sources belong to.
+
+
+Other
 =====
 
-note: this probably has been depricated.
-
-The utils module contains the actual SQL queries used for the various database
+The remaining modules contain the actual SQL queries used for the various database
 routines, such as source insertion, source association, keeping track of the
-monitoring list, etcetera. All functions and queries within each function
-follow a fixed pattern: functions accept a connection object (e.g.
-Database().connection), and each query is executed within a try-except block in
-case the database raises an error. There is some overhead in the sense that
-a cursor is created within each function (instead of using the
-Database().cursor object), but other than that, the routines in utils provide
+monitoring sources and null detections, etc. 
+All functions and queries within each function call follow a fixed pattern: 
+functions inherit the connection object, and each query is executed 
+within a try-except block in case the database raises an error. 
+There is some overhead in the sense that a cursor is created 
+for each function call, but other than that, the routines provide 
 the fastest and most direct interaction with the database.
 
 Several functions are called from methods of the classes in the dataset module,
 to provide a hopefully clearer interface, but can of course be called directly
 as well. Finally, a number of functions are private to the module, and their
 name is therefore preceded with an underscore. These functions tend to be
-called from another funtion within utils, and should only be used as such. 
+called from another funtion within the same module, but may be called from 
+another module as well.

@@ -1,9 +1,10 @@
 .. _database-monitoringlist:
 
 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-:mod:`tkp.db.monitoringlist` -- monitoringlist database functions
+:mod:`tkp.db.monitoringlist` -- handling of monitoring sources
 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 .. automodule:: tkp.db.monitoringlist
-   :synopsis: monitoringlist database stuff
+   :synopsis: Database handling monitoring source
    :members:
+   :private-members:

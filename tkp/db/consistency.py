@@ -1,3 +1,6 @@
+"""
+check database for consistency
+"""
 import logging
 import tkp.db
 

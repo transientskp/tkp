@@ -5,6 +5,6 @@
 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 .. automodule:: tkp.db.nulldetections
-  :synopsis: Database source association
+  :synopsis: Database null detections
   :members:
   :private-members:

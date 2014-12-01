@@ -29,3 +29,11 @@
 
 .. automodule:: tkp.quality.rms
   :members:
+
+
+:mod:`tkp.quality.statistics`
+======================
+
+.. automodule:: tkp.quality.statistics
+  :members:
+

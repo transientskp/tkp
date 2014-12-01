@@ -11,10 +11,10 @@ logger = logging.getLogger(__name__)
 RejectReason = namedtuple('RejectReason', 'id desc')
 
 reason = {
-    'rms': RejectReason(id=0, desc='RMS invalid'),
-    'beam': RejectReason(id=1, desc='beam invalid'),
-    'bright_source': RejectReason(id=2, desc='bright source near'),
-    'tau_time': RejectReason(id=3, desc='tau_time invalid'),
+    'rms': RejectReason(id=1, desc='RMS invalid'),
+    'beam': RejectReason(id=2, desc='beam invalid'),
+    'bright_source': RejectReason(id=3, desc='bright source near'),
+    'tau_time': RejectReason(id=4, desc='tau_time invalid'),
 }
 
 query_reject = """\

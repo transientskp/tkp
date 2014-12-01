@@ -14,6 +14,7 @@ dt_w_microsecond_format = '%Y-%m-%dT%H:%M:%S.%f'
 
 
 def loads_timestamp_w_microseconds(dt_str):
+    """Loads and returns timestamp with microsecond precission"""
     return datetime.datetime.strptime(dt_str, dt_w_microsecond_format)
 
 loads_methods = (ast.literal_eval,

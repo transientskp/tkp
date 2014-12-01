@@ -32,7 +32,7 @@
 
 
 :mod:`tkp.quality.statistics`
-======================
+=============================
 
 .. automodule:: tkp.quality.statistics
   :members:

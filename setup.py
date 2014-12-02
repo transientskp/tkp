@@ -6,7 +6,7 @@ from distutils.command.install import INSTALL_SCHEMES
 
 tkp_scripts = [
     "tkp/bin/pyse.py",
-    "tkp/bin/tkp-manage.py",
+    "tkp/bin/trap-manage.py",
     "tkp/bin/tkp-inject.py",
     ]
 

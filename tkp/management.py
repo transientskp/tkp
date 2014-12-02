@@ -3,12 +3,12 @@ This is a tool for managing a TKP project. It can be used to initialize a TKP
 project and the jobs inside a project. To start using this tool you first
 create a TraP project by running:
 
-  $ tkp-manage.py initproject <projectname>
+  $ trap-manage.py initproject <projectname>
 
 In the folder where you want to put the TraP project. To learn more about a
-specific `tkp-manage.py` subcommand, run:
+specific `trap-manage.py` subcommand, run:
 
-  $ tkp-manage.py <subcommand> -h
+  $ trap-manage.py <subcommand> -h
 
 Have a nice day!
 """

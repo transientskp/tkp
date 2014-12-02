@@ -37,7 +37,7 @@ install:
  - make install
 script: 
  - cd /tmp
- - ${TRAVIS_BUILD_DIR}/tkp/bin/tkp-manage.py initproject pipeline
+ - ${TRAVIS_BUILD_DIR}/tkp/bin/trap-manage.py initproject pipeline
  - cd pipeline
  - ./manage.py initdb -d testdb -u testdb -p testdb -s testdb -e monetdb -y -P 50000
  - ./manage.py initdb -d testdb -u postgres -p "" -y

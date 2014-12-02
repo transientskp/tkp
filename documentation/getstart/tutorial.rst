@@ -29,17 +29,17 @@ installation manual <installation>`.
     Then consult your sysadmin or see :ref:`this note <casacore-measures>`.
 
 
-``tkp-manage.py``
-=================
-The main tool for configuring and running TraP is :ref:`tkp-manage`, which
+``trap-manage.py``
+==================
+The main tool for configuring and running TraP is :ref:`trap-manage`, which
 should be available to you as a command-line utility after installing the TraP.
 You may need to consult your sysadmin for details of how to access
 your local TraP installation. You can remind yourself of the options available
 to you by running::
 
-    $ tkp-manage.py -h
+    $ trap-manage.py -h
 
-Or you can consult the :ref:`documentation <tkp-manage>` for details.
+Or you can consult the :ref:`documentation <trap-manage>` for details.
 
 
 Create a pipeline project directory
@@ -50,7 +50,7 @@ this will contain your pipeline settings and job directories.
 To create a project folder in your current working directory,
 type::
 
-    $ tkp-manage.py initproject <projectname>
+    $ trap-manage.py initproject <projectname>
 
 (substituting ``<projectname>`` for your chosen directory name).
 
@@ -81,7 +81,7 @@ the system running the database management system, the name of the database,
 and the username and password.
 Then, from the project directory, type::
 
-  $ tkp-manage.py initdb
+  $ trap-manage.py initdb
 
 
 Resetting a TraP database
@@ -120,7 +120,7 @@ a subdirectory. Job directories contain a list of files to process, and config
 file that can be used to define various properties used during processing.
 To initialise a job directory run::
 
-    $ tkp-manage.py initjob <jobname>
+    $ trap-manage.py initjob <jobname>
 
 This will create a job subdirectory within your pipeline directory. This
 directory contains three files:
@@ -141,7 +141,7 @@ Run the pipeline
 
 To start processing your data run (from your pipeline directory)::
 
-    $ tkp-manage.py run <jobname>
+    $ trap-manage.py run <jobname>
 
 
 .. _MonetDB online documentation: https://www.monetdb.org/Documentation/monetdbd

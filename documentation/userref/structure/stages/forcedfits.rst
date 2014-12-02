@@ -66,7 +66,7 @@ Null-detection depends upon the same
 Monitoringlist
 --------------
 If monitoringlist positions have been specified when
-:ref:`running a job<tkp-manage-run>`,
+:ref:`running a job<trap-manage-run>`,
 then these are always force-fitted whenever an image's source-extraction region
 contains the designated co-ordinates.
 These forced fits are used to build up a special

@@ -25,22 +25,19 @@ before_install:
  - sudo monetdbd set control=yes /var/lib/monetdb
  - sudo monetdbd set passphrase=testdb /var/lib/monetdb
  - psql -c 'create database testdb;' -U postgres
- - cd ${TRAVIS_BUILD_DIR}/tests
- - svn co --username gijs --password ${PASSWORD} http://svn.transientskp.org/data/unittests/tkp_lib/ data --config-option servers:global:store-plaintext-passwords=yes --non-interactive
+ - git submodule init
+ - git submodule update
 
 install: 
  - cd ${TRAVIS_BUILD_DIR}
  - pip install -r requirements.txt
- - mkdir build && cd build
- - cmake ..
- - make
- - make install
-script: 
+
+script:
  - cd /tmp
  - ${TRAVIS_BUILD_DIR}/tkp/bin/trap-manage.py initproject pipeline
  - cd pipeline
- - ./manage.py initdb -d testdb -u testdb -p testdb -s testdb -e monetdb -y -P 50000
- - ./manage.py initdb -d testdb -u postgres -p "" -y
+ - ${TRAVIS_BUILD_DIR}/tkp/bin/trap-manage.py initdb -d testdb -u testdb -p testdb -s testdb -e monetdb -y -P 50000
+ - ${TRAVIS_BUILD_DIR}/tkp/bin/trap-manage.py initdb -d testdb -u postgres -p "" -y
  - cd ${TRAVIS_BUILD_DIR}
  - TKP_DBENGINE=monetdb TKPDB_USER=testdb TKPDB_PASS=testdb TKPDB_NAME=testdb TKPDB_PORT=50000 nosetests
  - TKP_DBUSER=postgres TKP_DBPASS= nosetests

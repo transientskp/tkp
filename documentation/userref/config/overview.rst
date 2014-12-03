@@ -26,9 +26,9 @@ work as they please.
 Creating a Project Directory
 ============================
 
-Use :ref:`tkp-manage.py <tkp-manage>` to create a project directory::
+Use :ref:`trap-manage.py <trap-manage>` to create a project directory::
 
-  $ tkp-manage.py initproject <directory-name>
+  $ trap-manage.py initproject <directory-name>
 
 The created directory will contain the following configuration files:
 
@@ -47,10 +47,10 @@ The created directory will contain the following configuration files:
 Creating a Job
 ==============
 
-From within a project directory, use the ``tkp-manage.py`` script to create a job::
+From within a project directory, use the ``trap-manage.py`` script to create a job::
 
   $ cd ./<projectname>
-  $ tkp-manage.py initjob <jobname>
+  $ trap-manage.py initjob <jobname>
 
 This creates a job directory as a subdirectory of your project directory,
 named according to the job name. Within that directory, there are three

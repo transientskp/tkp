@@ -1,19 +1,19 @@
-.. _tkp-manage:
+.. _trap-manage:
 
-+++++++++++++
-tkp-manage.py
-+++++++++++++
+++++++++++++++
+trap-manage.py
+++++++++++++++
 
-``tkp-manage.py`` is the command-line tool for initialising and running the
+``trap-manage.py`` is the command-line tool for initialising and running the
 TraP pipeline. Different tasks are handled via the use of 'subcommands'
 as detailed below.
 
 When the TraP is correctly installed on the system you can issue the
-``tkp-manage.py`` command. Documentation of subcommands is also available
+``trap-manage.py`` command. Documentation of subcommands is also available
 on the command line. You can use the ``--help`` flag (also per subcommand) to
 explore all possible options.
 
-.. program-output:: python ../tkp/bin/tkp-manage.py -h
+.. program-output:: python ../tkp/bin/trap-manage.py -h
 
 Subcommands
 ===========
@@ -28,22 +28,22 @@ setup that hopefully works for your setup, but probably the modification of
 some of the configuration files is required.
 
 
-.. program-output:: python ../tkp/bin/tkp-manage.py  initproject -h
+.. program-output:: python ../tkp/bin/trap-manage.py  initproject -h
 
 initjob
 -------
 This command will initaliase a new job. It will setup a subfolder which is
 populated with a set of templates you need to modify.
 
-.. program-output:: python ../tkp/bin/tkp-manage.py initjob -h
+.. program-output:: python ../tkp/bin/trap-manage.py initjob -h
 
-.. _tkp-manage-run:
+.. _trap-manage-run:
 
 run
 ---
 Run will start a job. It needs a job name as argument.
 
-.. program-output:: python ../tkp/bin/tkp-manage.py run -h
+.. program-output:: python ../tkp/bin/trap-manage.py run -h
 
 initdb
 ------
@@ -52,11 +52,11 @@ Initialise a database with the TKP schema. The semantics of this command vary
 depending on the database system in use; see the :ref:`relevant section
 <getstart-initdb>` for details.
 
-.. program-output:: python ../tkp/bin/tkp-manage.py initdb -h
+.. program-output:: python ../tkp/bin/trap-manage.py initdb -h
 
 celery
 ------
 
 Shortcut access to celery subcommands.
 
-.. program-output:: python ../tkp/bin/tkp-manage.py celery -h
+.. program-output:: python ../tkp/bin/trap-manage.py celery -h

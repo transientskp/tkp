@@ -34,12 +34,12 @@ with their own pros and cons: `RabbitMQ <http://www.rabbitmq.com/>`_ is a fine
 default choice.
 
 Workers can be started by using the ``celery worker`` option to the
-:ref:`tkp-manage.py <tkp-manage>` script. Indeed, ``tkp-manage.py`` provides a
+:ref:`trap-manage.py <trap-manage>` script. Indeed, ``trap-manage.py`` provides a
 convenient way of interfacing with a variety of Celery subcommands: try
-``tkp-manage.py celery -h`` for information.
+``trap-manage.py celery -h`` for information.
 
 When you start a worker, you will need to configure it to connect to an
-appropriate broker. If you are using the ``tkp-manage.py`` script, you can
+appropriate broker. If you are using the ``trap-manage.py`` script, you can
 configure the worker through the file :ref:`celeryconfig.py <celeryconfig_py>`
 in your :ref:`project folder <config-overview>`: set the ``BROKER_URL``
 variable appropriately. Note that if you are running the broker and a worker
@@ -76,7 +76,7 @@ separate Celery worker. This worker will receive jobs from a broker, so it is
 assumed you installed and started a broker in the installation step. Start a
 Celery worker by running::
 
-    % tkp-manage.py celery worker
+    % trap-manage.py celery worker
 
 If you want to increase the log level add ``--loglevel=info`` or maybe even
 ``debug`` to the command. If you dont want to use a Celery worker (run the
@@ -93,7 +93,7 @@ Note that a running broker is still required.
 Celery Configuration File
 =========================
 
-The :ref:`management script <tkp-manage>` may be used to start a :ref:`Celery
+The :ref:`management script <trap-manage>` may be used to start a :ref:`Celery
 <celery-intro>` worker. The worker is configured using the file
 ``celeryconfig.py`` in the :ref:`project directory <config-overview>`. The
 default contents of this file are:

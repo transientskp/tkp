@@ -121,10 +121,10 @@ def destroy_monetdb():
     """
 
     msg = """
-tkp-manage.py doesn't support the removal of all db content at the moment, you
+trap-manage.py doesn't support the removal of all db content at the moment, you
 need to do this manually by destroying and recreating the database. Please refer
 to the TKP manual on how to recreate a TKP database. When you recreate the
-database manually you should run tkp-manage.py initdb again without the -d
+database manually you should run trap-manage.py initdb again without the -d
 flag.
 """
     sys.stderr.write(msg)

@@ -60,7 +60,7 @@ environment variables. For example::
   $ export TKP_DBPORT=xxx
   $ export TKP_DBUSER=xxx
   $ export TKP_DBPASSWORD=xxx
-  $ tkp-manage.py initdb
+  $ trap-manage.py initdb
 
 If you do not have or need a database, you can disable all the tests which
 require it by exporting the variable ``TKP_DISABLEDB``. The partial test suite

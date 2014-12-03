@@ -11,6 +11,6 @@ should be initialized appropriately, they key configuration files --
 Celery broker and one or more workers shouldbe running. The pipeline is then
 started by running::
 
-   $ tkp-manage.py run <jobname>
+   $ trap-manage.py run <jobname>
 
 from within the project directory.

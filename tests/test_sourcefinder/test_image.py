@@ -42,6 +42,18 @@ class TestNumpySubroutines(unittest.TestCase):
                               list(chunk_3_by_3_round_down.reshape(9))
                               )
 
+class TestMapsType(unittest.TestCase):
+    """
+    Check that rms, bg maps are of correct type.
+    """
+
+    @requires_data(GRB120422A)
+    def testmaps_array_type(self):
+        self.image = accessors.sourcefinder_image_from_accessor(
+            accessors.FitsImage(GRB120422A), margin=10)
+        self.assertIsInstance(self.image.rmsmap, np.ma.MaskedArray)
+        self.assertIsInstance(self.image.backmap, np.ma.MaskedArray)
+
 
 class TestFitFixedPositions(unittest.TestCase):
     """Test various fitting cases where the pixel position is predetermined"""

@@ -47,7 +47,7 @@ def get_database_config(config_passed=None, apply=False):
     - TKP_DBENGINE
     - TKP_DBNAME
     - TKP_DBUSER
-    - TKP_DBPASS
+    - TKP_DBPASSWORD
     - TKP_DBHOST
     - TKP_DBPORT
 

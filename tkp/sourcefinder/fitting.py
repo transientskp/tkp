@@ -111,12 +111,12 @@ def moments(data, beam, threshold=0):
         }
 
 
-def fitgaussian(data, params, fixed=None, maxfev=0):
+def fitgaussian(pixels, params, fixed=None, maxfev=0):
     """Calculate source positional values by fitting a 2D Gaussian
 
     Args:
 
-        data (numpy.ndarray): Pixel values
+        pixels (numpy.ma.MaskedArray): Pixel values (with bad pixels masked)
 
         params (dict): initial fit parameters (possibly estimated
             using the moments() function, above)
@@ -164,7 +164,7 @@ def fitgaussian(data, params, fixed=None, maxfev=0):
         :type fixed: dict
 
         :returns: 2d-array of difference between estimated Gaussian function
-            and the actual data
+            and the actual pixels
         """
         paramlist = list(paramlist)
         gaussian_args = []
@@ -180,8 +180,11 @@ def fitgaussian(data, params, fixed=None, maxfev=0):
 
         # The .compressed() below is essential so the Gaussian fit will not
         # take account of the masked values (=below threshold) at the edges
-        # and corners of data (=(masked) array, so rectangular in shape).
-        return (numpy.fromfunction(g, data.shape) - data).compressed()
+        # and corners of pixels (=(masked) array, so rectangular in shape).
+        pixel_resids = numpy.ma.MaskedArray(
+            data = numpy.fromfunction(g, pixels.shape) - pixels,
+            mask = pixels.mask)
+        return pixel_resids.compressed()
 
     # maxfev=0, the default, corresponds to 200*(N+1) (NB, not 100*(N+1) as
     # the scipy docs state!) function evaluations, where N is the number of

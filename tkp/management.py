@@ -293,7 +293,7 @@ environment variables to configure the connection:
   * TKP_DBENGINE
   * TKP_DBNAME
   * TKP_DBUSER
-  * TKP_DBPASS
+  * TKP_DBPASSWORD
   * TKP_DBHOST
   * TKP_DBPORT
 

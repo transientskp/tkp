@@ -271,7 +271,7 @@ class ImageData(object):
 
         Args:
 
-            grid (numpy.ma.array)
+            grid (numpy.ma.MaskedArray)
 
         Kwargs:
 
@@ -279,7 +279,7 @@ class ImageData(object):
 
         Returns:
 
-            (numpy.ndarray)
+            (numpy.ma.MaskedArray)
 
         Used to transform the RMS, background or FDR grids produced by
         L{_grids()} to a map we can compare with the image data.
@@ -327,10 +327,11 @@ class ImageData(object):
             # lower than the minimum value in the map. If required, these
             # can be trimmed off. No point doing this if the map is already
             # fully masked, though.
-            my_map = numpy.where(
-                my_map >= numpy.min(grid), my_map, numpy.min(grid)
+            my_map = numpy.ma.MaskedArray(
+                    data = numpy.where(
+                        my_map >= numpy.min(grid), my_map, numpy.min(grid)),
+                    mask = my_map.mask
             )
-
         return my_map
 
     ###########################################################################

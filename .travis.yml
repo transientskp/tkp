@@ -40,5 +40,5 @@ script:
  - ${TRAVIS_BUILD_DIR}/tkp/bin/trap-manage.py initdb -d testdb -u postgres -p "" -y
  - cd ${TRAVIS_BUILD_DIR}
  - TKP_DBENGINE=monetdb TKPDB_USER=testdb TKPDB_PASS=testdb TKPDB_NAME=testdb TKPDB_PORT=50000 nosetests
- - TKP_DBUSER=postgres TKP_DBPASS= nosetests
+ - TKP_DBUSER=postgres TKP_DBPASSWORD= nosetests
 

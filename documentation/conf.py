@@ -258,6 +258,7 @@ intersphinx_mapping = {
 nitpicky = True
 nitpick_ignore = [
     ("py:obj", "numpy.ndarray"),
+    ("py:obj", "numpy.ma.MaskedArray"),
     ("py:obj", "dict/list/tuple"),
     ("py:obj", "3-tuple of float"),
     ("py:obj", "3-tuple"),

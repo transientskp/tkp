@@ -123,6 +123,9 @@ class RotatedGaussTest(SimpleGaussTest):
         self.moments = moments(self.mygauss, beam, 0)
         self.fit = fitgaussian(self.mygauss, self.moments)
 
+    def testMomentAngle(self):
+        self.assertAlmostEqual(self.moments["theta"], self.theta)
+
 class RotatedGaussTest2(SimpleGaussTest):
     """Rotated by an angle > pi/2; theta becomes negative"""
     def setUp(self):
@@ -161,10 +164,22 @@ class AxesSwapGaussTest(SimpleGaussTest):
         self.fit = fitgaussian(self.mygauss, self.moments)
 
     def testMomentAngle(self):
-        self.assertAlmostEqual(self.moments["theta"], -1 * numpy.pi/2)
+        theta = self.moments["theta"]
+        # Numpy 1.6 and 1.9 return -pi/2 and +pi/2, respectively.
+        # Presumably there's some numerical quirk causing different,
+        # but equivalent, convergence in the optimization.
+        if theta <0:
+            theta = theta + numpy.pi
+        self.assertAlmostEqual( theta,numpy.pi/2)
 
     def testFitAngle(self):
-        self.assertAlmostEqual(self.fit["theta"], -1 * numpy.pi/2)
+        theta = self.fit["theta"]
+        # Numpy 1.6 and 1.9 return -pi/2 and +pi/2, respectively.
+        # Presumably there's some numerical quirk causing different,
+        # but equivalent, convergence in the optimization.
+        if theta <0:
+            theta = theta + numpy.pi
+        self.assertAlmostEqual(theta,  numpy.pi/2)
 
     def testMomentSize(self):
         self.assertAlmostEqual(self.moments["semiminor"], self.maj, 5)

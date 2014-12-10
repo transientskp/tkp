@@ -7,3 +7,4 @@
 .. automodule:: tkp.sourcefinder.utils
    :synopsis: Utility routines
    :members:
+   :undoc-members:

@@ -51,6 +51,11 @@ def julian_date(time=None, modified=False):
 
 
 def mjd2datetime(mjd):
+    """
+    Convert a Modified Julian Date to datetime via 'unix time' representation.
+
+    NB 'unix time' is defined by the casacore/pyrap package.
+    """
     q = quantity("%sd" % mjd)
     return datetime.datetime.fromtimestamp(q.to_unix_time())
 
@@ -446,9 +451,12 @@ def m(ra, dec, cra, cdec, incr):
              math.cos(math.radians(ra-cra)))) / math.radians(incr)
 
 
-# Find the l direction cosine in a radio image, given an RA and Dec and the
-# field centre
+
 def lm_to_radec(ra0, dec0, l, m):
+    """
+    Find the l direction cosine in a radio image, given an RA and Dec and the
+    field centre
+    """
     # This function should be the inverse of radec_to_lmn, but it is
     # not. There is likely an error here.
 

@@ -10,7 +10,7 @@ from tkp.utility import coordinates
 
 def generate_subthresholds(min_value, max_value, num_thresholds):
     """
-    Generate a series of @num_thresholds@ logarithmically spaced values
+    Generate a series of ``num_thresholds`` logarithmically spaced values
     in the range (min_value, max_value) (both exclusive).
     """
     # First, we calculate a logarithmically spaced sequence between exp(0.0)
@@ -30,12 +30,15 @@ def generate_subthresholds(min_value, max_value, num_thresholds):
 
 
 def get_error_radius(wcs, x_value, x_error, y_value, y_error):
-    # Estimate an absolute angular error on the position (x_value, y_value)
-    # with the given errors.
-    # This is a pessimistic estimate, because we take sum of the error
-    # along the X and Y axes. Better might be to project them both back on
-    # to the major/minor axes of the elliptical fit, but this should do for
-    # now.
+    """
+    Estimate an absolute angular error on the position (x_value, y_value)
+    with the given errors.
+
+    This is a pessimistic estimate, because we take sum of the error
+    along the X and Y axes. Better might be to project them both back on
+    to the major/minor axes of the elliptical fit, but this should do for
+    now.
+    """
     error_radius = 0
     try:
         centre_ra, centre_dec = wcs.p2s([x_value, y_value])

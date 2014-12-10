@@ -276,7 +276,7 @@ class TestSimpleImageSourceFind(unittest.TestCase):
 
         self.assertEqual(len(fits_src),len(casa_src))
         for idx, _ in enumerate(fits_src):
-            self.assertAlmostEqual(fits_src[idx], casa_src[idx], places=6)
+            self.assertAlmostEqual(fits_src[idx], casa_src[idx], places=5)
 
     @requires_data(GRB120422A)
     def testNoLabelledIslandsCase(self):

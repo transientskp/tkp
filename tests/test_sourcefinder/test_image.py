@@ -267,13 +267,16 @@ class TestSimpleImageSourceFind(unittest.TestCase):
         ew_sys_err, ns_sys_err = 0.0, 0.0
         fits_results = fits_image.extract(det=5, anl=3)
         fits_results = [result.serialize(ew_sys_err, ns_sys_err) for result in fits_results]
-        casa_results = fits_image.extract(det=5, anl=3)
+        casa_results = casa_image.extract(det=5, anl=3)
         casa_results = [result.serialize(ew_sys_err, ns_sys_err) for result in casa_results]
         self.assertEqual(len(fits_results), 1)
         self.assertEqual(len(casa_results), 1)
         fits_src = fits_results[0]
         casa_src = casa_results[0]
-        self.assertEqual(fits_src, casa_src)
+
+        self.assertEqual(len(fits_src),len(casa_src))
+        for idx, _ in enumerate(fits_src):
+            self.assertAlmostEqual(fits_src[idx], casa_src[idx], places=6)
 
     @requires_data(GRB120422A)
     def testNoLabelledIslandsCase(self):

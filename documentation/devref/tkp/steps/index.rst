@@ -1,7 +1,7 @@
 .. _steps-package:
 
 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-:mod:`tkp.steps` -- Define logic for each pipeline stage
+``tkp.steps`` -- Define logic for each pipeline stage
 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 :mod:`tkp.steps.forced_fitting`
@@ -30,6 +30,6 @@
   :members:
 
 :mod:`tkp.steps.source_extraction`
-================================
+==================================
 .. automodule:: tkp.steps.source_extraction
   :members:

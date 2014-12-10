@@ -97,14 +97,16 @@ See also :ref:`stage-extraction` and :ref:`stage-forcedfit`.
    are allowed to vary freely.
 
 ``box_in_beampix``
-   Foobar?
+    The size of the masking aperture which determines which pixels are used
+    for forced fitting, as a multiple of the beam major axis length.
+    See :py:func:`tkp.sourcefinder.image.ImageData.fit_to_point` for details.
 
 ``ew_sys_err``, ``ns_sys_err``
    Floats. Systematic errors in units of arcseconds which augment the
    sourcefinder-measured errors on source positions when performing source
    association. These variables refer to an absolute angular error along an
    east-west and north-south axis respectively. (NB Although these values
-   are *stored* during the source-extraction process, they *effect* the
+   are *stored* during the source-extraction process, they affect the
    source-association process.)
 
 

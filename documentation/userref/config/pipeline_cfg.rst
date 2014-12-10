@@ -77,11 +77,13 @@ be referred to be other sections. The following parameters may be defined:
    databases.
 
 ``dump_backup_copy``
-    A boolean value. If True, a copy of the configured database will be
-    dumped to disk at the beginning of each pipeline run. This is not
-    recommended in regular use, but can be useful if encountering
-    intermittent database errors, both for recovering a working database,
-    and diagnosing how errors occur.
+   A boolean value. If True, a copy of the configured database will be
+   dumped to disk at the beginning of each pipeline run. This is not
+   recommended in regular use, but can be useful if encountering
+   intermittent database errors, both for recovering a working database,
+   and diagnosing how errors occur.
+   The dump is made to the job directory in a file named according to
+   the pattern ``<database host>_<database name>_<current time>.dump``.
 
 .. _pipeline_cfg_image_cache:
 
@@ -104,3 +106,18 @@ See also: the 'optional dependencies' section of your relevant
 ``mongo_db``
    String. Name of MongoDB database in which to store image pixel data. Only
    used if ``copy_images`` is ``True``.
+
+.. _pipeline_cfg_parallelise:
+
+``parallelise`` Section
+=======================
+
+``method``
+   Determines whether the TraP is run in single-process, multi-process, or
+   :ref:`distributed <installation_distributed>` mode.
+   ``"multiproc"`` should be suitable for most users.
+
+``cores``
+   Determines the number of cores to use in multi-process mode. ``0`` will
+   attempt to autodetect (and use all available cores).
+

@@ -1,8 +1,10 @@
 .. _stage-extraction:
 
-=========================
-"Blind" source extraction
-=========================
+===============================
+"Blind" source extraction stage
+===============================
+(See also the
+:ref:`relevant configuration parameters<job_params_source_extraction>`.)
 
 A source finding and measurement step is run on the image.  For more details
 on the procedure employed, the reader is referred to :ref:`Spreeuw (2010)
@@ -66,36 +68,3 @@ For each source, the following measurements are stored:
 After the blind extraction has been performed, the list of source measurements
 is stored in the database.
 
-The following parameters may be configured in the :ref:`job configuration file
-<job_params_cfg>`:
-
-Section ``source_extraction``
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-``detection_threshold``
-   Float. The detection threshold as a multiple of the RMS noise.
-
-``analysis_threshold``
-   Float. The analysis threshold as a multiple of the RMS noise.
-
-``back_size_x``, ``back_size_y``
-   Integers. The size of the background grid parallel to the X and Y axes of
-   the pixel grid.
-
-``margin``
-   Integer. Pixel data within ``margin`` pixels of the edge of the image will
-   be excluded from the analysis.
-
-``extraction_radius_pix``
-   Integer. Pixel data more than ``extraction_radius_pix`` pixels from the
-   centre of the image will be excluded from the analysis.
-
-``deblend_nthresh``
-   Integer. The number of subthresholds to use for deblending. Set to ``0`` to
-   disable deblending.
-
-``force_beam``
-   Boolean. If ``True``, all detected sources are assumed to have the size and
-   shape of the restoring beam (ie, to be unresolved point sources), and these
-   parameters are held constant during fitting. If ``False``, all parameters
-   are allowed to vary freely.

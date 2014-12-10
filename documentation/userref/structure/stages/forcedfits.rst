@@ -1,7 +1,11 @@
+.. _stage-forcedfit:
 
+Forced source-fitting stage
+===========================
 
-Forced source-fitting
-=====================
+(See also the
+:ref:`relevant configuration parameters<job_params_source_extraction>`.)
+
 When the :ref:`source association <stage-association>` stage is complete,
 the pipeline proceeds to handle forced-fits. These may be required either for
 measuring 'null detections' or sources added to the monitoringlist.
@@ -59,7 +63,7 @@ first time.
 
 Null-detection depends upon the same
 :ref:`job configuration file <job_params_cfg>` parameters as the
-:ref:`"blind" source-extraction stage<stage-extraction>`.
+:ref:`"blind" source-extraction stage <stage-extraction>`.
 
 .. _stage-monitoringlist:
 

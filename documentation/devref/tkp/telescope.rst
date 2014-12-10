@@ -8,7 +8,6 @@
 .. automodule:: tkp.telescope.lofar
   :members:
 
-
 .. automodule:: tkp.telescope.lofar.antennaarrays
   :members:
 

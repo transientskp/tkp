@@ -16,6 +16,15 @@ Subpackages
    telescope
    quality/index
    sourcefinder/index
+   steps/index
    testutil
    utility/index
+
+Top-level modules
+=================
+
+.. toctree::
+   :maxdepth: 1
+
+   main
 

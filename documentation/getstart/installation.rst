@@ -126,6 +126,8 @@ Following installation, including setting up and configuring the database,
 follow the :ref:`test procedure <testing>` to ensure that everything is
 working and ready for use.
 
+.. _installation_distributed:
+
 Distributed processing via Celery
 =================================
 If you wish to run a TraP job across multiple machines, you may optionally

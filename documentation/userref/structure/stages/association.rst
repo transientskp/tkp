@@ -1,8 +1,9 @@
 .. _stage-association:
 
-==================
-Source association
-==================
+========================
+Source association stage
+========================
+(See also the :ref:`relevant configuration parameters<job_params_association>`.)
 
 After all :ref:`blind <stage-extraction>`
 source measurements have been inserted into the database, they are
@@ -23,20 +24,5 @@ ways in which sources may be related. The detailed documentation on
 describes the code pathways in detail; see also :ref:`Scheers (2011)
 <scheers-2011>`.
 
-The following parameters may be configured in the :ref:`job configuration file
-<job_params_cfg>`:
 
-Section ``association``
-^^^^^^^^^^^^^^^^^^^^^^^
 
-``deruiter_radius``
-   Float. Defined as per :ref:`stage-nulldet`.
-
-Section ``source_extraction``
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-``ew_sys_err``, ``ns_sys_err``
-   Floats. Systematic errors in units of arcseconds which augment the
-   sourcefinder-measured errors on source positions when performing source
-   association. These variables refer to an absolute angular error along an
-   east-west and north-south axis respectively.

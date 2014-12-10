@@ -6,8 +6,10 @@ Pipeline Design
 
 This section presents an overview of the fundamental algorithms used by, and
 data flow through, the TraP. It is designed such that everyday users have a
-full understanding of how their data is being processed. For implementation
-details, please refer to the :ref:`devref`.
+full understanding of how their data is being processed.
+Note that the top-level logic is defined in :py:mod:`tkp.main`, further
+implementation details for specific sub-sections may be found in the
+:ref:`devref`.
 
 As images flow through the TraP, they are processed by a series of distinct
 pipeline components, or "stages". Each stage consists of Python logic,
@@ -45,6 +47,12 @@ re-order images provided to it in the :ref:`images_to_process.py file
 combined in a single dataset, the user must ensure that the runs are in an
 appropriate sequence.*
 
+
+Configuration and startup
+=========================
+The pipeline configuration and job management system is described under
+:ref:`config`.
+
 .. _stages:
 
 Pipeline stages
@@ -53,8 +61,6 @@ Pipeline stages
 .. toctree::
    :maxdepth: 1
 
-   stages/startup
-   stages/dump
    stages/persistence
    stages/quality
    stages/extraction

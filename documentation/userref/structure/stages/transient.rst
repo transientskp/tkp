@@ -1,8 +1,10 @@
 .. _stage-transient:
 
-====================================
-Variability and new-source detection
-====================================
+==========================================
+Variability and new-source detection stage
+==========================================
+(See also the
+:ref:`relevant configuration parameters<job_params_transient_search>`.)
 
 Variability index calculation
 -----------------------------
@@ -66,23 +68,5 @@ sources is encoded by
 :func:`tkp.db.associations._determine_newsource_previous_limits`.
 Sources we deem to be intrinsically 'new' are then recorded in the
 :ref:`schema-newsource` table.
-
-
-
-
-Section ``transient_search``
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-The following parameters may be configured in the :ref:`job configuration file
-<job_params_cfg>`:
-
-``new_source_sigma_margin``
-    Float. A newly detected source is considered transient if it is
-    significantly above the best (lowest) previous detection limit for that
-    point on-sky. 'Significantly above' is defined by a 'margin of error,'
-    intended to screen out steady sources that just happen to be fluctuating
-    around the detection threshold due to measurement noise.
-    This value sets that margin as a multiple of the RMS of the previous-best
-    image.
-
 
 .. _coeff-of-var: http://en.wikipedia.org/wiki/Coefficient_of_variation

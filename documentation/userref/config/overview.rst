@@ -79,6 +79,16 @@ files:
    This contains all the end-user tunable parameters which are relevant to
    TraP operation. :ref:`See here <job_params_cfg>` for details.
 
+.. _config-run:
+
+Running a Job
+==============
+Once fully configured, you will want to run a TraP job to process your data.
+From within a project directory, you can start a job using::
+
+   $ trap-manage.py run <jobname>
+
+
 .. _configparser:
 
 Configuration file syntax

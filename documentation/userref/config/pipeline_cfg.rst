@@ -58,6 +58,11 @@ be referred to be other sections. The following parameters may be defined:
 ``database`` Section
 ====================
 
+.. note::
+   The database config settings can be over-ridden using environment
+   variables, e.g. for configuring a unit-testing environment.
+   See :py:func:`tkp.config.get_database_config` for details.
+
 ``engine``
    The database engine to use. Two engines are supported: ``postgresql`` and
    ``monetdb``. See the :ref:`introductory material on databases

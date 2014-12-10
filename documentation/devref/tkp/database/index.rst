@@ -11,10 +11,14 @@ Modules from the :mod:`tkp.db` package.
 
    introduction
    root
+   association
+   configstore
+   consistency
    database
-   orm
+   dump
    general
    generic
-   association
-   nulldetections
+   orm
    monitoringlist
+   nulldetections
+   quality

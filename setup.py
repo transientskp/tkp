@@ -44,9 +44,11 @@ for dirpath, dirnames, filenames in os.walk('tkp'):
     elif filenames:
         tkp_data_files.append([dirpath, [os.path.join(dirpath, f) for f in filenames]])
 
+from tkp import __version__ as tkp_version
+
 setup(
     name = "tkp",
-    version = "2.0-pre",
+    version = tkp_version,
     packages = tkp_packages,
     scripts = tkp_scripts,
     data_files=tkp_data_files,

@@ -105,7 +105,7 @@ def group_per_timestep(images):
         * s is stokes, sorted by ID as defined in the database schema
 
     Args:
-        List of images.
+        images (list): Images to group.
 
     Returns:
         List of tuples: The list is sorted by timestamp.

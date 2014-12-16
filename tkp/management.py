@@ -265,41 +265,62 @@ def init_db(options):
     populate(dbconfig)
 
 
-def parse_arguments(argv=None):
+def get_parser():
+    trap_manage_note= """
+        A tool for managing TKP projects.
+
+        Use 'initproject' to create a project directory. Other Subcommands
+        should be run from within a project directory.
+
+        NB:
+        To overwrite the database settings in pipeline.cfg you can use these
+        environment variables to configure the connection:
+
+        * TKP_DBENGINE
+        * TKP_DBNAME
+        * TKP_DBUSER
+        * TKP_DBPASSWORD
+        * TKP_DBHOST
+        * TKP_DBPORT
+
+        (This is useful for setting up test databases, etc.)
+
+        """
+
     parser = argparse.ArgumentParser(
-        description='A tool for managing TKP projects',
-        formatter_class=argparse.RawDescriptionHelpFormatter,
-        epilog=__doc__)
+        description=trap_manage_note,
+        formatter_class=argparse.RawDescriptionHelpFormatter
+        )
     parser_subparsers = parser.add_subparsers()
 
     # initproject
-    initproject_parser = parser_subparsers.add_parser('initproject')
+    initproject_parser = parser_subparsers.add_parser(
+        'initproject',
+        help="""
+        Initialize a pipeline project directory, complete with config files which you
+        can use to configure your pipeline.
+        """                                                      )
     initproject_parser.add_argument('name', help='project folder name')
     initproject_parser.add_argument('-t', '--target',
                                     help='location of new TKP project')
     initproject_parser.set_defaults(func=init_project)
 
     # initjob
-    initjob_parser = parser_subparsers.add_parser('initjob')
+    initjob_parser = parser_subparsers.add_parser(
+        'initjob',
+        help="""
+        Create a job folder, complete with job-specific config files
+        which you will need to modify.
+        """)
     initjob_parser.add_argument('name', help='Name of new job')
     initjob_parser.set_defaults(func=init_job)
 
     # runjob
-    run_help = """Run a specific job.
-
-To overwrite the database settings in pipeline.cfg you can use these
-environment variables to configure the connection:
-
-  * TKP_DBENGINE
-  * TKP_DBNAME
-  * TKP_DBUSER
-  * TKP_DBPASSWORD
-  * TKP_DBHOST
-  * TKP_DBPORT
-
-"""
-    run_parser = parser_subparsers.add_parser('run', description=run_help,
-                              formatter_class=argparse.RawTextHelpFormatter)
+    run_parser = parser_subparsers.add_parser(
+        'run',
+        help="Run a job by specifying the name of the job folder.",
+        formatter_class=argparse.RawTextHelpFormatter
+    )
 
     run_parser.add_argument('name', help='Name of job to run')
     m_help = 'a list of RA,DEC coordinates to monitor in JSON format,' \
@@ -310,28 +331,32 @@ environment variables to configure the connection:
     run_parser.set_defaults(func=run_job)
 
     #initdb
-    initdb_parser = parser_subparsers.add_parser('initdb')
+    initdb_parser = parser_subparsers.add_parser(
+        'initdb',
+        help="Initialize a database with the TKP schema.")
     initdb_parser.add_argument('-y', '--yes',
                                help="don't ask for confirmation",
                                action="store_true")
     initdb_parser.add_argument('-d', '--destroy',
-                               help="remove all tables before population",
+                               help="remove all tables before population"
+                                    "(only works with Postgres backend)",
                                action="store_true")
     initdb_parser.set_defaults(func=init_db)
 
     # celery
-    description = 'shortcut for access to celery sub commands'
-    celery_parser = parser_subparsers.add_parser('celery',
-                                                 description=description)
+    celery_parser = parser_subparsers.add_parser(
+        'celery',
+        help='Shortcut for access to celery sub commands')
+
     celery_parser.add_argument('rest', nargs=argparse.REMAINDER,
                                help='A celery subcommand')
     celery_parser.set_defaults(func=celery_cmd)
 
-    return parser.parse_args(argv)
+    return parser
 
 
 def main():
-    args = parse_arguments()
+    args = get_parser().parse_args()
     args.func(args)
 
 

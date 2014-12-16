@@ -31,13 +31,18 @@ SECONDS_IN_HOUR = 60**2
 SECONDS_IN_DAY = 24 * SECONDS_IN_HOUR
 
 def julian_date(time=None, modified=False):
-    """Return the Julian Date: the number of days (including fractions) which
-    have elapsed between noon, UT on 1 January 4713 BC and the specified time.
+    """
+    Calculate the Julian date at a given timestamp.
 
-    If modified is True, return the Modified Julian Date: the number of days
-    (including fractions) which have elapsed between the start of 17 November
-    1858 AD and the specified time. Takes a datetime.datetime object as
-    input.
+
+
+    Args:
+        time (datetime.datetime): Timestamp to calculate JD for.
+        modified (bool): If True, return the Modified Julian Date:
+            the number of days (including fractions) which have elapsed between
+            the start of 17 November 1858 AD and the specified time.
+    Returns:
+        float: Julian date value.
     """
     if not time:
         time = datetime.datetime.now(pytz.utc)
@@ -83,8 +88,9 @@ def mjds2lst(mjds, position=None):
     """
     As mjd2lst(), but takes an argument in seconds rather than days.
 
-    mjds -- Modified Julian Date (float, in seconds)
-    position -- Position (pyrap measure)
+    Args:
+        mjds (float):Modified Julian Date (in seconds)
+        position (pyrap measure): Position for LST calcs
     """
     return mjd2lst(mjds/SECONDS_IN_DAY, position)
 
@@ -95,8 +101,9 @@ def jd2lst(jd, position=None):
     given position. If position is None, we default to the reference position
     of CS002.
 
-    jd -- Julian Date (float)
-    position -- Position (pyrap measure)
+    Args:
+        jd (float): Julian Date
+        position (pyrap measure): Position for LST calcs.
     """
     return mjd2lst(jd - 2400000.5, position)
 
@@ -137,7 +144,7 @@ def unix2julian(timestamp):
 
     Args:
         timestamp (numbers.Number): Number of seconds since the modified
-        Julian epoch.
+            Julian epoch.
 
     Returns:
         numbers.Number: Number of seconds since the Unix epoch.
@@ -262,11 +269,11 @@ def propagate_sign(val1, val2, val3):
     meant: we raise.
 
     Args:
-        val1, val2, val3 (numeric): input values (hour/min/sec or deg/min/sec)
+        val1(float): (,val2,val3) input values (hour/min/sec or deg/min/sec)
 
     Returns:
-        sign (str): "+" or "-"
-        val1, val2, val3 (numeric): absolute values of inputs.
+        tuple: "+" or "-" string denoting sign,
+            val1, val2, val3 (numeric) denoting absolute values of inputs.
     """
     signs = [x<0 for x in (val1, val2, val3)]
     if signs.count(True) == 0:

@@ -325,7 +325,7 @@ def insert_image_and_simulated_sources(dataset, image_params, mock_sources,
 
     Args:
         dataset: The dataset object
-        image_params (dict); Contains the image properties.
+        image_params (dict): Contains the image properties.
         mock_sources (list of MockSource): The mock sources to simulate.
         new_source_sigma_margin (float): Parameter passed to source-association
             routines.

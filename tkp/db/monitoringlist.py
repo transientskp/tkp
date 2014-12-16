@@ -21,7 +21,7 @@ def get_monitor_entries(dataset_id):
     Returns the ``monitor`` entries relevant to this dataset.
 
     Args:
-        dataset_id (int)
+        dataset_id (int): Parent dataset.
 
     Returns:
         list of tuples [(monitor_id, ra, decl)]

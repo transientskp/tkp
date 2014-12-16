@@ -18,6 +18,28 @@
 
 # -- General configuration -----------------------------------------------------
 
+#Mock out numpy, scipy etc if building on readthedocs.org:
+import os
+on_rtd = os.environ.get('READTHEDOCS', None) == 'True'
+# if on_rtd:
+# May as well always set this up to ensure more consistent build environment
+import sys
+from mock import  Mock as MagicMock
+
+class Mock(MagicMock):
+    @classmethod
+    def __getattr__(cls, name):
+            return Mock()
+
+MOCK_MODULES = [#'numpy', 'numpy.ma',
+                #'scipy', 'scipy.integrate', 'scipy.optimize',
+                #'scipy.special', 'scipy.constants','scipy.interpolate',
+                'pyfits', 'pywcs',
+                'pyrap', 'pyrap.measures', 'pyrap.tables','pyrap.images',
+                'pyrap.quanta',
+                ]
+sys.modules.update((mod_name, Mock()) for mod_name in MOCK_MODULES)
+
 # If your documentation needs a minimal Sphinx version, state it here.
 #needs_sphinx = '1.0'
 
@@ -36,6 +58,7 @@ extensions = [
     'tkp.utility.sphinx.lastupdated',
     'sphinxcontrib.programoutput',
     'sphinxcontrib.napoleon',
+    'sphinxarg.ext',
 ]
 
 
@@ -269,5 +292,11 @@ nitpick_ignore = [
     ("py:obj", "list of tuples"),
     ("py:obj", "ExtractedSourceTuple"),
     ("py:obj", "list of MockSource"),
+    ("py:obj", "pyrap measure"),
+    # These result from incorrect docstrings, should really be fixed
+    # but we'll just suppress the errors for now.
+    ("py:obj", "-"),
 
 ]
+
+

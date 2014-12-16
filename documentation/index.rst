@@ -4,6 +4,9 @@
 LOFAR Transients Pipeline
 +++++++++++++++++++++++++
 
+Version |version|
+------------------
+
 .. toctree::
    :maxdepth: 2
 

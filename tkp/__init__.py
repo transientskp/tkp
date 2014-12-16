@@ -11,4 +11,4 @@ This package contains the Python modules used by the LOFAR Transients Pipeline
 For details, see http://docs.transientskp.org/.
 """
 
-__version__ = "2.0-pre"
+__version__ = "2.0.0"

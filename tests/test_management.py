@@ -74,12 +74,12 @@ class TestManagement(unittest.TestCase):
         """
         # Better as two separate tests?
         os.chdir(self.parent)
-        init_project_args = tkp.management.parse_arguments(['initproject',
+        init_project_args = tkp.management.get_parser().parse_args(['initproject',
                                                             project_name])
         target = init_project_args.func(init_project_args)
         os.chdir(target)
 
-        initjob_args = tkp.management.parse_arguments(['initjob',
+        initjob_args = tkp.management.get_parser().parse_args(['initjob',
                                                        job_name])
         initjob_args.func(initjob_args)
         # we don't want no images!
@@ -87,7 +87,7 @@ class TestManagement(unittest.TestCase):
                                         'images_to_process.py'), 'w')
         images_file.write("images=[]\n")
         images_file.close()
-        runjob_args = tkp.management.parse_arguments(['run',
+        runjob_args = tkp.management.get_parser().parse_args(['run',
                                                        job_name])
         tkp.management.run = Mock()
         runjob_args.func(runjob_args)
@@ -102,8 +102,10 @@ class TestManagement(unittest.TestCase):
 
     def test_parse_no_arguments(self):
         # should raise error if no arguments
+        parser = tkp.management.get_parser()
         with nostderr():  # don't clutter test results
-            self.assertRaises(SystemExit, tkp.management.parse_arguments)
+            self.assertRaises(SystemExit,
+                              parser.parse_args)
 
     def test_parse_monitoringlist_coords(self):
         coords1 = [[123.45, 67.89], [98.67, 54.32]]
@@ -119,7 +121,7 @@ class TestManagement(unittest.TestCase):
                         "--monitor-coords={}".format(coord1_string),
                         "--monitor-list={}".format(t.name)
                         ]
-            args = tkp.management.parse_arguments(arg_list)
+            args = tkp.management.get_parser().parse_args(arg_list)
             loaded = tkp.management.parse_monitoringlist_positions(args)
             all_coords = []
             all_coords.extend(coords1)

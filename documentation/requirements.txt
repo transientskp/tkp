@@ -1,4 +1,10 @@
 sphinx
 sphinxcontrib-programoutput
 sphinxcontrib-napoleon
+sphinx-argparse
+
+#To build on readthedocs.org
+python-dateutil>=1.4.1
+pytz
+mock
 

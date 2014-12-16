@@ -13,50 +13,15 @@ When the TraP is correctly installed on the system you can issue the
 on the command line. You can use the ``--help`` flag (also per subcommand) to
 explore all possible options.
 
-.. program-output:: python ../tkp/bin/trap-manage.py -h
+-----
 
-Subcommands
-===========
+.. argparse::
+    :module: tkp.management
+    :func: get_parser
+    :prog: trap-manage.py
 
-initproject
------------
-Initialise a pipeline environment. As an end user this is the first thing you
-want to do. It will set up a local environment which you can use to configure
-your pipeline and for creating jobs. A project can be seen as a set of
-configured jobs. When a project is initialised it is populated with a generic
-setup that hopefully works for your setup, but probably the modification of
-some of the configuration files is required.
+    run : @before
+        .. _trap-manage-run:
 
 
-.. program-output:: python ../tkp/bin/trap-manage.py  initproject -h
 
-initjob
--------
-This command will initaliase a new job. It will setup a subfolder which is
-populated with a set of templates you need to modify.
-
-.. program-output:: python ../tkp/bin/trap-manage.py initjob -h
-
-.. _trap-manage-run:
-
-run
----
-Run will start a job. It needs a job name as argument.
-
-.. program-output:: python ../tkp/bin/trap-manage.py run -h
-
-initdb
-------
-
-Initialise a database with the TKP schema. The semantics of this command vary
-depending on the database system in use; see the :ref:`relevant section
-<getstart-initdb>` for details.
-
-.. program-output:: python ../tkp/bin/trap-manage.py initdb -h
-
-celery
-------
-
-Shortcut access to celery subcommands.
-
-.. program-output:: python ../tkp/bin/trap-manage.py celery -h

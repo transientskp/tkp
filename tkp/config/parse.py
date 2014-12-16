@@ -37,10 +37,10 @@ def parse_to_dict(config):
 
     
     Args:
-      - *config*: A ConfigParser object.
+      config: A ConfigParser object.
       
     Returns:
-    Nested dict {sections -> keys -> values } representing parsed params.
+        Nested dict {sections -> keys -> values } representing parsed params.
     
     """
     pars = adict()

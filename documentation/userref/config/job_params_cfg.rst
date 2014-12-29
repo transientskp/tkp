@@ -44,7 +44,7 @@ The parameters in this file are defined as follows:
 
 ``quality_lofar`` Section
 =========================
-These the quality-checking parameters applied if the ingested data is from LOFAR.
+These are the quality-checking parameters applied if the ingested data is from LOFAR.
 See also :ref:`stage-quality`.
 
 ``low_bound``

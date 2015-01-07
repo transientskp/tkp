@@ -240,12 +240,12 @@ with :math:`f_{14}`. However, if :math:`f_{14}` were to be inserted first, it
 would be compared for association with the average position of
 :math:`f_{2,4,10,12}`. This may well produce a different result!
 
-For obvious reasons, it is desirable for the database contents to be
-independent of the order of insertion (otherwise, its ultimate contents
-become non-deterministic given the input data). For this reason, every
-insertion at a given timestep causes the associations for *all* datapoints at
-that timestep to be revaluated, rather than simply the inserted measurement
-simply being associated with the already extant lightcurves.
+It is desirable for the database contents to be
+independent of the order of insertion, since this is an arbitrary choice which
+should not effect scientifically significant outcomes.
+However, in the current implementation we simply settle for a
+*deterministic and repeatable* arbitrary choice, by ingesting images in order
+of band frequency.
 
 ==========
 Discussion

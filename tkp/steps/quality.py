@@ -4,6 +4,7 @@ All generic quality checking routines.
 import logging
 
 from tkp.telescope.lofar.quality import reject_check_lofar
+from tkp.telescope.generic.quality import reject_check_generic
 from tkp.accessors.lofaraccessor import LofarAccessor
 import tkp.accessors
 import tkp.db.quality
@@ -30,23 +31,23 @@ def reject_check(image_path, job_config):
     """
 
     accessor = tkp.accessors.open(image_path)
+
+    rejected = reject_check_generic(accessor)
+    if rejected:
+        return rejected
+
     # Only run LOFAR-specific QC checks on LOFAR images.
     if isinstance(accessor, LofarAccessor):
-        return reject_check_lofar(
-            accessor, job_config
-        )
+        rejected = reject_check_lofar(accessor, job_config)
+        if rejected:
+            return rejected
     else:
-        logger.warn(
-            "Unrecognised telescope %s for file %s, no quality checks.",
-            accessor.telescope, image_path
-        )
-        return None
+        msg = "no specific quality checks for " + accessor.telescope
+        logger.warn(msg)
 
 
 def reject_image(image_id, reason, comment):
     """
     Adds a rejection for an image to the database
-
-    NOTE: should only be used on a MASTER node
     """
     tkp.db.quality.reject(image_id, reason, comment)

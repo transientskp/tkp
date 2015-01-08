@@ -15,6 +15,7 @@ reason = {
     'beam': RejectReason(id=1, desc='beam invalid'),
     'bright_source': RejectReason(id=2, desc='bright source near'),
     'tau_time': RejectReason(id=3, desc='tau_time invalid'),
+    'nan': RejectReason(id=4, desc='contains NaN'),
 }
 
 query_reject = """\

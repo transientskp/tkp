@@ -4,7 +4,6 @@ import pytz
 import datetime
 import dateutil.parser
 import logging
-import warnings
 import re
 
 import pyfits
@@ -14,6 +13,7 @@ from tkp.accessors.dataaccessor import DataAccessor
 from tkp.utility.coordinates import WCS
 
 logger = logging.getLogger(__name__)
+
 
 class FitsImage(DataAccessor):
     """

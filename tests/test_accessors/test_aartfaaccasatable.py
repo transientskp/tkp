@@ -29,24 +29,20 @@ class TestAartfaacCasaImage(unittest.TestCase):
         self.assertAlmostEqual(known_bpa, bpa, 2)
 
     def test_phase_centre(self):
-        known_ra, known_decl = 0.0, 0.0
+        known_ra, known_decl = -47.0740220732, 52.6674459125
         self.assertAlmostEqual(self.accessor.centre_ra, known_ra, 2)
         self.assertAlmostEqual(self.accessor.centre_decl, known_decl, 2)
 
-    # TODO: make this test working
-    @unittest.skip("don't know? maybe because of wrong pointingcenter")
     def test_wcs(self):
-        known_ra, known_dec = 212.82677, -52.2025
-        known_x, known_y = 2221.548, 851.305
+        known_ra, known_dec = 335.90109, 44.654139
+        known_x, known_y = 653.4013, 463.8584
         calc_x, calc_y = self.accessor.wcs.s2p([known_ra, known_dec])
         calc_ra, calc_dec = self.accessor.wcs.p2s([known_x, known_y])
         self.assertAlmostEqual(known_x, calc_x, 3)
         self.assertAlmostEqual(known_y, calc_y, 3)
-        self.assertAlmostEqual(known_ra, calc_ra, 3)
+        self.assertAlmostEqual(known_ra, calc_ra % 360, 3)
         self.assertAlmostEqual(known_dec, calc_dec, 3)
 
-    # TODO: make this test working
-    @unittest.skip("don't know? maybe because of wrong pointingcenter")
     def test_pix_scale(self):
         p1_sky = (self.accessor.centre_ra, self.accessor.centre_decl)
         p1_pix = self.accessor.wcs.s2p(p1_sky)

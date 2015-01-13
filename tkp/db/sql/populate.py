@@ -2,6 +2,7 @@
 initialises or removes TRAP tables in a database.
 """
 import os
+import re
 import sys
 import tkp
 from tkp.db.database import DB_VERSION
@@ -18,9 +19,6 @@ tokens = (
     ('%NODES%', '1'),
     ('%VERSION%', str(DB_VERSION))
 )
-
-
-
 
 
 def get_input(text):
@@ -44,6 +42,11 @@ def verify(dbconfig):
     print("\tpassword:   " + (dbconfig['password'] or ""))
     print("\thost:       " + (dbconfig['host'] or ""))
     print("\tport:       " + str(dbconfig['port']))
+
+    if not re.match(r'\w+$', dbconfig['database']):
+        print("\n!!! WARNING !!! Banana does not handles non-alphanumeric "
+              "database names well. Please remove any non-alphanumeric "
+              "character from the database name.")
 
     if dbconfig['destroy']:
         print("\n!!! WARNING !!! This will first REMOVE all data in '%s'"

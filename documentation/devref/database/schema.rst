@@ -419,6 +419,7 @@ assuming a band width of 1 MHz.
 
 .. _MSSS: http://www.lofar.org/wiki/doku.php?id=msss:documentation#standard_msss-lba_frequency_bands
 
+.. _schema-image:
 
 image
 =====

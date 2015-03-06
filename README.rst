@@ -7,9 +7,10 @@ astronomical images. It primarily targets LOFAR data, but is also applicable
 to a range of other instruments.  See the `pipeline documentation`_ for
 details including installation instructions and a usage guide.
 
-An overview of the TraP will be published in the forthcoming `TraP paper`_
-(currently undergoing journal review),
-and we already have an assigned ASCL ID (http://ascl.net/1412.011).
+An overview of the TraP can be found in the `TraP paper`_ accompanying
+release 2.0, and we also have an assigned ASCL ID (http://ascl.net/1412.011).
+If you make use of TraP in work leading to a publication, we ask that you cite
+these references.
 
 
 TraP development is coordinated by `The LOFAR Transients Key Science Project`_.
@@ -20,7 +21,7 @@ tracker`_. Contributions are welcome.
 This is open source software: see ``COPYING`` for licensing and copyright
 information.
 
-.. _TraP paper: https://github.com/transientskp/trap-paper
+.. _TraP paper: http://adsabs.harvard.edu/abs/2015arXiv150301526S
 .. _The LOFAR Transients Key Science Project: http://www.transientskp.org/
 .. _pipeline documentation: http://docs.transientskp.org/
 .. _issue tracker: https://github.com/transientskp/tkp/issues

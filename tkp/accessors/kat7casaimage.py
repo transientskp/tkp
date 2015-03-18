@@ -8,6 +8,7 @@ from tkp.utility.coordinates import mjd2datetime
 
 logger = logging.getLogger(__name__)
 
+
 class Kat7CasaImage(CasaImage):
     """
     Use pyrap to pull image data out of a CASA table as produced by KAT-7.
@@ -25,31 +26,25 @@ class Kat7CasaImage(CasaImage):
         (bmaj, bmin, bpa). Will attempt to read from header if
         not supplied.
     """
+    taustart_ts = None
+    tau_time = None
+    url = None
+
     def __init__(self, url, plane=0, beam=None):
         super(Kat7CasaImage, self).__init__(url, plane, beam)
+        self.table = pyrap_table(self.url.encode(), ack=False)
+        self.parse_taustartts()
+        self.tau_time = 1
 
-        table = pyrap_table(self.url.encode(), ack=False)
-        self._taustart_ts = parse_taustartts(table)
+    def parse_taustartts(self):
+        """
+        Extract image time from CASA table header.
 
-    @property
-    def tau_time(self):
-        # Placeholder value
-        return 1
+        Arguments:
+          - MAIN table of CASA image.
 
-    @property
-    def taustart_ts(self):
-        return self._taustart_ts
-
-
-def parse_taustartts(table):
-    """
-    Extract image time from CASA table header.
-
-    Arguments:
-      - MAIN table of CASA image.
-
-    Returns:
-      - Time of image start as a instance of ``datetime.datetime``
-    """
-    obsdate = table.getkeyword('coords')['obsdate']['m0']['value']
-    return mjd2datetime(obsdate)
+        Returns:
+          - Time of image start as a instance of ``datetime.datetime``
+        """
+        obsdate = self.table.getkeyword('coords')['obsdate']['m0']['value']
+        self.taustart_ts = mjd2datetime(obsdate)

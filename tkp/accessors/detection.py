@@ -9,6 +9,7 @@ from tkp.accessors.lofarhdf5image import LofarHdf5Image
 from tkp.accessors.fitsimage import FitsImage
 from tkp.accessors.lofarfitsimage import LofarFitsImage
 from tkp.accessors.kat7casaimage import Kat7CasaImage
+from tkp.accessors.aartfaaccasaimage import AartfaacCasaImage
 
 
 logger = logging.getLogger(__name__)
@@ -19,7 +20,7 @@ casafiles = ("table.dat", "table.f0", "table.f0_TSM0", "table.info",
              "table.lock")
 
 # We will take the first accessor for which the test returns True.
-FitsTest  = namedtuple('FitsTest', ['accessor', 'test'])
+FitsTest = namedtuple('FitsTest', ['accessor', 'test'])
 fits_type_mapping = [
     FitsTest(
         accessor=LofarFitsImage,
@@ -30,6 +31,7 @@ fits_type_mapping = [
 casa_telescope_keyword_mapping = {
     'LOFAR': LofarCasaImage,
     'KAT-7': Kat7CasaImage,
+    'AARTFAAC All Sky Monitor': AartfaacCasaImage,
 }
 
 

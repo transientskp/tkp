@@ -7,6 +7,7 @@ from pyrap.images import image as pyrap_image
 from tkp.accessors.lofarcasaimage import LofarCasaImage
 from tkp.accessors.lofarhdf5image import LofarHdf5Image
 from tkp.accessors.fitsimage import FitsImage
+from tkp.accessors.amicasaimage import AmiCasaImage
 from tkp.accessors.lofarfitsimage import LofarFitsImage
 from tkp.accessors.kat7casaimage import Kat7CasaImage
 
@@ -30,6 +31,7 @@ fits_type_mapping = [
 casa_telescope_keyword_mapping = {
     'LOFAR': LofarCasaImage,
     'KAT-7': Kat7CasaImage,
+    'AMI-LA': AmiCasaImage,
 }
 
 

@@ -41,8 +41,8 @@ def degrees2pixels(bmaj, bmin, bpa, deltax, deltay):
     For example Fits beam parameters are in degrees.
 
     Arguments:
-      - bmaj:   Beam semi-major axis in degrees
-      - bmin:   Beam semi-minor axis in degrees
+      - bmaj:   Beam major axis in degrees
+      - bmin:   Beam minor axis in degrees
       - bpa:    Beam position angle in degrees
       - deltax: Pixel size along the x axis in degrees
       - deltay: Pixel size along the y axis in degrees
@@ -63,21 +63,6 @@ def degrees2pixels(bmaj, bmin, bpa, deltax, deltay):
     theta = pi * bpa / 180
     return (semimaj, semimin, theta)
 
-
-def arcsec2degrees(bmaj, bmin, bpa):
-    """
-    Converts beam parameters from arcsec to degrees.
-    For example CASAtable beam parameters are in arcsec.
-
-    Arguments:
-      - bmaj: Beam semi-major axis in arcsec
-      - bmin: Beam semi-minor axis in arcsec
-      - bpa:  Beam position angle in arbitrary units
-
-    Returns:
-      - tuple of (semi-major in degrees, semi-minor in degrees, bpa as above)
-    """
-    return (bmaj / 3600, bmin / 3600, bpa)
 
 
 def unique_column_values(table, column_name):

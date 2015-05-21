@@ -22,20 +22,20 @@ class TestAartfaacCasaImage(unittest.TestCase):
         results = self.accessor.extract_metadata()
         sfimage = accessors.sourcefinder_image_from_accessor(self.accessor)
 
-        known_bmaj, known_bmin, known_bpa = 4.44, 4.44, 0
+        known_bmaj, known_bmin, known_bpa = 4.4586, 4.458, 0
         bmaj, bmin, bpa = self.accessor.beam
         self.assertAlmostEqual(known_bmaj, bmaj, 2)
         self.assertAlmostEqual(known_bmin, bmin, 2)
         self.assertAlmostEqual(known_bpa, bpa, 2)
 
     def test_phase_centre(self):
-        known_ra, known_decl = -47.0740220732, 52.6674459125
+        known_ra, known_decl = 118.859, 52.915
         self.assertAlmostEqual(self.accessor.centre_ra, known_ra, 2)
         self.assertAlmostEqual(self.accessor.centre_decl, known_decl, 2)
 
     def test_wcs(self):
         known_ra, known_dec = 335.90109, 44.654139
-        known_x, known_y = 653.4013, 463.8584
+        known_x, known_y = 633.178, 457.342
         calc_x, calc_y = self.accessor.wcs.s2p([known_ra, known_dec])
         calc_ra, calc_dec = self.accessor.wcs.p2s([known_x, known_y])
         self.assertAlmostEqual(known_x, calc_x, 3)

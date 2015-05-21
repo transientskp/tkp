@@ -31,7 +31,7 @@ fits_type_mapping = [
 casa_telescope_keyword_mapping = {
     'LOFAR': LofarCasaImage,
     'KAT-7': Kat7CasaImage,
-    'AARTFAAC All Sky Monitor': AartfaacCasaImage,
+    'AARTFAAC': AartfaacCasaImage,
 }
 
 

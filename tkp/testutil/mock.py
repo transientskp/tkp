@@ -2,8 +2,7 @@
 Mock data objects for use in testing.
 """
 from tkp.accessors.dataaccessor import DataAccessor
-from tkp.accessors.common import parse_pixelsize, degrees2pixels
-
+import numpy
 
 class Mock(object):
     def __init__(self, returnvalue=None):
@@ -44,7 +43,7 @@ class MockImage(DataAccessor):
 
     @property
     def pixelsize(self):
-        return parse_pixelsize(self.wcs)
+        return DataAccessor.parse_pixelsize(self.wcs)
 
     @property
     def tau_time(self):

@@ -558,11 +558,11 @@ INSERT INTO temprunningcatalog
              AND x0.image = %(image_id)s
              AND i0.dataset = rc0.dataset
              AND rc0.mon_src = FALSE
-             AND rc0.zone BETWEEN CAST(FLOOR(x0.decl - i0.rb_smaj) as INTEGER)
-                              AND CAST(FLOOR(x0.decl + i0.rb_smaj) as INTEGER)
-             AND rc0.wm_decl BETWEEN x0.decl - i0.rb_smaj
-                                 AND x0.decl + i0.rb_smaj
-             AND rc0.x*x0.x + rc0.y*x0.y + rc0.z*x0.z > cos(radians(i0.rb_smaj))
+             AND rc0.zone BETWEEN CAST(FLOOR(x0.decl - 5 * i0.rb_smaj) as INTEGER)
+                              AND CAST(FLOOR(x0.decl + 5 * i0.rb_smaj) as INTEGER)
+             AND rc0.wm_decl BETWEEN x0.decl - 5 * i0.rb_smaj
+                                 AND x0.decl + 5 * i0.rb_smaj
+             AND rc0.x*x0.x + rc0.y*x0.y + rc0.z*x0.z > cos(radians(5 * i0.rb_smaj))
              AND CASE WHEN rc0.wm_ra < 90 OR rc0.wm_ra > 270
                       THEN SQRT(  (MOD(CAST(rc0.wm_ra + 180 AS NUMERIC(11,8)), 360) - MOD(CAST(x0.ra + 180 AS NUMERIC(11,8)), 360)) * COS(RADIANS((rc0.wm_decl + x0.decl)/2))
                           * (MOD(CAST(rc0.wm_ra + 180 AS NUMERIC(11,8)), 360) - MOD(CAST(x0.ra + 180 AS NUMERIC(11,8)), 360)) * COS(RADIANS((rc0.wm_decl + x0.decl)/2))
@@ -764,13 +764,13 @@ INSERT INTO temprunningcatalog
              AND x0.image = %(image_id)s
              AND i0.dataset = rc0.dataset
              AND rc0.mon_src = FALSE
-             AND rc0.zone BETWEEN CAST(FLOOR(x0.decl - i0.rb_smaj) AS INTEGER)
-                              AND CAST(FLOOR(x0.decl + i0.rb_smaj) AS INTEGER)
-             AND rc0.wm_decl BETWEEN x0.decl - i0.rb_smaj
-                                 AND x0.decl + i0.rb_smaj
-             AND rc0.wm_ra BETWEEN x0.ra - alpha(i0.rb_smaj, x0.decl)
-                               AND x0.ra + alpha(i0.rb_smaj, x0.decl)
-             AND rc0.x * x0.x + rc0.y * x0.y + rc0.z * x0.z > COS(RADIANS(i0.rb_smaj))
+             AND rc0.zone BETWEEN CAST(FLOOR(x0.decl - 5 * i0.rb_smaj) AS INTEGER)
+                              AND CAST(FLOOR(x0.decl + 5 * i0.rb_smaj) AS INTEGER)
+             AND rc0.wm_decl BETWEEN x0.decl - 5 * i0.rb_smaj
+                                 AND x0.decl + 5 * i0.rb_smaj
+             AND rc0.wm_ra BETWEEN x0.ra - alpha(5 * i0.rb_smaj, x0.decl)
+                               AND x0.ra + alpha(5 * i0.rb_smaj, x0.decl)
+             AND rc0.x * x0.x + rc0.y * x0.y + rc0.z * x0.z > COS(RADIANS(5 * i0.rb_smaj))
              AND SQRT(  (rc0.wm_ra - x0.ra) * COS(RADIANS((rc0.wm_decl + x0.decl)/2))
                       * (rc0.wm_ra - x0.ra) * COS(RADIANS((rc0.wm_decl + x0.decl)/2))
                       / (x0.uncertainty_ew * x0.uncertainty_ew + rc0.wm_uncertainty_ew * rc0.wm_uncertainty_ew)

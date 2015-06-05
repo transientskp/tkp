@@ -64,22 +64,6 @@ class DataAccessor(object):
             'wcs',
         ]
 
-    def __init__(self):
-        # Initialise the `sigma` and `f` properties used for calculating the
-        # RMS value of the data. See `tkp.quality.statistics` for details.
-        self.sigma = 3
-        self.f = 4
-
-
-    def rms_qc(self):
-        """
-        RMS for quality-control.
-
-        Root mean square value calculated from central region of this image.
-        We sigma-clip the input-data in an attempt to exclude source-pixels
-        and keep only background-pixels.
-        """
-        return rms_with_clipped_subregion(self.data, sigma=self.sigma, f=self.f)
 
     def extract_metadata(self):
         """
@@ -106,7 +90,6 @@ class DataAccessor(object):
             'centre_decl': self.centre_decl,
             'deltax': self.pixelsize[0],
             'deltay': self.pixelsize[1],
-            'rms_qc': self.rms_qc(),
         }
 
     @staticmethod

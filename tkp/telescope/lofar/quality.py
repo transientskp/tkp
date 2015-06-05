@@ -10,18 +10,26 @@ from tkp.utility import nice_format
 logger = logging.getLogger(__name__)
 
 
-def reject_check_lofar(accessor, parset):
-    low_bound = parset['low_bound']
-    high_bound = parset['high_bound']
-    oversampled_x = parset['oversampled_x']
-    elliptical_x = parset['elliptical_x']
-    min_separation = parset['min_separation']
+def reject_check_lofar(accessor, job_config):
+
+    lofar_quality_params = job_config['quality_lofar']
+
+    low_bound = lofar_quality_params['low_bound']
+    high_bound = lofar_quality_params['high_bound']
+    oversampled_x = lofar_quality_params['oversampled_x']
+    elliptical_x = lofar_quality_params['elliptical_x']
+    min_separation = lofar_quality_params['min_separation']
 
     if accessor.tau_time == 0:
         logger.info("image %s REJECTED: tau_time is 0, should be > 0" % accessor.url)
         return tkp.db.quality.reason['tau_time'], "tau_time is 0"
 
-    rms_qc = accessor.rms_qc()
+    rms_est_sigma = job_config.persistence.rms_est_sigma
+    rms_est_fraction = job_config.persistence.rms_est_fraction
+    rms_qc = rms_with_clipped_subregion(accessor.data,
+                                        rms_est_sigma=rms_est_sigma,
+                                        rms_est_fraction=rms_est_fraction)
+
     noise = noise_level(accessor.freq_eff, accessor.freq_bw, accessor.tau_time,
         accessor.antenna_set, accessor.ncore, accessor.nremote, accessor.nintl
     )

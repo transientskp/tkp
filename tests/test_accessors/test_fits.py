@@ -99,27 +99,6 @@ class TestFitsImage(unittest.TestCase):
         sfimage = accessors.sourcefinder_image_from_accessor(image)
 
 
-@requires_database()
-class DataBaseImage(unittest.TestCase):
-    """TO DO: split this into an accessor test and a database test.
-                Move the database part to the database unit-tests"""
-
-    def tearDown(self):
-        tkp.db.rollback()
-
-    @requires_database()
-    @requires_data(os.path.join(DATAPATH, 'sourcefinder/L15_12h_const/observed-all.fits'))
-    def testDBImageFromAccessor(self):
-        import tkp.db.database
-
-        image = FitsImage(os.path.join(DATAPATH, 'sourcefinder/L15_12h_const/observed-all.fits'),
-                                      beam=(54./3600, 54./3600, 0.))
-
-        database = tkp.db.database.Database()
-        dataset = DataSet(data={'description': 'Accessor test'}, database=database)
-        dbimage = accessors.dbimage_from_accessor(dataset, image,
-                                                  extraction_radius=3)
-
 
 class FrequencyInformation(unittest.TestCase):
     @requires_data(os.path.join(DATAPATH, 'accessors/missing_metadata.fits'))

@@ -40,11 +40,19 @@ def subregion(data, f=4):
     return data[(x/2 - x/f):(x/2 + x/f), (y/2 - y/f):(y/2 + y/f)]
 
 
-def rms_with_clipped_subregion(data, sigma=3, f=4):
-    """ returns the rms value of a iterative sigma clipped subsection of an image
+def rms_with_clipped_subregion(data, rms_est_sigma=3, rms_est_fraction=4):
+    """
+    RMS for quality-control.
+
+    Root mean square value calculated from central region of an image.
+    We sigma-clip the input-data in an attempt to exclude source-pixels
+    and keep only background-pixels.
+
     Args:
         data: A numpy array
-        sigma: sigma value used for clipping
-        f: determines size of subsection, result will be 1/fth of the image size
+        rms_est_sigma: sigma value used for clipping
+        rms_est_fraction: determines size of subsection, result will be
+            1/fth of the image size where f=rms_est_fraction
+    returns the rms value of a iterative sigma clipped subsection of an image
     """
-    return rms(clip(subregion(data, f), sigma))
+    return rms(clip(subregion(data, rms_est_fraction), rms_est_sigma))

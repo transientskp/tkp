@@ -72,13 +72,13 @@ def perform_forced_fits(fit_posns, fit_ids,
     positions.
 
     Args:
-        fit_posns (list of (RA, Dec) tuples): Positions to be fit.
+        fit_posns (list): List of (RA, Dec) tuples: Positions to be fit.
         fit_ids: List of identifiers for each requested fit position.
         image_path (str): path to image for measurements.
         extraction_params (dict): source extraction parameters, as a dictionary.
 
     Returns:
-        A matched pair of lists (serialized_fits, ids), corresponding to
+        tuple: A matched pair of lists (serialized_fits, ids), corresponding to
         successfully fitted positions.
         NB returned lists may be shorter than input lists
         if some fits are unsuccessful.

@@ -21,8 +21,7 @@ def moments(data, beam, threshold=0):
             semi-minor axes
 
     Returns:
-
-        (dict): peak, total, x barycenter, y barycenter, semimajor
+        dict: peak, total, x barycenter, y barycenter, semimajor
             axis, semiminor axis, theta
 
     Raises:
@@ -130,11 +129,10 @@ def fitgaussian(pixels, params, fixed=None, maxfev=0):
 
     Returns:
 
-        (dict): peak, total, x barycenter, y barycenter, semimajor,
+        dict: peak, total, x barycenter, y barycenter, semimajor,
             semiminor, theta (radians)
 
     Raises:
-
         ValueError (in case of a bad fit)
 
     Perform a least squares fit to an elliptical Gaussian.

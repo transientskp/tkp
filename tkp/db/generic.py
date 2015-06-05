@@ -55,7 +55,7 @@ def columns_from_table(table, keywords=None, alias=None, where=None,
 
     Returns:
 
-        (list): list of dicts. Each dict contains the given keywords,
+        list: list of dicts. Each dict contains the given keywords,
             or all if keywords=None. Each element of the list
             corresponds to a table row.
 

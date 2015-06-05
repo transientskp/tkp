@@ -296,6 +296,9 @@ nitpick_ignore = [
     # These result from incorrect docstrings, should really be fixed
     # but we'll just suppress the errors for now.
     ("py:obj", "-"),
+    ("py:exc", "ValueError"),
+    ("py:obj", "function"),
+
 
 ]
 

@@ -370,8 +370,7 @@ class ImageData(object):
                 equal to the restoring beam
 
         Returns:
-
-             (..utility.containers.ExtractionResults):
+             :class:`tkp.utility.containers.ExtractionResults`
         """
 
         if anl > det:
@@ -611,7 +610,7 @@ class ImageData(object):
         This function wraps around fit_to_point().
 
         Args:
-            positions (list of (RA, Dec) tuples): Positions to be fit,
+            positions (list): list of (RA, Dec) tuples. Positions to be fit,
                 in decimal degrees.
             boxsize: See :py:func:`fit_to_point`
             threshold: as above.
@@ -626,11 +625,11 @@ class ImageData(object):
         fit_to_point, not in sky coordinates.
 
         Returns:
-            A list of successful fits.
-            If ``ids`` is None, returns a single list of
-            :class:`tkp.sourcefinder.extract.Detection` s.
-            Otherwise, returns a tuple of two matched lists:
-            ([detections], [matching_ids]).
+            list: A list of successful fits.
+                If ``ids`` is None, returns a single list of
+                :class:`tkp.sourcefinder.extract.Detection` s.
+                Otherwise, returns a tuple of two matched lists:
+                ([detections], [matching_ids]).
         """
 
         if ids is not None:

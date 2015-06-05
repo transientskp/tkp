@@ -27,8 +27,7 @@ def sourcefinder_image_from_accessor(image, **args):
           an accessor.
 
     Returns:
-
-        (sourcefinder.ImageData): a source finder image.
+        (:class:`tkp.sourcefinder.image.ImageData`): a source finder image.
     """
     image = ImageData(image.data, image.beam, image.wcs, **args)
     return image

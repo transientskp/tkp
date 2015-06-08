@@ -27,7 +27,5 @@ class AmiCasaImage(CasaImage):
     """
     def __init__(self, url, plane=0, beam=None):
         super(AmiCasaImage, self).__init__(url, plane, beam)
-
-        table = pyrap_table(self.url.encode(), ack=False)
-        self.taustart_ts = self.parse_taustartts(table)
+        self.taustart_ts = self.parse_taustartts()
         self.tau_time = 1 # Placeholder value until properly implemented

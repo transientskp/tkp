@@ -44,20 +44,18 @@ class LofarCasaImage(CasaImage, LofarAccessor):
     def __init__(self, url, plane=0, beam=None):
         super(LofarCasaImage, self).__init__(url, plane, beam)
 
-        table = pyrap_table(self.url.encode(), ack=False)
-        subtables = self.open_subtables(table)
-        self.taustart_ts = self.parse_taustartts(subtables)
-        self.tau_time = self.parse_tautime(subtables)
+        self.subtables = self.open_subtables()
+        self.taustart_ts = self.parse_taustartts()
+        self.tau_time = self.parse_tautime()
 
         # Additional, LOFAR-specific metadata
-        self.antenna_set = self.parse_antennaset(subtables)
-        self.ncore, self.nremote, self.nintl =  self.parse_stations(subtables)
-        self.subbandwidth = self.parse_subbandwidth(subtables)
-        self.subbands = self.parse_subbands(subtables)
+        self.antenna_set = self.parse_antennaset()
+        self.ncore, self.nremote, self.nintl =  self.parse_stations()
+        self.subbandwidth = self.parse_subbandwidth()
+        self.subbands = self.parse_subbands()
 
 
-    @staticmethod
-    def open_subtables(table):
+    def open_subtables(self):
         """open all subtables defined in the LOFAR format
         args:
             table: a pyrap table handler to a LOFAR CASA table
@@ -66,18 +64,17 @@ class LofarCasaImage(CasaImage, LofarAccessor):
         """
         subtables = {}
         for subtable in subtable_names:
-            subtable_location = table.getkeyword("ATTRGROUPS")[subtable]
+            subtable_location = self.table.getkeyword("ATTRGROUPS")[subtable]
             subtables[subtable] = pyrap_table(subtable_location, ack=False)
         return subtables
 
 
-    @staticmethod
-    def parse_taustartts(subtables):
+    def parse_taustartts(self):
         """ extract image start time from CASA table header
         """
         # Note that we sort the table in order of ascending start time then choose
         # the first value to ensure we get the earliest possible starting time.
-        observation_table = subtables['LOFAR_OBSERVATION']
+        observation_table = self.subtables['LOFAR_OBSERVATION']
         julianstart = observation_table.query(
             sortlist="OBSERVATION_START", limit=1).getcell(
             "OBSERVATION_START", 0
@@ -108,12 +105,11 @@ class LofarCasaImage(CasaImage, LofarAccessor):
         return total - overlap
 
 
-    @staticmethod
-    def parse_tautime(subtables):
+    def parse_tautime(self):
         """
         Returns the total on-sky time for this image.
         """
-        origin_table = subtables['LOFAR_ORIGIN']
+        origin_table = self.subtables['LOFAR_ORIGIN']
         startcol = origin_table.col('START')
         endcol = origin_table.col('END')
         series = [(int(start), int(end)) for start, end in zip(startcol, endcol)]
@@ -121,9 +117,9 @@ class LofarCasaImage(CasaImage, LofarAccessor):
         return tau_time
 
 
-    @staticmethod
-    def parse_antennaset(subtables):
-        observation_table = subtables['LOFAR_OBSERVATION']
+
+    def parse_antennaset(self):
+        observation_table = self.subtables['LOFAR_OBSERVATION']
         antennasets = CasaImage.unique_column_values(observation_table, "ANTENNA_SET")
         if len(antennasets) == 1:
             return antennasets[0]
@@ -131,9 +127,9 @@ class LofarCasaImage(CasaImage, LofarAccessor):
             raise Exception("Cannot handle multiple antenna sets in image")
 
 
-    @staticmethod
-    def parse_subbands(subtables):
-        origin_table = subtables['LOFAR_ORIGIN']
+
+    def parse_subbands(self):
+        origin_table = self.subtables['LOFAR_ORIGIN']
         num_chans = CasaImage.unique_column_values(origin_table, "NUM_CHAN")
         if len(num_chans) == 1:
             return num_chans[0]
@@ -141,8 +137,7 @@ class LofarCasaImage(CasaImage, LofarAccessor):
             raise Exception("Cannot handle varying numbers of channels in image")
 
 
-    @staticmethod
-    def parse_subbandwidth(subtables):
+    def parse_subbandwidth(self):
         # subband
         # see http://www.lofar.org/operations/doku.php?id=operator:background_to_observations&s[]=subband&s[]=width&s[]=clock&s[]=frequency
         freq_units = {
@@ -151,7 +146,7 @@ class LofarCasaImage(CasaImage, LofarAccessor):
             'MHz': 10 ** 6,
             'GHz': 10 ** 9,
         }
-        observation_table = subtables['LOFAR_OBSERVATION']
+        observation_table = self.subtables['LOFAR_OBSERVATION']
         clockcol = observation_table.col('CLOCK_FREQUENCY')
         clock_values = CasaImage.unique_column_values(observation_table, "CLOCK_FREQUENCY")
         if len(clock_values) == 1:
@@ -164,14 +159,15 @@ class LofarCasaImage(CasaImage, LofarAccessor):
             raise Exception("Cannot handle varying clocks in image")
 
 
-    @staticmethod
-    def parse_stations(subtables):
+
+    def parse_stations(self):
         """Extract number of specific LOFAR stations used
         returns:
             (number of core stations, remote stations, international stations)
         """
-        observation_table = subtables['LOFAR_OBSERVATION']
-        antenna_table = subtables['LOFAR_ANTENNA']
+
+        observation_table = self.subtables['LOFAR_OBSERVATION']
+        antenna_table = self.subtables['LOFAR_ANTENNA']
         nvis_used = observation_table.getcol('NVIS_USED')
         names = numpy.array(antenna_table.getcol('NAME'))
         mask = numpy.sum(nvis_used, axis=2) > 0

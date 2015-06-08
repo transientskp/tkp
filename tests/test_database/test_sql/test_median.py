@@ -1,6 +1,6 @@
 import unittest
 import tkp
-from tkp.db import execute, rollback, Database
+from tkp.db import execute, Database
 from tkp.testutil import db_subs
 from numpy import median
 

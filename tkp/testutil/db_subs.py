@@ -406,7 +406,7 @@ def get_newsources_for_dataset(dsid):
         AND ax.xtrsrc = ex.id
         AND tr.previous_limits_image = limits_image.id
     """
-    cursor = Database().connection.cursor()
+    cursor = Database().cursor
     cursor.execute(qry, {'dsid':dsid})
     newsource_rows_for_dataset = get_db_rows_as_dicts(cursor)
     return newsource_rows_for_dataset
@@ -463,7 +463,7 @@ WHERE rc.dataset = %(dataset_id)s
   AND eta_int >= %(eta_min)s
   AND v_int >= %(v_min)s
 """
-    cursor = tkp.db.Database().connection.cursor()
+    cursor = tkp.db.Database().cursor
     cursor.execute(query, {'dataset_id': dataset_id,
                            'eta_min':eta_min,
                            'v_min':v_min,

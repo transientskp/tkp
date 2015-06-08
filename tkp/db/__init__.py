@@ -16,50 +16,10 @@ def execute(query, parameters={}, commit=False):
 
     :returns: a database cursor object
     """
-    #logger.info('executing query\n%s' % query % parameters)
     database = Database()
-    cursor = database.connection.cursor()
-    try:
-        cursor.execute(query, sanitize_db_inputs(parameters))
-        if commit:
-            database.connection.commit()
-    except database.connection.Error as e:
-        logger.error("Query failed: %s. Query: %s." % (e, query % parameters))
-        raise
-    except Exception as e:
-        logger.error("Big problem here: %s" % e)
-        raise
-    return cursor
+    return database.execute(query, parameters=parameters, commit=commit)
 
-def commit():
-    """
-    A generic wrapper to commit a query transaction
-
-    It saves the changes involved by a transaction
-    """
-    database = Database()
-    return database.connection.commit()
 
 def rollback():
-    """
-    A generic wrapper to rollback a query transaction
-
-    Undo changes involved by a transaction that have not been saved
-    """
     database = Database()
-    return database.connection.rollback()
-
-def connect():
-    """
-    A generic wrapper to connect to the configured database
-    """
-    database = Database()
-    return database.connect()
-
-def connection():
-    """
-    A generic wrapper to create a connection to the database if
-    it does not exist
-    """
-    database = Database()
-    return database.connection
+    return database.rollback()

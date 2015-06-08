@@ -6,6 +6,9 @@ import re
 import sys
 import tkp
 from tkp.db.database import DB_VERSION
+import tkp.db.database
+import tkp.db.model
+from tkp.config import get_database_config
 
 
 tkp_folder = tkp.__path__[0]
@@ -57,31 +60,6 @@ def verify(dbconfig):
         sys.stderr.write("Aborting.\n")
         sys.exit(1)
 
-
-def connect(dbconfig):
-    """
-    Connect to the database
-
-    args:
-        parsed: an argparse namespace
-
-    returns:
-        a database connection
-    """
-    if dbconfig['engine'] == "postgresql":
-        import psycopg2
-        return psycopg2.connect(database=dbconfig['database'], user=dbconfig['user'],
-                                password=dbconfig['password'], host=dbconfig['host'],
-                                port=dbconfig['port'])
-    elif dbconfig['engine'] == "monetdb":
-        import monetdb
-        return monetdb.sql.connect(database=dbconfig['database'], user=dbconfig['user'],
-                                   password=dbconfig['password'], host=dbconfig['host'],
-                                   port=dbconfig['port'], autocommit=True)
-    else:
-        msg = "engine %s is not implemented" % dbconfig['engine']
-        sys.stderr.write(msg)
-        raise NotImplementedError(msg)
 
 
 def destroy_postgres(connection):
@@ -145,8 +123,9 @@ def destroy(dbconfig):
     """
     assert(dbconfig['destroy'])
     if dbconfig['engine'] == 'postgresql':
-        connection = connect(dbconfig)
-        destroy_postgres(connection)
+        database = tkp.db.database.Database()
+        database.connect()
+        destroy_postgres(database.connection.connection)
     elif dbconfig['engine'] == 'monetdb':
         destroy_monetdb()
 
@@ -155,12 +134,14 @@ def set_monetdb_schema(cur, dbconfig):
     """
     create custom schema. use with MonetDB only.
     """
-    schema_query = """
-CREATE SCHEMA "%(database)s" AUTHORIZATION "%(user)s";
-ALTER USER "%(user)s" SET SCHEMA "%(database)s";
+    create_query = """
+CREATE SCHEMA "trap" AUTHORIZATION "%(user)s";
+ALTER USER "%(user)s" SET SCHEMA "trap";
 """
-    print schema_query % dbconfig
-    cur.execute(schema_query % dbconfig)
+    cur.execute("select id from sys.schemas where name = 'trap'")
+    if len(cur.fetchall()) == 0:
+        print create_query % dbconfig
+        cur.execute(create_query % dbconfig)
 
 
 def populate(dbconfig):
@@ -176,10 +157,14 @@ def populate(dbconfig):
     if not dbconfig['yes']:
         verify(dbconfig)
 
+    # configure the database before we do anyting else
+    get_database_config(dbconfig, apply=True)
+
     if dbconfig['destroy']:
         destroy(dbconfig)
 
-    conn = connect(dbconfig)
+    database = tkp.db.database.Database()
+    conn = database.connection.connection
     cur = conn.cursor()
 
     if dbconfig['engine'] == 'postgresql':
@@ -191,14 +176,18 @@ def populate(dbconfig):
     if dbconfig['engine'] == 'monetdb':
         set_monetdb_schema(cur, dbconfig)
         # reconnect to switch to schema
-        conn.close()
-        conn = connect(dbconfig)
-        cur = conn.cursor()
+        conn.commit()
+        database.reconnect()
 
     batch_file = os.path.join(sql_repo, 'batch')
 
     error = "\nproblem processing \"%s\".\nMaybe the DB is already populated. "\
             "Try -d/--destroy argument for initdb cmd.\n\n"
+
+    tkp.db.model.Base.metadata.create_all(database.alchemy_engine)
+    conn = database.connection.connection
+    conn.commit()
+    cur = conn.cursor()
 
     for line in [l.strip() for l in open(batch_file) if not l.startswith("#")]:
         if not line:  # skip empty lines
@@ -217,6 +206,5 @@ def populate(dbconfig):
             except Exception as e:
                 sys.stderr.write(error % sql_file)
                 raise
-    if dbconfig['engine'] == 'postgresql':
-        conn.commit()
+    conn.commit()
     conn.close()

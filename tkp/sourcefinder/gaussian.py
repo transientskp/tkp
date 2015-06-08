@@ -24,7 +24,7 @@ def gaussian(height, center_x, center_y, semimajor, semiminor, theta):
             direction.
 
     Returns:
-        function: 2D Gaussian
+        lambda: 2D Gaussian (function of pixel coords ``(x,y)``)
     """
 
     return lambda x, y: height * exp(

@@ -25,8 +25,7 @@ def moments(data, beam, threshold=0):
             axis, semiminor axis, theta
 
     Raises:
-
-        ValueError (in case of NaN in input)
+        exceptions.ValueError: in case of NaN in input.
 
     Use the first moment of the distribution is the barycenter of an
     ellipse. The second moments are used to estimate the rotation angle
@@ -114,26 +113,23 @@ def fitgaussian(pixels, params, fixed=None, maxfev=0):
     """Calculate source positional values by fitting a 2D Gaussian
 
     Args:
-
         pixels (numpy.ma.MaskedArray): Pixel values (with bad pixels masked)
 
         params (dict): initial fit parameters (possibly estimated
             using the moments() function, above)
 
     Kwargs:
-
         fixed (dict): parameters & their values to be kept frozen (ie, not
             fitted)
 
         maxfev (int): maximum number of calls to the error function
 
     Returns:
-
         dict: peak, total, x barycenter, y barycenter, semimajor,
             semiminor, theta (radians)
 
     Raises:
-        ValueError (in case of a bad fit)
+        exceptions.ValueError: In case of a bad fit.
 
     Perform a least squares fit to an elliptical Gaussian.
 

@@ -293,11 +293,10 @@ nitpick_ignore = [
     ("py:obj", "ExtractedSourceTuple"),
     ("py:obj", "list of MockSource"),
     ("py:obj", "pyrap measure"),
+    ("py:obj", "lambda"),
     # These result from incorrect docstrings, should really be fixed
     # but we'll just suppress the errors for now.
     ("py:obj", "-"),
-    ("py:exc", "ValueError"),
-    ("py:obj", "function"),
 
 
 ]

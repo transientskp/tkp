@@ -8,7 +8,6 @@ logger = logging.getLogger(__name__)
 class DataAccessor(object):
     __metaclass__ = RequiredAttributesMetaclass
 
-
     _required_attributes = [
             'beam',
             'centre_ra',

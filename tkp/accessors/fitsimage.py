@@ -21,38 +21,36 @@ class FitsImage(DataAccessor):
     provide a ``telescope`` attribute if the FITS file has a ``TELESCOP``
     header.
     """
-    def __init__(self, url, plane=None, beam=None, hdu=0):
+    def __init__(self, url, plane=None, beam=None, hdu_index=0):
         super(FitsImage, self).__init__()
         self.url = url
-        header = self._get_header(hdu)
-        self.wcs = self.parse_coordinates(header)
-        self.data = self.read_data(pyfits.open(self.url)[hdu], plane)
-        self.taustart_ts, self.tau_time = self.parse_times(header)
-        self.freq_eff, self.freq_bw = self.parse_frequency(header)
-        self.pixelsize = self.parse_pixelsize(self.wcs)
+        self.header = self._get_header(hdu_index)
+        self.wcs = self.parse_coordinates()
+        self.data = self.read_data(hdu_index, plane)
+        self.taustart_ts, self.tau_time = self.parse_times()
+        self.freq_eff, self.freq_bw = self.parse_frequency()
+        self.pixelsize = self.parse_pixelsize()
         if beam:
             (bmaj, bmin, bpa) = beam
         else:
-            (bmaj, bmin, bpa) = self.parse_beam(header)
+            (bmaj, bmin, bpa) = self.parse_beam()
         self.beam = self.degrees2pixels(
                 bmaj, bmin, bpa, self.pixelsize[0], self.pixelsize[1]
             )
-        self.centre_ra, self.centre_decl = self.calculate_phase_centre(
-                                                    self.data.shape, self.wcs)
+        self.centre_ra, self.centre_decl = self.calculate_phase_centre()
 
         # Bonus attribute
-        if 'TELESCOP' in header:
-            # Otherwise, it defaults to None.
-            self.telescope = header['TELESCOP']
+        if 'TELESCOP' in self.header:
+            self.telescope = self.header['TELESCOP']
 
-    def _get_header(self, hdu):
+    def _get_header(self, hdu_index):
         hdulist = pyfits.open(self.url)
-        hdu = hdulist[hdu]
+        hdu = hdulist[hdu_index]
         return hdu.header.copy()
 
 
-    @staticmethod
-    def read_data(hdu, plane):
+
+    def read_data(self, hdu_index, plane):
         """
         Read and store data from our FITS file.
 
@@ -62,6 +60,7 @@ class FitsImage(DataAccessor):
         before viewing the array with RO.DS9, saving to a FITS file,
         etc.
         """
+        hdu = pyfits.open(self.url)[hdu_index]
         data = numpy.float64(hdu.data.squeeze())
         if plane is not None and len(data.shape) > 2:
             data = data[plane].squeeze()
@@ -72,9 +71,10 @@ class FitsImage(DataAccessor):
         data = data.transpose()
         return data
 
-    @staticmethod
-    def parse_coordinates(header):
+
+    def parse_coordinates(self):
         """Returns a WCS object"""
+        header = self.header
         wcs = WCS()
         try:
             wcs.crval = header['crval1'], header['crval2']
@@ -105,51 +105,51 @@ class FitsImage(DataAccessor):
         return wcs
 
 
-    @staticmethod
-    def calculate_phase_centre(data_shape, wcs):
-            x, y = data_shape
-            centre_ra, centre_decl = wcs.p2s((x / 2, y / 2))
-            return centre_ra, centre_decl
+    def calculate_phase_centre(self):
+        x, y = self.data.shape
+        centre_ra, centre_decl = self.wcs.p2s((x / 2, y / 2))
+        return centre_ra, centre_decl
 
 
-    @staticmethod
-    def parse_frequency(header):
-            """
-            Set some 'shortcut' variables for access to the frequency parameters
-            in the FITS file header.
 
-            @param hdulist: hdulist to parse
-            @type hdulist: hdulist
-            """
-            freq_eff = None
-            freq_bw = None
-            try:
-                if header['TELESCOP'] == 'LOFAR':
-                    freq_eff = header['RESTFRQ']
-                    freq_bw = header['RESTBW']
+    def parse_frequency(self):
+        """
+        Set some 'shortcut' variables for access to the frequency parameters
+        in the FITS file header.
+
+        @param hdulist: hdulist to parse
+        @type hdulist: hdulist
+        """
+        freq_eff = None
+        freq_bw = None
+        try:
+            header = self.header
+            if header['TELESCOP'] == 'LOFAR':
+                freq_eff = header['RESTFRQ']
+                freq_bw = header['RESTBW']
+            else:
+                if header['ctype3'] in ('FREQ', 'VOPT'):
+                    freq_eff = header['crval3']
+                    freq_bw = header['cdelt3']
+                elif header['ctype4'] in ('FREQ', 'VOPT'):
+                    freq_eff = header['crval4']
+                    freq_bw = header['cdelt4']
                 else:
-                    if header['ctype3'] in ('FREQ', 'VOPT'):
-                        freq_eff = header['crval3']
-                        freq_bw = header['cdelt3']
-                    elif header['ctype4'] in ('FREQ', 'VOPT'):
-                        freq_eff = header['crval4']
-                        freq_bw = header['cdelt4']
-                    else:
-                        freq_eff = header['restfreq']
-                        freq_bw = 0.0
-            except KeyError:
-                msg = "Frequency not specified in FITS"
-                logger.error(msg)
-                raise TypeError(msg)
+                    freq_eff = header['restfreq']
+                    freq_bw = 0.0
+        except KeyError:
+            msg = "Frequency not specified in FITS"
+            logger.error(msg)
+            raise TypeError(msg)
 
-            return freq_eff, freq_bw
+        return freq_eff, freq_bw
 
 
 
 
 
-    @staticmethod
-    def parse_beam(header):
+
+    def parse_beam(self):
         """Read and return the beam properties bmaj, bmin and bpa values from
         the fits header.
 
@@ -157,7 +157,7 @@ class FitsImage(DataAccessor):
           - Beam parameters, (semimajor, semiminor, position angle)
             in (pixels, pixels, radians)
         """
-            # AIPS FITS file; stored in the history section
+        # AIPS FITS file; stored in the history section
         beam_regex = re.compile(r'''
             BMAJ
             \s*=\s*
@@ -173,6 +173,7 @@ class FitsImage(DataAccessor):
             ''', re.VERBOSE)
 
         bmaj, bmin, bpa = None, None, None
+        header = self.header
         try:
             # MIRIAD FITS file
             bmaj = header['BMAJ']
@@ -203,15 +204,15 @@ class FitsImage(DataAccessor):
         return bmaj, bmin, bpa
 
 
-    @staticmethod
-    def parse_times(header):
+
+    def parse_times(self):
         """Returns:
           - taustart_ts: tz naive (implicit UTC) datetime at start of observation.
           - tau_time: Integration time, in seconds
         """
         # Attempt to do something sane with timestamps.
         try:
-            start = FitsImage.parse_start_time(header)
+            start = self.parse_start_time()
         except KeyError:
             #If no start time specified, give up:
             logger.warn("Timestamp not specified in FITS file:"
@@ -219,21 +220,19 @@ class FitsImage(DataAccessor):
             return datetime.datetime.now(), 0.
 
         try:
-            end = dateutil.parser.parse(header['end_utc'])
+            end = dateutil.parser.parse(self.header['end_utc'])
         except KeyError:
             msg = "End time not specified or unreadable"
             logger.warning(msg)
             end = start
 
         delta = end - start
-        # In Python 2.7, we can use delta.total_seconds instead
-        tau_time = (delta.days * 86400 + delta.seconds +
-                        delta.microseconds / 1e6)
+        tau_time = delta.total_seconds()
 
         #For simplicity, the database requires naive datetimes (implicit UTC)
         #So we convert to UTC and then drop the timezone:
         try:
-            timezone = pytz.timezone(header['timesys'])
+            timezone = pytz.timezone(self.header['timesys'])
             start_w_tz = start.replace(tzinfo=timezone)
             start_utc = pytz.utc.normalize(start_w_tz.astimezone(pytz.utc))
             return start_utc.replace(tzinfo=None), tau_time
@@ -242,15 +241,12 @@ class FitsImage(DataAccessor):
             return start, tau_time
 
 
-    @staticmethod
-    def parse_start_time(header):
+    def parse_start_time(self):
         """
-        Arguments:
-          - header: ``pyfits.header.Header``
-
         Returns:
           - start time of image as an instance of ``datetime.datetime``
         """
+        header = self.header
         try:
             start = dateutil.parser.parse(header['date-obs'])
         except AttributeError:

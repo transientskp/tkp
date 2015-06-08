@@ -27,52 +27,14 @@ class MockImage(DataAccessor):
             wcs (tkp.utility.coordinates.WCS): WCS for the image.
         """
         self.keywords = keywords
-        self._wcs = wcs
-
-    @property
-    def wcs(self):
-        return self._wcs
-
-    @property
-    def data(self):
-        return numpy.array([[[[0]]]])
-
-    @property
-    def url(self):
-        return self.keywords["url"]
-
-    @property
-    def pixelsize(self):
-        return DataAccessor.parse_pixelsize(self.wcs)
-
-    @property
-    def tau_time(self):
-        return self.keywords["tau_time"]
-
-    @property
-    def taustart_ts(self):
-        return self.keywords["taustart_ts"]
-
-    def get_centre_ra(self):
-        return self.keywords["centre_ra"]
-    def set_centre_ra(self, x):
-        self.keywords["centre_ra"] = x
-    centre_ra = property(get_centre_ra, set_centre_ra)
-
-    def get_centre_decl(self):
-        return self.keywords["centre_decl"]
-    def set_centre_decl(self, x):
-        self.keywords["centre_decl"] = x
-    centre_decl = property(get_centre_decl, set_centre_decl)
-
-    @property
-    def freq_eff(self):
-        return self.keywords["freq_eff"]
-
-    @property
-    def freq_bw(self):
-        return self.keywords["freq_bw"]
-
-    @property
-    def beam(self):
-        return self.keywords["beam"]
+        self.wcs = wcs
+        self.data = numpy.array([[[[0]]]])
+        self.url = self.keywords["url"]
+        self.pixelsize = self.parse_pixelsize()
+        self.tau_time = self.keywords["tau_time"]
+        self.taustart_ts = self.keywords["taustart_ts"]
+        self.centre_ra = self.keywords["centre_ra"]
+        self.centre_decl = self.keywords["centre_decl"]
+        self.freq_eff = self.keywords["freq_eff"]
+        self.freq_bw = self.keywords["freq_bw"]
+        self.beam = self.keywords["beam"]

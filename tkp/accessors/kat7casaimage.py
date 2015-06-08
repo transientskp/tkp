@@ -27,8 +27,6 @@ class Kat7CasaImage(CasaImage):
     """
     def __init__(self, url, plane=0, beam=None):
         super(Kat7CasaImage, self).__init__(url, plane, beam)
-
-        table = pyrap_table(self.url.encode(), ack=False)
-        self.taustart_ts = self.parse_taustartts(table)
-        self.tau_time= 1 # Placeholder value
+        self.taustart_ts = self.parse_taustartts()
+        self.tau_time = 1 # Placeholder value
 

@@ -102,18 +102,17 @@ class DataAccessor(object):
             'deltay': self.pixelsize[1],
         }
 
-    @staticmethod
-    def parse_pixelsize(wcs):
+    def parse_pixelsize(self):
         """
-        Arguments:
-          - wcs: A tkp.coordinates.wcs.WCS object
 
         Returns:
           - deltax: pixel size along the x axis in degrees
           - deltay: pixel size along the x axis in degrees
 
         """
-        #Would have to be pretty strange data for this not to be the case
+        wcs = self.wcs
+        # Check that pixels are square
+        # (Would have to be pretty strange data for this not to be the case)
         assert wcs.cunit[0] == wcs.cunit[1]
         if wcs.cunit[0] == "deg":
             deltax = wcs.cdelt[0]

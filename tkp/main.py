@@ -101,10 +101,10 @@ def run(job_name, supplied_mon_coords=[]):
     image_cache_params = pipe_config.image_cache
     imgs = [[img] for img in all_images]
 
-    sigma = job_config.persistence.sigma
-    f = job_config.persistence.f
+    rms_est_sigma = job_config.persistence.rms_est_sigma
+    rms_est_fraction = job_config.persistence.rms_est_fraction
     metadatas = runner.map("persistence_node_step", imgs,
-                           [image_cache_params, sigma, f])
+                           [image_cache_params, rms_est_sigma, rms_est_fraction])
     metadatas = [m[0] for m in metadatas if m]
 
     logger.info("Storing images")

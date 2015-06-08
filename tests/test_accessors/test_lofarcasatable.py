@@ -4,8 +4,7 @@ import unittest
 
 from tkp import accessors
 from tkp.accessors.lofaraccessor import LofarAccessor
-from tkp.accessors.lofarcasaimage import LofarCasaImage, parse_tautime, \
-    non_overlapping_time
+from tkp.accessors.lofarcasaimage import LofarCasaImage
 from tkp.testutil.decorators import requires_data
 from tkp.utility.coordinates import angsep
 from tkp.testutil.data import DATAPATH
@@ -72,7 +71,7 @@ class TestLofarCasaImage(unittest.TestCase):
                   (290, 300), (310, 320), (310, 311), (315, 320), (319, 320),
                   (319, 320)]
         answer = 165
-        self.assertEqual(non_overlapping_time(series), answer)
+        self.assertEqual(LofarCasaImage.non_overlapping_time(series), answer)
 
     def test_parse_tautime(self):
         class MockOriginTable:
@@ -80,4 +79,4 @@ class TestLofarCasaImage(unittest.TestCase):
                 if name == 'START': return [100, 100, 200]
                 elif name == 'END': return [150, 175, 300]
         subtables = {'LOFAR_ORIGIN': MockOriginTable()}
-        self.assertEqual(parse_tautime(subtables), 175)
+        self.assertEqual(LofarCasaImage.parse_tautime(subtables), 175)

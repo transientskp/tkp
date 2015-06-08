@@ -4,132 +4,140 @@ from pyrap.tables import table as pyrap_table
 from math import degrees
 from tkp.accessors.dataaccessor import DataAccessor
 from tkp.utility.coordinates import WCS
-from tkp.accessors.common import parse_pixelsize, degrees2pixels
+from tkp.utility.coordinates import mjd2datetime
 
 logger = logging.getLogger(__name__)
 
 class CasaImage(DataAccessor):
-    # NB CasaImage does not provide tau_time or taustart_ts, so cannot be
-    # instantiated.
+    """
+    Provides common functionality for pulling data from the CASA image format
+
+    (Technically known as the 'MeasurementSet' format.)
+
+    NB CasaImage does not provide tau_time or taustart_ts, as there was
+    no clear standard for these metadata, so cannot be
+    instantiated directly - subclass it and extract these attributes
+    as appropriate to a given telescope.
+    """
     def __init__(self, url, plane=0, beam=None):
         super(CasaImage, self).__init__()
-        self._url = url
+        self.url = url
         table = pyrap_table(self.url.encode(), ack=False)
-        self._data = parse_data(table, plane)
-        self._wcs = parse_coordinates(table)
-        self._centre_ra, self._centre_decl = parse_phase_centre(table)
-        self._freq_eff, self._freq_bw = parse_frequency(table)
+        self.data = self.parse_data(table, plane)
+        self.wcs = self.parse_coordinates(table)
+        self.centre_ra, self.centre_decl = self.parse_phase_centre(table)
+        self.freq_eff, self.freq_bw = self.parse_frequency(table)
+        self.pixelsize = self.parse_pixelsize(self.wcs)
 
         if beam:
             (bmaj, bmin, bpa) = beam
-            self._beam = degrees2pixels(
-                bmaj, bmin, bpa, self.pixelsize[0], self.pixelsize[1]
-            )
         else:
-            self._beam = parse_beam(table, self.pixelsize)
+            bmaj, bmin, bpa = self.parse_beam(table)
+        self.beam = self.degrees2pixels(
+            bmaj, bmin, bpa, self.pixelsize[0], self.pixelsize[1])
 
-    @property
-    def wcs(self):
-        return self._wcs
+    @staticmethod
+    def parse_data(table, plane=0):
+        """extract and massage data from CASA table"""
+        data = table[0]['map'].squeeze()
+        planes = len(data.shape)
+        if planes != 2:
+            msg = "received datacube with %s planes, assuming Stokes I and taking plane 0" % planes
+            logger.warn(msg)
+            warnings.warn(msg)
+            data = data[plane, :, :]
+        data = data.transpose()
+        return data
 
-    @property
-    def data(self):
-        return self._data
+    @staticmethod
+    def parse_coordinates(table):
+        """Returns a WCS object"""
+        wcs = WCS()
+        my_coordinates = table.getkeyword('coords')['direction0']
+        wcs.crval = my_coordinates['crval']
+        wcs.crpix = my_coordinates['crpix']
+        wcs.cdelt = my_coordinates['cdelt']
+        ctype = ['unknown', 'unknown']
+        # What about other projections?!
+        if my_coordinates['projection'] == "SIN":
+            if my_coordinates['axes'][0] == "Right Ascension":
+                ctype[0] = "RA---SIN"
+            if my_coordinates['axes'][1] == "Declination":
+                ctype[1] = "DEC--SIN"
+        wcs.ctype = tuple(ctype)
+        # Rotation, units? We better set a default
+        wcs.crota = (0., 0.)
+        wcs.cunit = table.getkeyword('coords')['direction0']['units']
+        return wcs
 
-    @property
-    def url(self):
-        return self._url
+    @staticmethod
+    def parse_frequency(table):
+        """extract frequency related information from headers"""
+        freq_eff = table.getkeywords()['coords']['spectral2']['restfreq']
+        freq_bw = table.getkeywords()['coords']['spectral2']['wcs']['cdelt']
+        return freq_eff, freq_bw
 
-    @property
-    def pixelsize(self):
-        return parse_pixelsize(self.wcs)
+    @staticmethod
+    def parse_beam(table):
+        """
+        Returns:
+          - Beam parameters, (semimajor, semiminor, parallactic angle) in
+            (pixels,pixels, radians).
+        """
+        def ensure_degrees(quantity):
+            if quantity['unit'] == 'deg':
+                return quantity['value']
+            elif quantity['unit'] == 'arcsec':
+                return quantity['value'] / 3600
+            elif quantity['unit'] == 'rad':
+                return degrees(quantity['value'])
+            else:
+                raise Exception("Beam units (%s) unknown" % quantity['unit'])
 
-    @property
-    def centre_ra(self):
-        return self._centre_ra
+        restoringbeam = table.getkeyword('imageinfo')['restoringbeam']
+        bmaj = ensure_degrees(restoringbeam['major'])
+        bmin = ensure_degrees(restoringbeam['minor'])
+        bpa = ensure_degrees(restoringbeam['positionangle'])
+        return bmaj, bmin, bpa
 
-    @property
-    def centre_decl(self):
-        return self._centre_decl
+    @staticmethod
+    def parse_phase_centre(table):
+        # The units for the pointing centre are not given in either the image cube
+        # itself or in the ICD. Assume radians.
+        # Note that we'll return the RA modulo 360 so it's always 0 <= RA < 360
+        centre_ra, centre_decl = table.getkeyword('coords')['pointingcenter']['value']
+        return degrees(centre_ra) % 360, degrees(centre_decl)
 
-    @property
-    def freq_eff(self):
-        return self._freq_eff
+    @staticmethod
+    def parse_taustartts(table):
+        """
+        Extract integration start-time from CASA table header.
 
-    @property
-    def freq_bw(self):
-        return self._freq_bw
+        This applies to some CASA images (typically those created from uvFITS
+        files) but not all, use with caution!
 
-    @property
-    def beam(self):
-        return self._beam
+        Arguments:
+            table: MAIN table of CASA image.
 
-
-def parse_data(table, plane=0):
-    """extract and massage data from CASA table"""
-    data = table[0]['map'].squeeze()
-    planes = len(data.shape)
-    if planes != 2:
-        msg = "received datacube with %s planes, assuming Stokes I and taking plane 0" % planes
-        logger.warn(msg)
-        warnings.warn(msg)
-        data = data[plane, :, :]
-    data = data.transpose()
-    return data
-
-def parse_coordinates(table):
-    """Returns a WCS object"""
-    wcs = WCS()
-    my_coordinates = table.getkeyword('coords')['direction0']
-    wcs.crval = my_coordinates['crval']
-    wcs.crpix = my_coordinates['crpix']
-    wcs.cdelt = my_coordinates['cdelt']
-    ctype = ['unknown', 'unknown']
-    # What about other projections?!
-    if my_coordinates['projection'] == "SIN":
-        if my_coordinates['axes'][0] == "Right Ascension":
-            ctype[0] = "RA---SIN"
-        if my_coordinates['axes'][1] == "Declination":
-            ctype[1] = "DEC--SIN"
-    wcs.ctype = tuple(ctype)
-    # Rotation, units? We better set a default
-    wcs.crota = (0., 0.)
-    wcs.cunit = table.getkeyword('coords')['direction0']['units']
-    return wcs
-
-def parse_frequency(table):
-    """extract frequency related information from headers"""
-    freq_eff = table.getkeywords()['coords']['spectral2']['restfreq']
-    freq_bw = table.getkeywords()['coords']['spectral2']['wcs']['cdelt']
-    return freq_eff, freq_bw
+        Returns:
+            Time of image start as a instance of ``datetime.datetime``
+        """
+        obsdate = table.getkeyword('coords')['obsdate']['m0']['value']
+        return mjd2datetime(obsdate)
 
 
-def parse_beam(table, pixelsize):
-    """
-    Returns:
-      - Beam parameters, (semimajor, semiminor, parallactic angle) in
-        (pixels,pixels, radians).
-    """
-    def ensure_degrees(quantity):
-        if quantity['unit'] == 'deg':
-            return quantity['value']
-        elif quantity['unit'] == 'arcsec':
-            return quantity['value'] / 3600
-        elif quantity['unit'] == 'rad':
-            return degrees(quantity['value'])
-        else:
-            raise Exception("Beam units (%s) unknown" % quantity['unit'])
+    @staticmethod
+    def unique_column_values(table, column_name):
+        """
+        Find all the unique values in a particular column of a CASA table.
 
-    restoringbeam = table.getkeyword('imageinfo')['restoringbeam']
-    bmaj = ensure_degrees(restoringbeam['major'])
-    bmin = ensure_degrees(restoringbeam['minor'])
-    bpa = ensure_degrees(restoringbeam['positionangle'])
-    beam_pixels = degrees2pixels(bmaj, bmin, bpa, pixelsize[0], pixelsize[1])
-    return beam_pixels
+        Arguments:
+          - table:       ``pyrap.tables.table``
+          - column_name: ``str``
 
-def parse_phase_centre(table):
-    # The units for the pointing centre are not given in either the image cube
-    # itself or in the ICD. Assume radians.
-    # Note that we'll return the RA modulo 360 so it's always 0 <= RA < 360
-    centre_ra, centre_decl = table.getkeyword('coords')['pointingcenter']['value']
-    return degrees(centre_ra) % 360, degrees(centre_decl)
+        Returns:
+          - ``numpy.ndarray`` containing unique values in column.
+        """
+        return table.query(
+            columns=column_name, sortlist="unique %s" % (column_name)
+        ).getcol(column_name)

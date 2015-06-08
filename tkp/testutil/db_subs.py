@@ -375,7 +375,7 @@ def get_newsources_for_dataset(dsid):
         dsid: Dataset id
 
     Returns:
-        list of dicts: Each dict represents one newsource.
+        list: (list of dicts) Each dict represents one newsource.
             The dict keys are all the columns in the newsources table, plus
             the 'taustart_ts' from the image table, which represents the
             trigger time.
@@ -428,8 +428,8 @@ def get_sources_filtered_by_final_variability(dataset_id,
         v_min (float): Minimum value of V-index to return.
 
     Returns:
-        list of dicts: Each dict represents a runningcatalog_flux entry matching
-            the filter criteria.
+        list: (list of dicts) Each dict represents a runningcatalog_flux entry
+            matching the filter criteria.
 
     """
 

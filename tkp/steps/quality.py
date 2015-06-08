@@ -33,7 +33,7 @@ def reject_check(image_path, job_config):
     # Only run LOFAR-specific QC checks on LOFAR images.
     if isinstance(accessor, LofarAccessor):
         return reject_check_lofar(
-            accessor, job_config['quality_lofar']
+            accessor, job_config
         )
     else:
         logger.warn(

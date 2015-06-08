@@ -22,6 +22,5 @@ class TestQuality(unittest.TestCase):
 
     def test_zero_integration(self):
         self.accessor._tau_time = 0
-        quality_parset = self.job_config['quality_lofar']
-        result = reject_check_lofar(self.accessor, quality_parset)
+        result = reject_check_lofar(self.accessor, self.job_config)
         self.assertTrue(result)

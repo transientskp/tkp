@@ -1,44 +1,25 @@
-import abc
+from tkp.accessors.dataaccessor import RequiredAttributesMetaclass
 
 class LofarAccessor(object):
-    __metaclass__ = abc.ABCMeta
+    __metaclass__ = RequiredAttributesMetaclass
     """
     Additional metadata required for processing LOFAR images through QC
     checks.
+
+    Attributes:
+        antenna_set (string): Antenna set in use during observation.
+            String; 'LBA_INNER', 'LBA_OUTER', 'LBA_SPARSE', 'LBA' or 'HBA'
+        ncore(int): Number of core stations in use during observation.
+        nremote(int): Number of remote stations in use during observation.
+        nintl(int): Number of international stations in use during observation.
+        subbandwidth(float): Width of a subband in Hz.
+        subbands(int): Number of subbands.
     """
-    @abc.abstractproperty
-    def antenna_set(self):
-        """
-        Antenna set in use during observation. String; 'LBA_INNER', 'LBA_OUTER',
-        'LBA_SPARSE', 'LBA' or 'HBA'
-        """
-
-    @abc.abstractproperty
-    def ncore(self):
-        """
-        Number of core stations in use during observation. Integer.
-        """
-
-    @abc.abstractproperty
-    def nremote(self):
-        """
-        Number of remote stations in use during observation. Integer.
-        """
-
-    @abc.abstractproperty
-    def nintl(self):
-        """
-        Number of international stations in use during observation. Integer.
-        """
-
-    @abc.abstractproperty
-    def subbandwidth(self):
-        """
-        Width of a subband in Hz.
-        """
-
-    @abc.abstractproperty
-    def subbands(self):
-        """
-        Number of subbands.
-        """
+    _required_attributes = [
+        'antenna_set',
+        'ncore',
+        'nremote',
+        'nintl',
+        'subbandwidth',
+        'subbands',
+    ]

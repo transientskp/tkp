@@ -150,7 +150,7 @@ def sigmaclip(data, errors=None, niter=0, siglow=3., sighigh=3.,
 
     Returns:
 
-        (2-tuple): boolean numpy array of indices indicating which
+        tuple: (2-tuple) Boolean numpy array of indices indicating which
             elements are clipped (False), with the same shape as the
             input; number of iterations
 

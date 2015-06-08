@@ -331,8 +331,7 @@ class DataSet(DBObject):
     def runcat_entries(self):
         """
         Returns:
-            a list of dictionarys:
-            representing rows in runningcatalog,
+            list: a list of dictionarys representing rows in runningcatalog,
             for all sources belonging to this dataset
 
             Column 'id' is returned with the key 'runcat'
@@ -536,7 +535,7 @@ class ExtractedSource(DBObject):
         for this source.
 
         Returns:
-            (list) list of 5-tuples, each tuple being:
+            list: list of 5-tuples, each tuple being:
                 - observation start time as a datetime.datetime object
                 - integration time (float)
                 - integrated flux (float)

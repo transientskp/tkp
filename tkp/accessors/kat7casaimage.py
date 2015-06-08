@@ -4,7 +4,7 @@ This module implements the CASA kat7 data container format.
 import logging
 from pyrap.tables import table as pyrap_table
 from tkp.accessors.casaimage import CasaImage
-from tkp.utility.coordinates import mjd2datetime
+
 
 logger = logging.getLogger(__name__)
 
@@ -29,27 +29,6 @@ class Kat7CasaImage(CasaImage):
         super(Kat7CasaImage, self).__init__(url, plane, beam)
 
         table = pyrap_table(self.url.encode(), ack=False)
-        self._taustart_ts = parse_taustartts(table)
+        self.taustart_ts = self.parse_taustartts(table)
+        self.tau_time= 1 # Placeholder value
 
-    @property
-    def tau_time(self):
-        # Placeholder value
-        return 1
-
-    @property
-    def taustart_ts(self):
-        return self._taustart_ts
-
-
-def parse_taustartts(table):
-    """
-    Extract image time from CASA table header.
-
-    Arguments:
-      - MAIN table of CASA image.
-
-    Returns:
-      - Time of image start as a instance of ``datetime.datetime``
-    """
-    obsdate = table.getkeyword('coords')['obsdate']['m0']['value']
-    return mjd2datetime(obsdate)

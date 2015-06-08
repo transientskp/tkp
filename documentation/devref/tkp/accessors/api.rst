@@ -9,12 +9,7 @@
    :synopsis: Base data accessor utilities
    :members:
 
-:mod:`tkp.accessors.common` -- Common accessor parsing functions
-++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-.. automodule:: tkp.accessors.common
-   :synopsis: Common accessor parsing functions
-   :members:
 
 :mod:`tkp.accessors.detection` -- File type detection
 +++++++++++++++++++++++++++++++++++++++++++++++++++++

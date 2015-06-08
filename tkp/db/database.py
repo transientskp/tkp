@@ -1,8 +1,11 @@
-import exceptions
+
 import logging
 import numpy
 import tkp.config
 from tkp.utility import substitute_inf
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker
+
 
 logger = logging.getLogger(__name__)
 
@@ -10,35 +13,6 @@ logger = logging.getLogger(__name__)
 # Increment whenever the schema changes.
 DB_VERSION = 35
 
-class DBExceptions(object):
-    """
-    This provides an engine-agnostic wrapper around the exceptions that can
-    the thrown by the database layer: we can refer to eg
-    DBExcetions(engine).Error rather than <engine specific module>.Error.
-
-    We handle both the PEP-0249 exceptions as provided by the DB engine, and
-    add our own as necessary.
-    """
-    def __init__(self, engine):
-        # RhombusError refers to unhandled source layout, See issue 4778:
-        # https://support.astron.nl/lofar_issuetracker/issues/4778
-        if engine == "monetdb":
-            import monetdb.exceptions
-            self.exceptions = monetdb.exceptions
-            self.RhombusError = self.exceptions.OperationalError
-        elif engine == "postgresql":
-            import psycopg2
-            self.exceptions = psycopg2
-            self.RhombusError = self.exceptions.IntegrityError
-
-    def __getattr__(self, attrname):
-        obj = getattr(self.exceptions, attrname)
-        # Weed the cluttered psycopg2 namespace: only return things that
-        # really are valid database errors.
-        if isinstance(obj, type) and issubclass(obj, exceptions.StandardError):
-            return obj
-        else:
-            raise AttributeError(attrname)
 
 
 def sanitize_db_inputs(params):
@@ -78,9 +52,12 @@ class Database(object):
     """
     _connection = None
     _configured = False
+    transaction = None
+    cursor = None
 
     # this makes this class a singleton
     _instance = None
+
     def __new__(cls, *args, **kwargs):
         if not cls._instance:
             cls._instance = object.__new__(cls)
@@ -88,7 +65,8 @@ class Database(object):
 
     def __init__(self, **kwargs):
         if self._configured:
-            if kwargs: logger.warning("Not configuring pre-configured database")
+            if kwargs:
+                logger.warning("Not configuring pre-configured database")
             return
         elif not kwargs:
             kwargs = tkp.config.get_database_config()
@@ -105,63 +83,48 @@ class Database(object):
                                                            self.port,
                                                            self.database))
         self._configured = True
-        # Provide placeholders for engine-specific Exception classes
-        self.exceptions = DBExceptions(self.engine)
 
-    def connect(self):
+    def connect(self, check=False):
         """
         connect to the configured database
+
+        args:
+            check (bool): check if schema version is correct
         """
         logger.info("connecting to database...")
 
-        kwargs = {}
-        if self.user:
-            kwargs['user'] = self.user
-        if self.host:
-            kwargs['host'] = self.host
-        if self.database:
-            kwargs['database'] = self.database
-        if self.password:
-            kwargs['password'] = self.password
-        if self.port:
-            kwargs['port'] = int(self.port)
+        self.alchemy_engine = create_engine('%s://%s:%s@%s:%s/%s' %
+                                            (self.engine,
+                                             self.user,
+                                             self.password,
+                                             self.host,
+                                             self.port,
+                                             self.database),
+                                            echo=False
+                                            )
+        self.Session = sessionmaker(bind=self.alchemy_engine)
+        self._connection = self.alchemy_engine.connect()
+        self._connection.execution_options(autocommit=False)
 
-        # During pipeline operation, we force autocommit to off (which should
-        # be the default according to the DB-API specs). See #4885.
-        if self.engine == 'monetdb':
-            import monetdb.sql
-            kwargs['autocommit'] = False
-            self._connection = monetdb.sql.connect(**kwargs)
-        elif self.engine == 'postgresql':
-            import psycopg2
-            self._connection = psycopg2.connect(**kwargs)
-            self._connection.autocommit = False
-        else:
-            msg = "engine %s not supported " % self.engine
-            logger.error(msg)
-            raise NotImplementedError(msg)
+        if check:
+            # Check that our database revision matches that expected by the
+            # codebase.
+            q = "SELECT value FROM version WHERE name='revision'"
+            cursor = self.connection.execute(q)
+            schema_version = cursor.fetchone()[0]
+            if schema_version != DB_VERSION:
+                error = ("Database version incompatibility (needed %d, got %d)" %
+                         (DB_VERSION, schema_version))
+                logger.error(error)
+                self._connection.close()
+                self._connection = None
+                raise Exception(error)
 
-        # Check that our database revision matches that expected by the
-        # codebase.
-        cursor = self.connection.cursor()
-        cursor.execute("SELECT value FROM version WHERE name='revision'")
-        schema_version = cursor.fetchone()[0]
-        if schema_version != DB_VERSION:
-            error = ("Database version incompatibility (needed %d, got %d)" %
-                        (DB_VERSION, schema_version))
-            logger.error(error)
-            self._connection.close()
-            self._connection = None
-            raise Exception(error)
-
-        # I don't like this but it is used in some parts of TKP
-        self.cursor = self._connection.cursor()
-
-        logger.info("connected to: %s://%s@%s:%s/%s" % (self.engine,
-                                                           self.user,
-                                                           self.host,
-                                                           self.port,
-                                                           self.database))
+            logger.info("connected to: %s://%s@%s:%s/%s" % (self.engine,
+                                                            self.user,
+                                                            self.host,
+                                                            self.port,
+                                                            self.database))
 
     @property
     def connection(self):
@@ -175,8 +138,7 @@ class Database(object):
         if not self._connection:
             self.connect()
 
-        # I don't like this but it is used in some parts of TKP
-        self.cursor = self._connection.cursor()
+        self.cursor = self._connection.connection.cursor()
 
         return self._connection
 
@@ -207,8 +169,30 @@ class Database(object):
                                             ISOLATION_LEVEL_READ_COMMITTED)
 
         # disable autocommit since can't vacuum in transaction
-        self.connection.set_isolation_level(ISOLATION_LEVEL_AUTOCOMMIT)
-        cursor = self.connection.cursor()
+        self.connection.connection.set_isolation_level(ISOLATION_LEVEL_AUTOCOMMIT)
+        cursor = self.connection.connection.cursor()
         cursor.execute("VACUUM ANALYZE %s" % table)
         # reset settings
-        self.connection.set_isolation_level(ISOLATION_LEVEL_READ_COMMITTED)
+        self.connection.connection.set_isolation_level(ISOLATION_LEVEL_READ_COMMITTED)
+
+    def execute(self, query, parameters={}, commit=False):
+        if commit:
+           self.transaction = self.connection.begin()
+
+        try:
+            cursor = self.connection.execute(query, parameters)
+            if commit:
+                self.transaction.commit()
+            return cursor
+        except Exception as e:
+            logger.error("Query failed: %s. Query: %s." % (e, query % parameters))
+            raise
+
+    def rollback(self):
+        if self.transaction:
+            self.transaction.rollback()
+
+    def reconnect(self):
+        self._connection.close()
+        self.connect()
+

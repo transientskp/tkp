@@ -73,7 +73,7 @@ def isrejected(imageid):
     cursor = tkp.db.execute(query)
     results = cursor.fetchall()
     if len(results) > 0:
-        return ["%s: %s" % row for row in results]
+        return ["%s: %s" % tuple(row) for row in results]
     else:
         return False
 

@@ -12,7 +12,7 @@ import tkp.db
 logger = logging.getLogger(__name__)
 
 
-def initialize_pipeline_config(pipe_cfg_file, job_name):
+def initialize_pipeline_config(pipe_cfg_file, job_name=False):
     """
     Initializes the default variables and loads the ConfigParser file.
 
@@ -31,7 +31,7 @@ def initialize_pipeline_config(pipe_cfg_file, job_name):
     return parse_to_dict(config)
 
 
-def get_database_config(config_passed=None, apply=False):
+def get_database_config(pipeline_config=None, apply=None):
     """
     Determine database config and (optionally) use to set up the Database.
 
@@ -51,22 +51,31 @@ def get_database_config(config_passed=None, apply=False):
     - TKP_DBHOST
     - TKP_DBPORT
 
-    :param config_passed: Dict of db settings.
-        Relevant keys: (engine, database, user, password, host, port,
-        passphrase )
-    :param apply: apply settings (configure db connection) or not
-    :return: Dict containing the resulting combined settings
-        (resulting from defaults, ``config_passed`` and possibly environment
-        variables.)
+    args:
+        pipeline_config: Dict of db settings.
+            Relevant keys: (engine, database, user, password, host, port,
+            passphrase )
+        apply: apply settings (configure db connection) or not
+    returns:
+        dict: containing the resulting combined settings
+            (resulting from defaults, ``config_passed`` and possibly environment
+            variables.)
     """
+
+    user = getpass.getuser()
     # Default values
-    combined_config = {
-        'engine': None, 'database': None, 'user': getpass.getuser(),
-        'password': None, 'host': "localhost", 'port': None, 'passphrase': None
+    combined = {
+        'engine': None,
+        'database': user,
+        'user': None,
+        'password': None,
+        'host': "localhost",
+        'port': None,
+        'passphrase': None
     }
 
-    if config_passed:
-        combined_config.update(config_passed)
+    if pipeline_config:
+        combined.update(pipeline_config)
 
     # The environment variables take precedence
     for env_var, key in [
@@ -79,26 +88,33 @@ def get_database_config(config_passed=None, apply=False):
         ("TKP_DBPORT", "port")
     ]:
         if env_var in os.environ:
-            combined_config[key] = os.environ.get(env_var)
+            combined[key] = os.environ.get(env_var)
 
-    # If only the username is defined, use that as a
-    # default for the database name and password.
-    if combined_config['user'] and not combined_config['database']:
-        combined_config['database'] = combined_config['user']
-    if combined_config['user'] and not combined_config['password']:
-        combined_config['password'] = combined_config['user']
+    if not combined['engine']:
+        combined['engine'] = 'postgresql'
 
-    if not combined_config['port']:
-        if combined_config['engine'] == "monetdb":
-            combined_config['port'] = 50000
-        if combined_config['engine'] == "postgresql":
-            combined_config['port'] = 5432
+    if not combined['user']:
+        if combined['engine'] == 'monetdb':
+            combined['user'] = 'monetdb'
+        else:
+            combined['user'] = user
+
+    if not combined['password']:
+        combined['password'] = combined['user']
+
+    if not combined['port']:
+        if combined['engine'] == "monetdb":
+            combined['port'] = 50000
+        if combined['engine'] == "postgresql":
+            combined['port'] = 5432
     else:
         # Port is always an integer
-        combined_config['port'] = int(combined_config['port'])
+        combined['port'] = int(combined['port'])
+
+    if not combined['database']:
+        combined['database'] = combined['user']
 
     # Optionally, initiate a db connection with the settings determined
     if apply:
-        tkp.db.Database(**combined_config)
-        tkp.db.execute('select 1')
-    return combined_config
+        tkp.db.Database(**combined)
+    return combined

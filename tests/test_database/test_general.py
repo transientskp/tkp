@@ -10,7 +10,7 @@ from tkp.testutil.decorators import requires_database
 class TestProcessTime(unittest.TestCase):
     def test_set_process_timestamps(self):
         dataset = DataSet(data={'description': 'test dataset'})
-        time.sleep(1)
+        time.sleep(3)
         update_dataset_process_end_ts(dataset.id)
         start_time, end_time = db_query("""
             SELECT process_start_ts, process_end_ts

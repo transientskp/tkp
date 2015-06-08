@@ -232,27 +232,6 @@ def init_db(options):
     else:
         dbconfig = get_database_config(None, apply=False)
 
-    if 'engine' not in dbconfig or not dbconfig['engine']:
-        dbconfig['engine'] = 'postgresql'
-
-    if 'port' not in dbconfig or not dbconfig['port']:
-        if dbconfig['engine'] == 'monetdb':
-            dbconfig['port'] = 50000
-        else:
-            dbconfig['port'] = 5432
-
-    if 'database' not in dbconfig or not dbconfig['database']:
-        dbconfig['database'] = getpass.getuser()
-
-    if 'user' not in dbconfig or not dbconfig['user']:
-        dbconfig['user'] = dbconfig['database']
-
-    if 'password' not in dbconfig or not dbconfig['password']:
-        dbconfig['password'] = dbconfig['user']
-
-    if 'host' not in dbconfig or not dbconfig['host']:
-        dbconfig['host'] = 'localhost'
-
     dbconfig['yes'] = options.yes
     dbconfig['destroy'] = options.destroy
 

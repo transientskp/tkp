@@ -10,8 +10,11 @@ from tkp.config import parse_to_dict
 import pyfits
 from pyrap.tables import table as pyrap_table
 import tkp.accessors.detection
-from tkp.accessors import LofarFitsImage, LofarCasaImage
+from tkp.accessors import FitsImage, LofarFitsImage, LofarCasaImage
 
+import logging
+
+logger=logging.getLogger()
 
 type_mapping = {
     str: 'getString',
@@ -65,12 +68,15 @@ def modify_fits_headers(parset, fits_file, overwrite):
         if parset.has_key(parset_field):
             if (fits_field not in already_present) or overwrite:
                 value = parset[parset_field]
-                print "setting %s (%s) to %s" % (parset_field, fits_field, value)
-                header.update(fits_field, value)
+                logger.info("setting %s (%s) to %s" % (parset_field, fits_field, value))
+                header[fits_field]= value
+            else:
+                logger.debug("Skipping field '%s' (already present & overwrite "
+                             "flag not set)", parset_field)
     fits_file.flush()
     fits_file.close()
 
-def modify_casa_headers(parset, casa_file):
+def modify_lofarcasa_tau_time(parset, casa_file):
     table = pyrap_table(casa_file, ack=False)
     origin_location = table.getkeyword("ATTRGROUPS")['LOFAR_ORIGIN']
     origin_table = pyrap_table(origin_location, ack=False, readonly=False)
@@ -78,16 +84,18 @@ def modify_casa_headers(parset, casa_file):
     for parset_field, value in parset.items():
         if parset_field == 'tau_time':
             tau_time = value
-            print "setting tau_time to %s" % (tau_time)
+            logger.info("setting tau_time to %s" % (tau_time))
             starttime = origin_table.getcell('START', 0)
             entime = starttime + tau_time
             origin_table.putcell('END', 0, entime)
         else:
-            print "WARNING: this script does not support setting %s for a CASA table" % parset_field
+            raise ValueError("WARNING: this script does not support setting %s "
+                             "for a CASA table" % parset_field)
     origin_table.close()
     table.close()
 
 def main():
+    logging.basicConfig(level=logging.DEBUG)
     parset_file, target_files, overwrite = parse_arguments()
     c = SafeConfigParser()
     c.read(parset_file)
@@ -96,15 +104,15 @@ def main():
     for target_file in target_files:
         #Normally accessors.open checks this, but we're going straight 
         #to detect here because we don't want to actually open it:
-        if not os.path.isfile(target_file) or os.path.isdir(target_file):
-            print "File not found: %s (check path is correct?)" % target_file
+        if not (os.path.isfile(target_file) or os.path.isdir(target_file)):
+            logger.warn("File not found: %s (check path is correct?)"
+                        % target_file)
             continue
-        print "injecting data into %s" % target_file
+        logger.info("injecting data into %s" % target_file)
         accessor_class = tkp.accessors.detection.detect(target_file)
-
-        if accessor_class == LofarFitsImage:
+        if FitsImage in accessor_class.mro():
             modify_fits_headers(new_hdr_entries, target_file, overwrite)
         elif accessor_class == LofarCasaImage:
-            modify_casa_headers(new_hdr_entries, target_file)
+            modify_lofarcasa_tau_time(new_hdr_entries, target_file)
         else:
-            print "ERROR: %s is in a unknown format" % target_file
+            logger.error("ERROR: %s is in a unknown format" % target_file)

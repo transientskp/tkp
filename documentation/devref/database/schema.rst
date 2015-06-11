@@ -354,8 +354,14 @@ The TraP may add forced-fit entries to this table as well. Then
 
 **chisq, reduced_chisq**
     Goodness of fit metrics for fitted Gaussian profiles.
-    (NB. These are not yet implemented, but have been placed in the schema
-    in advance, to avoid extra database migrations.)
+
+    .. note::
+        These provide useful information for e.g.
+        machine-classification and filtering of transient candidates, but
+        strictly speaking are not statistically valid (we might rename
+        them in a future release to avoid confusion).
+        See :func:`tkp.sourcefinder.fitting.goodness_of_fit` for
+        details.
 
 **extract_type**
     Reports how the source was extracted by sourcefinder (:ref:`Spreeuw (2010)

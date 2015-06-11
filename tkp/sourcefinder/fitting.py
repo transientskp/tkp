@@ -6,6 +6,7 @@ import math
 import numpy
 import scipy.optimize
 from .gaussian import gaussian
+from .stats import indep_pixels
 import utils
 
 FIT_PARAMS = ('peak', 'xbar', 'ybar', 'semimajor', 'semiminor', 'theta')
@@ -219,3 +220,52 @@ def fitgaussian(pixels, params, fixed=None, maxfev=0):
     results['semiminor'] = abs(results['semiminor'])
 
     return results
+
+def goodness_of_fit(masked_residuals, noise, beam):
+    """
+    Calculates the goodness-of-fit values, `chisq` and `reduced_chisq`.
+
+    .. Warning::
+        We do not use the `standard chi-squared
+        formula <https://en.wikipedia.org/wiki/Goodness_of_fit#Regression_analysis>`_
+        for calculating these goodness-of-fit
+        values, and should probably rename them in the next release.
+        See below for details.
+
+
+    These goodness-of-fit values are related to, but not quite the same as
+    reduced chi-squared.
+    Strictly speaking the reduced chi-squared is statistically
+    invalid for a Gaussian model from the outset
+    (see `arxiv:1012.3754 <http://arxiv.org/abs/1012.3754>`_).
+    We attempt to provide a resolution-independent estimate of goodness-of-fit
+    ('reduced chi-squared'), by using the same 'independent pixels' correction
+    as employed when estimating RMS levels, to normalize the chi-squared value.
+    However, as applied to the standard formula this will sometimes
+    imply that we are fitting a fractional number of datapoints less than 1!
+    As a result, it doesn't really make sense to try and apply the
+    'degrees-of-freedom' correction, as this would likely result in a
+    negative ``reduced_chisq`` value.
+    (And besides, the 'degrees of freedom' concept is invalid for non-linear
+    models.) Finally, note that when called from
+    :func:`.source_profile_and_errors`, the noise-estimate at the peak-pixel
+    is supplied, so will typically over-estimate the noise and
+    hence under-estimate the chi-squared values.
+
+    Args:
+        masked_residuals(numpy.ma.MaskedArray): The pixel-residuals from the fit
+        noise (float): An estimate of the noise level. Could also be set to
+            a masked numpy array matching the data, for per-pixel noise
+            estimates.
+        beam (tuple): Beam parameters
+
+    Returns:
+        tuple: chisq, reduced_chisq
+
+    """
+    gauss_resid_normed = (masked_residuals / noise).compressed()
+    chisq = numpy.sum(gauss_resid_normed*gauss_resid_normed)
+    n_fitted_pix = len(masked_residuals.compressed().ravel())
+    n_indep_pix = indep_pixels(n_fitted_pix, beam)
+    reduced_chisq = chisq / n_indep_pix
+    return chisq, reduced_chisq

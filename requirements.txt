@@ -5,6 +5,7 @@ python-dateutil>=1.4.1
 pytz
 pywcs
 #pyrap>=1.1.0  # not available on pip
+repoze.lru
 
 ## If you require distributed processing:
 #celery>=3.1.11

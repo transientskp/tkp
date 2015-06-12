@@ -7,6 +7,8 @@ import math
 import scipy.integrate
 from tkp.sourcefinder.gaussian import gaussian
 from tkp.utility import coordinates
+from repoze.lru import lru_cache
+
 
 def generate_subthresholds(min_value, max_value, num_thresholds):
     """
@@ -137,7 +139,7 @@ def calculate_beamsize(semimajor, semiminor):
 
     return numpy.pi * semimajor * semiminor
 
-
+@lru_cache(maxsize=100)
 def fudge_max_pix(semimajor, semiminor, theta):
     """Estimate peak flux correction at pixel of maximum flux
 
@@ -174,7 +176,7 @@ def fudge_max_pix(semimajor, semiminor, theta):
 
     return correction
 
-
+@lru_cache(maxsize=100)
 def maximum_pixel_method_variance(semimajor, semiminor, theta):
     """Estimate variance for peak flux at pixel position of maximum
 

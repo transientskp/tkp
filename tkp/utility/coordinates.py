@@ -11,8 +11,8 @@ import logging
 import datetime
 import pytz
 
-from pyrap.measures import measures
-from pyrap.quanta import quantity
+from casacore.measures import measures
+from casacore.quanta import quantity
 
 logger = logging.getLogger(__name__)
 
@@ -59,7 +59,7 @@ def mjd2datetime(mjd):
     """
     Convert a Modified Julian Date to datetime via 'unix time' representation.
 
-    NB 'unix time' is defined by the casacore/pyrap package.
+    NB 'unix time' is defined by the casacore/casacore package.
     """
     q = quantity("%sd" % mjd)
     return datetime.datetime.fromtimestamp(q.to_unix_time())
@@ -72,7 +72,7 @@ def mjd2lst(mjd, position=None):
     reference position of CS002.
 
     mjd -- Modified Julian Date (float, in days)
-    position -- Position (pyrap measure)
+    position -- Position (casacore measure)
     """
     dm = measures()
     position = position or dm.position(
@@ -90,7 +90,7 @@ def mjds2lst(mjds, position=None):
 
     Args:
         mjds (float):Modified Julian Date (in seconds)
-        position (pyrap measure): Position for LST calcs
+        position (casacore measure): Position for LST calcs
     """
     return mjd2lst(mjds/SECONDS_IN_DAY, position)
 
@@ -103,7 +103,7 @@ def jd2lst(jd, position=None):
 
     Args:
         jd (float): Julian Date
-        position (pyrap measure): Position for LST calcs.
+        position (casacore measure): Position for LST calcs.
     """
     return mjd2lst(jd - 2400000.5, position)
 

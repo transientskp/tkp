@@ -1,6 +1,5 @@
-import os
 from math import degrees
-from pyrap.measures import measures
+from casacore.measures import measures
 
 import unittest
 import datetime

@@ -5,7 +5,7 @@ Test functions used for manipulating coordinates in the TKP pipeline.
 import pytz
 
 import unittest
-from pyrap.measures import measures
+from casacore.measures import measures
 
 import datetime
 from tkp.utility import coordinates

@@ -84,8 +84,8 @@ In addition to the above, to run the TraP you will need:
 
 * `SciPy <http://www.scipy.org/>`_ (at least version 0.7.0)
 * `python-dateutil <http://labix.org/python-dateutil>`_ (at least version 1.4.1)
-* `pyrap <https://code.google.com/p/pyrap/>`_ and
-  `casacore <https://code.google.com/p/casacore/>`_ (including measures data)
+* `python-casacore <https://github.com/casacore/python-casacore/>`_ and
+  `casacore <https://github.com/casacore/casacore/>`_ (including measures data)
 
 To work with the pipeline database, you will need at least one of:
 
@@ -100,10 +100,11 @@ Most of these dependencies should be easily satisfied by operating
 system-level package management or through the `Python Package Index
 <https://pypi.python.org/pypi>`_, and we strongly suggest you take advantage
 of that convenience rather than building everything from source. The most
-notable exceptions are pyrap and casacore: these are not commonly packaged in
-mainstream distributions. They can be compiled from source, or users of
-Ubuntu-based distributions might find the `SKA South Africa Launchpad page
-<https://launchpad.net/~ska-sa>`_ useful.
+notable exceptions are is casacore: this are not commonly packaged in
+mainstream distributions. Casacore can be compiled from source, or users of
+Ubuntu-based distributions might find the `Radio Astronomy Ubuntu Personal
+Packaging Archive
+<https://launchpad.net/~radio-astro/+archive/ubuntu/main>`_ useful.
 
 .. warning::
 

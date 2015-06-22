@@ -1,6 +1,6 @@
 import logging
 import warnings
-from pyrap.tables import table as pyrap_table
+from casacore.tables import table as casacore_table
 from math import degrees
 from tkp.accessors.dataaccessor import DataAccessor
 from tkp.utility.coordinates import WCS
@@ -22,7 +22,7 @@ class CasaImage(DataAccessor):
     def __init__(self, url, plane=0, beam=None):
         super(CasaImage, self).__init__()
         self.url = url
-        self.table = pyrap_table(self.url.encode(), ack=False)
+        self.table = casacore_table(self.url.encode(), ack=False)
         self.data = self.parse_data(plane)
         self.wcs = self.parse_coordinates()
         self.centre_ra, self.centre_decl = self.parse_phase_centre()
@@ -130,7 +130,7 @@ class CasaImage(DataAccessor):
         Find all the unique values in a particular column of a CASA table.
 
         Arguments:
-          - table:       ``pyrap.tables.table``
+          - table:       ``casacore.tables.table``
           - column_name: ``str``
 
         Returns:

@@ -8,7 +8,7 @@ import logging
 import warnings
 import numpy
 import datetime
-from pyrap.tables import table as pyrap_table
+from casacore.tables import table as casacore_table
 from tkp.accessors.casaimage import CasaImage
 from tkp.accessors.lofaraccessor import LofarAccessor
 from tkp.utility.coordinates import julian2unix
@@ -29,7 +29,7 @@ subtable_names = (
 
 class LofarCasaImage(CasaImage, LofarAccessor):
     """
-    Use pyrap to pull image data out of an Casa table.
+    Use casacore to pull image data out of an Casa table.
 
     This accessor assumes the casatable contains the values described in the
     CASA Image description for LOFAR. 0.03.00.
@@ -58,14 +58,14 @@ class LofarCasaImage(CasaImage, LofarAccessor):
     def open_subtables(self):
         """open all subtables defined in the LOFAR format
         args:
-            table: a pyrap table handler to a LOFAR CASA table
+            table: a casacore table handler to a LOFAR CASA table
         returns:
             a dict containing all LOFAR CASA subtables
         """
         subtables = {}
         for subtable in subtable_names:
             subtable_location = self.table.getkeyword("ATTRGROUPS")[subtable]
-            subtables[subtable] = pyrap_table(subtable_location, ack=False)
+            subtables[subtable] = casacore_table(subtable_location, ack=False)
         return subtables
 
 

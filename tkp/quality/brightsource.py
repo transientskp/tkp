@@ -1,9 +1,9 @@
 import sys
 import logging
 import warnings
-import pyrap.quanta as qa
+import casacore.quanta as qa
 from io import BytesIO
-from pyrap.measures import measures
+from casacore.measures import measures
 from tkp.utility.coordinates import unix2julian
 from tkp.utility.redirect_stream import redirect_stream
 
@@ -25,15 +25,15 @@ def check_for_valid_ephemeris(measures):
     ``measures`` should already have a valid reference frame.
     """
     # Note that we need to catch and parse the standard error produced by
-    # pyrap: there doesn't seem to be any other way of figuring this out.
-    pyrap_stderr = BytesIO()
-    with redirect_stream(sys.__stderr__, pyrap_stderr):
+    # casacore: there doesn't seem to be any other way of figuring this out.
+    casacore_stderr = BytesIO()
+    with redirect_stream(sys.__stderr__, casacore_stderr):
         # We assume the ephemeris is valid if it has position of the sun.
         measures.separation(
             measures.direction("SUN"), measures.direction("SUN")
         )
-    if "WARN" in pyrap_stderr.getvalue():
-        # pyrap sends a warning to stderr if the ephemeris is invalid
+    if "WARN" in casacore_stderr.getvalue():
+        # casacore sends a warning to stderr if the ephemeris is invalid
         return False
     else:
         return True
@@ -50,7 +50,7 @@ def is_bright_source_near(accessor, distance=20):
     """
 
     #TODO: this function should be split up and tested more atomically
-    # The measures object is our interface to pyrap
+    # The measures object is our interface to casacore
     m = measures()
 
     # First, you need to set the reference frame -- ie, the time

@@ -199,6 +199,7 @@ def insert_extracted_sources(image_id, results, extract_type,
     (12) ew_sys_err [arcsec], (13) ns_sys_err [arcsec],
     (14) error_radius [arcsec]
     (15) gaussian fit (bool)
+    (16), (17) chisq, reduced_chisq (float)
 
     ra_fit_err and decl_fit_err are the 1-sigma errors from the gaussian fit,
     in degrees. Note that for a source located towards the poles the ra_fit_err
@@ -315,6 +316,8 @@ INSERT INTO extractedsource
   ,ns_sys_err
   ,error_radius
   ,fit_type
+  ,chisq
+  ,reduced_chisq
   ,ra_err
   ,decl_err
   ,uncertainty_ew

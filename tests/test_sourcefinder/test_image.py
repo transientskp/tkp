@@ -219,6 +219,8 @@ class TestSimpleImageSourceFind(unittest.TestCase):
             ew_sys_err, ns_sys_err,
             5.181697175052841,  # error_radius
             1,  # fit_type
+            0.59184643302, #chisq
+            0.67199741142, #reduced chisq
         )
         self.image = accessors.sourcefinder_image_from_accessor(
             accessors.FitsImage(GRB120422A))

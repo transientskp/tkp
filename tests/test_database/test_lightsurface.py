@@ -39,9 +39,7 @@ class TestLightSurface(unittest.TestCase):
                 'decl': 11.11 + i,
                 'ra_fit_err': 0.01,
                 'decl_fit_err': 0.01,
-                'ew_sys_err': 20,
-                'ns_sys_err': 20,
-                'i_peak': 10*i,
+                'i_peak': 10.*i,
                 'i_peak_err': 0.1,
                 'error_radius': 10.0,
                 'fit_type': 1,
@@ -53,14 +51,16 @@ class TestLightSurface(unittest.TestCase):
             # Create the "source finding results"
             sources = []
             for data in data_list:
-                source = (data['ra'], data['decl'],
-                          data['ra_fit_err'], data['decl_fit_err'],
-                          data['i_peak']*(1+i), data['i_peak_err'],
-                          data['i_peak']*(1+i), data['i_peak_err'],
-                          10., # Significance level
-                          1, 1, 0, # Beam params (width arcsec major, width arcsec minor, parallactic angle)
-                          data['ew_sys_err'], data['ns_sys_err'], # Systematic errors
-                          data['error_radius'], data['fit_type'])
+                source = db_subs.example_extractedsource_tuple(
+                        ra=data['ra'], dec=data['decl'],
+                        ra_fit_err=data['ra_fit_err'],
+                        dec_fit_err= data['decl_fit_err'],
+                        peak = data['i_peak']*(1+i),
+                        peak_err = data['i_peak_err'],
+                        flux = data['i_peak']*(1+i),
+                        flux_err = data['i_peak_err'],
+                        fit_type=data['fit_type']
+                        )
                 sources.append(source)
 
             # Insert the sources

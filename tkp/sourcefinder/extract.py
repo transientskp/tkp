@@ -21,6 +21,7 @@ from .gaussian import gaussian
 from . import fitting
 from . import utils
 
+
 logger = logging.getLogger(__name__)
 
 # This is used as a dummy value, -BIGNUM values will be always be masked.
@@ -264,6 +265,10 @@ class ParamSet(DictMixin):
         # and/or Gaussian fitting succeeds.
         self.moments = False
         self.gaussian = False
+
+        ##More metadata about the fit: only valid for Gaussian fits:
+        self.chisq = None
+        self.reduced_chisq = None
 
     def __getitem__(self, item):
         return self.values[item]
@@ -598,13 +603,18 @@ class ParamSet(DictMixin):
         return self
 
 
-def source_profile_and_errors(data, threshold, noise, beam, fixed=None, residuals=True):
+def source_profile_and_errors(data, threshold, noise,
+                              beam, fixed=None):
     """Return a number of measurable properties with errorbars
 
     Given an island of pixels it will return a number of measurable
     properties including errorbars.  It will also compute residuals
-    from Gauss fitting and export these to a residual map.  And it
-    will make a map of the decomposed sources.
+    from Gauss fitting and export these to a residual map.
+
+    In addition to handling the initial parameter estimation, and any fits
+    which fail to converge, this function runs the goodness-of-fit
+    calculations -
+    see :func:`tkp.sourcefinder.fitting.goodness_of_fit` for details.
 
     Args:
 
@@ -619,16 +629,18 @@ def source_profile_and_errors(data, threshold, noise, beam, fixed=None, residual
 
         noise (float): Noise level in data
 
-        beam (3-tuple of float): beam parameters
+        beam (tuple): beam parameters (semimaj,semimin,theta)
 
     Kwargs:
 
-        fixed (dict): parameters to keep fixed while fitting. passed
-            on to fitting.fitgaussian(): this will lock fit to only
-            occur at that pixel coordinate.
+        fixed (dict): Parameters (and their values) to hold fixed while fitting.
+            Passed on to fitting.fitgaussian().
 
     Returns:
-        tuple: a populated ParamSet, and a residual array.
+        tuple: a populated ParamSet, and a residuals map.
+            Note the residuals map is a regular ndarray, where masked (unfitted)
+            regions have been filled with 0-values.
+
     """
 
     if fixed is None:
@@ -671,7 +683,8 @@ def source_profile_and_errors(data, threshold, noise, beam, fixed=None, residual
         # Now we can do Gauss fitting if the island or subisland has a
         # thickness of more than 2 in both dimensions.
         try:
-            param.update(fitting.fitgaussian(data, param, fixed=fixed))
+            gaussian_soln = fitting.fitgaussian(data, param, fixed=fixed)
+            param.update(gaussian_soln)
             param.gaussian = True
             logger.debug('Gauss fitting was successful.')
         except ValueError:
@@ -686,19 +699,23 @@ def source_profile_and_errors(data, threshold, noise, beam, fixed=None, residual
                      param["semiminor"] / beamsize)
     param.calculate_errors(noise, beam, threshold)
     param.deconvolve_from_clean_beam(beam)
-    if residuals:
-        gauss_arg = (param["peak"].value,
-                     param["xbar"].value,
-                     param["ybar"].value,
-                     param["semimajor"].value,
-                     param["semiminor"].value,
-                     param["theta"].value)
-        gauss_resid = -(gaussian(*gauss_arg)(
-            *numpy.indices(data.shape)) - data).filled(fill_value=0.)
-    else:
-        gauss_resid = None
 
-    return param, gauss_resid
+    # Calculate residuals
+    # NB this works even if Gaussian fitting fails, we generate the model from
+    # the moments-fit parameters.
+    gauss_arg = (param["peak"].value,
+                 param["xbar"].value,
+                 param["ybar"].value,
+                 param["semimajor"].value,
+                 param["semiminor"].value,
+                 param["theta"].value)
+    gauss_resid_masked = -(gaussian(*gauss_arg)(*numpy.indices(data.shape)) - data)
+
+    param.chisq, param.reduced_chisq = fitting.goodness_of_fit(
+        gauss_resid_masked, noise, beam)
+
+    gauss_resid_filled = gauss_resid_masked.filled(fill_value=0.)
+    return param, gauss_resid_filled
 
 
 class Detection(object):
@@ -728,6 +745,8 @@ class Detection(object):
         self.theta_dc = paramset['theta_deconv']
         self.error_radius = None
         self.gaussian = paramset.gaussian
+        self.chisq = paramset.chisq
+        self.reduced_chisq = paramset.reduced_chisq
 
         self.sig = paramset.sig
 
@@ -989,5 +1008,7 @@ class Detection(object):
             ew_sys_err,
             ns_sys_err,
             self.error_radius,
-            self.gaussian
+            self.gaussian,
+            self.chisq,
+            self.reduced_chisq
         ]

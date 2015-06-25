@@ -848,6 +848,19 @@ UPDATE temprunningcatalog
                   AND t2.xtrsrc = temprunningcatalog.xtrsrc
               )
 """
+
+    database = tkp.db.Database()
+    if database.engine == "postgresql":
+        from psycopg2.extensions import (ISOLATION_LEVEL_AUTOCOMMIT,
+                                            ISOLATION_LEVEL_READ_COMMITTED)
+        # disable autocommit since can't vacuum in transaction
+        connection = database.connection
+        connection.set_isolation_level(ISOLATION_LEVEL_AUTOCOMMIT)
+        cursor = connection.cursor()
+        cursor.execute("VACUUM ANALYZE temprunningcatalog")
+        # reset settings
+        connection.set_isolation_level(ISOLATION_LEVEL_READ_COMMITTED)
+
     tkp.db.execute(query, commit=True)
 
 

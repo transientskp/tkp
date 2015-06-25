@@ -33,12 +33,12 @@ The parameters in this file are defined as follows:
    This value is only used if a new dataset is constructed (see
    ``dataset_id``, below).
 
-``sigma``
+``rms_est_sigma``
    Float. Sigma value used for iterative clipping.
 
-``f``
+``rms_est_fraction``
    Integer. Determines the size of the subsection used for RMS measurement:
-   the central ``1/f`` of the image will be used.
+   the central ``1/f`` of the image will be used (where f=rms_est_fraction).
 
 .. _job_params_quality:
 

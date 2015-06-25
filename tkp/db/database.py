@@ -163,7 +163,6 @@ class Database(object):
                                                            self.port,
                                                            self.database))
 
-
     @property
     def connection(self):
         """
@@ -188,3 +187,28 @@ class Database(object):
         if self._connection:
             self._connection.close()
         self._connection = None
+
+    def vacuum(self, table):
+        """
+        Force a vacuum on a table, which removes dead rows. (Postgres only)
+
+        Normally the auto vacuum process does this for you, but in some cases
+        (for example when the table receives many insert and deletes)  manual
+        vacuuming is necessary for performance reasons.
+
+        args:
+            table: name of the table in the database you want to vacuum
+        """
+
+        if self.engine != "postgresql":
+            return
+
+        from psycopg2.extensions import (ISOLATION_LEVEL_AUTOCOMMIT,
+                                            ISOLATION_LEVEL_READ_COMMITTED)
+
+        # disable autocommit since can't vacuum in transaction
+        self.connection.set_isolation_level(ISOLATION_LEVEL_AUTOCOMMIT)
+        cursor = self.connection.cursor()
+        cursor.execute("VACUUM ANALYZE %s" % table)
+        # reset settings
+        self.connection.set_isolation_level(ISOLATION_LEVEL_READ_COMMITTED)

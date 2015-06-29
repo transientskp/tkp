@@ -4,6 +4,7 @@ import numpy
 import tkp.config
 from tkp.utility import substitute_inf
 from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker
 
 
 logger = logging.getLogger(__name__)
@@ -56,6 +57,7 @@ class Database(object):
 
     # this makes this class a singleton
     _instance = None
+
     def __new__(cls, *args, **kwargs):
         if not cls._instance:
             cls._instance = object.__new__(cls)
@@ -63,7 +65,8 @@ class Database(object):
 
     def __init__(self, **kwargs):
         if self._configured:
-            if kwargs: logger.warning("Not configuring pre-configured database")
+            if kwargs:
+                logger.warning("Not configuring pre-configured database")
             return
         elif not kwargs:
             kwargs = tkp.config.get_database_config()
@@ -97,9 +100,9 @@ class Database(object):
                                              self.host,
                                              self.port,
                                              self.database),
-                                            echo=True
+                                            echo=False
                                             )
-
+        self.Session = sessionmaker(bind=self.alchemy_engine)
         self._connection = self.alchemy_engine.connect()
         self._connection.execution_options(autocommit=False)
 
@@ -122,7 +125,6 @@ class Database(object):
                                                             self.host,
                                                             self.port,
                                                             self.database))
-
 
     @property
     def connection(self):

@@ -6,5 +6,8 @@ CALL BuildFrequencyBands();
 SELECT BuildFrequencyBands();
 {% endifdb %}
 
+
+
+
 --CALL BuildNodes(-90,90, FALSE);
 

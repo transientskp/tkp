@@ -4,6 +4,8 @@ pyfits>=2.3.1
 python-dateutil>=1.4.1
 pytz
 pywcs
+sqlalchemy>=1.0.0
+
 #pyrap>=1.1.0  # not available on pip
 
 ## If you require distributed processing:
@@ -16,4 +18,5 @@ pymongo
 psycopg2
 
 ## if you want to use the monetdb storage backend
-#python-monetdb>=11.11.11
+#pymonetdb>=0.1
+#sqlalchemy_monetdb>=0.9.1

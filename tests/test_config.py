@@ -119,8 +119,8 @@ class DatabaseConfigTestCase(unittest.TestCase):
         db_config = get_database_config()
         self.assertEqual(db_config['engine'], "monetdb")
         self.assertEqual(db_config['database'], username)
-        self.assertEqual(db_config['user'], username)
-        self.assertEqual(db_config['password'], username)
+        self.assertEqual(db_config['user'], "monetdb")
+        self.assertEqual(db_config['password'], "monetdb")
         self.assertEqual(db_config['host'], "localhost")
         self.assertEqual(db_config['port'], 50000)
 

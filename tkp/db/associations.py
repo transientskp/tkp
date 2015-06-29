@@ -4,6 +4,7 @@ deal with source association.
 """
 import logging
 import tkp.db
+from sqlalchemy.exc import IntegrityError
 
 
 logger = logging.getLogger(__name__)
@@ -50,9 +51,9 @@ def associate_extracted_sources(image_id, deRuiter_r, new_source_sigma_margin):
     #+------------------------------------------------------+
     try:
         _insert_1_to_many_runcat()
-    except tkp.db.Database().exceptions.RhombusError as e:
+    except IntegrityError as e:
         logger.error("Error caught around _insert_1_to_many_runcat - "
-                 "possible 'RhombusError'. See Issue #4778. Will now re-raise.")
+                 "possible 'IntegrityError'. See Issue #4778. Will now re-raise.")
         raise e
 
     _flag_1_to_many_inactive_runcat()

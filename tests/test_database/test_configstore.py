@@ -3,6 +3,7 @@ from tkp.db.configstore import store_config, fetch_config
 from tkp.db import rollback, execute, Database
 from tkp.db.general import insert_dataset
 from tkp.testutil.decorators import requires_database
+from sqlalchemy.exc import IntegrityError
 
 
 config = {'section1': {'key1': 'value1', 'key2': 2},
@@ -62,9 +63,5 @@ class TestConfigStore(unittest.TestCase):
         """
         store_config(config, self.dataset_id)
         database = Database()
-        if database.engine == "monetdb":
-            # monetdb raises an OperationalError here, postgres (and probably others IntegrityError)
-            exception = database.connection.OperationalError
-        else:
-            exception = database.connection.IntegrityError
-        self.assertRaises(exception, store_config, config, self.dataset_id)
+        with self.assertRaises(IntegrityError):
+            store_config(config, self.dataset_id)

@@ -1,6 +1,7 @@
 import unittest
 from tkp.db.orm import DataSet, Image
 import tkp.db
+import tkp.db.database
 from tkp.testutil.decorators import requires_database
 from tkp.testutil import db_subs
 from tkp.db.generic import columns_from_table
@@ -12,8 +13,10 @@ new_source_sigma_margin = 3
 class TestSourceAssociation(unittest.TestCase):
     @requires_database()
     def setUp(self):
+        self.database = tkp.db.database.Database()
         self.dataset = DataSet(data={'description': "Src. assoc:" +
-                                                    self._testMethodName})
+                                                    self._testMethodName},
+                               database=self.database)
 
         self.im_params = db_subs.generate_timespaced_dbimages_data(n_images=8)
         self.db_imgs=[]

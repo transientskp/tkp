@@ -4,6 +4,8 @@ from io import BytesIO
 
 import unittest
 
+from sqlalchemy.exc import IntegrityError
+
 import tkp.db
 import tkp.db.general as dbgen
 from tkp.db.orm import DataSet
@@ -12,6 +14,7 @@ from tkp.db.associations import associate_extracted_sources
 from tkp.db.generic import columns_from_table, get_db_rows_as_dicts
 from tkp.testutil import db_subs
 from tkp.testutil.decorators import requires_database
+
 
 # Use a default argument value for convenience
 from functools import partial
@@ -1337,8 +1340,8 @@ class TestMany2Many(unittest.TestCase):
         hdlr = logging.StreamHandler(iostream)
         logging.getLogger().addHandler(hdlr)
 
-        # Raises an error, exact type depends on database engine in use:
-        with self.assertRaises(tkp.db.Database().exceptions.RhombusError):
+        # Raises an error
+        with self.assertRaises(IntegrityError):
             runcat, extracted = self.insert_many_to_many_sources(dataset,
                                              self.im_params,
                                              self.base_srcs, image2_srcs,
@@ -1346,4 +1349,4 @@ class TestMany2Many(unittest.TestCase):
         logging.getLogger().removeHandler(hdlr)
 
         # We want to be sure that the error has been appropriately logged.
-        self.assertIn("RhombusError", iostream.getvalue())
+        self.assertIn(IntegrityError.__name__, iostream.getvalue())

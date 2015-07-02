@@ -47,10 +47,11 @@ class TestRms(unittest.TestCase):
         nintl = 0
         configuration = "LBA_INNER"
 
-        self.assertEqual(
+        self.assertAlmostEqual(
             lofar.noise.noise_level(frequency, bandwidth, integration_time,
                                     configuration, ncore, nremote, nintl),
-            0.01590154516819521 # with a calculator!
+            0.01590154516819521 ,# with a calculator!
+            places=7
         )
 
     def test_rms_too_low(self):

@@ -3,7 +3,7 @@ scipy>=0.7.0
 pyfits>=2.3.1
 python-dateutil>=1.4.1
 pytz
-pywcs
+pywcs>=1.12
 python-casacore
 
 ## If you require distributed processing:

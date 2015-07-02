@@ -2,9 +2,9 @@ import os
 import math
 import shutil
 
-import pyrap
-import pyrap.images
-import pyrap.tables
+import casacore
+import casacore.images
+import casacore.tables
 import pyfits
 
 import datetime
@@ -42,9 +42,9 @@ def convert(casa_image, ms, fits_filename=None):
     """Convert a CASA image to FITS, taking care of header keywords
 
     :argument casa_image: CASA image
-    :type casa_image: pyrap.images.image
+    :type casa_image: casacore.images.image
     :argument ms: CASA measurement set
-    :type ms: pyrap.tables.table
+    :type ms: casacore.tables.table
 
     :keyword fits_filename: FITS output filename
     :type fits_filename: str
@@ -62,21 +62,21 @@ def convert(casa_image, ms, fits_filename=None):
     # but I'm not sure how correct the coordinate conversion
     # would be.
     # Currently using the easy way
-    image = pyrap.images.image(casa_image)
+    image = casacore.images.image(casa_image)
     image.tofits(fits_filename)
     hdulist = pyfits.open(fits_filename, mode='update')
     header = hdulist[0].header
     # Obtain header info from original MS
-    t0 = pyrap.tables.table(ms, ack=False)
+    t0 = casacore.tables.table(ms, ack=False)
     header.update('OBS-ID', t0.getcol('OBSERVATION_ID')[0])
 
-    t = pyrap.tables.table(t0.getkeyword('SPECTRAL_WINDOW'), ack=False)
+    t = casacore.tables.table(t0.getkeyword('SPECTRAL_WINDOW'), ack=False)
     header.update('SUBBAND', t.getcol('NAME')[0])
     header.update('REFFREQ', t.getcol('REF_FREQUENCY')[0])
     header.update('BANDWIDT', t.getcol('TOTAL_BANDWIDTH')[0])
     header.update('FREQUNIT', 'MHz')
 
-    t = pyrap.tables.table(t0.getkeyword('FIELD'), ack=False)
+    t = casacore.tables.table(t0.getkeyword('FIELD'), ack=False)
     phasedir = t.getcol('PHASE_DIR')
     phase_ra = phasedir[0][0][0] * 180 / math.pi
     if phase_ra < 0:
@@ -103,7 +103,7 @@ def convert(casa_image, ms, fits_filename=None):
     header.update('MID_UTC', mid_time.strftime("%Y-%m-%dT%H:%M:%S"),
                   "Mid time of observation")
 
-    t = pyrap.tables.table(t0.getkeyword('OBSERVATION'), ack=False)
+    t = casacore.tables.table(t0.getkeyword('OBSERVATION'), ack=False)
     header.update('OBSERVER', t.getcol('OBSERVER')[0])
     header.update('TELESCOP', t.getcol('TELESCOPE_NAME')[0])
 

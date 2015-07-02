@@ -2,15 +2,14 @@
 This module implements the CASA kat7 data container format.
 """
 import logging
-from pyrap.tables import table as pyrap_table
 from tkp.accessors.casaimage import CasaImage
-from tkp.utility.coordinates import mjd2datetime
+
 
 logger = logging.getLogger(__name__)
 
 class AmiCasaImage(CasaImage):
     """
-    Use pyrap to pull image data out of a CASA table as produced by AMI-LA.
+    Use casacore to pull image data out of a CASA table as produced by AMI-LA.
 
     Note that AMI-LA does not currently include image duration in its headers,
     so we use a placeholder value of 1.
@@ -28,4 +27,4 @@ class AmiCasaImage(CasaImage):
     def __init__(self, url, plane=0, beam=None):
         super(AmiCasaImage, self).__init__(url, plane, beam)
         self.taustart_ts = self.parse_taustartts()
-        self.tau_time = 1 # Placeholder value until properly implemented
+        self.tau_time = 1  # Placeholder value until properly implemented

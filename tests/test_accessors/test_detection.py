@@ -39,7 +39,7 @@ class TestAutodetect(unittest.TestCase):
 
     @requires_data(hdf5file)
     def test_ishdf5(self):
-        # TODO: disable this for now, since pyrap can't parse LOFAR hdf5
+        # TODO: disable this for now, since casacore can't parse LOFAR hdf5
         #self.assertTrue(islofarhdf5(hdf5file))
         self.assertFalse(isfits(hdf5file))
         self.assertFalse(iscasa(hdf5file))

@@ -19,7 +19,7 @@ your observation. A simple Python script can be used to check::
 
   $ cat check_ephemeris.py
   import sys
-  from  pyrap.measures import measures
+  from casacore.measures import measures
   dm = measures()
   dm.do_frame(dm.epoch('UTC', sys.argv[1]))
   dm.separation(dm.direction('SUN'), dm.direction('SUN'))

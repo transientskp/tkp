@@ -35,8 +35,8 @@ MOCK_MODULES = [#'numpy', 'numpy.ma',
                 #'scipy', 'scipy.integrate', 'scipy.optimize',
                 #'scipy.special', 'scipy.constants','scipy.interpolate',
                 'pyfits', 'pywcs',
-                'pyrap', 'pyrap.measures', 'pyrap.tables','pyrap.images',
-                'pyrap.quanta',
+                'casacore', 'casacore.measures', 'casacore.tables','casacore.images',
+                'casacore.quanta',
                 ]
 sys.modules.update((mod_name, Mock()) for mod_name in MOCK_MODULES)
 
@@ -286,13 +286,13 @@ nitpick_ignore = [
     ("py:obj", "dict/list/tuple"),
     ("py:obj", "3-tuple of float"),
     ("py:obj", "3-tuple"),
-    ("py:obj", "pyrap.images.image"),
-    ("py:obj", "pyrap.tables.table"),
+    ("py:obj", "casacore.images.image"),
+    ("py:obj", "casacore.tables.table"),
     ("py:obj", "list of (RA, Dec) tuples"),
     ("py:obj", "list of tuples"),
     ("py:obj", "ExtractedSourceTuple"),
     ("py:obj", "list of MockSource"),
-    ("py:obj", "pyrap measure"),
+    ("py:obj", "casacore measure"),
     ("py:obj", "lambda"),
     # These result from incorrect docstrings, should really be fixed
     # but we'll just suppress the errors for now.

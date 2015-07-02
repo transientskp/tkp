@@ -7,7 +7,7 @@ import logging
 import warnings
 from tempfile import NamedTemporaryFile
 
-from pyrap.images import image as pyrap_image
+from casacore.images import image as casacore_image
 
 import tkp.accessors
 from tkp.db.database import Database
@@ -40,7 +40,7 @@ def image_to_mongodb(filename, hostname, port, db):
             # is in FITS or CASA format.
             # temp_fits_file is removed automatically when closed.
             temp_fits_file = NamedTemporaryFile()
-            i = pyrap_image(filename)
+            i = casacore_image(filename)
             i.tofits(temp_fits_file.name)
             new_file = gfs.new_file(filename=filename)
             with open(temp_fits_file.name, "r") as f:

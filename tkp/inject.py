@@ -8,13 +8,13 @@ import argparse
 from ConfigParser import SafeConfigParser
 from tkp.config import parse_to_dict
 import pyfits
-from pyrap.tables import table as pyrap_table
+from casacore.tables import table as casacore_table
 import tkp.accessors.detection
-from tkp.accessors import FitsImage, LofarFitsImage, LofarCasaImage
+from tkp.accessors import FitsImage, LofarCasaImage
 
 import logging
 
-logger=logging.getLogger()
+logger = logging.getLogger()
 
 type_mapping = {
     str: 'getString',
@@ -77,9 +77,9 @@ def modify_fits_headers(parset, fits_file, overwrite):
     fits_file.close()
 
 def modify_lofarcasa_tau_time(parset, casa_file):
-    table = pyrap_table(casa_file, ack=False)
+    table = casacore_table(casa_file, ack=False)
     origin_location = table.getkeyword("ATTRGROUPS")['LOFAR_ORIGIN']
-    origin_table = pyrap_table(origin_location, ack=False, readonly=False)
+    origin_table = casacore_table(origin_location, ack=False, readonly=False)
 
     for parset_field, value in parset.items():
         if parset_field == 'tau_time':

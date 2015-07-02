@@ -2,7 +2,7 @@
 This module implements the CASA kat7 data container format.
 """
 import logging
-from pyrap.tables import table as pyrap_table
+from casacore.tables import table as casacore_table
 from tkp.accessors.casaimage import CasaImage
 
 
@@ -10,7 +10,7 @@ logger = logging.getLogger(__name__)
 
 class Kat7CasaImage(CasaImage):
     """
-    Use pyrap to pull image data out of a CASA table as produced by KAT-7.
+    Use casacore to pull image data out of a CASA table as produced by KAT-7.
 
     Note that KAT-7 does not currently include image duration in its headers,
     so we use a placeholder value of 1.

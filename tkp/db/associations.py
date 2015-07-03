@@ -39,8 +39,16 @@ def associate_extracted_sources(image_id, deRuiter_r, new_source_sigma_margin):
     #| Here we process (flag) the many-to-many associations.|
     #+------------------------------------------------------+
     database = tkp.db.Database()
-    if database.engine == "postgresql":
-        vacuum_temprunningcatalog()
+
+    # Since the _flag_many_to_many_tempruncat uses the temprunningcatalog table
+    # as a temporary use space the table will receive many writes and updates.
+    # On postgresql for speed up reasons rows are not directly deleted, but
+    # marked for deletion and eventually deleted by an auto vacuum process.
+    # Because of the nested complexity of this query it may happen the
+    # computational complexity of the query explodes, resulting in massive
+    # slowdowns. To make sure the temprunningcatalog table doesn't contain dead
+    # rows we force a manual vacuum here.
+    database.vacuum('temprunningcatalog')
 
     # _process_many_to_many()
     _flag_many_to_many_tempruncat()

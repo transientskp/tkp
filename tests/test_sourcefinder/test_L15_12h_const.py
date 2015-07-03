@@ -9,9 +9,9 @@ import unittest
 import tkp.accessors.fitsimage
 import tkp.sourcefinder.image as image
 import tkp.utility.coordinates as coords
-from tkp.testutil.decorators import requires_data
+from tkp.testutil.decorators import requires_data, high_ram_requirements
 from tkp.testutil.data import DATAPATH
-
+import gc
 
 # The simulation code causes a factor of 2 difference in the
 # measured flux.
@@ -21,8 +21,16 @@ corrected_fits = os.path.join(DATAPATH, 'sourcefinder/L15_12h_const/corrected-al
 observed_fits = os.path.join(DATAPATH, 'sourcefinder/L15_12h_const/observed-all.fits')
 all_fits = os.path.join(DATAPATH, 'sourcefinder/L15_12h_const/model-all.fits')
 
+# This module appears to be the most memory-intensive of the TKP unit-tests
+# Probably because a large (~30mb) image is being repeatedly loaded into the
+# sourcefinder. This was intermittently breaking the Travis-CI system until
+# the addition of the manual garbage-collection steps, which is why they are
+# only used in this module.
+
+
 class L15_12hConstObs(unittest.TestCase):
     # Single, constant 1 Jy source at centre of image.
+    @requires_data(observed_fits)
     def setUp(self):
         # Beam here is a random beam, in this case the WENSS beam
         # without the declination dependence.
@@ -30,6 +38,12 @@ class L15_12hConstObs(unittest.TestCase):
                                     beam=(54./3600, 54./3600, 0.))
         self.image = image.ImageData(fitsfile.data, fitsfile.beam, fitsfile.wcs)
         self.results = self.image.extract(det=10, anl=3.0)
+
+
+    def tearDown(self):
+        del(self.results)
+        del(self.image)
+        gc.collect()
 
     @requires_data(observed_fits)
     def testNumSources(self):
@@ -40,10 +54,7 @@ class L15_12hConstObs(unittest.TestCase):
         mysource = self.results.closest_to(1440, 1440)[0]
         self.assertAlmostEqual(mysource.peak, 1.0*FUDGEFACTOR, 1)
 
-    @requires_data(observed_fits)
-    def tearDown(self):
-        del(self.results)
-        del(self.image)
+
 
 
 class L15_12hConstCor(unittest.TestCase):
@@ -55,6 +66,11 @@ class L15_12hConstCor(unittest.TestCase):
             beam=(54./3600, 54./3600, 0.))
         self.image = image.ImageData(fitsfile.data, fitsfile.beam, fitsfile.wcs)
         self.results  = self.image.extract(det=10.0, anl=3.0)
+
+    def tearDown(self):
+        del(self.image)
+        del(self.results)
+        gc.collect()
 
     @requires_data(corrected_fits)
     def testNumSources(self):
@@ -78,9 +94,7 @@ class L15_12hConstCor(unittest.TestCase):
                 coords.angsep(centre.ra, centre.dec, mysource.ra, mysource.dec) /
                 60**2), 2)
 
-    def tearDown(self):
-        del(self.results)
-        del(self.image)
+
 
 
 class L15_12hConstMod(unittest.TestCase):
@@ -97,6 +111,11 @@ class L15_12hConstMod(unittest.TestCase):
         self.image = image.ImageData(fitsfile.data, fitsfile.beam, fitsfile.wcs, radius=100)
         self.results  = self.image.extract(det=5, anl=3.0)
 
+    def tearDown(self):
+        del(self.results)
+        del(self.image)
+        gc.collect()
+
     @requires_data(all_fits)
     def testNumSources(self):
         self.assertEqual(len(self.results), 1)
@@ -106,9 +125,7 @@ class L15_12hConstMod(unittest.TestCase):
         self.results.sort(lambda x, y: cmp(y.peak, x.peak))
         self.assertAlmostEqual(self.results[0].peak.value, 1.0*FUDGEFACTOR, 1)
 
-    def tearDown(self):
-        del(self.results)
-        del(self.image)
+
 
 
 class FitToPointTestCase(unittest.TestCase):
@@ -119,6 +136,10 @@ class FitToPointTestCase(unittest.TestCase):
             beam=(54./3600, 54./3600, 0.))
         self.my_im = image.ImageData(fitsfile.data, fitsfile.beam,
                                      fitsfile.wcs)
+
+    def tearDown(self):
+        del self.my_im
+        gc.collect()
 
     @requires_data(corrected_fits)
     def testFixed(self):

@@ -3,11 +3,21 @@ Tests the log message transportation mechanism.
 """
 import unittest
 import logging
-from tkp.distribute.celery.log import setup_event_listening
-from tkp.distribute.celery import celery_app
-from tkp.distribute.celery.tasks import test_log
+
+try:
+    import celery
+    CELERY_INSTALLED = True
+except ImportError:
+    CELERY_INSTALLED = False
+
+if CELERY_INSTALLED:
+    from tkp.distribute.celery.log import setup_event_listening
+    from tkp.distribute.celery import celery_app
+    from tkp.distribute.celery.tasks import test_log
 
 
+
+@unittest.skipUnless(CELERY_INSTALLED, 'requires celery')
 class MockLoggingHandler(logging.Handler):
     """Mock logging handler to check for expected logs."""
 
@@ -21,7 +31,7 @@ class MockLoggingHandler(logging.Handler):
     def reset(self):
         self.records = []
 
-
+@unittest.skipUnless(CELERY_INSTALLED, 'requires celery')
 class TestCelery(unittest.TestCase):
     """
     Tests related to distributing jobs using celery

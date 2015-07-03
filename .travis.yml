@@ -1,44 +1,41 @@
-python: 
- - "2.7"
+language: python
+python:
+- '2.7'
 virtualenv:
   system_site_packages: true
 services:
- - postgresql
-language: python
+- postgresql
 env:
- - secure: "Fwo2XW1lCdHcQINoN+ifR4Rio029Mu5xeaOI/9+DDuY1eiY5JObntb7LGWb7y+kYRBLH7aqWahCEIIVlEnwRHsPE3ui2oQjBsNAR/Mb3l6nhm1+/P/KD/s4u5/BgljEvhHwQ1kUTPj7jYGyI0J1FW/qXK7lFYRcGZu0LhLcw29w="
-notifications: 
-  hipchat: 
-    rooms: 
-      secure: J/txhSEXTRRibmPxGQ4YtePQ5aarnCAJhHZP+NP9luW/CyhMD45Aq8PKRNgaCq8kZuVs001HePz4IPceqfJiMjts2Dv1SrJqvpPhl4xxIj8aJgH7b1vlKcSUeum3G8+7ZJrURoIxET5EZL0hDAE7ZFPogaksK0zXKlRQsuATkM0=
-before_install: 
- - sudo apt-get install software-properties-common
- - sudo add-apt-repository -y ppa:gijzelaar/aartfaac
- - sudo apt-get update -qq
- - sudo sh -c "echo 'deb http://dev.monetdb.org/downloads/deb/ precise monetdb' > /etc/apt/sources.list.d/monetdb.list"
- - wget --output-document=- http://dev.monetdb.org/downloads/MonetDB-GPG-KEY | sudo apt-key add -
- - sudo apt-get update -qq
- - sudo apt-get install -qq casacore-data subversion gfortran git cmake build-essential python-pip python-numpy python-scipy python-pygresql python-monetdb pyrap monetdb5-sql monetdb-client wcslib-dev libboost-python-dev 
- - sudo usermod -a -G monetdb $USER
- - sudo sh -c "echo 'STARTUP=yes\nDBFARM=/var/lib/monetdb\n' > /etc/default/monetdb5-sql"
- - sudo service monetdb5-sql start
- - sudo monetdbd set control=yes /var/lib/monetdb
- - sudo monetdbd set passphrase=testdb /var/lib/monetdb
- - psql -c 'create database testdb;' -U postgres
- - git submodule init
- - git submodule update
-
-install: 
- - cd ${TRAVIS_BUILD_DIR}
- - pip install -r requirements.txt
-
+  global:
+  - TKP_DBNAME=testdb
+  - TKP_DBENGINE=postgresql
+  - TKP_DBUSER=postgres
+  - TKP_DBPASS=postgres
+  - TKP_TESTPATH=${TRAVIS_BUILD_DIR}/tests/data
+notifications:
+  hipchat:
+    rooms:
+      secure: ZhAQEKkc9bwt4O9TyL4Bdpic/5mme1A9QnFt38BlotvCPkIp19EhH/Qh7M76eCPrAIOngfO7GhnFj7SgjOQ7u5XxohC3Fak9MaUhBeew0GDYEcTq+7WDVQ3FVjyOcWOJMi5nBCKVK/SqOIdmCfBS+waBog7be2VQXcfcej8g2+E=
+before_install:
+  - sudo apt-get install software-properties-common
+  - sudo add-apt-repository -y ppa:radio-astro/main
+  - sudo apt-get update -q
+  - sudo apt-get install -qy casacore-data libcasacore2-dev python-numpy python-scipy libboost-python-dev libcfitsio3-dev wcslib-dev
+  - psql -c "ALTER ROLE postgres WITH PASSWORD 'postgres';" -U postgres
+  - psql -c "create database testdb;" -U postgres
+  - git submodule init
+  - git submodule update
+install:
+  - cd ${TRAVIS_BUILD_DIR}
+  - pip install --upgrade pip
+  - pip install -r requirements.txt
+  - pip install nose
+  - python setup.py install
+  - pip freeze
 script:
- - cd /tmp
- - ${TRAVIS_BUILD_DIR}/tkp/bin/trap-manage.py initproject pipeline
- - cd pipeline
- - ${TRAVIS_BUILD_DIR}/tkp/bin/trap-manage.py initdb -d testdb -u testdb -p testdb -s testdb -e monetdb -y -P 50000
- - ${TRAVIS_BUILD_DIR}/tkp/bin/trap-manage.py initdb -d testdb -u postgres -p "" -y
- - cd ${TRAVIS_BUILD_DIR}
- - TKP_DBENGINE=monetdb TKPDB_USER=testdb TKPDB_PASS=testdb TKPDB_NAME=testdb TKPDB_PORT=50000 nosetests
- - TKP_DBUSER=postgres TKP_DBPASSWORD= nosetests
-
+  - cd /tmp
+  - "${TRAVIS_BUILD_DIR}/tkp/bin/trap-manage.py initproject pipeline"
+  - cd pipeline
+  - "${TRAVIS_BUILD_DIR}/tkp/bin/trap-manage.py initdb -y"
+  - cd ${TRAVIS_BUILD_DIR}/tests
+  - TKP_DBUSER=postgres TKP_DBPASSWORD= nosetests -sv

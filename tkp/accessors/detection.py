@@ -42,7 +42,8 @@ def isfits(filename):
     if filename[-4:].lower() != 'fits':
         return False
     try:
-        pyfits.open(filename)
+        with pyfits.open(filename):
+            pass
     except IOError:
         return False
     return True
@@ -86,8 +87,8 @@ def fits_detect(filename):
     Checks for known FITS image types where we expect additional metadata.
     If the telescope is unknown we default to a regular FitsImage.
     """
-    hdu = pyfits.open(filename)
-    hdr = hdu[0].header
+    with pyfits.open(filename) as hdulist:
+        hdr = hdulist[0].header
     for fits_test in fits_type_mapping:
         if fits_test.test(hdr):
             return fits_test.accessor

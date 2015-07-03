@@ -44,8 +44,8 @@ class FitsImage(DataAccessor):
             self.telescope = self.header['TELESCOP']
 
     def _get_header(self, hdu_index):
-        hdulist = pyfits.open(self.url)
-        hdu = hdulist[hdu_index]
+        with pyfits.open(self.url) as hdulist:
+            hdu = hdulist[hdu_index]
         return hdu.header.copy()
 
 
@@ -60,8 +60,9 @@ class FitsImage(DataAccessor):
         before viewing the array with RO.DS9, saving to a FITS file,
         etc.
         """
-        hdu = pyfits.open(self.url)[hdu_index]
-        data = numpy.float64(hdu.data.squeeze())
+        with pyfits.open(self.url) as hdulist:
+            hdu = hdulist[hdu_index]
+            data = numpy.float64(hdu.data.squeeze())
         if plane is not None and len(data.shape) > 2:
             data = data[plane].squeeze()
         n_dim = len(data.shape)

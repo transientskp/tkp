@@ -141,9 +141,9 @@ def combine(fitsfiles, outputfile, method="average"):
     header0.update('orig0', os.path.basename(fitsfiles[0]),
                    'original fitsfile')
     for i, filename in enumerate(fitsfiles[1:]):
-        hdulist = pyfits.open(filename)
-        header = hdulist[0].header
-        data += hdulist[0].data
+        with pyfits.open(filename) as hdulist:
+            header = hdulist[0].header
+            data += hdulist[0].data
         freqs.append(header['reffreq'])
         header0.update(
             'orig%d' % (i + 1), os.path.basename(filename),
@@ -171,3 +171,5 @@ def combine(fitsfiles, outputfile, method="average"):
     hdu.header = header0
     hdulist = pyfits.HDUList([hdu])
     hdulist.writeto(outputfile)
+    hdulist.close()
+    hdulist0.close()

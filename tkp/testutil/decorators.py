@@ -53,3 +53,11 @@ def requires_test_db_managed():
         return lambda func: func
     return unittest.skip("DB management tests disabled, TKP_TESTDBMANAGEMENT"
                          " not set")
+
+def high_ram_requirements():
+    """
+    Used to disable tests that break Travis due to out-of-memory issues.
+    """
+    if os.environ.get("TRAVIS", False):
+        return unittest.skip("High-ram requirement unit-tests disabled on Travis")
+    return lambda func: func

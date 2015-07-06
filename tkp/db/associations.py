@@ -38,6 +38,18 @@ def associate_extracted_sources(image_id, deRuiter_r, new_source_sigma_margin):
     #+------------------------------------------------------+
     #| Here we process (flag) the many-to-many associations.|
     #+------------------------------------------------------+
+    database = tkp.db.Database()
+
+    # Since the _flag_many_to_many_tempruncat uses the temprunningcatalog table
+    # as a temporary use space the table will receive many writes and updates.
+    # On postgresql for speed up reasons rows are not directly deleted, but
+    # marked for deletion and eventually deleted by an auto vacuum process.
+    # Because of the nested complexity of this query it may happen the
+    # computational complexity of the query explodes, resulting in massive
+    # slowdowns. To make sure the temprunningcatalog table doesn't contain dead
+    # rows we force a manual vacuum here.
+    database.vacuum('temprunningcatalog')
+
     # _process_many_to_many()
     _flag_many_to_many_tempruncat()
     #+------------------------------------------------------+
@@ -102,6 +114,24 @@ def associate_extracted_sources(image_id, deRuiter_r, new_source_sigma_margin):
 # Subroutines...
 # Here be SQL dragons.
 ##############################################################################
+def vacuum_temprunningcatalog():
+    """
+    (Postgres only) - Runs some DB housekeeping, which improves performance.
+    """
+    database = tkp.db.Database()
+    assert database.engine == 'postgresql'
+    from psycopg2.extensions import (ISOLATION_LEVEL_AUTOCOMMIT,
+                                        ISOLATION_LEVEL_READ_COMMITTED)
+    # disable autocommit since can't vacuum in transaction
+    connection = database.connection
+    connection.set_isolation_level(ISOLATION_LEVEL_AUTOCOMMIT)
+    cursor = connection.cursor()
+    cursor.execute("VACUUM ANALYZE temprunningcatalog")
+    # reset settings
+    connection.set_isolation_level(ISOLATION_LEVEL_READ_COMMITTED)
+
+
+
 def _delete_bad_blind_extractions(image_id):
     """Remove blind extractions centred outside designated extract region.
 
@@ -848,6 +878,7 @@ UPDATE temprunningcatalog
                   AND t2.xtrsrc = temprunningcatalog.xtrsrc
               )
 """
+
     tkp.db.execute(query, commit=True)
 
 

@@ -28,9 +28,8 @@ before_install:
 install:
   - cd ${TRAVIS_BUILD_DIR}
   - pip install --upgrade pip
-  - pip install -r requirements.txt
+  - pip install .
   - pip install nose
-  - python setup.py install
   - pip freeze
 script:
   - cd /tmp

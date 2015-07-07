@@ -1,7 +1,5 @@
 #!/usr/bin/env python
-
-import os
-from setuptools import setup
+from setuptools import setup, find_packages
 
 install_requires = """
     numpy>=1.3.0
@@ -26,46 +24,20 @@ tkp_scripts = [
     "tkp/bin/tkp-inject.py",
     ]
 
-def fullsplit(path, result=None):
-    """
-    Split a pathname into components (the opposite of os.path.join) in a
-    platform-neutral way.
-    """
-    if result is None:
-        result = []
-    head, tail = os.path.split(path)
-    if head == '':
-        return [tail] + result
-    if head == path:
-        return result
-    return fullsplit(head, [tail] + result)
-
-
-tkp_packages = []
-root_dir = os.path.dirname(__file__)
-if root_dir != '':
-    os.chdir(root_dir)
-
-for dirpath, dirnames, filenames in os.walk('tkp'):
-    # Ignore dirnames that start with '.'
-    dirnames[:] = [d for d in dirnames if not d.startswith('.') and d != '__pycache__']
-    if '__init__.py' in filenames:
-        tkp_packages.append('.'.join(fullsplit(dirpath)))
-
-
 package_data = {'tkp': [
     'config/*/*',
     'db/sql/statements/batch',
     'db/sql/statements/*/*.sql'
 ]}
 
+package_list = find_packages(where='.', exclude=['tests'])
 
 from tkp import __version__ as tkp_version
 
 setup(
     name = "tkp",
     version = tkp_version,
-    packages = tkp_packages,
+    packages = package_list,
     scripts = tkp_scripts,
     package_data=package_data,
     description = "LOFAR Transients Key Project (TKP)",

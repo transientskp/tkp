@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 from setuptools import setup, find_packages
+from tkp import __version__ as tkp_version
 
 install_requires = """
     numpy>=1.3.0
@@ -31,8 +32,6 @@ package_data = {'tkp': [
 ]}
 
 package_list = find_packages(where='.', exclude=['tests'])
-
-from tkp import __version__ as tkp_version
 
 setup(
     name = "tkp",

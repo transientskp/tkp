@@ -61,14 +61,18 @@ a list of filenames::
 For each file specified, a list of sources identified is printed to the
 screen.
 
+By default, source extraction is carried out by thresholding: that is,
+identifying islands of pixels which exceed a particular multiple of the RMS
+noise.
+
 A list of available command line option may be obtained with the
 ``-h``/``--help`` option:
 
-.. program-output:: python ../tkp/bin/pyse.py -h
+.. argparse::
+    :module: tkp.bin.pyse
+    :func: get_argparser
+    :prog: pyse.py
 
-By default, source extraction is carried out by thresholding: that is,
-identifying islands of pixels which exceed a particular multiple of the RMS
-noise. In this mode, the following two parameters are may be supplied:
 
 The ``--detection`` argument specifies the multiple of the RMS noise which is
 required for detection; ie, setting ``--detection=5`` is equivalent to

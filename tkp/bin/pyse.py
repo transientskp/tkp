@@ -23,7 +23,7 @@ import math
 import numbers
 import os.path
 from cStringIO import StringIO
-from optparse import OptionParser
+import argparse
 import numpy
 import pyfits
 
@@ -116,44 +116,76 @@ def summary(filename, sourcelist):
         print >>output, "Peak: %s\n" % (str(source.peak))
     return output.getvalue()
 
+
+def get_argparser():
+    parser = argparse.ArgumentParser(
+        description="Source extraction for radio-synthesis images")
+
+    #Arguments relating to source extraction:
+    extraction = parser.add_argument_group("Extraction")
+    extraction.add_argument("--detection", default=10, type=float,
+                        help="Detection threshold")
+    extraction.add_argument("--analysis", default=3, type=float,
+                        help="Analysis threshold")
+    extraction.add_argument("--fdr", action="store_true",
+                        help="Use False Detection Rate algorithm")
+    extraction.add_argument("--alpha", default=1e-2, type=float, help="FDR Alpha")
+    extraction.add_argument("--deblend-thresholds", default=0, type=int,
+                        help="Number of deblending subthresholds; 0 to disable")
+    extraction.add_argument("--grid", default=64, type=int,
+                        help="Background grid segment size")
+    extraction.add_argument("--margin", default=0, type=int,
+                        help="Margin applied to each edge of image (in pixels)")
+    extraction.add_argument("--radius", default=0, type=float,
+                        help="Radius of usable portion of image (in pixels)")
+    extraction.add_argument("--bmaj", type=float, help="Set beam: Major axis of beam (deg)")
+    extraction.add_argument("--bmin", type=float, help="Set beam: Minor axis of beam (deg)")
+    extraction.add_argument("--bpa", type=float, help="Set beam: Beam position angle (deg)")
+    extraction.add_argument("--force-beam", action="store_true",
+                        help="Force fit axis lengths to beam size")
+    extraction.add_argument("--detection-image", type=str,
+                        help="Find islands on different image")
+    extraction.add_argument('--fixed-posns', help="List of position coordinates to "
+        "force-fit (decimal degrees, JSON, e.g [[123.4,56.7],[359.9,89.9]]) "
+        "(Will not perform blind extraction in this mode)"              ,
+        default=None)
+    extraction.add_argument('--fixed-posns-file',
+        help="Path to file containing a list of positions to force-fit "
+             "(Will not perform blind extraction in this mode)",
+        default=None)
+    extraction.add_argument('--ffbox', type=float, default=3.,
+        help="Forced fitting positional box size as a multiple of beam width.")
+
+    #Arguments relating to output:
+    output = parser.add_argument_group("Output")
+    output.add_argument("--skymodel", action="store_true",
+                        help="Generate sky model")
+    output.add_argument("--csv", action="store_true",
+                        help="Generate csv text file for use in programs such as TopCat")
+    output.add_argument("--regions", action="store_true",
+                        help="Generate DS9 region file(s)")
+    output.add_argument("--rmsmap", action="store_true",
+                        help="Generate RMS map")
+    output.add_argument("--sigmap", action="store_true",
+                        help="Generate significance map")
+    output.add_argument("--residuals", action="store_true",
+                        help="Generate residual maps")
+    output.add_argument("--islands", action="store_true",
+                        help="Generate island maps")
+
+    #Finally, positional arguments- the file list:
+    parser.add_argument('files', nargs='+',
+                        help="Image files for processing")
+    return parser
+
+
 def handle_args(args=None):
     """
     Parses command line options & arguments using OptionParser.
     Options & default values for the script are defined herein.
     """
-    usage = "usage: %prog [options] file1 ... fileN"
-    parser = OptionParser(usage)
-    parser.add_option("--fdr", action="store_true", dest="fdr", help="Use False Detection Rate algorithm")
-    parser.add_option("--alpha", default=1e-2, type="float", help="FDR Alpha")
-    parser.add_option("--detection", default=10, type="float", help="Detection threshold")
-    parser.add_option("--analysis", default=3, type="float", help="Analysis threshold")
-    parser.add_option("--regions", action="store_true", help="Generate DS9 region file(s)")
-    parser.add_option("--residuals", action="store_true", help="Generate residual maps")
-    parser.add_option("--islands", action="store_true", help="Generate island maps")
-    parser.add_option("--deblend-thresholds", default=0, type="int", help="Number of deblending subthresholds; 0 to disable")
-    parser.add_option("--bmaj", type="float", help="Major axis of beam (deg)")
-    parser.add_option("--bmin", type="float", help="Minor axis of beam (deg)")
-    parser.add_option("--bpa", type="float", help="Beam position angle (deg)")
-    parser.add_option("--grid", default=64, type="int", help="Background grid segment size")
-    parser.add_option("--margin", default=0, type="int", help="Margin applied to each edge of image (in pixels)")
-    parser.add_option("--radius", default=0, type="float", help="Radius of usable portion of image (in pixels)")
-    parser.add_option("--skymodel", action="store_true", help="Generate sky model")
-    parser.add_option("--csv", action="store_true", help="Generate csv text file for use in programs such as TopCat")
-    parser.add_option("--rmsmap", action="store_true", help="Generate RMS map")
-    parser.add_option("--sigmap", action="store_true", help="Generate significance map")
-    parser.add_option("--force-beam", action="store_true", help="Force fit axis lengths to beam size")
-    parser.add_option("--detection-image", type="string", help="Find islands on different image")
-    parser.add_option('--fixed-posns', help="List of position coordinates to "
-        "force-fit (decimal degrees, JSON, e.g [[123.4,56.7],[359.9,89.9]]) "
-        "(Will not perform blind extraction in this mode)"              ,
-        default=None)
-    parser.add_option('--fixed-posns-file',
-        help="Path to file containing a list of positions to force-fit "
-             "(Will not perform blind extraction in this mode)",
-        default=None)
-    parser.add_option('--ffbox', type='float', default=3.,
-        help="Forced fitting positional box size as a multiple of beam width.")
-    options, files = parser.parse_args(args=args)
+    parser = get_argparser()
+    options= parser.parse_args()
 
     # Overwrite 'fixed_coords' with a parsed list of coords
     # collated from both command line and file.
@@ -190,7 +222,7 @@ def handle_args(args=None):
     else:
         options.mode = "threshold" # mode 1.1 above
 
-    return options, files
+    return options, options.files
 
 def writefits(filename, data, header={}):
     try:
@@ -323,7 +355,4 @@ def run_sourcefinder(files, options):
 if __name__ == "__main__":
     logging.basicConfig()
     options, files = handle_args()
-    if files:
-        print run_sourcefinder(files, options),
-    else:
-        print "No files to process specified."
+    print run_sourcefinder(files, options),

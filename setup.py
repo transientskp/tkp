@@ -1,8 +1,23 @@
 #!/usr/bin/env python
+from setuptools import setup, find_packages
+from tkp import __version__ as tkp_version
 
-import os
-from distutils.core import setup
-from distutils.command.install import INSTALL_SCHEMES
+install_requires = """
+    numpy>=1.3.0
+    scipy>=0.7.0
+    pyfits>=2.3.1
+    python-dateutil>=1.4.1
+    pytz
+    pywcs>=1.12
+    python-casacore
+    psycopg2
+    """.split()
+
+extras_require = {
+    'pixelstore': ['pymongo'],
+    'monetdb' : ['python-monetdb>=11.11.11'],
+    'distribute' : [ 'celery>=3.1.11']
+}
 
 tkp_scripts = [
     "tkp/bin/pyse.py",
@@ -10,50 +25,24 @@ tkp_scripts = [
     "tkp/bin/tkp-inject.py",
     ]
 
-def fullsplit(path, result=None):
-    """
-    Split a pathname into components (the opposite of os.path.join) in a
-    platform-neutral way.
-    """
-    if result is None:
-        result = []
-    head, tail = os.path.split(path)
-    if head == '':
-        return [tail] + result
-    if head == path:
-        return result
-    return fullsplit(head, [tail] + result)
+package_data = {'tkp': [
+    'config/*/*',
+    'db/sql/statements/batch',
+    'db/sql/statements/*/*.sql'
+]}
 
-# Tell distutils not to put the data_files in platform-specific installation
-# locations. See here for an explanation:
-# http://groups.google.com/group/comp.lang.python/browse_thread/thread/35ec7b2fed36eaec/2105ee4d9e8042cb
-for scheme in INSTALL_SCHEMES.values():
-    scheme['data'] = scheme['purelib']
-
-tkp_packages = []
-tkp_data_files = []
-root_dir = os.path.dirname(__file__)
-if root_dir != '':
-    os.chdir(root_dir)
-
-for dirpath, dirnames, filenames in os.walk('tkp'):
-    # Ignore dirnames that start with '.'
-    dirnames[:] = [d for d in dirnames if not d.startswith('.') and d != '__pycache__']
-    if '__init__.py' in filenames:
-        tkp_packages.append('.'.join(fullsplit(dirpath)))
-    elif filenames:
-        tkp_data_files.append([dirpath, [os.path.join(dirpath, f) for f in filenames]])
-
-from tkp import __version__ as tkp_version
+package_list = find_packages(where='.', exclude=['tests'])
 
 setup(
     name = "tkp",
     version = tkp_version,
-    packages = tkp_packages,
+    packages = package_list,
     scripts = tkp_scripts,
-    data_files=tkp_data_files,
+    package_data=package_data,
     description = "LOFAR Transients Key Project (TKP)",
     author = "TKP Discovery WG",
     author_email = "discovery@transientskp.org",
-    url = "http://www.transientskp.org/",
+    url = "http://docs.transientskp.org/",
+    install_requires=install_requires,
+    extras_require=extras_require
 )

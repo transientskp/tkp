@@ -8,7 +8,6 @@
 images = [
     "/path/to/image1",
     "/path/to/image2",
-    ...
 ]
 
 # Optionally, whatever standard tools are required may be used to generate the

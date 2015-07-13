@@ -61,6 +61,7 @@ def run(job_name, supplied_mon_coords=[]):
     job_config = load_job_config(pipe_config)
     se_parset = job_config.source_extraction
     deruiter_radius = job_config.association.deruiter_radius
+    beamwidths_limit = job_config.association.beamwidths_limit
     new_src_sigma = job_config.transient_search.new_source_sigma_margin
 
     all_images = imp.load_source('images_to_process',
@@ -158,9 +159,9 @@ def run(job_name, supplied_mon_coords=[]):
             logger.info("performing DB operations for image %s" % image.id)
 
             logger.info("performing source association")
-            dbass.associate_extracted_sources(
-                image.id,deRuiter_r=deruiter_radius,
-                new_source_sigma_margin=new_src_sigma)
+            dbass.associate_extracted_sources(image.id,
+                                              deRuiter_r=deruiter_radius,
+                                              new_source_sigma_margin=new_src_sigma)
 
             all_fit_posns, all_fit_ids = steps_ff.get_forced_fit_requests(image)
             if all_fit_posns:

@@ -13,11 +13,6 @@ from tkp.db.generic import columns_from_table, get_db_rows_as_dicts
 from tkp.testutil import db_subs
 from tkp.testutil.decorators import requires_database
 
-# Use a default argument value for convenience
-from functools import partial
-associate_extracted_sources = partial(associate_extracted_sources,
-                                      new_source_sigma_margin=3)
-
 @requires_database()
 class TestOne2One(unittest.TestCase):
     """
@@ -46,7 +41,7 @@ class TestOne2One(unittest.TestCase):
         for im in im_params:
             image = tkp.db.Image(dataset=dataset, data=im)
             dbgen.insert_extracted_sources(image.id, steady_srcs,'blind')
-            associate_extracted_sources(image.id, deRuiter_r = 3.717)
+            associate_extracted_sources(image.id, deRuiter_r=3.717)
 
         # Check runningcatalog, runningcatalog_flux, assocxtrsource.
         # note that the order of insertions is not garanteed, so we ORDER by
@@ -174,6 +169,119 @@ class TestOne2One(unittest.TestCase):
             image.insert_extracted_sources([extracted_source])
             # NB choice of De Ruiter radius is arbitrary.
             associate_extracted_sources(image.id, deRuiter_r=1.0)
+
+
+@requires_database()
+class TestBeamwidthsLimit(unittest.TestCase):
+    def shortDescription(self):
+        return None
+
+    def setUp(self):
+        """
+        Set up a source to shift by 1.5 beamwidths between images, with a large
+        systematic error so that DR radius between locations is still small.
+        These will not be associated by default (beamwidth_limit=1),
+        but will be if we increase the limit.
+        """
+
+        image_beam_data = {
+                      'deltax': -0.01,#degrees
+                      'deltay': 0.01,#degrees
+                     'beam_smaj_pix': 3.,#pixels
+                      'beam_smin_pix': 3.,#pixels
+                      'beam_pa_rad': 1.7,#rad
+        }
+        beam_semimajor_degs = (image_beam_data['deltax']*
+                                image_beam_data['beam_smaj_pix'])
+
+        self.im_params = db_subs.generate_timespaced_dbimages_data(
+            n_images=2,
+            kwargs=image_beam_data
+        )
+        src = db_subs.example_extractedsource_tuple(
+            ra=123., dec=10.,
+            ra_fit_err=10. / 3600, dec_fit_err=10. / 3600,
+            beam_maj=50, beam_min=50, beam_angle=45,
+            ew_sys_err=100, ns_sys_err=100
+        )
+        #Add second source-detection at separate of just over one beamwidth
+        self.srcs = [src,
+                     src._replace(ra=src.ra + beam_semimajor_degs*1.1)]
+
+    def test_default_beamwidths_limit(self):
+        """
+        We use default beamwidths_limit of 1.0, which prevents association.
+
+        As a result we get a two runcat entries.
+        """
+        beamwidths_limit = 1
+        dataset = DataSet(data={'description': 'assoc test set: n-1'})
+
+
+        # image 1
+        image = tkp.db.Image(dataset=dataset, data=self.im_params[0])
+        imageid1 = image.id
+        dbgen.insert_extracted_sources(imageid1, [self.srcs[0]], 'blind')
+        associate_extracted_sources(imageid1, deRuiter_r=3.717,
+                                    beamwidths_limit=beamwidths_limit)
+        # image 2
+        image = tkp.db.Image(dataset=dataset, data=self.im_params[1])
+        imageid2 = image.id
+        dbgen.insert_extracted_sources(imageid2, [self.srcs[1]], 'blind')
+        associate_extracted_sources(imageid2, deRuiter_r=3.717,
+                                    beamwidths_limit=beamwidths_limit)
+
+        query = """\
+        SELECT id
+              ,xtrsrc
+              ,datapoints
+          FROM runningcatalog
+         WHERE dataset = %s
+        ORDER BY xtrsrc
+        """
+        cursor = tkp.db.execute(query, (dataset.id,), commit=False)
+        runcat = get_db_rows_as_dicts(cursor)
+        #Expect 2 separate entries, extractions not associated
+        self.assertEqual(len(runcat), 2)
+        for rc_entry in runcat:
+            self.assertEqual(rc_entry['datapoints'], 1)
+
+    def test_altered_beamwidths_limit(self):
+        """
+        We use a slightly larger beamwidths_limit, which allows association.
+
+        As a result we get a single runcat entry.
+        """
+        beamwidths_limit = 1.2
+        dataset = DataSet(data={'description': 'assoc test set: n-1'})
+
+        # image 1
+        image = tkp.db.Image(dataset=dataset, data=self.im_params[0])
+        imageid1 = image.id
+        dbgen.insert_extracted_sources(imageid1, [self.srcs[0]], 'blind')
+        associate_extracted_sources(imageid1, deRuiter_r=3.717,
+                                    beamwidths_limit=beamwidths_limit)
+        # image 2
+        image = tkp.db.Image(dataset=dataset, data=self.im_params[1])
+        imageid2 = image.id
+        dbgen.insert_extracted_sources(imageid2, [self.srcs[1]], 'blind')
+        associate_extracted_sources(imageid2, deRuiter_r=3.717,
+                                    beamwidths_limit=beamwidths_limit)
+
+        query = """\
+        SELECT id
+              ,xtrsrc
+              ,datapoints
+          FROM runningcatalog
+         WHERE dataset = %s
+        ORDER BY xtrsrc
+        """
+        cursor = tkp.db.execute(query, (dataset.id,), commit=False)
+        runcat = get_db_rows_as_dicts(cursor)
+
+        self.assertEqual(len(runcat), 1)
+        for rc_entry in runcat:
+            self.assertEqual(rc_entry['datapoints'], 2)
 
 
 @requires_database()
@@ -659,7 +767,7 @@ class TestOne2Many(unittest.TestCase):
         results = []
         results.append(src[-1])
         dbgen.insert_extracted_sources(imageid1, results, 'blind')
-        associate_extracted_sources(imageid1, deRuiter_r = 3.717)
+        associate_extracted_sources(imageid1, deRuiter_r=3.717)
 
         query = """\
         SELECT id
@@ -731,7 +839,7 @@ class TestOne2Many(unittest.TestCase):
         results.append(src[0])
         results.append(src[1])
         dbgen.insert_extracted_sources(imageid2, results, 'blind')
-        associate_extracted_sources(imageid2, deRuiter_r = 3.717)
+        associate_extracted_sources(imageid2, deRuiter_r=3.717)
 
         query = """\
         SELECT id
@@ -859,7 +967,7 @@ class TestMany2One(unittest.TestCase):
         results.append(src[0])
         results.append(src[1])
         dbgen.insert_extracted_sources(imageid1, results, 'blind')
-        associate_extracted_sources(imageid1, deRuiter_r = 3.717)
+        associate_extracted_sources(imageid1, deRuiter_r=3.717)
 
         query = """\
         SELECT id
@@ -889,7 +997,7 @@ class TestMany2One(unittest.TestCase):
         results = []
         results.append(src[-1])
         dbgen.insert_extracted_sources(imageid2, results, 'blind')
-        associate_extracted_sources(imageid2, deRuiter_r = 3.717)
+        associate_extracted_sources(imageid2, deRuiter_r=3.717)
 
         query = """\
         SELECT id
@@ -1054,8 +1162,11 @@ class TestMany2Many(unittest.TestCase):
         dbgen.insert_extracted_sources(image2.id, image2_srcs, 'blind')
 
 #         Double check that we actually get *many-to-many* candidate links:
-        assoc_subs._insert_temprunningcatalog(image2.id, dr_limit,
-                                    assoc_subs._check_meridian_wrap(image2.id))
+        assoc_subs._insert_temprunningcatalog(
+            image2.id, dr_limit,
+            beamwidths_limit=1,
+            meridian_wrap=assoc_subs._check_meridian_wrap(image2.id)
+        )
         candidate_assocs = columns_from_table('temprunningcatalog')
         self.assertEqual(len(candidate_assocs),
                          len(image1_srcs) * len(image2_srcs))

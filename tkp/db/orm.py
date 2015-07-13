@@ -498,7 +498,7 @@ class Image(DBObject):
                 tkp.config module
         """
         associate_extracted_sources(self._id, deRuiter_r,
-                                    new_source_sigma_margin)
+                                    new_source_sigma_margin=new_source_sigma_margin)
 
 
 class ExtractedSource(DBObject):

@@ -7,10 +7,6 @@ from tkp.testutil import db_subs
 from tkp.testutil import db_queries
 from tkp.testutil.decorators import requires_database
 
-# Use a default argument value for convenience
-from functools import partial
-associate_extracted_sources = partial(associate_extracted_sources,
-                                      new_source_sigma_margin=3)
 
 class TestOne2OneFlux(unittest.TestCase):
     """
@@ -215,7 +211,7 @@ class TestMany2OneFlux(unittest.TestCase):
             ))
 
         dbgen.insert_extracted_sources(image1.id, img1_srclist, 'blind')
-        associate_extracted_sources(image1.id, deRuiter_r = 3.717)
+        associate_extracted_sources(image1.id, deRuiter_r=3.717)
 
         # image 2
         image2 = tkp.db.Image(database=self.database, dataset=dataset, data=im_params[1])
@@ -229,7 +225,7 @@ class TestMany2OneFlux(unittest.TestCase):
             ))
 
         dbgen.insert_extracted_sources(image2.id, img2_srclist, 'blind')
-        associate_extracted_sources(image2.id, deRuiter_r = 3.717)
+        associate_extracted_sources(image2.id, deRuiter_r=3.717)
 
         # Manually compose the lists of sources we expect to see associated
         # into runningcatalog entries:
@@ -340,14 +336,14 @@ class TestMany2Many(unittest.TestCase):
                               data=im_params[0])
         dbgen.insert_extracted_sources(
             image1.id, [eastern_src,western_src], 'blind')
-        associate_extracted_sources(image1.id, deRuiter_r = 3.717)
+        associate_extracted_sources(image1.id, deRuiter_r=3.717)
 
         # image 2
         image2 = tkp.db.Image(database=self.database, dataset=dataset,
                               data=im_params[1])
         dbgen.insert_extracted_sources(
             image2.id, [northern_source, southern_source], 'blind')
-        associate_extracted_sources(image2.id, deRuiter_r = 3.717)
+        associate_extracted_sources(image2.id, deRuiter_r=3.717)
 
         # Manually compose the lists of sources we expect to see associated
         # into runningcatalog entries:
@@ -444,14 +440,14 @@ class TestMany2Many(unittest.TestCase):
                               data=im_params[0])
         dbgen.insert_extracted_sources(
             image1.id, [eastern_src,western_src], 'blind')
-        associate_extracted_sources(image1.id, deRuiter_r = 3.717)
+        associate_extracted_sources(image1.id, deRuiter_r=3.717)
 
         # image 2
         image2 = tkp.db.Image(database=self.database, dataset=dataset,
                               data=im_params[1])
         dbgen.insert_extracted_sources(
             image2.id, [northern_source, southern_source], 'blind')
-        associate_extracted_sources(image2.id, deRuiter_r = 3.717)
+        associate_extracted_sources(image2.id, deRuiter_r=3.717)
 
         # Manually compose the lists of sources we expect to see associated
         # into runningcatalog entries:

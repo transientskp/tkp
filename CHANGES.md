@@ -12,28 +12,44 @@ but the summary is as follows:
 ### User-interface changes
 Minor changes to *job_params.cfg*,
 - The ``[persistence]`` variables ``sigma`` and ``f`` have been renamed to ``rms_est_sigma`` and 
-``rms_est_fraction`` respectively (#435).
+``rms_est_fraction`` respectively ([#435][]).
 - The ``[association]`` section has a new variable, ``beamwidths_limit``, to control the hard-limit
-on source-association (#421, #447).
+on source-association ([#421][], [#447][]).
 
 ### Features / Enhancements
-- We now calculate and store 'goodness-of-fit' metrics for all source-extractions (#429).
-- The hard limit on source-association radius is now a user-configurable parameter (#421, #447).
+- We now calculate and store 'goodness-of-fit' metrics for all source-extractions ([#429][]).
+- The hard limit on source-association radius is now a user-configurable parameter ([#421][], [#447][]).
 This resulted from investigation of issues with source association when large systematic position-errors are present.
-- We now support AMI-LA data in CASA image format, in addition to FITS (#438).
+- We now support AMI-LA data in CASA image format, in addition to FITS ([#438][]).
 
 ### Bugfixes 
-- We now perform additional 'VACUUM' cleanups on the Postgres database, to improve performance (#432, #441).
-- Setup procedure now pulls in dependencies, allowing use of ``pip install tkp`` without a source-checkout (#393).
-- Docfixes (#442).
-- Header injection now works with CASA format images (#425).
+- We now perform additional 'VACUUM' cleanups on the Postgres database, to improve performance ([#432][], [#441][]).
+- Setup procedure now pulls in dependencies, allowing use of ``pip install tkp`` without a source-checkout ([#393][]).
+- Docfixes ([#442][]).
+- Header injection now works with CASA format images ([#425][]).
 
 ### Refactoring / Infrastructure changes
 Most refactoring is on hold for now, but some minor changes were deemed desirable to enable new features.
 We also took steps to make the TKP docs-hosting and testing infrastructure less reliant on privately administered UvA machines.
-- Reworked DataAccessor interface classes for shorter, simpler accessors (#424, #426).
+- Reworked DataAccessor interface classes for shorter, simpler accessors ([#424][], [#426][]).
 - Migrated docs hosting to [tkp.readthedocs.org](http://tkp.readthedocs.org).
-- Added [Travis-CI testing](https://travis-ci.org/transientskp/tkp) (#437, #439).
+- Added [Travis-CI testing](https://travis-ci.org/transientskp/tkp) ([#437][], [#439][]).
+
+
+[#393]: https://github.com/transientskp/tkp/issues/393
+[#421]: https://github.com/transientskp/tkp/issues/421
+[#424]: https://github.com/transientskp/tkp/issues/424
+[#425]: https://github.com/transientskp/tkp/issues/425
+[#426]: https://github.com/transientskp/tkp/issues/426
+[#429]: https://github.com/transientskp/tkp/issues/429
+[#432]: https://github.com/transientskp/tkp/issues/432
+[#435]: https://github.com/transientskp/tkp/issues/435
+[#437]: https://github.com/transientskp/tkp/issues/437
+[#438]: https://github.com/transientskp/tkp/issues/438
+[#439]: https://github.com/transientskp/tkp/issues/439
+[#441]: https://github.com/transientskp/tkp/issues/441
+[#442]: https://github.com/transientskp/tkp/issues/442
+[#447]: https://github.com/transientskp/tkp/issues/447
 
 --------
 

@@ -9,7 +9,8 @@ import tkp.db
 logger = logging.getLogger(__name__)
 
 
-def associate_extracted_sources(image_id, deRuiter_r, new_source_sigma_margin):
+def associate_extracted_sources(image_id, deRuiter_r, beamwidths_limit=1,
+                                new_source_sigma_margin=3):
     """
     Associate extracted sources with sources detected in the running
     catalog.
@@ -34,7 +35,7 @@ def associate_extracted_sources(image_id, deRuiter_r, new_source_sigma_margin):
     #| many-to-many, many-to-one, one-to-many, one-to-many  |
     #+------------------------------------------------------+
     mw = _check_meridian_wrap(image_id)
-    _insert_temprunningcatalog(image_id, deRuiter_r, mw)
+    _insert_temprunningcatalog(image_id, deRuiter_r, beamwidths_limit, mw)
     #+------------------------------------------------------+
     #| Here we process (flag) the many-to-many associations.|
     #+------------------------------------------------------+
@@ -299,7 +300,8 @@ SELECT CASE WHEN s.centre_ra - alpha(s.xtr_radius, s.centre_decl) < 0 OR
     }
 
 
-def _insert_temprunningcatalog(image_id, deRuiter_r, mw):
+def _insert_temprunningcatalog(image_id, deRuiter_r, beamwidths_limit,
+                               meridian_wrap):
     """Select matched sources
 
     Here we select the extractedsource that have a positional match
@@ -558,11 +560,11 @@ INSERT INTO temprunningcatalog
              AND x0.image = %(image_id)s
              AND i0.dataset = rc0.dataset
              AND rc0.mon_src = FALSE
-             AND rc0.zone BETWEEN CAST(FLOOR(x0.decl - i0.rb_smaj) as INTEGER)
-                              AND CAST(FLOOR(x0.decl + i0.rb_smaj) as INTEGER)
-             AND rc0.wm_decl BETWEEN x0.decl - i0.rb_smaj
-                                 AND x0.decl + i0.rb_smaj
-             AND rc0.x*x0.x + rc0.y*x0.y + rc0.z*x0.z > cos(radians(i0.rb_smaj))
+             AND rc0.zone BETWEEN CAST(FLOOR(x0.decl - %(beamwidths_limit)s * i0.rb_smaj) as INTEGER)
+                              AND CAST(FLOOR(x0.decl + %(beamwidths_limit)s * i0.rb_smaj) as INTEGER)
+             AND rc0.wm_decl BETWEEN x0.decl - %(beamwidths_limit)s * i0.rb_smaj
+                                 AND x0.decl + %(beamwidths_limit)s * i0.rb_smaj
+             AND rc0.x*x0.x + rc0.y*x0.y + rc0.z*x0.z > cos(radians(%(beamwidths_limit)s * i0.rb_smaj))
              AND CASE WHEN rc0.wm_ra < 90 OR rc0.wm_ra > 270
                       THEN SQRT(  (MOD(CAST(rc0.wm_ra + 180 AS NUMERIC(11,8)), 360) - MOD(CAST(x0.ra + 180 AS NUMERIC(11,8)), 360)) * COS(RADIANS((rc0.wm_decl + x0.decl)/2))
                           * (MOD(CAST(rc0.wm_ra + 180 AS NUMERIC(11,8)), 360) - MOD(CAST(x0.ra + 180 AS NUMERIC(11,8)), 360)) * COS(RADIANS((rc0.wm_decl + x0.decl)/2))
@@ -764,13 +766,13 @@ INSERT INTO temprunningcatalog
              AND x0.image = %(image_id)s
              AND i0.dataset = rc0.dataset
              AND rc0.mon_src = FALSE
-             AND rc0.zone BETWEEN CAST(FLOOR(x0.decl - i0.rb_smaj) AS INTEGER)
-                              AND CAST(FLOOR(x0.decl + i0.rb_smaj) AS INTEGER)
-             AND rc0.wm_decl BETWEEN x0.decl - i0.rb_smaj
-                                 AND x0.decl + i0.rb_smaj
-             AND rc0.wm_ra BETWEEN x0.ra - alpha(i0.rb_smaj, x0.decl)
-                               AND x0.ra + alpha(i0.rb_smaj, x0.decl)
-             AND rc0.x * x0.x + rc0.y * x0.y + rc0.z * x0.z > COS(RADIANS(i0.rb_smaj))
+             AND rc0.zone BETWEEN CAST(FLOOR(x0.decl - %(beamwidths_limit)s * i0.rb_smaj) AS INTEGER)
+                              AND CAST(FLOOR(x0.decl + %(beamwidths_limit)s * i0.rb_smaj) AS INTEGER)
+             AND rc0.wm_decl BETWEEN x0.decl - %(beamwidths_limit)s * i0.rb_smaj
+                                 AND x0.decl + %(beamwidths_limit)s * i0.rb_smaj
+             AND rc0.wm_ra BETWEEN x0.ra - alpha(%(beamwidths_limit)s * i0.rb_smaj, x0.decl)
+                               AND x0.ra + alpha(%(beamwidths_limit)s * i0.rb_smaj, x0.decl)
+             AND rc0.x * x0.x + rc0.y * x0.y + rc0.z * x0.z > COS(RADIANS(%(beamwidths_limit)s * i0.rb_smaj))
              AND SQRT(  (rc0.wm_ra - x0.ra) * COS(RADIANS((rc0.wm_decl + x0.decl)/2))
                       * (rc0.wm_ra - x0.ra) * COS(RADIANS((rc0.wm_decl + x0.decl)/2))
                       / (x0.uncertainty_ew * x0.uncertainty_ew + rc0.wm_uncertainty_ew * rc0.wm_uncertainty_ew)
@@ -784,11 +786,12 @@ INSERT INTO temprunningcatalog
          AND t0.stokes = rf0.stokes
 """
     #mw = _check_meridian_wrap(conn, image_id)
-    if mw['q_across'] == True:
-        logger.debug("Search across 0/360 meridian: %s" % mw)
+    if meridian_wrap['q_across'] == True:
+        logger.debug("Search across 0/360 meridian: %s" % meridian_wrap)
         query = q_across_ra0
 
-    args = {'image_id': image_id, 'deRuiter': deRuiter_r}
+    args = {'image_id': image_id, 'deRuiter': deRuiter_r,
+            'beamwidths_limit' : beamwidths_limit}
     tkp.db.execute(query, args, commit=True)
 
 

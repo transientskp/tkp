@@ -122,6 +122,14 @@ source-association.
    Float. Maximum DeRuiter radius for two sources to be considered candidates
    for association.
 
+``beamwidths_limit``
+   Float. Maximum separation for two sources to be considered candidates for
+   association, as a multiple of the restoring-beam semimajor-axis length.
+   Default is 1.0, which was the fixed default prior to TraP release 2.1.
+   It may be necessary to use a larger number if your data has large
+   systematic position errors, i.e. if the sources 'jitter' between images,
+   but note that using a large value can cause slowdown of database operations.
+
 .. _job_params_transient_search:
 
 ``transient_search`` Section

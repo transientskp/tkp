@@ -121,7 +121,7 @@ Installation
 Once all dependencies have been satisfied, installation should be
 straightforward. You can either install from source::
 
-  $ git clone https://github.com/transientskp/tkp.git
+  $ git clone --branch release2.1 https://github.com/transientskp/tkp.git
   $ cd tkp
   $ python setup.py install
 
@@ -129,16 +129,16 @@ Or you can install directly from the Python Package Index
 (`PyPI <https://pypi.python.org/pypi/tkp>`_), e.g. using
 `pip <https://pip.pypa.io>`_)::
 
-  $ pip install tkp
+  $ pip install tkp==2.1
 
 Note that if you want to make use of the :ref:`pixel store <mongodb-intro>`
 functionality, then::
 
-  $ pip install tkp[pixelstore]
+  $ pip install tkp[pixelstore]==2.1
 
 will install the required libaries, similarly::
 
-  $ pip install tkp[monetdb]
+  $ pip install tkp[monetdb]==2.1
 
 will ensure installation of the python-monetdb interface package.
 

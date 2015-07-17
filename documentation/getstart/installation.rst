@@ -9,13 +9,14 @@ To install the TraP you must:
 #. Install and configure a suitable back-end database;
 #. Optionally, install and configure `MongoDB <http://www.mongodb.org/>`_
    as a :ref:`pixel store <mongodb-intro>`;
-#. Install the core pipeline dependencies;
-#. Build and install the TraP itself.
+#. Install the core pipeline dependencies (casacore etc);
+#. Install the TraP itself, via the 'tkp' Python package.
 
 Some details on each of these steps is provided below.
 
-Note, though, that the overall procedure is complex, and correctly configuring
-all the various components can be difficult. It is possible instead to use
+Note, though, that the overall procedure is complex, and can be difficult if
+you've not had prior experience with e.g. database configuration.
+It is possible instead to use
 `Vagrant <http://www.vagrantup.com/>`_ to quickly and easily set up a virtual
 machine which provides a fully configured and working ready-to-go pipeline and
 supporting tools. This is a quick and easy way to get up and running for
@@ -42,7 +43,8 @@ PostgreSQL
 
 Ensure that the access rights to your server are set appropriately, for
 example to trust connections from whichever machine(s) will be used to run the
-TraP. This is done by editing ``pg_hba.conf``.
+TraP. This is done by editing ``pg_hba.conf``, and can be verified by
+connecting with the command line tool ``psql``.
 
 MonetDB
 -------
@@ -70,41 +72,41 @@ configured to accept requests from TraP clients.
 Core Dependencies
 =================
 
-To build the TraP, you will need:
+TraP mostly depends on standard packages which you should be able to find
+in your system's package manager (e.g. apt, yum, etc).
+To install the TraP, you will need the following:
 
 * C++ and Fortran compilers (tested with `GCC <http://gcc.gnu.org/>`_)
 * `GNU Make <https://www.gnu.org/software/make/>`_
-* `Python <https://www.python.org/>`_ (2.7.x series *only*, including header files)
-* `NumPy <http://www.numpy.org/>`_ (at least version 1.3.0)
+* `Python <https://www.python.org/>`_ (2.7.x series, including header files)
 * `Boost Python <http://www.boost.org/doc/libs/release/libs/python/doc/>`_
 * `WCSLIB <http://www.atnf.csiro.au/people/mcalabre/WCS/>`_
-* `pywcs <http://stsdas.stsci.edu/astrolib/pywcs/>`_
 
-In addition to the above, to run the TraP you will need:
 
+TraP also has a number of Python-package dependencies. The install process
+will attempt to download and install these as necessary, but you may
+wish to pre-install system packages for some of the following,
+in order to save time recompiling them from source:
+
+* `NumPy <http://www.numpy.org/>`_ (at least version 1.3.0)
 * `SciPy <http://www.scipy.org/>`_ (at least version 0.7.0)
 * `python-dateutil <http://labix.org/python-dateutil>`_ (at least version 1.4.1)
-* `python-casacore <https://github.com/casacore/python-casacore/>`_ and
-  `casacore <https://github.com/casacore/casacore/>`_ (including measures data)
-
-To work with the pipeline database, you will need at least one of:
-
+* `python-psycopg2 <http://initd.org/psycopg/>`_ (for PostgreSQL)
 * `python-monetdb <https://pypi.python.org/pypi/python-monetdb>`_ (for MonetDB)
-* `psycopg2 <http://initd.org/psycopg/>`_ (for PostgreSQL)
 
-To work with the :ref:`pixel store <mongodb-intro>` you will need:
+To work with the :ref:`pixel store <mongodb-intro>` you will also need:
 
 * `PyMongo <http://api.mongodb.org/python/current/>`_
 
-Most of these dependencies should be easily satisfied by operating
-system-level package management or through the `Python Package Index
-<https://pypi.python.org/pypi>`_, and we strongly suggest you take advantage
-of that convenience rather than building everything from source. The most
-notable exceptions are is casacore: this are not commonly packaged in
-mainstream distributions. Casacore can be compiled from source, or users of
-Ubuntu-based distributions might find the `Radio Astronomy Ubuntu Personal
-Packaging Archive
-<https://launchpad.net/~radio-astro/+archive/ubuntu/main>`_ useful.
+Finally, TraP also requires the 'casacore' library, which is not yet widely
+available as a system package:
+
+* `casacore <https://github.com/casacore/casacore/>`_ (including measures data)
+
+Casacore can be compiled from source, or users of
+Ubuntu-based distributions might find the
+`Radio Astronomy Launchpad page <https://launchpad.net/~radio-astro/+archive/ubuntu/main>`_
+useful.
 
 .. warning::
 
@@ -113,15 +115,33 @@ Packaging Archive
     configured.
 
 
-Build and Install
-=================
+Installation
+============
 
-Once all dependencies have been satisfied, building should be
-straightforward::
+Once all dependencies have been satisfied, installation should be
+straightforward. You can either install from source::
 
   $ git clone https://github.com/transientskp/tkp.git
   $ cd tkp
   $ python setup.py install
+
+Or you can install directly from the Python Package Index
+(`PyPI <https://pypi.python.org/pypi/tkp>`_), e.g. using
+`pip <https://pip.pypa.io>`_)::
+
+  $ pip install tkp
+
+Note that if you want to make use of the :ref:`pixel store <mongodb-intro>`
+functionality, then::
+
+  $ pip install tkp[pixelstore]
+
+will install the required libaries, similarly::
+
+  $ pip install tkp[monetdb]
+
+will ensure installation of the python-monetdb interface package.
+
 
 Following installation, including setting up and configuring the database,
 follow the :ref:`test procedure <testing>` to ensure that everything is

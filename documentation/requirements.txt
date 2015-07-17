@@ -1,4 +1,4 @@
-sphinx
+sphinx>=1.3
 sphinxcontrib-programoutput
 sphinxcontrib-napoleon
 sphinx-argparse

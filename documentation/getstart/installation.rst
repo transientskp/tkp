@@ -115,7 +115,7 @@ useful.
     configured.
 
 
-Installation
+Install TKP
 ============
 
 Once all dependencies have been satisfied, installation should be
@@ -136,7 +136,7 @@ functionality, then::
 
   $ pip install tkp[pixelstore]
 
-will install the required libaries, similarly::
+will install the required libraries, similarly::
 
   $ pip install tkp[monetdb]
 

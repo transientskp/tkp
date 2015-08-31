@@ -1,7 +1,7 @@
 
 from sqlalchemy import Boolean, Column, DateTime, ForeignKey, Index,\
     Integer, SmallInteger, String, text, Sequence
-from sqlalchemy.orm import relationship
+from sqlalchemy.orm import relationship, backref
 from sqlalchemy.ext.declarative import declarative_base
 
 from sqlalchemy.dialects.postgresql import DOUBLE_PRECISION as Double
@@ -16,12 +16,13 @@ class Assocskyrgn(Base):
     __tablename__ = 'assocskyrgn'
 
     id = Column(Integer, primary_key=True)
-    runcat = Column(ForeignKey('runningcatalog.id'), nullable=False, index=True)
-    skyrgn = Column(ForeignKey('skyregion.id'), nullable=False, index=True)
-    distance_deg = Column(Double)
+    runcat_id = Column('runcat', ForeignKey('runningcatalog.id'), nullable=False, index=True)
+    runcat = relationship('Runningcatalog')
 
-    runningcatalog = relationship('Runningcatalog')
-    skyregion = relationship('Skyregion')
+    skyrgn_id = Column('skyrgn', ForeignKey('skyregion.id'), nullable=False, index=True)
+    skyrgn = relationship('Skyregion')
+
+    distance_deg = Column(Double)
 
 
 class Assocxtrsource(Base):
@@ -32,8 +33,13 @@ class Assocxtrsource(Base):
     )
 
     id = Column(Integer, primary_key=True)
-    runcat = Column(ForeignKey('runningcatalog.id'), nullable=False)
-    xtrsrc = Column(ForeignKey('extractedsource.id'), index=True)
+
+    runcat_id = Column('runcat', ForeignKey('runningcatalog.id'), nullable=False)
+    runcat = relationship('Runningcatalog')
+
+    xtrsrc_id = Column('xtrsrc', ForeignKey('extractedsource.id'), index=True)
+    xtrsrc = relationship('Extractedsource')
+
     type = Column(SmallInteger, nullable=False)
     distance_arcsec = Column(Double)
     r = Column(Double)
@@ -41,9 +47,6 @@ class Assocxtrsource(Base):
     v_int = Column(Double, nullable=False)
     eta_int = Column(Double, nullable=False)
     f_datapoints = Column(Integer, nullable=False)
-
-    runningcatalog = relationship('Runningcatalog')
-    extractedsource = relationship('Extractedsource')
 
 
 class Config(Base):
@@ -54,13 +57,14 @@ class Config(Base):
     )
 
     id = Column(Integer, primary_key=True)
-    dataset = Column(ForeignKey('dataset.id'), nullable=False)
+
+    dataset_id = Column('dataset', ForeignKey('dataset.id'), nullable=False)
+    dataset = relationship('Dataset')
+
     section = Column(String(100))
     key = Column(String(100))
     value = Column(String(500))
     type = Column(String(5))
-
-    dataset1 = relationship('Dataset')
 
 
 seq_dataset = Sequence('seq_dataset')
@@ -68,8 +72,7 @@ seq_dataset = Sequence('seq_dataset')
 class Dataset(Base):
     __tablename__ = 'dataset'
 
-    id = Column(Integer, seq_dataset, server_default=seq_dataset.next_value(),
-                primary_key=True)
+    id = Column(Integer, seq_dataset, server_default=seq_dataset.next_value(), primary_key=True)
     rerun = Column(Integer, nullable=False, server_default=text("0"))
     type = Column(SmallInteger, nullable=False, server_default=text("1"))
     process_start_ts = Column(DateTime, nullable=False)
@@ -89,7 +92,16 @@ class Extractedsource(Base):
     __tablename__ = 'extractedsource'
 
     id = Column(Integer, primary_key=True)
-    image = Column(ForeignKey('image.id'), nullable=False, index=True)
+
+    image_id = Column('image', ForeignKey('image.id'), nullable=False, index=True)
+    image = relationship('Image')
+
+    ff_runcat_id = Column('ff_runcat', ForeignKey('runningcatalog.id'))
+    ff_runcat = relationship('Runningcatalog',  primaryjoin='Extractedsource.ff_runcat_id == Runningcatalog.id')
+
+    ff_monitor_id = Column('ff_monitor', ForeignKey('monitor.id'))
+    ff_monitor = relationship('Monitor')
+
     zone = Column(Integer, nullable=False)
     ra = Column(Double, nullable=False, index=True)
     decl = Column(Double, nullable=False, index=True)
@@ -119,15 +131,9 @@ class Extractedsource(Base):
     reduced_chisq = Column(Double)
     extract_type = Column(SmallInteger)
     fit_type = Column(SmallInteger)
-    ff_runcat = Column(ForeignKey('runningcatalog.id'))
-    ff_monitor = Column(ForeignKey('monitor.id'))
+
     node = Column(SmallInteger, nullable=False, server_default=text("1"))
     nodes = Column(SmallInteger, nullable=False, server_default=text("1"))
-
-    monitor = relationship('Monitor')
-    runningcatalog = relationship('Runningcatalog',
-                                  primaryjoin='Extractedsource.ff_runcat == Runningcatalog.id')
-    image1 = relationship('Image')
 
 
 seq_frequencyband = Sequence('seq_frequencyband')
@@ -151,15 +157,22 @@ class Image(Base):
 
     id = Column(Integer, seq_image, primary_key=True,
                 server_default=seq_image.next_value())
-    dataset = Column(ForeignKey('dataset.id'), nullable=False, index=True)
+
+    dataset_id = Column('dataset', Integer, ForeignKey('dataset.id'), nullable=False, index=True)
+    dataset = relationship('Dataset', backref=backref('images'))
+
+    band_id = Column('band', ForeignKey('frequencyband.id'), nullable=False, index=True)
+    band = relationship('Frequencyband')
+
+    skyrgn_id = Column('skyrgn', Integer, ForeignKey('skyregion.id'), nullable=False, index=True)
+    skyrgn = relationship('Skyregion', backref=backref('images'))
+
     tau = Column(Integer)
-    band = Column(ForeignKey('frequencyband.id'), nullable=False, index=True)
     stokes = Column(SmallInteger, nullable=False, server_default=text("1"))
     tau_time = Column(Double)
     freq_eff = Column(Double, nullable=False)
     freq_bw = Column(Double)
     taustart_ts = Column(DateTime, nullable=False, index=True)
-    skyrgn = Column(ForeignKey('skyregion.id'), nullable=False, index=True)
     rb_smaj = Column(Double, nullable=False)
     rb_smin = Column(Double, nullable=False)
     rb_pa = Column(Double, nullable=False)
@@ -176,38 +189,37 @@ class Image(Base):
     node = Column(SmallInteger, nullable=False, server_default=text("1"))
     nodes = Column(SmallInteger, nullable=False, server_default=text("1"))
 
-    frequencyband = relationship('Frequencyband')
-    dataset1 = relationship('Dataset')
-    skyregion = relationship('Skyregion')
-
 
 class Monitor(Base):
     __tablename__ = 'monitor'
 
     id = Column(Integer, primary_key=True)
-    dataset = Column(ForeignKey('dataset.id'), nullable=False, index=True)
+    dataset_id = Column('dataset', ForeignKey('dataset.id'), nullable=False, index=True)
+    dataset = relationship('Dataset')
+
+    runcat_id = Column('runcat', ForeignKey('runningcatalog.id'))
+    runcat = relationship('Runningcatalog')
+
     ra = Column(Double, nullable=False)
     decl = Column(Double, nullable=False)
-    runcat = Column(ForeignKey('runningcatalog.id'))
     name = Column(String(100))
-
-    dataset1 = relationship('Dataset')
-    runningcatalog = relationship('Runningcatalog')
 
 
 class Newsource(Base):
     __tablename__ = 'newsource'
 
     id = Column(Integer, primary_key=True)
-    runcat = Column(ForeignKey('runningcatalog.id'), nullable=False, index=True)
-    trigger_xtrsrc = Column(ForeignKey('extractedsource.id'), nullable=False,
-                            index=True)
-    newsource_type = Column(SmallInteger, nullable=False)
-    previous_limits_image = Column(ForeignKey('image.id'), nullable=False)
 
-    image = relationship('Image')
-    runningcatalog = relationship('Runningcatalog')
-    extractedsource = relationship('Extractedsource')
+    runcat_id = Column('runcat', ForeignKey('runningcatalog.id'), nullable=False, index=True)
+    runcat = relationship('Runningcatalog')
+
+    trigger_xtrsrc_id = Column('trigger_xtrsrc', ForeignKey('extractedsource.id'), nullable=False, index=True)
+    trigger_xtrsrc = relationship('Extractedsource')
+
+    previous_limits_image_id = Column('previous_limits_image', ForeignKey('image.id'), nullable=False)
+    previous_limits_image = relationship('Image')
+
+    newsource_type = Column(SmallInteger, nullable=False)
 
 
 class Node(Base):
@@ -231,12 +243,14 @@ class Rejection(Base):
     __tablename__ = 'rejection'
 
     id = Column(Integer, primary_key=True)
-    image = Column(ForeignKey('image.id'), index=True)
-    rejectreason = Column(ForeignKey('rejectreason.id'), index=True)
-    comment = Column(String(512))
 
-    image1 = relationship('Image')
-    rejectreason1 = relationship('Rejectreason')
+    image_id = Column('image', ForeignKey('image.id'), index=True)
+    image = relationship('Image')
+
+    rejectreason_id = Column('rejectreason', ForeignKey('rejectreason.id'), index=True)
+    rejectreason = relationship('Rejectreason')
+
+    comment = Column(String(512))
 
 
 class Rejectreason(Base):
@@ -250,9 +264,13 @@ class Runningcatalog(Base):
     __tablename__ = 'runningcatalog'
 
     id = Column(Integer, primary_key=True)
-    xtrsrc = Column(ForeignKey('extractedsource.id'), nullable=False,
-                    unique=True)
-    dataset = Column(ForeignKey('dataset.id'), nullable=False, index=True)
+
+    xtrsrc_id = Column('xtrsrc', ForeignKey('extractedsource.id'), nullable=False, unique=True)
+    xtrsrc = relationship('Extractedsource', primaryjoin='Runningcatalog.xtrsrc_id == Extractedsource.id')
+
+    dataset_id = Column('dataset', ForeignKey('dataset.id'), nullable=False, index=True)
+    dataset = relationship('Dataset')
+
     datapoints = Column(Integer, nullable=False)
     zone = Column(Integer, nullable=False, index=True)
     wm_ra = Column(Double, nullable=False, index=True)
@@ -271,10 +289,9 @@ class Runningcatalog(Base):
     inactive = Column(Boolean, nullable=False, server_default=text("false"))
     mon_src = Column(Boolean, nullable=False, server_default=text("false"))
 
-    dataset1 = relationship('Dataset')
-    extractedsource = relationship('Extractedsource',
-                                   primaryjoin='Runningcatalog.xtrsrc == Extractedsource.id')
-
+    extractedsources = relationship('Extractedsource',
+                                    secondary='assocxtrsource',
+                                    backref='runningcatalogs')
 
 class RunningcatalogFlux(Base):
     __tablename__ = 'runningcatalog_flux'
@@ -284,8 +301,13 @@ class RunningcatalogFlux(Base):
     )
 
     id = Column(Integer, primary_key=True)
-    runcat = Column(ForeignKey('runningcatalog.id'), nullable=False)
-    band = Column(ForeignKey('frequencyband.id'), nullable=False, index=True)
+
+    runcat_id = Column('runcat', ForeignKey('runningcatalog.id'), nullable=False)
+    runcat = relationship('Runningcatalog')
+
+    band_id = Column('band', ForeignKey('frequencyband.id'), nullable=False, index=True)
+    band = relationship('Frequencyband')
+
     stokes = Column(SmallInteger, nullable=False, server_default=text("1"))
     f_datapoints = Column(Integer, nullable=False)
     avg_f_peak = Column(Double)
@@ -299,19 +321,18 @@ class RunningcatalogFlux(Base):
     avg_weighted_f_int = Column(Double)
     avg_weighted_f_int_sq = Column(Double)
 
-    frequencyband = relationship('Frequencyband')
-    runningcatalog = relationship('Runningcatalog')
-
 
 seq_skyregion = Sequence('seq_skyregion')
-
 
 class Skyregion(Base):
     __tablename__ = 'skyregion'
 
     id = Column(Integer, seq_skyregion, primary_key=True,
                 server_default=seq_skyregion.next_value())
-    dataset = Column(ForeignKey('dataset.id'), nullable=False, index=True)
+
+    dataset_id = Column('dataset', ForeignKey('dataset.id'), nullable=False, index=True)
+    dataset = relationship('Dataset')
+
     centre_ra = Column(Double, nullable=False)
     centre_decl = Column(Double, nullable=False)
     xtr_radius = Column(Double, nullable=False)
@@ -319,19 +340,26 @@ class Skyregion(Base):
     y = Column(Double, nullable=False)
     z = Column(Double, nullable=False)
 
-    dataset1 = relationship('Dataset')
-
 
 class Temprunningcatalog(Base):
     __tablename__ = 'temprunningcatalog'
 
     id = Column(Integer, primary_key=True)
-    runcat = Column(ForeignKey('runningcatalog.id'), nullable=False, index=True)
-    xtrsrc = Column(ForeignKey('extractedsource.id'), nullable=False, index=True)
+
+    runcat_id = Column('runcat', ForeignKey('runningcatalog.id'), nullable=False, index=True)
+    runcat = relationship('Runningcatalog')
+
+    xtrsrc_id = Column('xtrsrc', ForeignKey('extractedsource.id'), nullable=False, index=True)
+    xtrsrc = relationship('Extractedsource')
+
+    dataset_id = Column('dataset', ForeignKey('dataset.id'), nullable=False, index=True)
+    dataset = relationship('Dataset')
+
+    band_id = Column('band', ForeignKey('frequencyband.id'), nullable=False, index=True)
+    band = relationship('Frequencyband')
+
     distance_arcsec = Column(Double, nullable=False)
     r = Column(Double, nullable=False)
-    dataset = Column(ForeignKey('dataset.id'), nullable=False, index=True)
-    band = Column(ForeignKey('frequencyband.id'), nullable=False, index=True)
     stokes = Column(SmallInteger, nullable=False, server_default=text("1"))
     datapoints = Column(Integer, nullable=False)
     zone = Column(Integer, nullable=False)
@@ -364,11 +392,6 @@ class Temprunningcatalog(Base):
     avg_f_int_weight = Column(Double)
     avg_weighted_f_int = Column(Double)
     avg_weighted_f_int_sq = Column(Double)
-
-    frequencyband = relationship('Frequencyband')
-    dataset1 = relationship('Dataset')
-    runningcatalog = relationship('Runningcatalog')
-    extractedsource = relationship('Extractedsource')
 
 
 class Version(Base):

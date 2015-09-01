@@ -146,19 +146,3 @@ will ensure installation of the python-monetdb interface package.
 Following installation, including setting up and configuring the database,
 follow the :ref:`test procedure <testing>` to ensure that everything is
 working and ready for use.
-
-.. _installation_distributed:
-
-Distributed processing via Celery
-=================================
-If you wish to run a TraP job across multiple machines, you may optionally
-also install a :ref:`Celery <celery-intro>` broker (at least version 3.0);
-see the `Celery website <http://www.celeryproject.org/>`_ for further details
-of the Celery package.
-
-Multiple different options for Celery brokers are available;
-refer to the Celery documentation for details.
-We have had success with `RabbitMQ <http://www.rabbitmq.com/>`_.
-
-This functionality is currently not well supported
-and should be considered experimental.

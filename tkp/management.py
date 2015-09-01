@@ -216,12 +216,6 @@ def prepare_job(jobname):
     sys.path.append(jobdir)
 
 
-def celery_cmd(args):
-    from celery.bin import celery
-    base = celery.CeleryCommand(app='tkp.distribute.celery.celery_app')
-    base.execute_from_commandline(sys.argv[1:])
-
-
 def run_job(args):
     print "running job '%s'" % args.name
     prepare_job(args.name)
@@ -342,16 +336,6 @@ def get_parser():
                                     "(only works with Postgres backend)",
                                action="store_true")
     initdb_parser.set_defaults(func=init_db)
-
-    # celery
-    celery_parser = parser_subparsers.add_parser(
-        'celery',
-        help='Shortcut for access to celery sub commands')
-
-    celery_parser.add_argument('rest', nargs=argparse.REMAINDER,
-                               help='A celery subcommand')
-    celery_parser.set_defaults(func=celery_cmd)
-
     return parser
 
 

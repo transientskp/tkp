@@ -118,8 +118,7 @@ See also: the 'optional dependencies' section of your relevant
 =======================
 
 ``method``
-   Determines whether the TraP is run in single-process, multi-process, or
-   :ref:`distributed <installation_distributed>` mode.
+   Determines whether the TraP is run in single-process or multi-process mode.
    ``"multiproc"`` should be suitable for most users.
 
 ``cores``

@@ -16,7 +16,6 @@ install_requires = """
 extras_require = {
     'pixelstore': ['pymongo'],
     'monetdb' : ['python-monetdb>=11.11.11'],
-    'distribute' : [ 'celery>=3.1.11']
 }
 
 tkp_scripts = [

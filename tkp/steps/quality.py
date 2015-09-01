@@ -16,10 +16,10 @@ logger = logging.getLogger(__name__)
 
 
 def reject_check(image_path, job_config):
-    """ checks if an image passes the quality check. If not, a rejection
-        tuple is returned.
+    """
+    Check if an image passes the quality checks.
 
-    NOTE: should only be used on a NODE
+    If not, a rejection reason is returned.
 
     args:
         id: database ID of image. This is not used but kept as a reference for

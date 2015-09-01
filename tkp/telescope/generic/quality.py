@@ -20,3 +20,5 @@ def reject_check_generic(accessor):
     if nan_check:
         logger.warning("image %s REJECTED: contains NaN" % accessor.url)
         return tkp.db.quality.reason['nan'].id, ""
+    else:
+        return None

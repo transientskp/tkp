@@ -3,7 +3,9 @@ import numpy as np
 
 def contains_nan(array):
     """
-    Checks if a numpy array contains a NaN value.
+    Efficiently checks if a numpy array contains a NaN value.
+
+    cf. http://stackoverflow.com/questions/6736590/fast-check-for-nan-in-numpy
 
     A NaN values may indicate a calibration error. The source finder doesn't
     know how to interpret a NaN value so we reject such an image.

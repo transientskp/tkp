@@ -38,10 +38,6 @@ The created directory will contain the following configuration files:
    as well as specifying where and how to store log files.
    :ref:`See here <pipeline_cfg>` for a full description.
 
-``celeryconfig.py``
-   Configuration of the :ref:`Celery <celery-intro>` task distribution system.
-   :ref:`See here <celeryconfig_py>` for a full description.
-
 .. _config-job:
 
 Creating a Job

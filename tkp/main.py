@@ -1,12 +1,5 @@
 """
-Main pipeline logic is defined here.
-
-The science logic is a bit entwined with celery-specific functionality.
-This is somewhat unavoidable, since how a task is parallelised (or not) has
-implications for the resulting logic.
-
-In general, we try to keep functions elsewhere so this file is succinct.
-The exceptions are a couple of celery-specific subroutines.
+The main pipeline logic, from where all other components are called.
 """
 import imp
 import logging

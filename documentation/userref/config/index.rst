@@ -14,4 +14,4 @@ can best customize to meet their needs.
    overview
    pipeline_cfg
    job_params_cfg
-   celeryconfig_py
+

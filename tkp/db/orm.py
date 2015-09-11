@@ -214,8 +214,9 @@ class DBObject(object):
             try:
                 # Insert a default source
                 cursor.execute(query, values)
-                if not self.database.connection.autocommit:
-                    self.database.connection.commit()
+                if not self.database.connection.connection.autocommit:
+                    self.database.connection.connection.commit()
+
                 if self.database.engine == "monetdb":
                     self._id = cursor.lastrowid
                 elif self.database.engine == "postgresql":
@@ -223,6 +224,7 @@ class DBObject(object):
                 else:
                     raise self.database.connection.Error(
                          "Database engine not implemented in ORM.")
+
             except self.database.connection.Error:
                 logger.warn("insertion into database failed: %s",
                              (query % values))
@@ -264,7 +266,8 @@ class DBObject(object):
         # Shallow copy, but that's ok: all database values are
         # immutable (including datetime objects)
         if results:
-            self._data = results[0].copy()
+            # force to dict since sqlalchemy RowProxy doesn't have a copy
+            self._data = dict(results[0]).copy()
         else:
             self._data = {}
 

@@ -17,7 +17,7 @@ def dataset_images(dataset_id, database=None):
 def convert_to_cartesian(conn, ra, decl):
     """Returns tuple (x,y,z)"""
     qry = """SELECT x,y,z FROM cartesian(%s, %s)"""
-    curs = conn.cursor()
+    curs = conn.connection.cursor()
     curs.execute(qry, (ra, decl))
     return curs.fetchone()
 

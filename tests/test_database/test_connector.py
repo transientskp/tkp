@@ -28,14 +28,12 @@ class TestDatabaseConnection(unittest.TestCase):
             "NotSupportedError"
         ]
 
-        # In addition, we define our own exception types:
-        exceptions.append("RhombusError")
 
         # All DB-API exceptions are subclasses of StandardError:
         for exception in exceptions:
             self.assertTrue(
                 issubclass(
-                    getattr(self.database.exceptions, exception),
+                    getattr(self.database.connection.connection.connection, exception),
                     StandardError
                 )
             )

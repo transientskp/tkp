@@ -75,33 +75,44 @@ def columns_from_table(table, keywords=None, alias=None, where=None,
 
     cursor = tkp.db.execute(query, where_args)
     results = cursor.fetchall()
-    results_dict = convert_db_rows_to_dicts(results, cursor.description, alias)
+    results_dict = convert_db_rows_to_dicts(results, alias_map=alias)
     return results_dict
 
 
-def convert_db_rows_to_dicts(results, cursor_description, alias_map=None):
-    """Takes a list of rows as returned by cursor.fetchall(),
-        converts to a list of dictionaries."""
-    col_names = [d[0] for d in cursor_description]
-    if alias_map is not None:  # Replace column names with chosen alias
-        for index, k in enumerate(col_names):
-            if k in alias_map:
-                col_names[index] = alias_map[k]
-    #NB enumerate generates only one loop
-    #so store it in a list!
-    col_index = [(i, c) for i, c in enumerate(col_names)]
-    result_dicts = []
+def convert_db_rows_to_dicts(results, cursor_description=None, alias_map=None):
+    """Converts a SQLAlchemy Resultproxy to a list of dicts.
+
+    here for backward compatability reasons. A ResultProxy can already be used
+    as a dict, but for now it is too much work to rewrite all code.
+
+    Args:
+        results: a SQLalchemy ResultProxy or just a list of rows
+        cursor_description: Not required if results is a ResultProxy
+        alias_map: a dict controlling the rewrite of specified columns
+    """
+    dic_list = []
     for row in results:
-        rd = dict((keyword, row[index])
-                        for index, keyword in col_index)
-        result_dicts.append(rd)
-    return result_dicts
+        if cursor_description:
+            dict_row = dict(zip(cursor_description, row))
+        else:
+            dict_row = dict(row.items())
+        if alias_map:
+            for old_key, new_key in alias_map.items():
+                if old_key in row:
+                   dict_row[new_key] = dict_row.pop(old_key)
+        dic_list.append(dict_row)
+    return dic_list
 
 
 def get_db_rows_as_dicts(cursor, alias_map=None):
     """Grab results of cursor.fetchall(), convert to a list of dictionaries."""
-    return convert_db_rows_to_dicts(cursor.fetchall(), cursor.description,
-                                    alias_map)
+    if hasattr(cursor, "description"):
+        description = [col[0] for col in cursor.description]
+    else:
+        description = None
+
+    return convert_db_rows_to_dicts(cursor.fetchall(), description,
+                                    alias_map=alias_map)
 
 
 

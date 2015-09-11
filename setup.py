@@ -11,11 +11,13 @@ install_requires = """
     pywcs>=1.12
     python-casacore
     psycopg2
+    sqlalchemy>=1.0.0
     """.split()
 
 extras_require = {
     'pixelstore': ['pymongo'],
-    'monetdb' : ['python-monetdb>=11.11.11'],
+    'monetdb': ['python-monetdb>=11.11.11', 'sqlalchemy_monetdb>=0.9.1'],
+    'distribute' : [ 'celery>=3.1.11']
 }
 
 tkp_scripts = [

@@ -294,6 +294,32 @@ class Runningcatalog(Base):
                                     secondary='assocxtrsource',
                                     backref='runningcatalogs')
 
+    varmetric = relationship("Varmetric", uselist=False, backref="runcat")
+
+
+class Varmetric(Base):
+    __tablename__ = 'varmetric'
+
+    id = Column(Integer, primary_key=True)
+
+    runcat_id = Column('runcat', ForeignKey('runningcatalog.id'),
+                       nullable=False, index=True)
+
+    v_int = Column(Double, index=True)
+    eta_int = Column(Double)
+
+    band_id = Column('band', ForeignKey('frequencyband.id'), nullable=False,
+                     index=True)
+    band = relationship('Frequencyband')
+
+    newsource = Column(Integer)
+    sigma_rms_max = Column(Double, index=True)
+    sigma_rms_min = Column(Double, index=True)
+    lightcurve_max = Column(Double, index=True)
+    lightcurve_avg = Column(Double, index=True)
+    lightcurve_median = Column(Double, index=True)
+
+
 class RunningcatalogFlux(Base):
     __tablename__ = 'runningcatalog_flux'
     __table_args__ = (

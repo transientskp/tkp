@@ -25,6 +25,17 @@ class AartfaacCasaImage(CasaImage):
 
         """
         keywords = self.table.getkeywords()
-        freq_eff = keywords['coords']['spectral1']['restfreq']
-        freq_bw = keywords['coords']['spectral1']['wcs']['cdelt']
+
+        # due to some undocumented casacore feature, the 'spectral' keyword
+        # changes from spectral1 to spectral2 when AARTFAAC imaging developers
+        # changed some of the header information. For now we will try both
+        # locations.
+        if 'spectral1' in keywords['coords']:
+            keyword = 'spectral1'
+
+        if 'spectral2' in keywords['coords']:
+            keyword = 'spectral2'
+
+        freq_eff = keywords['coords'][keyword]['restfreq']
+        freq_bw = keywords['coords'][keyword]['wcs']['cdelt']
         return freq_eff, freq_bw

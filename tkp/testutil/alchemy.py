@@ -45,6 +45,11 @@ def gen_runningcatalog(xtrsrc, dataset):
                                        x=1, y=1, z=1)
 
 
+def gen_assocskyrgn(runcat, skyrgn):
+    return tkp.db.model.Assocskyrgn(runcat=runcat, skyrgn=skyrgn,
+                                    distance_deg=10)
+
+
 def gen_assocxtrsource(runningcatalog, xtrsrc):
     return tkp.db.model.Assocxtrsource(runcat=runningcatalog, xtrsrc=xtrsrc,
                                        type=0, r=0, distance_arcsec=0, v_int=0,
@@ -76,14 +81,14 @@ def gen_lightcurve(band, dataset, skyregion, datapoints=10):
 
     # now we can make runningcatalog, we use first xtrsrc as trigger src
     runningcatalog = gen_runningcatalog(xtrsrcs[0], dataset)
+    assocskyrgn = gen_assocskyrgn(runningcatalog, skyregion)
 
     # create the associations. Can't do this directly since the
     # association table has non nullable columns
     for xtrsrc in xtrsrcs:
         assocs.append(gen_assocxtrsource(runningcatalog, xtrsrc))
 
-    newsource = gen_newsource(runningcatalog, xtrsrcs[5], images[4])
 
     # just return all db objects we created
-    return [dataset, band, skyregion, runningcatalog, newsource] + images + \
-           xtrsrcs + assocs
+    return [dataset, band, skyregion, runningcatalog, assocskyrgn] + \
+           images + xtrsrcs + assocs

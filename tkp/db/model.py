@@ -1,3 +1,11 @@
+"""
+The SQLAlchemy model definition.
+
+revision history:
+
+ 37 - add forcedfits_count column to runningcatalog
+ 36 - switch to SQLAlchemy schema initialisation
+"""
 
 from sqlalchemy import Boolean, Column, DateTime, ForeignKey, Index,\
     Integer, SmallInteger, String, text, Sequence
@@ -7,7 +15,7 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.dialects.postgresql import DOUBLE_PRECISION as Double
 
 
-SCHEMA_VERSION = 36
+SCHEMA_VERSION = 37
 
 Base = declarative_base()
 metadata = Base.metadata
@@ -289,6 +297,7 @@ class Runningcatalog(Base):
     z = Column(Double, nullable=False, index=True)
     inactive = Column(Boolean, nullable=False, server_default=text("false"))
     mon_src = Column(Boolean, nullable=False, server_default=text("false"))
+    forcedfits_count = Column(Integer, server_default=text("0"))
 
     extractedsources = relationship('Extractedsource',
                                     secondary='assocxtrsource',

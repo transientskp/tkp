@@ -5,7 +5,7 @@ import shutil
 import casacore
 import casacore.images
 import casacore.tables
-import pyfits
+import astropy.io.fits as pyfits
 
 import datetime
 

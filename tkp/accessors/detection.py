@@ -1,5 +1,5 @@
 import os.path
-import pyfits
+import astropy.io.fits as pyfits
 import logging
 from collections import namedtuple
 from casacore.tables import table as casacore_table

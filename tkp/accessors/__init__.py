@@ -6,8 +6,7 @@ These can be used to populate ImageData objects based on some data source
 """
 
 import os
-import pyfits
-from tkp.db.orm import Image as DBImage
+import astropy.io.fits as pyfits
 from tkp.sourcefinder.image import ImageData
 from tkp.accessors.dataaccessor import DataAccessor
 from tkp.accessors.fitsimage import FitsImage

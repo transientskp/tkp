@@ -25,7 +25,7 @@ import os.path
 from cStringIO import StringIO
 import argparse
 import numpy
-import pyfits
+import astropy.io.fits as pyfits
 
 import logging
 

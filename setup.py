@@ -5,7 +5,7 @@ from tkp import __version__ as tkp_version
 install_requires = """
     numpy>=1.3.0
     scipy>=0.7.0
-    pyfits>=2.3.1
+    astropy
     python-dateutil>=1.4.1
     pytz
     pywcs>=1.12

@@ -6,7 +6,7 @@ import dateutil.parser
 import logging
 import re
 
-import pyfits
+import astropy.io.fits as pyfits
 
 from tkp.accessors.dataaccessor import DataAccessor
 from tkp.utility.coordinates import WCS
@@ -186,14 +186,7 @@ class FitsImage(DataAccessor):
                 """
                 Returns all history cards in FITS header hdr as a list of strings.
                 """
-                # Appropriate method to get the HISTORY from a FITS header varies with
-                # PyFITS version. See discussion at
-                # <http://pythonhosted.org/pyfits/appendix/header_transition.html>.
-                # This is quite ugly, so deliberately limited to this scope.
-                if pyfits.__version__ < 3.2:
-                    return hdr.get_history()
-                else:
-                    return hdr['HISTORY']
+                return hdr['HISTORY']
 
             for hist_entry in get_history(header):
                 results = beam_regex.search(hist_entry)

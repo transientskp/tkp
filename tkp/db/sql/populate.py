@@ -73,7 +73,7 @@ def destroy_postgres(connection):
         connection: A monetdb DB connection
     """
 
-    # both queries below generate a resultset with rows containing SQL queries
+    # queries below generate a resultset with rows containing SQL queries
     # which can be executed to drop the db content
     postgres_gen_drop_tables = """
 select 'drop table if exists "' || tablename || '" cascade;'
@@ -87,7 +87,16 @@ from pg_proc inner join pg_namespace ns on (pg_proc.pronamespace = ns.oid)
 where ns.nspname = 'public'  order by proname;
 """
 
-    for big_query in postgres_gen_drop_tables, postgres_gen_drop_functions:
+    postgres_gen_drop_sequences = """
+select 'drop sequence ' ||  relname || ';'
+from pg_class c
+inner join pg_namespace ns on (c.relnamespace = ns.oid)
+where ns.nspname = 'public' and c.relkind = 'S';
+"""
+
+    for big_query in postgres_gen_drop_tables, \
+                     postgres_gen_drop_functions, \
+                     postgres_gen_drop_sequences:
         cursor = connection.cursor()
         cursor.execute(big_query)
         queries = [row[0] for row in cursor.fetchall()]

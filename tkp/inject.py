@@ -7,7 +7,7 @@ import os.path
 import argparse
 from ConfigParser import SafeConfigParser
 from tkp.config import parse_to_dict
-import pyfits
+import astropy.io.fits as pyfits
 from casacore.tables import table as casacore_table
 import tkp.accessors.detection
 from tkp.accessors import FitsImage, LofarCasaImage

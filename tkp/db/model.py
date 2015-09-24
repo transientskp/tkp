@@ -97,6 +97,12 @@ class Dataset(Base):
     nodes = Column(SmallInteger, nullable=False, server_default=text("1"))
 
 
+# extractedsource types
+BLIND_FIT = 0
+FORCED_FIT = 1
+MONITORED_FIT = 2
+
+
 class Extractedsource(Base):
     __tablename__ = 'extractedsource'
 

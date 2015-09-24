@@ -96,6 +96,7 @@ def associate_nd(image_id):
     _del_tempruncat()
     _insert_tempruncat(image_id)
     _insert_1_to_1_assoc()
+    _increment_forcedfits_count()
 
     n_updated = _update_1_to_1_runcat_flux()
     if n_updated:
@@ -105,6 +106,24 @@ def associate_nd(image_id):
         logger.debug("Inserted new-band flux measurement for %s null_detections"
                     % n_inserted)
     _del_tempruncat()
+
+
+def _increment_forcedfits_count():
+    """
+    Increment the forcedfits count for every runningcatalog entry in the
+    temprunningcatalog table.
+    """
+    query = """\
+update runningcatalog
+set forcedfits_count = forcedfits_count + 1
+where id in (
+    select t.runcat
+    from temprunningcatalog t, runningcatalog r
+    where t.runcat = r.id
+);
+"""
+    execute(query)
+
 
 def _insert_tempruncat(image_id):
     """

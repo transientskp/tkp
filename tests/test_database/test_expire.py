@@ -9,14 +9,19 @@ whole image will be monitored.
 """
 import unittest
 from datetime import datetime, timedelta
+import logging
 
 from tkp.db.database import Database
-from tkp.db.model import Runningcatalog
+from tkp.db.model import Runningcatalog, Extractedsource, FORCED_FIT
 from tkp.db.nulldetections import get_nulldetections, associate_nd
 
-from tkp.testutil.alchemy import gen_band, gen_dataset, gen_skyregion,\
+from tkp.testutil.alchemy import gen_band, gen_dataset, gen_skyregion, \
     gen_extractedsource, gen_runningcatalog, gen_assocskyrgn, \
     gen_assocxtrsource, gen_image
+
+
+logging.basicConfig(level=logging.DEBUG)
+#logging.getLogger('sqlalchemy.engine').setLevel(logging.INFO)
 
 
 class TestExpire(unittest.TestCase):
@@ -24,6 +29,9 @@ class TestExpire(unittest.TestCase):
     def setUpClass(cls):
         cls.database = Database()
         cls.database.connect()
+
+    def tearDown(self):
+        self.session.rollback()
 
     def setUp(self):
         """
@@ -52,21 +60,21 @@ class TestExpire(unittest.TestCase):
             xtrsrcs2.append(gen_extractedsource(image))
 
         # now we can make runningcatalog, we use first xtrsrc as trigger src
-        runningcatalog1 = gen_runningcatalog(xtrsrcs1[0], self.dataset)
+        self.runningcatalog1 = gen_runningcatalog(xtrsrcs1[0], self.dataset)
         runningcatalog2 = gen_runningcatalog(xtrsrcs2[0], self.dataset)
-        assocskyrgn1 = gen_assocskyrgn(runningcatalog1, skyregion)
+        assocskyrgn1 = gen_assocskyrgn(self.runningcatalog1, skyregion)
         assocskyrgn2 = gen_assocskyrgn(runningcatalog2, skyregion)
 
         # create the associations. Can't do this directly since the
         # association table has non nullable columns
         for xtrsrc in xtrsrcs1:
-            assocs.append(gen_assocxtrsource(runningcatalog1, xtrsrc))
+            assocs.append(gen_assocxtrsource(self.runningcatalog1, xtrsrc))
         for xtrsrc in xtrsrcs2:
             assocs.append(gen_assocxtrsource(runningcatalog2, xtrsrc))
 
         self.empty_image = gen_image(band, self.dataset, skyregion, taustart_ts)
 
-        self.session.add_all([band, skyregion, runningcatalog1, runningcatalog2,
+        self.session.add_all([band, skyregion, self.runningcatalog1, runningcatalog2,
                               assocskyrgn1, assocskyrgn2, self.empty_image] +
                              images + xtrsrcs1 + xtrsrcs2 + assocs)
         self.session.flush()
@@ -78,7 +86,7 @@ class TestExpire(unittest.TestCase):
         """
 
         # get all runningcatalog entries, should be two
-        runcats = self.session.query(Runningcatalog).\
+        runcats = self.session.query(Runningcatalog). \
             filter(Runningcatalog.dataset == self.dataset).all()
         self.assertEqual(len(runcats), 2)
 
@@ -98,7 +106,22 @@ class TestExpire(unittest.TestCase):
         """
         Check if associate_nd increments the forcedfits_count column
         """
+        e = Extractedsource(zone=1, ra=1, decl=1, uncertainty_ew=1, x=1, y=1,
+                            z=1, uncertainty_ns=1, ra_err=1, decl_err=1,
+                            ra_fit_err=1, decl_fit_err=1, ew_sys_err=1,
+                            ns_sys_err=1, error_radius=1, racosdecl=1,
+                            det_sigma=1, f_int=0.01, image=self.empty_image,
+                            semimajor=1, semiminor=1, pa=1, f_peak=1,
+                            f_peak_err=1, f_int_err=1, chisq=1,
+                            reduced_chisq=1, extract_type=FORCED_FIT,
+                            ff_runcat=self.runningcatalog1)
+        self.session.add(e)
+        self.session.commit()
+        forcedfits_count_pre = self.runningcatalog1.forcedfits_count
         associate_nd(self.empty_image.id)
+        self.session.refresh(self.runningcatalog1)
+        forcedfits_count_post = self.runningcatalog1.forcedfits_count
+        self.assertEqual(forcedfits_count_pre + 1, forcedfits_count_post)
 
     def test_reset(self):
         """

@@ -30,7 +30,7 @@ def image_to_mongodb(filename, hostname, port, db):
         return False
 
     try:
-        connection = pymongo.Connection(host=hostname, port=port)
+        connection = pymongo.MongoClient(host=hostname, port=port)
         gfs = gridfs.GridFS(connection[db])
         if gfs.exists(filename=filename):
             logger.debug("File already in database")

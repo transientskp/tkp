@@ -9,6 +9,7 @@ from tkp.db.database import DB_VERSION
 import tkp.db.database
 import tkp.db.model
 from tkp.config import get_database_config
+from sqlalchemy.exc import ProgrammingError
 
 
 tkp_folder = tkp.__path__[0]
@@ -72,7 +73,7 @@ def destroy_postgres(connection):
         connection: A monetdb DB connection
     """
 
-    # both queries below generate a resultset with rows containing SQL queries
+    # queries below generate a resultset with rows containing SQL queries
     # which can be executed to drop the db content
     postgres_gen_drop_tables = """
 select 'drop table if exists "' || tablename || '" cascade;'
@@ -86,7 +87,16 @@ from pg_proc inner join pg_namespace ns on (pg_proc.pronamespace = ns.oid)
 where ns.nspname = 'public'  order by proname;
 """
 
-    for big_query in postgres_gen_drop_tables, postgres_gen_drop_functions:
+    postgres_gen_drop_sequences = """
+select 'drop sequence ' ||  relname || ';'
+from pg_class c
+inner join pg_namespace ns on (c.relnamespace = ns.oid)
+where ns.nspname = 'public' and c.relkind = 'S';
+"""
+
+    for big_query in postgres_gen_drop_tables, \
+                     postgres_gen_drop_functions, \
+                     postgres_gen_drop_sequences:
         cursor = connection.cursor()
         cursor.execute(big_query)
         queries = [row[0] for row in cursor.fetchall()]
@@ -124,13 +134,13 @@ def destroy(dbconfig):
     assert(dbconfig['destroy'])
     if dbconfig['engine'] == 'postgresql':
         database = tkp.db.database.Database()
-        database.connect()
+
         destroy_postgres(database.connection.connection)
     elif dbconfig['engine'] == 'monetdb':
         destroy_monetdb()
 
 
-def set_monetdb_schema(cur, dbconfig):
+def set_monetdb_schema(session, dbconfig):
     """
     create custom schema. use with MonetDB only.
     """
@@ -138,10 +148,11 @@ def set_monetdb_schema(cur, dbconfig):
 CREATE SCHEMA "trap" AUTHORIZATION "%(user)s";
 ALTER USER "%(user)s" SET SCHEMA "trap";
 """
-    cur.execute("select id from sys.schemas where name = 'trap'")
-    if len(cur.fetchall()) == 0:
+    q = session.execute("select id from sys.schemas where name = 'trap'")
+    if len(q.fetchall()) == 0:
         print create_query % dbconfig
-        cur.execute(create_query % dbconfig)
+        session.execute(create_query % dbconfig)
+        session.commit()
 
 
 def populate(dbconfig):
@@ -160,23 +171,24 @@ def populate(dbconfig):
     # configure the database before we do anyting else
     get_database_config(dbconfig, apply=True)
 
+    database = tkp.db.database.Database()
+    database.connect()
+
     if dbconfig['destroy']:
         destroy(dbconfig)
 
-    database = tkp.db.database.Database()
-    conn = database.connection.connection
-    cur = conn.cursor()
+    session = database.Session()
 
     if dbconfig['engine'] == 'postgresql':
         # make sure plpgsql is enabled
         try:
-            cur.execute("CREATE LANGUAGE plpgsql;")
-        except conn.ProgrammingError:
-            conn.rollback()
+            session.execute("CREATE LANGUAGE plpgsql;")
+        except ProgrammingError:
+            session.rollback()
     if dbconfig['engine'] == 'monetdb':
-        set_monetdb_schema(cur, dbconfig)
+        set_monetdb_schema(session, dbconfig)
         # reconnect to switch to schema
-        conn.commit()
+        session.commit()
         database.reconnect()
 
     batch_file = os.path.join(sql_repo, 'batch')
@@ -185,9 +197,11 @@ def populate(dbconfig):
             "Try -d/--destroy argument for initdb cmd.\n\n"
 
     tkp.db.model.Base.metadata.create_all(database.alchemy_engine)
-    conn = database.connection.connection
-    conn.commit()
-    cur = conn.cursor()
+
+
+    version = tkp.db.model.Version(name='revision',
+                                   value=tkp.db.model.SCHEMA_VERSION)
+    session.add(version)
 
     for line in [l.strip() for l in open(batch_file) if not l.startswith("#")]:
         if not line:  # skip empty lines
@@ -200,11 +214,10 @@ def populate(dbconfig):
 
             if not dialected:  # empty query, can happen
                 continue
-
             try:
-                cur.execute(dialected)
+                session.execute(dialected)
             except Exception as e:
                 sys.stderr.write(error % sql_file)
                 raise
-    conn.commit()
-    conn.close()
+    session.commit()
+

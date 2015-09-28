@@ -109,6 +109,12 @@ See also :ref:`stage-extraction` and :ref:`stage-forcedfit`.
    are *stored* during the source-extraction process, they affect the
    source-association process.)
 
+`expiration`
+    The number of forced fits performed since the last blind fit. Used to
+    'expire' the runningcatalog - else said to stop monitoring a source of
+    which the flux went below the detection threshold after a configurable
+    amount of timesteps.
+
 
 .. _job_params_association:
 

@@ -147,6 +147,7 @@ def set_monetdb_schema(session, dbconfig):
     create_query = """
 CREATE SCHEMA "trap" AUTHORIZATION "%(user)s";
 ALTER USER "%(user)s" SET SCHEMA "trap";
+SET SCHEMA "trap";
 """
     q = session.execute("select id from sys.schemas where name = 'trap'")
     if len(q.fetchall()) == 0:

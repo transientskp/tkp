@@ -100,7 +100,7 @@ class TestApi(unittest.TestCase):
 
     def test_transient_newsource(self):
         """
-        Ra & Decl filtering
+        Check if we can filter on new source transients only
         """
         r = tkp.db.alchemy.transients(self.session, self.dataset1,
                                   new_src_only=True).all()

@@ -88,7 +88,8 @@ def gen_lightcurve(band, dataset, skyregion, datapoints=10):
     for xtrsrc in xtrsrcs:
         assocs.append(gen_assocxtrsource(runningcatalog, xtrsrc))
 
+    newsource = gen_newsource(runningcatalog, xtrsrcs[5], images[4])
 
     # just return all db objects we created
-    return [dataset, band, skyregion, runningcatalog, assocskyrgn] + \
+    return [dataset, band, skyregion, runningcatalog, assocskyrgn, newsource] + \
            images + xtrsrcs + assocs

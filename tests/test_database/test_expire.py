@@ -12,8 +12,10 @@ from datetime import datetime, timedelta
 import logging
 
 from tkp.db.database import Database
-from tkp.db.model import Runningcatalog, Extractedsource, FORCED_FIT
+from tkp.db.model import Runningcatalog, Extractedsource, FORCED_FIT,\
+    Temprunningcatalog
 from tkp.db.nulldetections import get_nulldetections, associate_nd
+from tkp.db.associations import _update_1_to_1_runcat
 
 from tkp.testutil.alchemy import gen_band, gen_dataset, gen_skyregion, \
     gen_extractedsource, gen_runningcatalog, gen_assocskyrgn, \
@@ -38,7 +40,7 @@ class TestExpire(unittest.TestCase):
         make a dataset with 10 images with 2 ligthcurves + one empty image
         """
         self.session = self.database.Session()
-        band = gen_band(central=150**6)
+        self.band = gen_band(central=150**6)
         self.dataset = gen_dataset('expiring runningcatalog test')
         skyregion = gen_skyregion(self.dataset)
         datapoints = 10
@@ -51,7 +53,7 @@ class TestExpire(unittest.TestCase):
         assocs = []
         for i in range(datapoints):
             taustart_ts = start + ten_sec * i
-            image = gen_image(band, self.dataset, skyregion, taustart_ts)
+            image = gen_image(self.band, self.dataset, skyregion, taustart_ts)
 
             if i == 5:
                 image.int = 10
@@ -72,9 +74,9 @@ class TestExpire(unittest.TestCase):
         for xtrsrc in xtrsrcs2:
             assocs.append(gen_assocxtrsource(runningcatalog2, xtrsrc))
 
-        self.empty_image = gen_image(band, self.dataset, skyregion, taustart_ts)
+        self.empty_image = gen_image(self.band, self.dataset, skyregion, taustart_ts)
 
-        self.session.add_all([band, skyregion, self.runningcatalog1, runningcatalog2,
+        self.session.add_all([self.band, skyregion, self.runningcatalog1, runningcatalog2,
                               assocskyrgn1, assocskyrgn2, self.empty_image] +
                              images + xtrsrcs1 + xtrsrcs2 + assocs)
         self.session.flush()
@@ -127,9 +129,27 @@ class TestExpire(unittest.TestCase):
         """
         Check if 1-to-1 association resets expiration counter to 0
         """
-        pass
+        e = Extractedsource(zone=1, ra=1, decl=1, uncertainty_ew=1, x=1, y=1,
+                            z=1, uncertainty_ns=1, ra_err=1, decl_err=1,
+                            ra_fit_err=1, decl_fit_err=1, ew_sys_err=1,
+                            ns_sys_err=1, error_radius=1, racosdecl=1,
+                            det_sigma=1, f_int=0.01, image=self.empty_image,
+                            semimajor=1, semiminor=1, pa=1, f_peak=1,
+                            f_peak_err=1, f_int_err=1, chisq=1,
+                            reduced_chisq=1)
+        t = Temprunningcatalog(runcat=self.runningcatalog1, xtrsrc=e,
+                               dataset=self.dataset, band=self.band,
+                               distance_arcsec=0, r=0, datapoints=10, zone=1,
+                               wm_ra=1, wm_decl=1, wm_uncertainty_ew=1,
+                               wm_uncertainty_ns=1, avg_ra_err=1,
+                               avg_decl_err=1, avg_wra=1, avg_wdecl=1,
+                               avg_weight_ra=1, avg_weight_decl=1, x=1, y=1,
+                               z=1)
+        self.runningcatalog1.forcedfits_counts = 20
+        self.session.add_all((e, t))
+        self.session.commit()
 
-    def test_overall(self):
-        """
-        Black box test if running catalog entries expire
-        """
+        _update_1_to_1_runcat()
+
+        self.session.refresh(self.runningcatalog1)
+        self.assertEqual(self.runningcatalog1.forcedfits_count, 0)

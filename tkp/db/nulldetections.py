@@ -12,6 +12,7 @@ from tkp.db.associations import (
 
 logger = logging.getLogger(__name__)
 
+
 def get_nulldetections(image_id, expiration=10):
     """
     Returns the runningcatalog sources which:
@@ -114,13 +115,19 @@ def _increment_forcedfits_count():
     temprunningcatalog table.
     """
     query = """\
-update runningcatalog
-set forcedfits_count = forcedfits_count + 1
-where id in (
-    select t.runcat
-    from temprunningcatalog t, runningcatalog r
-    where t.runcat = r.id
-);
+UPDATE
+    runningcatalog
+SET
+    forcedfits_count = forcedfits_count + 1
+WHERE id IN (
+    SELECT
+        t.runcat
+    FROM
+        temprunningcatalog t,
+        runningcatalog r
+    WHERE
+        t.runcat = r.id
+)
 """
     execute(query)
 

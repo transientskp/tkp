@@ -1479,6 +1479,7 @@ def _update_1_to_1_runcat():
                      WHERE temprunningcatalog.runcat = runningcatalog.id
                           AND temprunningcatalog.inactive = FALSE
                    )
+              ,forcedfits_count = 0
          WHERE EXISTS (SELECT runcat
                          FROM temprunningcatalog
                         WHERE temprunningcatalog.runcat = runningcatalog.id

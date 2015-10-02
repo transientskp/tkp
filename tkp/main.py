@@ -156,7 +156,9 @@ def run(job_name, supplied_mon_coords=[]):
                                               deRuiter_r=deruiter_radius,
                                               new_source_sigma_margin=new_src_sigma)
 
-            all_fit_posns, all_fit_ids = steps_ff.get_forced_fit_requests(image)
+            expiration = job_config.source_extraction.expiration
+            all_fit_posns, all_fit_ids = steps_ff.get_forced_fit_requests(image,
+                                                                          expiration)
             if all_fit_posns:
                 successful_fits, successful_ids = steps_ff.perform_forced_fits(
                     all_fit_posns, all_fit_ids, image.url, se_parset)

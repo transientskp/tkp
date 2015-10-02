@@ -9,8 +9,8 @@ from tkp.db import nulldetections as dbnd
 logger = logging.getLogger(__name__)
 
 
-def get_forced_fit_requests(image):
-    nd_requested_fits = dbnd.get_nulldetections(image.id)
+def get_forced_fit_requests(image, expiration):
+    nd_requested_fits = dbnd.get_nulldetections(image.id, expiration)
     logger.info("Found %s null detections" % len(nd_requested_fits))
     mon_entries = dbmon.get_monitor_entries(image.dataset.id)
 

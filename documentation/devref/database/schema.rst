@@ -786,6 +786,13 @@ If no counterpart could be found for an extracted sources, it is appended to
     Boolean to indicate whether an entry is from the user-specified monitoring list.
     Default value is false.
 
+**forcedfits_count**
+    The number of forced fits performed since the last blind fit. Used to
+    'expire' the runningcatalog - else said to stop monitoring a source of
+    which the flux went below the detection threshold after a configurable
+    amount of timesteps. Controlled by the ``expiration`` configuration
+    variable.
+
 .. _schema-runningcatalog-flux:
 
 runningcatalog_flux

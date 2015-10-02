@@ -11,6 +11,7 @@ https://github.com/transientskp/notebooks/blob/master/transients.ipynb
 from sqlalchemy.orm import aliased
 from sqlalchemy.sql import func
 
+from tkp.config import get_database_config
 from tkp.db.model import (Assocxtrsource, Extractedsource, Image, Newsource,
                           Runningcatalog)
 
@@ -159,7 +160,9 @@ def _combined(session, dataset):
         newsrc_trigger_query.c.sigma_rms_min.label('sigma_rms_min'),
         func.max(agg_ex.f_int).label('lightcurve_max'),
         func.avg(agg_ex.f_int).label('lightcurve_avg'),
-        func.median(agg_ex.f_int).label('lightcurve_median')
+        func.median(agg_ex.f_int).label('lightcurve_median') \
+            if get_database_config()['engine'] == "postgresql" \
+            else func.sys.median(agg_ex.f_int).label('lightcurve_median')
     ). \
         select_from(last_ts_fmax_query). \
         join(match_assoc, match_assoc.runcat_id == last_ts_fmax_query.c.runcat_id). \

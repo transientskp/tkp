@@ -868,14 +868,14 @@ class ImageData(object):
                                   '(increase fitting margin?)', det.x, det.y )
                 else:
                     results.append(det)
+            except RuntimeError as e:
+                logger.error("Island not processed; unphysical?")
 
-                if self.residuals:
-                    self.residuals_from_deblending[island.chunk] -= (
-                        island.data.filled(fill_value=0.))
-                    self.residuals_from_gauss_fitting[island.chunk] += residual
-            except RuntimeError:
-                logger.warn("Island not processed; unphysical?")
-                raise
+            if self.residuals:
+                self.residuals_from_deblending[island.chunk] -= (
+                    island.data.filled(fill_value=0.))
+                self.residuals_from_gauss_fitting[island.chunk] += residual
+
 
         def is_usable(det):
             # Check that both ends of each axis are usable; that is, that they

@@ -8,3 +8,7 @@ python-dateutil>=1.4.1
 pytz
 mock
 
+numpy
+astropy
+scipy
+sqlalchemy

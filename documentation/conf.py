@@ -26,15 +26,25 @@ on_rtd = os.environ.get('READTHEDOCS', None) == 'True'
 import sys
 from mock import  Mock as MagicMock
 
+# Ugly hack to allow import tkp without installing the module
+# This is necessary because setup.py pulls in dependencies, specifically
+# casacore. Casacore build fails on ReadTheDocs because Boost libs are not
+# present. Therefore the install fails.
+# Instead, we hack the PYTHONPATH, and mock out modules that we can't use.
+rootdir = os.path.join(os.path.dirname(__file__), os.pardir)
+print "Rootdir", rootdir
+sys.path.append(rootdir)
+
 class Mock(MagicMock):
     @classmethod
     def __getattr__(cls, name):
             return Mock()
 
 MOCK_MODULES = [#'numpy', 'numpy.ma',
-                #'scipy', 'scipy.integrate', 'scipy.optimize',
-                #'scipy.special', 'scipy.constants','scipy.interpolate',
-                'pyfits', 'pywcs',
+                # 'scipy', 'scipy.integrate', 'scipy.optimize',
+                # 'scipy.special', 'scipy.constants','scipy.interpolate',
+                # 'pyfits',
+                'pywcs',
                 'casacore', 'casacore.measures', 'casacore.tables','casacore.images',
                 'casacore.quanta',
                 ]

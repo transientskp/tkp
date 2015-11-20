@@ -911,6 +911,48 @@ tables are listed below.
 
 
 
+varmetric
+=========
+
+This table contains precalculated lightcurve properties, which can be used
+for filtering and isolating potential transients.
+
+**runcat**
+    Reference to the ``runningcatalog`` ``id``.
+
+**v_int**
+    The flux `coefficient of variation <coeff-of-var_>`_ , :math:`V_{\nu}`,
+    based on the integrated flux values up to this datapoint.
+
+**eta_int**
+    The 'reduced chi-squared' variability index, :math:`\eta_{\nu}`, based on
+    the integrated flux values up to this datapoint.
+
+**band**
+    Reference to the ``band`` ``id``.
+
+**newsource**
+    Reference to the ``newsource`` ``id``.
+
+**sigma_rms_max**
+    Integrated flux from the from the extractedsource that triggered an new source
+    entry divided by the *maximum* value of the estimated-RMS-map within the
+    source-extraction region of the previous limits image.
+
+
+**sigma_rms_min**
+    Integrated flux from the from the extractedsource that triggered an new source
+    entry divided by the *minimum* value of the estimated-RMS-map within the
+    source-extraction region of the previous limits image.
+
+**lightcurve_max**
+    The maximum flux value of the lightcurve
+
+**lightcurve_avg**
+    The average flux value of the lightcurve
+
+**lightcurve_median**
+    The median flux value of the lightcurve
 
 
 

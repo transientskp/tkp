@@ -19,6 +19,7 @@ from tkp.steps.misc import (load_job_config, dump_configs_to_logdir,
 from tkp.db.configstore import store_config, fetch_config
 from tkp.steps.persistence import create_dataset, store_images
 import tkp.steps.forced_fitting as steps_ff
+from tkp.steps.varmetric import execute_store_varmetric
 
 
 logger = logging.getLogger(__name__)
@@ -168,3 +169,6 @@ def run(job_name, supplied_mon_coords=[]):
 
 
         dbgen.update_dataset_process_end_ts(dataset_id)
+
+    logger.info("calculating variability metrics")
+    execute_store_varmetric(dataset_id)

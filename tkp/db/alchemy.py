@@ -9,10 +9,10 @@ https://github.com/transientskp/notebooks/blob/master/transients.ipynb
 """
 
 from sqlalchemy.orm import aliased
-from sqlalchemy.sql import func
+from sqlalchemy.sql import func, insert
 
 from tkp.db.model import (Assocxtrsource, Extractedsource, Image, Newsource,
-                          Runningcatalog)
+                          Runningcatalog, Varmetric)
 
 
 def _last_assoc_timestamps(session, dataset):
@@ -143,7 +143,7 @@ def _combined(session, dataset):
     last_ts_fmax_query = _last_ts_fmax(session, dataset)
 
     return session.query(
-        runcat.id,
+        runcat.id.label('runcat'),
         runcat.wm_ra.label('ra'),
         runcat.wm_decl.label('decl'),
         runcat.wm_uncertainty_ew,
@@ -192,7 +192,28 @@ def _combined(session, dataset):
         subquery()
 
 
-def transients(session, dataset, ra_range=None, decl_range=None,
+def store_varmetric(session, dataset):
+    """
+    Stores the augmented runningcatalog values in the varmetric table.
+    args:
+        session: A SQLAlchemy session
+        dataset: a dataset model object
+
+    :return: a SQLAlchemy query
+    """
+    fields = ['runcat', 'v_int', 'eta_int', 'band', 'newsource',
+              'sigma_rms_max', 'sigma_rms_min', 'lightcurve_max',
+              'lightcurve_avg', 'lightcurve_median']
+
+    subquery = _combined(session=session, dataset=dataset)
+
+    # only select the columns we are going to insert
+    filtered = session.query(*fields).select_from(subquery)
+
+    return insert(Varmetric).from_select(names=fields, select=filtered)
+
+
+def calculate_varmetric(session, dataset, ra_range=None, decl_range=None,
                v_int_min=None, eta_int_min=None, sigma_rms_min_range=None,
                sigma_rms_max_range=None, new_src_only=False):
     """

@@ -1,7 +1,6 @@
 from datetime import datetime, timedelta
 import tkp.db
 
-
 def gen_band(central=150**6, low=None, high=None):
     if not low:
         low = central * .9
@@ -43,8 +42,6 @@ def gen_runningcatalog(xtrsrc, dataset):
                                        wm_uncertainty_ns=1, avg_ra_err=1, avg_decl_err=1,
                                        avg_wra=1, avg_wdecl=1, avg_weight_ra=1, avg_weight_decl=1,
                                        x=1, y=1, z=1)
-
-
 def gen_assocskyrgn(runcat, skyrgn):
     return tkp.db.model.Assocskyrgn(runcat=runcat, skyrgn=skyrgn,
                                     distance_deg=10)

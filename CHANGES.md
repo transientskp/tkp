@@ -1,6 +1,40 @@
 # Changelog
 ---------------
 
+## R3.0 (2015/16, pending)
+
+### User-interface changes
+New entry `expiration` in *job_params.cfg* ([#472][]):
+
+    [source_extraction]
+    expiration = 10  ; number of forced fits performed after a blind fit
+
+
+### Features / Enhancements
+- Added support for AARTFAAC format images ([#444][], [#452][]).
+- Expiration of forced-fit monitoring at locations with no recent blind
+  detections ([#472][]).
+- Caching of additional variability metrics (`varmetric` table) to improve
+  interactive queries via the 'Banana' web-interface ([#469][]).
+
+
+### Refactoring / Infrastructure changes
+- Started integrating SQLAlchemy as a future replacement for home-grown
+  database-ORM code ([#362][]).
+- Migrate from PyFITS to astropy.io.fits ([#355][]).
+- Removed unused 'Celery' code ([#433][]).
+
+
+[#355]: https://github.com/transientskp/tkp/issues/355
+[#362]: https://github.com/transientskp/tkp/issues/362
+[#433]: https://github.com/transientskp/tkp/issues/433
+[#444]: https://github.com/transientskp/tkp/issues/444
+[#452]: https://github.com/transientskp/tkp/pull/452
+[#469]: https://github.com/transientskp/tkp/pull/469
+[#472]: https://github.com/transientskp/tkp/pull/472
+
+
+
 ## R2.1 (2015-07-14)
 A minor release, database-schema compatible with R2.0.
 A comprehensive listing of 
@@ -51,7 +85,7 @@ We also took steps to make the TKP docs-hosting and testing infrastructure less 
 [#442]: https://github.com/transientskp/tkp/issues/442
 [#447]: https://github.com/transientskp/tkp/issues/447
 
---------
+
 
 ## R2.0 (2014-12-16)
 First public release.

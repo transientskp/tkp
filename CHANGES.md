@@ -1,7 +1,7 @@
 # Changelog
----------------
+-----------
 
-## R3.0 (2015/16, pending)
+## R3.0rc (2015-12-14)
 
 ### User-interface changes
 New entry `expiration` in *job_params.cfg* ([#472][]):

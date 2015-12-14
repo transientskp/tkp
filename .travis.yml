@@ -38,3 +38,12 @@ script:
   - "${TRAVIS_BUILD_DIR}/tkp/bin/trap-manage.py initdb -y"
   - cd ${TRAVIS_BUILD_DIR}/tests
   - TKP_DBUSER=postgres TKP_DBPASSWORD= nosetests -sv
+deploy:
+  provider: pypi
+  user: gijzelaerr
+  password:
+    secure: ROczqGNFuAczn6xu/X8BsHbBYkRLMvZwanOiC4X5iyzAe7fxwNiFdmHVSHru4bF7jCwasJmaTwubj23wFUsDm3xF2Bqu+N768no/b13pr6+AP2Q2GOHV6Y+4I5ti92ZLc3bemZkNiKAi/yva+F0Xb+BWRwLmyQcMl4tKDMn67Lo=
+  on:
+    tags: true
+    repo: transientskp/tkp
+

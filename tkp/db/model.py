@@ -3,6 +3,7 @@ The SQLAlchemy model definition.
 
 revision history:
 
+ 38 - add varmetric table
  37 - add forcedfits_count column to runningcatalog
  36 - switch to SQLAlchemy schema initialisation
 """
@@ -15,7 +16,7 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.dialects.postgresql import DOUBLE_PRECISION as Double
 
 
-SCHEMA_VERSION = 37
+SCHEMA_VERSION = 38
 
 Base = declarative_base()
 metadata = Base.metadata

@@ -4,9 +4,9 @@ All generic quality checking routines.
 import logging
 
 from tkp.telescope.lofar.quality import reject_check_lofar
-from tkp.telescope.generic.quality import reject_check_generic
+from tkp.telescope.aartfaac.quality import reject_check_aartfaac
 from tkp.accessors.lofaraccessor import LofarAccessor
-import tkp.accessors
+from tkp.accessors import AartfaacCasaImage
 import tkp.db.quality
 import tkp.quality.brightsource
 import tkp.quality
@@ -32,9 +32,10 @@ def reject_check(image_path, job_config):
 
     accessor = tkp.accessors.open(image_path)
 
-    rejected = reject_check_generic(accessor)
-    if rejected:
-        return rejected
+    if isinstance(accessor, AartfaacCasaImage):
+        rejected = reject_check_aartfaac(accessor)
+        if rejected:
+            return rejected
 
     # Only run LOFAR-specific QC checks on LOFAR images.
     if isinstance(accessor, LofarAccessor):

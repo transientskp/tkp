@@ -9,6 +9,8 @@ Bibliography
 Bertin, E. and Arnouts, S. *SExtractor: Software for source extraction*, A&AS
 117, 393--404, 1996.
 
+* `Bertin & Arnouts (1996) on ADS <http://adsabs.harvard.edu/abs/1996A%26AS..117..393B>`_
+
 .. _scheers-2011:
 
 Scheers, L.H.A. *Transient and variable radio sources in the LOFAR sky: An
@@ -26,6 +28,8 @@ thesis, University of Amsteram, 2010.
 
 .. _swinbank-2014:
 
-Swinbank, J.D. et al. *The LOFAR Transients Pipeline*. In prep.
+Swinbank, J.D. et al. *The LOFAR Transients Pipeline*, Astronomy & Computing
+11, 25--48, 2015.
 
+* `Swinbank (2015) on ADS <http://adsabs.harvard.edu/abs/2015A%26C....11...25S>`_
 * `Github Repository (members only) <https://github.com/transientskp/trap-paper>`_

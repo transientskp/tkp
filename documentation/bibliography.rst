@@ -9,6 +9,8 @@ Bibliography
 Bertin, E. and Arnouts, S. *SExtractor: Software for source extraction*, A&AS
 117, 393--404, 1996.
 
+* `Bertin & Arnouts (1996) on ADS <http://adsabs.harvard.edu/abs/1996A%26AS..117..393B>`_
+
 .. _scheers-2011:
 
 Scheers, L.H.A. *Transient and variable radio sources in the LOFAR sky: An

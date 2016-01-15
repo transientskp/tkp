@@ -1,5 +1,9 @@
 # Changelog
 -----------
+## R3.0 (2016-01-15)
+
+No changes since R3.0rc
+
 
 ## R3.0rc (2015-12-14)
 

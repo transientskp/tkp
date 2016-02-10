@@ -6,6 +6,7 @@ import unittest
 from tkp.testutil.decorators import requires_data
 import tkp.sourcefinder
 from tkp.sourcefinder import image as sfimage
+from tkp.sourcefinder.image import ImageData
 from tkp import accessors
 from tkp.utility.uncertain import Uncertain
 from tkp.testutil.data import DATAPATH
@@ -149,10 +150,12 @@ class TestFitFixedPositions(unittest.TestCase):
     def testGivenPositionOutsideImage(self):
         """If given position is outside image then result should be NoneType"""
         img = self.image
-        p1 = img.wcs.p2s((0,0))
-        p2 = img.wcs.p2s((img.data.shape[0], img.data.shape[1]))
-        posn_out_of_img = (p1[0] - 10.0 / 3600.0 , (p1[1] + p2[1] / 2.0) )
-        results = self.image.fit_fixed_positions(positions= [posn_out_of_img],
+        # Generate a position halfway up the y-axis, but at negative x-position.
+        pixel_posn_out_of_img =  (-50, img.data.shape[1]/2.0)
+        sky_posn_out_of_img = img.wcs.p2s(pixel_posn_out_of_img)
+        # print "Out of image?", sky_posn_out_of_img
+        # print "Out of image (pixel backconvert)?", img.wcs.s2p(sky_posn_out_of_img)
+        results = self.image.fit_fixed_positions(positions= [sky_posn_out_of_img],
                                        boxsize = BOX_IN_BEAMPIX*max(img.beam[0], img.beam[1]))
         self.assertListEqual([], results)
 
@@ -196,6 +199,53 @@ class TestFitFixedPositions(unittest.TestCase):
         det._physical_coordinates()
         self.assertEqual(det.ra.error, float('inf'))
         self.assertEqual(det.dec.error, float('inf'))
+
+    def testForcedFitAtNans(self):
+        """
+        Should not return a fit if the position was largely masked due to NaNs
+        """
+
+        forcedfit_sky_posn = self.bright_src_posn
+        forcedfit_pixel_posn = self.image.wcs.s2p(forcedfit_sky_posn)
+
+        fitting_boxsize = BOX_IN_BEAMPIX*max(self.image.beam[0],
+                                             self.image.beam[1])
+
+        nandata = self.image.rawdata.copy()
+        x0, y0 = forcedfit_pixel_posn
+        # nandata[x0-fitting_boxsize:x0+fitting_boxsize,
+        #         y0-fitting_boxsize:y0+fitting_boxsize] = float('nan')
+
+
+        # If we totally cover the fitting box in NaNs, then there are no
+        # valid pixels and fit gets rejected.
+        # However, if we only cover the central quarter (containing all the
+        # real signal!) then we get a dodgy fit back.
+        nanbox_radius = fitting_boxsize/2
+        boxsize_proportion = 0.5
+        nanbox_radius *= boxsize_proportion
+
+        nandata[x0-nanbox_radius:x0+nanbox_radius+1,
+                y0-nanbox_radius:y0+nanbox_radius+1] = float('nan')
+
+        # Dump image data for manual inspection:
+        # import astropy.io.fits as fits
+        # # output_data = self.image.rawdata
+        # output_data = nandata
+        # hdu = fits.PrimaryHDU((output_data).transpose())
+        # hdu.writeto('/tmp/nandata.fits',clobber=True)
+
+
+        nan_image = ImageData(nandata, beam = self.image.beam,
+                              wcs=self.image.wcs)
+
+        results = nan_image.fit_fixed_positions(
+                             positions= [self.bright_src_posn],
+                             boxsize=fitting_boxsize,
+                             threshold = None
+                             )
+        print(results)
+        self.assertFalse(results)
 
 
 class TestSimpleImageSourceFind(unittest.TestCase):

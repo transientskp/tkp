@@ -514,6 +514,18 @@ class ImageData(object):
 
         Returns an instance of :class:`tkp.sourcefinder.extract.Detection`.
         """
+
+        # First, check that x and y are actually valid semi-positive integers.
+        # Otherwise,
+        # If they are too high (positive), then indexing will fail
+        # BUT, if they are negative, then we get wrap-around indexing
+        # and the fit continues at the wrong position!
+        if x < 0 or x >self.xdim:
+            return None
+        if y < 0 or y >self.ydim:
+            return None
+
+
         if ((
                 # Recent NumPy
                 hasattr(numpy.ma.core, "MaskedConstant") and
@@ -843,16 +855,18 @@ class ImageData(object):
             #deblended_list = [x.deblend() for x in island_list]
             island_list = list(utils.flatten(deblended_list))
 
+        # Set up the fixed fit parameters if 'force beam' is on:
+        if force_beam:
+            fixed = {'semimajor': self.beam[0],
+                     'semiminor': self.beam[1],
+                     'theta': self.beam[2]}
+        else:
+            fixed = None
+
         # Iterate over the list of islands and measure the source in each,
         # appending it to the results list.
         results = containers.ExtractionResults()
         for island in island_list:
-            if force_beam:
-                fixed = {'semimajor': self.beam[0],
-                         'semiminor': self.beam[1],
-                         'theta': self.beam[2]}
-            else:
-                fixed = None
             fit_results = island.fit(fixed=fixed)
             if fit_results:
                 measurement, residual = fit_results

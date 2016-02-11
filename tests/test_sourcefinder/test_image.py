@@ -151,11 +151,16 @@ class TestFitFixedPositions(unittest.TestCase):
         """If given position is outside image then result should be NoneType"""
         img = self.image
         # Generate a position halfway up the y-axis, but at negative x-position.
-        pixel_posn_out_of_img =  (-50, img.data.shape[1]/2.0)
-        sky_posn_out_of_img = img.wcs.p2s(pixel_posn_out_of_img)
+        pixel_posn_negative_x =  (-50, img.data.shape[1]/2.0)
+        # and halfway up the y-axis, but at x-position outside array limit:
+        pixel_posn_high_x =  (img.data.shape[0]+50, img.data.shape[1]/2.0)
+        sky_posns_out_of_img = [
+                                img.wcs.p2s(pixel_posn_negative_x),
+                                img.wcs.p2s(pixel_posn_high_x),
+                                ]
         # print "Out of image?", sky_posn_out_of_img
         # print "Out of image (pixel backconvert)?", img.wcs.s2p(sky_posn_out_of_img)
-        results = self.image.fit_fixed_positions(positions= [sky_posn_out_of_img],
+        results = self.image.fit_fixed_positions(positions= sky_posns_out_of_img,
                                        boxsize = BOX_IN_BEAMPIX*max(img.beam[0], img.beam[1]))
         self.assertListEqual([], results)
 
@@ -213,9 +218,6 @@ class TestFitFixedPositions(unittest.TestCase):
 
         nandata = self.image.rawdata.copy()
         x0, y0 = forcedfit_pixel_posn
-        # nandata[x0-fitting_boxsize:x0+fitting_boxsize,
-        #         y0-fitting_boxsize:y0+fitting_boxsize] = float('nan')
-
 
         # If we totally cover the fitting box in NaNs, then there are no
         # valid pixels and fit gets rejected.

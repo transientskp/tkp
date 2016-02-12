@@ -212,6 +212,10 @@ class ImageData(object):
         ImageData.rmsmap or ImageData.fdrmap is first accessed.
         """
 
+        # We set up a dedicated logging subchannel, as the sigmaclip loop
+        # logging is very chatty:
+        sigmaclip_logger = logging.getLogger(__name__+'.sigmaclip')
+
         # there's no point in working with the whole of the data array
         # if it's masked.
         useful_chunk = ndimage.find_objects(numpy.where(self.data.mask, 0, 1))
@@ -247,11 +251,11 @@ class ImageData(object):
                     # (mean - median) / sigma is a quick n' dirty skewness
                     # estimator devised by Karl Pearson.
                     if numpy.fabs(mean - median) / sigma >= 0.3:
-                        logger.debug(
+                        sigmaclip_logger.debug(
                             'bg skewed, %f clipping iterations', num_clip_its)
                         bgrow.append(median)
                     else:
-                        logger.debug(
+                        sigmaclip_logger.debug(
                             'bg not skewed, %f clipping iterations', num_clip_its)
                         bgrow.append(2.5 * median - 1.5 * mean)
 
@@ -515,6 +519,7 @@ class ImageData(object):
         Returns an instance of :class:`tkp.sourcefinder.extract.Detection`.
         """
 
+        logger.debug("Force-fitting pixel location ({},{})".format(x,y))
         # First, check that x and y are actually valid semi-positive integers.
         # Otherwise,
         # If they are too high (positive), then indexing will fail

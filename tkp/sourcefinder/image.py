@@ -525,11 +525,22 @@ class ImageData(object):
         # If they are too high (positive), then indexing will fail
         # BUT, if they are negative, then we get wrap-around indexing
         # and the fit continues at the wrong position!
-        if x < 0 or x >self.xdim:
-            return None
-        if y < 0 or y >self.ydim:
+        if (x < 0 or x >self.xdim
+            or y < 0 or y >self.ydim ):
+            logger.warning("Dropping forced fit at ({},{}), "
+                           "pixel position outside image".format(x,y)
+            )
             return None
 
+        # Next, check if any of the central pixels (in a 3x3 box about the
+        # fitted pixel position) have been Masked
+        # (e.g. if NaNs, or close to image edge) - reject if so.
+        central_pixels_slice = ImageData.box_slice_about_pixel(x, y, 1)
+        if self.data.mask[central_pixels_slice].any():
+            logger.warning(
+                "Dropping forced fit at ({},{}), "
+                   "Masked pixel in central fitting region".format(x,y))
+            return None
 
         if ((
                 # Recent NumPy

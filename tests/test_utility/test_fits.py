@@ -1,5 +1,5 @@
 import unittest
-import pyfits
+import astropy.io.fits as fits
 import math
 import tempfile
 from tkp.utility.fits import fix_reference_dec
@@ -21,10 +21,10 @@ class TestFixReferenceDec(unittest.TestCase):
 
     def _test_for_reference_dec(self, refdec, unit=None):
         with tempfile.NamedTemporaryFile() as temp_fits:
-            h = pyfits.PrimaryHDU()
-            h.header.update("CRVAL2", refdec)
+            h = fits.PrimaryHDU()
+            h.header["CRVAL2"] = refdec
             if unit:
                 h.header.update("CUNIT2", unit)
             h.writeto(temp_fits.name)
             fix_reference_dec(temp_fits.name)
-            self.assertLess(abs(pyfits.getheader(temp_fits.name)['CRVAL2']), abs(refdec))
+            self.assertLess(abs(fits.getheader(temp_fits.name)['CRVAL2']), abs(refdec))

@@ -212,6 +212,10 @@ class ImageData(object):
         ImageData.rmsmap or ImageData.fdrmap is first accessed.
         """
 
+        # We set up a dedicated logging subchannel, as the sigmaclip loop
+        # logging is very chatty:
+        sigmaclip_logger = logging.getLogger(__name__+'.sigmaclip')
+
         # there's no point in working with the whole of the data array
         # if it's masked.
         useful_chunk = ndimage.find_objects(numpy.where(self.data.mask, 0, 1))
@@ -247,11 +251,11 @@ class ImageData(object):
                     # (mean - median) / sigma is a quick n' dirty skewness
                     # estimator devised by Karl Pearson.
                     if numpy.fabs(mean - median) / sigma >= 0.3:
-                        logger.debug(
+                        sigmaclip_logger.debug(
                             'bg skewed, %f clipping iterations', num_clip_its)
                         bgrow.append(median)
                     else:
-                        logger.debug(
+                        sigmaclip_logger.debug(
                             'bg not skewed, %f clipping iterations', num_clip_its)
                         bgrow.append(2.5 * median - 1.5 * mean)
 
@@ -514,6 +518,30 @@ class ImageData(object):
 
         Returns an instance of :class:`tkp.sourcefinder.extract.Detection`.
         """
+
+        logger.debug("Force-fitting pixel location ({},{})".format(x,y))
+        # First, check that x and y are actually valid semi-positive integers.
+        # Otherwise,
+        # If they are too high (positive), then indexing will fail
+        # BUT, if they are negative, then we get wrap-around indexing
+        # and the fit continues at the wrong position!
+        if (x < 0 or x >self.xdim
+            or y < 0 or y >self.ydim ):
+            logger.warning("Dropping forced fit at ({},{}), "
+                           "pixel position outside image".format(x,y)
+            )
+            return None
+
+        # Next, check if any of the central pixels (in a 3x3 box about the
+        # fitted pixel position) have been Masked
+        # (e.g. if NaNs, or close to image edge) - reject if so.
+        central_pixels_slice = ImageData.box_slice_about_pixel(x, y, 1)
+        if self.data.mask[central_pixels_slice].any():
+            logger.warning(
+                "Dropping forced fit at ({},{}), "
+                   "Masked pixel in central fitting region".format(x,y))
+            return None
+
         if ((
                 # Recent NumPy
                 hasattr(numpy.ma.core, "MaskedConstant") and
@@ -843,16 +871,18 @@ class ImageData(object):
             #deblended_list = [x.deblend() for x in island_list]
             island_list = list(utils.flatten(deblended_list))
 
+        # Set up the fixed fit parameters if 'force beam' is on:
+        if force_beam:
+            fixed = {'semimajor': self.beam[0],
+                     'semiminor': self.beam[1],
+                     'theta': self.beam[2]}
+        else:
+            fixed = None
+
         # Iterate over the list of islands and measure the source in each,
         # appending it to the results list.
         results = containers.ExtractionResults()
         for island in island_list:
-            if force_beam:
-                fixed = {'semimajor': self.beam[0],
-                         'semiminor': self.beam[1],
-                         'theta': self.beam[2]}
-            else:
-                fixed = None
             fit_results = island.fit(fixed=fixed)
             if fit_results:
                 measurement, residual = fit_results

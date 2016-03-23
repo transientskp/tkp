@@ -12,9 +12,9 @@ from tkp.db import general as dbgen
 from tkp.db import associations as dbass
 from tkp.distribute import Runner
 from tkp.steps.misc import (load_job_config, dump_configs_to_logdir,
-                                   check_job_configs_match,
-                                   setup_log_file, dump_database_backup,
-                                group_per_timestep
+                            check_job_configs_match,
+                            setup_logging, dump_database_backup,
+                            group_per_timestep
                             )
 from tkp.db.configstore import store_config, fetch_config
 from tkp.steps.persistence import create_dataset, store_images
@@ -37,10 +37,13 @@ def run(job_name, supplied_mon_coords=[]):
     runner = Runner(distributor=distributor,
                     cores=parallelise.get('cores', 0))
 
-    debug = pipe_config.logging.debug
+
     #Setup logfile before we do anything else
     log_dir = pipe_config.logging.log_dir
-    setup_log_file(log_dir, debug)
+    setup_logging(log_dir,
+                  debug=pipe_config.logging.debug,
+                  use_colorlog=pipe_config.logging.colorlog
+                  )
 
     job_dir = pipe_config.DEFAULT.job_directory
     if not os.access(job_dir, os.X_OK):
@@ -132,13 +135,13 @@ def run(job_name, supplied_mon_coords=[]):
         msg = "processing %s images in timestep %s (%s/%s)"
         logger.info(msg % (len(images), timestep, n+1, timestep_num))
 
-        logger.info("performing source extraction")
+        logger.debug("performing source extraction")
         urls = [img.url for img in images]
         arguments = [se_parset]
 
         extraction_results = runner.map("extract_sources", urls, arguments)
 
-        logger.info("storing extracted sources to database")
+        logger.debug("storing extracted sources to database")
         # we also set the image max,min RMS values which calculated during
         # source extraction
         for image, results in zip(images, extraction_results):
@@ -147,12 +150,10 @@ def run(job_name, supplied_mon_coords=[]):
                 analysis_thresh=se_parset['analysis_threshold'])
             dbgen.insert_extracted_sources(image.id, results.sources, 'blind')
 
-        logger.info("performing database operations")
-
         for image in images:
-            logger.info("performing DB operations for image %s" % image.id)
+            logger.info("performing DB operations for image {} ({})".format(
+                image.id, image.url))
 
-            logger.info("performing source association")
             dbass.associate_extracted_sources(image.id,
                                               deRuiter_r=deruiter_radius,
                                               new_source_sigma_margin=new_src_sigma)

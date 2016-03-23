@@ -245,7 +245,7 @@ def insert_extracted_sources(image_id, results, extract_type,
           source-distance calculations
     """
     if not len(results):
-        logger.info("No extract_type=%s sources added to extractedsource for"
+        logger.debug("No extract_type=%s sources added to extractedsource for"
                     " image %s" % (extract_type, image_id))
         return
 
@@ -255,7 +255,8 @@ def insert_extracted_sources(image_id, results, extract_type,
         # Drop any fits with infinite flux errors
         if math.isinf(r[5]) or math.isinf(r[7]):
             logger.warn("Dropped source fit with infinite flux errors "
-                        "at position %s %s" % (r[0], r[1]))
+                        "at position {} {} in image {}".format(
+                r[0], r[1], image_id))
             continue
         # Use 360 degree rather than infinite uncertainty for
         # unconstrained positions.
@@ -348,13 +349,13 @@ VALUES {placeholder}
         #    logger.info("No forced-fit sources added to extractedsource for "
         #                "image %s" % (image_id,))
         if extract_type == 'blind':
-            logger.info("Inserted %d sources in extractedsource for image %s" %
+            logger.debug("Inserted %d sources in extractedsource for image %s" %
                         (insert_num, image_id))
         elif extract_type == 'ff_nd':
-            logger.info("Inserted %d forced-fit null detections in extractedsource"
+            logger.debug("Inserted %d forced-fit null detections in extractedsource"
                         " for image %s" % (insert_num, image_id))
         elif extract_type == 'ff_ms':
-            logger.info("Inserted %d forced-fit for monitoring in extractedsource"
+            logger.debug("Inserted %d forced-fit for monitoring in extractedsource"
                         " for image %s" % (insert_num, image_id))
 
 

@@ -135,13 +135,35 @@ directory contains three files:
 ``inject.cfg``
     Configuration for :ref:`image metadata injection <tkp-inject>`.
 
+.. _getstart-runpipe:
 
 Run the pipeline
 ================
 
-To start processing your data run (from your pipeline directory)::
+To start processing your data, from your pipeline directory run::
 
     $ trap-manage.py run <jobname>
+
+
+Position monitoring
+--------------------
+
+Additionally you can specify monitoring-locations - TraP will attempt forced-fits
+at these co-ordinates, which can help to identify faint sources or place upper
+limits on a non-detection. Co-ordinates should be a JSON-format
+list of RA,Dec pairs in decimal degrees, either listed at command line::
+
+    $ trap-manage.py run <jobname> -m "[[123,45],[124,46]]"
+
+Or in a JSON-formatted file, e.g.::
+
+    $ cat mycoords.json
+        [[123,45],
+         [124,46]
+        ]
+
+    $ trap-manage.py run <jobname> -l mycoords.json
+
 
 
 .. _MonetDB online documentation: https://www.monetdb.org/Documentation/monetdbd

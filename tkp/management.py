@@ -27,8 +27,8 @@ import tkp
 from tkp.db.sql.populate import populate
 from tkp.main import run
 
-
 logging.basicConfig(level=logging.INFO)
+
 
 class CommandError(Exception):
     """
@@ -125,8 +125,8 @@ def copy_template(job_or_project, name, target=None, **options):
     # these are used for string replacement in templates
     substitutes = (
         ("user_name", getpass.getuser()),
-        #("runtime_directory", top_dir)
-        )
+        # ("runtime_directory", top_dir)
+    )
 
     for root, dirs, files in os.walk(template_dir):
 
@@ -147,7 +147,7 @@ def copy_template(job_or_project, name, target=None, **options):
                 continue
             old_path = path.join(root, filename)
             new_path = path.join(top_dir, relative_dir,
-                filename.replace(base_name, name))
+                                 filename.replace(base_name, name))
             if path.exists(new_path):
                 raise CommandError("%s already exists, overlaying a "
                                    "project or job into an existing "
@@ -168,26 +168,29 @@ def copy_template(job_or_project, name, target=None, **options):
                 shutil.copymode(old_path, new_path)
                 make_writeable(new_path)
             except OSError:
-                sys.stderr.write("Notice: Couldn't set permission bits on %s. You're "
-                                  "probably using an uncommon filesystem setup. No "
-                                  "problem.\n" % new_path)
+                sys.stderr.write(
+                    "Notice: Couldn't set permission bits on %s. You're "
+                    "probably using an uncommon filesystem setup. No "
+                    "problem.\n" % new_path)
     return top_dir
 
-def parse_monitoringlist_positions(args, str_name="monitor_coords", list_name="monitor_list"):
+
+def parse_monitoringlist_positions(args, str_name="monitor_coords",
+                                   list_name="monitor_list"):
     """Loads a list of monitoringlist (RA,Dec) tuples from cmd line args object.
 
     Processes the flags "--monitor-coords" and "--monitor-list"
     NB This is just a dumb function that does not care about units,
     those should be matched against whatever uses the resulting values...
     """
-    monitor_coords=[]
+    monitor_coords = []
     if hasattr(args, str_name) and getattr(args, str_name):
         try:
             monitor_coords.extend(json.loads(getattr(args, str_name)))
         except ValueError:
             logging.error("Could not parse monitor-coords from command line:"
-                         "string passed was:\n%s" % (getattr(args, str_name),)
-                         )
+                          "string passed was:\n%s" % (getattr(args, str_name),)
+                          )
             raise
     if hasattr(args, list_name) and getattr(args, list_name):
         try:
@@ -195,9 +198,10 @@ def parse_monitoringlist_positions(args, str_name="monitor_coords", list_name="m
             monitor_coords.extend(mon_list)
         except ValueError:
             logging.error("Could not parse monitor-coords from file: "
-                              + getattr(args, list_name))
+                          + getattr(args, list_name))
             raise
     return monitor_coords
+
 
 def init_project(args):
     print "creating project '%s'" % args.name
@@ -239,7 +243,7 @@ def init_db(options):
 
 
 def get_parser():
-    trap_manage_note= """
+    trap_manage_note = """
         A tool for managing TKP projects.
 
         Use 'initproject' to create a project directory. Other Subcommands
@@ -263,7 +267,7 @@ def get_parser():
     parser = argparse.ArgumentParser(
         description=trap_manage_note,
         formatter_class=argparse.RawDescriptionHelpFormatter
-        )
+    )
     parser_subparsers = parser.add_subparsers()
 
     # initproject
@@ -272,7 +276,7 @@ def get_parser():
         help="""
         Initialize a pipeline project directory, complete with config files which you
         can use to configure your pipeline.
-        """                                                      )
+        """)
     initproject_parser.add_argument('name', help='project folder name')
     initproject_parser.add_argument('-t', '--target',
                                     help='location of new TKP project')
@@ -296,14 +300,16 @@ def get_parser():
     )
 
     run_parser.add_argument('name', help='Name of job to run')
-    m_help = 'a list of RA,DEC coordinates to monitor in JSON format,' \
-             ' example: [[5, 6], [7, 8]]'
+    m_help = ('a list of RA,DEC coordinates to monitor in JSON format, '
+              '(decimal degrees)'
+              ' example: "[[5, 6], [7, 8]]"')
     run_parser.add_argument('-m', '--monitor-coords', help=m_help)
     run_parser.add_argument('-l', '--monitor-list',
-                            help='Specify a file containing a list of RA,DEC')
+                            help='Specify a file containing the '
+                                 'JSON-formatted monitor co-ordinates.')
     run_parser.set_defaults(func=run_job)
 
-    #initdb
+    # initdb
     initdb_parser = parser_subparsers.add_parser(
         'initdb',
         help="Initialize a database with the TKP schema.")

@@ -27,7 +27,7 @@ import tkp
 from tkp.db.sql.populate import populate
 from tkp.main import run
 
-logging.basicConfig(level=logging.INFO)
+# logging.basicConfig(level=logging.INFO)
 
 
 class CommandError(Exception):

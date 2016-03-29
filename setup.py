@@ -3,21 +3,21 @@ from setuptools import setup, find_packages
 from tkp import __version__ as tkp_version
 
 install_requires = """
-    numpy>=1.3.0
-    scipy>=0.7.0
     astropy
+    colorlog
+    numpy>=1.3.0
+    psycopg2
+    python-casacore
     python-dateutil>=1.4.1
     pytz
     pywcs>=1.12
-    python-casacore
-    psycopg2
+    scipy>=0.7.0
     sqlalchemy>=1.0.0
     """.split()
 
 extras_require = {
     'pixelstore': ['pymongo>=3.0'],
     'monetdb': ['python-monetdb>=11.11.11', 'sqlalchemy_monetdb>=0.9.1'],
-    'distribute' : [ 'celery>=3.1.11']
 }
 
 tkp_scripts = [

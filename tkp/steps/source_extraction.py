@@ -26,10 +26,9 @@ def extract_sources(image_path, extraction_params):
         list of ExtractionResults named tuples containing source measurements,
         min RMS value and max RMS value
     """
-    logger.info("Extracting image: %s" % image_path)
-    accessor = tkp.accessors.open(image_path)
     logger.debug("Detecting sources in image %s at detection threshold %s",
                  image_path, extraction_params['detection_threshold'])
+    accessor = tkp.accessors.open(image_path)
     data_image = sourcefinder_image_from_accessor(accessor,
                     margin=extraction_params['margin'],
                     radius=extraction_params['extraction_radius_pix'],

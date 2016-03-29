@@ -15,6 +15,7 @@ from collections import defaultdict
 from tkp.config import parse_to_dict
 from tkp.db.dump import dump_db
 
+import colorlog
 
 logger = logging.getLogger(__name__)
 
@@ -49,30 +50,77 @@ def check_job_configs_match(job_config_1, job_config_2):
     return jc_from_file==jc_from_db
 
 
-def setup_log_file(log_dir, debug=False, basename='trap.log'):
+def setup_logging(log_dir, debug, use_colorlog,
+                  basename='trap'):
     """
-    sets up a catch all logging handler which writes to `log_file`.
+    Sets up logging to stdout, + info/debug level logfiles in log_dir.
 
-    :param log_file: log file to write
-    :param debug: do we want debug level logging?
-    :param basename: basename of the log file
+    Args:
+        log_dir (string): log directory
+        debug (bool): do we want debug level logging on stdout?
+        basename (string): basename of the log file
     """
     if not os.path.isdir(log_dir):
         os.makedirs(log_dir)
-    log_file = os.path.join(log_dir, basename)
-    global_logger = logging.getLogger()
-    hdlr = logging.FileHandler(log_file)
-    global_logger.addHandler(hdlr)
-    formatter = logging.Formatter(
-        '%(asctime)s.%(msecs)03d %(levelname)s %(name)s: %(message)s',
+    info_log_file = os.path.join(log_dir, basename+'.log')
+    debug_log_file = os.path.join(log_dir, basename+'.debug.log')
+
+
+
+    long_formatter = logging.Formatter(
+        '%(asctime)s %(levelname)s %(name)s: %(message)s',
         datefmt="%Y-%m-%d %H:%M:%S"
     )
-    hdlr.setFormatter(formatter)
-    logger.info("logging to %s" % log_file)
-    if debug:
-        global_logger.setLevel(logging.DEBUG)
+    short_formatter = logging.Formatter(
+        '%(asctime)s %(levelname)s %(name)s: %(message)s',
+            datefmt="%H:%M:%S")
+
+    info_hdlr = logging.FileHandler(info_log_file)
+    info_hdlr.setLevel(logging.INFO)
+    info_hdlr.setFormatter(long_formatter)
+
+    debug_hdlr = logging.FileHandler(debug_log_file)
+    debug_hdlr.setLevel(logging.DEBUG)
+    debug_hdlr.setFormatter(long_formatter)
+
+    stdout_handler = logging.StreamHandler()
+
+    color_fmt = colorlog.ColoredFormatter(
+            "%(log_color)s%(asctime)s:%(name)s:%(levelname)s%(reset)s %(blue)s%(message)s",
+            datefmt= "%H:%M:%S",
+            reset=True,
+            log_colors={
+                    'DEBUG':    'cyan',
+                    'INFO':     'green',
+                    'WARNING':  'yellow',
+                    'ERROR':    'red',
+                    'CRITICAL': 'red',
+            }
+        )
+    if use_colorlog:
+        stdout_handler.setFormatter(color_fmt)
     else:
-        global_logger.setLevel(logging.INFO)
+        stdout_handler.setFormatter(short_formatter)
+
+
+    if debug:
+        stdout_handler.setLevel(logging.DEBUG)
+    else:
+        stdout_handler.setLevel(logging.INFO)
+
+
+    root_logger = logging.getLogger()
+    #We set level to debug, and handle output via handler-levels
+    root_logger.setLevel(logging.DEBUG)
+    #Trash any preset handlers and start fresh
+    root_logger.handlers = []
+    root_logger.addHandler(stdout_handler)
+    root_logger.addHandler(info_hdlr)
+    root_logger.addHandler(debug_hdlr)
+
+    logger.info("logging to %s" % log_dir)
+    #Suppress noisy streams:
+    logging.getLogger('tkp.sourcefinder.image.sigmaclip').setLevel(logging.INFO)
 
 
 def dump_database_backup(db_config, job_dir):

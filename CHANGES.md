@@ -1,5 +1,38 @@
 # Changelog
 -----------
+
+## R3.1 (2016-03-29)
+Adds an uncommon but potentially serious bug-fix, and
+some minor user-interface improvements.
+
+### User-interface changes
+New boolean entry `colorlog` in *job_params.cfg* ([#502][]),
+this controls whether the console logging-output from *trap-manage.py*
+is colored according to message severity. E.g.:
+
+    [logging]
+    colorlog = True
+
+This is accompanied by some adjustments to the logging, we now output both
+INFO and DEBUG level logfiles (under the *<jobdir>/logs/<run_datestamp>* folders).
+
+### Bugfixes
+- Catch some forced fitting bugs that could possibly have been encountered
+  due to oversize 'skyregion' settings, or simply when reducing mosaic images
+  with 'NaN' pixel regions. ([#496][])
+
+### Documentation
+- Add ['features overview'](http://tkp.readthedocs.org/en/latest/introduction.html#key-features)
+  section to docs.
+- Document use (and units) of 'monitoring-coords' option to *trap-manage.py*.
+  ([#485][])
+
+[#485]: https://github.com/transientskp/tkp/issues/485
+[#496]: https://github.com/transientskp/tkp/pull/496
+[#502]: https://github.com/transientskp/tkp/pull/502
+
+
+
 ## R3.0 (2016-01-15)
 
 No changes since R3.0rc

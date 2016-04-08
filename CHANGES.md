@@ -6,7 +6,7 @@ Adds an uncommon but potentially serious bug-fix, and
 some minor user-interface improvements.
 
 ### User-interface changes
-New boolean entry `colorlog` in *job_params.cfg* ([#502][]),
+New boolean entry `colorlog` in *pipeline.cfg* ([#502][]),
 this controls whether the console logging-output from *trap-manage.py*
 is colored according to message severity. E.g.:
 

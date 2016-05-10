@@ -2,7 +2,7 @@
 All generic quality checking routines.
 """
 import logging
-
+from tkp.telescope.generic.quality import reject_check_generic_data
 from tkp.telescope.lofar.quality import reject_check_lofar
 from tkp.telescope.aartfaac.quality import reject_check_aartfaac
 from tkp.accessors.lofaraccessor import LofarAccessor
@@ -31,6 +31,10 @@ def reject_check(image_path, job_config):
     """
 
     accessor = tkp.accessors.open(image_path)
+
+    rejected = reject_check_generic_data(accessor)
+    if rejected:
+        return rejected
 
     if isinstance(accessor, AartfaacCasaImage):
         rejected = reject_check_aartfaac(accessor)

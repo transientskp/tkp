@@ -6,8 +6,7 @@ import datetime
 
 import tkp.quality.brightsource
 import tkp.accessors
-from tkp.testutil.mock import MockImage
-from tkp.utility.coordinates import WCS
+from tkp.testutil.mock import SyntheticImage, make_wcs
 
 class TestEphemeris(unittest.TestCase):
     # Tests whether we can correctly identify that an ephemeris is invalid.
@@ -24,25 +23,14 @@ class TestEphemeris(unittest.TestCase):
 
 class TestBrightsource(unittest.TestCase):
     def test_brightsource(self):
-        wcs = WCS()
-        wcs.cdelt = (-0.011111111111111112, 0.011111111111111112)
-        wcs.crota = (0.0, 0.0)
-        wcs.crpix = (256.0, 256.0)
-        wcs.crval = (212.83583333333334, 52.2025)
-        wcs.ctype = ('RA---SIN', 'DEC--SIN')
-        wcs.cunit = ('deg', 'deg')
-        image = MockImage(
-            {
-                "url": "dummy",
-                "tau_time": 58141509,
-                "taustart_ts": datetime.datetime(2012, 4, 6, 3, 42, 1),
-                "centre_ra": 212.83583333333334,
-                "centre_decl": 52.2025,
-                "freq_eff": 128613281.25,
-                "freq_bw": 1940917.96875,
-                "beam": (1.9211971282958984, 1.7578132629394532, 1.503223674140207)
-            },
-            wcs
+        wcs = make_wcs(crval=(212.83583333333334, 52.2025))
+        image = SyntheticImage(
+            wcs = wcs,
+            tau_time=58141509,
+            taustart_ts=datetime.datetime(2012, 4, 6, 3, 42, 1),
+            freq_eff=128613281.25,
+            freq_bw=1940917.96875,
+            beam= (1.9211971282958984, 1.7578132629394532, 1.503223674140207),
         )
 
         # this image is not near any bright sources

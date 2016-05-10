@@ -11,6 +11,7 @@ from tkp import accessors
 from tkp.utility.uncertain import Uncertain
 from tkp.testutil.data import DATAPATH
 from tkp.testutil.data import fits_file
+from tkp.testutil.mock import SyntheticImage
 
 BOX_IN_BEAMPIX = 10 #HARDCODING - FIXME! (see also monitoringlist recipe)
 
@@ -402,3 +403,14 @@ class TestMaskedBackground(unittest.TestCase):
             accessors.open(fits_file), radius=1.0)
         result = self.image.extract(det=10.0, anl=3.0)
         self.assertFalse(result)
+
+class TestFailureModes(unittest.TestCase):
+    """
+    If we get pathological data we should probably throw an exception
+    and let the calling code decide what to do.
+    """
+    def testFlatImage(self):
+        sfimage = accessors.sourcefinder_image_from_accessor(
+            SyntheticImage(data=np.zeros((512,512))))
+        with self.assertRaises(RuntimeError):
+            sfimage.extract(det=5,anl=3)

@@ -412,5 +412,7 @@ class TestFailureModes(unittest.TestCase):
     def testFlatImage(self):
         sfimage = accessors.sourcefinder_image_from_accessor(
             SyntheticImage(data=np.zeros((512,512))))
+        self.assertTrue(np.ma.max(sfimage.data) == np.ma.min(sfimage.data),
+                        msg = "Data should be flat")
         with self.assertRaises(RuntimeError):
             sfimage.extract(det=5,anl=3)

@@ -139,7 +139,6 @@ class ImageData(object):
         if self.radius:
             radius_mask = utils.circular_mask(self.xdim, self.ydim, self.radius)
             mask = numpy.logical_or(mask, radius_mask)
-        mask = numpy.logical_or(mask, numpy.where(self.rawdata == 0, 1, 0))
         mask = numpy.logical_or(mask, numpy.isnan(self.rawdata))
         return numpy.ma.array(self.rawdata, mask=mask)
     data = property(fget=_get_data, fdel=_get_data.delete)
@@ -381,6 +380,13 @@ class ImageData(object):
             logger.warn(
                 "Analysis threshold is higher than detection threshold"
             )
+
+        # If the image data is flat we may as well crash out here with a
+        # sensible error message, otherwise the RMS estimation code will
+        # crash out with a confusing error later.
+        if numpy.ma.max(self.data) == numpy.ma.min(self.data):
+            raise RuntimeError("Bad data: Image data is flat")
+
         if (type(bgmap).__name__ == 'ndarray' or
             type(bgmap).__name__ == 'MaskedArray'):
             if bgmap.shape != self.backmap.shape:

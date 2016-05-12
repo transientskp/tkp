@@ -41,6 +41,11 @@ class TestReject(unittest.TestCase):
         self.assertRaises(DatabaseError,
               tkp.db.quality.reject, self.image.id, 666666, "bad reason")
 
+    def test_all_reasons_present_in_database(self):
+        for reason in tkp.db.quality.reason.values():
+            tkp.db.quality.reject(self.image.id, reason.id, "comment")
+            tkp.db.quality.unreject(self.image.id)
+
     def test_isrejected(self):
         tkp.db.quality.unreject(self.image.id)
         self.assertFalse(tkp.db.quality.isrejected(self.image.id))

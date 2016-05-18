@@ -6,10 +6,12 @@ import logging
 import os
 from tkp import steps
 from tkp.config import initialize_pipeline_config, get_database_config
+import tkp.db
 from tkp.db import consistency as dbconsistency
 from tkp.db import Image
 from tkp.db import general as dbgen
 from tkp.db import associations as dbass
+from tkp.db.quality import sync_rejectreasons
 from tkp.distribute import Runner
 from tkp.steps.misc import (load_job_config, dump_configs_to_logdir,
                             check_job_configs_match,
@@ -71,6 +73,8 @@ def run(job_name, supplied_mon_coords=[]):
     if not dbconsistency.check():
         logger.error("Inconsistent database found; aborting")
         return 1
+
+    sync_rejectreasons(tkp.db.Database().Session())
 
     dataset_id = create_dataset(job_config.persistence.dataset_id,
                                 job_config.persistence.description)

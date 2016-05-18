@@ -84,15 +84,6 @@ class Database(object):
                                                            self.database))
         self._configured = True
 
-    def connect(self, check=False):
-        """
-        connect to the configured database
-
-        args:
-            check (bool): check if schema version is correct
-        """
-        logger.info("connecting to database...")
-
         self.alchemy_engine = create_engine('%s://%s:%s@%s:%s/%s' %
                                             (self.engine,
                                              self.user,
@@ -103,6 +94,16 @@ class Database(object):
                                             echo=False
                                             )
         self.Session = sessionmaker(bind=self.alchemy_engine)
+
+    def connect(self, check=False):
+        """
+        connect to the configured database
+
+        args:
+            check (bool): check if schema version is correct
+        """
+        logger.info("connecting to database...")
+
         self._connection = self.alchemy_engine.connect()
         self._connection.execution_options(autocommit=False)
 

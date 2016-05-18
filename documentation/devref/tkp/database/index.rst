@@ -18,7 +18,8 @@ Modules from the :mod:`tkp.db` package.
    dump
    general
    generic
-   orm
+   model
    monitoringlist
    nulldetections
+   orm
    quality

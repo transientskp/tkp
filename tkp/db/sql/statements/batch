@@ -18,7 +18,6 @@ procedures/BuildNodes.sql
 # initialisation
 #
 init/tables.sql
-init/rejectreasons.sql
 #
 # views
 #

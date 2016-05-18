@@ -390,7 +390,6 @@ class Image(DBObject):
         if not self.dataset:
             self.dataset = DataSet(id=self._data['dataset'], database=self.database)
 
-        self.update_rejected()
 
 
     # Inserting images is handled a little different than normal inserts
@@ -435,10 +434,6 @@ class Image(DBObject):
                 raise
         return self._id
 
-    def update_rejected(self):
-        """Update self.rejected with the rejected status. Will be false
-        if not rejected, will be a list of reject descriptions if rejected"""
-        self.rejected = tkp.db.quality.isrejected(self.id)
 
     def update_sources(self):
         """Renew the set of sources by getting the sources for this

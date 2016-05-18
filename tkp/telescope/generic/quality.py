@@ -1,6 +1,6 @@
 import numpy as np
 import logging
-import tkp.db
+import tkp.db.quality as dbquality
 logger = logging.getLogger(__name__)
 
 
@@ -33,6 +33,6 @@ def reject_check_flat_data(accessor):
 
     if np.ma.min(data)==np.ma.max(data):
         logger.warning("image %s REJECTED: image data is flat" % accessor.url)
-        return tkp.db.quality.reason['flat'].id, ""
+        return dbquality.reject_reasons['flat'], ""
     else:
         return None

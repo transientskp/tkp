@@ -1,6 +1,5 @@
 import logging
-import tkp.db
-import tkp.quality
+import tkp.db.quality as dbquality
 from tkp.quality.nan import contains_nan
 
 logger = logging.getLogger(__name__)
@@ -19,6 +18,6 @@ def reject_check_aartfaac(accessor):
     nan_check = contains_nan(accessor.data)
     if nan_check:
         logger.warning("image %s REJECTED: contains NaN" % accessor.url)
-        return tkp.db.quality.reason['nan'].id, ""
+        return dbquality.reject_reasons['nan'], ""
     else:
         return None

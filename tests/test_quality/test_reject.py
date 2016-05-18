@@ -1,60 +1,90 @@
 import unittest
 import tkp.quality
 import tkp.db
-import tkp.db.quality
+from tkp.db.model import Rejection, Rejectreason
+import tkp.db.quality as dbqual
 import tkp.db.database
-from sqlalchemy.exc import DatabaseError
+from sqlalchemy.exc import DatabaseError, IntegrityError
 from tkp.testutil.decorators import requires_database
 from tkp.testutil import db_subs
 
 
+@requires_database()
 class TestReject(unittest.TestCase):
-    @requires_database()
+    @classmethod
+    def setUpClass(cls):
+        cls.db = tkp.db.Database()
+
     def setUp(self):
+        self.session = self.db.Session()
         self.fake_images = db_subs.generate_timespaced_dbimages_data(n_images=1)
         self.dataset = tkp.db.DataSet(data={'description':
-                                                  "Reject:" + self._testMethodName})
+                                                "Reject:" + self._testMethodName})
         self.image = tkp.db.Image(data=self.fake_images[0],
-                                        dataset=self.dataset)
+                                  dataset=self.dataset)
 
     def tearDown(self):
+        self.session.rollback()
         tkp.db.rollback()
+        pass
 
-    def test_rejectrms(self):
-        tkp.db.quality.unreject(self.image.id)
-        tkp.db.quality.reject(self.image.id,
-                                    tkp.db.quality.reason['rms'].id,
-                                    "10 times too high")
-        query = "select count(*) from rejection where image=%s"
-        args = (self.image.id,)
-        cursor = tkp.db.execute(query, args)
-        self.assertEqual(cursor.fetchone()[0], 1)
-
-    def test_unreject(self):
-        tkp.db.quality.unreject(self.image.id)
-        query = "select count(*) from rejection where image=%s"
-        args = (self.image.id,)
-        cursor = tkp.db.execute(query, args)
-        self.assertEqual(cursor.fetchone()[0], 0)
+    def test_rejectrms_and_unreject(self):
+        dbqual.reject(self.image.id,
+                      dbqual.reject_reasons['rms'],
+                      "10 times too high",
+                      self.session)
+        image_rejections_q = self.session.query(Rejection).filter(
+            Rejection.image_id == self.image.id)
+        self.assertEqual(image_rejections_q.count(), 1)
+        dbqual.unreject(self.image.id, self.session)
+        self.assertEqual(image_rejections_q.count(), 0)
 
     def test_unknownreason(self):
-        self.assertRaises(DatabaseError,
-              tkp.db.quality.reject, self.image.id, 666666, "bad reason")
+        with self.assertRaises(IntegrityError):
+            dbqual.reject(self.image.id,
+                          Rejectreason(id=666666, description="foobar"),
+                          comment="bad reason",
+                          session=self.session)
+            self.session.flush()
 
     def test_all_reasons_present_in_database(self):
-        for reason in tkp.db.quality.reason.values():
-            tkp.db.quality.reject(self.image.id, reason.id, "comment")
-            tkp.db.quality.unreject(self.image.id)
+        for reason in dbqual.reject_reasons.values():
+            dbqual.reject(self.image.id, reason, "comment", self.session)
+            dbqual.unreject(self.image.id, self.session)
 
     def test_isrejected(self):
-        tkp.db.quality.unreject(self.image.id)
-        self.assertFalse(tkp.db.quality.isrejected(self.image.id))
-        tkp.db.quality.reject(self.image.id,
-                                    tkp.db.quality.reason['rms'].id,
-                                    "10 times too high")
-        self.assertEqual(tkp.db.quality.isrejected(self.image.id),
-                         [tkp.db.quality.reason['rms'].desc +
-                          ': 10 times too high', ])
+        dbqual.unreject(self.image.id, self.session)
+        self.assertFalse(dbqual.isrejected(self.image.id, self.session))
+
+        rms_reason = dbqual.reject_reasons['rms']
+        comment = "10 times too high"
+
+        reason_comment_str = "{}: {}".format(rms_reason.description, comment)
+        dbqual.reject(self.image.id,
+                      rms_reason,
+                      comment,
+                      self.session)
+        self.assertEqual(dbqual.isrejected(self.image.id, self.session),
+                         [ reason_comment_str ])
+
+    def test_rejectreasons_sync(self):
+        """
+        Delete a rejectreason, then re-sync and double check the counts match.
+        """
+        reason = self.session.query(Rejectreason).all()[-1]
+        print "Deleting reason id", reason.id
+        self.session.delete(reason)
+        self.assertNotEqual(
+            self.session.query(Rejectreason).count(),
+            len(dbqual.reject_reasons))
+
+        dbqual.sync_rejectreasons(self.session)
+        self.session.flush()
+        self.assertEqual(
+            self.session.query(Rejectreason).count(),
+            len(dbqual.reject_reasons))
+
+
 
 if __name__ == '__main__':
     unittest.main()

@@ -8,6 +8,7 @@ import tkp
 from tkp.db.database import DB_VERSION
 import tkp.db.database
 import tkp.db.model
+import tkp.db.quality
 from tkp.config import get_database_config
 from sqlalchemy.exc import ProgrammingError
 
@@ -203,6 +204,8 @@ def populate(dbconfig):
     version = tkp.db.model.Version(name='revision',
                                    value=tkp.db.model.SCHEMA_VERSION)
     session.add(version)
+
+    tkp.db.quality.sync_rejectreasons(session)
 
     for line in [l.strip() for l in open(batch_file) if not l.startswith("#")]:
         if not line:  # skip empty lines

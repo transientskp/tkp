@@ -20,6 +20,7 @@ echo "****************************"
 echo "POSTGRES:"
 echo "****************************"
 export TKP_DBENGINE=postgresql
-export TKP_DBUSER=postgres
+export TKP_DBUSER=$USER
+export TKP_DBPASSWORD=$USER
 python ./runtests.py $*
 

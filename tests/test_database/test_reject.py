@@ -5,8 +5,16 @@ from tkp.testutil.decorators import requires_database
 import tkp.db.quality as db_quality
 from tkp.db.associations import associate_extracted_sources
 
+@requires_database()
 class TestRejection(unittest.TestCase):
-    @requires_database()
+
+    @classmethod
+    def setUpClass(cls):
+        cls.db = tkp.db.Database()
+
+    def setUp(self):
+        self.session = self.db.Session()
+
     def test_rejected_initial_image(self):
         """
         An image which is rejected should not be taken into account when
@@ -34,9 +42,14 @@ class TestRejection(unittest.TestCase):
 
        # The first image is rejected for an arbitrary reason
        # (for the sake of argument, we use an unacceptable RMS).
-        tkp.db.quality.reject(
-            db_imgs[0].id, tkp.db.quality.reason['rms'].id, self._testMethodName
+        db_quality.reject(
+            imageid=db_imgs[0].id,
+            reason=db_quality.reject_reasons['rms'],
+            comment=self._testMethodName,
+            session=self.session
         )
+        # Have to commit here: old DB code makes queries in a separate transaction.
+        self.session.commit()
 
         # Since we rejected the first image, we only find a source in the
         # second.

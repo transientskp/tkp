@@ -2,78 +2,79 @@
 check image quality
 """
 import logging
-from collections import namedtuple
-import tkp.db
+from tkp.db.model import Rejectreason, Rejection
 
 logger = logging.getLogger(__name__)
 
-# TODO: need to think of a way to sync this with tkp/db/tables/rejection.sql
-RejectReason = namedtuple('RejectReason', 'id desc')
-
-reason = {
-    'rms': RejectReason(id=0, desc='RMS invalid'),
-    'beam': RejectReason(id=1, desc='beam invalid'),
-    'bright_source': RejectReason(id=2, desc='bright source near'),
-    'tau_time': RejectReason(id=3, desc='tau_time invalid'),
-    'nan': RejectReason(id=4, desc='contains NaN'),
+reject_reasons = {
+    'rms': Rejectreason(id=0, description='RMS invalid'),
+    'beam': Rejectreason(id=1, description='beam invalid'),
+    'bright_source': Rejectreason(id=2, description='bright source near'),
+    'tau_time': Rejectreason(id=3, description='tau_time invalid'),
+    'nan': Rejectreason(id=4, description='contains NaN'),
+    'flat': Rejectreason(id=5, description='data is flat'),
 }
 
-query_reject = """\
-INSERT INTO rejection
-  (image
-  ,rejectreason
-  ,comment
-  )
-VALUES
-  (%(imageid)s
-  ,%(reason)s
-  ,'%(comment)s'
-  )
-"""
 
-query_unreject = """\
-DELETE
-  FROM rejection
- WHERE image=%(image)s
-"""
-
-query_isrejected = """\
-SELECT rejectreason.description, rejection.comment
-  FROM rejection, rejectreason
- WHERE rejection.rejectreason = rejectreason.id
-   AND rejection.image = %(imageid)s
-"""
-
-
-def reject(imageid, reason, comment):
-    """ Add a reject intro to the db for a given image
-    :param imageid: The image ID of the image to reject
-    :param reason: why is the image rejected, a defined in 'reason'
-    :param comment: an optional comment with details about the reason
+def sync_rejectreasons(session):
     """
-    args = {'imageid': imageid, 'reason': reason, 'comment': comment}
-    query = query_reject % args
-    tkp.db.execute(query, commit=True)
+    Check if rejectreasons are in sync. If not, insert as needed and commit.
 
-
-def unreject(imageid):
-    """ Remove all rejection of a given imageid
-    :param imageid: The image ID of the image to reject
+    Args:
+        session (sqlalchemy.orm.Session): Database session.
     """
-    query = query_unreject % {'image': imageid}
-    tkp.db.execute(query, commit=True)
+    if session.query(Rejectreason).count() != len(reject_reasons):
+        dbreason_id_rows = session.query(Rejectreason.id).all()
+        dbreason_ids = [row[0] for row in dbreason_id_rows]
+        for r in reject_reasons.values():
+            if r.id not in dbreason_ids:
+                logger.info("Added to database Rejectreason {}:'{}'".format(
+                    r.id, r.description
+                ))
+                session.add(r)
+        session.commit()
 
 
-def isrejected(imageid):
-    """ Find out if an image is rejected or not
-    :param  imageid: The image ID of the image to reject
-    :returns:  False if not rejected, a list of reason id's if rejected
+def reject(imageid, reason, comment, session):
     """
-    query = query_isrejected % {'imageid': imageid}
-    cursor = tkp.db.execute(query)
-    results = cursor.fetchall()
-    if len(results) > 0:
-        return ["%s: %s" % tuple(row) for row in results]
-    else:
-        return False
+    Add a reject reason to the db for a given image.
 
+    Args:
+        imageid (int): The image ID of the image to reject
+        reason (tkp.db.model.Rejectreason): Why is the image rejected
+        comment (str): An optional comment with details about the reason
+        session (sqlalchemy.orm.Session): Database session.
+    """
+    r = Rejection(image_id=imageid,
+                  rejectreason_id=reason.id,
+                  comment=comment,
+                  )
+    session.add(r)
+
+
+def unreject(imageid, session):
+    """
+    Remove any rejections of a given imageid
+
+    Args:
+        imageid: The image ID
+        session (sqlalchemy.orm.Session): Database session.
+    """
+    session.query(Rejection).filter(
+        Rejection.image_id == imageid).delete()
+
+
+def isrejected(imageid, session):
+    """
+    Find out if an image is rejected or not
+    Args:
+        imageid: The image ID
+        session (sqlalchemy.orm.Session): Database session.
+    Returns:
+        list: Empty if not rejected, a list of strings formatted as
+            '{description}: {comment}' if rejected.
+    """
+    image_rejections = session.query(Rejection).filter(
+        Rejection.image_id == imageid).all()
+    return ["{}: {}".format(ir.rejectreason.description, ir.comment)
+            for ir in image_rejections]

@@ -1,6 +1,6 @@
 import logging
 import tkp.db
-import tkp.quality
+import tkp.db.quality as dbquality
 from tkp.quality.restoringbeam import beam_invalid
 from tkp.quality.rms import rms_invalid
 from tkp.quality.statistics import rms_with_clipped_subregion
@@ -22,7 +22,7 @@ def reject_check_lofar(accessor, job_config):
 
     if accessor.tau_time == 0:
         logger.info("image %s REJECTED: tau_time is 0, should be > 0" % accessor.url)
-        return tkp.db.quality.reason['tau_time'], "tau_time is 0"
+        return dbquality.reject_reasons['tau_time'], "tau_time is 0"
 
     rms_est_sigma = job_config.persistence.rms_est_sigma
     rms_est_fraction = job_config.persistence.rms_est_fraction
@@ -40,7 +40,7 @@ def reject_check_lofar(accessor, job_config):
                          nice_format(noise)))
     else:
         logger.info("image %s REJECTED: %s " % (accessor.url, rms_check))
-        return (tkp.db.quality.reason['rms'].id, rms_check)
+        return (dbquality.reject_reasons['rms'], rms_check)
 
     # beam shape check
     (semimaj, semimin, theta) = accessor.beam
@@ -52,10 +52,10 @@ def reject_check_lofar(accessor, job_config):
                                              nice_format(semimin)))
     else:
         logger.info("image %s REJECTED: %s " % (accessor.url, beam_check))
-        return (tkp.db.quality.reason['beam'].id, beam_check)
+        return (dbquality.reject_reasons['beam'], beam_check)
 
     # Bright source check
     bright = tkp.quality.brightsource.is_bright_source_near(accessor, min_separation)
     if bright:
         logger.info("image %s REJECTED: %s " % (accessor.url, bright))
-        return (tkp.db.quality.reason['bright_source'].id, bright)
+        return (dbquality.reject_reasons['bright_source'], bright)

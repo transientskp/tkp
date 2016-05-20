@@ -263,6 +263,10 @@ class Rejection(Base):
     image_id = Column('image', ForeignKey('image.id'), index=True)
     image = relationship('Image')
 
+    # TO DO: Rename this column to 'rejectreason_id',
+    # (rather than just 'rejectreason') so the model attribute matches
+    # the SQL column name, avoiding the current confusing name-shadowing
+    # between the SQL columns and the model attributes. (Issue #508)
     rejectreason_id = Column('rejectreason', ForeignKey('rejectreason.id'), index=True)
     rejectreason = relationship('Rejectreason')
 

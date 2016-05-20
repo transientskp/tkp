@@ -1,5 +1,14 @@
 # Changelog
 -----------
+## R3.1.1 (2016-05-20)
+
+Adds a 'generic' (i.e. not telescope-specific) quality check for flat images,
+which are clearly bad data since they contain no information ([#507][]).
+Also makes some changes to the way image-rejection reasons are handled, 
+closing [#360][] in the process.
+
+[#360]: https://github.com/transientskp/tkp/issues/360
+[#507]: https://github.com/transientskp/tkp/issues/507
 
 ## R3.1 (2016-03-29)
 Adds an uncommon but potentially serious bug-fix, and

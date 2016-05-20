@@ -304,6 +304,7 @@ nitpick_ignore = [
     ("py:obj", "list of MockSource"),
     ("py:obj", "casacore measure"),
     ("py:obj", "lambda"),
+    ("py:obj", "sqlalchemy.orm.Session"),
     # These result from incorrect docstrings, should really be fixed
     # but we'll just suppress the errors for now.
     ("py:obj", "-"),

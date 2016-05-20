@@ -2,14 +2,15 @@
 All generic quality checking routines.
 """
 import logging
-
-from tkp.telescope.lofar.quality import reject_check_lofar
-from tkp.telescope.aartfaac.quality import reject_check_aartfaac
-from tkp.accessors.lofaraccessor import LofarAccessor
-from tkp.accessors import AartfaacCasaImage
 import tkp.db.quality
-import tkp.quality.brightsource
 import tkp.quality
+import tkp.quality.brightsource
+from tkp.accessors import AartfaacCasaImage
+from tkp.accessors.lofaraccessor import LofarAccessor
+from tkp.db import Database
+from tkp.telescope.aartfaac.quality import reject_check_aartfaac
+from tkp.telescope.generic.quality import reject_check_generic_data
+from tkp.telescope.lofar.quality import reject_check_lofar
 
 
 logger = logging.getLogger(__name__)
@@ -32,6 +33,10 @@ def reject_check(image_path, job_config):
 
     accessor = tkp.accessors.open(image_path)
 
+    rejected = reject_check_generic_data(accessor)
+    if rejected:
+        return rejected
+
     if isinstance(accessor, AartfaacCasaImage):
         rejected = reject_check_aartfaac(accessor)
         if rejected:
@@ -51,4 +56,6 @@ def reject_image(image_id, reason, comment):
     """
     Adds a rejection for an image to the database
     """
-    tkp.db.quality.reject(image_id, reason, comment)
+    session = Database().Session()
+    tkp.db.quality.reject(image_id, reason, comment,session)
+    session.commit()

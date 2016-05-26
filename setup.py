@@ -17,7 +17,7 @@ install_requires = """
 
 extras_require = {
     'pixelstore': ['pymongo>=3.0'],
-    'monetdb': ['python-monetdb>=11.11.11', 'sqlalchemy_monetdb>=0.9.1'],
+    'monetdb': ['sqlalchemy_monetdb>=0.9.1'],
 }
 
 tkp_scripts = [

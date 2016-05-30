@@ -1,0 +1,31 @@
+To find out how to work with migrations read the docs
+
+https://alembic.readthedocs.io/en/latest/autogenerate.html
+
+you can work on a specific TKP database by settings these
+environment variables:
+
+ - TKP_DBENGINE
+ - TKP_DBNAME
+ - TKP_DBUSER
+ - TKP_DBPASSWORD
+ - TKP_DBHOST
+ - TKP_DBPORT
+
+This is similar to how we configure the test suite:
+
+http://tkp.readthedocs.io/en/latest/devref/procedures/testing.html#database
+
+annoying thing is that for now you also need to set the database config
+in the alembic.ini file (sqlalchemy.url)
+
+basically to create a migration you should modify the model and then run:
+
+$ alembic revision --autogenerate -m "description"
+
+and then check the generated migration.
+
+An end user can then upgrade to the latest version using:
+
+$ alembic upgrade head
+

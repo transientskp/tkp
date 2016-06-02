@@ -365,7 +365,7 @@ class Image(DBObject):
 
     TABLE = 'image'
     ID = 'id'
-    REQUIRED = ('dataset', 'tau_time', 'freq_eff', 'freq_bw', 'taustart_ts',
+    REQUIRED = ('dataset', 'tau_time', 'freq_eff', 'freq_bw', 'freq_bw_max', 'taustart_ts',
                 'beam_smaj_pix', 'beam_smin_pix', 'beam_pa_rad',
                 'deltax', 'deltay',
                 'url', 'centre_ra', 'centre_decl', 'xtr_radius', 'rms_qc')
@@ -404,30 +404,27 @@ class Image(DBObject):
 
         if self._id is None:
             try:
-                #if 'bsmaj' not in self._data:
-                #    self._data['bsmaj'] = None
-                #    self._data['bsmin'] = None
-                #    self._data['bpa'] = None
-                #    self._data['deltax'] = None
-                #    self._data['deltay'] = None
-                # Insert a default image
                 self._id = insert_image(self.dataset.id,
-                    self._data['freq_eff'], self._data['freq_bw'],
-                    self._data['taustart_ts'], self._data['tau_time'],
-                    self._data['beam_smaj_pix'], self._data['beam_smin_pix'],
-                    self._data['beam_pa_rad'],
-                    self._data['deltax'],
-                    self._data['deltay'],
-                    self._data['url'],
-                    self._data['centre_ra'], #Degrees J2000
-                    self._data['centre_decl'], #Degrees J2000
-                    self._data['xtr_radius'], #Degrees
-                    self._data['rms_qc'],
-                    self._data.get('rms_min',None),
-                    self._data.get('rms_max',None),
-                    self._data.get('detection_thresh',None),
-                    self._data.get('analysis_thresh',None),
-                )
+                                        self._data['freq_eff'],
+                                        self._data['freq_bw'],
+                                        self._data['freq_bw_max'],
+                                        self._data['taustart_ts'],
+                                        self._data['tau_time'],
+                                        self._data['beam_smaj_pix'],
+                                        self._data['beam_smin_pix'],
+                                        self._data['beam_pa_rad'],
+                                        self._data['deltax'],
+                                        self._data['deltay'],
+                                        self._data['url'],
+                                        self._data['centre_ra'], #Degrees J2000
+                                        self._data['centre_decl'], #Degrees J2000
+                                        self._data['xtr_radius'], #Degrees
+                                        self._data['rms_qc'],
+                                        self._data.get('rms_min',None),
+                                        self._data.get('rms_max',None),
+                                        self._data.get('detection_thresh',None),
+                                        self._data.get('analysis_thresh',None),
+                                        )
             except Exception as e:
                 logger.error("ORM: error inserting image,  %s: %s" %
                                 (type(e).__name__, str(e)))

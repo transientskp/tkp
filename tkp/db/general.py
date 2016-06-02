@@ -101,12 +101,9 @@ VALUES {placeholder}
                     (insert_num, dataset_id))
 
 
-def insert_image(dataset, freq_eff, freq_bw,
-                 taustart_ts, tau_time,
+def insert_image(dataset, freq_eff, freq_bw, freq_bw_max, taustart_ts, tau_time,
                  beam_smaj_pix, beam_smin_pix, beam_pa_rad,
-                 deltax, deltay,
-                 url,
-                 centre_ra, centre_decl, xtr_radius,
+                 deltax, deltay, url, centre_ra, centre_decl, xtr_radius,
                  rms_qc,  rms_min, rms_max,
                  detection_thresh, analysis_thresh
                  ):
@@ -117,6 +114,7 @@ def insert_image(dataset, freq_eff, freq_bw,
         dataset (int): ID of parent dataset.
         freq_eff: See :ref:`Image table definitions <schema-image>`.
         freq_bw: See :ref:`Image table definitions <schema-image>`.
+        freq_bw_max (float): Optional override for freq_bw, not used if 0.
         taustart_ts: See :ref:`Image table definitions <schema-image>`.
         taus_time: See :ref:`Image table definitions <schema-image>`.
         beam_smaj_pix (float): Restoring beam semimajor axis length in pixels.
@@ -138,6 +136,7 @@ def insert_image(dataset, freq_eff, freq_bw,
                       ,%(tau_time)s
                       ,%(freq_eff)s
                       ,%(freq_bw)s
+                      ,%(freq_bw_max)s
                       ,%(taustart_ts)s
                       ,%(rb_smaj)s
                       ,%(rb_smin)s
@@ -159,6 +158,7 @@ def insert_image(dataset, freq_eff, freq_bw,
                  'tau_time': tau_time,
                  'freq_eff': freq_eff,
                  'freq_bw': freq_bw,
+                 'freq_bw_max': freq_bw_max,
                  'taustart_ts': taustart_ts,
                  'rb_smaj': beam_smaj_pix * math.fabs(deltax),
                  'rb_smin': beam_smin_pix * math.fabs(deltay),

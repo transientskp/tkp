@@ -85,6 +85,7 @@ def example_dbimage_data_dict(**kwargs):
     init_im_params = {'tau_time':300,
                       'freq_eff':140e6,
                       'freq_bw':2e6,
+                      'freq_bw_max':0,
                       'taustart_ts':starttime,
                       'beam_smaj_pix': float(2.7),
                       'beam_smin_pix': float(2.3),

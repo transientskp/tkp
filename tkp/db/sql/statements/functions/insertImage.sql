@@ -22,7 +22,6 @@ CREATE FUNCTION insertImage(idataset INT
                            ,itau_time DOUBLE PRECISION
                            ,ifreq_eff DOUBLE PRECISION
                            ,ifreq_bw DOUBLE PRECISION
-                           ,ifreq_bw_max DOUBLE PRECISION
                            ,itaustart_ts TIMESTAMP
                            ,irb_smaj DOUBLE PRECISION
                            ,irb_smin DOUBLE PRECISION
@@ -50,7 +49,7 @@ AS $$
   DECLARE iskyrgn INT;
 
 BEGIN
-  iband := getBand(ifreq_eff, ifreq_bw, ifreq_bw_max);
+  iband := getBand(1e6 * FLOOR(ifreq_eff/1e6 + 0.5), 1e6);
   iskyrgn := getSkyRgn(idataset, icentre_ra, icentre_decl, ixtr_radius);
 
   INSERT INTO image
@@ -113,7 +112,7 @@ BEGIN
   DECLARE itau INT;
   DECLARE iskyrgn INT;
 
-  SET iband = getBand(ifreq_eff, ifreq_bw, ifreq_bw_max);
+  SET iband = getBand(1e6 * FLOOR(ifreq_eff/1e6 + 0.5), 1e6);
   SET iskyrgn = getSkyRgn(idataset, icentre_ra, icentre_decl, ixtr_radius);
 
   SELECT NEXT VALUE FOR seq_image INTO iimageid;

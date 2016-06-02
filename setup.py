@@ -14,6 +14,7 @@ install_requires = """
     scipy>=0.7.0
     sqlalchemy>=1.0.0
     future
+    six>=1.10.0
     """.split()
 
 extras_require = {

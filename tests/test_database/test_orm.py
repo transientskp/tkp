@@ -1,6 +1,7 @@
 import unittest
 import datetime
 import logging
+import six
 from io import BytesIO
 from tkp.testutil.decorators import requires_database
 import tkp.db
@@ -253,8 +254,7 @@ class TestExtractedSource(unittest.TestCase):
         self.assertEqual(src1.id, src4.id)
         self.assertAlmostEqual(src1.ra, src4.ra)
         del extracted_source_data['x']
-        self.assertRaisesRegex(
-            AttributeError, "missing required data key: x",
+        six.assertRaisesRegex(self, AttributeError, "missing required data key: x",
             ExtractedSource, data=extracted_source_data, database=self.database)
 
     @requires_database()
@@ -303,7 +303,6 @@ class TestExtractedSource(unittest.TestCase):
         source5 = ExtractedSource(image=image2, data=extractedsource_data)
         self.assertEqual(len(image2.sources), 1)
         self.assertEqual(image2.sources.pop().id, source5.id)
-
 
     @requires_database()
     def test_update(self):

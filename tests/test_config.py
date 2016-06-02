@@ -3,6 +3,7 @@ import os
 import getpass
 import datetime
 import io
+from builtins import str
 from configparser import SafeConfigParser
 
 from tkp.testutil.data import (default_job_config, default_pipeline_config,
@@ -35,7 +36,7 @@ string2 = "0.235"           ; force string by enclosing in double-quotes
 """
 
         cls.config = SafeConfigParser()
-        cls.config.readfp(io.StringIO(example_config_str))
+        cls.config.readfp(io.StringIO(str(example_config_str)))
 
         cls.parset = {}
         cls.parset['test1']= {

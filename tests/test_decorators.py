@@ -1,5 +1,5 @@
+from __future__ import print_function
 import os
-
 import unittest
 from tkp.testutil.decorators import requires_database, requires_data, duration
 from tkp.testutil.data import DATAPATH

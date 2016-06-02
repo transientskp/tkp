@@ -18,6 +18,8 @@ For help with command line options:
 See chapters 2 & 3 of Spreeuw, PhD Thesis, University of Amsterdam, 2010,
 <http://dare.uva.nl/en/record/340633> for details.
 """
+from __future__ import print_function
+from builtins import str
 import sys
 import math
 import numbers
@@ -35,18 +37,21 @@ from tkp.accessors import writefits as tkp_writefits
 from tkp.sourcefinder.utils import generate_result_maps
 from tkp.management import parse_monitoringlist_positions
 
+
 def regions(sourcelist):
     """
     Return a string containing a DS9-compatible region file describing all the
     sources in sourcelist.
     """
     output = StringIO()
-    print("# Region file format: DS9 version 4.1", file=output)
-    print("global color=green dashlist=8 3 width=1 font=\"helvetica 10 normal\" select=1 highlite=1 dash=0 fixed=0 edit=1 move=1 delete=1 include=1 source=1", file=output)
-    print("image", file=output)
+    print(str("# Region file format: DS9 version 4.1"), file=output)
+    print(str("global color=green dashlist=8 3 width=1 font=\"helvetica 10 normal\" select=1"
+              "highlite=1 dash=0 fixed=0 edit=1 move=1 delete=1 include=1 source=1"), file=output)
+
+    print(str("image"), file=output)
     for source in sourcelist:
         # NB, here we convert from internal 0-origin indexing to DS9 1-origin indexing
-        print("ellipse(%f, %f, %f, %f, %f)" % (
+        print(str("ellipse(%f, %f, %f, %f, %f)") % (
             source.x.value + 1.0,
             source.y.value + 1.0,
             source.smaj.value*2,
@@ -55,14 +60,16 @@ def regions(sourcelist):
         ), file=output)
     return output.getvalue()
 
+
 def skymodel(sourcelist, ref_freq=73800000):
     """
     Return a string containing a skymodel from the extracted sources for use in self-calibration.
     """
     output = StringIO()
-    print("#(Name, Type, Ra, Dec, I, Q, U, V, MajorAxis, MinorAxis, Orientation, ReferenceFrequency='60e6', SpectralIndex='[0.0]') = format", file=output)
+    print(str("#(Name, Type, Ra, Dec, I, Q, U, V, MajorAxis, MinorAxis, Orientation, "
+              "ReferenceFrequency='60e6', SpectralIndex='[0.0]') = format"), file=output)
     for source in sourcelist:
-        print("%s, GAUSSIAN, %s, %s, %f, 0, 0, 0, %f, %f, %f, %f, [0]" % (
+        print(str("%s, GAUSSIAN, %s, %s, %f, 0, 0, 0, %f, %f, %f, %f, [0]") % (
             "ra:%fdec:%f" % (source.ra, source.dec),
             "%fdeg" % (source.ra,),
             "%fdeg" % (source.dec,),
@@ -74,14 +81,16 @@ def skymodel(sourcelist, ref_freq=73800000):
         ), file=output)
     return output.getvalue()
 
+
 def csv(sourcelist):
     """
     Return a string containing a csv from the extracted sources.
     """
     output = StringIO()
-    print("ra, ra_err, dec, dec_err, smaj, smaj_err, smin, smin_err, pa, pa_err, int_flux, int_flux_err, pk_flux, pk_flux_err", file=output)
+    print(str("ra, ra_err, dec, dec_err, smaj, smaj_err, smin, smin_err, pa, pa_err, "
+              "int_flux, int_flux_err, pk_flux, pk_flux_err"), file=output)
     for source in sourcelist:
-        print("%f, %f, %f, %f, %f, %f, %f, %f, %f, %f, %f, %f, %f, %f" % (
+        print(str("%f, %f, %f, %f, %f, %f, %f, %f, %f, %f, %f, %f, %f, %f") % (
             source.ra,
             source.ra.error,
             source.dec,
@@ -99,21 +108,22 @@ def csv(sourcelist):
         ), file=output)
     return output.getvalue()
 
+
 def summary(filename, sourcelist):
     """
     Return a string containing a human-readable summary of all sources in
     sourcelist.
     """
     output = StringIO()
-    print("** %s **\n" % (filename), file=output)
+    print(str("** %s **\n" % (filename)), file=output)
     for source in sourcelist:
-        print("RA: %s, dec: %s" % (str(source.ra), str(source.dec)), file=output)
-        print("Error radius (arcsec): %s" % (str(source.error_radius)), file=output)
-        print("Semi-major axis (arcsec): %s" % (str(source.smaj_asec)), file=output)
-        print("Semi-minor axis (arcsec): %s" % (str(source.smin_asec)), file=output)
-        print("Position angle: %s" % (str(source.theta_celes)), file=output)
-        print("Flux: %s" % (str(source.flux)), file=output)
-        print("Peak: %s\n" % (str(source.peak)), file=output)
+        print(str("RA: %s, dec: %s") % (str(source.ra), str(source.dec)), file=output)
+        print(str("Error radius (arcsec): %s") % (str(source.error_radius)), file=output)
+        print(str("Semi-major axis (arcsec): %s") % (str(source.smaj_asec)), file=output)
+        print(str("Semi-minor axis (arcsec): %s") % (str(source.smin_asec)), file=output)
+        print(str("Position angle: %s") % (str(source.theta_celes)), file=output)
+        print(str("Flux: %s") % (str(source.flux)), file=output)
+        print(str("Peak: %s\n") % (str(source.peak)), file=output)
     return output.getvalue()
 
 
@@ -121,42 +131,42 @@ def get_argparser():
     parser = argparse.ArgumentParser(
         description="Source extraction for radio-synthesis images")
 
-    #Arguments relating to source extraction:
+    # Arguments relating to source extraction:
     extraction = parser.add_argument_group("Extraction")
     extraction.add_argument("--detection", default=10, type=float,
-                        help="Detection threshold")
+                            help="Detection threshold")
     extraction.add_argument("--analysis", default=3, type=float,
-                        help="Analysis threshold")
+                            help="Analysis threshold")
     extraction.add_argument("--fdr", action="store_true",
-                        help="Use False Detection Rate algorithm")
+                            help="Use False Detection Rate algorithm")
     extraction.add_argument("--alpha", default=1e-2, type=float, help="FDR Alpha")
     extraction.add_argument("--deblend-thresholds", default=0, type=int,
-                        help="Number of deblending subthresholds; 0 to disable")
+                            help="Number of deblending subthresholds; 0 to disable")
     extraction.add_argument("--grid", default=64, type=int,
-                        help="Background grid segment size")
+                            help="Background grid segment size")
     extraction.add_argument("--margin", default=0, type=int,
-                        help="Margin applied to each edge of image (in pixels)")
+                            help="Margin applied to each edge of image (in pixels)")
     extraction.add_argument("--radius", default=0, type=float,
-                        help="Radius of usable portion of image (in pixels)")
+                            help="Radius of usable portion of image (in pixels)")
     extraction.add_argument("--bmaj", type=float, help="Set beam: Major axis of beam (deg)")
     extraction.add_argument("--bmin", type=float, help="Set beam: Minor axis of beam (deg)")
     extraction.add_argument("--bpa", type=float, help="Set beam: Beam position angle (deg)")
     extraction.add_argument("--force-beam", action="store_true",
-                        help="Force fit axis lengths to beam size")
+                            help="Force fit axis lengths to beam size")
     extraction.add_argument("--detection-image", type=str,
-                        help="Find islands on different image")
+                            help="Find islands on different image")
     extraction.add_argument('--fixed-posns', help="List of position coordinates to "
-        "force-fit (decimal degrees, JSON, e.g [[123.4,56.7],[359.9,89.9]]) "
-        "(Will not perform blind extraction in this mode)"              ,
-        default=None)
+                                                  "force-fit (decimal degrees, JSON, e.g [[123.4,56.7],[359.9,89.9]]) "
+                                                  "(Will not perform blind extraction in this mode)",
+                            default=None)
     extraction.add_argument('--fixed-posns-file',
-        help="Path to file containing a list of positions to force-fit "
-             "(Will not perform blind extraction in this mode)",
-        default=None)
+                            help="Path to file containing a list of positions to force-fit "
+                                 "(Will not perform blind extraction in this mode)",
+                            default=None)
     extraction.add_argument('--ffbox', type=float, default=3.,
-        help="Forced fitting positional box size as a multiple of beam width.")
+                            help="Forced fitting positional box size as a multiple of beam width.")
 
-    #Arguments relating to output:
+    # Arguments relating to output:
     output = parser.add_argument_group("Output")
     output.add_argument("--skymodel", action="store_true",
                         help="Generate sky model")
@@ -173,7 +183,7 @@ def get_argparser():
     output.add_argument("--islands", action="store_true",
                         help="Generate island maps")
 
-    #Finally, positional arguments- the file list:
+    # Finally, positional arguments- the file list:
     parser.add_argument('files', nargs='+',
                         help="Image files for processing")
     return parser
@@ -212,17 +222,18 @@ def handle_args(args=None):
             parser.error("--fdr not supported with fixed positions")
         elif options.detection_image:
             parser.error("--detection-image not supported with fixed positions")
-        options.mode = "fixed" # mode 2 above
+        options.mode = "fixed"  # mode 2 above
     elif options.fdr:
         if options.detection_image:
             parser.error("--detection-image not supported with --fdr")
-        options.mode = "fdr" # mode 1.3 above
+        options.mode = "fdr"  # mode 1.3 above
     elif options.detection_image:
-        options.mode = "detimage" # mode 1.2 above
+        options.mode = "detimage"  # mode 1.2 above
     else:
-        options.mode = "threshold" # mode 1.1 above
+        options.mode = "threshold"  # mode 1.1 above
 
     return options, options.files
+
 
 def writefits(filename, data, header={}):
     try:
@@ -231,6 +242,7 @@ def writefits(filename, data, header={}):
         # Thrown if file didn't exist
         pass
     tkp_writefits(data, filename, header)
+
 
 def get_detection_labels(filename, det, anl, beam, configuration, plane=0):
     print("Detecting islands in %s" % (filename,))
@@ -241,6 +253,7 @@ def get_detection_labels(filename, det, anl, beam, configuration, plane=0):
         det * imagedata.rmsmap, anl * imagedata.rmsmap
     )
     return labels, labelled_data
+
 
 def get_sourcefinder_configuration(options):
     configuration = {
@@ -253,22 +266,22 @@ def get_sourcefinder_configuration(options):
         configuration['residuals'] = True
     return configuration
 
-def get_beam(bmaj, bmin, bpa):
 
-    if (
-        isinstance(bmaj, numbers.Real)
-        and isinstance(bmin, numbers.Real)
-        and isinstance(bpa, numbers.Real)
-    ):
-        return (float(bmaj), float(bmin), float(bpa))
+def get_beam(bmaj, bmin, bpa):
+    if (isinstance(bmaj, numbers.Real) and
+            isinstance(bmin, numbers.Real) and
+            isinstance(bpa, numbers.Real)):
+        return float(bmaj), float(bmin), float(bpa)
     if bmaj or bmin or bpa:
         print("WARNING: partial beam specification ignored")
     return None
+
 
 def bailout(reason):
     # Exit with error
     print("ERROR: %s" % (reason))
     sys.exit(1)
+
 
 def run_sourcefinder(files, options):
     """
@@ -297,8 +310,8 @@ def run_sourcefinder(files, options):
 
         if options.mode == "fixed":
             sr = imagedata.fit_fixed_positions(options.fixed_coords,
-                options.ffbox * max(imagedata.beam[0:2])
-            )
+                                               options.ffbox * max(imagedata.beam[0:2])
+                                               )
 
         else:
             if options.mode == "fdr":
@@ -348,7 +361,7 @@ def run_sourcefinder(files, options):
         if options.csv:
             with open(imagename + ".csv", 'w') as csvfile:
                 csvfile.write(csv(sr))
-        print(summary(filename, sr), end=' ', file=output)
+        print(str(summary(filename, sr)), end=str(' '), file=output)
     return output.getvalue()
 
 

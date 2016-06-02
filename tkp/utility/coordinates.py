@@ -6,6 +6,7 @@ General purpose astronomical coordinate handling routines.
 
 import sys
 import math
+#import astropy.wcs as pywcs
 import pywcs
 import logging
 import datetime

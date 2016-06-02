@@ -1,11 +1,12 @@
 import logging
-from tkp.quality.statistics import rms_with_clipped_subregion
 from tkp.accessors.requiredatts import RequiredAttributesMetaclass
 from math import degrees, sqrt, sin, pi, cos
+from future.utils import with_metaclass
 
 logger = logging.getLogger(__name__)
 
-class DataAccessor(object, metaclass=RequiredAttributesMetaclass):
+
+class DataAccessor(with_metaclass(RequiredAttributesMetaclass, object)):
     _required_attributes = [
             'beam',
             'centre_ra',

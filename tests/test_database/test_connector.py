@@ -1,7 +1,7 @@
 import unittest
-from exceptions import Exception
 from tkp.testutil.decorators import requires_database
 import tkp.db
+
 
 class TestDatabaseConnection(unittest.TestCase):
 

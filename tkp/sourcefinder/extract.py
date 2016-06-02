@@ -6,14 +6,18 @@ These are used in conjunction with image.ImageData.
 
 import logging
 import math
-# DictMixin may need to be replaced using collections.MutableMapping;
-# see http://docs.python.org/library/userdict.html#UserDict.DictMixin
-from UserDict import DictMixin
+
+try:
+    from UserDict import DictMixin
+except ImportError:
+    from collections import MutableMapping as DictMixin
+
 import numpy
 try:
     import ndimage
 except ImportError:
     from scipy import ndimage
+
 from tkp.sourcefinder.deconv import deconv
 from ..utility import coordinates
 from ..utility.uncertain import Uncertain

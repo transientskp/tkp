@@ -7,6 +7,7 @@ them using :func:`parse_antennafile()`, :func:`shortest_distances()` and a
 ``LOFAR/MAC/Deployment/data/StaticMetaData/AntennaArrays`` in the lofar system
 software source tree.
 """
+from __future__ import print_function
 import math
 
 

@@ -80,27 +80,28 @@ def example_dbimage_data_dict(**kwargs):
     regions.
     """
     starttime = datetime.datetime(2012, 1, 1)  # Happy new year
-    time_spacing = datetime.timedelta(seconds=600)
 
-    init_im_params = {'tau_time':300,
-                      'freq_eff':140e6,
-                      'freq_bw':2e6,
-                      'taustart_ts':starttime,
-                      'beam_smaj_pix': float(2.7),
-                      'beam_smin_pix': float(2.3),
-                      'beam_pa_rad': float(1.7),
-                      'deltax': float(-0.01111),
-                      'deltay': float(0.01111),
-                      'url':testdata.fits_file,  # just an arbitrary existing fits file
-                      'centre_ra': 123.,  # Arbitarily picked.
-                      'centre_decl': 10.,  # Arbitarily picked.
-                      'xtr_radius': 10.,  # (Degrees)
-                      'rms_qc': 1.,
-                      'rms_min': 1e-4, #0.1mJy RMS
-                      'rms_max': 3e-4, #0.3mJy RMS
-                      'detection_thresh': 6,
-                      'analysis_thresh': 3
-                    }
+    init_im_params = {
+        'tau_time': 300,
+        'freq_eff': 140e6,
+        'freq_bw': 2e6,
+        'freq_bw_max': 0.0,
+        'taustart_ts': starttime,
+        'beam_smaj_pix': float(2.7),
+        'beam_smin_pix': float(2.3),
+        'beam_pa_rad': float(1.7),
+        'deltax': float(-0.01111),
+        'deltay': float(0.01111),
+        'url': testdata.fits_file,  # just an arbitrary existing fits file
+        'centre_ra': 123.,  # Arbitrarily picked.
+        'centre_decl': 10.,  # Arbitrarily picked.
+        'xtr_radius': 10.,  # (Degrees)
+        'rms_qc': 1.,
+        'rms_min': 1e-4,  # 0.1mJy RMS
+        'rms_max': 3e-4,  # 0.3mJy RMS
+        'detection_thresh': 6,
+        'analysis_thresh': 3
+    }
     init_im_params.update(kwargs)
     return init_im_params
 

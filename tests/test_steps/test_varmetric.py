@@ -7,7 +7,6 @@ from tkp.testutil.alchemy import gen_band, gen_dataset, gen_skyregion,\
     gen_lightcurve
 
 import tkp.db
-import tkp.db.alchemy
 
 from tkp.steps.varmetric import execute_store_varmetric
 

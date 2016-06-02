@@ -114,8 +114,8 @@ If an ``id`` is supplied, ``data`` is ignored.
 
 import logging
 from tkp.db.generic import columns_from_table, set_columns_for_table
-from tkp.db.general import (insert_dataset, insert_image,
-                            insert_extracted_sources, lightcurve)
+from tkp.db.general import (insert_dataset, insert_extracted_sources, lightcurve)
+from tkp.db.alchemy.image import insert_image
 from tkp.db.associations import associate_extracted_sources
 import tkp.db
 import tkp.db.quality
@@ -310,8 +310,6 @@ class DataSet(DBObject):
     @property
     def id(self):
         """Add or obtain an id to/from the table
-
-        This uses the SQL function insertDataset().
         """
         if self._id is None:
             try:
@@ -390,50 +388,29 @@ class Image(DBObject):
         if not self.dataset:
             self.dataset = DataSet(id=self._data['dataset'], database=self.database)
 
-
-
-    # Inserting images is handled a little different than normal inserts
-    # -- We call an SQL function 'insertImage' which takes care of
-    #    assigning a new image id.
     @property
     def id(self):
         """Add or obtain an id to/from the table
 
-        This uses the SQL function insertImage()
+        If the ID does not exist the image is inserted into the database
         """
 
         if self._id is None:
+            args = self._data.copy()
+            # somehow _data contains a garbage kwargs
+            args.pop('kwargs', None)
+            session = self.database.Session()
+            args['session'] = session
             try:
-                #if 'bsmaj' not in self._data:
-                #    self._data['bsmaj'] = None
-                #    self._data['bsmin'] = None
-                #    self._data['bpa'] = None
-                #    self._data['deltax'] = None
-                #    self._data['deltay'] = None
-                # Insert a default image
-                self._id = insert_image(self.dataset.id,
-                    self._data['freq_eff'], self._data['freq_bw'],
-                    self._data['taustart_ts'], self._data['tau_time'],
-                    self._data['beam_smaj_pix'], self._data['beam_smin_pix'],
-                    self._data['beam_pa_rad'],
-                    self._data['deltax'],
-                    self._data['deltay'],
-                    self._data['url'],
-                    self._data['centre_ra'], #Degrees J2000
-                    self._data['centre_decl'], #Degrees J2000
-                    self._data['xtr_radius'], #Degrees
-                    self._data['rms_qc'],
-                    self._data.get('rms_min',None),
-                    self._data.get('rms_max',None),
-                    self._data.get('detection_thresh',None),
-                    self._data.get('analysis_thresh',None),
-                )
+                image = insert_image(**args)
+                session.commit()
+                self._id = image.id
+                session.close()
             except Exception as e:
                 logger.error("ORM: error inserting image,  %s: %s" %
                                 (type(e).__name__, str(e)))
                 raise
         return self._id
-
 
     def update_sources(self):
         """Renew the set of sources by getting the sources for this

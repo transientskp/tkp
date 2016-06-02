@@ -82,7 +82,7 @@ def run(job_name, supplied_mon_coords=[]):
     if job_config.persistence.dataset_id == -1:
         store_config(job_config, dataset_id)  # new data set
         if supplied_mon_coords:
-            dbgen.insert_monitor_positions(dataset_id,supplied_mon_coords)
+            dbgen.insert_monitor_positions(dataset_id, supplied_mon_coords)
     else:
         job_config_from_db = fetch_config(dataset_id)  # existing data set
         if check_job_configs_match(job_config, job_config_from_db):
@@ -105,14 +105,17 @@ def run(job_name, supplied_mon_coords=[]):
 
     rms_est_sigma = job_config.persistence.rms_est_sigma
     rms_est_fraction = job_config.persistence.rms_est_fraction
+
+
     metadatas = runner.map("persistence_node_step", imgs,
                            [image_cache_params, rms_est_sigma, rms_est_fraction])
     metadatas = [m[0] for m in metadatas if m]
 
     logger.info("Storing images")
+    bandwidth_max = job_config.persistence.bandwidth_max
     image_ids = store_images(metadatas,
                              job_config.source_extraction.extraction_radius_pix,
-                             dataset_id)
+                             dataset_id, bandwidth_max)
 
     db_images = [Image(id=image_id) for image_id in image_ids]
 

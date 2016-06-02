@@ -1,4 +1,4 @@
-from tkp.db.alchemy import store_varmetric
+from tkp.db.alchemy.varmetric import store_varmetric
 from tkp.db.model import Dataset
 from tkp.db import Database
 

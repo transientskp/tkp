@@ -1,12 +1,35 @@
 import unittest
 
-import datetime
 from tkp.testutil.decorators import requires_database
 from tkp.testutil import db_subs
 import tkp.db
 from tkp.db.orm import DataSet, Image
-from tkp.db.database import Database
 from copy import copy
+
+
+def get_band_for_image(image):
+    """
+    Returns the band number corresponding to a particular image
+    """
+    return tkp.db.execute("""
+        SELECT band
+        FROM image
+        WHERE image.id = %(id)s
+    """, {"id": image.id}).fetchone()[0]
+
+
+def get_freq_for_image(image):
+    """
+    Returns the stored frequency corresponding to a particular image
+    """
+    return tkp.db.execute("""
+        SELECT freq_central
+        FROM image
+            ,frequencyband
+        WHERE image.id = %(id)s
+          AND image.band = frequencyband.id
+    """, {"id": image.id}).fetchone()[0]
+
 
 class TestBand(unittest.TestCase):
 
@@ -25,14 +48,6 @@ class TestBand(unittest.TestCase):
         # same band (unless they fall over a band boundary). See #4801.
         # Bands are 1 MHz wide and centred on the MHz.
 
-        def get_band_for_image(image):
-            # Returns the band number corresponding to a particular image.
-            return tkp.db.execute("""
-                SELECT band
-                FROM image
-                WHERE image.id = %(id)s
-            """, {"id": image.id}).fetchone()[0]
-
         data = copy(self.image_data)
         dataset1 = DataSet(data={'description': self._testMethodName},
                            database=self.database)
@@ -47,9 +62,9 @@ class TestBand(unittest.TestCase):
         image2 = Image(dataset=dataset1, data=data)
         self.assertEqual(get_band_for_image(image1), get_band_for_image(image2))
 
-        # Another image at a frequency 1 MHz different should be in
+        # Another image at a frequency 10 MHz different should be in
         # a different band...
-        data['freq_eff'] = data['freq_eff'] - 1e6
+        data['freq_eff'] -= 1e7
         image3 = Image(dataset=dataset1, data=data)
         self.assertNotEqual(get_band_for_image(image1), get_band_for_image(image3))
 
@@ -70,35 +85,48 @@ class TestBand(unittest.TestCase):
         """
         Determine range of frequencies supported by DB schema.
         """
-
-        def get_freq_for_image(image):
-            # Returns the stored frequency corresponding to a particular image.
-            return tkp.db.execute("""
-                SELECT freq_central
-                FROM image
-                    ,frequencyband
-                WHERE image.id = %(id)s
-                  AND image.band = frequencyband.id
-            """, {"id": image.id}).fetchone()[0]
-
         dataset = DataSet(data={'description': self._testMethodName},
-                   database=self.database)
+                          database=self.database)
         data = copy(self.image_data)
 
         data['freq_eff'] = 1e6  # 1MHz
-        data['freq_bw'] = 1e3 # 1KHz
+        data['freq_bw'] = 1e3  # 1KHz
         mhz_freq_image = Image(dataset=dataset, data=data)
         self.assertEqual(data['freq_eff'], get_freq_for_image(mhz_freq_image))
 
         data['freq_eff'] = 100e9  # 100 GHz (e.g. CARMA)
-        data['freq_bw'] = 5e9 # 5GHz
+        data['freq_bw'] = 5e9  # 5GHz
         ghz_freq_image = Image(dataset=dataset, data=data)
         self.assertEqual(data['freq_eff'], get_freq_for_image(ghz_freq_image))
 
         data['freq_eff'] = 5e15  # 5 PHz (e.g. UV obs)
-        data['freq_bw'] = 1e14 # 5GHz
+        data['freq_bw'] = 1e14  # 100 THz
         phz_freq_image = Image(dataset=dataset, data=data)
         self.assertEqual(data['freq_eff'], get_freq_for_image(phz_freq_image))
 
-if __name__ == "__main__":
-    unittest.main()
+    def test_max_bandwidth(self):
+        """
+        Test if setting max bandwidth correctly affects the band of images
+        """
+        data = copy(self.image_data)
+        dataset_data = {'description': self._testMethodName}
+        dataset = DataSet(data=dataset_data, database=self.database)
+
+        data['freq_eff'] = 50e6  # 50 MHz
+        data['freq_bw'] = 2e6    # 2 MHz
+        data['freq_bw_max'] = 0.0  # no band association limiting
+        first_image = Image(dataset=dataset, data=data)
+
+        # this image should be assigned the same band, since within bandwidth
+        data['freq_eff'] = 51e6  # 50 MHz
+        data['freq_bw'] = 2e6  # 2 MHz
+        data['freq_bw_max'] = 0.0  # no band association limiting
+        assocated_image = Image(dataset=dataset, data=data)
+        self.assertEqual(get_band_for_image(first_image), get_band_for_image(assocated_image))
+
+        # this image should *not* be assigned the same band, since bandwidth is limited
+        data['freq_eff'] = 49e6  # 50 MHz
+        data['freq_bw'] = 2e6  # 2 MHz
+        data['freq_bw_max'] = 0.5e5  # limit bandwith to 0.5 MHz
+        assocated_image = Image(dataset=dataset, data=data)
+        self.assertNotEqual(get_band_for_image(first_image), get_band_for_image(assocated_image))

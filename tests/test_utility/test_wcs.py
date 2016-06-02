@@ -106,13 +106,13 @@ class wcsSin(unittest.TestCase):
 
     def testSpatialToPixel(self):
         for pixel, spatial in self.known_values:
-            result = map(round, self.wcs.s2p(spatial))
+            result = list(map(round, self.wcs.s2p(spatial)))
             self.assertEqual(result, pixel)
 
     def testSanity(self):
         import random
         pixel = [random.randrange(500, 1500), random.randrange(500, 1500)]
-        result = map(round, self.wcs.s2p(self.wcs.p2s(pixel)))
+        result = list(map(round, self.wcs.s2p(self.wcs.p2s(pixel))))
         self.assertEqual(result, pixel)
 
 

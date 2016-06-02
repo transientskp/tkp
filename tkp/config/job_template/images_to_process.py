@@ -23,7 +23,7 @@ images = [
 
 #Display the list of images to be processed whenever this file is imported:
 # (can be used for quick checking via an ipython import)
-print "******** IMAGES: ********"
+print("******** IMAGES: ********")
 for f in images:
-    print f
-print "*************************"
+    print(f)
+print("*************************")

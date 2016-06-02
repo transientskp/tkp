@@ -8,6 +8,7 @@ from numpy.ma import MaskedArray
 from scipy.special import erf
 from scipy.special import erfcinv
 from .utils import calculate_correlation_lengths
+import collections
 
 
 # CODE & NUMBER HANDLING ROUTINES
@@ -96,7 +97,7 @@ def sigma_clip(data, beam, sigma=unbiased_sigma, max_iter=100,
 
     # If sigma is callable, use it to dynamically calculate the clipping
     # limits.
-    if callable(sigma):
+    if isinstance(sigma, collections.Callable):
         my_sigma = sigma(N_indep)
     else:
         my_sigma = sigma

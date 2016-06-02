@@ -54,6 +54,6 @@ def isconsistent(query):
             return True
         else:
             logger.warning("Inconsistent database:\n %s returns %s" % (query, result))
-    except Exception, e:
+    except Exception as e:
         logger.exception("No consistency check possible for database")
     return False

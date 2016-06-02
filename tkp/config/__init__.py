@@ -1,6 +1,6 @@
-from __future__ import absolute_import
 
-from ConfigParser import SafeConfigParser
+
+from configparser import SafeConfigParser
 import datetime
 import getpass
 import logging

@@ -44,7 +44,7 @@ def writefits(data, filename, header = {}):
         pyfits.writeto(filename, data.transpose(), header)
     else:
         hdu = pyfits.PrimaryHDU(data.transpose())
-        for key in header.iterkeys():
+        for key in header.keys():
             hdu.header.update(key, header[key])
         hdu.writeto(filename)
 

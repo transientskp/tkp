@@ -1,5 +1,5 @@
 import unittest
-from ConfigParser import SafeConfigParser
+from configparser import SafeConfigParser
 import tkp.steps.quality
 import tkp.accessors
 from tkp.telescope.lofar.quality import reject_check_lofar

@@ -204,12 +204,12 @@ class DBObject(object):
         """
         if self._id is None:
             query = ("INSERT INTO " + self.TABLE + " (" +
-                     ", ".join(self._data.iterkeys()) + ") VALUES (" +
+                     ", ".join(iter(self._data.keys())) + ") VALUES (" +
                      ", ".join(["%s"] * len(self._data)) + ")"
                      )
             if self.database.engine == "postgresql":
                 query = query + "RETURNING ID"
-            values = tuple(self._data.itervalues())
+            values = tuple(self._data.values())
             cursor = self.database.cursor
             try:
                 # Insert a default source
@@ -448,7 +448,7 @@ class Image(DBObject):
         try:
             self.database.cursor.execute(query, (self._id,))
             results = self.database.cursor.fetchall()
-        except self.database.connection.Error, e:
+        except self.database.connection.Error as e:
             query = query % self._id
             logger.warn("database failed on query: %s", query)
             raise

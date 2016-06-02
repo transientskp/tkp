@@ -5,7 +5,7 @@ We keep them separately to make the pipeline logic easier to read at a glance.
 """
 
 import datetime
-import ConfigParser
+import configparser
 import logging
 import os
 from pprint import pprint
@@ -25,7 +25,7 @@ def load_job_config(pipe_config):
     Locates the job_params.cfg in 'job_directory' and loads via ConfigParser.
     """
     job_directory = pipe_config['DEFAULT']['job_directory']
-    job_config = ConfigParser.SafeConfigParser()
+    job_config = configparser.SafeConfigParser()
     job_config.read(os.path.join(job_directory, 'job_params.cfg'))
     return parse_to_dict(job_config)
 
@@ -167,7 +167,7 @@ def group_per_timestep(images):
         timestamp_to_images_map[image.taustart_ts].append(image)
 
     #List of (timestamp, [images_at_timestamp]) tuples:
-    grouped_images = timestamp_to_images_map.items()
+    grouped_images = list(timestamp_to_images_map.items())
 
     # sort the tuples by first element (timestamps)
     grouped_images.sort()

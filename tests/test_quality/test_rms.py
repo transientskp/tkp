@@ -21,7 +21,7 @@ class TestRms(unittest.TestCase):
         self.assertEqual(sub.shape, (400, 400))
 
     def test_rms(self):
-        self.assertEquals(statistics.rms(numpy.ones([4,4])*4), 0)
+        self.assertEqual(statistics.rms(numpy.ones([4,4])*4), 0)
 
     def test_clip(self):
         a = numpy.ones([50, 50]) * 10

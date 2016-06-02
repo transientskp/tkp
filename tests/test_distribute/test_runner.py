@@ -15,7 +15,7 @@ class TestRunner(unittest.TestCase):
         cores = 10
         tkp.distribute.Runner('serial', cores=cores)
         multiproc_runner = tkp.distribute.Runner('multiproc', cores=cores)
-        print dir(multiproc_runner.module)
+        print(dir(multiproc_runner.module))
         assert(multiproc_runner.module.pool._processes == cores)
 
     def test_invalid_runner(self):
@@ -24,4 +24,4 @@ class TestRunner(unittest.TestCase):
     def test_invalid_function(self):
         celery_runner = tkp.distribute.Runner('serial')
         self.assertRaises(NotImplementedError, celery_runner.map, "invalid",
-                          range(5))
+                          list(range(5)))

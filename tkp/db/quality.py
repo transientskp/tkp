@@ -26,7 +26,7 @@ def sync_rejectreasons(session):
     if session.query(Rejectreason).count() != len(reject_reasons):
         dbreason_id_rows = session.query(Rejectreason.id).all()
         dbreason_ids = [row[0] for row in dbreason_id_rows]
-        for r in reject_reasons.values():
+        for r in list(reject_reasons.values()):
             if r.id not in dbreason_ids:
                 logger.info("Added to database Rejectreason {}:'{}'".format(
                     r.id, r.description

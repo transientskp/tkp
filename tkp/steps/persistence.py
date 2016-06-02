@@ -48,7 +48,7 @@ def image_to_mongodb(filename, hostname, port, db):
             new_file.close()
             logger.info("Saved local copy of %s on %s"\
                         % (os.path.basename(filename), hostname))
-    except Exception, e:
+    except Exception as e:
         logger.exception("Failed to save image to MongoDB: {}".format(filename))
         return False
 

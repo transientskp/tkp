@@ -5,7 +5,7 @@ Note: this does *not* replace the specialized sigma_clip function in
 utilities.py
 """
 
-from __future__ import division
+
 import numpy
 
 def clip(data, mean, sigma, siglow, sighigh, indices=None):

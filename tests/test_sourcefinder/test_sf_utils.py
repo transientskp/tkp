@@ -89,5 +89,5 @@ class SubthresholdingTest(unittest.TestCase):
             self.assertLess(subthr[-1], r[1])
 
             # And non-linearly spaced
-            for i in xrange(2, len(subthr)):
+            for i in range(2, len(subthr)):
                 self.assertGreater(subthr[i] - subthr[i-1], subthr[i-1] - subthr[i-2])

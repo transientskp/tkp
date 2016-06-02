@@ -48,7 +48,7 @@ class TestReject(unittest.TestCase):
             self.session.flush()
 
     def test_all_reasons_present_in_database(self):
-        for reason in dbqual.reject_reasons.values():
+        for reason in list(dbqual.reject_reasons.values()):
             dbqual.reject(self.image.id, reason, "comment", self.session)
             dbqual.unreject(self.image.id, self.session)
 
@@ -72,7 +72,7 @@ class TestReject(unittest.TestCase):
         Delete a rejectreason, then re-sync and double check the counts match.
         """
         reason = self.session.query(Rejectreason).all()[-1]
-        print "Deleting reason id", reason.id
+        print("Deleting reason id", reason.id)
         self.session.delete(reason)
         self.assertNotEqual(
             self.session.query(Rejectreason).count(),

@@ -2,7 +2,7 @@ import unittest
 import os
 import tempfile
 import shutil
-from ConfigParser import SafeConfigParser
+from configparser import SafeConfigParser
 import tkp
 import tkp.accessors
 import tkp.inject

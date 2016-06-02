@@ -148,7 +148,7 @@ def system_sensitivity(freq_eff, Aeff):
         (120e6, 200),
         (300e6, 200)
     ]
-    x, y = zip(*sensitivities)
+    x, y = list(zip(*sensitivities))
     sensitivity = scipy.interpolate.interp1d(x, y, kind='linear')
     Tinst = sensitivity(freq_eff)
 

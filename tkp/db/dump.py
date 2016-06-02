@@ -57,7 +57,7 @@ def dump_monetdb(hostname, port, dbname, dbuser, dbpass, output_filename):
                 env=env,
                 stdout=output_file
             )
-        except Exception, e:
+        except Exception as e:
             logger.error("Failed to dump: %s" % (e,))
             raise
 
@@ -81,6 +81,6 @@ def dump_pg(hostname, port, dbname, dbuser, dbpass, output_filename):
             ],
             env=env
         )
-    except Exception, e:
+    except Exception as e:
         logger.error("Failed to dump: %s" % (e,))
         raise

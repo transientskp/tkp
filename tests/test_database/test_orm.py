@@ -253,7 +253,7 @@ class TestExtractedSource(unittest.TestCase):
         self.assertEqual(src1.id, src4.id)
         self.assertAlmostEqual(src1.ra, src4.ra)
         del extracted_source_data['x']
-        self.assertRaisesRegexp(
+        self.assertRaisesRegex(
             AttributeError, "missing required data key: x",
             ExtractedSource, data=extracted_source_data, database=self.database)
 

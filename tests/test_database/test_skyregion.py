@@ -4,6 +4,8 @@ from tkp.db import nulldetections as dbnd
 from tkp.testutil import db_subs
 from tkp.testutil.decorators import requires_database, duration
 from tkp.db.generic import columns_from_table, get_db_rows_as_dicts
+from tkp.db.associations import associate_extracted_sources
+from tkp.db.general import insert_extracted_sources
 
 # Convenient default values
 deRuiter_r = 3.7
@@ -98,10 +100,10 @@ class TestSkyRegionAssociation(unittest.TestCase):
                         ra=im_params[0]['centre_ra'],
                         dec=im_params[0]['centre_decl'],)
 
-        ##First image:
+        # First image
         image0 = tkp.db.Image(dataset=self.dataset, data=im_params[0])
-        image0.insert_extracted_sources([src_in_img0])
-        image0.associate_extracted_sources(deRuiter_r, new_source_sigma_margin)
+        insert_extracted_sources(image0._id, [src_in_img0])
+        associate_extracted_sources(image0._id, deRuiter_r, new_source_sigma_margin)
         image0.update()
 
         runcats = columns_from_table('runningcatalog',
@@ -159,11 +161,11 @@ class TestSkyRegionAssociation(unittest.TestCase):
                         dec=im_params[1]['centre_decl'] +
                             im_params[1]['xtr_radius'] * 0.5)
 
-        ##First insert new sources in img1 and check association to parent field:
-        ## (This is always asserted without calculation, for efficiency)
+        # First insert new sources in img1 and check association to parent field
+        # This is always asserted without calculation, for efficiency
         image1 = tkp.db.Image(dataset=self.dataset, data=im_params[1])
-        image1.insert_extracted_sources([src_in_imgs_0_1, src_in_img_1_only])
-        image1.associate_extracted_sources(deRuiter_r, new_source_sigma_margin)
+        insert_extracted_sources(image1._id, [src_in_imgs_0_1, src_in_img_1_only])
+        associate_extracted_sources(image1._id, deRuiter_r, new_source_sigma_margin)
         image1.update()
 
         runcats = columns_from_table('runningcatalog',
@@ -219,13 +221,13 @@ class TestOneToManyAssocUpdates(unittest.TestCase):
         src_b = src_a._replace(ra=src_a.ra + 1. / 60.) # 1 arcminute offset
         imgs = []
         imgs.append(tkp.db.Image(dataset=self.dataset, data=im_params[idx]))
-        imgs[idx].insert_extracted_sources([src_a])
-        imgs[idx].associate_extracted_sources(deRuiter_r, new_source_sigma_margin)
+        insert_extracted_sources(imgs[idx]._id, [src_a])
+        associate_extracted_sources(imgs[idx]._id, deRuiter_r, new_source_sigma_margin)
 
         idx = 1
         imgs.append(tkp.db.Image(dataset=self.dataset, data=im_params[idx]))
-        imgs[idx].insert_extracted_sources([src_a, src_b])
-        imgs[idx].associate_extracted_sources(deRuiter_r, new_source_sigma_margin)
+        insert_extracted_sources(imgs[idx]._id, [src_a, src_b])
+        associate_extracted_sources(imgs[idx]._id, deRuiter_r, new_source_sigma_margin)
         imgs[idx].update()
         runcats = columns_from_table('runningcatalog',
                                 where={'dataset':self.dataset.id})
@@ -267,8 +269,8 @@ class TestTransientExclusion(unittest.TestCase):
                                     dec=im_params[idx]['centre_decl'])
 
             imgs.append(tkp.db.Image(dataset=self.dataset, data=im_params[idx]))
-            imgs[idx].insert_extracted_sources([central_src])
-            imgs[idx].associate_extracted_sources(deRuiter_r, new_source_sigma_margin)
+            insert_extracted_sources(imgs[idx]._id, [central_src])
+            associate_extracted_sources(imgs[idx]._id, deRuiter_r, new_source_sigma_margin)
 
         runcats = columns_from_table('runningcatalog',
                                 where={'dataset':self.dataset.id})
@@ -317,16 +319,16 @@ class TestTransientExclusion(unittest.TestCase):
         imgs.append(tkp.db.Image(dataset=self.dataset, data=im_params[0]))
         imgs.append(tkp.db.Image(dataset=self.dataset, data=im_params[1]))
 
-        imgs[0].insert_extracted_sources([lower_steady_src, overlap_steady_src])
-        imgs[0].associate_extracted_sources(deRuiter_r=0.1,
-                                new_source_sigma_margin=new_source_sigma_margin)
+        insert_extracted_sources(imgs[0]._id, [lower_steady_src, overlap_steady_src])
+        associate_extracted_sources(imgs[0]._id, deRuiter_r=0.1,
+                                    new_source_sigma_margin=new_source_sigma_margin)
         nd_posns = dbnd.get_nulldetections(imgs[0].id)
         self.assertEqual(len(nd_posns), 0)
 
-        imgs[1].insert_extracted_sources([upper_steady_src, overlap_steady_src,
-                                          overlap_transient])
-        imgs[1].associate_extracted_sources(deRuiter_r=0.1,
-                                new_source_sigma_margin=new_source_sigma_margin)
+        insert_extracted_sources(imgs[1]._id, [upper_steady_src, overlap_steady_src,
+                                               overlap_transient])
+        associate_extracted_sources(imgs[1]._id, deRuiter_r=0.1,
+                                    new_source_sigma_margin=new_source_sigma_margin)
         nd_posns = dbnd.get_nulldetections(imgs[1].id)
         self.assertEqual(len(nd_posns), 0)
 
@@ -377,16 +379,16 @@ class TestTransientExclusion(unittest.TestCase):
         imgs.append(tkp.db.Image(dataset=self.dataset, data=im_params[0]))
         imgs.append(tkp.db.Image(dataset=self.dataset, data=im_params[1]))
 
-        imgs[0].insert_extracted_sources([lower_steady_src, overlap_steady_src,
-                                          overlap_transient])
-        imgs[0].associate_extracted_sources(deRuiter_r=0.1,
-                                new_source_sigma_margin=new_source_sigma_margin)
+        insert_extracted_sources(imgs[0]._id, [lower_steady_src, overlap_steady_src,
+                                               overlap_transient])
+        associate_extracted_sources(imgs[0]._id, deRuiter_r=0.1,
+                                    new_source_sigma_margin=new_source_sigma_margin)
         nd_posns = dbnd.get_nulldetections(imgs[0].id)
         self.assertEqual(len(nd_posns), 0)
 
-        imgs[1].insert_extracted_sources([upper_steady_src, overlap_steady_src])
-        imgs[1].associate_extracted_sources(deRuiter_r=0.1,
-                                new_source_sigma_margin=new_source_sigma_margin)
+        insert_extracted_sources(imgs[1]._id, [upper_steady_src, overlap_steady_src])
+        associate_extracted_sources(imgs[1]._id, deRuiter_r=0.1,
+                                            new_source_sigma_margin=new_source_sigma_margin)
         #This time we don't expect to get an immediate transient detection,
         #but we *do* expect to get a null-source forced extraction request:
         nd_posns = dbnd.get_nulldetections(imgs[1].id)

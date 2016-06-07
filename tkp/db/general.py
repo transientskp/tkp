@@ -12,6 +12,7 @@ import math
 import tkp.db
 from datetime import datetime
 from tkp.db.alchemy.image import insert_dataset as alchemy_insert_dataset
+from tkp.db.generic import columns_from_table
 from tkp.utility import substitute_inf
 from tkp.utility.coordinates import alpha_inflate
 from tkp.utility.coordinates import eq_to_cart
@@ -104,7 +105,7 @@ VALUES {placeholder}
                     (insert_num, dataset_id))
 
 
-def insert_extracted_sources(image_id, results, extract_type,
+def insert_extracted_sources(image_id, results, extract_type='blind',
                              ff_runcat_ids=None, ff_monitor_ids=None):
     """
     Insert all detections from sourcefinder into the extractedsource table.
@@ -306,3 +307,32 @@ def lightcurve(xtrsrcid):
     args = {'xtrsrc': xtrsrcid}
     cursor = tkp.db.execute(lightcurve_query, args)
     return cursor.fetchall()
+
+
+def frequency_bands(dataset_id):
+    """Return a list of distinct bands present in the dataset."""
+    query = """\
+    SELECT DISTINCT(band)
+      FROM image
+     WHERE dataset = %s
+    """
+    cursor = tkp.db.execute(query, (dataset_id,))
+    bands = zip(*cursor.fetchall())[0]
+    return bands
+
+
+def runcat_entries(dataset_id):
+    """
+    Returns:
+        list: a list of dictionarys representing rows in runningcatalog,
+        for all sources belonging to this dataset
+
+        Column 'id' is returned with the key 'runcat'
+
+        Currently only returns 3 columns:
+        [{'runcat,'xtrsrc','datapoints'}]
+    """
+    return columns_from_table('runningcatalog',
+                              keywords=['id', 'xtrsrc', 'datapoints'],
+                              alias={'id': 'runcat'},
+                              where={'dataset': dataset_id})

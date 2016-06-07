@@ -5,7 +5,8 @@ import datetime, math
 import tkp.db
 from tkp.db.generic import get_db_rows_as_dicts
 from tkp.db.database import Database
-from tkp.db.orm import DataSet, Image
+from tkp.db.associations import associate_extracted_sources
+from tkp.db.general import insert_extracted_sources
 from tkp.db import general as dbgen
 from tkp.db import nulldetections
 import tkp.testutil.data as testdata
@@ -340,15 +341,15 @@ def insert_image_and_simulated_sources(dataset, image_params, mock_sources,
         3-tuple (image, list of blind extractions, list of forced fits).
 
     """
-    image = tkp.db.Image(data=image_params,dataset=dataset)
+    image = tkp.db.Image(data=image_params, dataset=dataset)
     blind_extractions=[]
     for src in mock_sources:
-        xtr = src.simulate_extraction(image,extraction_type='blind')
+        xtr = src.simulate_extraction(image, extraction_type='blind')
         if xtr is not None:
             blind_extractions.append(xtr)
-    image.insert_extracted_sources(blind_extractions,'blind')
-    image.associate_extracted_sources(deRuiter_r=deruiter_radius,
-        new_source_sigma_margin=new_source_sigma_margin)
+    insert_extracted_sources(image._id, blind_extractions, 'blind')
+    associate_extracted_sources(image._id, deRuiter_r=deruiter_radius,
+                                new_source_sigma_margin=new_source_sigma_margin)
     nd_ids_posns = nulldetections.get_nulldetections(image.id)
     nd_posns = [(ra,decl) for ids, ra, decl in nd_ids_posns]
     forced_fits = []

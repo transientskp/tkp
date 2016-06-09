@@ -1,5 +1,22 @@
 # Changelog
 -----------
+
+## next release
+
+the band determination logic has changed. Before all bands where split
+into 1 MHz intervals and associated as such. With this release  images are
+put in the same band if their bandwidths overlap.
+
+We added an option to limit the bandwidth used for band assoication ([#492][]).
+Limiting the bandwidth for an image is done by setting `bandwidth_max`
+in *job_params.cfg* under the `persistence section`. E.g.:
+
+    [persistense]
+    bandwidth_max = 0.0
+
+Setting the value to 0.0 will use the bandwidth defined in the image
+headers, a non 0.0 value will override this value.
+
 ## R3.1.1 (2016-05-20)
 
 Adds a 'generic' (i.e. not telescope-specific) quality check for flat images,

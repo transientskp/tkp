@@ -40,7 +40,7 @@ script:
   - cd /tmp
   - "${TRAVIS_BUILD_DIR}/tkp/bin/trap-manage.py initproject pipeline"
   - cd pipeline
-  - "${TRAVIS_BUILD_DIR}/tkp/bin/trap-manage.py initdb -y"
+  - "${TRAVIS_BUILD_DIR}/tkp/bin/trap-manage.py initdb -dy"
   - cd ${TRAVIS_BUILD_DIR}/tests
   - TKP_DBUSER=postgres TKP_DBPASSWORD= nosetests -sv
 deploy:

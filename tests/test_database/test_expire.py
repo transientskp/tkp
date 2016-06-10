@@ -40,8 +40,8 @@ class TestExpire(unittest.TestCase):
         make a dataset with 10 images with 2 ligthcurves + one empty image
         """
         self.session = self.database.Session()
-        self.band = gen_band(central=150**6)
         self.dataset = gen_dataset('expiring runningcatalog test')
+        self.band = gen_band(dataset=self.dataset, central=150**6)
         skyregion = gen_skyregion(self.dataset)
         datapoints = 10
 

@@ -5,13 +5,14 @@ from tkp.utility.coordinates import eq_to_cart
 from sqlalchemy import text, func
 
 
-def get_band(session, freq_eff, freq_bw, freq_bw_max=.0):
+def get_band(session, dataset, freq_eff, freq_bw, freq_bw_max=.0):
     """
     Returns the frequency band for the given frequency parameters. Will create a new frequency band entry in the
     database if no match is found. You can limit the bandwidth of the band association with the freq_bw_max.
 
     args:
         session (sqlalchemy.orm.session.Session): a SQLAlchemy session object
+        dataset (tkp.db.model.Dataset): the TraP dataset
         freq_eff (float): The central frequency of image to get band for
         freq_bw (float): The bandwidth of image to get band for
         freq_bw_max (float): The maximum bandwith used for band association. Not used if 0.0 (default).
@@ -32,11 +33,11 @@ def get_band(session, freq_eff, freq_bw, freq_bw_max=.0):
         filter_ = " between freq_central - %s and freq_central + %s" % (bw_half, bw_half)
 
     band = session.query(Frequencyband). \
-        filter(text(low + filter_) | text(high + filter_)).first()
+        filter((Frequencyband.dataset == dataset) & (text(low + filter_) | text(high + filter_))).first()
     
     if not band:
         # no match so we create a new band
-        band = Frequencyband(freq_central=freq_eff, freq_low=low, freq_high=high)
+        band = Frequencyband(freq_central=freq_eff, freq_low=low, freq_high=high, dataset=dataset)
         session.add(band)
 
     return band
@@ -158,7 +159,7 @@ def insert_image(session, dataset, freq_eff, freq_bw, taustart_ts, tau_time, bea
     dataset = session.query(Dataset).filter(Dataset.id == dataset_id).one()
 
     skyrgn = get_skyregion(session, dataset, centre_ra, centre_decl, xtr_radius)
-    band = get_band(session, freq_eff, freq_bw, freq_bw_max)
+    band = get_band(session, dataset, freq_eff, freq_bw, freq_bw_max)
     rb_smaj = beam_smaj_pix * math.fabs(deltax)
     rb_smin = beam_smin_pix * math.fabs(deltay)
     rb_pa = 180 * beam_pa_rad / math.pi

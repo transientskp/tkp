@@ -25,16 +25,19 @@ class TestApi(unittest.TestCase):
 
         # make 2 datasets with 2 lightcurves each. Lightcurves have different
         # band
-        band1 = gen_band(central=150**6)
-        band2 = gen_band(central=160**6)
         self.dataset1 = gen_dataset('sqlalchemy test')
         self.dataset2 = gen_dataset('sqlalchemy test')
+        d1_b1 = gen_band(dataset=self.dataset1, central=150**6)
+        d1_b2 = gen_band(dataset=self.dataset1, central=160**6)
+        d2_b1 = gen_band(dataset=self.dataset2, central=150**6)
+        d2_b2 = gen_band(dataset=self.dataset2, central=160**6)
+
         skyregion1 = gen_skyregion(self.dataset1)
         skyregion2 = gen_skyregion(self.dataset2)
-        lightcurve1 = gen_lightcurve(band1, self.dataset1, skyregion1)
-        lightcurve2 = gen_lightcurve(band2, self.dataset1, skyregion1)
-        lightcurve3 = gen_lightcurve(band1, self.dataset2, skyregion2)
-        lightcurve4 = gen_lightcurve(band2, self.dataset2, skyregion2)
+        lightcurve1 = gen_lightcurve(d1_b1, self.dataset1, skyregion1)
+        lightcurve2 = gen_lightcurve(d1_b2, self.dataset1, skyregion1)
+        lightcurve3 = gen_lightcurve(d2_b1, self.dataset2, skyregion2)
+        lightcurve4 = gen_lightcurve(d2_b2, self.dataset2, skyregion2)
         db_objecsts = lightcurve1 + lightcurve2 + lightcurve3 + lightcurve4
         self.session.add_all(db_objecsts)
         self.session.flush()

@@ -16,23 +16,19 @@ from tkp.telescope.lofar.quality import reject_check_lofar
 logger = logging.getLogger(__name__)
 
 
-def reject_check(image_path, job_config):
+def reject_check(accessor, job_config):
     """
     Check if an image passes the quality checks.
 
     If not, a rejection reason is returned.
 
     args:
-        id: database ID of image. This is not used but kept as a reference for
-            distributed computation!
-        image_path: path to image
-        parset_file: parset file location with quality check parameters
+        accessor: a TKP accessor representing the image
+        job_config: parset file location with quality check parameters
+
     Returns:
         (rejection ID, description) if rejected, else None
     """
-
-    accessor = tkp.accessors.open(image_path)
-
     rejected = reject_check_generic_data(accessor)
     if rejected:
         return rejected

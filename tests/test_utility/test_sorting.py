@@ -17,9 +17,10 @@ def create_input():
         taustart_ts = now - timedelta(hours=hours)
         for freq_eff in 100, 150, 200:
             for stokes in 1, 2, 3, 4:
-                mockimages.append(MockOrmImage(taustart_ts=taustart_ts,
+                mock_accessor = "accessor_%s_%s" % (freq_eff, stokes)
+                mockimages.append((MockOrmImage(taustart_ts=taustart_ts,
                                                freq_eff=freq_eff ** 6,
-                                               stokes=stokes))
+                                               stokes=stokes), mock_accessor))
 
     # when we seed the RNG with a constant the shuffle will be deterministic
     random.seed(1)
@@ -34,16 +35,17 @@ def create_output():
         group = []
         for freq_eff in 100, 150, 200:
             for stokes in 1, 2, 3, 4:
-                group.append(MockOrmImage(taustart_ts=taustart_ts,
+                mock_accessor = "accessor_%s_%s" % (freq_eff, stokes)
+                group.append((MockOrmImage(taustart_ts=taustart_ts,
                                           freq_eff=freq_eff ** 6,
-                                          stokes=stokes))
+                                          stokes=stokes), mock_accessor))
         mockimages.append((taustart_ts, group))
     return mockimages
 
 
 class TestSorting(unittest.TestCase):
     def test_sorting(self):
-        input = create_input()
+        input_ = create_input()
         should_be = create_output()
-        evaluated = group_per_timestep(input)
+        evaluated = group_per_timestep(input_)
         self.assertEqual(should_be, evaluated)

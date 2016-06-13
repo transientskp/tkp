@@ -9,12 +9,18 @@ import tkp.steps
 logger = logging.getLogger(__name__)
 
 
-def persistence_node_step(zipped):
+def save_to_mongodb(zipped):
     logger.info("running persistence task")
     images, args = zipped
-    image_cache_config, sigma, f = args
-    return tkp.steps.persistence.node_steps(images, image_cache_config,
-                                            sigma, f)
+    [image_cache_config] = args
+    return tkp.steps.persistence.save_to_mongodb(images, image_cache_config)
+
+
+def extract_metadatas(zipped):
+    logger.info("running extract metadatas task")
+    images, args = zipped
+    sigma, f = args
+    return tkp.steps.persistence.extract_metadatas(images, sigma, f)
 
 
 def quality_reject_check(zipped):
@@ -26,6 +32,13 @@ def quality_reject_check(zipped):
 
 def extract_sources(zipped):
     logger.info("running extracted sources task")
-    url, args = zipped
+    accessor, args = zipped
     extraction_params = args[0]
-    return tkp.steps.source_extraction.extract_sources(url, extraction_params)
+    return tkp.steps.source_extraction.extract_sources(accessor,
+                                                       extraction_params)
+
+
+def get_accessors(zipped):
+    logger.debug("Creating accessors for images")
+    url, args = zipped
+    return tkp.steps.persistence.get_accessors(url)

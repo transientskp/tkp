@@ -66,7 +66,7 @@ def insert_and_associate_forced_fits(image_id,successful_fits,successful_ids):
 
 
 def perform_forced_fits(fit_posns, fit_ids,
-                        image_path, extraction_params):
+                        accessor, extraction_params):
     """
     Perform forced source measurements on an image based on a list of
     positions.
@@ -83,25 +83,27 @@ def perform_forced_fits(fit_posns, fit_ids,
         NB returned lists may be shorter than input lists
         if some fits are unsuccessful.
     """
-    logger.info("Forced fitting in image: %s" % (image_path))
-    fitsimage = tkp.accessors.open(image_path)
+    logger.info("Forced fitting in image: %s" % (accessor.url))
 
-    data_image = sourcefinder_image_from_accessor(fitsimage,
-                    margin=extraction_params['margin'],
-                    radius=extraction_params['extraction_radius_pix'],
-                    back_size_x=extraction_params['back_size_x'],
-                    back_size_y=extraction_params['back_size_y'])
+    margin = extraction_params['margin']
+    radius = extraction_params['extraction_radius_pix']
+    back_size_x = extraction_params['back_size_x']
+    back_size_y = extraction_params['back_size_y']
+    data_image = sourcefinder_image_from_accessor(accessor, margin=margin,
+                                                  radius=radius,
+                                                  back_size_x=back_size_x,
+                                                  back_size_y=back_size_y)
 
-
-    boxsize = extraction_params['box_in_beampix'] * max(data_image.beam[0],
-                                             data_image.beam[1])
-    successful_fits, successful_ids = data_image.fit_fixed_positions(
-                                                fit_posns, boxsize, ids=fit_ids)
+    box_in_beampix = extraction_params['box_in_beampix']
+    boxsize = box_in_beampix * max(data_image.beam[0], data_image.beam[1])
+    fits = data_image.fit_fixed_positions( fit_posns, boxsize, ids=fit_ids)
+    successful_fits, successful_ids = fits
     if successful_fits:
-        serialized =[
+        serialized = [
             f.serialize(
-                extraction_params['ew_sys_err'], extraction_params['ns_sys_err'])
+                extraction_params['ew_sys_err'],
+                extraction_params['ns_sys_err'])
             for f in successful_fits]
         return serialized, successful_ids
     else:
-        return [],[]
+        return [], []

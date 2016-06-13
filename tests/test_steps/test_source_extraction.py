@@ -32,7 +32,8 @@ class TestSourceExtraction(unittest.TestCase):
     @requires_data(fits_file)
     def test_extract_sources(self):
         image_path = fits_file
-        tkp.steps.source_extraction.extract_sources(image_path, self.parset)
+        accessor = tkp.accessors.open(image_path)
+        tkp.steps.source_extraction.extract_sources(accessor, self.parset)
 
     @requires_data(fits_file)
     def test_for_appropriate_arguments(self):
@@ -45,7 +46,8 @@ class TestSourceExtraction(unittest.TestCase):
         mock_method = Mock(MockImage([]))
         orig_method = tkp.steps.source_extraction.sourcefinder_image_from_accessor
         tkp.steps.source_extraction.sourcefinder_image_from_accessor = mock_method
-        tkp.steps.source_extraction.extract_sources(image_path, self.parset)
+        accessor = tkp.accessors.open(image_path)
+        tkp.steps.source_extraction.extract_sources(accessor, self.parset)
         tkp.steps.source_extraction.sourcefinder_image_from_accessor = orig_method
 
         # Arguments to sourcefinder_image_from_accessor()

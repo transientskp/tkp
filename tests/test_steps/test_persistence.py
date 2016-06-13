@@ -6,12 +6,14 @@ import tkp.testutil.data as testdata
 from tkp.testutil.decorators import requires_database, requires_data
 import tkp.db
 import tkp.db.generic
+import tkp.accessors
 from ConfigParser import SafeConfigParser
 
 from tkp.config import parse_to_dict, initialize_pipeline_config
 from tkp.testutil.data import default_job_config, default_pipeline_config
 
 datafile = os.path.join(testdata.DATAPATH, "sourcefinder/NCP_sample_image_1.fits")
+
 
 class TestPersistence(unittest.TestCase):
 
@@ -25,6 +27,7 @@ class TestPersistence(unittest.TestCase):
         dataset = tkp.db.DataSet(data={'description': "Test persistence"})
         cls.dataset_id = dataset.id
         cls.images = [datafile]
+        cls.accessors = [tkp.accessors.open(datafile)]
         cls.extraction_radius = 256
         job_config = SafeConfigParser()
         job_config.read(default_job_config)
@@ -41,15 +44,16 @@ class TestPersistence(unittest.TestCase):
         tkp.steps.persistence.create_dataset(dataset_id, "test")
 
     def test_extract_metadatas(self):
-        tkp.steps.persistence.extract_metadatas(self.images,
-                                rms_est_sigma=4, rms_est_fraction=8)
+        tkp.steps.persistence.extract_metadatas(self.accessors,
+                                                rms_est_sigma=4,
+                                                rms_est_fraction=8)
 
     def test_store_images(self):
         images_metadata = tkp.steps.persistence.extract_metadatas(
-            self.images, rms_est_sigma=4, rms_est_fraction=8)
-        img_ids = tkp.steps.persistence.store_images(images_metadata,
-                                           self.extraction_radius,
-                                           self.dataset_id)
+            self.accessors, rms_est_sigma=4, rms_est_fraction=8)
+        img_ids = tkp.steps.persistence.store_images_in_db(images_metadata,
+                                                           self.extraction_radius,
+                                                           self.dataset_id)
         # xtr_radius >=0 is a Postgres constraint, but we should also test
         # manually, in case running MonetDB:
         for id in img_ids:
@@ -58,9 +62,9 @@ class TestPersistence(unittest.TestCase):
                                                    where=dict(id=image.skyrgn))
             self.assertGreaterEqual(skyrgn[0]['xtr_radius'], 0)
 
-    def test_node_steps(self):
-        tkp.steps.persistence.node_steps(self.images, self.image_cache_pars,
-                                         rms_est_sigma=4, rms_est_fraction=8)
+    def test_safe_to_mongodb(self):
+        tkp.steps.persistence.save_to_mongodb(self.images,
+                                              self.image_cache_pars)
 
 
 @requires_mongodb()

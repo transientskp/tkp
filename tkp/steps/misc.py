@@ -153,7 +153,7 @@ def group_per_timestep(images):
         * s is stokes, sorted by ID as defined in the database schema
 
     Args:
-        images (list): Images to group.
+        images (list of tupels): Images to group. a image_db and accessor object
 
     Returns:
         list: List of tuples. The list is sorted by timestamp.
@@ -163,15 +163,15 @@ def group_per_timestep(images):
 
     """
     timestamp_to_images_map = defaultdict(list)
-    for image in images:
-        timestamp_to_images_map[image.taustart_ts].append(image)
+    for db_image, accessor in images:
+        timestamp_to_images_map[db_image.taustart_ts].append((db_image, accessor))
 
-    #List of (timestamp, [images_at_timestamp]) tuples:
+    # List of (timestamp, [images_at_timestamp]) tuples:
     grouped_images = timestamp_to_images_map.items()
 
     # sort the tuples by first element (timestamps)
     grouped_images.sort()
 
     # and then sort the nested items per freq and stokes
-    [l[1].sort(key=lambda x: (x.freq_eff, x.stokes)) for l in grouped_images]
+    [l[1].sort(key=lambda x: (x[0].freq_eff, x[0].stokes)) for l in grouped_images]
     return grouped_images

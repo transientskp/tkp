@@ -6,7 +6,7 @@ General purpose astronomical coordinate handling routines.
 
 import sys
 import math
-import pywcs
+from astropy import wcs as pywcs
 import logging
 import datetime
 import pytz
@@ -663,10 +663,10 @@ class WCS(object):
             ra (float):     Right ascension corresponding to position [x, y]
             dec (float):    Declination corresponding to position [x, y]
         """
-        [ra], [dec] =  self.wcs.wcs_pix2sky(pixpos[0], pixpos[1], self.ORIGIN)
+        ra, dec = self.wcs.wcs_pix2world(pixpos[0], pixpos[1], self.ORIGIN)
         if math.isnan(ra) or math.isnan(dec):
             raise RuntimeError("Spatial position is not a number")
-        return ra, dec
+        return float(ra), float(dec)
 
     def s2p(self, spatialpos):
         """
@@ -679,7 +679,7 @@ class WCS(object):
             x (float):      X pixel value corresponding to position [ra, dec]
             y (float):      Y pixel value corresponding to position [ra, dec]
         """
-        [x], [y] =  self.wcs.wcs_sky2pix(spatialpos[0], spatialpos[1], self.ORIGIN)
+        x, y = self.wcs.wcs_world2pix(spatialpos[0], spatialpos[1], self.ORIGIN)
         if math.isnan(x) or math.isnan(y):
             raise RuntimeError("Pixel position is not a number")
-        return x, y
+        return float(x), float(y)

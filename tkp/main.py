@@ -77,6 +77,7 @@ def load_images(job_name, job_dir, job_config):
                                                        len(all_images)))
     else:
         # this is where the AARTFAAC magic will happen
+        all_images = []
     return all_images
 
 

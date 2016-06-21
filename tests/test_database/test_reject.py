@@ -4,6 +4,8 @@ from tkp.testutil import db_subs
 from tkp.testutil.decorators import requires_database
 import tkp.db.quality as db_quality
 from tkp.db.associations import associate_extracted_sources
+from tkp.db.general import insert_extracted_sources
+
 
 @requires_database()
 class TestRejection(unittest.TestCase):
@@ -40,8 +42,8 @@ class TestRejection(unittest.TestCase):
             im_params in db_subs.generate_timespaced_dbimages_data(n_images)
         ]
 
-       # The first image is rejected for an arbitrary reason
-       # (for the sake of argument, we use an unacceptable RMS).
+        # The first image is rejected for an arbitrary reason
+        # (for the sake of argument, we use an unacceptable RMS).
         db_quality.reject(
             imageid=db_imgs[0].id,
             reason=db_quality.reject_reasons['rms'],
@@ -54,7 +56,7 @@ class TestRejection(unittest.TestCase):
         # Since we rejected the first image, we only find a source in the
         # second.
         source = db_subs.example_extractedsource_tuple()
-        db_imgs[1].insert_extracted_sources([source])
+        insert_extracted_sources(db_imgs[1]._id, [source])
 
         # Standard source association procedure etc.
         associate_extracted_sources(db_imgs[1].id, deRuiter_r=3.7,

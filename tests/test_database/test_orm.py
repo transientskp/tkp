@@ -9,6 +9,7 @@ from tkp.db.database import Database
 from tkp.db.orm import ExtractedSource
 from tkp.testutil import db_subs
 from tkp.db.generic import columns_from_table
+from tkp.db.general import insert_extracted_sources
 
 # We're cheating here: a unit test shouldn't really depend on an
 # external dependency like the database being up and running
@@ -195,7 +196,7 @@ class TestExtractedSource(unittest.TestCase):
 
         # Inserting a standard example extractedsource should be fine
         extracted_source = db_subs.example_extractedsource_tuple()
-        image.insert_extracted_sources([extracted_source])
+        insert_extracted_sources(image._id, [extracted_source])
         inserted = columns_from_table('extractedsource',
                                       where= {'image' : image.id})
         self.assertEqual(len(inserted), 1)
@@ -211,7 +212,7 @@ class TestExtractedSource(unittest.TestCase):
         hdlr = logging.StreamHandler(iostream)
         logging.getLogger().addHandler(hdlr)
 
-        image.insert_extracted_sources([extracted_source])
+        insert_extracted_sources(image._id, [extracted_source])
 
         logging.getLogger().removeHandler(hdlr)
         # We want to be sure that the error has been appropriately logged.

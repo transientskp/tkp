@@ -6,6 +6,8 @@ import datetime
 from tkp.testutil.decorators import requires_database
 from tkp.db.orm import DataSet
 from tkp.db.orm import Image
+from tkp.db.associations import associate_extracted_sources
+from tkp.db.general import insert_extracted_sources
 import tkp.db
 from tkp.testutil import db_subs
 
@@ -64,11 +66,11 @@ class TestLightSurface(unittest.TestCase):
                 sources.append(source)
 
             # Insert the sources
-            image.insert_extracted_sources(sources)
+            insert_extracted_sources(image._id, sources)
 
             # Run the association for each list of source for an image
-            image.associate_extracted_sources(deRuiter_r=3.7,
-                                              new_source_sigma_margin=3)
+            associate_extracted_sources(image._id, deRuiter_r=3.7,
+                                        new_source_sigma_margin=3)
 
         # updates the dataset and its set of images
         self.dataset.update()

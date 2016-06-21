@@ -3,6 +3,7 @@ import tkp.db
 import tkp.db.general as dbgen
 from tkp.db.generic import  get_db_rows_as_dicts, columns_from_table
 from tkp.db.associations import associate_extracted_sources
+from tkp.db.general import insert_extracted_sources
 from tkp.testutil import db_subs
 from tkp.testutil import db_queries
 from tkp.testutil.decorators import requires_database
@@ -37,7 +38,7 @@ class TestOne2OneFlux(unittest.TestCase):
 
         for idx, im in enumerate(im_params):
             image = tkp.db.Image(database=self.database, dataset=dataset, data=im)
-            image.insert_extracted_sources([src_list[idx]])
+            insert_extracted_sources(image._id, [src_list[idx]])
             associate_extracted_sources(image.id, deRuiter_r=3.717)
 
         query = """\
@@ -526,7 +527,7 @@ class TestInfiniteErrorFluxes(unittest.TestCase):
 
         for idx, im in enumerate(im_params):
             image = tkp.db.Image(database=self.database, dataset=dataset, data=im)
-            image.insert_extracted_sources([src_list[idx]])
+            insert_extracted_sources(image._id, [src_list[idx]])
             associate_extracted_sources(image.id, deRuiter_r=3.717)
 
         query = """\

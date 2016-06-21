@@ -5,15 +5,17 @@ In this module we collect together various routines
 that don't fit into a more specific collection.
 """
 
-import math
-import logging
 import itertools
+import logging
+import math
 
 import tkp.db
-from tkp.utility.coordinates import eq_to_cart
-from tkp.utility.coordinates import alpha_inflate
+from datetime import datetime
+from tkp.db.alchemy.image import insert_dataset as alchemy_insert_dataset
+from tkp.db.generic import columns_from_table
 from tkp.utility import substitute_inf
-
+from tkp.utility.coordinates import alpha_inflate
+from tkp.utility.coordinates import eq_to_cart
 
 logger = logging.getLogger(__name__)
 
@@ -43,7 +45,7 @@ ORDER BY im.taustart_ts
 
 update_dataset_process_end_ts_query = """
 UPDATE dataset
-   SET process_end_ts = NOW()
+   SET process_end_ts = %(end)s
  WHERE id = %(dataset_id)s
 """
 
@@ -51,20 +53,22 @@ def update_dataset_process_end_ts(dataset_id):
     """Update dataset start-of-processing timestamp.
 
     """
-    args = {'dataset_id': dataset_id}
+    args = {'dataset_id': dataset_id, 'end': datetime.now()}
     tkp.db.execute(update_dataset_process_end_ts_query, args, commit=True)
     return dataset_id
 
 
 def insert_dataset(description):
-    """Insert dataset with description as given by argument.
-
-    DB function insertDataset() sets the necessary default values.
     """
-    query = "SELECT insertDataset(%s)"
-    arguments = (description,)
-    cursor = tkp.db.execute(query, arguments, commit=True)
-    dataset_id = cursor.fetchone()[0]
+    Insert dataset with description as given by argument.
+    """
+    db = tkp.db.Database()
+    session = db.Session()
+    dataset = alchemy_insert_dataset(session, description)
+    session.add(dataset)
+    session.commit()
+    dataset_id = dataset.id
+    session.close()
     return dataset_id
 
 
@@ -101,86 +105,7 @@ VALUES {placeholder}
                     (insert_num, dataset_id))
 
 
-def insert_image(dataset, freq_eff, freq_bw,
-                 taustart_ts, tau_time,
-                 beam_smaj_pix, beam_smin_pix, beam_pa_rad,
-                 deltax, deltay,
-                 url,
-                 centre_ra, centre_decl, xtr_radius,
-                 rms_qc,  rms_min, rms_max,
-                 detection_thresh, analysis_thresh
-                 ):
-    """
-    Insert an image for a given dataset.
-
-    Args:
-        dataset (int): ID of parent dataset.
-        freq_eff: See :ref:`Image table definitions <schema-image>`.
-        freq_bw: See :ref:`Image table definitions <schema-image>`.
-        taustart_ts: See :ref:`Image table definitions <schema-image>`.
-        taus_time: See :ref:`Image table definitions <schema-image>`.
-        beam_smaj_pix (float): Restoring beam semimajor axis length in pixels.
-            (Converted to degrees before storing to database).
-        beam_smin_pix (float): Restoring beam semiminor axis length in pixels.
-            (Converted to degrees before storing to database).
-        beam_pa_rad (float): Restoring beam parallactic angle in radians.
-            (Converted to degrees before storing to database).
-        deltax(float): Degrees per pixel increment in x-direction.
-        deltay(float): Degrees per pixel increment in y-direction.
-        centre_ra(float): Image central RA co-ord, in degrees.
-        centre_decl(float): Image central Declination co-ord, in degrees.
-        xtr_radius(float): Radius in degrees from field centre that will be used
-            for source extraction.
-
-    """
-    query = """\
-    SELECT insertImage(%(dataset)s
-                      ,%(tau_time)s
-                      ,%(freq_eff)s
-                      ,%(freq_bw)s
-                      ,%(taustart_ts)s
-                      ,%(rb_smaj)s
-                      ,%(rb_smin)s
-                      ,%(rb_pa)s
-                      ,%(deltax)s
-                      ,%(deltay)s
-                      ,%(url)s
-                      ,%(centre_ra)s
-                      ,%(centre_decl)s
-                      ,%(xtr_radius)s
-                      ,%(rms_qc)s
-                      ,%(rms_min)s
-                      ,%(rms_max)s
-                      ,%(detection_thresh)s
-                      ,%(analysis_thresh)s
-                      )
-    """
-    arguments = {'dataset': dataset,
-                 'tau_time': tau_time,
-                 'freq_eff': freq_eff,
-                 'freq_bw': freq_bw,
-                 'taustart_ts': taustart_ts,
-                 'rb_smaj': beam_smaj_pix * math.fabs(deltax),
-                 'rb_smin': beam_smin_pix * math.fabs(deltay),
-                 'rb_pa': 180 * beam_pa_rad / math.pi,
-                 'deltax': deltax,
-                 'deltay': deltay,
-                 'url': url,
-                 'centre_ra': centre_ra,
-                 'centre_decl': centre_decl,
-                 'xtr_radius': xtr_radius,
-                 'rms_qc': rms_qc,
-                 'rms_min': rms_min,
-                 'rms_max': rms_max,
-                 'detection_thresh': detection_thresh,
-                 'analysis_thresh': analysis_thresh,
-                 }
-    cursor = tkp.db.execute(query, arguments, commit=True)
-    image_id = cursor.fetchone()[0]
-    return image_id
-
-
-def insert_extracted_sources(image_id, results, extract_type,
+def insert_extracted_sources(image_id, results, extract_type='blind',
                              ff_runcat_ids=None, ff_monitor_ids=None):
     """
     Insert all detections from sourcefinder into the extractedsource table.
@@ -382,3 +307,32 @@ def lightcurve(xtrsrcid):
     args = {'xtrsrc': xtrsrcid}
     cursor = tkp.db.execute(lightcurve_query, args)
     return cursor.fetchall()
+
+
+def frequency_bands(dataset_id):
+    """Return a list of distinct bands present in the dataset."""
+    query = """\
+    SELECT DISTINCT(band)
+      FROM image
+     WHERE dataset = %s
+    """
+    cursor = tkp.db.execute(query, (dataset_id,))
+    bands = zip(*cursor.fetchall())[0]
+    return bands
+
+
+def runcat_entries(dataset_id):
+    """
+    Returns:
+        list: a list of dictionarys representing rows in runningcatalog,
+        for all sources belonging to this dataset
+
+        Column 'id' is returned with the key 'runcat'
+
+        Currently only returns 3 columns:
+        [{'runcat,'xtrsrc','datapoints'}]
+    """
+    return columns_from_table('runningcatalog',
+                              keywords=['id', 'xtrsrc', 'datapoints'],
+                              alias={'id': 'runcat'},
+                              where={'dataset': dataset_id})

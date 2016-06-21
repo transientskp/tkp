@@ -2,6 +2,8 @@ import unittest
 from tkp.db.orm import DataSet, Image
 import tkp.db
 import tkp.db.database
+from tkp.db.associations import associate_extracted_sources
+from tkp.db.general import insert_extracted_sources
 from tkp.testutil.decorators import requires_database
 from tkp.testutil import db_subs
 from tkp.db.generic import columns_from_table
@@ -9,6 +11,7 @@ from tkp.db.generic import columns_from_table
 # Convenient default values
 deRuiter_r = 3.7
 new_source_sigma_margin = 3
+
 
 class TestSourceAssociation(unittest.TestCase):
     @requires_database()
@@ -24,7 +27,6 @@ class TestSourceAssociation(unittest.TestCase):
     def tearDown(self):
         tkp.db.rollback()
 
-
     def test_null_case_sequential(self):
         """test_null_case_sequential
 
@@ -33,19 +35,14 @@ class TestSourceAssociation(unittest.TestCase):
 
         """
         for im in self.im_params:
-            self.db_imgs.append(Image( data=im, dataset=self.dataset))
-            self.db_imgs[-1].insert_extracted_sources([],'blind')
-            self.db_imgs[-1].associate_extracted_sources(deRuiter_r,
-                                                        new_source_sigma_margin)
+            self.db_imgs.append(Image(data=im, dataset=self.dataset))
+            insert_extracted_sources(self.db_imgs[-1]._id, [],'blind')
+            associate_extracted_sources(self.db_imgs[-1]._id, deRuiter_r,
+                                        new_source_sigma_margin)
             running_cat = columns_from_table(table="runningcatalog",
-                                           keywords="*",
-                                           where={"dataset":self.dataset.id})
+                                             keywords="*",
+                                             where={"dataset":self.dataset.id})
             self.assertEqual(len(running_cat), 0)
-
-#    def test_null_case_post_insert(self):
-#        for im in self.im_params:
-#            self.db_imgs.append( tkp.db.Image( data=im, dataset=self.dataset) )
-#        pass
 
     def test_only_first_epoch_source(self):
         """test_only_first_epoch_source
@@ -56,33 +53,30 @@ class TestSourceAssociation(unittest.TestCase):
         - Check runcat and assocxtrsource are correct.
 
         """
-
-
         first_epoch = True
-        extracted_source_ids=[]
+        extracted_source_ids = []
         for im in self.im_params:
-            self.db_imgs.append( Image( data=im, dataset=self.dataset) )
-            last_img =self.db_imgs[-1]
+            self.db_imgs.append(Image( data=im, dataset=self.dataset))
+            last_img = self.db_imgs[-1]
 
             if first_epoch:
-                last_img.insert_extracted_sources(
-                    [db_subs.example_extractedsource_tuple()],'blind')
+                insert_extracted_sources(last_img._id,
+                    [db_subs.example_extractedsource_tuple()], 'blind')
 
-            last_img.associate_extracted_sources(deRuiter_r,
-                                                 new_source_sigma_margin)
+            associate_extracted_sources(last_img._id, deRuiter_r,
+                                        new_source_sigma_margin)
 
-            #First, check the runcat has been updated correctly:
+            # First, check the runcat has been updated correctly
             running_cat = columns_from_table(table="runningcatalog",
-                                           keywords=['datapoints'],
-                                           where={"dataset":self.dataset.id})
+                                             keywords=['datapoints'],
+                                             where={"dataset": self.dataset.id})
             self.assertEqual(len(running_cat), 1)
             self.assertEqual(running_cat[0]['datapoints'], 1)
 
             last_img.update()
             last_img.update_sources()
             img_xtrsrc_ids = [src.id for src in last_img.sources]
-#            print "ImageID:", last_img.id
-#            print "Imgs sources:", img_xtrsrc_ids
+
             if first_epoch:
                 self.assertEqual(len(img_xtrsrc_ids),1)
                 extracted_source_ids.extend(img_xtrsrc_ids)
@@ -107,7 +101,6 @@ class TestSourceAssociation(unittest.TestCase):
         self.assertEqual(assocxtrsrcs_rows[0]['xtrsrc'], extracted_source_ids[0],
                          "Runcat xtrsrc entry must match the only extracted source")
 
-
     def test_single_fixed_source(self):
         """test_single_fixed_source
 
@@ -119,12 +112,12 @@ class TestSourceAssociation(unittest.TestCase):
 
         fixed_src_runcat_id = None
         for img_idx, im in enumerate(self.im_params):
-            self.db_imgs.append( Image( data=im, dataset=self.dataset) )
-            last_img =self.db_imgs[-1]
-            last_img.insert_extracted_sources(
+            self.db_imgs.append( Image(data=im, dataset=self.dataset))
+            last_img = self.db_imgs[-1]
+            insert_extracted_sources(last_img._id,
                 [db_subs.example_extractedsource_tuple()],'blind')
-            last_img.associate_extracted_sources(deRuiter_r,
-                                                 new_source_sigma_margin)
+            associate_extracted_sources(last_img._id, deRuiter_r,
+                                        new_source_sigma_margin)
 
             running_cat = columns_from_table(table="runningcatalog",
                                            keywords=['id', 'datapoints'],
@@ -132,7 +125,7 @@ class TestSourceAssociation(unittest.TestCase):
             self.assertEqual(len(running_cat), 1)
             self.assertEqual(running_cat[0]['datapoints'], img_idx+1)
 
-            #Check runcat ID does not change for a steady single source
+            # Check runcat ID does not change for a steady single source
             if img_idx == 0:
                 fixed_src_runcat_id = running_cat[0]['id']
                 self.assertIsNotNone(fixed_src_runcat_id, "No runcat id assigned to source")

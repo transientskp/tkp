@@ -48,8 +48,9 @@ class TestPersistence(unittest.TestCase):
         images_metadata = tkp.steps.persistence.extract_metadatas(
             self.images, rms_est_sigma=4, rms_est_fraction=8)
         img_ids = tkp.steps.persistence.store_images(images_metadata,
-                                           self.extraction_radius,
-                                           self.dataset_id)
+                                                     self.extraction_radius,
+                                                     self.dataset_id,
+                                                     0.0)
         # xtr_radius >=0 is a Postgres constraint, but we should also test
         # manually, in case running MonetDB:
         for id in img_ids:

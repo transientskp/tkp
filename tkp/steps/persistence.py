@@ -108,7 +108,7 @@ def extract_metadatas(images, rms_est_sigma, rms_est_fraction):
     return results
 
 
-def store_images(images_metadata, extraction_radius_pix, dataset_id):
+def store_images(images_metadata, extraction_radius_pix, dataset_id, bandwidth_max):
     """ Add images to database.
     Note that all images in one dataset should be inserted in one go, since the
     order is very important here. If you don't add them all in once, you should
@@ -133,6 +133,7 @@ def store_images(images_metadata, extraction_radius_pix, dataset_id):
     images_metadata.sort(key=lambda m: m['taustart_ts'])
 
     for metadata in images_metadata:
+        metadata['freq_bw_max'] = bandwidth_max
         metadata['xtr_radius'] = extraction_radius_pix * abs(metadata['deltax'])
         filename = metadata['url']
         db_image = Image(data=metadata, dataset=dataset)

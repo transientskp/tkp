@@ -160,6 +160,9 @@ class Frequencyband(Base):
 
     id = Column(Integer, seq_frequencyband, primary_key=True,
                 server_default=seq_frequencyband.next_value())
+    dataset_id = Column('dataset', Integer, ForeignKey('dataset.id'),
+                        nullable=False, index=True)
+    dataset = relationship('Dataset', backref=backref('frequencybands'))
     freq_central = Column(Double)
     freq_low = Column(Double)
     freq_high = Column(Double)

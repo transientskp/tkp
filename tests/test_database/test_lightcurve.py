@@ -1,17 +1,16 @@
-from operator import attrgetter, itemgetter
-from collections import namedtuple
-
+from operator import attrgetter
 import unittest
-
 import datetime
 from tkp.testutil.decorators import requires_database
-from tkp.testutil import db_queries
 from tkp.testutil import db_subs
 from tkp.testutil import db_queries
 from tkp.db.orm import DataSet
 from tkp.db.orm import Image
 import tkp.db
-from tkp.db.generic import  get_db_rows_as_dicts, columns_from_table
+from tkp.db.associations import associate_extracted_sources
+from tkp.db.general import insert_extracted_sources
+from tkp.db.general import lightcurve as ligtcurve_func
+from tkp.db.generic import get_db_rows_as_dicts, columns_from_table
 
 
 class TestLightCurve(unittest.TestCase):
@@ -58,9 +57,9 @@ class TestLightCurve(unittest.TestCase):
                 )
                 lightcurves_sorted_by_ra[src_idx].append(src)
                 img_sources.append(src)
-            image.insert_extracted_sources(img_sources)
-            image.associate_extracted_sources(deRuiter_r=3.7,
-                                              new_source_sigma_margin=3)
+            insert_extracted_sources(image._id, img_sources)
+            associate_extracted_sources(image._id, deRuiter_r=3.7,
+                                        new_source_sigma_margin=3)
 
         # updates the dataset and its set of images
         self.dataset.update()
@@ -75,7 +74,7 @@ class TestLightCurve(unittest.TestCase):
         # and extract its light curve
         sources = self.dataset.images[-1].sources
         sources = sorted(sources, key=attrgetter('ra'))
-        lightcurve = sources[0].lightcurve()
+        lightcurve = ligtcurve_func(sources[0]._id)
 
         # check if the sources are associated in all images
         self.assertEqual(len(images), len(lightcurve))

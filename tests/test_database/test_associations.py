@@ -11,6 +11,7 @@ import tkp.db.general as dbgen
 from tkp.db.orm import DataSet
 import tkp.db.associations as assoc_subs
 from tkp.db.associations import associate_extracted_sources
+from tkp.db.general import insert_extracted_sources
 from tkp.db.generic import columns_from_table, get_db_rows_as_dicts
 from tkp.testutil import db_subs
 from tkp.testutil.decorators import requires_database
@@ -175,7 +176,7 @@ class TestOne2One(unittest.TestCase):
 
         for im_param in im_params:
             image = tkp.db.Image(dataset=dataset, data=im_param)
-            image.insert_extracted_sources([extracted_source])
+            insert_extracted_sources(image._id, [extracted_source])
             # NB choice of De Ruiter radius is arbitrary.
             associate_extracted_sources(image.id, deRuiter_r=1.0)
 
@@ -333,7 +334,7 @@ class TestMixedSkyregions(unittest.TestCase):
 
         for im in im_list:
             image = tkp.db.Image(dataset=dataset, data=im)
-            image.insert_extracted_sources(srcs)
+            insert_extracted_sources(image._id, srcs)
             associate_extracted_sources(image.id, deRuiter_r=3.717)
 
             runcat = columns_from_table('runningcatalog', ['wm_ra'],
@@ -367,7 +368,7 @@ class TestMixedSkyregions(unittest.TestCase):
 
         for im in imgs_input_data:
             image = tkp.db.Image(dataset=dataset, data=im)
-            image.insert_extracted_sources([src])
+            insert_extracted_sources(image._id, [src])
             associate_extracted_sources(image.id, deRuiter_r=3.717)
 
         runcat = columns_from_table('runningcatalog', ['wm_ra'],
@@ -395,7 +396,7 @@ class TestMixedSkyregions(unittest.TestCase):
 
         for im in im_list:
             image = tkp.db.Image(dataset=dataset, data=im)
-            image.insert_extracted_sources(sources)
+            insert_extracted_sources(image._id, sources)
             associate_extracted_sources(image.id, deRuiter_r=3.717)
 
         runcat = columns_from_table('runningcatalog', ['wm_ra'],
@@ -406,7 +407,6 @@ class TestMixedSkyregions(unittest.TestCase):
             self.assertAlmostEqual(wm_ras[ctr], ra)
 
 
-#@unittest.skip
 @requires_database()
 class TestMeridianOne2One(unittest.TestCase):
     """
@@ -441,7 +441,7 @@ class TestMeridianOne2One(unittest.TestCase):
         source = db_subs.example_extractedsource_tuple(ra=0.0, dec=0.0)
         for im in im_list:
             image = tkp.db.Image(dataset=dataset, data=im)
-            image.insert_extracted_sources([source])
+            insert_extracted_sources(image._id, [source])
             associate_extracted_sources(image.id, deRuiter_r=3.717)
 
         runcat = columns_from_table('runningcatalog', ['wm_ra'],
@@ -481,10 +481,10 @@ class TestMeridianOne2One(unittest.TestCase):
                                       for ra, dec in zip(ras, decs)]
 
         image1 = tkp.db.Image(dataset=dataset, data=im1)
-        image1.insert_extracted_sources(im1_srcs)
+        insert_extracted_sources(image1._id, im1_srcs)
         associate_extracted_sources(image1.id, deRuiter_r=3.717)
         image2 = tkp.db.Image(dataset=dataset, data=im2)
-        image2.insert_extracted_sources(im2_srcs)
+        insert_extracted_sources(image2._id, im2_srcs)
         associate_extracted_sources(image2.id, deRuiter_r=3.717)
 
         runcat = columns_from_table('runningcatalog', ['wm_ra', 'wm_decl'],
@@ -520,16 +520,15 @@ class TestMeridianOne2One(unittest.TestCase):
         for idx, im in enumerate(im_params):
             im['centre_ra'] = 359.9
             image = tkp.db.Image(dataset=dataset, data=im)
-            image.insert_extracted_sources([src_list[idx]])
+            insert_extracted_sources(image._id, [src_list[idx]])
             associate_extracted_sources(image.id, deRuiter_r=3.717)
         runcat = columns_from_table('runningcatalog', ['datapoints', 'wm_ra'],
-                                   where={'dataset':dataset.id})
-#        print "***\nRESULTS:", runcat, "\n*****"
+                                    where={'dataset': dataset.id})
         self.assertEqual(len(runcat), 1)
         self.assertEqual(runcat[0]['datapoints'], 3)
-        avg_ra = ((src0.ra+180)%360 + (src1.ra+180)%360 + (src2.ra+180)%360)/3 - 180
-        #Ensure our Python calculation is wrapped to positive:
-        avg_ra = (avg_ra + 360.0)%360.0
+        avg_ra = ((src0.ra+180) % 360 + (src1.ra+180) % 360 + (src2.ra+180) % 360)/3 - 180
+        # Ensure our Python calculation is wrapped to positive
+        avg_ra = (avg_ra + 360.0) % 360.0
         self.assertAlmostEqual(runcat[0]['wm_ra'], avg_ra)
 
     def TestMeridianCrossHighLowEdgeCase(self):
@@ -551,16 +550,15 @@ class TestMeridianOne2One(unittest.TestCase):
         for idx, im in enumerate(im_params):
             im['centre_ra'] = 359.9
             image = tkp.db.Image(dataset=dataset, data=im)
-            image.insert_extracted_sources([src_list[idx]])
+            insert_extracted_sources(image._id, [src_list[idx]])
             associate_extracted_sources(image.id, deRuiter_r=3.717)
         runcat = columns_from_table(
                                    'runningcatalog', ['datapoints', 'wm_ra'],
-                                   where={'dataset':dataset.id})
-#        print "***\nRESULTS:", runcat, "\n*****"
+                                   where={'dataset': dataset.id})
         self.assertEqual(len(runcat), 1)
         self.assertEqual(runcat[0]['datapoints'], 3)
-        avg_ra = ((src0.ra+180)%360 + (src1.ra+180)%360 + (src2.ra+180)%360)/3 - 180
-        #Ensure our Python calculation is wrapped to positive:
+        avg_ra = ((src0.ra+180)%360 + (src1.ra+180) % 360 + (src2.ra+180) % 360)/3 - 180
+        # Ensure our Python calculation is wrapped to positive
         avg_ra = (avg_ra + 360.0)%360.0
         self.assertAlmostEqual(runcat[0]['wm_ra'], avg_ra)
 
@@ -583,16 +581,15 @@ class TestMeridianOne2One(unittest.TestCase):
         for idx, im in enumerate(im_params):
             im['centre_ra'] = 359.9
             image = tkp.db.Image(dataset=dataset, data=im)
-            image.insert_extracted_sources([src_list[idx]])
+            insert_extracted_sources(image._id, [src_list[idx]])
             associate_extracted_sources(image.id, deRuiter_r=3.717)
         runcat = columns_from_table('runningcatalog', ['datapoints', 'wm_ra'],
-                                   where={'dataset':dataset.id})
-#        print "***\nRESULTS:", runcat, "\n*****"
+                                   where={'dataset': dataset.id})
         self.assertEqual(len(runcat), 1)
         self.assertEqual(runcat[0]['datapoints'], 3)
         avg_ra = (src0.ra + src1.ra +src2.ra)/3
-        #Ensure our Python calculation is wrapped to positive:
-        avg_ra = (avg_ra + 360.0)%360.0
+        # Ensure our Python calculation is wrapped to positive
+        avg_ra = (avg_ra + 360.0) % 360.0
         self.assertAlmostEqual(runcat[0]['wm_ra'], avg_ra)
 
     def TestMeridianLowerEdgeCase(self):
@@ -618,16 +615,15 @@ class TestMeridianOne2One(unittest.TestCase):
         for idx, im in enumerate(im_params):
             im['centre_ra'] = 359.9
             image = tkp.db.Image(dataset=dataset, data=im)
-            image.insert_extracted_sources([src_list[idx]])
+            insert_extracted_sources(image._id, [src_list[idx]])
             associate_extracted_sources(image.id, deRuiter_r=3.717)
         runcat = columns_from_table('runningcatalog', ['datapoints', 'wm_ra'],
                                    where={'dataset':dataset.id})
-#        print "***\nRESULTS:", runcat, "\n*****"
         self.assertEqual(len(runcat), 1)
         self.assertEqual(runcat[0]['datapoints'], 3)
         avg_ra = (src0.ra + src1.ra +src2.ra)/3
-        #Ensure our Python calculation is wrapped to positive:
-        avg_ra = (avg_ra + 360.0)%360.0
+        # Ensure our Python calculation is wrapped to positive
+        avg_ra = (avg_ra + 360.0) % 360.0
         self.assertAlmostEqual(runcat[0]['wm_ra'], avg_ra)
 
     def TestDeRuiterCalculation(self):
@@ -637,12 +633,11 @@ class TestMeridianOne2One(unittest.TestCase):
         im_params = db_subs.generate_timespaced_dbimages_data(n_images, centre_ra=10,
                                                      centre_decl=0)
 
-
-        #Note ra / ra_fit_err are in degrees.
+        # Note ra / ra_fit_err are in degrees.
         # ew_sys_err is in arcseconds, but we set it = 0 so doesn't matter.
-        #ra_fit_err cannot be zero or we get div by zero errors.
-        #Also, there is a hard limit on association radii:
-        #currently this defaults to 0.03 degrees== 108 arcseconds
+        # ra_fit_err cannot be zero or we get div by zero errors.
+        # Also, there is a hard limit on association radii:
+        # currently this defaults to 0.03 degrees== 108 arcseconds
         src0 = db_subs.example_extractedsource_tuple(ra=10.00, dec=0.0,
                                              error_radius=10.0,
                                              ew_sys_err=0.0, ns_sys_err=0.0)
@@ -658,17 +653,17 @@ class TestMeridianOne2One(unittest.TestCase):
 
         for idx in [0, 1]:
             image = tkp.db.Image(dataset=dataset,
-                                data=im_params[idx])
-            image.insert_extracted_sources([src_list[idx]])
-            #Peform very loose association since we just want to store DR value.
+                                 data=im_params[idx])
+            insert_extracted_sources(image._id, [src_list[idx]])
+            # Perform very loose association since we just want to store DR value.
             associate_extracted_sources(image.id, deRuiter_r=100)
         runcat = columns_from_table('runningcatalog', ['id'],
-                                   where={'dataset':dataset.id})
-#        print "***\nRESULTS:", runcat, "\n*****"
+                                   where={'dataset': dataset.id})
+
         self.assertEqual(len(runcat), 1)
         assoc = columns_from_table('assocxtrsource', ['r'],
-                                   where={'runcat':runcat[0]['id']})
-#        print "Got assocs:", assoc
+                                   where={'runcat': runcat[0]['id']})
+
         self.assertEqual(len(assoc), 2)
         self.assertAlmostEqual(assoc[1]['r'], expected_DR_radius)
 
@@ -688,7 +683,7 @@ class TestMeridianOne2One(unittest.TestCase):
                     for p in positions]
 
         image = tkp.db.Image(dataset=dataset, data=im_list[0])
-        image.insert_extracted_sources(sources1)
+        insert_extracted_sources(image._id, sources1)
         associate_extracted_sources(image.id, deRuiter_r=3.717)
 
         # Now shift the positions to be associated in both RA and Dec,
@@ -700,14 +695,14 @@ class TestMeridianOne2One(unittest.TestCase):
 
         sources2 = [db_subs.example_extractedsource_tuple(ra=p[0], dec=p[1])
                     for p in positions]
-        
+
         expected_dr1 = db_subs.deRuiter_radius(sources1[0], sources2[0])
         expected_dr2 = db_subs.deRuiter_radius(sources1[1], sources2[1])
 
         image = tkp.db.Image(dataset=dataset, data=im_list[1])
-        image.insert_extracted_sources(sources2)
+        insert_extracted_sources(image._id, sources2)
         associate_extracted_sources(image.id, deRuiter_r=1e6)
-        
+
         # Now inspect the contents of assocxtrsource:
         # Order results by runningcatalog id, then DR radius.
         query = """\
@@ -729,7 +724,7 @@ class TestMeridianOne2One(unittest.TestCase):
         runcat = dr_result[0]
         xtrsrc = dr_result[1]
         dr_radius = dr_result[2]
-        
+
         self.assertEqual(len(runcat), 4)
         # Ordered by image and position, since we cannot rely on the  
         # generated ids by the db.
@@ -740,7 +735,7 @@ class TestMeridianOne2One(unittest.TestCase):
         self.assertAlmostEqual(dr_radius[1], 0)
         self.assertAlmostEqual(dr_radius[2], expected_dr1)
         self.assertAlmostEqual(dr_radius[3], expected_dr2)
-        
+
 
 class TestOne2Many(unittest.TestCase):
     """
@@ -929,7 +924,6 @@ class TestOne2Many(unittest.TestCase):
         self.database.cursor.execute(query, (dataset.id, imageid1))
         count = zip(*self.database.cursor.fetchall())
         self.assertEqual(count[0][0], 0)
-
 
 
 class TestMany2One(unittest.TestCase):
@@ -1137,7 +1131,7 @@ class TestMany2Many(unittest.TestCase):
     def tearDown(self):
         """remove all stuff after the test has been run"""
         tkp.db.rollback()
-        
+
 
     def insert_many_to_many_sources(self, dataset, im_params,
                                     image1_srcs, image2_srcs, dr_limit):

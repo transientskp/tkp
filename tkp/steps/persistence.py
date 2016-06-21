@@ -7,6 +7,7 @@ import logging
 import warnings
 from tempfile import NamedTemporaryFile
 
+
 from casacore.images import image as casacore_image
 
 import tkp.accessors

@@ -10,8 +10,6 @@ import logging
 import os
 from pprint import pprint
 
-from collections import defaultdict
-
 from tkp.config import parse_to_dict
 from tkp.db.dump import dump_db
 
@@ -108,18 +106,17 @@ def setup_logging(log_dir, debug, use_colorlog,
     else:
         stdout_handler.setLevel(logging.INFO)
 
-
     root_logger = logging.getLogger()
-    #We set level to debug, and handle output via handler-levels
+    # We set level to debug, and handle output via handler-levels
     root_logger.setLevel(logging.DEBUG)
-    #Trash any preset handlers and start fresh
+    # Trash any preset handlers and start fresh
     root_logger.handlers = []
     root_logger.addHandler(stdout_handler)
     root_logger.addHandler(info_hdlr)
     root_logger.addHandler(debug_hdlr)
 
     logger.info("logging to %s" % log_dir)
-    #Suppress noisy streams:
+    # Suppress noisy streams
     logging.getLogger('tkp.sourcefinder.image.sigmaclip').setLevel(logging.INFO)
 
 
@@ -137,41 +134,3 @@ def dump_database_backup(db_config, job_dir):
                 db_config['database'], db_config['user'], db_config['password'],
                 output_name
             )
-
-def group_per_timestep(images):
-    """
-    groups a list of TRAP images per time step.
-
-    Per time step the images are order per frequency and then per stokes. The
-    eventual order is:
-
-    (t1, f1, s1), (t1, f1, s2), (t1, f2, s1), (t1, f2, s2), (t2, f1, s1), ...)
-    where:
-
-        * t is time sorted by old to new
-        * f is frequency sorted from low to high
-        * s is stokes, sorted by ID as defined in the database schema
-
-    Args:
-        images (list): list of tuple, (image_db, accessor object)
-
-    Returns:
-        list: List of tuples. The list is sorted by timestamp.
-            Each tuple has the timestamp as a first element,
-            and a list of images sorted by frequency and then stokes
-            as the second element.
-
-    """
-    timestamp_to_images_map = defaultdict(list)
-    for db_image, accessor in images:
-        timestamp_to_images_map[db_image.taustart_ts].append((db_image, accessor))
-
-    # List of (timestamp, [images_at_timestamp]) tuples:
-    grouped_images = timestamp_to_images_map.items()
-
-    # sort the tuples by first element (timestamps)
-    grouped_images.sort()
-
-    # and then sort the nested items per freq and stokes
-    [l[1].sort(key=lambda x: (x[0].freq_eff, x[0].stokes)) for l in grouped_images]
-    return grouped_images

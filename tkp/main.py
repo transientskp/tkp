@@ -5,6 +5,7 @@ import imp
 import logging
 import os
 import sys
+from collections import defaultdict
 from tkp import steps
 from tkp.config import initialize_pipeline_config, get_database_config
 import tkp.db
@@ -17,7 +18,6 @@ from tkp.distribute import Runner
 from tkp.steps.misc import (load_job_config, dump_configs_to_logdir,
                             check_job_configs_match,
                             setup_logging, dump_database_backup,
-                            group_per_timestep
                             )
 from tkp.db.configstore import store_config, fetch_config
 from tkp.steps.persistence import create_dataset, store_images_in_db
@@ -68,17 +68,18 @@ def setup(job_name, supplied_mon_coords=None):
     return job_dir, job_config, pipe_config, runner, dataset_id
 
 
-def load_images(job_name, job_dir, job_config):
+def load_images(job_name, job_dir):
+    """
+    Load all the images for a specific TraP job.
 
-    if job_config.pipeline.mode == 'batch':
-        path = os.path.join(job_dir, 'images_to_process.py')
-        all_images = imp.load_source('images_to_process', path).images
-        logger.info("dataset %s contains %s images" % (job_name,
-                                                       len(all_images)))
-    else:
-        # this is where the AARTFAAC magic will happen
-        all_images = []
-    return all_images
+    returns:
+        list: a list of paths
+    """
+    path = os.path.join(job_dir, 'images_to_process.py')
+    images = imp.load_source('images_to_process', path).images
+    logger.info("dataset %s contains %s images" % (job_name,
+                                                   len(images)))
+    return images
 
 
 def consistency_check():
@@ -89,6 +90,19 @@ def consistency_check():
 
 
 def initialise_dataset(job_config, supplied_mon_coords):
+    """
+    sets up a dataset in the database.
+
+    if the dataset already exists it will return the job_config from the
+    previous dataset run.
+
+    args:
+        job_config: a job configuration object
+        supplied_mon_coords: a list of monitoring positions
+
+    returns:
+        tuple: job_config and dataset ID
+    """
     dataset_id = create_dataset(job_config.persistence.dataset_id,
                                 job_config.persistence.description)
 
@@ -118,7 +132,7 @@ def store_mongodb(pipe_config, all_images, runner):
     runner.map("save_to_mongodb", imgs, [pipe_config.image_cache])
 
 
-def extra_metadata(job_config, accessors, runner):
+def extract_metadata(job_config, accessors, runner):
     logger.info("Extracting metadata from images")
     imgs = [[a] for a in accessors]
     metadatas = runner.map("extract_metadatas",
@@ -138,6 +152,10 @@ def storing_images(metadatas, job_config, dataset_id):
 
 
 def quality_check(db_images, accessors, job_config, runner):
+    """
+    returns:
+        list: a list of db_image and accessor tuples
+    """
     logger.info("performing quality check")
     arguments = [job_config]
     rejecteds = runner.map("quality_reject_check", accessors, arguments)
@@ -157,10 +175,6 @@ def quality_check(db_images, accessors, job_config, runner):
 
 
 def source_extraction(accessors, job_config, runner):
-    """
-    args:
-        images: a list of accessors
-    """
     logger.debug("performing source extraction")
     arguments = [job_config.source_extraction]
     extraction_results = runner.map("extract_sources", accessors, arguments)
@@ -212,32 +226,62 @@ def get_accessors(runner, all_images):
     return [a[0] for a in accessors if a]
 
 
-def run(job_name, supplied_mon_coords=None):
-    s = setup(job_name, supplied_mon_coords)
-    job_dir, job_config, pipe_config, runner, dataset_id = s
+def group_per_start_time(runner, image_paths):
+    """
+    Group images per timestamp. Will open all images in parallel using runner.
 
-    all_images = load_images(job_name, job_dir, job_config)
+    returns:
+        list: list of tuples, (timestamp, [list_of_images])
+    """
+    timestamp_to_images_map = defaultdict(list)
+    nested_img = [[i] for i in image_paths]
+    timestamps = [t[0] for t in runner.map("get_start_time", nested_img)]
+    for timestamp, image_path in zip(timestamps, image_paths):
+        timestamp_to_images_map[timestamp].append(image_path)
 
-    store_mongodb(pipe_config, all_images, runner)
+    grouped_images = timestamp_to_images_map.items()
+    grouped_images.sort()  # sort per timestamp
+    return grouped_images
 
-    # gather all image info.
-    accessors = get_accessors(runner, all_images)
-    metadatas = extra_metadata(job_config, accessors, runner)
+
+def timestamp_step(runner, images, job_config, dataset_id):
+    """
+    Called from the main loop with all images in a certain timestep
+    """
+    # gather all image info
+    accessors = get_accessors(runner, images)
+    metadatas = extract_metadata(job_config, accessors, runner)
     db_images = storing_images(metadatas, job_config, dataset_id)
     error = "%s != %s != %s" % (len(accessors), len(metadatas), len(db_images))
     assert len(accessors) == len(metadatas) == len(db_images), error
 
+    # filter out the bad ones
     good_images = quality_check(db_images, accessors, job_config, runner)
-    grouped_images = group_per_timestep(good_images)
+    good_accessors = [i[1] for i in good_images]
+
+    # do the source extractions
+    extraction_results = source_extraction(good_accessors, job_config, runner)
+    store_extractions(good_images, extraction_results, job_config)
+
+    # store extracted sources in the database
+    for (db_image, accessor) in good_images:
+        image_db_operations(db_image, accessor, job_config)
+
+
+def run(job_name, supplied_mon_coords=None):
+    """
+    TKP pipeline run entry point.
+    """
+    s = setup(job_name, supplied_mon_coords)
+    job_dir, job_config, pipe_config, runner, dataset_id = s
+
+    image_paths = load_images(job_name, job_dir)
+    store_mongodb(pipe_config, image_paths, runner)
+    grouped_images = group_per_start_time(runner, image_paths)
 
     for n, (timestep, images) in enumerate(grouped_images):
         msg = "processing %s images in timestep %s (%s/%s)"
         logger.info(msg % (len(images), timestep, n + 1, len(grouped_images)))
-        accessors = [i[1] for i in images]
-        extraction_results = source_extraction(accessors, job_config, runner)
-        store_extractions(images, extraction_results, job_config)
-
-        for (db_image, accessor) in images:
-            image_db_operations(db_image, accessor, job_config)
+        timestamp_step(runner, images, job_config, dataset_id)
 
     finalise(dataset_id)

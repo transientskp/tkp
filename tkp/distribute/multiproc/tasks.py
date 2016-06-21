@@ -40,5 +40,11 @@ def extract_sources(zipped):
 
 def get_accessors(zipped):
     logger.debug("Creating accessors for images")
-    url, args = zipped
-    return tkp.steps.persistence.get_accessors(url)
+    images, args = zipped
+    return tkp.steps.persistence.get_accessors(images)
+
+
+def get_start_time(zipped):
+    logger.debug("Retrieving start time from accessors")
+    images, args = zipped
+    return [a.taustart_ts for a in tkp.steps.persistence.get_accessors(images)]

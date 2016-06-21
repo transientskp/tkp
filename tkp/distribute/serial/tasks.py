@@ -30,3 +30,9 @@ def extract_sources(accessor, extraction_params):
 def get_accessors(images):
     logger.debug("Creating accessors for images")
     return tkp.steps.persistence.get_accessors(images)
+
+
+def get_start_time(images):
+    logger.debug("Retrieving start time from accessors")
+    return [a.taustart_ts for a in tkp.steps.persistence.get_accessors(images)]
+

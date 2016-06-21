@@ -2,7 +2,9 @@ import math
 from datetime import datetime
 from tkp.db.model import Frequencyband, Skyregion, Image, Dataset
 from tkp.utility.coordinates import eq_to_cart
-from sqlalchemy import text, func
+from sqlalchemy import func, cast
+from sqlalchemy.dialects.postgresql import DOUBLE_PRECISION as Double
+
 
 
 def get_band(session, dataset, freq_eff, freq_bw, freq_bw_max=.0):
@@ -23,17 +25,21 @@ def get_band(session, dataset, freq_eff, freq_bw, freq_bw_max=.0):
     
     if freq_bw_max == .0:
         bw_half = freq_bw / 2
-        low = str(freq_eff - bw_half)
-        high = str(freq_eff + bw_half)
-        filter_ = " between freq_low and freq_high"
+        low = freq_eff - bw_half
+        high = freq_eff + bw_half
     else:
         bw_half = freq_bw_max / 2
-        low = str(freq_eff - bw_half)
-        high = str(freq_eff + bw_half)
-        filter_ = " between freq_central - %s and freq_central + %s" % (bw_half, bw_half)
+        low = freq_eff - bw_half
+        high = freq_eff + bw_half
 
-    band = session.query(Frequencyband). \
-        filter((Frequencyband.dataset == dataset) & (text(low + filter_) | text(high + filter_))).first()
+    w1 = high - low
+    w2 = Frequencyband.freq_high - Frequencyband.freq_low
+    max_ = func.greatest(high, Frequencyband.freq_high)
+    min_ = func.least(low, Frequencyband.freq_low)
+
+    band = session.query(Frequencyband).filter(
+        (Frequencyband.dataset == dataset) & (max_ - min_ < w1 + w2)
+    ).first()
     
     if not band:
         # no match so we create a new band

@@ -68,10 +68,10 @@ class TestBand(unittest.TestCase):
         image3 = Image(dataset=dataset1, data=data)
         self.assertNotEqual(get_band_for_image(image1), get_band_for_image(image3))
 
-        # ...even if it has a huge bandwidth.
+        # but in the same if the bandwidths overlap
         data['freq_bw'] *= 100
         image4 = Image(dataset=dataset1, data=data)
-        self.assertNotEqual(get_band_for_image(image1), get_band_for_image(image4))
+        self.assertEqual(get_band_for_image(image1), get_band_for_image(image4))
 
         # Finally, this image should be in the same band, since it's at an only
         # slightly different frequency.
@@ -124,9 +124,10 @@ class TestBand(unittest.TestCase):
         assocated_image = Image(dataset=dataset, data=data)
         self.assertEqual(get_band_for_image(first_image), get_band_for_image(assocated_image))
 
-        # this image should *not* be assigned the same band, since bandwidth is limited
-        data['freq_eff'] = 49e6  # 50 MHz
-        data['freq_bw'] = 2e6  # 2 MHz
+        # this image should *not* be assigned the same band, since bandwidth is
+        # limited
+        data['freq_eff'] = 47e6  # 50 MHz
+        data['freq_bw'] = 5e6  # 2 MHz
         data['freq_bw_max'] = 0.5e5  # limit bandwith to 0.5 MHz
         assocated_image = Image(dataset=dataset, data=data)
         self.assertNotEqual(get_band_for_image(first_image), get_band_for_image(assocated_image))

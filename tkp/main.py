@@ -4,7 +4,6 @@ The main pipeline logic, from where all other components are called.
 import imp
 import logging
 import os
-import sys
 from collections import defaultdict
 from tkp import steps
 from tkp.config import initialize_pipeline_config, get_database_config
@@ -52,7 +51,7 @@ def setup(job_name, supplied_mon_coords=None):
     if not os.access(job_dir, os.X_OK):
         msg = "can't access job folder %s" % job_dir
         logger.error(msg)
-        sys.exit(1)
+        raise IOError(msg)
     logger.info("Job dir: %s", job_dir)
 
     db_config = get_database_config(pipe_config.database, apply=True)
@@ -85,8 +84,9 @@ def load_images(job_name, job_dir):
 def consistency_check():
     logger.info("performing database consistency check")
     if not dbconsistency.check():
-        logger.error("Inconsistent database found; aborting")
-        sys.exit(1)
+        msg = "Inconsistent database found; aborting"
+        logger.error(msg)
+        raise RuntimeError(msg)
 
 
 def initialise_dataset(job_config, supplied_mon_coords):
@@ -169,8 +169,9 @@ def quality_check(db_images, accessors, job_config, runner):
             good_images.append((db_image, accessor))
 
     if not good_images:
-        logger.warn("No good images under these quality checking criteria")
-        sys.exit(1)
+        msg = "No good images under these quality checking criteria"
+        logger.warn(msg)
+        raise IOError(msg)
     return good_images
 
 

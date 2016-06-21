@@ -11,7 +11,7 @@ We added an option to limit the bandwidth used for band assoication ([#492][]).
 Limiting the bandwidth for an image is done by setting `bandwidth_max`
 in *job_params.cfg* under the `persistence section`. E.g.:
 
-    [persistense]
+    [persistence]
     bandwidth_max = 0.0
 
 Setting the value to 0.0 will use the bandwidth defined in the image

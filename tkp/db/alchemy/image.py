@@ -115,7 +115,7 @@ def get_skyregion(session, dataset, centre_ra, centre_decl, xtr_radius):
     skyregion = session.query(Skyregion).filter(Skyregion.dataset == dataset,
                                                 Skyregion.centre_ra == centre_ra,
                                                 Skyregion.centre_decl == centre_decl,
-                                                Skyregion.xtr_radius == xtr_radius).first()
+                                                Skyregion.xtr_radius == xtr_radius).one_or_none()
     if not skyregion:
         x, y, z = eq_to_cart(centre_ra, centre_decl)
         skyregion = Skyregion(dataset=dataset, centre_ra=centre_ra, centre_decl=centre_decl,

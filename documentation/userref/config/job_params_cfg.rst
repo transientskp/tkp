@@ -40,10 +40,9 @@ The parameters in this file are defined as follows:
    Integer. Determines the size of the subsection used for RMS measurement:
    the central ``1/f`` of the image will be used (where f=rms_est_fraction).
 
-``bandwidth``
-   Float. Limit the bandwidth of an image. The bandwidth of an image
-   is used to determine if images fall into the same band or not, overlapping
-   bandwidth imply the same band.
+``bandwidth_max``
+   Float. Limit the maximum bandwidth used when determining if two images
+   belong to the same 'band' grouping.
 
 .. _job_params_quality:
 

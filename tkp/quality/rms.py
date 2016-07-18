@@ -89,10 +89,8 @@ def reject_bad_rms_with_dataset_rms(session, dataset_id, est_sigma):
 
        !(mu - sigma * est_sigma < rms_qc < mu + sigma * est_sigma)
 
-    will be rejected.
-
     Args:
-        session (sqlalchemy.Session): A SQLAlchemy session
+        session (sqlalchemy.orm.session.Session): A SQLAlchemy session
         dataset_id (int): The ID of the dataset to use
         est_sigma (float): The sigma multiplication factor controlling upper
                            and lower rejection threshold

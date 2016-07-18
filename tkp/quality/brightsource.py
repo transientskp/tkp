@@ -1,7 +1,5 @@
 import sys
 import logging
-import warnings
-import casacore.quanta as qa
 from io import BytesIO
 from casacore.measures import measures
 from tkp.utility.coordinates import unix2julian

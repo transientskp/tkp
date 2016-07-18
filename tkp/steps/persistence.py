@@ -12,8 +12,7 @@ from casacore.images import image as casacore_image
 import tkp.accessors
 from tkp.db.database import Database
 from tkp.db.orm import DataSet, Image
-from tkp.quality.statistics import rms_with_clipped_subregion
-
+from tkp.quality.rms import rms_with_clipped_subregion
 
 logger = logging.getLogger(__name__)
 

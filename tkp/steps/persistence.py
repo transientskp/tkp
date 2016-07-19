@@ -7,7 +7,6 @@ import logging
 import warnings
 from tempfile import NamedTemporaryFile
 
-
 from casacore.images import image as casacore_image
 
 import tkp.accessors
@@ -17,7 +16,6 @@ from tkp.quality.statistics import rms_with_clipped_subregion
 
 
 logger = logging.getLogger(__name__)
-
 
 def image_to_mongodb(filename, hostname, port, db):
     """Copy a file into mongodb"""
@@ -105,7 +103,7 @@ def extract_metadatas(accessors, rms_est_sigma, rms_est_fraction):
     return results
 
 
-def store_images_in_db(images_metadata, extraction_radius_pix, dataset_id):
+def store_images_in_db(images_metadata, extraction_radius_pix, dataset_id, bandwidth_max):
     """ Add images to database.
     Note that all images in one dataset should be inserted in one go, since the
     order is very important here. If you don't add them all in once, you should
@@ -130,6 +128,7 @@ def store_images_in_db(images_metadata, extraction_radius_pix, dataset_id):
     images_metadata.sort(key=lambda m: m['taustart_ts'])
 
     for metadata in images_metadata:
+        metadata['freq_bw_max'] = bandwidth_max
         metadata['xtr_radius'] = extraction_radius_pix * abs(metadata['deltax'])
         filename = metadata['url']
         db_image = Image(data=metadata, dataset=dataset)

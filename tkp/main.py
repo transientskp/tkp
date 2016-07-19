@@ -4,7 +4,6 @@ The main pipeline logic, from where all other components are called.
 import imp
 import logging
 import os
-from collections import defaultdict
 from tkp import steps
 from tkp.config import initialize_pipeline_config, get_database_config
 import tkp.db
@@ -17,6 +16,7 @@ from tkp.distribute import Runner
 from tkp.steps.misc import (load_job_config, dump_configs_to_logdir,
                             check_job_configs_match,
                             setup_logging, dump_database_backup,
+                            group_per_timestep
                             )
 from tkp.db.configstore import store_config, fetch_config
 from tkp.steps.persistence import create_dataset, store_images_in_db
@@ -38,9 +38,7 @@ def setup(job_name, supplied_mon_coords=None):
         os.path.join(os.getcwd(), "pipeline.cfg"),
         job_name)
 
-    # get parallelise props. Defaults to multiproc with autodetect num cores
-    distributor = os.environ.get('TKP_PARALLELISE', pipe_config.parallelise.method)
-    runner = Runner(distributor=distributor, cores=pipe_config.parallelise.cores)
+
 
     # Setup logfile before we do anything else
     log_dir = pipe_config.logging.log_dir
@@ -64,7 +62,15 @@ def setup(job_name, supplied_mon_coords=None):
 
     job_config, dataset_id = initialise_dataset(job_config, supplied_mon_coords)
 
-    return job_dir, job_config, pipe_config, runner, dataset_id
+    return job_dir, job_config, pipe_config, dataset_id
+
+
+def get_runner(pipe_config):
+    """
+    get parallelise props. Defaults to multiproc with autodetect num cores
+    """
+    distributor = os.environ.get('TKP_PARALLELISE', pipe_config.parallelise.method)
+    return Runner(distributor=distributor, cores=pipe_config.parallelise.cores)
 
 
 def load_images(job_name, job_dir):
@@ -98,7 +104,7 @@ def initialise_dataset(job_config, supplied_mon_coords):
 
     args:
         job_config: a job configuration object
-        supplied_mon_coords: a list of monitoring positions
+        supplied_mon_coords (list): a list of monitoring positions
 
     returns:
         tuple: job_config and dataset ID
@@ -146,7 +152,8 @@ def extract_metadata(job_config, accessors, runner):
 def storing_images(metadatas, job_config, dataset_id):
     logger.info("Storing image metadata in SQL database")
     r = job_config.source_extraction.extraction_radius_pix
-    image_ids = store_images_in_db(metadatas, r, dataset_id)
+    image_ids = store_images_in_db(metadatas, r, dataset_id,
+                                   job_config.persistence.bandwidth_max)
     db_images = [Image(id=image_id) for image_id in image_ids]
     return db_images
 
@@ -227,27 +234,31 @@ def get_accessors(runner, all_images):
     return [a[0] for a in accessors if a]
 
 
-def group_per_start_time(runner, image_paths):
+def get_metadata_for_sorting(runner, image_paths):
     """
     Group images per timestamp. Will open all images in parallel using runner.
 
+    args:
+        runner (tkp.distribute.Runner): Runner to use for distribution
+        image_paths (list): list of image paths
     returns:
         list: list of tuples, (timestamp, [list_of_images])
     """
-    timestamp_to_images_map = defaultdict(list)
     nested_img = [[i] for i in image_paths]
-    timestamps = [t[0] for t in runner.map("get_start_time", nested_img)]
-    for timestamp, image_path in zip(timestamps, image_paths):
-        timestamp_to_images_map[timestamp].append(image_path)
-
-    grouped_images = timestamp_to_images_map.items()
-    grouped_images.sort()  # sort per timestamp
-    return grouped_images
+    metadatas = [t[0] for t in runner.map("get_metadata_for_ordering", nested_img)]
+    return metadatas
 
 
 def timestamp_step(runner, images, job_config, dataset_id):
     """
     Called from the main loop with all images in a certain timestep
+
+    args:
+         runner (tkp.distribute.Runner): Runner to use for distribution
+         images (list): list of things tkp.accessors can handle, like image
+                        paths or fits objects
+         job_config: a tkp job config object
+         dataset_id (int): The ``tkp.db.model.Dataset`` id
     """
     # gather all image info
     accessors = get_accessors(runner, images)
@@ -273,12 +284,14 @@ def run(job_name, supplied_mon_coords=None):
     """
     TKP pipeline run entry point.
     """
-    s = setup(job_name, supplied_mon_coords)
-    job_dir, job_config, pipe_config, runner, dataset_id = s
+    job_dir, job_config, pipe_config, dataset_id = setup(job_name,
+                                                         supplied_mon_coords)
+    runner = get_runner(pipe_config)
 
     image_paths = load_images(job_name, job_dir)
     store_mongodb(pipe_config, image_paths, runner)
-    grouped_images = group_per_start_time(runner, image_paths)
+    sorting_metadata = get_metadata_for_sorting(runner, image_paths)
+    grouped_images = group_per_timestep(sorting_metadata)
 
     for n, (timestep, images) in enumerate(grouped_images):
         msg = "processing %s images in timestep %s (%s/%s)"

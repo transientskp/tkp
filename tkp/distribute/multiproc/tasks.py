@@ -4,6 +4,7 @@ Parallisable tasks used with python multiprocessing
 from __future__ import absolute_import
 import logging
 import tkp.steps
+from tkp.steps.misc import ImageMetadataForSort
 
 
 logger = logging.getLogger(__name__)
@@ -44,7 +45,11 @@ def get_accessors(zipped):
     return tkp.steps.persistence.get_accessors(images)
 
 
-def get_start_time(zipped):
-    logger.debug("Retrieving start time from accessors")
+def get_metadata_for_ordering(zipped):
+    logger.debug("Retrieving ordering metadata from accessors")
     images, args = zipped
-    return [a.taustart_ts for a in tkp.steps.persistence.get_accessors(images)]
+    l = []
+    for a in tkp.steps.persistence.get_accessors(images):
+        l.append(ImageMetadataForSort(url=a.url, timestamp=a.taustart_ts,
+                                      frequency=a.freq_eff))
+    return l

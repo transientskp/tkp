@@ -1,7 +1,7 @@
 from __future__ import absolute_import
 import logging
 import tkp.steps
-
+from tkp.steps.misc import ImageMetadataForSort
 
 logger = logging.getLogger(__name__)
 
@@ -32,7 +32,17 @@ def get_accessors(images):
     return tkp.steps.persistence.get_accessors(images)
 
 
-def get_start_time(images):
-    logger.debug("Retrieving start time from accessors")
-    return [a.taustart_ts for a in tkp.steps.persistence.get_accessors(images)]
+def get_metadata_for_ordering(images):
+    """
+    args:
+        images (list): list of image urls
+    returns:
+        list: of ImageMetadataForSort
+    """
+    logger.debug("Retrieving ordering metadata from accessors")
+    l = []
+    for a in tkp.steps.persistence.get_accessors(images):
+        l.append(ImageMetadataForSort(url=a.url, timestamp=a.taustart_ts,
+                                      frequency=a.freq_eff))
+    return l
 

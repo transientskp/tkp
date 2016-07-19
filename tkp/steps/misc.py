@@ -10,6 +10,8 @@ import logging
 import os
 from pprint import pprint
 
+from collections import defaultdict, namedtuple
+
 from tkp.config import parse_to_dict
 from tkp.db.dump import dump_db
 
@@ -134,3 +136,43 @@ def dump_database_backup(db_config, job_dir):
                 db_config['database'], db_config['user'], db_config['password'],
                 output_name
             )
+
+ImageMetadataForSort = namedtuple('ImageMetadataForSort', [
+    'url',
+    'timestamp',
+    'frequency',
+])
+
+
+def group_per_timestep(metadatas):
+    """
+    groups a list of TRAP images per time step.
+
+    Per time step the images are order per frequency. We could add other
+    ordering logic (per stoke) later on.
+
+    Args:
+        metadatas (list): list of ImageMetadataForSort
+
+    Returns:
+        list: List of tuples. The list is sorted by timestamp.
+            Each tuple has the timestamp as a first element,
+            and a list of ImageMetadataForSort sorted by frequency as the
+            second element.
+
+    """
+    grouped_dict = defaultdict(list)
+    for metadata in metadatas:
+        grouped_dict[metadata.timestamp].append(metadata)
+
+    grouped_tuple = grouped_dict.items()
+
+    # sort for timestamp
+    grouped_tuple.sort()
+
+    # and then sort the nested items per freq and stokes
+    [l[1].sort(key=lambda x: x.frequency) for l in grouped_tuple]
+
+    # only return the urls
+    return [(stamp, [m.url for m in metas]) for stamp, metas in grouped_tuple]
+

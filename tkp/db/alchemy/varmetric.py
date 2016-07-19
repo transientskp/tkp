@@ -1,18 +1,11 @@
 """
-This is a placeholder for code that uses the SQLAlchemy ORM. In contains
-helper functions that should make it easier to query the database
-
 An example how to use this is shown in an IPython notebook:
 
 https://github.com/transientskp/notebooks/blob/master/transients.ipynb
-
 """
-
+from sqlalchemy import func, insert
 from sqlalchemy.orm import aliased
-from sqlalchemy.sql import func, insert
-
-from tkp.db.model import (Assocxtrsource, Extractedsource, Image, Newsource,
-                          Runningcatalog, Varmetric)
+from tkp.db.model import Assocxtrsource, Extractedsource, Runningcatalog, Image, Newsource, Varmetric
 
 
 def _last_assoc_timestamps(session, dataset):

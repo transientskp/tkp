@@ -1,24 +1,4 @@
-#
-# ordered list of sql files that should be imported
-#
-#system functions
-#
 functions/degrad.sql
 functions/alpha.sql
 functions/cartesian.sql
-functions/getBand.sql
-functions/updateSkyRgnMembers.sql
-functions/getSkyRgn.sql
-functions/insertImage.sql
-functions/insertDataset.sql
 functions/median.sql
-procedures/BuildFrequencyBands.sql
-procedures/BuildNodes.sql
-#
-# initialisation
-#
-init/tables.sql
-#
-# views
-#
-views/augmented_runningcatalog.sql

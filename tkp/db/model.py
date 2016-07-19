@@ -3,6 +3,7 @@ The SQLAlchemy model definition.
 
 revision history:
 
+ 39 - Remove SQL insert functions, add dataset row to frequencyband table
  38 - add varmetric table
  37 - add forcedfits_count column to runningcatalog
  36 - switch to SQLAlchemy schema initialisation
@@ -16,7 +17,7 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.dialects.postgresql import DOUBLE_PRECISION as Double
 
 
-SCHEMA_VERSION = 38
+SCHEMA_VERSION = 39
 
 Base = declarative_base()
 metadata = Base.metadata
@@ -160,6 +161,9 @@ class Frequencyband(Base):
 
     id = Column(Integer, seq_frequencyband, primary_key=True,
                 server_default=seq_frequencyband.next_value())
+    dataset_id = Column('dataset', Integer, ForeignKey('dataset.id'),
+                        nullable=False, index=True)
+    dataset = relationship('Dataset', backref=backref('frequencybands'))
     freq_central = Column(Double)
     freq_low = Column(Double)
     freq_high = Column(Double)

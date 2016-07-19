@@ -3,5 +3,5 @@ documentation/build/
 build
 dist/
 tkp.egg-info/
-.virtualenv
-
+.virtualenv/
+.virtualenv3/

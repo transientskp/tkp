@@ -114,9 +114,8 @@ If an ``id`` is supplied, ``data`` is ignored.
 
 import logging
 from tkp.db.generic import columns_from_table, set_columns_for_table
-from tkp.db.general import (insert_dataset, insert_image,
-                            insert_extracted_sources, lightcurve)
-from tkp.db.associations import associate_extracted_sources
+from tkp.db.general import insert_dataset
+from tkp.db.alchemy.image import insert_image
 import tkp.db
 import tkp.db.quality
 from tkp.db.database import Database
@@ -310,8 +309,6 @@ class DataSet(DBObject):
     @property
     def id(self):
         """Add or obtain an id to/from the table
-
-        This uses the SQL function insertDataset().
         """
         if self._id is None:
             try:
@@ -331,34 +328,6 @@ class DataSet(DBObject):
         image_ids = [row[0] for row in result]
         self.images = [Image(database=self.database, id=id) for id in image_ids]
 
-    def runcat_entries(self):
-        """
-        Returns:
-            list: a list of dictionarys representing rows in runningcatalog,
-            for all sources belonging to this dataset
-
-            Column 'id' is returned with the key 'runcat'
-
-            Currently only returns 3 columns:
-            [{'runcat,'xtrsrc','datapoints'}]
-        """
-        return columns_from_table('runningcatalog',
-                                      keywords=['id', 'xtrsrc', 'datapoints'],
-                                      alias={'id':'runcat'},
-                                      where={'dataset':self.id})
-
-
-    def frequency_bands(self):
-        """Return a list of distinct bands present in the dataset."""
-        query = """\
-        SELECT DISTINCT(band)
-          FROM image
-         WHERE dataset = %s
-        """
-        self.database.cursor.execute(query, (self.id,))
-        bands = zip(*self.database.cursor.fetchall())[0]
-        return bands
-
 
 class Image(DBObject):
     """Class corresponding to the images table in the database"""
@@ -369,8 +338,6 @@ class Image(DBObject):
                 'beam_smaj_pix', 'beam_smin_pix', 'beam_pa_rad',
                 'deltax', 'deltay',
                 'url', 'centre_ra', 'centre_decl', 'xtr_radius', 'rms_qc')
-
-
 
     def __init__(self, data=None, dataset=None, database=None, id=None):
         """If id is supplied, the data and image arguments are ignored."""
@@ -390,50 +357,29 @@ class Image(DBObject):
         if not self.dataset:
             self.dataset = DataSet(id=self._data['dataset'], database=self.database)
 
-
-
-    # Inserting images is handled a little different than normal inserts
-    # -- We call an SQL function 'insertImage' which takes care of
-    #    assigning a new image id.
     @property
     def id(self):
         """Add or obtain an id to/from the table
 
-        This uses the SQL function insertImage()
+        If the ID does not exist the image is inserted into the database
         """
 
         if self._id is None:
+            args = self._data.copy()
+            # somehow _data contains a garbage kwargs
+            args.pop('kwargs', None)
+            session = self.database.Session()
+            args['session'] = session
             try:
-                #if 'bsmaj' not in self._data:
-                #    self._data['bsmaj'] = None
-                #    self._data['bsmin'] = None
-                #    self._data['bpa'] = None
-                #    self._data['deltax'] = None
-                #    self._data['deltay'] = None
-                # Insert a default image
-                self._id = insert_image(self.dataset.id,
-                    self._data['freq_eff'], self._data['freq_bw'],
-                    self._data['taustart_ts'], self._data['tau_time'],
-                    self._data['beam_smaj_pix'], self._data['beam_smin_pix'],
-                    self._data['beam_pa_rad'],
-                    self._data['deltax'],
-                    self._data['deltay'],
-                    self._data['url'],
-                    self._data['centre_ra'], #Degrees J2000
-                    self._data['centre_decl'], #Degrees J2000
-                    self._data['xtr_radius'], #Degrees
-                    self._data['rms_qc'],
-                    self._data.get('rms_min',None),
-                    self._data.get('rms_max',None),
-                    self._data.get('detection_thresh',None),
-                    self._data.get('analysis_thresh',None),
-                )
+                image = insert_image(**args)
+                session.commit()
+                self._id = image.id
+                session.close()
             except Exception as e:
                 logger.error("ORM: error inserting image,  %s: %s" %
                                 (type(e).__name__, str(e)))
                 raise
         return self._id
-
 
     def update_sources(self):
         """Renew the set of sources by getting the sources for this
@@ -456,47 +402,6 @@ class Image(DBObject):
         for result in results:
             sources.add(ExtractedSource(database=self.database, id=result[0]))
         self.sources = sources
-
-
-    def insert_extracted_sources(self, results, extract='blind'):
-        """Insert a list of sources
-
-        Args:
-
-            results (list): list of
-                utility.containers.ExtractionResult objects (as
-                returned from
-                sourcefinder.image.ImageData().extract()), or a list
-                of data tuples with the source information as follows:
-                (ra, dec,
-                ra_fit_err, dec_fit_err,
-                peak, peak_err,
-                flux, flux_err,
-                significance level,
-                beam major width (as), beam minor width(as),
-                beam parallactic angle
-                ew_sys_err, ns_sys_err,
-                error_radius).
-            extract (str):'blind', 'ff_nd' or 'ff_ms'
-                (see db.general.insert_extracted_sources)
-       """
-       #To do: Figure out a saner method of passing the results around
-       # (Namedtuple, for starters?)
-
-        insert_extracted_sources(self._id, results=results, extract_type=extract)
-
-    def associate_extracted_sources(self, deRuiter_r, new_source_sigma_margin):
-        """Associate sources from the last images with previously
-        extracted sources within the same dataset
-
-        Args:
-
-            deRuiter_r (float): The De Ruiter radius for source
-                association. The default value is set through the
-                tkp.config module
-        """
-        associate_extracted_sources(self._id, deRuiter_r,
-                                    new_source_sigma_margin=new_source_sigma_margin)
 
 
 class ExtractedSource(DBObject):
@@ -527,18 +432,3 @@ class ExtractedSource(DBObject):
             raise ValueError(
                 "can't create ExtractedSource object without a Database() object")
         self._init_data()
-
-    def lightcurve(self):
-        """Obtain the complete light curve (within the current dataset)
-        for this source.
-
-        Returns:
-            list: list of 5-tuples, each tuple being:
-                - observation start time as a datetime.datetime object
-                - integration time (float)
-                - integrated flux (float)
-                - integrated flux error (float)
-                - database ID of this particular source
-        """
-
-        return lightcurve(self._id)

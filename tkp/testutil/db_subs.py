@@ -5,7 +5,8 @@ import datetime, math
 import tkp.db
 from tkp.db.generic import get_db_rows_as_dicts
 from tkp.db.database import Database
-from tkp.db.orm import DataSet, Image
+from tkp.db.associations import associate_extracted_sources
+from tkp.db.general import insert_extracted_sources
 from tkp.db import general as dbgen
 from tkp.db import nulldetections
 import tkp.testutil.data as testdata
@@ -80,27 +81,28 @@ def example_dbimage_data_dict(**kwargs):
     regions.
     """
     starttime = datetime.datetime(2012, 1, 1)  # Happy new year
-    time_spacing = datetime.timedelta(seconds=600)
 
-    init_im_params = {'tau_time':300,
-                      'freq_eff':140e6,
-                      'freq_bw':2e6,
-                      'taustart_ts':starttime,
-                      'beam_smaj_pix': float(2.7),
-                      'beam_smin_pix': float(2.3),
-                      'beam_pa_rad': float(1.7),
-                      'deltax': float(-0.01111),
-                      'deltay': float(0.01111),
-                      'url':testdata.fits_file,  # just an arbitrary existing fits file
-                      'centre_ra': 123.,  # Arbitarily picked.
-                      'centre_decl': 10.,  # Arbitarily picked.
-                      'xtr_radius': 10.,  # (Degrees)
-                      'rms_qc': 1.,
-                      'rms_min': 1e-4, #0.1mJy RMS
-                      'rms_max': 3e-4, #0.3mJy RMS
-                      'detection_thresh': 6,
-                      'analysis_thresh': 3
-                    }
+    init_im_params = {
+        'tau_time': 300,
+        'freq_eff': 140e6,
+        'freq_bw': 2e6,
+        'freq_bw_max': 0.0,
+        'taustart_ts': starttime,
+        'beam_smaj_pix': float(2.7),
+        'beam_smin_pix': float(2.3),
+        'beam_pa_rad': float(1.7),
+        'deltax': float(-0.01111),
+        'deltay': float(0.01111),
+        'url': testdata.fits_file,  # just an arbitrary existing fits file
+        'centre_ra': 123.,  # Arbitrarily picked.
+        'centre_decl': 10.,  # Arbitrarily picked.
+        'xtr_radius': 10.,  # (Degrees)
+        'rms_qc': 1.,
+        'rms_min': 1e-4,  # 0.1mJy RMS
+        'rms_max': 3e-4,  # 0.3mJy RMS
+        'detection_thresh': 6,
+        'analysis_thresh': 3
+    }
     init_im_params.update(kwargs)
     return init_im_params
 
@@ -339,15 +341,15 @@ def insert_image_and_simulated_sources(dataset, image_params, mock_sources,
         3-tuple (image, list of blind extractions, list of forced fits).
 
     """
-    image = tkp.db.Image(data=image_params,dataset=dataset)
+    image = tkp.db.Image(data=image_params, dataset=dataset)
     blind_extractions=[]
     for src in mock_sources:
-        xtr = src.simulate_extraction(image,extraction_type='blind')
+        xtr = src.simulate_extraction(image, extraction_type='blind')
         if xtr is not None:
             blind_extractions.append(xtr)
-    image.insert_extracted_sources(blind_extractions,'blind')
-    image.associate_extracted_sources(deRuiter_r=deruiter_radius,
-        new_source_sigma_margin=new_source_sigma_margin)
+    insert_extracted_sources(image._id, blind_extractions, 'blind')
+    associate_extracted_sources(image._id, deRuiter_r=deruiter_radius,
+                                new_source_sigma_margin=new_source_sigma_margin)
     nd_ids_posns = nulldetections.get_nulldetections(image.id)
     nd_posns = [(ra,decl) for ids, ra, decl in nd_ids_posns]
     forced_fits = []

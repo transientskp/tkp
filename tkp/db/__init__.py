@@ -1,5 +1,4 @@
 import logging
-import numpy
 from tkp.db.database import Database, sanitize_db_inputs
 from tkp.db.orm import DataSet, Image, ExtractedSource
 

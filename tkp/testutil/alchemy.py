@@ -1,12 +1,14 @@
 from datetime import datetime, timedelta
 import tkp.db
+import tkp.db.model
 
-def gen_band(central=150**6, low=None, high=None):
+
+def gen_band(dataset, central=150**6, low=None, high=None):
     if not low:
         low = central * .9
     if not high:
         high = central * 1.1
-    return tkp.db.model.Frequencyband(freq_low=low, freq_central=central,
+    return tkp.db.model.Frequencyband(dataset=dataset, freq_low=low, freq_central=central,
                                       freq_high=high)
 
 

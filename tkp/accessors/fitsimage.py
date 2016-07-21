@@ -109,7 +109,7 @@ class FitsImage(DataAccessor):
     def calculate_phase_centre(self):
         x, y = self.data.shape
         centre_ra, centre_decl = self.wcs.p2s((x / 2, y / 2))
-        return centre_ra, centre_decl
+        return float(centre_ra), float(centre_decl)
 
 
 
@@ -196,7 +196,6 @@ class FitsImage(DataAccessor):
                     break
 
         return bmaj, bmin, bpa
-
 
 
     def parse_times(self):

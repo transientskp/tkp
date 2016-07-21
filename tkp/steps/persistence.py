@@ -80,12 +80,12 @@ def create_dataset(dataset_id, description):
     return dataset.id
 
 
-def extract_metadatas(images, rms_est_sigma, rms_est_fraction):
+def extract_metadatas(accessors, rms_est_sigma, rms_est_fraction):
     """
     Extracts metadata and rms_qc values from the list of images.
 
     Args:
-        images: list of image urls
+        accessors: list of image accessors
         rms_est_sigma: used for RMS calculation, see `tkp.quality.statistics`
         rms_est_fraction: used for RMS calculation, see `tkp.quality.statistics`
 
@@ -93,22 +93,17 @@ def extract_metadatas(images, rms_est_sigma, rms_est_fraction):
         a list of metadata's. The metadata will be False if extraction failed.
     """
     results = []
-    for image in images:
-        logger.info("Extracting metadata from %s" % image)
-        try:
-            accessor = tkp.accessors.open(image)
-        except TypeError as e:
-            logging.error("Can't open image %s: %s" % (image, e))
-            results.append(False)
-        else:
-            metadata = accessor.extract_metadata()
-            metadata['rms_qc'] = rms_with_clipped_subregion(accessor.data,
-                                                rms_est_sigma,rms_est_fraction)
-            results.append(metadata)
+    for accessor in accessors:
+        logger.info("Extracting metadata from %s" % accessors)
+        metadata = accessor.extract_metadata()
+        metadata['rms_qc'] = rms_with_clipped_subregion(accessor.data,
+                                                        rms_est_sigma,
+                                                        rms_est_fraction)
+        results.append(metadata)
     return results
 
 
-def store_images(images_metadata, extraction_radius_pix, dataset_id, bandwidth_max):
+def store_images_in_db(images_metadata, extraction_radius_pix, dataset_id, bandwidth_max):
     """ Add images to database.
     Note that all images in one dataset should be inserted in one go, since the
     order is very important here. If you don't add them all in once, you should
@@ -138,14 +133,14 @@ def store_images(images_metadata, extraction_radius_pix, dataset_id, bandwidth_m
         filename = metadata['url']
         db_image = Image(data=metadata, dataset=dataset)
         image_ids.append(db_image.id)
-        logger.info("stored %s with ID %s" % (os.path.basename(filename), db_image.id))
+        logger.info("stored %s with ID %s" % (os.path.basename(filename),
+                                              db_image.id))
     return image_ids
 
 
-def node_steps(images, image_cache_config, rms_est_sigma, rms_est_fraction):
+def save_to_mongodb(images, image_cache_config):
     """
-    this function executes all persistence steps that should be executed on a node.
-    Note: Should only be used in a node recipe
+    Copy image data to a MongDB database
     """
     mongohost = image_cache_config['mongo_host']
     mongoport = image_cache_config['mongo_port']
@@ -158,5 +153,14 @@ def node_steps(images, image_cache_config, rms_est_sigma, rms_est_fraction):
     else:
         logger.info("Not copying images to mongodb")
 
-    metadatas = extract_metadatas(images, rms_est_sigma, rms_est_fraction)
-    return metadatas
+
+def get_accessors(images):
+    results = []
+    for image in images:
+        try:
+            accessor = tkp.accessors.open(image)
+        except TypeError as e:
+            logger.error("Can't open image %s: %s" % (image, e))
+        else:
+            results.append(accessor)
+    return results

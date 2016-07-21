@@ -8,6 +8,7 @@ from tkp.utility.coordinates import mjd2datetime
 
 logger = logging.getLogger(__name__)
 
+
 class CasaImage(DataAccessor):
     """
     Provides common functionality for pulling data from the CASA image format
@@ -22,24 +23,26 @@ class CasaImage(DataAccessor):
     def __init__(self, url, plane=0, beam=None):
         super(CasaImage, self).__init__()
         self.url = url
-        self.table = casacore_table(self.url.encode(), ack=False)
-        self.data = self.parse_data(plane)
-        self.wcs = self.parse_coordinates()
-        self.centre_ra, self.centre_decl = self.parse_phase_centre()
-        self.freq_eff, self.freq_bw = self.parse_frequency()
+
+        # we don't want the table as a property since it makes the accessor
+        # not serializable
+        table = casacore_table(self.url.encode(), ack=False)
+        self.data = self.parse_data(table, plane)
+        self.wcs = self.parse_coordinates(table)
+        self.centre_ra, self.centre_decl = self.parse_phase_centre(table)
+        self.freq_eff, self.freq_bw = self.parse_frequency(table)
         self.pixelsize = self.parse_pixelsize()
 
         if beam:
             (bmaj, bmin, bpa) = beam
         else:
-            bmaj, bmin, bpa = self.parse_beam()
+            bmaj, bmin, bpa = self.parse_beam(table)
         self.beam = self.degrees2pixels(
             bmaj, bmin, bpa, self.pixelsize[0], self.pixelsize[1])
 
-
-    def parse_data(self, plane=0):
+    def parse_data(self, table, plane=0):
         """extract and massage data from CASA table"""
-        data = self.table[0]['map'].squeeze()
+        data = table[0]['map'].squeeze()
         planes = len(data.shape)
         if planes != 2:
             msg = "received datacube with %s planes, assuming Stokes I and taking plane 0" % planes
@@ -49,10 +52,10 @@ class CasaImage(DataAccessor):
         data = data.transpose()
         return data
 
-    def parse_coordinates(self):
+    def parse_coordinates(self, table):
         """Returns a WCS object"""
         wcs = WCS()
-        my_coordinates = self.table.getkeyword('coords')['direction0']
+        my_coordinates = table.getkeyword('coords')['direction0']
         wcs.crval = my_coordinates['crval']
         wcs.crpix = my_coordinates['crpix']
         wcs.cdelt = my_coordinates['cdelt']
@@ -66,17 +69,16 @@ class CasaImage(DataAccessor):
         wcs.ctype = tuple(ctype)
         # Rotation, units? We better set a default
         wcs.crota = (0., 0.)
-        wcs.cunit = self.table.getkeyword('coords')['direction0']['units']
+        wcs.cunit = table.getkeyword('coords')['direction0']['units']
         return wcs
 
-
-    def parse_frequency(self):
+    def parse_frequency(self, table):
         """extract frequency related information from headers"""
-        freq_eff = self.table.getkeywords()['coords']['spectral2']['restfreq']
-        freq_bw = self.table.getkeywords()['coords']['spectral2']['wcs']['cdelt']
+        freq_eff = table.getkeywords()['coords']['spectral2']['restfreq']
+        freq_bw = table.getkeywords()['coords']['spectral2']['wcs']['cdelt']
         return freq_eff, freq_bw
 
-    def parse_beam(self):
+    def parse_beam(self, table):
         """
         Returns:
           - Beam parameters, (semimajor, semiminor, parallactic angle) in
@@ -92,22 +94,20 @@ class CasaImage(DataAccessor):
             else:
                 raise Exception("Beam units (%s) unknown" % quantity['unit'])
 
-        restoringbeam = self.table.getkeyword('imageinfo')['restoringbeam']
+        restoringbeam = table.getkeyword('imageinfo')['restoringbeam']
         bmaj = ensure_degrees(restoringbeam['major'])
         bmin = ensure_degrees(restoringbeam['minor'])
         bpa = ensure_degrees(restoringbeam['positionangle'])
         return bmaj, bmin, bpa
 
-
-    def parse_phase_centre(self):
-        # The units for the pointing centre are not given in either the image cube
-        # itself or in the ICD. Assume radians.
+    def parse_phase_centre(self, table):
+        # The units for the pointing centre are not given in either the image
+        # cubeitself or in the ICD. Assume radians.
         # Note that we'll return the RA modulo 360 so it's always 0 <= RA < 360
-        centre_ra, centre_decl = self.table.getkeyword('coords')['pointingcenter']['value']
+        centre_ra, centre_decl = table.getkeyword('coords')['pointingcenter']['value']
         return degrees(centre_ra) % 360, degrees(centre_decl)
 
-
-    def parse_taustartts(self):
+    def parse_taustartts(self, table):
         """
         Extract integration start-time from CASA table header.
 
@@ -120,7 +120,7 @@ class CasaImage(DataAccessor):
         Returns:
             Time of image start as a instance of ``datetime.datetime``
         """
-        obsdate = self.table.getkeyword('coords')['obsdate']['m0']['value']
+        obsdate = table.getkeyword('coords')['obsdate']['m0']['value']
         return mjd2datetime(obsdate)
 
 

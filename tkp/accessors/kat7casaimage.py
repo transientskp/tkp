@@ -8,6 +8,7 @@ from tkp.accessors.casaimage import CasaImage
 
 logger = logging.getLogger(__name__)
 
+
 class Kat7CasaImage(CasaImage):
     """
     Use casacore to pull image data out of a CASA table as produced by KAT-7.
@@ -27,6 +28,7 @@ class Kat7CasaImage(CasaImage):
     """
     def __init__(self, url, plane=0, beam=None):
         super(Kat7CasaImage, self).__init__(url, plane, beam)
-        self.taustart_ts = self.parse_taustartts()
-        self.tau_time = 1 # Placeholder value
+        table = casacore_table(self.url.encode(), ack=False)
+        self.taustart_ts = self.parse_taustartts(table)
+        self.tau_time = 1  # Placeholder value
 

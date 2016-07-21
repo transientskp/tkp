@@ -1,5 +1,6 @@
 from tkp.accessors.dataaccessor import RequiredAttributesMetaclass
 
+
 class LofarAccessor(object):
     __metaclass__ = RequiredAttributesMetaclass
     """

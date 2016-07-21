@@ -123,7 +123,7 @@ class DataAccessor(object):
         else:
             raise ValueError("Unrecognised WCS co-ordinate system")
 
-        #NB. What's a reasonable epsilon here?
+        # NB. What's a reasonable epsilon here?
         eps = 1e-7
         if abs(abs(deltax) - abs(deltay)) > eps:
             raise ValueError("Image WCS header suggests non-square pixels."

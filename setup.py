@@ -10,7 +10,6 @@ install_requires = """
     python-casacore
     python-dateutil>=1.4.1
     pytz
-    pywcs>=1.12
     scipy>=0.7.0
     sqlalchemy>=1.0.0
     """.split()

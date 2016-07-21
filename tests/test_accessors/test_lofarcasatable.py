@@ -80,5 +80,5 @@ class TestLofarCasaImage(unittest.TestCase):
             def col(self, name):
                 if name == 'START': return [100, 100, 200]
                 elif name == 'END': return [150, 175, 300]
-        self.accessor.subtables = {'LOFAR_ORIGIN': MockOriginTable()}
-        self.assertEqual(self.accessor.parse_tautime(), 175)
+        subtables = {'LOFAR_ORIGIN': MockOriginTable()}
+        self.assertEqual(self.accessor.parse_tautime(subtables), 175)

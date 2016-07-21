@@ -18,7 +18,7 @@ class TestQuality(unittest.TestCase):
         self.job_config = parse_to_dict(config)
 
     def test_check(self):
-        tkp.steps.quality.reject_check(self.accessor.url, self.job_config)
+        tkp.steps.quality.reject_check(self.accessor, self.job_config)
 
     def test_zero_integration(self):
         self.accessor._tau_time = 0

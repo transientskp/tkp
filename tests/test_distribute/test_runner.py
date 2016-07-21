@@ -9,7 +9,7 @@ class TestRunner(unittest.TestCase):
 
         for method in 'serial', 'multiproc':
             runner = tkp.distribute.Runner(method)
-            runner.map("persistence_node_step", [])
+            runner.map("get_accessors", [])
 
     def test_set_cores(self):
         cores = 10

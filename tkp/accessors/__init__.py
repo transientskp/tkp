@@ -6,6 +6,7 @@ These can be used to populate ImageData objects based on some data source
 """
 
 import os
+from astropy.io.fits.hdu.hdulist import HDUList
 import astropy.io.fits as pyfits
 from tkp.sourcefinder.image import ImageData
 from tkp.accessors.dataaccessor import DataAccessor
@@ -14,8 +15,8 @@ from tkp.accessors.casaimage import CasaImage
 from tkp.accessors.aartfaaccasaimage import AartfaacCasaImage
 from tkp.accessors.lofarfitsimage import LofarFitsImage
 from tkp.accessors.lofarcasaimage import LofarCasaImage
+from tkp.accessors.fitsimageblob import FitsImageBlob
 import tkp.accessors.detection
-
 
 
 def sourcefinder_image_from_accessor(image, **args):
@@ -61,11 +62,16 @@ def open(path, *args, **kwargs):
     Will raise an exception if something went wrong or no matching accessor
     class is found.
     """
-    if not os.access(path, os.F_OK):
-        raise IOError("%s does not exist!" % path)
-    if not os.access(path, os.R_OK):
-        raise IOError("Don't have permission to read %s!" % path)
-    Accessor = tkp.accessors.detection.detect(path)
-    if not Accessor:
-        raise IOError("no accessor found for %s" % path)
-    return Accessor(path, *args, **kwargs)
+    if type(path) == HDUList:
+        return FitsImageBlob(path, *args, **kwargs)
+    elif type(path) == str:
+        if not os.access(path, os.F_OK):
+            raise IOError("%s does not exist!" % path)
+        if not os.access(path, os.R_OK):
+            raise IOError("Don't have permission to read %s!" % path)
+        Accessor = tkp.accessors.detection.detect(path)
+        if not Accessor:
+            raise IOError("no accessor found for %s" % path)
+        return Accessor(path, *args, **kwargs)
+    else:
+        raise Exception("image should be path or HDUlist, got " + str(path))

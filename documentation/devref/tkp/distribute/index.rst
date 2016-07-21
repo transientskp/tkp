@@ -4,3 +4,15 @@
 
 .. automodule:: tkp.distribute
   :members:
+  :undoc-members:
+  :show-inheritance:
+
+.. automodule:: tkp.distribute.serial
+  :members:
+  :undoc-members:
+  :show-inheritance:
+
+.. automodule:: tkp.distribute.multiproc
+  :members:
+  :undoc-members:
+  :show-inheritance:

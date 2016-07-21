@@ -3,6 +3,7 @@ This module implements the CASA kat7 data container format.
 """
 import logging
 from tkp.accessors.casaimage import CasaImage
+from casacore.tables import table as casacore_table
 
 
 logger = logging.getLogger(__name__)
@@ -26,5 +27,6 @@ class AmiCasaImage(CasaImage):
     """
     def __init__(self, url, plane=0, beam=None):
         super(AmiCasaImage, self).__init__(url, plane, beam)
-        self.taustart_ts = self.parse_taustartts()
+        table = casacore_table(self.url.encode(), ack=False)
+        self.taustart_ts = self.parse_taustartts(table)
         self.tau_time = 1  # Placeholder value until properly implemented

@@ -317,7 +317,7 @@ class ImageData(object):
                                       mask = self.data.mask)
 
         # Remove the MaskedArrayFutureWarning warning and keep old numpy < 1.11
-        # behavior 1.11
+        # behavior
         my_map.unshare_mask()
 
         my_map[useful_chunk[0]] = ndimage.map_coordinates(

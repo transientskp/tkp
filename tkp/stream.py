@@ -22,9 +22,7 @@ import struct
 import astropy.io.fits.header
 import astropy.io.fits
 import numpy as np
-from itertools import count
 import dateutil.parser
-import multiprocessing
 
 HOSTNAME = 'localhost'
 PORT = 6000

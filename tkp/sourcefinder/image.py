@@ -315,6 +315,11 @@ class ImageData(object):
         slicey = slice(-0.5, -0.5+yratio, 1j*my_ydim)
         my_map = numpy.ma.MaskedArray(numpy.zeros(self.data.shape),
                                       mask = self.data.mask)
+
+        # Remove the MaskedArrayFutureWarning warning and keep old numpy < 1.11
+        # behavior 1.11
+        my_map.unshare_mask()
+
         my_map[useful_chunk[0]] = ndimage.map_coordinates(
             grid, numpy.mgrid[slicex, slicey],
             mode='nearest', order=INTERPOLATE_ORDER)

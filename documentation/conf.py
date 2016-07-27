@@ -80,10 +80,11 @@ source_suffix = '.rst'
 
 # rst_prolog is included in all our rst files. Use it to define common
 # substitutions, like the database version number.
-from tkp.db.database import DB_VERSION
+from tkp.db.model import SCHEMA_VERSION 
+
 rst_prolog = """
 .. |db_version| replace:: %d
-""" % (DB_VERSION)
+""" % (SCHEMA_VERSION)
 
 # The encoding of source files.
 #source_encoding = 'utf-8-sig'

@@ -213,5 +213,7 @@ def populate(dbconfig):
             except Exception as e:
                 sys.stderr.write(error % sql_file)
                 raise
+
         database.session.commit()
+        database.close()
 

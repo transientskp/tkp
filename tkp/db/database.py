@@ -52,6 +52,7 @@ class Database(object):
     _configured = False
     transaction = None
     cursor = None
+    session = None
 
     # this makes this class a singleton
     _instance = None
@@ -93,7 +94,6 @@ class Database(object):
                                             poolclass=NullPool,
                                             )
         self.Session = sessionmaker(bind=self.alchemy_engine)
-
         self.session = self.Session()
 
     def connect(self, check=True):
@@ -148,8 +148,12 @@ class Database(object):
         """
         close the connection if open
         """
+        if self.session:
+            self.session.close()
+
         if self._connection:
             self._connection.close()
+
         self._connection = None
 
     def vacuum(self, table):

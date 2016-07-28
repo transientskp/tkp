@@ -14,6 +14,7 @@ install_requires = """
     sqlalchemy>=1.0.0
     concurrent
     alembic
+    monotonic
     """.split()
 
 extras_require = {

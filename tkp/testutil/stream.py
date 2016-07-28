@@ -1,22 +1,27 @@
 import struct
 import time
+import monotonic
+from datetime import datetime
+import socket
+import logging
+from Queue import Queue
+import atexit
+from itertools import repeat
+from concurrent.futures import ThreadPoolExecutor, as_completed
 import numpy as np
 from astropy.io import fits
 from tkp.stream import checksum
-import socket
-from datetime import datetime
-import dateutil
-from concurrent.futures import ProcessPoolExecutor, ThreadPoolExecutor
-from tkp.stream import reconstruct_fits, read_window
 
 
+checksum = 0x47494A53484F4D4F
 ports = range(6666, 6672)
 freqs = range(6*10**6, 9*10**6, 5*10**5)
-assert(len(ports) == len(freqs))
+
+logger = logging.getLogger(__name__)
 
 
 def create_fits_hdu():
-    data = np.zeros((10, 10), dtype=float)
+    data = np.eye(10, dtype=float)
     hdu = fits.PrimaryHDU(data)
     return hdu
 
@@ -32,44 +37,63 @@ def create_header(fits_length, array_length):
     return struct.pack('=QLL496x', checksum, fits_length, array_length)
 
 
-def handle_client(port, freq):
-    print("starting server for freq {} on port {}".format(freq, port))
+def client_handler(conn, addr, freq, queue):
+    logging.info('connection from {}'.format(addr))
     hdu = create_fits_hdu()
     hdu.header['RESTFREQ'] = str(freq)
-    socket_ = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    socket_.bind(('localhost', port))
-    socket_.listen(5)
-    conn, addr = socket_.accept()
-    print("connection from {} on {}".format(addr, freq))
     while True:
-        start = datetime.now()
-        print("sending fits with timestamp {}".format(start))
-        hdu.header['date-obs'] = start.isoformat()
+        timestamp = queue.get()
+        logging.info("sending fits with timestamp {}".format(timestamp))
+        hdu.header['date-obs'] = timestamp.isoformat()
         data, fits_header = serialize_hdu(hdu)
         header = create_header(len(fits_header), len(data))
-        print("sending header")
-        conn.send(header)
-        print("sending fits header")
-        conn.send(fits_header)
-        print("sending data")
-        conn.send(data)
-        print("done sending")
-        end = datetime.now()
-        sleep = 1 - (end - start).seconds()
-        print("sleeping {} seconds".format(sleep))
-        time.sleep(sleep)
+        try:
+            conn.send(header)
+            conn.send(fits_header)
+            conn.send(data)
+        except socket.error:
+            logging.info("client {} disconnected".format(addr))
+            break
+    conn.close()
 
 
-def run_servers():
-    futures = []
-    with ProcessPoolExecutor(max_workers=len(ports)) as e:
-        for port, freq in zip(ports, freqs):
-            futures.append(e.submit(handle_client, port, freq))
-    try:
-        [x.result() for x in futures]
-    except KeyboardInterrupt:
-        [x.cancel() for x in futures]
+def socket_listener(port, freq, executor, queue):
+    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+    while True:
+        try:
+            sock.bind(('', port))
+        except socket.error as e:
+            logging.error("can't bind to port {}: {}".format(port, str(e)))
+            logging.error("retrying in 5 seconds...")
+            time.sleep(5)
+        else:
+            break
+    sock.listen(10)
+    atexit.register(lambda s: s.close(), sock)  # close socket on exit
+    logging.info("Server listening on port {}".format(port))
+    while True:
+        conn, addr = sock.accept()
+        executor.submit(client_handler, conn, addr, freq, queue)
+        #client_handler(conn, addr, freq, queue)
+
+
+def timer(queue):
+    while True:
+        now = datetime.now()
+        logging.debug("timer is pushing {}".format(now))
+        queue.put(now)
+        time.sleep(1 - monotonic.monotonic() % 1)
+
+
+def main():
+    queue = Queue()
+    with ThreadPoolExecutor(max_workers=24) as ex:
+        ex.submit(timer, queue)
+        socket_listener(ports[0], freqs[0], ex, queue)
+        fs = [ex.submit(socket_listener, *i) for i in zip(ports, freqs, repeat(ex), repeat(queue))]
 
 
 if __name__ == '__main__':
-    run_servers()
+    logging.basicConfig(level=logging.DEBUG)
+    main()

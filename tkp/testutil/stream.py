@@ -146,13 +146,12 @@ def socket_listener(port, freq):
         port (int): On that port to listen
         freq (int): The corresponds frequency that belongs to the port
     """
-    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    # don't wait for socket release, useful when restarting service often
-    sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-
     # loop and sleep for 5 until we can bind
     while True:
         try:
+            sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            # don't wait for socket release, useful when restarting service often
+            sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
             sock.bind(('', port))
         except socket.error as e:
             logging.error("can't bind to port {}: {}".format(port, str(e)))

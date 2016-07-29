@@ -1,3 +1,10 @@
+#!/usr/bin/env python
+"""
+This is an AARTFAAC imaging pipeline simulator. It will spawn 6 server sockets
+where multiple clients can connect to. once connected the server will
+send out empty fits images, with increasing timestamps. Each port has a
+different band.
+"""
 import struct
 import time
 import monotonic

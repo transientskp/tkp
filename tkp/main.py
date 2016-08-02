@@ -22,6 +22,7 @@ from tkp.db.configstore import store_config, fetch_config
 from tkp.steps.persistence import create_dataset, store_images_in_db
 import tkp.steps.forced_fitting as steps_ff
 from tkp.steps.varmetric import execute_store_varmetric
+from tkp.stream import AartfaacStream
 
 
 logger = logging.getLogger(__name__)
@@ -37,6 +38,8 @@ def setup(job_name, supplied_mon_coords=None):
     pipe_config = initialize_pipeline_config(
         os.path.join(os.getcwd(), "pipeline.cfg"),
         job_name)
+
+
 
     # Setup logfile before we do anything else
     log_dir = pipe_config.logging.log_dir
@@ -286,21 +289,21 @@ def timestamp_step(runner, images, job_config, dataset_id):
         image_db_operations(db_image, accessor, job_config)
 
 
-def run(job_name, supplied_mon_coords=None):
-    """
-    TKP pipeline run entry point.
-    """
-    job_dir, job_config, pipe_config, dataset_id = setup(job_name,
-                                                         supplied_mon_coords)
-    runner = get_runner(pipe_config)
+def run_stream(runner, job_config, dataset_id):
 
+    hosts = [job_config.pipeline.host]
+    ports = [job_config.pipeline.port]
+    with AartfaacStream(hosts=hosts, ports=ports) as stream:
+        for images in stream.grouped_images():
+            logger.info("processing {} stream images...".format(len(images)))
+            timestamp_step(runner, images, job_config, dataset_id)
+    	    varmetric(dataset_id)
+        close_database()
+
+
+def run_batch(job_name, job_dir, pipe_config, job_config, runner, dataset_id):
     image_paths = load_images(job_name, job_dir)
-
-    if pipe_config.image_cache['copy_images']:
-        store_mongodb(pipe_config, image_paths, runner)
-    else:
-        logging.info("storing copies in image cache is disabled")
-
+    store_mongodb(pipe_config, image_paths, runner)
     sorting_metadata = get_metadata_for_sorting(runner, image_paths)
     grouped_images = group_per_timestep(sorting_metadata)
 
@@ -311,3 +314,19 @@ def run(job_name, supplied_mon_coords=None):
 
     varmetric(dataset_id)
     close_database()
+
+
+def run(job_name, supplied_mon_coords=None):
+    """
+    TKP pipeline run entry point.
+    """
+    job_dir, job_config, pipe_config, dataset_id = setup(job_name,
+                                                         supplied_mon_coords)
+    runner = get_runner(pipe_config)
+
+    if job_config.pipeline.mode == 'stream':
+        run_stream(runner, job_config, dataset_id)
+    elif job_config.pipeline.mode == 'batch':
+        run_batch(job_name, job_dir, pipe_config, job_config, runner, dataset_id)
+
+

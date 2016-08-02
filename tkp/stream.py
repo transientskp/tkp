@@ -25,15 +25,13 @@ import astropy.io.fits
 import numpy as np
 import time
 import dateutil.parser
-import monotonic
 from itertools import repeat
-from concurrent.futures import ProcessPoolExecutor, ThreadPoolExecutor, as_completed
+from concurrent.futures import ProcessPoolExecutor, ThreadPoolExecutor
 from multiprocessing import Manager
 
 
 logger = logging.getLogger(__name__)
 
-ports = range(6666, 6672)
 # the checksum is used to check if we are not drifting in the data flow
 CHECKSUM = 0x47494A53484F4D4F
 
@@ -121,10 +119,11 @@ def connector(host, port, queue):
             connection_handler(socket_, queue)
 
 
-def merger(image_queue):
+def merger(image_queue, grouped_queue):
     """
     Will monitor the queue for images and group them by timestamp. When an image
-    with an successive timestamp is received the group is processed.
+    with an successive timestamp is received the group is put on the grouped
+    queue.
     """
     logging.info("merger thread started")
     first_image = image_queue.get()
@@ -143,44 +142,57 @@ def merger(image_queue):
         else:
             previous_timestamp = new_timestamp
             logging.info("collected {} images, processing...".format(len(images)))
+            grouped_queue.put(images)
             images = [new_image]
 
 
 class AartfaacStream(object):
-    def __init__(self):
+    def __init__(self, hosts, ports):
+        """
+        args:
+            hosts (list): a list of hostnames to connect to
+            ports (list): a list of ports to connect to
+        """
         self.manager = None
         self.image_queue = None
         self.threadpool = None
         self.processpool = None
-        self.connection_futures = None
+        self.conn_f = None  # the connection futures
+        self.grouped_queue = None
+        self.hosts = hosts
+        self.ports = ports
 
     def __enter__(self):
         self.start()
         return self
 
-    def start(self):
-        self.manager = Manager()
-        self.image_queue = self.manager.Queue()
-
-        self.threadpool = ThreadPoolExecutor(max_workers=2)
-        self.processpool = ProcessPoolExecutor()
-
-        self.threadpool.submit(merger, self.image_queue)
-        self.connection_futures = self.processpool.map(connector,
-                                                       repeat('localhost'),
-                                                       ports,
-                                                       repeat(self.image_queue))
-
     def __exit__(self, exc_type, exc_value, traceback):
         self.threadpool.shutdown()
         self.processpool.shutdown()
 
+    def start(self):
+        self.manager = Manager()
+        self.image_queue = self.manager.Queue()
+        self.grouped_queue = self.manager.Queue()
+
+        self.threadpool = ThreadPoolExecutor(max_workers=2)
+        self.processpool = ProcessPoolExecutor()
+
+        self.threadpool.submit(merger, self.image_queue, self.grouped_queue)
+
+        connector_args = self.hosts, self.ports, repeat(self.image_queue)
+        self.conn_f = self.processpool.map(connector, *connector_args)
+
+    def grouped_images(self):
+        while True:
+            yield self.grouped_queue.get()
+
+
 if __name__ == '__main__':
     logging.basicConfig(level=logging.DEBUG)
+    hosts = repeat("localhost")
+    ports = range(6666, 6672)
 
-    with AartfaacStream() as stream:
-        for f in as_completed(stream.connection_futures):
-            if f.exception() is not None:
-                print('%r generated an exception: {}'.format(f.exception()))
-            else:
-                print(f.result())
+    with AartfaacStream(hosts, ports) as stream:
+        for images in stream.grouped_images():
+            print(len(images))

@@ -10,6 +10,7 @@ import time
 import monotonic
 from datetime import datetime
 import socket
+import StringIO
 import logging
 from Queue import Queue
 import atexit
@@ -17,12 +18,13 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from threading import Lock
 import numpy as np
 from astropy.io import fits
-from tkp.stream import checksum
+from tkp.stream import CHECKSUM
 
+# if true only start one thread on the first port, useful for debugging
+DEBUGGING = False
 
-checksum = 0x47494A53484F4D4F
-ports = range(6666, 6672)
-freqs = range(6*10**6, 9*10**6, 5*10**5)
+DEFAULT_PORTS = range(6666, 6672)
+DEFAULT_FREQS = range(int(6e6), int(9e6), int(5e5))
 
 logger = logging.getLogger(__name__)
 
@@ -31,7 +33,7 @@ class Repeater(object):
     """
     repeats incoming queue messages to subscribed queues
     """
-    mutex = Lock()
+    lock = Lock()
     receivers = []
 
     def __init__(self):
@@ -52,10 +54,9 @@ class Repeater(object):
         args:
             mesg (object):
         """
-        self.mutex.acquire()
-        logger.debug("relaying to {} subscribers".format(len(self.receivers)))
-        [r.put(mesg) for r in self.receivers]
-        self.mutex.release()
+        with self.lock:
+            logger.debug("relaying to {} subscribers".format(len(self.receivers)))
+            [r.put(mesg) for r in self.receivers]
 
     def subscribe(self, queue):
         """
@@ -65,9 +66,8 @@ class Repeater(object):
             out_queue (Queue.Queue):
         """
         logger.debug("subscriber")
-        self.mutex.acquire()
-        self.receivers.append(queue)
-        self.mutex.release()
+        with self.lock:
+            self.receivers.append(queue)
 
     def unsubscribe(self, out_queue):
         """
@@ -77,12 +77,11 @@ class Repeater(object):
             out_queue (Queue.Queue):
         """
         logger.debug("unsubscriber")
-        self.mutex.acquire()
-        try:
-            self.receivers.remove(out_queue)
-        except ValueError:
-            logging.error("item not in queue")
-        self.mutex.release()
+        with self.lock:
+            try:
+                self.receivers.remove(out_queue)
+            except ValueError:
+                logging.error("item not in queue")
 
 
 def create_fits_hdu():
@@ -99,7 +98,20 @@ def serialize_hdu(hdu):
 
 def create_header(fits_length, array_length):
     # 512 - 16: Q = 8, L = 4
-    return struct.pack('=QLL496x', checksum, fits_length, array_length)
+    return struct.pack('=QLL496x', CHECKSUM, fits_length, array_length)
+
+
+def make_window(hdu):
+    """
+    Construct a complete serialised image including aartfaac header
+    """
+    result = StringIO.StringIO()
+    data, fits_header = serialize_hdu(hdu)
+    header = create_header(len(fits_header), len(data))
+    result.write(header)
+    result.write(fits_header)
+    result.write(data)
+    return result.getvalue()
 
 
 def client_handler(conn, addr, freq):
@@ -125,12 +137,9 @@ def client_handler(conn, addr, freq):
         timestamp = queue.get()
         logging.info("sending to {} on {} ts {}".format(addr, port, timestamp))
         hdu.header['date-obs'] = timestamp.isoformat()
-        data, fits_header = serialize_hdu(hdu)
-        header = create_header(len(fits_header), len(data))
+        window = make_window(hdu)
         try:
-            conn.send(header)
-            conn.send(fits_header)
-            conn.send(data)
+            conn.send(window)
         except socket.error:
             logging.info("client {} disconnected".format(addr))
             break
@@ -150,7 +159,7 @@ def socket_listener(port, freq):
     while True:
         try:
             sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            # don't wait for socket release, useful when restarting service often
+            # don't wait for socket release
             sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
             sock.bind(('', port))
         except socket.error as e:
@@ -168,7 +177,10 @@ def socket_listener(port, freq):
         # block until incoming connection, start handler thread
         while True:
             conn, addr_port = sock.accept()
-            ex.submit(client_handler, conn, addr_port[0], freq)
+            if DEBUGGING:
+                client_handler(conn, addr_port[0], freq)
+            else:
+                ex.submit(client_handler, conn, addr_port[0], freq)
 
 
 def timer(queue):
@@ -180,23 +192,28 @@ def timer(queue):
     """
     while True:
         # We use monotonic so the timing doesn't drift.
-        time.sleep(1 - monotonic.monotonic() % 1)
+        duty_cycle = 1  # seconds
+        time.sleep(duty_cycle - monotonic.monotonic() % duty_cycle)
         now = datetime.now()
         logging.debug("timer is pushing {}".format(now))
         queue.put(now)
 
 
-def main():
+def emulator(ports=DEFAULT_PORTS, freqs=DEFAULT_FREQS):
     heartbeat_queue = Queue()
     repeater = Repeater()
 
     with ThreadPoolExecutor(max_workers=len(ports) + 2) as ex:
         ex.submit(timer, heartbeat_queue)
         ex.submit(repeater.run, heartbeat_queue)
-        fs = [ex.submit(socket_listener, *i) for i in zip(ports, freqs)]
-        for f in as_completed(fs):
-            logging.info(f.results())
+        if DEBUGGING:
+            socket_listener(ports[0], freqs[0])
+        else:
+            fs = ex.map(socket_listener, ports, freqs)
+            for f in as_completed(fs):
+                logging.info(f.result())
+
 
 if __name__ == '__main__':
-    logging.basicConfig(level=logging.INFO)
-    main()
+    logging.basicConfig(level=logging.DEBUG)
+    emulator()

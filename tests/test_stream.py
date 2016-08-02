@@ -1,13 +1,8 @@
-import socket
 import unittest
 from datetime import datetime
 import dateutil
-from concurrent.futures import ThreadPoolExecutor
-from tkp.stream import reconstruct_fits, read_window
-from tkp.testutil.stream import create_fits_hdu, serialize_hdu, create_header
-
-HOST = 'localhost'
-PORT = 6666
+import tkp.stream
+from tkp.testutil.stream_emu import create_fits_hdu, serialize_hdu, make_window
 
 
 class TestStream(unittest.TestCase):
@@ -19,27 +14,41 @@ class TestStream(unittest.TestCase):
 
     def test_reconstruct(self):
         data, header = serialize_hdu(self.hdu)
-        hdulist = reconstruct_fits(header, data)
-        timestamp = dateutil.parser.parse(hdulist[0].header['date-obs'])
+        hdulist = tkp.stream.reconstruct_fits(header, data)
+        dateutil.parser.parse(hdulist[0].header['date-obs'])
 
-    def test_network(self):
-        now = datetime.now()
-        self.hdu.header['date-obs'] = now.isoformat()
-        data, fits_header = serialize_hdu(self.hdu)
-        header = create_header(len(fits_header), len(data))
-        server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        server.bind((HOST, PORT))
-        server.listen(1)
-        e = ThreadPoolExecutor(max_workers=1)
-        future = e.submit(server.accept)
-        client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        client.connect((HOST, PORT))
-        conn, _ = future.result()
-        conn.send(header)
-        conn.send(fits_header)
-        conn.send(data)
-        fits_bytes, image_bytes = read_window(client)
-        hdulist = reconstruct_fits(fits_bytes, image_bytes)
-        timestamp = dateutil.parser.parse(hdulist[0].header['date-obs'])
-        e.shutdown()
-        self.assertEqual(timestamp, now)
+    def test_get_bytes(self):
+        class MockSocket(object):
+            def recv(self, count):
+                return count * "s"
+
+        x = tkp.stream.getbytes(MockSocket(), 10)
+        self.assertEqual(x, 10 * "s")
+
+    def test_get_bytes_closed(self):
+        class MockSocket(object):
+            def recv(self, _):
+                return ""
+        self.assertRaises(Exception, tkp.stream.getbytes, MockSocket(), 10)
+
+    def test_read_window(self):
+        window = make_window(self.hdu)
+        data, header = serialize_hdu(self.hdu)
+
+        class MockSocket(object):
+            counter = 0
+
+            def recv(self2, bytes):
+                data = window[self2.counter:self2.counter+bytes]
+                self2.counter += bytes
+                return data
+
+        fits_bytes, image_bytes = tkp.stream.read_window(MockSocket())
+        self.assertEqual(header, fits_bytes)
+        self.assertEqual(data, image_bytes)
+
+    def test_reconstruct_fits(self):
+        data, header = serialize_hdu(self.hdu)
+        hdulist = tkp.stream.reconstruct_fits(header, data)
+        self.assertEqual(self.hdu.data.all(), hdulist[0].data.all())
+        self.assertEqual(self.hdu.header, hdulist[0].header)

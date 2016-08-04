@@ -181,7 +181,6 @@ def quality_check(db_images, accessors, job_config, runner):
     if not good_images:
         msg = "No good images under these quality checking criteria"
         logger.warn(msg)
-        raise IOError(msg)
     return good_images
 
 
@@ -296,7 +295,10 @@ def run_stream(runner, job_config, dataset_id):
     with AartfaacStream(hosts=hosts, ports=ports) as stream:
         for images in stream.grouped_images():
             logger.info("processing {} stream images...".format(len(images)))
-            timestamp_step(runner, images, job_config, dataset_id)
+            try:
+                timestamp_step(runner, images, job_config, dataset_id)
+            except Exception as e:
+                logger.error("timestep raised {} exception: {}".format(type(e), str(e)))
     	    varmetric(dataset_id)
         close_database()
 

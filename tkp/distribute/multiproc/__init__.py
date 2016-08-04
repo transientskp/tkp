@@ -4,9 +4,13 @@ module. the Pool.map function only accepts one argument, so we need to
 zip the iterable together with the arguments.
 """
 import sys
-from multiprocessing import Pool, cpu_count
+from multiprocessing import Pool, cpu_count, log_to_stderr
+import logging
 
 pool = Pool(processes=cpu_count())
+
+logger = log_to_stderr()
+logger.setLevel(logging.WARNING)
 
 
 def set_cores(cores=0):

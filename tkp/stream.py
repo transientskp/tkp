@@ -111,11 +111,12 @@ def connector(host, port, queue):
         try:
             socket_ = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             socket_.connect((host, port))
-        except socket.error as e:
+        except Exception as e:
             logger.error("cant connect to {}:{}: {}".format(host, port, str(e)))
             logger.info("will try reconnecting in 5 seconds")
             time.sleep(5)
         else:
+            logger.info("connected to {}:{}".format(host, port))
             connection_handler(socket_, queue)
 
 
@@ -125,16 +126,16 @@ def merger(image_queue, grouped_queue):
     with an successive timestamp is received the group is put on the grouped
     queue.
     """
-    logging.info("merger thread started")
+    logger.info("merger thread started")
     first_image = image_queue.get()
-    logging.info("merged received first image")
+    logger.info("merger received first image")
     images = [first_image]
     previous_timestamp = extract_timestamp(first_image)
 
     while True:
         new_image = image_queue.get()
         new_timestamp = extract_timestamp(new_image)
-        logging.info("merged received image with timestamp {}".format(new_timestamp))
+        logging.info("merger received image with timestamp {}".format(new_timestamp))
         if new_timestamp < previous_timestamp:
             logging.error("timing error, older image received after newer image")
         if new_timestamp == previous_timestamp:
@@ -161,6 +162,7 @@ class AartfaacStream(object):
         self.grouped_queue = None
         self.hosts = hosts
         self.ports = ports
+        self.started = False
 
     def __enter__(self):
         self.start()
@@ -182,8 +184,13 @@ class AartfaacStream(object):
 
         connector_args = self.hosts, self.ports, repeat(self.image_queue)
         self.conn_f = self.processpool.map(connector, *connector_args)
+        self.started = True
 
     def grouped_images(self):
+        if not self.started:
+            logger.error("stream not started yet")
+            raise StopIteration
+
         while True:
             yield self.grouped_queue.get()
 

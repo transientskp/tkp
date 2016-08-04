@@ -13,10 +13,11 @@ import socket
 import StringIO
 import logging
 from Queue import Queue
+from os import path
 import atexit
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from threading import Lock
-import numpy as np
+from tkp.testutil.data import DATAPATH
 from astropy.io import fits
 from tkp.stream import CHECKSUM
 
@@ -81,12 +82,15 @@ class Repeater(object):
             try:
                 self.receivers.remove(out_queue)
             except ValueError:
-                logging.error("item not in queue")
+                logger.error("item not in queue")
 
 
 def create_fits_hdu():
-    data = np.eye(10, dtype=float)
-    hdu = fits.PrimaryHDU(data)
+    #data = np.eye(10, dtype=float)
+    #hdu = fits.PrimaryHDU(data)
+    #hdu.header.update(emu_header_data)
+    hdulist = fits.open(path.join(DATAPATH, 'accessors/aartfaac.fits'))
+    hdu = hdulist[0]
     return hdu
 
 
@@ -127,7 +131,7 @@ def client_handler(conn, addr, freq):
     """
     repeater = Repeater()
     port = conn.getsockname()[1]
-    logging.info('connection from {} on {}'.format(addr, port))
+    logger.info('connection from {} on {}'.format(addr, port))
     hdu = create_fits_hdu()
     hdu.header['RESTFREQ'] = str(freq)
     queue = Queue()
@@ -135,13 +139,13 @@ def client_handler(conn, addr, freq):
     while True:
         # block until we get a timestamp
         timestamp = queue.get()
-        logging.info("sending to {} on {} ts {}".format(addr, port, timestamp))
+        logger.info("sending to {} on {} ts {}".format(addr, port, timestamp))
         hdu.header['date-obs'] = timestamp.isoformat()
         window = make_window(hdu)
         try:
             conn.send(window)
         except socket.error:
-            logging.info("client {} disconnected".format(addr))
+            logger.info("client {} disconnected".format(addr))
             break
     conn.close()
     repeater.unsubscribe(queue)
@@ -163,15 +167,15 @@ def socket_listener(port, freq):
             sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
             sock.bind(('', port))
         except socket.error as e:
-            logging.error("can't bind to port {}: {}".format(port, str(e)))
-            logging.error("retrying in 5 seconds...")
+            logger.error("can't bind to port {}: {}".format(port, str(e)))
+            logger.error("retrying in 5 seconds...")
             time.sleep(5)
         else:
             break
 
     sock.listen(2)
     atexit.register(lambda s: s.close(), sock)  # close socket on exit
-    logging.info("Server listening on port {}".format(port))
+    logger.info("Server listening on port {}".format(port))
 
     with ThreadPoolExecutor(max_workers=4) as ex:
         # block until incoming connection, start handler thread
@@ -195,7 +199,7 @@ def timer(queue):
         duty_cycle = 1  # seconds
         time.sleep(duty_cycle - monotonic.monotonic() % duty_cycle)
         now = datetime.now()
-        logging.debug("timer is pushing {}".format(now))
+        logger.debug("timer is pushing {}".format(now))
         queue.put(now)
 
 

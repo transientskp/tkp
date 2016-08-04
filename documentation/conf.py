@@ -285,6 +285,7 @@ autoclass_content = 'both'
 # Example configuration for intersphinx: refer to the Python standard library.
 intersphinx_mapping = {
     'python': ('http://docs.python.org/', None),
+    'astropy': ('http://docs.astropy.org/en/stable/', None),
     'sqlalchemy': ('http://docs.sqlalchemy.org/en/rel_1_0/', None),
     'casacore': ('http://casacore.github.io/python-casacore/', None),
     'numpy': ('http://docs.scipy.org/doc/numpy/', None),

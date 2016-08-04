@@ -22,7 +22,7 @@ from tkp.db.configstore import store_config, fetch_config
 from tkp.steps.persistence import create_dataset, store_images_in_db
 import tkp.steps.forced_fitting as steps_ff
 from tkp.steps.varmetric import execute_store_varmetric
-from tkp.stream import AartfaacStream
+from tkp.stream import stream_generator
 
 
 logger = logging.getLogger(__name__)
@@ -38,8 +38,6 @@ def setup(job_name, supplied_mon_coords=None):
     pipe_config = initialize_pipeline_config(
         os.path.join(os.getcwd(), "pipeline.cfg"),
         job_name)
-
-
 
     # Setup logfile before we do anything else
     log_dir = pipe_config.logging.log_dir
@@ -253,7 +251,8 @@ def get_metadata_for_sorting(runner, image_paths):
         list: list of tuples, (timestamp, [list_of_images])
     """
     nested_img = [[i] for i in image_paths]
-    metadatas = [t[0] for t in runner.map("get_metadata_for_ordering", nested_img)]
+    metadatas = [t[0] for t in runner.map("get_metadata_for_ordering",
+                                          nested_img)]
     return metadatas
 
 
@@ -289,20 +288,39 @@ def timestamp_step(runner, images, job_config, dataset_id):
 
 
 def run_stream(runner, job_config, dataset_id):
-    hosts = [job_config.pipeline.host]
-    ports = [job_config.pipeline.port]
-    with AartfaacStream(hosts=hosts, ports=ports) as stream:
-        for images in stream.grouped_images():
-            logger.info("processing {} stream images...".format(len(images)))
-            try:
-                timestamp_step(runner, images, job_config, dataset_id)
-            except Exception as e:
-                logger.error("timestep raised {} exception: {}".format(type(e), str(e)))
-    	    varmetric(dataset_id)
-        close_database()
+    """
+    Run the pipeline in stream mode.
+
+    Daemon function, doesn't return.
+
+    args:
+         runner (tkp.distribute.Runner): Runner to use for distribution
+         job_config: a job configuration object
+         dataset_id (int): The dataset ID to use
+    """
+    hosts = job_config.pipeline.hosts.split(',')
+    ports = [int(p) for p in job_config.pipeline.ports.split(',')]
+    for images in stream_generator(hosts=hosts, ports=ports):
+        logger.info("processing {} stream images...".format(len(images)))
+        try:
+            timestamp_step(runner, images, job_config, dataset_id)
+        except Exception as e:
+            logger.error("timestep raised {} exception: {}".format(type(e), str(e)))
+        finalise(dataset_id)
+    close_database()
 
 
 def run_batch(job_name, job_dir, pipe_config, job_config, runner, dataset_id):
+    """
+    Run the pipeline in batch mode.
+
+    args:
+        job_name (str): job name, used for locating images script
+        pipe_config: the pipeline configuration object
+        job_config: a job configuration object
+        runner (tkp.distribute.Runner): Runner to use for distribution
+        dataset_id (int): The dataset ID to use
+    """
     image_paths = load_images(job_name, job_dir)
     store_mongodb(pipe_config, image_paths, runner)
     sorting_metadata = get_metadata_for_sorting(runner, image_paths)
@@ -319,7 +337,11 @@ def run_batch(job_name, job_dir, pipe_config, job_config, runner, dataset_id):
 
 def run(job_name, supplied_mon_coords=None):
     """
-    TKP pipeline run entry point.
+    TKP pipeline main loop entry point.
+
+    args:
+        job_name (str): name of the jbo to run
+        supplied_mon_coords (list): list of coordinates to monitor
     """
     job_dir, job_config, pipe_config, dataset_id = setup(job_name,
                                                          supplied_mon_coords)

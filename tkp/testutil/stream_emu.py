@@ -86,21 +86,43 @@ class Repeater(object):
 
 
 def create_fits_hdu():
-    #data = np.eye(10, dtype=float)
-    #hdu = fits.PrimaryHDU(data)
-    #hdu.header.update(emu_header_data)
+    """
+    Create a fake AARTFAAC file used as a base for the emulated servers. Could
+    be anything but for now we just take the fits file from the test data.
+
+    returns:
+        astropy.io.fits.HDUList: a fits object
+    """
     hdulist = fits.open(path.join(DATAPATH, 'accessors/aartfaac.fits'))
     hdu = hdulist[0]
     return hdu
 
 
 def serialize_hdu(hdu):
+    """
+    Serialize a fits object.
+
+    args:
+        hdu (astropy.io.fits.HDUList): a fits object
+    returns:
+        str: a serialized fits object.
+    """
     data = struct.pack('=%sf' % hdu.data.size, *hdu.data.flatten('F'))
     header = hdu.header.tostring()
     return data, header
 
 
 def create_header(fits_length, array_length):
+    """
+    make a AARTFAAC header. Header is padded with zeros up to 512 bytes.
+
+    args:
+        fits_lenght (int): how long will the fits header be
+        array_length (int): How long will the data be
+
+    returns:
+        str: aartfaac header ready for transmission.
+    """
     # 512 - 16: Q = 8, L = 4
     return struct.pack('=QLL496x', CHECKSUM, fits_length, array_length)
 
@@ -108,6 +130,11 @@ def create_header(fits_length, array_length):
 def make_window(hdu):
     """
     Construct a complete serialised image including aartfaac header
+
+    args:
+        hdu (astropy.io.fits.HDUList): the first header
+    returns:
+        str: serialised fits file
     """
     result = StringIO.StringIO()
     data, fits_header = serialize_hdu(hdu)
@@ -153,7 +180,8 @@ def client_handler(conn, addr, freq):
 
 def socket_listener(port, freq):
     """
-    Will listen on a specific socket and fire of threads if a client connects
+    Will listen on a specific socket and fire of threads if a client connects.
+    Will try to reconnect every 5 seconds in case of connect failure.
 
     args:
         port (int): On that port to listen
@@ -204,6 +232,16 @@ def timer(queue):
 
 
 def emulator(ports=DEFAULT_PORTS, freqs=DEFAULT_FREQS):
+    """
+    Run the aartfaac stream emulator. Will listen on all ports defined in ports
+    and change the frequency in the fits headers according to the freqs list.
+
+    Daemon function, does not return.
+
+    args:
+        ports (list): list of ints representing ports
+        freqs (list): list of frequencies
+    """
     heartbeat_queue = Queue()
     repeater = Repeater()
 

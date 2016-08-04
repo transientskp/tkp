@@ -289,7 +289,6 @@ def timestamp_step(runner, images, job_config, dataset_id):
 
 
 def run_stream(runner, job_config, dataset_id):
-
     hosts = [job_config.pipeline.host]
     ports = [job_config.pipeline.port]
     with AartfaacStream(hosts=hosts, ports=ports) as stream:

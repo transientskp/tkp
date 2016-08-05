@@ -93,7 +93,7 @@ def extract_metadatas(accessors, rms_est_sigma, rms_est_fraction):
     """
     results = []
     for accessor in accessors:
-        logger.info("Extracting metadata from %s" % accessors)
+        logger.debug("Extracting metadata from %s" % accessor.url)
         metadata = accessor.extract_metadata()
         metadata['rms_qc'] = rms_with_clipped_subregion(accessor.data,
                                                         rms_est_sigma,
@@ -132,7 +132,7 @@ def store_images_in_db(images_metadata, extraction_radius_pix, dataset_id, bandw
         filename = metadata['url']
         db_image = Image(data=metadata, dataset=dataset)
         image_ids.append(db_image.id)
-        logger.info("stored %s with ID %s" % (os.path.basename(filename),
+        logger.debug("stored %s with ID %s" % (os.path.basename(filename),
                                               db_image.id))
     return image_ids
 

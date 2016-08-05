@@ -38,8 +38,6 @@ def setup(job_name, supplied_mon_coords=None):
         os.path.join(os.getcwd(), "pipeline.cfg"),
         job_name)
 
-
-
     # Setup logfile before we do anything else
     log_dir = pipe_config.logging.log_dir
     setup_logging(log_dir, debug=pipe_config.logging.debug,
@@ -69,8 +67,10 @@ def get_runner(pipe_config):
     """
     get parallelise props. Defaults to multiproc with autodetect num cores
     """
-    distributor = os.environ.get('TKP_PARALLELISE', pipe_config.parallelise.method)
-    return Runner(distributor=distributor, cores=pipe_config.parallelise.cores)
+    para = pipe_config.parallelise
+    logging.info("using '{}' method for parallellisation".format(para.method))
+    distributor = os.environ.get('TKP_PARALLELISE', para.method)
+    return Runner(distributor=distributor, cores=para.cores)
 
 
 def load_images(job_name, job_dir):
@@ -203,7 +203,7 @@ def store_extractions(images, extraction_results, job_config):
 
 
 def image_db_operations(db_image, accessor, job_config):
-    logger.info("performing DB operations for image {} ({})".format(db_image.id,
+    logger.debug("performing DB operations for image {} ({})".format(db_image.id,
                                                                     db_image.url))
 
     r = job_config.association.deruiter_radius
@@ -295,7 +295,12 @@ def run(job_name, supplied_mon_coords=None):
     runner = get_runner(pipe_config)
 
     image_paths = load_images(job_name, job_dir)
-    store_mongodb(pipe_config, image_paths, runner)
+
+    if pipe_config.image_cache['copy_images']:
+        store_mongodb(pipe_config, image_paths, runner)
+    else:
+        logging.info("storing copies in image cache is disabled")
+
     sorting_metadata = get_metadata_for_sorting(runner, image_paths)
     grouped_images = group_per_timestep(sorting_metadata)
 

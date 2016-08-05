@@ -1,7 +1,5 @@
 import logging
-import tkp.accessors
 from tkp.accessors import sourcefinder_image_from_accessor
-import tkp.accessors
 from tkp.db import general as dbgen
 from tkp.db import monitoringlist as dbmon
 from tkp.db import nulldetections as dbnd
@@ -11,7 +9,7 @@ logger = logging.getLogger(__name__)
 
 def get_forced_fit_requests(image, expiration):
     nd_requested_fits = dbnd.get_nulldetections(image.id, expiration)
-    logger.info("Found %s null detections" % len(nd_requested_fits))
+    logger.debug("Found %s null detections" % len(nd_requested_fits))
     mon_entries = dbmon.get_monitor_entries(image.dataset.id)
 
     all_fit_positions = []
@@ -31,7 +29,6 @@ def insert_and_associate_forced_fits(image_id,successful_fits,successful_ids):
 
     nd_extractions=[]
     nd_runcats=[]
-
     ms_extractions=[]
     ms_ids = []
 
@@ -46,22 +43,22 @@ def insert_and_associate_forced_fits(image_id,successful_fits,successful_ids):
             raise ValueError("Forced fit type id not recognised:" + id[0])
 
     if nd_extractions:
-        logger.info("adding null detections")
+        logger.debug("adding null detections")
         dbgen.insert_extracted_sources(image_id, nd_extractions,
                                        extract_type='ff_nd',
                                        ff_runcat_ids=nd_runcats)
         dbnd.associate_nd(image_id)
     else:
-        logger.info("No successful nulldetection fits")
+        logger.debug("No successful nulldetection fits")
 
     if ms_extractions:
         dbgen.insert_extracted_sources(image_id, ms_extractions,
                                        extract_type='ff_ms',
                                        ff_monitor_ids=ms_ids)
-        logger.info("adding monitoring sources")
+        logger.debug("adding monitoring sources")
         dbmon.associate_ms(image_id)
     else:
-        logger.info("No successful monitor fits")
+        logger.debug("No successful monitor fits")
 
 
 
@@ -83,7 +80,7 @@ def perform_forced_fits(fit_posns, fit_ids,
         NB returned lists may be shorter than input lists
         if some fits are unsuccessful.
     """
-    logger.info("Forced fitting in image: %s" % (accessor.url))
+    logger.debug("Forced fitting in image: %s" % (accessor.url))
 
     margin = extraction_params['margin']
     radius = extraction_params['extraction_radius_pix']

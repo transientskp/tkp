@@ -315,6 +315,11 @@ class ImageData(object):
         slicey = slice(-0.5, -0.5+yratio, 1j*my_ydim)
         my_map = numpy.ma.MaskedArray(numpy.zeros(self.data.shape),
                                       mask = self.data.mask)
+
+        # Remove the MaskedArrayFutureWarning warning and keep old numpy < 1.11
+        # behavior
+        my_map.unshare_mask()
+
         my_map[useful_chunk[0]] = ndimage.map_coordinates(
             grid, numpy.mgrid[slicex, slicey],
             mode='nearest', order=INTERPOLATE_ORDER)
@@ -505,11 +510,13 @@ class ImageData(object):
                                   x-numpix:x+numpix+1].max()
 
     @staticmethod
-    def box_slice_about_pixel(x,y,box_radius):
+    def box_slice_about_pixel(x, y, box_radius):
         """
         Returns a slice centred about (x,y), of width = 2*int(box_radius) + 1
         """
         ibr = int(box_radius)
+        x = int(x)
+        y = int(y)
         return (slice(x - ibr, x + ibr + 1),
                 slice(y - ibr, y + ibr + 1))
 
@@ -525,7 +532,7 @@ class ImageData(object):
         Returns an instance of :class:`tkp.sourcefinder.extract.Detection`.
         """
 
-        logger.debug("Force-fitting pixel location ({},{})".format(x,y))
+        logger.debug("Force-fitting pixel location ({},{})".format(x, y))
         # First, check that x and y are actually valid semi-positive integers.
         # Otherwise,
         # If they are too high (positive), then indexing will fail
@@ -554,7 +561,7 @@ class ImageData(object):
                 isinstance(self.rmsmap, numpy.ma.core.MaskedConstant)
             ) or (
                 # Old NumPy
-                numpy.ma.is_masked(self.rmsmap[x, y])
+                numpy.ma.is_masked(self.rmsmap[int(x), int(y)])
         )):
             logger.error("Background is masked: cannot fit")
             return None
@@ -574,8 +581,7 @@ class ImageData(object):
                     )
                 )
 
-
-            mylabel = labels[x, y]
+            mylabel = labels[int(x), int(y)]
             if mylabel == 0:  # 'Background'
                 raise ValueError("Fit region is below specified threshold, fit aborted.")
             mask = numpy.where(labels[chunk] == mylabel, 0, 1)
@@ -605,7 +611,7 @@ class ImageData(object):
             raise TypeError("Unkown fixed parameter")
 
         if threshold is not None:
-            threshold_at_pixel = threshold * self.rmsmap[x, y]
+            threshold_at_pixel = threshold * self.rmsmap[int(x), int(y)]
         else:
             threshold_at_pixel = None
 
@@ -613,7 +619,7 @@ class ImageData(object):
             measurement, residuals = extract.source_profile_and_errors(
                 fitme,
                 threshold_at_pixel,
-                self.rmsmap[x, y],
+                self.rmsmap[int(x), int(y)],
                 self.beam,
                 fixed=fixed
             )
@@ -919,8 +925,8 @@ class ImageData(object):
             # The axis will not likely fall exactly on a pixel number, so
             # check all the surroundings.
             def check_point(x, y):
-                x = (numpy.floor(x), numpy.ceil(x))
-                y = (numpy.floor(y), numpy.ceil(y))
+                x = (int(x), int(numpy.ceil(x)))
+                y = (int(y), int(numpy.ceil(y)))
                 for position in itertools.product(x, y):
                     try:
                         if self.data.mask[position[0], position[1]]:

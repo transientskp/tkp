@@ -284,27 +284,24 @@ autoclass_content = 'both'
 # Example configuration for intersphinx: refer to the Python standard library.
 intersphinx_mapping = {
     'python': ('http://docs.python.org/', None),
-#    'numpy': ('http://docs.scipy.org/doc/numpy/', None),
-#    'scipy': ('http://docs.scipy.org/doc/scipy/reference/', None),
+    'sqlalchemy': ('http://docs.sqlalchemy.org/en/rel_1_0/', None),
+    'casacore': ('http://casacore.github.io/python-casacore/', None),
+    'numpy': ('http://docs.scipy.org/doc/numpy/', None),
+    'scipy': ('http://docs.scipy.org/doc/scipy/reference/', None),
     }
 
 # Warn when references cannot be resolved:
 nitpicky = True
 nitpick_ignore = [
-    ("py:obj", "numpy.ndarray"),
-    ("py:obj", "numpy.ma.MaskedArray"),
     ("py:obj", "dict/list/tuple"),
     ("py:obj", "3-tuple of float"),
     ("py:obj", "3-tuple"),
-    ("py:obj", "casacore.images.image"),
-    ("py:obj", "casacore.tables.table"),
     ("py:obj", "list of (RA, Dec) tuples"),
     ("py:obj", "list of tuples"),
     ("py:obj", "ExtractedSourceTuple"),
     ("py:obj", "list of MockSource"),
     ("py:obj", "casacore measure"),
     ("py:obj", "lambda"),
-    ("py:obj", "sqlalchemy.orm.Session"),
     # These result from incorrect docstrings, should really be fixed
     # but we'll just suppress the errors for now.
     ("py:obj", "-"),

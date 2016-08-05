@@ -1,12 +1,11 @@
 import os
 import numpy
+import tkp.quality.rms
 from numpy.testing import assert_array_equal, assert_array_almost_equal
 import unittest
 
 from tkp.quality.rms import rms_invalid
-from tkp import accessors
 import tkp.quality
-from tkp.quality import statistics
 import tkp.telescope.lofar as lofar
 from tkp.testutil.decorators import requires_data
 from tkp.testutil.data import DATAPATH
@@ -17,25 +16,25 @@ remote_antennas = os.path.join(DATAPATH, 'lofar/RS106-AntennaArrays.conf')
 
 class TestRms(unittest.TestCase):
     def test_subrgion(self):
-        sub = statistics.subregion(numpy.ones((800, 800)))
+        sub = tkp.quality.rms.subregion(numpy.ones((800, 800)))
         self.assertEqual(sub.shape, (400, 400))
 
     def test_rms(self):
-        self.assertEquals(statistics.rms(numpy.ones([4,4])*4), 0)
+        self.assertEquals(tkp.quality.rms.rms(numpy.ones([4, 4]) * 4), 0)
 
     def test_clip(self):
         a = numpy.ones([50, 50]) * 10
         a[20, 20] = 20
-        clipped = statistics.clip(a)
+        clipped = tkp.quality.rms.clip(a)
         check = numpy.array([10] * (50*50-1))
         assert_array_equal(clipped,  check)
 
     def test_rmsclippedsubregion(self):
         o = numpy.ones((800, 800))
-        sub = statistics.subregion(o)
-        clip = statistics.clip(sub)
-        rms = statistics.rms(clip)
-        self.assertEqual(rms, statistics.rms_with_clipped_subregion(o))
+        sub = tkp.quality.rms.subregion(o)
+        clip = tkp.quality.rms.clip(sub)
+        rms = tkp.quality.rms.rms(clip)
+        self.assertEqual(rms, tkp.quality.rms.rms_with_clipped_subregion(o))
 
     def test_calculate_theoreticalnoise(self):
         # Sample data from a LOFAR image header.

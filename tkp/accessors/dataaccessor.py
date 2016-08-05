@@ -1,5 +1,5 @@
 import logging
-from tkp.quality.statistics import rms_with_clipped_subregion
+from tkp.quality.rms import rms_with_clipped_subregion
 from tkp.accessors.requiredatts import RequiredAttributesMetaclass
 from math import degrees, sqrt, sin, pi, cos
 

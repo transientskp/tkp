@@ -2,8 +2,7 @@ import logging
 import tkp.db
 import tkp.db.quality as dbquality
 from tkp.quality.restoringbeam import beam_invalid
-from tkp.quality.rms import rms_invalid
-from tkp.quality.statistics import rms_with_clipped_subregion
+from tkp.quality.rms import rms_invalid, rms_with_clipped_subregion
 from tkp.telescope.lofar.noise import noise_level
 from tkp.utility import nice_format
 

@@ -12,6 +12,7 @@ install_requires = """
     pytz
     scipy>=0.7.0
     sqlalchemy>=1.0.0
+    alembic
     """.split()
 
 extras_require = {

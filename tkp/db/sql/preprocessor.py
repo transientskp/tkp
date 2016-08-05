@@ -15,17 +15,6 @@ import re
 # (.*?): match any string in a non-greedy way and put it in a group
 # {%% endifdb %%}: match the end tag
 # \s*: match zero or more spaces
-def dialectise(string, dialect, tokens=[]):
-    """
-    Preprocess a SQL string, removes or manipulates all preprocess statements.
-
-    :param string: a string with possible SQL preprocessor content
-    :param dialect: what SQL dialect do you want?
-    :returns: a string containing only statements in the specified dialect
-    """
-    dialected = filter_ifdb(string, dialect)
-    tokenized = filter_tokens(dialected, tokens)
-    return tokenized
 # \n?: match zero or one newline
 
 
@@ -66,3 +55,16 @@ def filter_tokens(string, tokens):
     for (token, replacer) in tokens:
         result = result.replace(token, replacer)
     return result
+
+
+def dialectise(string, dialect, tokens=[]):
+    """
+    Preprocess a SQL string, removes or manipulates all preprocess statements.
+
+    :param string: a string with possible SQL preprocessor content
+    :param dialect: what SQL dialect do you want?
+    :returns: a string containing only statements in the specified dialect
+    """
+    dialected = filter_ifdb(string, dialect)
+    tokenized = filter_tokens(dialected, tokens)
+    return tokenized

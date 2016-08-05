@@ -13,7 +13,6 @@ install_requires = """
     scipy>=0.7.0
     sqlalchemy>=1.0.0
     futures
-    concurrent
     alembic
     monotonic
     """.split()

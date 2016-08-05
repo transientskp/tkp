@@ -306,7 +306,7 @@ def run_stream(runner, job_config, dataset_id):
             timestamp_step(runner, images, job_config, dataset_id)
         except Exception as e:
             logger.error("timestep raised {} exception: {}".format(type(e), str(e)))
-        finalise(dataset_id)
+        varmetric(dataset_id)
     close_database()
 
 
@@ -322,7 +322,12 @@ def run_batch(job_name, job_dir, pipe_config, job_config, runner, dataset_id):
         dataset_id (int): The dataset ID to use
     """
     image_paths = load_images(job_name, job_dir)
-    store_mongodb(pipe_config, image_paths, runner)
+
+    if pipe_config.image_cache['copy_images']:
+        store_mongodb(pipe_config, image_paths, runner)
+    else:
+        logging.info("storing copies in image cache is disabled")
+
     sorting_metadata = get_metadata_for_sorting(runner, image_paths)
     grouped_images = group_per_timestep(sorting_metadata)
 

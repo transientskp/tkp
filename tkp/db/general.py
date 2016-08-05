@@ -63,12 +63,10 @@ def insert_dataset(description):
     Insert dataset with description as given by argument.
     """
     db = tkp.db.Database()
-    session = db.Session()
-    dataset = alchemy_insert_dataset(session, description)
-    session.add(dataset)
-    session.commit()
+    dataset = alchemy_insert_dataset(db.session, description)
+    db.session.add(dataset)
+    db.session.commit()
     dataset_id = dataset.id
-    session.close()
     return dataset_id
 
 

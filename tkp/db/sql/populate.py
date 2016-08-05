@@ -5,7 +5,7 @@ import os
 import re
 import sys
 import tkp
-from tkp.db.database import DB_VERSION
+from tkp.db.model import SCHEMA_VERSION
 import tkp.db.database
 import tkp.db.model
 import tkp.db.quality
@@ -17,13 +17,6 @@ tkp_folder = tkp.__path__[0]
 sql_repo = os.path.join(tkp_folder, 'db/sql/statements')
 
 from tkp.db.sql.preprocessor import dialectise
-
-# use these to replace strings in the SQL files
-tokens = (
-    ('%NODE%', '1'),
-    ('%NODES%', '1'),
-    ('%VERSION%', str(DB_VERSION))
-)
 
 
 def get_input(text):
@@ -174,23 +167,21 @@ def populate(dbconfig):
     get_database_config(dbconfig, apply=True)
 
     database = tkp.db.database.Database()
-    database.connect()
+    database.connect(check=False)
 
     if dbconfig['destroy']:
         destroy(dbconfig)
 
-    session = database.Session()
-
     if dbconfig['engine'] == 'postgresql':
         # make sure plpgsql is enabled
         try:
-            session.execute("CREATE LANGUAGE plpgsql;")
+            database.session.execute("CREATE LANGUAGE plpgsql;")
         except ProgrammingError:
-            session.rollback()
+            database.session.rollback()
     if dbconfig['engine'] == 'monetdb':
-        set_monetdb_schema(session, dbconfig)
+        set_monetdb_schema(database.session, dbconfig)
         # reconnect to switch to schema
-        session.commit()
+        database.session.commit()
         database.reconnect()
 
     batch_file = os.path.join(sql_repo, 'batch')
@@ -200,12 +191,11 @@ def populate(dbconfig):
 
     tkp.db.model.Base.metadata.create_all(database.alchemy_engine)
 
-
     version = tkp.db.model.Version(name='revision',
                                    value=tkp.db.model.SCHEMA_VERSION)
-    session.add(version)
+    database.session.add(version)
 
-    tkp.db.quality.sync_rejectreasons(session)
+    tkp.db.quality.sync_rejectreasons(database.session)
 
     for line in [l.strip() for l in open(batch_file) if not l.startswith("#")]:
         if not line:  # skip empty lines
@@ -214,14 +204,16 @@ def populate(dbconfig):
         sql_file = os.path.join(sql_repo, line)
         with open(sql_file) as sql_handler:
             sql = sql_handler.read()
-            dialected = dialectise(sql, dbconfig['engine'], tokens).strip()
+            dialected = dialectise(sql, dbconfig['engine']).strip()
 
             if not dialected:  # empty query, can happen
                 continue
             try:
-                session.execute(dialected)
+                database.session.execute(dialected)
             except Exception as e:
                 sys.stderr.write(error % sql_file)
                 raise
-    session.commit()
+
+        database.session.commit()
+        database.close()
 

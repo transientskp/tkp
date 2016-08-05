@@ -222,10 +222,16 @@ def image_db_operations(db_image, accessor, job_config):
                                                   successful_ids)
 
 
-def finalise(dataset_id):
+def varmetric(dataset_id):
     dbgen.update_dataset_process_end_ts(dataset_id)
     logger.info("calculating variability metrics")
     execute_store_varmetric(dataset_id)
+
+
+def close_database():
+    db = tkp.db.Database()
+    db.session.commit()
+    db.close()
 
 
 def get_accessors(runner, all_images):
@@ -298,4 +304,5 @@ def run(job_name, supplied_mon_coords=None):
         logger.info(msg % (len(images), timestep, n + 1, len(grouped_images)))
         timestamp_step(runner, images, job_config, dataset_id)
 
-    finalise(dataset_id)
+    varmetric(dataset_id)
+    close_database()

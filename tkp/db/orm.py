@@ -368,13 +368,11 @@ class Image(DBObject):
             args = self._data.copy()
             # somehow _data contains a garbage kwargs
             args.pop('kwargs', None)
-            session = self.database.Session()
-            args['session'] = session
+            args['session'] = self.database.session
             try:
                 image = insert_image(**args)
-                session.commit()
+                self.database.session.commit()
                 self._id = image.id
-                session.close()
             except Exception as e:
                 logger.error("ORM: error inserting image,  %s: %s" %
                                 (type(e).__name__, str(e)))

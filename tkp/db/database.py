@@ -1,18 +1,16 @@
 
 import logging
 import numpy
-import tkp.config
-from tkp.utility import substitute_inf
+
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
+from sqlalchemy.pool import NullPool
 
+import tkp.config
+from tkp.utility import substitute_inf
+from tkp.db.model import SCHEMA_VERSION
 
 logger = logging.getLogger(__name__)
-
-# The version of the TKP DB schema which is assumed by the current tree.
-# Increment whenever the schema changes.
-DB_VERSION = 35
-
 
 
 def sanitize_db_inputs(params):
@@ -54,6 +52,7 @@ class Database(object):
     _configured = False
     transaction = None
     cursor = None
+    session = None
 
     # this makes this class a singleton
     _instance = None
@@ -91,11 +90,13 @@ class Database(object):
                                              self.host,
                                              self.port,
                                              self.database),
-                                            echo=False
+                                            echo=False,
+                                            poolclass=NullPool,
                                             )
         self.Session = sessionmaker(bind=self.alchemy_engine)
+        self.session = self.Session()
 
-    def connect(self, check=False):
+    def connect(self, check=True):
         """
         connect to the configured database
 
@@ -113,9 +114,9 @@ class Database(object):
             q = "SELECT value FROM version WHERE name='revision'"
             cursor = self.connection.execute(q)
             schema_version = cursor.fetchone()[0]
-            if schema_version != DB_VERSION:
+            if schema_version != SCHEMA_VERSION:
                 error = ("Database version incompatibility (needed %d, got %d)" %
-                         (DB_VERSION, schema_version))
+                         (SCHEMA_VERSION, schema_version))
                 logger.error(error)
                 self._connection.close()
                 self._connection = None
@@ -147,8 +148,12 @@ class Database(object):
         """
         close the connection if open
         """
+        if self.session:
+            self.session.close()
+
         if self._connection:
             self._connection.close()
+
         self._connection = None
 
     def vacuum(self, table):

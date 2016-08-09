@@ -15,14 +15,20 @@ import numpy as np
 import time
 import dateutil.parser
 from itertools import repeat
-from concurrent.futures import ProcessPoolExecutor, ThreadPoolExecutor
+import threading
+import multiprocessing
+from Queue import Full
 from multiprocessing import Manager
 
 
-logger = logging.getLogger(__name__)
-
 # the checksum is used to check if we are not drifting in the data flow
 CHECKSUM = 0x47494A53484F4D4F
+
+# how many images groups do we keep before we start dropping
+BACK_LOG = 10
+
+
+logger = logging.getLogger(__name__)
 
 
 def extract_timestamp(hdulist):
@@ -99,7 +105,7 @@ def reconstruct_fits(fits_bytes, image_bytes):
     return hdulist
 
 
-def connection_handler(socket_, queue):
+def connection_handler(socket_, image_queue):
     """
     Handles the connection, waits until a windows is returned and puts it in
     the queue.
@@ -108,7 +114,7 @@ def connection_handler(socket_, queue):
 
     args:
         socket_ (socket.socket): socket used for reading
-        queue (Queue.Queue): used for putting images in
+        image_queue (Queue.Queue): used for putting images in
     """
     while True:
         try:
@@ -119,10 +125,10 @@ def connection_handler(socket_, queue):
             break
         else:
             hdulist = reconstruct_fits(fits_bytes, image_bytes)
-            queue.put(hdulist)
+            image_queue.put(hdulist)
 
 
-def connector(host, port, queue):
+def connector(host, port, image_queue):
     """
     Tries to connect to a specific host and port, if succesful will call
     connection_handler() with the connection.
@@ -130,21 +136,22 @@ def connector(host, port, queue):
     args:
         host (str): host to connect to
         port (int): port to connect to
-        queue (Queue.Queue): Will be used for putting the images in
+        image_queue (Queue.Queue): Will be used for putting the images in
 
     """
     while True:
         logger.info("connecting to {}:{}".format(host, port))
         try:
             socket_ = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            socket_.settimeout(5)
             socket_.connect((host, port))
-        except Exception as e:
+        except socket.error as e:
             logger.error("cant connect to {}:{}: {}".format(host, port, str(e)))
             logger.info("will try reconnecting in 5 seconds")
             time.sleep(5)
         else:
             logger.info("connected to {}:{}".format(host, port))
-            connection_handler(socket_, queue)
+            connection_handler(socket_, image_queue)
 
 
 def merger(image_queue, grouped_queue):
@@ -174,7 +181,13 @@ def merger(image_queue, grouped_queue):
         else:
             previous_timestamp = new_timestamp
             logging.info("collected {} images, processing...".format(len(images)))
-            grouped_queue.put(images)
+            try:
+                grouped_queue.put(images, block=False)
+            except Full:
+                logging.error("grouped image queue full ({}), dropping group"
+                              " ({} images)".format(grouped_queue.qsize(),
+                                                    images.qsize()))
+
             images = [new_image]
 
 
@@ -189,15 +202,20 @@ def stream_generator(hosts, ports):
     """
     manager = Manager()
     image_queue = manager.Queue()
-    grouped_queue = manager.Queue()
+    grouped_queue = manager.Queue(maxsize=BACK_LOG)
 
-    threadpool = ThreadPoolExecutor(max_workers=2)
-    processpool = ProcessPoolExecutor()
+    merger_thread = threading.Thread(target=merger,
+                                     name='merger_tread',
+                                     args=(image_queue, grouped_queue))
+    merger_thread.daemon = True
+    merger_thread.start()
 
-    threadpool.submit(merger, image_queue, grouped_queue)
-
-    connector_args = hosts, ports, repeat(image_queue)
-    processpool.map(connector, *connector_args)
+    for host, port in zip(hosts, ports):
+        con_proc = multiprocessing.Process(target=connector,
+                                           name=None,
+                                           args=(host, port, image_queue))
+        con_proc.daemon = True
+        con_proc.start()
 
     while True:
         yield grouped_queue.get()

@@ -15,8 +15,7 @@ import logging
 from Queue import Queue
 from os import path
 import atexit
-from concurrent.futures import ThreadPoolExecutor, as_completed
-from threading import Lock
+from threading import Lock, Thread, active_count
 from tkp.testutil.data import DATAPATH
 from astropy.io import fits
 from tkp.stream import CHECKSUM
@@ -205,14 +204,15 @@ def socket_listener(port, freq):
     atexit.register(lambda s: s.close(), sock)  # close socket on exit
     logger.info("Server listening on port {}".format(port))
 
-    with ThreadPoolExecutor(max_workers=4) as ex:
-        # block until incoming connection, start handler thread
-        while True:
-            conn, addr_port = sock.accept()
-            if DEBUGGING:
-                client_handler(conn, addr_port[0], freq)
-            else:
-                ex.submit(client_handler, conn, addr_port[0], freq)
+    while True:
+        conn, addr_port = sock.accept()
+        if DEBUGGING:
+            client_handler(conn, addr_port[0], freq)
+        else:
+            t = Thread(target=client_handler, name='repeater_thread',
+                       args=(conn, addr_port[0], freq))
+            t.daemon = True
+            t.start()
 
 
 def timer(queue):
@@ -245,16 +245,26 @@ def emulator(ports=DEFAULT_PORTS, freqs=DEFAULT_FREQS):
     heartbeat_queue = Queue()
     repeater = Repeater()
 
-    with ThreadPoolExecutor(max_workers=len(ports) + 2) as ex:
-        ex.submit(timer, heartbeat_queue)
-        ex.submit(repeater.run, heartbeat_queue)
-        if DEBUGGING:
-            socket_listener(ports[0], freqs[0])
-        else:
-            fs = ex.map(socket_listener, ports, freqs)
-            for f in as_completed(fs):
-                logging.info(f.result())
+    timer_thread = Thread(target=timer, name='timer_thread',
+                          args=(heartbeat_queue,))
+    timer_thread.daemon = True
+    timer_thread.start()
 
+    repeater_thread = Thread(target=repeater.run, name='repeater_thread',
+                             args=(heartbeat_queue,))
+    repeater_thread.daemon = True
+    repeater_thread.start()
+
+    # start all listening threads
+    for port, freq in zip(ports, freqs):
+        name = 'socket_{}_thread'.format(port)
+        args = port, freq
+        t = Thread(target=socket_listener, name=name, args=args)
+        t.daemon = True
+        t.start()
+
+    while active_count():
+        time.sleep(1)
 
 if __name__ == '__main__':
     logging.basicConfig(level=logging.DEBUG)

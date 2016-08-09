@@ -300,13 +300,19 @@ def run_stream(runner, job_config, dataset_id):
     """
     hosts = job_config.pipeline.hosts.split(',')
     ports = [int(p) for p in job_config.pipeline.ports.split(',')]
+    from datetime import datetime
     for images in stream_generator(hosts=hosts, ports=ports):
         logger.info("processing {} stream images...".format(len(images)))
+        trap_start = datetime.now()
         try:
             timestamp_step(runner, images, job_config, dataset_id)
         except Exception as e:
             logger.error("timestep raised {} exception: {}".format(type(e), str(e)))
-        varmetric(dataset_id)
+        else:
+            trap_end = datetime.now()
+            delta = (trap_end - trap_start).microseconds/1000
+            logging.info("trap iteration took {} ms".format(delta))
+    varmetric(dataset_id)
     close_database()
 
 

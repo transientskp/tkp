@@ -28,16 +28,17 @@ from tkp.stream import stream_generator
 logger = logging.getLogger(__name__)
 
 
-def setup(job_name, supplied_mon_coords=None):
+def get_pipe_config(job_name):
+    return initialize_pipeline_config(os.path.join(os.getcwd(), "pipeline.cfg"),
+                                      job_name)
+
+
+def setup(pipe_config, supplied_mon_coords=None):
     """
     Initialises the pipeline run.
     """
     if not supplied_mon_coords:
         supplied_mon_coords = []
-
-    pipe_config = initialize_pipeline_config(
-        os.path.join(os.getcwd(), "pipeline.cfg"),
-        job_name)
 
     # Setup logfile before we do anything else
     log_dir = pipe_config.logging.log_dir
@@ -61,12 +62,19 @@ def setup(job_name, supplied_mon_coords=None):
 
     job_config, dataset_id = initialise_dataset(job_config, supplied_mon_coords)
 
-    return job_dir, job_config, pipe_config, dataset_id
+    return job_dir, job_config, dataset_id
 
 
 def get_runner(pipe_config):
     """
-    get parallelise props. Defaults to multiproc with autodetect num cores
+    get parallelise props. Defaults to multiproc with autodetect num cores. Wil
+    initialise the distributor.
+
+    One should not mix threads and multiprocessing, but for example AstroPy uses
+    threads internally. Best practice then is to first do multiprocessing,
+    and then threading per process. This is the reason why this function
+    should be called as one of the first functions the in the TraP pipeline
+    lifespan.
     """
     para = pipe_config.parallelise
     logging.info("using '{}' method for parallellisation".format(para.method))
@@ -354,9 +362,9 @@ def run(job_name, supplied_mon_coords=None):
         job_name (str): name of the jbo to run
         supplied_mon_coords (list): list of coordinates to monitor
     """
-    job_dir, job_config, pipe_config, dataset_id = setup(job_name,
-                                                         supplied_mon_coords)
+    pipe_config = get_pipe_config(job_name)
     runner = get_runner(pipe_config)
+    job_dir, job_config, dataset_id = setup(pipe_config, supplied_mon_coords)
 
     if job_config.pipeline.mode == 'stream':
         run_stream(runner, job_config, dataset_id)

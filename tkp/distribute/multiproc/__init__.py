@@ -5,12 +5,19 @@ zip the iterable together with the arguments.
 """
 import sys
 from multiprocessing import Pool, cpu_count, log_to_stderr
-#from multiprocessing.pool import ThreadPool
+
 import logging
 import atexit
 
+# use this for debugging. Will not fork processes but run everything threaded
+THREADED = False
 
-pool = Pool(processes=cpu_count())
+if THREADED:
+    from multiprocessing.pool import ThreadPool
+    pool = ThreadPool(processes=cpu_count())
+else:
+    pool = Pool(processes=cpu_count())
+
 atexit.register(lambda: pool.terminate())
 
 logger = log_to_stderr()

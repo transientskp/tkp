@@ -14,7 +14,7 @@ import astropy.io.fits
 import numpy as np
 import time
 import dateutil.parser
-import multiprocessing
+
 from Queue import Full
 from multiprocessing import Manager
 
@@ -25,6 +25,8 @@ CHECKSUM = 0x47494A53484F4D4F
 # how many images groups do we keep before we start dropping
 BACK_LOG = 10
 
+# use this for debugging. Will not fork processes but run everything threaded
+THREADED = False
 
 logger = logging.getLogger(__name__)
 
@@ -199,10 +201,19 @@ def stream_generator(hosts, ports):
         hosts (list): list of hosts to connect to
         ports (list): list of ports to connect to
     """
-    manager = Manager()
-    image_queue = manager.Queue()
-    grouped_queue = manager.Queue(maxsize=BACK_LOG)
-    method = multiprocessing.Process  # could be threading.Thread for debugging
+
+    if THREADED:
+        import threading
+        from queue import Queue
+        method = threading.Thread
+        image_queue = Queue()
+        grouped_queue = Queue(maxsize=BACK_LOG)
+    else:
+        import multiprocessing
+        manager = Manager()
+        image_queue = manager.Queue()
+        grouped_queue = manager.Queue(maxsize=BACK_LOG)
+        method = multiprocessing.Process
 
     for host, port in zip(hosts, ports):
         name = 'port_{}_proc'.format(port)

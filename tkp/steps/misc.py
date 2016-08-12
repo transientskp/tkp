@@ -71,8 +71,8 @@ def setup_logging(log_dir, debug, use_colorlog,
     )
 
     debug_formatter = logging.Formatter(
-        '%(asctime)s %(levelname)s %(name)s %(funcName)s() %(processName)s '
-        '(%(process)d) %(threadName)s %(thread)d : %(message)s',
+        '%(asctime)s %(levelname)s %(name)s %(funcName)s() process %(processName)s '
+        '(%(process)d) thread %(threadName)s (%(thread)d) : %(message)s',
         datefmt="%Y-%m-%d %H:%M:%S"
     )
 

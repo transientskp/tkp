@@ -14,8 +14,6 @@ import astropy.io.fits
 import numpy as np
 import time
 import dateutil.parser
-from itertools import repeat
-import threading
 import multiprocessing
 from Queue import Full
 from multiprocessing import Manager
@@ -58,7 +56,7 @@ def getbytes(socket_, bytes_):
     while count > 0:
         recv = socket_.recv(count)
         if len(recv) == 0:
-            raise Exception("Server closed connection")
+            raise socket.error("Server closed connection")
         count -= len(recv)
         result.write(recv)
     return result.getvalue()
@@ -121,7 +119,8 @@ def connection_handler(socket_, image_queue):
             fits_bytes, image_bytes = read_window(socket_)
         except Exception as e:
             logger.error("error reading data: {}".format(str(e)))
-            logger.error(str(type(e)))
+            logger.info("sleeping for 5 seconds")
+            time.sleep(5)
             break
         else:
             hdulist = reconstruct_fits(fits_bytes, image_bytes)
@@ -130,7 +129,7 @@ def connection_handler(socket_, image_queue):
 
 def connector(host, port, image_queue):
     """
-    Tries to connect to a specific host and port, if succesful will call
+    Tries to connect to a specific host and port, if succesfull will call
     connection_handler() with the connection.
 
     args:
@@ -173,20 +172,20 @@ def merger(image_queue, grouped_queue):
     while True:
         new_image = image_queue.get()
         new_timestamp = extract_timestamp(new_image)
-        logging.info("merger received image with timestamp {}".format(new_timestamp))
+        logger.info("merger received image with timestamp {}".format(new_timestamp))
         if new_timestamp < previous_timestamp:
-            logging.error("timing error, older image received after newer image")
+            logger.error("timing error, older image received after newer image")
         if new_timestamp == previous_timestamp:
             images.append(new_image)
         else:
             previous_timestamp = new_timestamp
-            logging.info("collected {} images, processing...".format(len(images)))
+            logger.info("collected {} images, processing...".format(len(images)))
             try:
                 grouped_queue.put(images, block=False)
             except Full:
-                logging.error("grouped image queue full ({}), dropping group"
+                logger.error("grouped image queue full ({}), dropping group"
                               " ({} images)".format(grouped_queue.qsize(),
-                                                    images.qsize()))
+                                                    len(images)))
 
             images = [new_image]
 
@@ -197,38 +196,26 @@ def stream_generator(hosts, ports):
     images with the same timestamp.
 
     args:
-        hosts (list): list of hosts to connec to
+        hosts (list): list of hosts to connect to
         ports (list): list of ports to connect to
     """
     manager = Manager()
     image_queue = manager.Queue()
     grouped_queue = manager.Queue(maxsize=BACK_LOG)
-
-    merger_thread = threading.Thread(target=merger,
-                                     name='merger_tread',
-                                     args=(image_queue, grouped_queue))
-    merger_thread.daemon = True
-    merger_thread.start()
+    method = multiprocessing.Process  # could be threading.Thread for debugging
 
     for host, port in zip(hosts, ports):
-        con_proc = multiprocessing.Process(target=connector,
-                                           name=None,
-                                           args=(host, port, image_queue))
+        name = 'port_{}_proc'.format(port)
+        args = dict(target=connector, name=name, args=(host, port, image_queue))
+        con_proc = method(**args)
         con_proc.daemon = True
         con_proc.start()
 
+    args = dict(target=merger, name='merger_proc',
+                args=(image_queue, grouped_queue))
+    merger_proc = method(**args)
+    merger_proc.daemon = True
+    merger_proc.start()
+
     while True:
         yield grouped_queue.get()
-
-
-def main():
-    logging.basicConfig(level=logging.DEBUG)
-    hosts = repeat("localhost")
-    ports = range(6666, 6672)
-
-    for images in stream_generator(hosts, ports):
-        print(len(images))
-
-
-if __name__ == '__main__':
-    main()

@@ -65,48 +65,48 @@ def setup_logging(log_dir, debug, use_colorlog,
     info_log_file = os.path.join(log_dir, basename+'.log')
     debug_log_file = os.path.join(log_dir, basename+'.debug.log')
 
-
-
-    long_formatter = logging.Formatter(
+    formatter = logging.Formatter(
         '%(asctime)s %(levelname)s %(name)s: %(message)s',
         datefmt="%Y-%m-%d %H:%M:%S"
     )
-    short_formatter = logging.Formatter(
-        '%(asctime)s %(levelname)s %(name)s: %(message)s',
-            datefmt="%H:%M:%S")
+
+    debug_formatter = logging.Formatter(
+        '%(asctime)s %(levelname)s %(name)s %(funcName)s() %(processName)s '
+        '(%(process)d) %(threadName)s %(thread)d : %(message)s',
+        datefmt="%Y-%m-%d %H:%M:%S"
+    )
 
     info_hdlr = logging.FileHandler(info_log_file)
     info_hdlr.setLevel(logging.INFO)
-    info_hdlr.setFormatter(long_formatter)
+    info_hdlr.setFormatter(formatter)
 
     debug_hdlr = logging.FileHandler(debug_log_file)
     debug_hdlr.setLevel(logging.DEBUG)
-    debug_hdlr.setFormatter(long_formatter)
+    debug_hdlr.setFormatter(debug_formatter)
 
     stdout_handler = logging.StreamHandler()
 
-    color_fmt = colorlog.ColoredFormatter(
-            "%(log_color)s%(asctime)s:%(name)s:%(levelname)s%(reset)s %(blue)s%(message)s",
-            datefmt= "%H:%M:%S",
-            reset=True,
-            log_colors={
-                    'DEBUG':    'cyan',
-                    'INFO':     'green',
-                    'WARNING':  'yellow',
-                    'ERROR':    'red',
-                    'CRITICAL': 'red',
-            }
-        )
-    if use_colorlog:
-        stdout_handler.setFormatter(color_fmt)
-    else:
-        stdout_handler.setFormatter(short_formatter)
-
-
     if debug:
         stdout_handler.setLevel(logging.DEBUG)
+        formatter = debug_formatter
     else:
         stdout_handler.setLevel(logging.INFO)
+        formatter = formatter
+
+    if use_colorlog:
+        formatter = colorlog.ColoredFormatter(
+            "%(log_color)s" + formatter._fmt,
+            datefmt="%H:%M:%S",
+            reset=True,
+            log_colors={
+                'DEBUG': 'cyan',
+                'INFO': 'green',
+                'WARNING': 'yellow',
+                'ERROR': 'red',
+                'CRITICAL': 'red',
+            }
+        )
+    stdout_handler.setFormatter(formatter)
 
     root_logger = logging.getLogger()
     # We set level to debug, and handle output via handler-levels

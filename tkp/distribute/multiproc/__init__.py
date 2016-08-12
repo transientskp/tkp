@@ -5,12 +5,18 @@ zip the iterable together with the arguments.
 """
 import sys
 from multiprocessing import Pool, cpu_count, log_to_stderr
+#from multiprocessing.pool import ThreadPool
 import logging
+import atexit
+
 
 pool = Pool(processes=cpu_count())
+atexit.register(lambda: pool.terminate())
 
 logger = log_to_stderr()
-logger.setLevel(logging.WARNING)
+logger.setLevel(logging.INFO)
+logger.info("initialising multiprocessing module with "
+            "{} cores".format(cpu_count()))
 
 
 def set_cores(cores=0):

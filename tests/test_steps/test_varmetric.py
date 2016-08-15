@@ -35,3 +35,11 @@ class TestApi(unittest.TestCase):
     def test_execute_store_varmetric(self):
         session = self.db.Session()
         execute_store_varmetric(session=session, dataset_id=self.dataset.id)
+        self.session.flush()
+
+    def test_execute_store_varmetric_twice(self):
+        session = self.db.Session()
+        execute_store_varmetric(session=session, dataset_id=self.dataset.id)
+        self.session.flush()
+        execute_store_varmetric(session=session, dataset_id=self.dataset.id)
+        self.session.flush()

@@ -13,6 +13,7 @@ install_requires = """
     scipy>=0.7.0
     sqlalchemy>=1.0.0
     alembic
+    monotonic
     """.split()
 
 extras_require = {

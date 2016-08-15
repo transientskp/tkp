@@ -662,8 +662,8 @@ class WCS(object):
             pixpos (list):  [x, y] pixel position
 
         Returns:
-            ra (float):     Right ascension corresponding to position [x, y]
-            dec (float):    Declination corresponding to position [x, y]
+            tuple: ra (float) Right ascension corresponding to position [x, y]
+                   dec (float) Declination corresponding to position [x, y]
         """
         ra, dec = self.wcs.wcs_pix2world(pixpos[0], pixpos[1], self.ORIGIN)
         if math.isnan(ra) or math.isnan(dec):
@@ -678,8 +678,8 @@ class WCS(object):
             pixpos (list):  [ra, dec] spatial position
 
         Returns:
-            x (float):      X pixel value corresponding to position [ra, dec]
-            y (float):      Y pixel value corresponding to position [ra, dec]
+            tuple: X pixel value corresponding to position [ra, dec],
+                   Y pixel value corresponding to position [ra, dec]
         """
         x, y = self.wcs.wcs_world2pix(spatialpos[0], spatialpos[1], self.ORIGIN)
         if math.isnan(x) or math.isnan(y):

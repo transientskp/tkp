@@ -27,4 +27,4 @@ Top-level modules
    :maxdepth: 1
 
    main
-
+   stream

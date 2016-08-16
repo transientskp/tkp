@@ -21,7 +21,7 @@ else:
 atexit.register(lambda: pool.terminate())
 
 logger = log_to_stderr()
-logger.setLevel(logging.INFO)
+logger.setLevel(logging.WARNING)
 logger.info("initialising multiprocessing module with "
             "{} cores".format(cpu_count()))
 

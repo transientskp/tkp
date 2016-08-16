@@ -327,7 +327,7 @@ class Varmetric(Base):
     id = Column(Integer, primary_key=True)
 
     runcat_id = Column('runcat', ForeignKey('runningcatalog.id'),
-                       nullable=False, index=True)
+                       nullable=False, index=True, unique=True)
 
     v_int = Column(Double, index=True)
     eta_int = Column(Double)

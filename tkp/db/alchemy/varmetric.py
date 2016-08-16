@@ -3,9 +3,10 @@ An example how to use this is shown in an IPython notebook:
 
 https://github.com/transientskp/notebooks/blob/master/transients.ipynb
 """
-from sqlalchemy import func, insert
+from sqlalchemy import func, insert, delete
 from sqlalchemy.orm import aliased
-from tkp.db.model import Assocxtrsource, Extractedsource, Runningcatalog, Image, Newsource, Varmetric
+from tkp.db.model import Assocxtrsource, Extractedsource, Runningcatalog,\
+    Image, Newsource, Varmetric
 
 
 def _last_assoc_timestamps(session, dataset):
@@ -185,6 +186,18 @@ def _combined(session, dataset):
         subquery()
 
 
+def del_duplicate_varmetric(session, dataset):
+    """
+    can't figure out how to update in a simple way, for now just delete
+    the updated rows. This code should be rewritten anyway when we make it
+    optional to specify a list of runcat entries to update
+    """
+    del_varmetrics = session.query(Varmetric.id).\
+        filter(Varmetric.runcat_id == Runningcatalog.id,
+               Runningcatalog.dataset == dataset).subquery()
+    return delete(Varmetric).where(Varmetric.id.in_(del_varmetrics))
+
+
 def store_varmetric(session, dataset):
     """
     Stores the augmented runningcatalog values in the varmetric table.
@@ -216,7 +229,7 @@ def calculate_varmetric(session, dataset, ra_range=None, decl_range=None,
     It starts by getting the extracted source from latest image for a runcat.
     This is arbitrary, since you have multiple bands. We pick the band with the
     max integrated flux. Now we have v_int and eta_int.
-    The flux is then devided by the RMS_max and RMS_min of the previous image
+    The flux is then divided by the RMS_max and RMS_min of the previous image
     (stored in newsource.previous_limits_image) to obtain sigma_max and
     sigma_min.
 

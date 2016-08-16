@@ -63,18 +63,4 @@ class TestPersistence(unittest.TestCase):
                                                    where=dict(id=image.skyrgn))
             self.assertGreaterEqual(skyrgn[0]['xtr_radius'], 0)
 
-    def test_safe_to_mongodb(self):
-        tkp.steps.persistence.save_to_mongodb(self.images,
-                                              self.image_cache_pars)
 
-
-@requires_mongodb()
-class TestMongoDb(unittest.TestCase):
-    @classmethod
-    def setUpClass(cls):
-        cls.images = [datafile]
-
-    @unittest.skip("disabled for now since no proper way to configure (yet)")
-    def test_image_to_mongodb(self):
-        self.assertTrue(tkp.steps.persistence.image_to_mongodb(self.images[0],
-                                                    hostname, port, database))

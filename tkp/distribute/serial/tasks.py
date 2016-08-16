@@ -17,6 +17,11 @@ def extract_metadatas(accessors, sigma, f):
     return tkp.steps.persistence.extract_metadatas(accessors, sigma, f)
 
 
+def open_as_fits(images):
+    logger.debug("opening files as fits objects")
+    return tkp.steps.persistence.paths_to_fits(images)
+
+
 def quality_reject_check(accessor, job_config):
     logger.debug("running quality task")
     return tkp.steps.quality.reject_check(accessor, job_config)

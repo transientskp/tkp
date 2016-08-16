@@ -8,6 +8,9 @@ import os
 from tkp import steps
 from tkp.config import initialize_pipeline_config, get_database_config
 import tkp.db
+from tkp.db.image_store import store_fits
+from astropy.io.fits.hdu import HDUList
+from itertools import chain
 from tkp.db import consistency as dbconsistency
 from tkp.db import Image
 from tkp.db import general as dbgen
@@ -142,12 +145,6 @@ def initialise_dataset(job_config, supplied_mon_coords):
     return job_config, dataset_id
 
 
-def store_mongodb(pipe_config, all_images, runner):
-    logger.info("Storing copy of images in MongoDB")
-    imgs = [[img] for img in all_images]
-    runner.map("save_to_mongodb", imgs, [pipe_config.image_cache])
-
-
 def extract_metadata(job_config, accessors, runner):
     logger.info("Extracting metadata from images")
     imgs = [[a] for a in accessors]
@@ -166,6 +163,17 @@ def storing_images(metadatas, job_config, dataset_id):
                                    job_config.persistence.bandwidth_max)
     db_images = [Image(id=image_id) for image_id in image_ids]
     return db_images
+
+
+def extract_fits_from_files(runner, paths):
+    # we assume pahtss is uniform
+    if type(paths[0]) == str:
+        fitss = runner.map("open_as_fits", [[p] for p in paths])
+        return zip(*list(chain.from_iterable(fitss)))
+    elif type(paths[0]) == HDUList:
+        return [f[0].data for f in paths], [str(f[0].header) for f in paths]
+    else:
+        logging.error('unknown type')
 
 
 def quality_check(db_images, accessors, job_config, runner):
@@ -270,7 +278,15 @@ def get_metadata_for_sorting(runner, image_paths):
     return metadatas
 
 
-def timestamp_step(runner, images, job_config, dataset_id):
+def store_images(db_images, fits_datas, fits_headers):
+    logging.info("storing {} images to database".format(len(db_images)))
+    db = tkp.db.Database()
+    for update in store_fits(db_images, fits_datas, fits_headers):
+        db.session.execute(update)
+    db.session.commit()
+
+
+def timestamp_step(runner, images, job_config, dataset_id, copy_images):
     """
     Called from the main loop with all images in a certain timestep
 
@@ -287,6 +303,11 @@ def timestamp_step(runner, images, job_config, dataset_id):
     db_images = storing_images(metadatas, job_config, dataset_id)
     error = "%s != %s != %s" % (len(accessors), len(metadatas), len(db_images))
     assert len(accessors) == len(metadatas) == len(db_images), error
+
+    # store copy of image data in database
+    if copy_images:
+        fits_datas, fits_headers = extract_fits_from_files(runner, images)
+        store_images(db_images, fits_datas, fits_headers)
 
     # filter out the bad ones
     good_images = quality_check(db_images, accessors, job_config, runner)
@@ -317,7 +338,7 @@ def timestamp_step(runner, images, job_config, dataset_id):
     varmetric(dataset_id)
 
 
-def run_stream(runner, job_config, dataset_id):
+def run_stream(runner, job_config, dataset_id, copy_images):
     """
     Run the pipeline in stream mode.
 
@@ -334,18 +355,18 @@ def run_stream(runner, job_config, dataset_id):
     for images in stream_generator(hosts=hosts, ports=ports):
         logger.info("processing {} stream images...".format(len(images)))
         trap_start = datetime.now()
-        try:
-            timestamp_step(runner, images, job_config, dataset_id)
-            varmetric(dataset_id)
-        except Exception as e:
-            logger.error("timestep raised {} exception: {}".format(type(e), str(e)))
-        else:
-            trap_end = datetime.now()
-            delta = (trap_end - trap_start).microseconds/1000
-            logging.info("trap iteration took {} ms".format(delta))
+        #try:
+        timestamp_step(runner, images, job_config, dataset_id, copy_images)
+        varmetric(dataset_id)
+        #except Exception as e:
+        #    logger.error("timestep raised {} exception: {}".format(type(e), str(e)))
+        #else:
+        trap_end = datetime.now()
+        delta = (trap_end - trap_start).microseconds/1000
+        logging.info("trap iteration took {} ms".format(delta))
 
 
-def run_batch(job_name, job_dir, pipe_config, job_config, runner, dataset_id):
+def run_batch(image_paths, job_config, runner, dataset_id, copy_images):
     """
     Run the pipeline in batch mode.
 
@@ -356,20 +377,13 @@ def run_batch(job_name, job_dir, pipe_config, job_config, runner, dataset_id):
         runner (tkp.distribute.Runner): Runner to use for distribution
         dataset_id (int): The dataset ID to use
     """
-    image_paths = load_images(job_name, job_dir)
-
-    if pipe_config.image_cache['copy_images']:
-        store_mongodb(pipe_config, image_paths, runner)
-    else:
-        logging.info("storing copies in image cache is disabled")
-
     sorting_metadata = get_metadata_for_sorting(runner, image_paths)
     grouped_images = group_per_timestep(sorting_metadata)
 
     for n, (timestep, images) in enumerate(grouped_images):
         msg = "processing %s images in timestep %s (%s/%s)"
         logger.info(msg % (len(images), timestep, n + 1, len(grouped_images)))
-        timestamp_step(runner, images, job_config, dataset_id)
+        timestamp_step(runner, images, job_config, dataset_id, copy_images)
 
 
 def run(job_name, supplied_mon_coords=None):
@@ -387,9 +401,11 @@ def run(job_name, supplied_mon_coords=None):
     # make sure we close the database connection at program exit
     atexit.register(close_database, dataset_id)
 
+    copy_images = pipe_config.image_cache['copy_images']
     if job_config.pipeline.mode == 'stream':
-        run_stream(runner, job_config, dataset_id)
+        run_stream(runner, job_config, dataset_id, copy_images)
     elif job_config.pipeline.mode == 'batch':
-        run_batch(job_name, job_dir, pipe_config, job_config, runner, dataset_id)
+        image_paths = load_images(job_name, job_dir)
+        run_batch(image_paths, job_config, runner, dataset_id, copy_images)
 
 

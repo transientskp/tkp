@@ -24,6 +24,12 @@ def extract_metadatas(zipped):
     return tkp.steps.persistence.extract_metadatas(images, sigma, f)
 
 
+def open_as_fits(zipped):
+    logger.debug("opening files as fits objects")
+    images, args = zipped
+    return list(tkp.steps.persistence.paths_to_fits(images))
+
+
 def quality_reject_check(zipped):
     logger.debug("running quality task")
     url, args = zipped

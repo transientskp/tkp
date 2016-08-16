@@ -4,9 +4,8 @@ to the database and image cache (mongodb).
 """
 import os
 import logging
-import warnings
 from tempfile import NamedTemporaryFile
-
+from astropy.io.fits import open as fits_open
 from casacore.images import image as casacore_image
 
 import tkp.accessors
@@ -15,50 +14,6 @@ from tkp.db.orm import DataSet, Image
 from tkp.quality.rms import rms_with_clipped_subregion
 
 logger = logging.getLogger(__name__)
-
-def image_to_mongodb(filename, hostname, port, db):
-    """Copy a file into mongodb"""
-
-    try:
-        import pymongo
-        import gridfs
-    except ImportError:
-        msg = "Could not import MongoDB modules"
-        logger.error(msg)
-        warnings.warn(msg)
-        return False
-
-    try:
-        connection = pymongo.MongoClient(host=hostname, port=port)
-        gfs = gridfs.GridFS(connection[db])
-        if gfs.exists(filename=filename):
-            logger.debug("File already in database")
-
-        else:
-            # This conversion should work whether the input file
-            # is in FITS or CASA format.
-            # temp_fits_file is removed automatically when closed.
-            temp_fits_file = NamedTemporaryFile()
-            i = casacore_image(filename)
-            i.tofits(temp_fits_file.name)
-            new_file = gfs.new_file(filename=filename)
-            with open(temp_fits_file.name, "r") as f:
-                new_file.write(f)
-            new_file.close()
-            logger.info("Saved local copy of %s on %s"\
-                        % (os.path.basename(filename), hostname))
-    except Exception, e:
-        logger.exception("Failed to save image to MongoDB: {}".format(filename))
-        return False
-
-    finally:
-        # Only clear up things which have been created
-        if "connection" in locals():
-            connection.close()
-        if "temp_fits_file" in locals():
-            temp_fits_file.close()
-
-    return True
 
 
 def create_dataset(dataset_id, description):
@@ -137,22 +92,6 @@ def store_images_in_db(images_metadata, extraction_radius_pix, dataset_id, bandw
     return image_ids
 
 
-def save_to_mongodb(images, image_cache_config):
-    """
-    Copy image data to a MongDB database
-    """
-    mongohost = image_cache_config['mongo_host']
-    mongoport = image_cache_config['mongo_port']
-    mongodb = image_cache_config['mongo_db']
-    copy_images = image_cache_config['copy_images']
-
-    if copy_images:
-        for image in images:
-            image_to_mongodb(image, mongohost, mongoport, mongodb)
-    else:
-        logger.info("Not copying images to mongodb")
-
-
 def get_accessors(images):
     results = []
     for image in images:
@@ -163,3 +102,23 @@ def get_accessors(images):
         else:
             results.append(accessor)
     return results
+
+
+def paths_to_fits(paths):
+    """
+    paths (list): list of paths to a astronomical image which can be opened with
+                 casacore
+    returns:
+        list: of HDUlist objects
+    """
+    for path in paths:
+        try:
+            i = casacore_image(path)
+        except RuntimeError:
+            logging.error("can't open image {}".format(path))
+            yield
+        else:
+            with NamedTemporaryFile() as temp_file:
+                i.tofits(temp_file.name)
+                fits = fits_open(temp_file.name)
+                yield fits[0].data, str(fits[0].header)

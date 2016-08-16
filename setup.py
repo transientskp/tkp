@@ -17,7 +17,6 @@ install_requires = """
     """.split()
 
 extras_require = {
-    'pixelstore': ['pymongo>=3.0'],
     'monetdb': ['sqlalchemy_monetdb>=0.9.1'],
 }
 

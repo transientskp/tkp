@@ -61,9 +61,7 @@ def insert_and_associate_forced_fits(image_id,successful_fits,successful_ids):
         logger.debug("No successful monitor fits")
 
 
-
-def perform_forced_fits(fit_posns, fit_ids,
-                        accessor, extraction_params):
+def perform_forced_fits(fit_posns, fit_ids, accessor, extraction_params):
     """
     Perform forced source measurements on an image based on a list of
     positions.
@@ -81,6 +79,10 @@ def perform_forced_fits(fit_posns, fit_ids,
         if some fits are unsuccessful.
     """
     logger.debug("Forced fitting in image: %s" % (accessor.url))
+
+    if not len(fit_ids):
+        logging.debug("nothing to force fit")
+        return [], []
 
     margin = extraction_params['margin']
     radius = extraction_params['extraction_radius_pix']

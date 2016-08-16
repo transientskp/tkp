@@ -159,7 +159,7 @@ def extract_metadata(job_config, accessors, runner):
 
 
 def storing_images(metadatas, job_config, dataset_id):
-    logger.info("Storing image metadata in SQL database")
+    logger.debug("Storing image metadata in SQL database")
     r = job_config.source_extraction.extraction_radius_pix
     image_ids = store_images_in_db(metadatas, r, dataset_id,
                                    job_config.persistence.bandwidth_max)
@@ -172,7 +172,7 @@ def quality_check(db_images, accessors, job_config, runner):
     returns:
         list: a list of db_image and accessor tuples
     """
-    logger.info("performing quality check")
+    logger.debug("performing quality check")
     arguments = [job_config]
     rejecteds = runner.map("quality_reject_check", accessors, arguments)
 
@@ -194,7 +194,17 @@ def source_extraction(accessors, job_config, runner):
     logger.debug("performing source extraction")
     arguments = [job_config.source_extraction]
     extraction_results = runner.map("extract_sources", accessors, arguments)
+    total = sum(len(i[0]) for i in extraction_results)
+    logger.info('found {} blind sources in {} images'.format(total, len(extraction_results)))
     return extraction_results
+
+
+def do_forced_fits(runner, all_forced_fits):
+    logger.debug('performing forced fitting')
+    returned = runner.map("forced_fits", all_forced_fits)
+    total = sum(len(i[0]) for i in returned)
+    logger.info('performed {} forced fits in {} images'.format(total, len(returned)))
+    return returned
 
 
 def store_extractions(images, extraction_results, job_config):
@@ -210,7 +220,7 @@ def store_extractions(images, extraction_results, job_config):
         dbgen.insert_extracted_sources(db_image.id, results.sources, 'blind')
 
 
-def image_db_operations(db_image, accessor, job_config):
+def assocate_and_get_force_fits(db_image, job_config):
     logger.debug("performing DB operations for image {} ({})".format(db_image.id,
                                                                     db_image.url))
 
@@ -222,12 +232,7 @@ def image_db_operations(db_image, accessor, job_config):
     expiration = job_config.source_extraction.expiration
     all_fit_posns, all_fit_ids = steps_ff.get_forced_fit_requests(db_image,
                                                                   expiration)
-    if all_fit_posns:
-        successful_fits, successful_ids = steps_ff.perform_forced_fits(
-            all_fit_posns, all_fit_ids, accessor, job_config.source_extraction)
-
-        steps_ff.insert_and_associate_forced_fits(db_image.id, successful_fits,
-                                                  successful_ids)
+    return all_fit_posns, all_fit_ids
 
 
 def varmetric(dataset_id):
@@ -288,11 +293,24 @@ def timestamp_step(runner, images, job_config, dataset_id):
 
     # do the source extractions
     extraction_results = source_extraction(good_accessors, job_config, runner)
+
     store_extractions(good_images, extraction_results, job_config)
 
-    # store extracted sources in the database
+    all_forced_fits = []
+    # assocate the sources
     for (db_image, accessor) in good_images:
-        image_db_operations(db_image, accessor, job_config)
+        fit_poss, fit_ids = assocate_and_get_force_fits(db_image, job_config)
+        all_forced_fits.append((accessor, db_image.id, fit_poss, fit_ids,
+                               job_config.source_extraction))
+
+    # do the forced fitting
+    all_forced_fits_results = do_forced_fits(runner, all_forced_fits)
+
+    # store and associate the forced fits
+    for (successful_fits, successful_ids, db_image_id) in all_forced_fits_results:
+        steps_ff.insert_and_associate_forced_fits(db_image_id,
+                                                  successful_fits,
+                                                  successful_ids)
 
 
 def run_stream(runner, job_config, dataset_id):

@@ -2,6 +2,7 @@ from __future__ import absolute_import
 import logging
 import tkp.steps
 from tkp.steps.misc import ImageMetadataForSort
+from tkp.steps.forced_fitting import perform_forced_fits
 
 logger = logging.getLogger(__name__)
 
@@ -46,3 +47,11 @@ def get_metadata_for_ordering(images):
                                       frequency=a.freq_eff))
     return l
 
+
+def forced_fits(zipped):
+    logger.debug("running forced fits task")
+    accessor, db_image_id, fit_posns, fit_ids, extraction_params = zipped
+    successful_fits, successful_ids = perform_forced_fits(fit_posns, fit_ids,
+                                                          accessor,
+                                                          extraction_params)
+    return successful_fits, successful_ids, db_image_id

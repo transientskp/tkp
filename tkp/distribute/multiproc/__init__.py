@@ -10,7 +10,7 @@ import logging
 import atexit
 
 # use this for debugging. Will not fork processes but run everything threaded
-THREADED = False
+THREADED = True
 
 if THREADED:
     from multiprocessing.pool import ThreadPool

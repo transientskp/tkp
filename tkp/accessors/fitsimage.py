@@ -130,8 +130,8 @@ class FitsImage(DataAccessor):
 
                 else:
                     logger.warning("bandwidth header missing in image {},"
-                                   " setting to 0.0".format(self.url))
-                    freq_bw = 0.0
+                                   " setting to 1 MHz".format(self.url))
+                    freq_bw = 1e6
             else:
                 if header['ctype3'] in ('FREQ', 'VOPT'):
                     freq_eff = header['crval3']

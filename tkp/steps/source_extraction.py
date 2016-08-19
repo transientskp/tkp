@@ -47,7 +47,7 @@ def extract_sources(accessor, extraction_params):
         deblend_nthresh=extraction_params['deblend_nthresh'],
         force_beam=extraction_params['force_beam']
     )
-    logger.info("Detected %d sources in image %s" % (len(results), accessor.url))
+    logger.debug("Detected %d sources in image %s" % (len(results), accessor.url))
 
     ew_sys_err = extraction_params['ew_sys_err']
     ns_sys_err = extraction_params['ns_sys_err']

@@ -26,10 +26,8 @@ def deconv(fmaj, fmin, fpa, cmaj, cmin, cpa):
         cpa (float):  Clean beam position angle of major axis
 
     Returns:
-        rmaj (float): Real major axis
-        rmin (float): Real minor axis
-        rpa (float):  Real position angle of major axis
-        ierr (int):   Number of components which failed to deconvolve
+        tuple: real major axis, real minor axis, real position angle of major
+               axis, number of components which failed to deconvolve
     """
     HALF_RAD = 90.0 / pi
     cmaj2 = cmaj * cmaj

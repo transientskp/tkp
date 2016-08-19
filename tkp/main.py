@@ -3,6 +3,7 @@ The main pipeline logic, from where all other components are called.
 """
 import imp
 import logging
+import atexit
 import os
 from tkp import steps
 from tkp.config import initialize_pipeline_config, get_database_config
@@ -22,21 +23,23 @@ from tkp.db.configstore import store_config, fetch_config
 from tkp.steps.persistence import create_dataset, store_images_in_db
 import tkp.steps.forced_fitting as steps_ff
 from tkp.steps.varmetric import execute_store_varmetric
+from tkp.stream import stream_generator
 
 
 logger = logging.getLogger(__name__)
 
 
-def setup(job_name, supplied_mon_coords=None):
+def get_pipe_config(job_name):
+    return initialize_pipeline_config(os.path.join(os.getcwd(), "pipeline.cfg"),
+                                      job_name)
+
+
+def setup(pipe_config, supplied_mon_coords=None):
     """
     Initialises the pipeline run.
     """
     if not supplied_mon_coords:
         supplied_mon_coords = []
-
-    pipe_config = initialize_pipeline_config(
-        os.path.join(os.getcwd(), "pipeline.cfg"),
-        job_name)
 
     # Setup logfile before we do anything else
     log_dir = pipe_config.logging.log_dir
@@ -60,12 +63,19 @@ def setup(job_name, supplied_mon_coords=None):
 
     job_config, dataset_id = initialise_dataset(job_config, supplied_mon_coords)
 
-    return job_dir, job_config, pipe_config, dataset_id
+    return job_dir, job_config, dataset_id
 
 
 def get_runner(pipe_config):
     """
-    get parallelise props. Defaults to multiproc with autodetect num cores
+    get parallelise props. Defaults to multiproc with autodetect num cores. Wil
+    initialise the distributor.
+
+    One should not mix threads and multiprocessing, but for example AstroPy uses
+    threads internally. Best practice then is to first do multiprocessing,
+    and then threading per process. This is the reason why this function
+    should be called as one of the first functions the in the TraP pipeline
+    lifespan.
     """
     para = pipe_config.parallelise
     logging.info("using '{}' method for parallellisation".format(para.method))
@@ -139,7 +149,7 @@ def store_mongodb(pipe_config, all_images, runner):
 
 
 def extract_metadata(job_config, accessors, runner):
-    logger.info("Extracting metadata from images")
+    logger.debug("Extracting metadata from images")
     imgs = [[a] for a in accessors]
     metadatas = runner.map("extract_metadatas",
                            imgs,
@@ -150,7 +160,7 @@ def extract_metadata(job_config, accessors, runner):
 
 
 def storing_images(metadatas, job_config, dataset_id):
-    logger.info("Storing image metadata in SQL database")
+    logger.debug("Storing image metadata in SQL database")
     r = job_config.source_extraction.extraction_radius_pix
     image_ids = store_images_in_db(metadatas, r, dataset_id,
                                    job_config.persistence.bandwidth_max)
@@ -163,7 +173,7 @@ def quality_check(db_images, accessors, job_config, runner):
     returns:
         list: a list of db_image and accessor tuples
     """
-    logger.info("performing quality check")
+    logger.debug("performing quality check")
     arguments = [job_config]
     rejecteds = runner.map("quality_reject_check", accessors, arguments)
 
@@ -178,7 +188,6 @@ def quality_check(db_images, accessors, job_config, runner):
     if not good_images:
         msg = "No good images under these quality checking criteria"
         logger.warn(msg)
-        raise IOError(msg)
     return good_images
 
 
@@ -186,7 +195,17 @@ def source_extraction(accessors, job_config, runner):
     logger.debug("performing source extraction")
     arguments = [job_config.source_extraction]
     extraction_results = runner.map("extract_sources", accessors, arguments)
+    total = sum(len(i[0]) for i in extraction_results)
+    logger.info('found {} blind sources in {} images'.format(total, len(extraction_results)))
     return extraction_results
+
+
+def do_forced_fits(runner, all_forced_fits):
+    logger.debug('performing forced fitting')
+    returned = runner.map("forced_fits", all_forced_fits)
+    total = sum(len(i[0]) for i in returned)
+    logger.info('performed {} forced fits in {} images'.format(total, len(returned)))
+    return returned
 
 
 def store_extractions(images, extraction_results, job_config):
@@ -202,7 +221,7 @@ def store_extractions(images, extraction_results, job_config):
         dbgen.insert_extracted_sources(db_image.id, results.sources, 'blind')
 
 
-def image_db_operations(db_image, accessor, job_config):
+def assocate_and_get_force_fits(db_image, job_config):
     logger.debug("performing DB operations for image {} ({})".format(db_image.id,
                                                                     db_image.url))
 
@@ -214,21 +233,16 @@ def image_db_operations(db_image, accessor, job_config):
     expiration = job_config.source_extraction.expiration
     all_fit_posns, all_fit_ids = steps_ff.get_forced_fit_requests(db_image,
                                                                   expiration)
-    if all_fit_posns:
-        successful_fits, successful_ids = steps_ff.perform_forced_fits(
-            all_fit_posns, all_fit_ids, accessor, job_config.source_extraction)
-
-        steps_ff.insert_and_associate_forced_fits(db_image.id, successful_fits,
-                                                  successful_ids)
+    return all_fit_posns, all_fit_ids
 
 
 def varmetric(dataset_id):
-    dbgen.update_dataset_process_end_ts(dataset_id)
     logger.info("calculating variability metrics")
     execute_store_varmetric(dataset_id)
 
 
-def close_database():
+def close_database(dataset_id):
+    dbgen.update_dataset_process_end_ts(dataset_id)
     db = tkp.db.Database()
     db.session.commit()
     db.close()
@@ -251,8 +265,13 @@ def get_metadata_for_sorting(runner, image_paths):
         list: list of tuples, (timestamp, [list_of_images])
     """
     nested_img = [[i] for i in image_paths]
-    metadatas = [t[0] for t in runner.map("get_metadata_for_ordering", nested_img)]
-    return metadatas
+    results = runner.map("get_metadata_for_ordering", nested_img)
+    if results and results[0]:
+        metadatas = [t[0] for t in results]
+        return metadatas
+    else:
+        logger.warning("no images to process!")
+        return []
 
 
 def timestamp_step(runner, images, job_config, dataset_id):
@@ -279,21 +298,68 @@ def timestamp_step(runner, images, job_config, dataset_id):
 
     # do the source extractions
     extraction_results = source_extraction(good_accessors, job_config, runner)
+
     store_extractions(good_images, extraction_results, job_config)
 
-    # store extracted sources in the database
+    all_forced_fits = []
+    # assocate the sources
     for (db_image, accessor) in good_images:
-        image_db_operations(db_image, accessor, job_config)
+        fit_poss, fit_ids = assocate_and_get_force_fits(db_image, job_config)
+        all_forced_fits.append((accessor, db_image.id, fit_poss, fit_ids,
+                               job_config.source_extraction))
+
+    # do the forced fitting
+    all_forced_fits_results = do_forced_fits(runner, all_forced_fits)
+
+    # store and associate the forced fits
+    for (successful_fits, successful_ids, db_image_id) in all_forced_fits_results:
+        steps_ff.insert_and_associate_forced_fits(db_image_id,
+                                                  successful_fits,
+                                                  successful_ids)
+
+    # update the variable metrics for running catalogs
+    varmetric(dataset_id)
 
 
-def run(job_name, supplied_mon_coords=None):
+def run_stream(runner, job_config, dataset_id):
     """
-    TKP pipeline run entry point.
-    """
-    job_dir, job_config, pipe_config, dataset_id = setup(job_name,
-                                                         supplied_mon_coords)
-    runner = get_runner(pipe_config)
+    Run the pipeline in stream mode.
 
+    Daemon function, doesn't return.
+
+    args:
+         runner (tkp.distribute.Runner): Runner to use for distribution
+         job_config: a job configuration object
+         dataset_id (int): The dataset ID to use
+    """
+    hosts = job_config.pipeline.hosts.split(',')
+    ports = [int(p) for p in job_config.pipeline.ports.split(',')]
+    from datetime import datetime
+    for images in stream_generator(hosts=hosts, ports=ports):
+        logger.info("processing {} stream images...".format(len(images)))
+        trap_start = datetime.now()
+        try:
+            timestamp_step(runner, images, job_config, dataset_id)
+            varmetric(dataset_id)
+        except Exception as e:
+            logger.error("timestep raised {} exception: {}".format(type(e), str(e)))
+        else:
+            trap_end = datetime.now()
+            delta = (trap_end - trap_start).microseconds/1000
+            logging.info("trap iteration took {} ms".format(delta))
+
+
+def run_batch(job_name, job_dir, pipe_config, job_config, runner, dataset_id):
+    """
+    Run the pipeline in batch mode.
+
+    args:
+        job_name (str): job name, used for locating images script
+        pipe_config: the pipeline configuration object
+        job_config: a job configuration object
+        runner (tkp.distribute.Runner): Runner to use for distribution
+        dataset_id (int): The dataset ID to use
+    """
     image_paths = load_images(job_name, job_dir)
 
     if pipe_config.image_cache['copy_images']:
@@ -307,7 +373,30 @@ def run(job_name, supplied_mon_coords=None):
     for n, (timestep, images) in enumerate(grouped_images):
         msg = "processing %s images in timestep %s (%s/%s)"
         logger.info(msg % (len(images), timestep, n + 1, len(grouped_images)))
-        timestamp_step(runner, images, job_config, dataset_id)
+        try:
+            timestamp_step(runner, images, job_config, dataset_id)
+        except Exception as e:
+            logger.error("timestep raised {} exception: {}".format(type(e), str(e)))
 
-    varmetric(dataset_id)
-    close_database()
+
+def run(job_name, supplied_mon_coords=None):
+    """
+    TKP pipeline main loop entry point.
+
+    args:
+        job_name (str): name of the jbo to run
+        supplied_mon_coords (list): list of coordinates to monitor
+    """
+    pipe_config = get_pipe_config(job_name)
+    runner = get_runner(pipe_config)
+    job_dir, job_config, dataset_id = setup(pipe_config, supplied_mon_coords)
+
+    # make sure we close the database connection at program exit
+    atexit.register(close_database, dataset_id)
+
+    if job_config.pipeline.mode == 'stream':
+        run_stream(runner, job_config, dataset_id)
+    elif job_config.pipeline.mode == 'batch':
+        run_batch(job_name, job_dir, pipe_config, job_config, runner, dataset_id)
+
+

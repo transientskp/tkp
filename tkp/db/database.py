@@ -23,10 +23,10 @@ def sanitize_db_inputs(params):
         * Convert infs into the string "Infinity".
 
     Args:
-        params (dict/list/tuple): (Potentially) dirty database inputs
+        params: (Potentially) dirty database inputs
 
     Returns:
-        cleaned (dict/list/tuple): Sanitized database inputs
+        Sanitized database inputs
     """
     def sanitize(val):
         val = substitute_inf(val)

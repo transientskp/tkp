@@ -28,11 +28,6 @@ class TestFitsInject(unittest.TestCase):
         os.chdir(cls.start_dir)
         shutil.rmtree(cls.temp_dir)
 
-    def test_no_injection(self):
-        # Without injection the file cannot be opened because the frequency
-        # isn't specified.
-        self.assertRaises(TypeError, tkp.accessors.open, fits_file)
-
     def test_injection(self):
         c = SafeConfigParser()
         c.read(default_header_inject_config)

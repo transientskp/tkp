@@ -99,6 +99,7 @@ def get_accessors(images):
             accessor = tkp.accessors.open(image)
         except TypeError as e:
             logger.error("Can't open image %s: %s" % (image, e))
+            raise
         else:
             results.append(accessor)
     return results

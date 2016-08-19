@@ -11,7 +11,10 @@ class FitsImageBlob(FitsImage):
     constructed from an in memory fits file, not a fits file on disk.
     """
     def __init__(self, hdulist, plane=None, beam=None, hdu_index=0):
+        # set the URL in case we need it during header parsing for error loggign
+        self.url = "AARTFAAC streaming image"
         super(FitsImage, self).__init__()
+
         self.header = self._get_header(hdulist, hdu_index)
         self.wcs = self.parse_coordinates()
         self.data = self.read_data(hdulist, hdu_index, plane)

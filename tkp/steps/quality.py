@@ -45,7 +45,7 @@ def reject_check(accessor, job_config):
             return rejected
     else:
         msg = "no specific quality checks for " + accessor.telescope
-        logger.warn(msg)
+        logger.debug(msg)
 
 
 def reject_image(image_id, reason, comment):

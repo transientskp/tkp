@@ -146,7 +146,7 @@ def initialise_dataset(job_config, supplied_mon_coords):
 
 
 def extract_metadata(job_config, accessors, runner):
-    logger.info("Extracting metadata from images")
+    logger.debug("Extracting metadata from images")
     imgs = [[a] for a in accessors]
     metadatas = runner.map("extract_metadatas",
                            imgs,
@@ -273,9 +273,13 @@ def get_metadata_for_sorting(runner, image_paths):
         list: list of tuples, (timestamp, [list_of_images])
     """
     nested_img = [[i] for i in image_paths]
-    metadatas = [t[0] for t in runner.map("get_metadata_for_ordering",
-                                          nested_img)]
-    return metadatas
+    results = runner.map("get_metadata_for_ordering", nested_img)
+    if results and results[0]:
+        metadatas = [t[0] for t in results]
+        return metadatas
+    else:
+        logger.warning("no images to process!")
+        return []
 
 
 def store_images(db_images, fits_datas, fits_headers):
@@ -355,15 +359,14 @@ def run_stream(runner, job_config, dataset_id, copy_images):
     for images in stream_generator(hosts=hosts, ports=ports):
         logger.info("processing {} stream images...".format(len(images)))
         trap_start = datetime.now()
-        #try:
-        timestamp_step(runner, images, job_config, dataset_id, copy_images)
-        varmetric(dataset_id)
-        #except Exception as e:
-        #    logger.error("timestep raised {} exception: {}".format(type(e), str(e)))
-        #else:
-        trap_end = datetime.now()
-        delta = (trap_end - trap_start).microseconds/1000
-        logging.info("trap iteration took {} ms".format(delta))
+        try:
+            timestamp_step(runner, images, job_config, dataset_id, copy_images)
+        except Exception as e:
+            logger.error("timestep raised {} exception: {}".format(type(e), str(e)))
+        else:
+            trap_end = datetime.now()
+            delta = (trap_end - trap_start).microseconds/1000
+            logging.info("trap iteration took {} ms".format(delta))
 
 
 def run_batch(image_paths, job_config, runner, dataset_id, copy_images):
@@ -383,7 +386,10 @@ def run_batch(image_paths, job_config, runner, dataset_id, copy_images):
     for n, (timestep, images) in enumerate(grouped_images):
         msg = "processing %s images in timestep %s (%s/%s)"
         logger.info(msg % (len(images), timestep, n + 1, len(grouped_images)))
-        timestamp_step(runner, images, job_config, dataset_id, copy_images)
+        try:
+            timestamp_step(runner, images, job_config, dataset_id, copy_images)
+        except Exception as e:
+            logger.error("timestep raised {} exception: {}".format(type(e), str(e)))
 
 
 def run(job_name, supplied_mon_coords=None):

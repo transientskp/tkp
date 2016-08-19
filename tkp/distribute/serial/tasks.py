@@ -8,7 +8,7 @@ logger = logging.getLogger(__name__)
 
 
 def extract_metadatas(accessors, sigma, f):
-    logger.info("running extract metadatas task")
+    logger.debug("running extract metadatas task")
     return tkp.steps.persistence.extract_metadatas(accessors, sigma, f)
 
 

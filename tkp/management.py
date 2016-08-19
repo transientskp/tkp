@@ -242,6 +242,28 @@ def init_db(options):
     populate(dbconfig)
 
 
+def deldataset(options):
+    if not options.yes:
+        answer = raw_input("\nAre you sure you want to delete dataset {}? "
+                           "[y/N]: ".format(options.id))
+        if answer.lower() != 'y':
+            sys.stderr.write("Aborting.\n")
+            sys.exit(1)
+    from tkp.db.database import Database
+    from tkp.db.model import Dataset
+    from sqlalchemy.orm.exc import NoResultFound
+    db = Database()
+    try:
+        dataset = db.session.query(Dataset).filter(Dataset.id==options.id).one()
+    except NoResultFound:
+        print("\ndataset {} does not exist!\n".format(options.id))
+        sys.exit(1)
+    db.session.delete(dataset)
+    db.session.commit()
+    print("\ndataset {} has been deleted!\n".format(options.id))
+    db.close()
+
+
 def get_parser():
     trap_manage_note = """
         A tool for managing TKP projects.
@@ -321,6 +343,16 @@ def get_parser():
                                     "(only works with Postgres backend)",
                                action="store_true")
     initdb_parser.set_defaults(func=init_db)
+
+
+    # deldataset
+    deldataset_parser = parser_subparsers.add_parser(
+        'deldataset', help="Delete a dataset from a database")
+    deldataset_parser.add_argument('id', help='dataset id', type=int)
+    deldataset_parser.add_argument('-y', '--yes',
+                                   help="don't ask for confirmation",
+                                   action="store_true")
+    deldataset_parser.set_defaults(func=deldataset)
     return parser
 
 

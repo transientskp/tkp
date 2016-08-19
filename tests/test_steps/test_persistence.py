@@ -1,7 +1,6 @@
 import os
 import unittest
 import tkp.steps.persistence
-from tkp.testutil.decorators import requires_mongodb
 import tkp.testutil.data as testdata
 from tkp.testutil.decorators import requires_database, requires_data
 import tkp.db

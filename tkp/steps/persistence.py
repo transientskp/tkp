@@ -1,6 +1,6 @@
 """
 This `step` is used for the storing of images and metadata
-to the database and image cache (mongodb).
+to the database
 """
 import os
 import logging
@@ -107,7 +107,8 @@ def get_accessors(images):
 def paths_to_fits(paths):
     """
     paths (list): list of paths to a astronomical image which can be opened with
-                 casacore
+                  casacore
+                  
     returns:
         list: of HDUlist objects
     """

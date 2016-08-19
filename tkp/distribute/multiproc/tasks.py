@@ -10,13 +10,6 @@ from tkp.steps.forced_fitting import perform_forced_fits
 logger = logging.getLogger(__name__)
 
 
-def save_to_mongodb(zipped):
-    logger.debug("saving to mongodb")
-    images, args = zipped
-    [image_cache_config] = args
-    return tkp.steps.persistence.save_to_mongodb(images, image_cache_config)
-
-
 def extract_metadatas(zipped):
     logger.debug("running extract metadatas task")
     images, args = zipped

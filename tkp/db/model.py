@@ -3,8 +3,7 @@ The SQLAlchemy model definition.
 
 revision history:
 
- 39 - Remove SQL insert functions, add dataset row to frequencyband table. Add
-      image data.
+ 39 - Remove SQL insert functions, add dataset row to frequencyband table. Add image data.
  38 - add varmetric table
  37 - add forcedfits_count column to runningcatalog
  36 - switch to SQLAlchemy schema initialisation

@@ -7,11 +7,6 @@ from tkp.steps.forced_fitting import perform_forced_fits
 logger = logging.getLogger(__name__)
 
 
-def save_to_mongodb(images, image_cache_config):
-    logger.debug("running persistence task")
-    return tkp.steps.persistence.save_to_mongodb(images, image_cache_config)
-
-
 def extract_metadatas(accessors, sigma, f):
     logger.info("running extract metadatas task")
     return tkp.steps.persistence.extract_metadatas(accessors, sigma, f)

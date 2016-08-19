@@ -12,9 +12,9 @@ related images together for processing: searches for transients are performed
 between images in a single databset, for instance. All images being processed
 are added to the same dataset.
 
-Optionally, a copy of the image pixel data may be stored to a :ref:`MongoDB
-<mongodb-intro>` instance at the same time. This is configured in
-the :ref:`image_cache section <pipeline_cfg_image_cache>` of the pipeline config.
+Optionally, a copy of the image pixel data may be stored to the database. This
+is configured in the :ref:`image_cache section <pipeline_cfg_image_cache>` of
+the pipeline config.
 
 Note that only images which meet the :ref:`data accessor <accessors>`
 requirements are stored in the database. Any other data provided to the

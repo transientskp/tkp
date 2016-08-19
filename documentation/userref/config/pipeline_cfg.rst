@@ -95,22 +95,12 @@ be referred to be other sections. The following parameters may be defined:
 ``image_cache`` Section
 =======================
 
-This section configures the
-:ref:`image caching or 'pixel store' <mongodb-intro>` functionality.
+This section configures the image caching functionality.
 
-See also: the 'optional dependencies' section of your relevant
-:ref:`installation <installation>` guide.
 
 ``copy_images``
    Boolean. If ``True``, image pixel data will be stored to a MongoDB database.
 
-``mongo_host``, ``mongo_port``
-   String, integer. Network hostname and port to use to connect to MongoDB.
-   Only used if ``copy_images`` is ``True``.
-
-``mongo_db``
-   String. Name of MongoDB database in which to store image pixel data. Only
-   used if ``copy_images`` is ``True``.
 
 .. _pipeline_cfg_parallelise:
 

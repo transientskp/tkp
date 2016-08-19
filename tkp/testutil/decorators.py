@@ -8,12 +8,6 @@ def requires_database():
     return lambda func: func
 
 
-def requires_mongodb():
-    if os.environ.get("TKP_DISABLEMONGODB", False):
-        return unittest.skip("mongodb functionality disabled in configuration")
-    return lambda func: func
-
-
 def requires_data(*args):
     for filename in args:
         if not os.path.exists(filename):

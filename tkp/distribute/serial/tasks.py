@@ -7,14 +7,14 @@ from tkp.steps.forced_fitting import perform_forced_fits
 logger = logging.getLogger(__name__)
 
 
-def save_to_mongodb(images, image_cache_config):
-    logger.debug("running persistence task")
-    return tkp.steps.persistence.save_to_mongodb(images, image_cache_config)
-
-
 def extract_metadatas(accessors, sigma, f):
     logger.debug("running extract metadatas task")
     return tkp.steps.persistence.extract_metadatas(accessors, sigma, f)
+
+
+def open_as_fits(images):
+    logger.debug("opening files as fits objects")
+    return tkp.steps.persistence.paths_to_fits(images)
 
 
 def quality_reject_check(accessor, job_config):

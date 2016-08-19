@@ -10,18 +10,17 @@ from tkp.steps.forced_fitting import perform_forced_fits
 logger = logging.getLogger(__name__)
 
 
-def save_to_mongodb(zipped):
-    logger.debug("saving to mongodb")
-    images, args = zipped
-    [image_cache_config] = args
-    return tkp.steps.persistence.save_to_mongodb(images, image_cache_config)
-
-
 def extract_metadatas(zipped):
     logger.debug("running extract metadatas task")
     images, args = zipped
     sigma, f = args
     return tkp.steps.persistence.extract_metadatas(images, sigma, f)
+
+
+def open_as_fits(zipped):
+    logger.debug("opening files as fits objects")
+    images, args = zipped
+    return list(tkp.steps.persistence.paths_to_fits(images))
 
 
 def quality_reject_check(zipped):

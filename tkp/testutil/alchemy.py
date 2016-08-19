@@ -12,7 +12,7 @@ def gen_band(dataset, central=150**6, low=None, high=None):
                                       freq_high=high)
 
 
-def gen_dataset(description):
+def gen_dataset(description='A test dataset without a description'):
     return tkp.db.model.Dataset(process_start_ts=datetime.now(),
                                 description=description)
 
@@ -22,7 +22,13 @@ def gen_skyregion(dataset):
                                   xtr_radius=1, x=1, y=1, z=1)
 
 
-def gen_image(band, dataset, skyregion, taustart_ts=None):
+def gen_image(band=None, dataset=None, skyregion=None, taustart_ts=None):
+    if not dataset:
+        dataset = gen_dataset()
+    if not band:
+        band = gen_band(dataset=dataset)
+    if not skyregion:
+        skyregion=gen_skyregion(dataset=dataset)
     if not taustart_ts:
         taustart_ts = datetime.now()
     return tkp.db.model.Image(band=band, dataset=dataset, skyrgn=skyregion,

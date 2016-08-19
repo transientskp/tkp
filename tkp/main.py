@@ -149,7 +149,7 @@ def store_mongodb(pipe_config, all_images, runner):
 
 
 def extract_metadata(job_config, accessors, runner):
-    logger.info("Extracting metadata from images")
+    logger.debug("Extracting metadata from images")
     imgs = [[a] for a in accessors]
     metadatas = runner.map("extract_metadatas",
                            imgs,
@@ -265,9 +265,13 @@ def get_metadata_for_sorting(runner, image_paths):
         list: list of tuples, (timestamp, [list_of_images])
     """
     nested_img = [[i] for i in image_paths]
-    metadatas = [t[0] for t in runner.map("get_metadata_for_ordering",
-                                          nested_img)]
-    return metadatas
+    results = runner.map("get_metadata_for_ordering", nested_img)
+    if results and results[0]:
+        metadatas = [t[0] for t in results]
+        return metadatas
+    else:
+        logger.warning("no images to process!")
+        return []
 
 
 def timestamp_step(runner, images, job_config, dataset_id):
@@ -369,7 +373,10 @@ def run_batch(job_name, job_dir, pipe_config, job_config, runner, dataset_id):
     for n, (timestep, images) in enumerate(grouped_images):
         msg = "processing %s images in timestep %s (%s/%s)"
         logger.info(msg % (len(images), timestep, n + 1, len(grouped_images)))
-        timestamp_step(runner, images, job_config, dataset_id)
+        try:
+            timestamp_step(runner, images, job_config, dataset_id)
+        except Exception as e:
+            logger.error("timestep raised {} exception: {}".format(type(e), str(e)))
 
 
 def run(job_name, supplied_mon_coords=None):

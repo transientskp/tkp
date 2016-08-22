@@ -1,21 +1,88 @@
 # Changelog
 -----------
 
-## next release
+##4.0 release candidate 1
+
+# frequency band logic change
 
 the band determination logic has changed. Before all bands where split
-into 1 MHz intervals and associated as such. With this release  images are
-put in the same band if their bandwidths overlap.
+into 1 MHz intervals and associated as such. With this release  images
+are put in the same band if their bandwidths overlap.
 
-We added an option to limit the bandwidth used for band assoication ([#492][]).
-Limiting the bandwidth for an image is done by setting `bandwidth_max`
-in *job_params.cfg* under the `persistence section`. E.g.:
+We added an option to limit the bandwidth used for band association
+([#492][]). Limiting the bandwidth for an image is done by
+setting `bandwidth_max` in *job_params.cfg* under the
+`persistence section`. E.g.::
 
     [persistence]
     bandwidth_max = 0.0
 
 Setting the value to 0.0 will use the bandwidth defined in the image
 headers, a non 0.0 value will override this value.
+
+[#492]: https://github.com/transientskp/tkp/issues/492
+
+
+# added streaming telescope support
+
+The internals of TraP have been rewritten to support streaming AARTFAAC
+data ([#483][]). There is now a new section in the job_params.cfg file
+with a mode setting. Setting this to batch will keep the old TraP behavior,
+but setting mode to stream will enable the new behavior. TraP will
+connect to a network port and process these images untill terminated.
+The hosts and ports where to connect to is controlled with the hosts
+and ports settings::
+
+    [pipeline]
+    mode = 'stream'
+    hosts = 'struis.science.uva.nl,struis.science.uva.nl'
+    ports = '6666,6667'
+
+
+[#483]: https://github.com/transientskp/tkp/pull/483
+
+
+# Removal of MongoDB image store
+
+If you enable the ``copy_images`` setting in your pipeline.cfg file
+the images are now stored in the sql database ([#534][]). This makes it
+much easier to manage the files, for example delete them. Also the
+images load faster in banana. This makes setting up and configuring
+MongoDB obsolete. 
+
+
+[#534]: https://github.com/transientskp/tkp/pull/534
+
+
+# Add command line option to delete dataset
+
+It is now possible to delete a dataset  ([#533][])::
+
+
+    $ trap-manage.py deldataset 5 -y
+
+    dataset 5 has been deleted!
+
+
+[#533]: https://github.com/transientskp/tkp/pull/533
+
+
+# Make TraP more resilient against faulty data
+
+TraP often crashed on faulty image data. On popular request TraP will
+now try to continue, giving a warning. 
+
+
+# Various other changes and bugfixes
+
+* Fix Numpy 1.9+ compatibility [#509][])
+* TraP sourcefinder error on updated AARTFAAC images [#505][]
+* forced fits is not parallelised [#526][]
+
+[#509]: https://github.com/transientskp/tkp/issues/509
+[#505]: https://github.com/transientskp/tkp/issues/505
+[#526]: https://github.com/transientskp/tkp/issues/526
+
 
 ## R3.1.1 (2016-05-20)
 

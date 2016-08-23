@@ -10,5 +10,9 @@ This package contains the Python modules used by the LOFAR Transients Pipeline
 
 For details, see http://docs.transientskp.org/.
 """
+import pkg_resources
 
-__version__ = "3.2.dev"
+try:
+    __version__ = pkg_resources.require("tkp")[0].version
+except pkg_resources.DistributionNotFound:
+    __version__ = "dev"

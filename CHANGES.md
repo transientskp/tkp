@@ -27,9 +27,10 @@ headers, a non 0.0 value will override this value.
 
 The internals of TraP have been rewritten to support streaming AARTFAAC
 data ([#483][]). There is now a new section in the job_params.cfg file
-with a mode setting. Setting this to batch will keep the old TraP behavior,
-but setting mode to stream will enable the new behavior. TraP will
-connect to a network port and process these images untill terminated.
+with a mode setting. Setting this to batch will keep the old TraP
+behavior, but setting mode to stream will enable the new behavior.
+TraP will connect to a network port and process these images untill
+terminated.
 The hosts and ports where to connect to is controlled with the hosts
 and ports settings::
 
@@ -38,6 +39,13 @@ and ports settings::
     hosts = 'struis.science.uva.nl,struis.science.uva.nl'
     ports = '6666,6667'
 
+The batch mode should mostly be unaffected, only the order of actions
+has changed. TraP will process the full dataset now in chunks grouped by
+timstamp. Tthe storing of images, quality checks and meta data
+extraction is now run together with the source extraction and assocation
+cycle, where before this was all done at the start of a TraP run.
+This makes it more similar to how we process streaming data and enabled
+other optimisations in the future.
 
 [#483]: https://github.com/transientskp/tkp/pull/483
 
@@ -78,10 +86,23 @@ now try to continue, giving a warning.
 * Fix Numpy 1.9+ compatibility [#509][])
 * TraP sourcefinder error on updated AARTFAAC images [#505][]
 * forced fits is not parallelised [#526][]
+* restructure logging, make less verbose. Also multiproc workers will
+  log to stdout.
+* fix multiprocess job cancelling problem (ctrl-c)
 
 [#509]: https://github.com/transientskp/tkp/issues/509
 [#505]: https://github.com/transientskp/tkp/issues/505
 [#526]: https://github.com/transientskp/tkp/issues/526
+
+
+# known issues
+
+* Streaming mode gives a harmless error [#536][]
+* Alembic upgrade is not working yet [#535][]
+
+
+[#535]: https://github.com/transientskp/tkp/issues/535
+[#536]: https://github.com/transientskp/tkp/issues/536
 
 
 ## R3.1.1 (2016-05-20)

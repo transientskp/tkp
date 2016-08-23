@@ -1,6 +1,5 @@
 #!/usr/bin/env python
 from setuptools import setup, find_packages
-from tkp import __version__ as tkp_version
 
 install_requires = """
     astropy
@@ -35,15 +34,15 @@ package_data = {'tkp': [
 package_list = find_packages(where='.', exclude=['tests'])
 
 setup(
-    name = "tkp",
-    version = tkp_version,
-    packages = package_list,
-    scripts = tkp_scripts,
+    name="tkp",
+    version="4.0rc1",
+    packages=package_list,
+    scripts=tkp_scripts,
     package_data=package_data,
-    description = "LOFAR Transients Key Project (TKP)",
-    author = "TKP Discovery WG",
-    author_email = "discovery@transientskp.org",
-    url = "http://docs.transientskp.org/",
+    description="LOFAR Transients Key Project (TKP)",
+    author="TKP Discovery WG",
+    author_email="discovery@transientskp.org",
+    url="http://docs.transientskp.org/",
     install_requires=install_requires,
     extras_require=extras_require
 )

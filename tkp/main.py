@@ -156,7 +156,7 @@ def extract_metadata(job_config, accessors, runner):
     return metadatas
 
 
-def storing_images(metadatas, job_config, dataset_id):
+def store_image_metadata(metadatas, job_config, dataset_id):
     logger.debug("Storing image metadata in SQL database")
     r = job_config.source_extraction.extraction_radius_pix
     image_ids = store_images_in_db(metadatas, r, dataset_id,
@@ -282,12 +282,9 @@ def get_metadata_for_sorting(runner, image_paths):
         return []
 
 
-def store_images(db_images, fits_datas, fits_headers):
-    logging.info("storing {} images to database".format(len(db_images)))
-    db = tkp.db.Database()
-    for update in store_fits(db_images, fits_datas, fits_headers):
-        db.session.execute(update)
-    db.session.commit()
+def store_image_data(db_images, fits_datas, fits_headers):
+    logger.info("storing {} images to database".format(len(db_images)))
+    store_fits(db_images, fits_datas, fits_headers)
 
 
 def timestamp_step(runner, images, job_config, dataset_id, copy_images):
@@ -304,14 +301,14 @@ def timestamp_step(runner, images, job_config, dataset_id, copy_images):
     # gather all image info
     accessors = get_accessors(runner, images)
     metadatas = extract_metadata(job_config, accessors, runner)
-    db_images = storing_images(metadatas, job_config, dataset_id)
+    db_images = store_image_metadata(metadatas, job_config, dataset_id)
     error = "%s != %s != %s" % (len(accessors), len(metadatas), len(db_images))
     assert len(accessors) == len(metadatas) == len(db_images), error
 
     # store copy of image data in database
     if copy_images:
         fits_datas, fits_headers = extract_fits_from_files(runner, images)
-        store_images(db_images, fits_datas, fits_headers)
+        store_image_data(db_images, fits_datas, fits_headers)
 
     # filter out the bad ones
     good_images = quality_check(db_images, accessors, job_config, runner)

@@ -4,6 +4,7 @@ to the database
 """
 import os
 import logging
+import cPickle
 from tempfile import NamedTemporaryFile
 from astropy.io.fits import open as fits_open
 from casacore.images import image as casacore_image
@@ -123,4 +124,4 @@ def paths_to_fits(paths):
             with NamedTemporaryFile() as temp_file:
                 i.tofits(temp_file.name)
                 fits = fits_open(temp_file.name)
-                yield fits[0].data, str(fits[0].header)
+                yield cPickle.dumps(fits[0].data), str(fits[0].header)

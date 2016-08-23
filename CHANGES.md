@@ -3,7 +3,7 @@
 
 ##4.0 release candidate 1
 
-# frequency band logic change
+### frequency band logic change
 
 the band determination logic has changed. Before all bands where split
 into 1 MHz intervals and associated as such. With this release  images
@@ -23,7 +23,7 @@ headers, a non 0.0 value will override this value.
 [#492]: https://github.com/transientskp/tkp/issues/492
 
 
-# added streaming telescope support
+### added streaming telescope support
 
 The internals of TraP have been rewritten to support streaming AARTFAAC
 data ([#483][]). There is now a new section in the job_params.cfg file
@@ -50,7 +50,7 @@ other optimisations in the future.
 [#483]: https://github.com/transientskp/tkp/pull/483
 
 
-# Removal of MongoDB image store
+### Removal of MongoDB image store
 
 If you enable the ``copy_images`` setting in your pipeline.cfg file
 the images are now stored in the sql database ([#534][]). This makes it
@@ -62,7 +62,7 @@ MongoDB obsolete.
 [#534]: https://github.com/transientskp/tkp/pull/534
 
 
-# Add command line option to delete dataset
+### Add command line option to delete dataset
 
 It is now possible to delete a dataset  ([#533][])::
 
@@ -75,13 +75,15 @@ It is now possible to delete a dataset  ([#533][])::
 [#533]: https://github.com/transientskp/tkp/pull/533
 
 
-# Make TraP more resilient against faulty data
+### Make TraP more resilient against faulty data
 
 TraP often crashed on faulty image data. On popular request TraP will
-now try to continue, giving a warning. 
+now try to continue, giving a warning. [#522][]
+
+[#522]: https://github.com/transientskp/tkp/issues/522
 
 
-# Various other changes and bugfixes
+### Various other changes and bugfixes
 
 * Fix Numpy 1.9+ compatibility [#509][])
 * TraP sourcefinder error on updated AARTFAAC images [#505][]
@@ -95,7 +97,7 @@ now try to continue, giving a warning.
 [#526]: https://github.com/transientskp/tkp/issues/526
 
 
-# known issues
+### known issues
 
 * Streaming mode gives a harmless error [#536][]
 * Alembic upgrade is not working yet [#535][]

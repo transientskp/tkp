@@ -3,7 +3,9 @@ The SQLAlchemy model definition.
 
 revision history:
 
- 39 - Remove SQL insert functions, add dataset row to frequencyband table. Add image data.
+ 40 - Move image data to seperate table for speed
+ 39 - Remove SQL insert functions, add dataset row to frequencyband table. Add
+      image data.
  38 - add varmetric table
  37 - add forcedfits_count column to runningcatalog
  36 - switch to SQLAlchemy schema initialisation
@@ -17,7 +19,7 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.dialects.postgresql import DOUBLE_PRECISION as Double
 
 
-SCHEMA_VERSION = 39
+SCHEMA_VERSION = 40
 
 Base = declarative_base()
 metadata = Base.metadata
@@ -212,6 +214,16 @@ class Image(Base):
     url = Column(String(1024))
     node = Column(SmallInteger, nullable=False, server_default=text("1"))
     nodes = Column(SmallInteger, nullable=False, server_default=text("1"))
+
+    data = relationship("ImageData", uselist=False, back_populates="image")
+
+
+class ImageData(Base):
+    __tablename__ = 'imagedata'
+
+    id = Column(Integer, primary_key=True)
+    image_id = Column('image', Integer, ForeignKey('image.id'), nullable=False, index=True)
+    image = relationship("Image", back_populates="data")
     fits_header = Column(String)
     fits_data = Column(LargeBinary)
 

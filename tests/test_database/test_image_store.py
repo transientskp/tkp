@@ -12,6 +12,7 @@ from tkp.testutil.alchemy import gen_image
 FITS_FILE = path.join(DATAPATH, 'accessors/aartfaac.fits')
 
 
+
 class TestImageStore(unittest.TestCase):
     def setUp(self):
         self.db = Database()
@@ -25,7 +26,7 @@ class TestImageStore(unittest.TestCase):
         expected_header = fits_object[0].header
         store_fits([self.image], [expected_data], [str(expected_header)])
         fetched_image = self.db.session.query(Image).filter(Image.id==self.image.id).first()
-        returned_data = cPickle.loads(fetched_image.fits_data)
-        returned_header = Header.fromstring(fetched_image.fits_header)
+        returned_data = cPickle.loads(fetched_image.data.fits_data)
+        returned_header = Header.fromstring(fetched_image.data.fits_header)
         self.assertTrue((returned_data, expected_data))
         self.assertEqual(returned_header, expected_header)

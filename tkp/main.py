@@ -27,6 +27,7 @@ from tkp.steps.persistence import create_dataset, store_images_in_db
 import tkp.steps.forced_fitting as steps_ff
 from tkp.steps.varmetric import execute_store_varmetric
 from tkp.stream import stream_generator
+from tkp.quality.rms import reject_historical_rms
 
 
 logger = logging.getLogger(__name__)
@@ -146,6 +147,16 @@ def initialise_dataset(job_config, supplied_mon_coords):
 
 
 def extract_metadata(job_config, accessors, runner):
+    """
+
+    args:
+        job_config: a TKP config object
+        accessors (list): list of tkp.Accessor objects
+        runner (tkp.distribute.Runner): the runner to use
+
+    returns:
+        list: a list of metadata dicts
+    """
     logger.debug("Extracting metadata from images")
     imgs = [[a] for a in accessors]
     metadatas = runner.map("extract_metadatas",
@@ -185,8 +196,15 @@ def quality_check(db_images, accessors, job_config, runner):
     arguments = [job_config]
     rejecteds = runner.map("quality_reject_check", accessors, arguments)
 
+    db = tkp.db.Database()
+    history = job_config.persistence.rms_est_history
+    est_sigma = job_config.persistence.rms_est_sigma
     good_images = []
     for db_image, rejected, accessor in zip(db_images, rejecteds, accessors):
+        if not rejected:
+            rejected = reject_historical_rms(db_image.id, db.session,
+                                             history, est_sigma)
+
         if rejected:
             reason, comment = rejected
             steps.quality.reject_image(db_image.id, reason, comment)
@@ -297,6 +315,9 @@ def timestamp_step(runner, images, job_config, dataset_id, copy_images):
                         paths or fits objects
          job_config: a tkp job config object
          dataset_id (int): The ``tkp.db.model.Dataset`` id
+
+    returns:
+        list: of tuples (rms_qc, band)
     """
     # gather all image info
     accessors = get_accessors(runner, images)

@@ -1,10 +1,9 @@
 import numpy
 from tkp.utility import nice_format
 from scipy.stats import norm
-from tkp.db.quality import reject, reject_reasons
+from sqlalchemy.sql.expression import desc
 from tkp.db.model import Image
-from sqlalchemy import not_
-
+from tkp.db.quality import reject_reasons
 
 def rms_invalid(rms, noise, low_bound=1, high_bound=50):
     """
@@ -80,28 +79,30 @@ def rms_with_clipped_subregion(data, rms_est_sigma=3, rms_est_fraction=4):
     return rms(clip(subregion(data, rms_est_fraction), rms_est_sigma))
 
 
-def reject_bad_rms_with_dataset_rms(session, dataset_id, est_sigma):
+def reject_historical_rms(image_id, session, history=100, est_sigma=4):
     """
-    Reject images based on the RMS value of the full dataset.
+    Check if the RMS value of an image lies within a range defined
+    by a gaussian fit on the histogram calculated from the last x RMS
+    values in this subband. Upper and lower bound are then controlled
+    by est_sigma multiplied with the sigma of the gaussian.
 
-    Images with rms_qc value outside of a rms range controlled with est_sigma
-     wil be rejected:
-
-       !(mu - sigma * est_sigma < rms_qc < mu + sigma * est_sigma)
-
-    Args:
-        session (sqlalchemy.orm.session.Session): A SQLAlchemy session
-        dataset_id (int): The ID of the dataset to use
-        est_sigma (float): The sigma multiplication factor controlling upper
-                           and lower rejection threshold
+    args:
+        image_id (int): database ID of the image we want to check
+        session (sqlalchemy.orm.session.Session): the database session
+        history (int): the number of timestamps we want to use for histogram
+        est_sigma (float): sigma multiplication factor
+    returns:
+        bool: None if not rejected, (rejectreason, comment) if rejected
     """
-    images = session.query(Image.rms_qc).filter(Image.dataset_id == dataset_id).all()
-    mu, sigma = norm.fit(images)
+    image = session.query(Image).filter(Image.id == image_id).one()
+    rmss = session.query(Image.rms_qc).filter(
+        (Image.band == image.band)).order_by(desc(Image.taustart_ts)).limit(
+        history).all()
+    if len(rmss) < history:
+        return False
+    mu, sigma = norm.fit(rmss)
     t_low = mu - sigma * est_sigma
     t_high = mu + sigma * est_sigma
-    bad_images = session.query(Image).filter(not_(Image.rms_qc.between(t_low, t_high))).all()
-    reason = reject_reasons['rms']
-    for b in bad_images:
-        comment = "RMS of {} is outside range of ({:.3f}, {:.3f}), est_sigma={}".format(b.rms_qc, t_low, t_high, est_sigma)
-        reject(b.id, reason, comment, session)
-    return bad_images
+    if not t_low < image.rms_qc < t_high:
+        return reject_reasons['rms'],\
+               "RMS value not within {} and {}".format(t_low, t_high)

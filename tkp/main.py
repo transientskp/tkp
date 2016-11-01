@@ -198,12 +198,13 @@ def quality_check(db_images, accessors, job_config, runner):
 
     db = tkp.db.Database()
     history = job_config.persistence.rms_est_history
+    rms_max = job_config.persistence.rms_est_max
     est_sigma = job_config.persistence.rms_est_sigma
     good_images = []
     for db_image, rejected, accessor in zip(db_images, rejecteds, accessors):
         if not rejected:
             rejected = reject_historical_rms(db_image.id, db.session,
-                                             history, est_sigma)
+                                             history, est_sigma, rms_max)
 
         if rejected:
             reason, comment = rejected

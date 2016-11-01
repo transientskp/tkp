@@ -103,6 +103,12 @@ def reject_historical_rms(image_id, session, history=100, est_sigma=4, rms_max=1
     mu, sigma = norm.fit(rmss)
     t_low = mu - sigma * est_sigma
     t_high = mu + sigma * est_sigma
-    if not t_low < image.rms_qc < t_high:
+
+    if not 0.0 < image.rms_qc < rms_max:
+        return reject_reasons['rms'],\
+               "RMS value not within {} and {}".format(0.0, rms_max)
+
+    if not t_low < image.rms_qc < t_high or not 0.0 < image.rms_qc < rms_max:
         return reject_reasons['rms'],\
                "RMS value not within {} and {}".format(t_low, t_high)
+

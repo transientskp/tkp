@@ -246,16 +246,26 @@ def init_db(options):
 
 
 def deldataset(options):
+    from tkp.db.database import Database
+    from tkp.db.model import Dataset
+    from sqlalchemy.orm.exc import NoResultFound
+    dbconfig = get_db_config()
+
     if not options.yes:
+        print("\nThis script will delete dataset {} with "
+              "these settings:".format(options.id))
+        print("")
+        print("\tengine:     " + (dbconfig['engine'] or ""))
+        print("\tdatabase:   " + (dbconfig['database'] or ""))
+        print("\tuser:       " + (dbconfig['user'] or ""))
+        print("\tpassword:   " + (dbconfig['password'] or ""))
+        print("\thost:       " + (dbconfig['host'] or ""))
+        print("\tport:       " + str(dbconfig['port']))
         answer = raw_input("\nAre you sure you want to delete dataset {}? "
                            "[y/N]: ".format(options.id))
         if answer.lower() != 'y':
             sys.stderr.write("Aborting.\n")
             sys.exit(1)
-    from tkp.db.database import Database
-    from tkp.db.model import Dataset
-    from sqlalchemy.orm.exc import NoResultFound
-    dbconfig = get_db_config()
     db = Database(**dbconfig)
     try:
         dataset = db.session.query(Dataset).filter(Dataset.id==options.id).one()

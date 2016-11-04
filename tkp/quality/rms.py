@@ -91,6 +91,8 @@ def reject_historical_rms(image_id, session, history=100, est_sigma=4, rms_max=1
         session (sqlalchemy.orm.session.Session): the database session
         history (int): the number of timestamps we want to use for histogram
         est_sigma (float): sigma multiplication factor
+        rms_max (float): global maximum rms for image quality check
+        rms_min (float): global minimum rms for image quality check
     returns:
         bool: None if not rejected, (rejectreason, comment) if rejected
     """

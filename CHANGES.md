@@ -3,6 +3,25 @@
 
 ##4.0 release candidate 1
 
+### RMS basd image quality check added for all images.
+
+A quality check of each image is now done based on either when ther the
+image data contains nans, the background  RMS of the image, rejected
+if the RMS is outside of the user set range in job_params.:
+
+    [persistence]
+    rms_est_max = 100            ; global maximum acceptable rms
+    rms_est_min = 0.0            ; global minimum acceptable rms
+
+or if after a number images, the image RMS is rms_est_sigma away from
+the mean RMS of the last number of images, where the number is set in
+job_params:
+
+    [persistence]
+    rms_est_history = 100        ; how many images used for calculating rms histogram
+
+[#512]: https://github.com/transientskp/tkp/issues/512
+
 ### frequency band logic change
 
 the band determination logic has changed. Before all bands where split

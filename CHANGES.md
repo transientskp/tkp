@@ -1,6 +1,10 @@
 # Changelog
 -----------
 
+##4.0
+
+No changes since 4.0rc1
+
 ##4.0 release candidate 1
 
 ### RMS basd image quality check added for all images.

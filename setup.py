@@ -35,7 +35,7 @@ package_list = find_packages(where='.', exclude=['tests'])
 
 setup(
     name="tkp",
-    version="4.0rc1",
+    version="4.0",
     packages=package_list,
     scripts=tkp_scripts,
     package_data=package_data,

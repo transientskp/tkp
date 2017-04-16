@@ -1,0 +1,7 @@
+numpy==1.6.2
+scipy==0.10.1
+pyfits==3.0.8
+python-dateutil>=1.5
+h5py==2.1.0
+python-monetdb==11.13.0.1
+

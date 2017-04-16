@@ -1,0 +1,90 @@
+html, body, h1, form, fieldset, legend, ul#calclist, li {
+margin: 0;
+padding: 0;
+}
+
+body {
+background: #ffffff;
+color: #111111;
+font: 14px Verdana, Geneva, sans-serif;
+padding: 20px;
+}
+
+form#calculator {
+background: #2191cc;
+-moz-border-radius: 5px;
+-webkit-border-radius: 5px;
+border-radius: 5px;
+padding: 20px;
+width: 500px;
+}
+
+div#lofar {
+right: 0px;
+bottom: 0px;
+position: fixed;
+padding: 0px;
+}
+
+form#calculator fieldset {
+border: none;
+margin-bottom: 10px;
+}
+
+form#calculator fieldset:last-of-type {
+margin-bottom: 0;
+}
+
+form#calculator legend {
+color: #111111;
+font-size: 16px;
+font-weight: bold;
+padding-bottom: 10px;
+text-shadow: 0 1px 1px #224c90;
+}
+
+ul#calclist {
+list-style: none
+}
+
+form#calculator input:not([type=radio]),
+form#calculator textarea {
+background: #ffffff;
+border: none;
+-moz-border-radius: 3px;
+-webkit-border-radius: 3px;
+-khtml-border-radius: 3px;
+border-radius: 3px;
+font: italic 12px Verdana, Geneva, sans-serif;
+outline: none;
+padding: 3px;
+}
+form#calculator input:not([type=submit]):focus,
+form#calculator textarea:focus {
+background: #eaeaea;
+}
+form#calculator input[type=radio] {
+float: left;
+margin-right: 5px;
+}
+
+form#calculator button {
+background: #224c90;
+border: none;
+-moz-border-radius: 20px;
+-webkit-border-radius: 20px;
+-khtml-border-radius: 20px;
+border-radius: 20px;
+color: #ffffff;
+display: block;
+font: 18px Verdana, Geneva, sans-serif;
+letter-spacing: 1px;
+margin: auto;
+padding: 7px 25px;
+text-shadow: 0 1px 1px #000000;
+text-transform: uppercase;
+}
+form#payment button:hover {
+background: #1e2506;
+cursor: pointer;
+}

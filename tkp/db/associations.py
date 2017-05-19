@@ -84,6 +84,9 @@ def associate_extracted_sources(image_id, deRuiter_r, beamwidths_limit=1,
     _insert_1_to_many_newsource()
     _delete_1_to_many_inactive_newsource()
 
+    _insert_1_to_many_varmetric()
+    _delete_1_to_many_inactive_varmetric()
+
     _flag_1_to_many_inactive_tempruncat()
 
     #+-----------------------------------------------------+
@@ -1201,6 +1204,68 @@ INSERT INTO newsource
      AND tmprc.inactive = FALSE
      AND tr.runcat = one_to_many.old_runcat_id
      AND r.xtrsrc = tmprc.xtrsrc
+"""
+    tkp.db.execute(query, commit=True)
+
+
+def _insert_1_to_many_varmetric():
+    """Update the varmetric entry for a one-to-many runcat associations 
+    """
+    query = """\
+INSERT INTO varmetric
+  (runcat
+   ,v_int
+   ,eta_int
+   ,band
+   ,newsource
+   ,sigma_rms_max
+   ,sigma_rms_min
+   ,lightcurve_max
+   ,lightcurve_avg
+   ,lightcurve_median
+  )
+  SELECT r.id as new_runcat_id
+        ,tr.v_int
+        ,tr.eta_int
+        ,tr.band
+        ,tr.newsource
+        ,tr.sigma_rms_max
+        ,tr.sigma_rms_min
+        ,tr.lightcurve_max
+        ,tr.lightcurve_avg
+        ,tr.lightcurve_median
+    FROM (SELECT runcat as old_runcat_id
+            FROM temprunningcatalog
+           WHERE inactive = FALSE
+          GROUP BY runcat
+          HAVING COUNT(*) > 1
+         ) one_to_many
+        ,temprunningcatalog tmprc
+        ,runningcatalog r
+        ,varmetric vm
+   WHERE tmprc.runcat = one_to_many.old_runcat_id
+     AND tmprc.inactive = FALSE
+     AND tr.runcat = one_to_many.old_runcat_id
+     AND r.xtrsrc = tmprc.xtrsrc
+"""
+    tkp.db.execute(query, commit=True)
+
+
+def _delete_1_to_many_inactive_varmetric():
+    """Delete the varmetric sources of the old runcat
+
+    Since we replaced this runcat.id with multiple new ones, we now
+    delete the old one.
+    """
+    query = """\
+DELETE
+    FROM newsource
+    WHERE runcat IN (SELECT runcat
+                       FROM temprunningcatalog
+                       WHERE inactive = FALSE
+                       GROUP BY runcat
+                       HAVING COUNT(*) > 1
+                    )
 """
     tkp.db.execute(query, commit=True)
 

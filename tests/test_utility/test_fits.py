@@ -24,7 +24,7 @@ class TestFixReferenceDec(unittest.TestCase):
             h = fits.PrimaryHDU()
             h.header["CRVAL2"] = refdec
             if unit:
-                h.header.update("CUNIT2", unit)
+                h.header["CUNIT2"] = unit
             h.writeto(temp_fits.name)
             fix_reference_dec(temp_fits.name)
             self.assertLess(abs(fits.getheader(temp_fits.name)['CRVAL2']), abs(refdec))

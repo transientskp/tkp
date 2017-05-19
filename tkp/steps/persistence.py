@@ -108,11 +108,11 @@ def get_accessors(images):
 
 def paths_to_fits(paths):
     """
-    paths (list): list of paths to a astronomical image which can be opened with
+    paths (tuple): list of paths to a astronomical image which can be opened with
                   casacore
                   
     returns:
-        list: of HDUlist objects
+        tuple: of HDUlist objects
     """
     for path in paths:
         try:

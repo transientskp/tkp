@@ -71,7 +71,7 @@ def isrejected(imageid, session):
         imageid: The image ID
         session (sqlalchemy.orm.session.Session): Database session.
     Returns:
-        list: Empty if not rejected, a list of strings formatted as
+        tuple: Empty if not rejected, a list of strings formatted as
             '{description}: {comment}' if rejected.
     """
     image_rejections = session.query(Rejection).filter(

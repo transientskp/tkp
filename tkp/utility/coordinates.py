@@ -659,7 +659,7 @@ class WCS(object):
         Pixel to Spatial coordinate conversion.
 
         Args:
-            pixpos (list):  [x, y] pixel position
+            pixpos (tuple):  [x, y] pixel position
 
         Returns:
             tuple: ra (float) Right ascension corresponding to position [x, y]
@@ -675,7 +675,7 @@ class WCS(object):
         Spatial to Pixel coordinate conversion.
 
         Args:
-            pixpos (list):  [ra, dec] spatial position
+            pixpos (tuple):  [ra, dec] spatial position
 
         Returns:
             tuple: X pixel value corresponding to position [ra, dec],

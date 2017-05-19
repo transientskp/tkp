@@ -117,7 +117,7 @@ def combine(fitsfiles, outputfile, method="average"):
     """Combine a set of FITS files, taking care of header keywords
 
     :argument fitsfiles: FITS filenames to combine
-    :type fitsfiles: list
+    :type fitsfiles: tuple
     :argument outputfile: output FITS filename
     :type outputfile: str
 

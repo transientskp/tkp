@@ -16,9 +16,9 @@ def store_fits(db_images, fits_datas, fits_headers):
     bulk store fits data in database
 
     args:
-        db_images (list): list of ``tkp.db.model.Image``s
-        fits_datas (list): list of serialised numpy arrays
-        fits_headers (list): list of serialised fits headers (string)
+        db_images (tuple): list of ``tkp.db.model.Image``s
+        fits_datas (tuple): list of serialised numpy arrays
+        fits_headers (tuple): list of serialised fits headers (string)
     """
     values = [{'image': i.id, 'fits_data': d, 'fits_header': h} for i, d, h in
               zip(db_images, fits_datas, fits_headers)]

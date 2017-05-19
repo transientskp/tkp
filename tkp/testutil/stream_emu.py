@@ -239,8 +239,8 @@ def emulator(ports=DEFAULT_PORTS, freqs=DEFAULT_FREQS):
     Daemon function, does not return.
 
     args:
-        ports (list): list of ints representing ports
-        freqs (list): list of frequencies
+        ports (tuple): list of ints representing ports
+        freqs (tuple): list of frequencies
     """
     heartbeat_queue = Queue()
     repeater = Repeater()

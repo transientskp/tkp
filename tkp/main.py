@@ -92,7 +92,7 @@ def load_images(job_name, job_dir):
     Load all the images for a specific TraP job.
 
     returns:
-        list: a list of paths
+        tuple: a list of paths
     """
     path = os.path.join(job_dir, 'images_to_process.py')
     images = imp.load_source('images_to_process', path).images
@@ -118,7 +118,7 @@ def initialise_dataset(job_config, supplied_mon_coords):
 
     args:
         job_config: a job configuration object
-        supplied_mon_coords (list): a list of monitoring positions
+        supplied_mon_coords (tuple): a list of monitoring positions
 
     returns:
         tuple: job_config and dataset ID
@@ -151,11 +151,11 @@ def extract_metadata(job_config, accessors, runner):
 
     args:
         job_config: a TKP config object
-        accessors (list): list of tkp.Accessor objects
+        accessors (tuple): list of tkp.Accessor objects
         runner (tkp.distribute.Runner): the runner to use
 
     returns:
-        list: a list of metadata dicts
+        tuple: a list of metadata dicts
     """
     logger.debug("Extracting metadata from images")
     imgs = [[a] for a in accessors]
@@ -190,7 +190,7 @@ def extract_fits_from_files(runner, paths):
 def quality_check(db_images, accessors, job_config, runner):
     """
     returns:
-        list: a list of db_image and accessor tuples
+        tuple: a list of db_image and accessor tuples
     """
     logger.debug("performing quality check")
     arguments = [job_config]
@@ -288,9 +288,9 @@ def get_metadata_for_sorting(runner, image_paths):
 
     args:
         runner (tkp.distribute.Runner): Runner to use for distribution
-        image_paths (list): list of image paths
+        image_paths (tuple): list of image paths
     returns:
-        list: list of tuples, (timestamp, [list_of_images])
+        tuple: list of tuples, (timestamp, [list_of_images])
     """
     nested_img = [[i] for i in image_paths]
     results = runner.map("get_metadata_for_ordering", nested_img)
@@ -313,13 +313,13 @@ def timestamp_step(runner, images, job_config, dataset_id, copy_images):
 
     args:
          runner (tkp.distribute.Runner): Runner to use for distribution
-         images (list): list of things tkp.accessors can handle, like image
+         images (tuple): list of things tkp.accessors can handle, like image
                         paths or fits objects
          job_config: a tkp job config object
          dataset_id (int): The ``tkp.db.model.Dataset`` id
 
     returns:
-        list: of tuples (rms_qc, band)
+        tuple: of tuples (rms_qc, band)
     """
     # gather all image info
     accessors = get_accessors(runner, images)
@@ -418,7 +418,7 @@ def run(job_name, supplied_mon_coords=None):
 
     args:
         job_name (str): name of the jbo to run
-        supplied_mon_coords (list): list of coordinates to monitor
+        supplied_mon_coords (tuple): list of coordinates to monitor
     """
     pipe_config = get_pipe_config(job_name)
     runner = get_runner(pipe_config)

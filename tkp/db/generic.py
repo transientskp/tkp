@@ -41,7 +41,7 @@ def columns_from_table(table, keywords=None, alias=None, where=None,
 
     Kwargs:
 
-        keywords (list): column names to select from the table. None indicates all ('*')
+        keywords (uple): column names to select from the table. None indicates all ('*')
 
         where (dict): where clause for the query, specified as a set
             of 'key = value' comparisons. Comparisons are and-ed
@@ -55,7 +55,7 @@ def columns_from_table(table, keywords=None, alias=None, where=None,
 
     Returns:
 
-        list: list of dicts. Each dict contains the given keywords,
+        (tuple): list of dicts. Each dict contains the given keywords,
             or all if keywords=None. Each element of the list
             corresponds to a table row.
 

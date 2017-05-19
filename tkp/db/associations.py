@@ -1225,15 +1225,15 @@ INSERT INTO varmetric
    ,lightcurve_median
   )
   SELECT r.id as new_runcat_id
-        ,tr.v_int
-        ,tr.eta_int
-        ,tr.band
-        ,tr.newsource
-        ,tr.sigma_rms_max
-        ,tr.sigma_rms_min
-        ,tr.lightcurve_max
-        ,tr.lightcurve_avg
-        ,tr.lightcurve_median
+        ,vm.v_int
+        ,vm.eta_int
+        ,vm.band
+        ,vm.newsource
+        ,vm.sigma_rms_max
+        ,vm.sigma_rms_min
+        ,vm.lightcurve_max
+        ,vm.lightcurve_avg
+        ,vm.lightcurve_median
     FROM (SELECT runcat as old_runcat_id
             FROM temprunningcatalog
            WHERE inactive = FALSE
@@ -1245,7 +1245,7 @@ INSERT INTO varmetric
         ,varmetric vm
    WHERE tmprc.runcat = one_to_many.old_runcat_id
      AND tmprc.inactive = FALSE
-     AND tr.runcat = one_to_many.old_runcat_id
+     AND vm.runcat = one_to_many.old_runcat_id
      AND r.xtrsrc = tmprc.xtrsrc
 """
     tkp.db.execute(query, commit=True)

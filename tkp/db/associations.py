@@ -1267,8 +1267,12 @@ DELETE
                        HAVING COUNT(*) > 1
                     )
 """
-    affected = tkp.db.execute(query, commit=True)
-    logger.debug("delete_1_to_many_inactive_varmetric affected {} rows".format(affected))
+    cursor = tkp.db.execute(query, commit=True)
+    ins = cursor.rowcount
+    if ins > 0:
+        logger.debug(
+            "delete_1_to_many_inactive_varmetric "
+            "affected {} rows".format(cursor.rowcount))
 
 
 def _delete_1_to_many_inactive_assocskyrgn():

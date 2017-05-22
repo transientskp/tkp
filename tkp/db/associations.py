@@ -1259,7 +1259,7 @@ def _delete_1_to_many_inactive_varmetric():
     """
     query = """\
 DELETE
-    FROM newsource
+    FROM varmetric
     WHERE runcat IN (SELECT runcat
                        FROM temprunningcatalog
                        WHERE inactive = FALSE

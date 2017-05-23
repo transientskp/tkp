@@ -25,6 +25,7 @@ import logging
 import json
 import tkp
 from tkp.db.sql.populate import populate
+from tkp.config import initialize_pipeline_config, get_database_config
 from tkp.main import run
 
 # logging.basicConfig(level=logging.INFO)
@@ -227,32 +228,45 @@ def run_job(args):
     run(args.name, monitor_coords)
 
 
-def init_db(options):
-    from tkp.config import initialize_pipeline_config, get_database_config
+def get_db_config():
     cfgfile = os.path.join(os.getcwd(), "pipeline.cfg")
     if os.path.exists(cfgfile):
         pipe_config = initialize_pipeline_config(cfgfile, "notset")
         dbconfig = get_database_config(pipe_config['database'], apply=False)
     else:
         dbconfig = get_database_config(None, apply=False)
+    return dbconfig
 
+
+def init_db(options):
+    dbconfig = get_db_config()
     dbconfig['yes'] = options.yes
     dbconfig['destroy'] = options.destroy
-
     populate(dbconfig)
 
 
 def deldataset(options):
+    from tkp.db.database import Database
+    from tkp.db.model import Dataset
+    from sqlalchemy.orm.exc import NoResultFound
+    dbconfig = get_db_config()
+
     if not options.yes:
+        print("\nThis script will delete dataset {} with "
+              "these settings:".format(options.id))
+        print("")
+        print("\tengine:     " + (dbconfig['engine'] or ""))
+        print("\tdatabase:   " + (dbconfig['database'] or ""))
+        print("\tuser:       " + (dbconfig['user'] or ""))
+        print("\tpassword:   " + (dbconfig['password'] or ""))
+        print("\thost:       " + (dbconfig['host'] or ""))
+        print("\tport:       " + str(dbconfig['port']))
         answer = raw_input("\nAre you sure you want to delete dataset {}? "
                            "[y/N]: ".format(options.id))
         if answer.lower() != 'y':
             sys.stderr.write("Aborting.\n")
             sys.exit(1)
-    from tkp.db.database import Database
-    from tkp.db.model import Dataset
-    from sqlalchemy.orm.exc import NoResultFound
-    db = Database()
+    db = Database(**dbconfig)
     try:
         dataset = db.session.query(Dataset).filter(Dataset.id==options.id).one()
     except NoResultFound:

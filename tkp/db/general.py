@@ -293,7 +293,7 @@ def lightcurve(xtrsrcid):
             (first) point of the light curve.
 
     Returns:
-        list: a list of tuples, each containing:
+        (tuple): a list of tuples, each containing:
             - observation start time as a datetime.datetime object
             - integration time (float)
             - integrated flux (float)
@@ -322,7 +322,7 @@ def frequency_bands(dataset_id):
 def runcat_entries(dataset_id):
     """
     Returns:
-        list: a list of dictionarys representing rows in runningcatalog,
+        (tuple): a list of dictionarys representing rows in runningcatalog,
         for all sources belonging to this dataset
 
         Column 'id' is returned with the key 'runcat'

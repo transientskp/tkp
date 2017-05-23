@@ -650,12 +650,12 @@ class ImageData(object):
         This function wraps around fit_to_point().
 
         Args:
-            positions (list): list of (RA, Dec) tuples. Positions to be fit,
+            positions (tuple): list of (RA, Dec) tuples. Positions to be fit,
                 in decimal degrees.
             boxsize: See :py:func:`fit_to_point`
             threshold: as above.
             fixed: as above.
-            ids (list): A list of identifiers. If not None, then must match
+            ids (tuple): A list of identifiers. If not None, then must match
                 the length and order of the ``requested_fits``. Any
                 successfully fit positions will be returned in a tuple
                 along with the matching id. As these are simply passed back to
@@ -665,7 +665,7 @@ class ImageData(object):
         fit_to_point, not in sky coordinates.
 
         Returns:
-            list: A list of successful fits.
+            tuple: A list of successful fits.
                 If ``ids`` is None, returns a single list of
                 :class:`tkp.sourcefinder.extract.Detection` s.
                 Otherwise, returns a tuple of two matched lists:
@@ -817,7 +817,7 @@ class ImageData(object):
             numpy.ndimage.label()). Will be calculated automatically if not
             provided.
 
-            labels (list): list of labels in the island map to use for
+            labels (tuple): list of labels in the island map to use for
             fitting.
 
         Returns:

@@ -36,7 +36,7 @@ def get_accessors(images):
 def get_metadata_for_ordering(images):
     """
     args:
-        images (list): list of image urls
+        images (tuple): list of image urls
     returns:
         list: of ImageMetadataForSort
     """

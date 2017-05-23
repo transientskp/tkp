@@ -198,8 +198,8 @@ def stream_generator(hosts, ports):
     images with the same timestamp.
 
     args:
-        hosts (list): list of hosts to connect to
-        ports (list): list of ports to connect to
+        hosts (tuple): list of hosts to connect to
+        ports (tuple): list of ports to connect to
     """
 
     if THREADED:

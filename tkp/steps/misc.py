@@ -152,10 +152,10 @@ def group_per_timestep(metadatas):
     ordering logic (per stoke) later on.
 
     Args:
-        metadatas (list): list of ImageMetadataForSort
+        metadatas (tuple): list of ImageMetadataForSort
 
     Returns:
-        list: List of tuples. The list is sorted by timestamp.
+        tuple: List of tuples. The list is sorted by timestamp.
             Each tuple has the timestamp as a first element,
             and a list of ImageMetadataForSort sorted by frequency as the
             second element.

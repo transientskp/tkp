@@ -54,6 +54,25 @@ second scale lightcurves after a year. That could keep database row count much
 lower. We only need a short list of coordinates that required monitoring
 (forced fitting) in our case.
 
+Originally the idea was that we are going to work with a massive dataset and
+that we need to do the work close to the datase and all the calculations in the
+database. This turns out to be a terrible idea. Writing complex SQL queries 
+is a pain, having 2 logical code spaces is hard to manage and reason about
+and code complexity explodes. It is probably much better to use the database
+only as a storage, and do the calculations in memory. The amount of sources
+tracked in case of AARTFAAC is quite low, but even if you track 1000 sources
+it is probably much better to do this in memory and write only the lightcurves 
+to the database. The logic becomes much more compact and is much easier to maintain.
+
+Ideally I would move TraP to a more service oriented design, where a socket
+listener dumps images on a subscribably channel. Then a source extracter
+extracts sources and publishes this on a different channel. Same for a source
+associator. This way you can 'plug in' modules, like a 'transient finder'
+that listens to a lightcurve stream. or a 'database dumper' that records
+lighcurves to a database. That way nonthing needs to wait for eachother, 
+it scales to multiple machines, no synchronisation is needed between workers
+and everything is implicility parallel.
+
 ### pipeline
 
 Various tasks (not DB) can be executed in parallel. We already do that for

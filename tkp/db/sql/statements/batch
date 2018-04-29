@@ -22,3 +22,4 @@ init/tables.sql
 # views
 #
 views/augmented_runningcatalog.sql
+keys/drop_constraints.sql

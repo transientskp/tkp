@@ -7,10 +7,12 @@ An example how to use this is shown in an IPython notebook:
 https://github.com/transientskp/notebooks/blob/master/transients.ipynb
 
 """
+import os
 
 from sqlalchemy.orm import aliased
 from sqlalchemy.sql import func, insert
 
+from tkp.config import initialize_pipeline_config, get_database_config
 from tkp.db.model import (Assocxtrsource, Extractedsource, Image, Newsource,
                           Runningcatalog, Varmetric)
 
@@ -142,6 +144,10 @@ def _combined(session, dataset):
     newsrc_trigger_query = _newsrc_trigger(session, dataset)
     last_ts_fmax_query = _last_ts_fmax(session, dataset)
 
+    cfgfile = os.path.join(os.getcwd(), "pipeline.cfg")
+    pipe_config = initialize_pipeline_config(cfgfile, "notset")
+    dbconfig = get_database_config(pipe_config['database'], apply=False)
+
     return session.query(
         runcat.id.label('runcat'),
         runcat.wm_ra.label('ra'),
@@ -159,7 +165,9 @@ def _combined(session, dataset):
         newsrc_trigger_query.c.sigma_rms_min.label('sigma_rms_min'),
         func.max(agg_ex.f_int).label('lightcurve_max'),
         func.avg(agg_ex.f_int).label('lightcurve_avg'),
-        func.median(agg_ex.f_int).label('lightcurve_median')
+        func.median(agg_ex.f_int).label('lightcurve_median') \
+            if dbconfig['engine'] == "postgresql" \
+            else func.sys.median(agg_ex.f_int).label('lightcurve_median')
     ). \
         select_from(last_ts_fmax_query). \
         join(match_assoc, match_assoc.runcat_id == last_ts_fmax_query.c.runcat_id). \

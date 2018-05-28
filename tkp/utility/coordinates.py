@@ -6,13 +6,13 @@ General purpose astronomical coordinate handling routines.
 
 import sys
 import math
-import wcslib
+from astropy import wcs as pywcs
 import logging
 import datetime
 import pytz
 
-from pyrap.measures import measures
-from pyrap.quanta import quantity
+from casacore.measures import measures
+from casacore.quanta import quantity
 
 logger = logging.getLogger(__name__)
 
@@ -31,13 +31,15 @@ SECONDS_IN_HOUR = 60**2
 SECONDS_IN_DAY = 24 * SECONDS_IN_HOUR
 
 def julian_date(time=None, modified=False):
-    """Return the Julian Date: the number of days (including fractions) which
-    have elapsed between noon, UT on 1 January 4713 BC and the specified time.
-
-    If modified is True, return the Modified Julian Date: the number of days
-    (including fractions) which have elapsed between the start of 17 November
-    1858 AD and the specified time. Takes a datetime.datetime object as
-    input.
+    """
+    Calculate the Julian date at a given timestamp.
+    Args:
+        time (datetime.datetime): Timestamp to calculate JD for.
+        modified (bool): If True, return the Modified Julian Date:
+            the number of days (including fractions) which have elapsed between
+            the start of 17 November 1858 AD and the specified time.
+    Returns:
+        float: Julian date value.
     """
     if not time:
         time = datetime.datetime.now(pytz.utc)
@@ -51,6 +53,10 @@ def julian_date(time=None, modified=False):
 
 
 def mjd2datetime(mjd):
+    """
+    Convert a Modified Julian Date to datetime via 'unix time' representation.
+    NB 'unix time' is defined by the casacore/casacore package.
+    """
     q = quantity("%sd" % mjd)
     return datetime.datetime.fromtimestamp(q.to_unix_time())
 
@@ -60,9 +66,8 @@ def mjd2lst(mjd, position=None):
     Converts a Modified Julian Date into Local Apparent Sidereal Time in
     seconds at a given position. If position is None, we default to the
     reference position of CS002.
-
     mjd -- Modified Julian Date (float, in days)
-    position -- Position (pyrap measure)
+    position -- Position (casacore measure)
     """
     dm = measures()
     position = position or dm.position(
@@ -77,9 +82,9 @@ def mjd2lst(mjd, position=None):
 def mjds2lst(mjds, position=None):
     """
     As mjd2lst(), but takes an argument in seconds rather than days.
-
-    mjds -- Modified Julian Date (float, in seconds)
-    position -- Position (pyrap measure)
+    Args:
+        mjds (float):Modified Julian Date (in seconds)
+        position (casacore measure): Position for LST calcs
     """
     return mjd2lst(mjds/SECONDS_IN_DAY, position)
 
@@ -89,16 +94,16 @@ def jd2lst(jd, position=None):
     Converts a Julian Date into Local Apparent Sidereal Time in seconds at a
     given position. If position is None, we default to the reference position
     of CS002.
-
-    jd -- Julian Date (float)
-    position -- Position (pyrap measure)
+    Args:
+        jd (float): Julian Date
+        position (casacore measure): Position for LST calcs.
     """
     return mjd2lst(jd - 2400000.5, position)
 
 
 
 # NB: datetime is not sensitive to leap seconds.
-# However, leap seconds were first introduced in 1972. 
+# However, leap seconds were first introduced in 1972.
 # So there are no leap seconds between the start of the
 # Modified Julian epoch and the start of the Unix epoch,
 # so this calculation is safe.
@@ -106,21 +111,34 @@ def jd2lst(jd, position=None):
 #unix_epoch = datetime.datetime(1970, 1, 1, 0, 0)
 #delta = unix_epoch - julian_epoch
 #deltaseconds = delta.total_seconds()
-seconds_between_julian_and_unix_epoc = 3506716800
+#unix_epoch = 3506716800
 
+# The above is equivalent to this:
+unix_epoch = quantity("1970-01-01T00:00:00").get_value('s')
 
 def julian2unix(timestamp):
-    """converts a julian timestamp (number of seconds since 17 November 1858)
-    to unix timestamp (number of seconds since  1 January 1970)
     """
-    return timestamp - seconds_between_julian_and_unix_epoc
+    Convert a modifed julian timestamp (number of seconds since 17 November
+    1858) to Unix timestamp (number of seconds since 1 January 1970).
+    Args:
+        timestamp (numbers.Number): Number of seconds since the Unix epoch.
+    Returns:
+        numbers.Number: Number of seconds since the modified Julian epoch.
+    """
+    return timestamp - unix_epoch
 
 
 def unix2julian(timestamp):
-    """converts a julian timestamp (number of seconds since 17 November 1858)
-    to unix timestamp (number of seconds since  1 January 1970)
     """
-    return timestamp + seconds_between_julian_and_unix_epoc
+    Convert a Unix timestamp (number of seconds since 1 January 1970) to a
+    modified Julian timestamp (number of seconds since 17 November 1858).
+    Args:
+        timestamp (numbers.Number): Number of seconds since the modified
+            Julian epoch.
+    Returns:
+        numbers.Number: Number of seconds since the Unix epoch.
+    """
+    return timestamp + unix_epoch
 
 
 def sec2deg(seconds):
@@ -175,13 +193,10 @@ def altaz(mjds, ra, dec, lat=CORE_LAT):
 def ratohms(radegs):
     """Convert RA in decimal degrees format to hours, minutes,
     seconds format.
-
     Keyword arguments:
     radegs -- RA in degrees format
-
     Return value:
     ra -- tuple of 3 values, [hours,minutes,seconds]
-
     """
 
     radegs %= 360
@@ -192,13 +207,10 @@ def ratohms(radegs):
 def dectodms(decdegs):
     """Convert Declination in decimal degrees format to hours, minutes,
     seconds format.
-
     Keyword arguments:
     decdegs -- Dec. in degrees format
-
     Return value:
     dec -- list of 3 values, [degrees,minutes,seconds]
-
     """
 
     sign = -1 if decdegs < 0 else 1
@@ -229,63 +241,67 @@ def dectodms(decdegs):
     return (decd, decm, decs)
 
 
+def propagate_sign(val1, val2, val3):
+    """
+    casacore (reasonably enough) demands that a minus sign (if required)
+    comes at the start of the quantity. Thus "-0D30M" rather than "0D-30M".
+    Python regards "-0" as equal to "0"; we need to split off a separate sign
+    field.
+    If more than one of our inputs is negative, it's not clear what the user
+    meant: we raise.
+    Args:
+        val1(float): (,val2,val3) input values (hour/min/sec or deg/min/sec)
+    Returns:
+        tuple: "+" or "-" string denoting sign,
+            val1, val2, val3 (numeric) denoting absolute values of inputs.
+    """
+    signs = [x<0 for x in (val1, val2, val3)]
+    if signs.count(True) == 0:
+        sign = "+"
+    elif signs.count(True) == 1:
+        sign, val1, val2, val3 = "-", abs(val1), abs(val2), abs(val3)
+    else:
+        raise ValueError("Too many negative coordinates")
+    return sign, val1, val2, val3
+
 def hmstora(rah, ram, ras):
     """Convert RA in hours, minutes, seconds format to decimal
     degrees format.
-
     Keyword arguments:
     rah,ram,ras -- RA values (h,m,s)
-
     Return value:
     radegs -- RA in decimal degrees
-
     """
-    if rah > 360 or ram > 59 or ras > 59:
-        raise ValueError("coordinate out of range")
-    if rah < 0 or ram < 0 or ras < 0:
-        raise ValueError("coordinate out of range")
-    hrs = (float(rah)+(float(ram)/60)+(float(ras)/3600.0))
-    if hrs > 24:
-        raise ValueError("coordinate out of range")
-    return 15 * hrs
+    sign, rah, ram, ras = propagate_sign(rah, ram, ras)
+    ra = quantity("%s%dH%dM%f" % (sign, rah, ram, ras)).get_value()
+    if abs(ra) >= 360:
+        raise ValueError("coordinates out of range")
+    return ra
 
 
 def dmstodec(decd, decm, decs):
     """Convert Dec in degrees, minutes, seconds format to decimal
     degrees format.
-
     Keyword arguments:
     decd, decm, decs -- list of Dec values (d,m,s)
-
     Return value:
     decdegs -- Dec in decimal degrees
-
     """
-    if decd > 90 or decd < -90:
-        raise ValueError("degrees out of range")
-    if decm > 59 or decm < -59:
-        raise ValueError("minutes out of range")
-    if decs > 59 or decs < -59:
-        raise ValueError("seconds out of range")
-    sign = -1 if decd < 0 or decm < 0 or decs < 0 else 1
-    decdegs = abs(decd) + abs(decm) / 60. + abs(decs) / 3600.
-    if decdegs > 90:
+    sign, decd, decm, decs = propagate_sign(decd, decm, decs)
+    dec = quantity("%s%dD%dM%f" % (sign, decd, decm, decs)).get_value()
+    if abs(dec) > 90:
         raise ValueError("coordinates out of range")
-
-    return sign * decdegs
+    return dec
 
 
 def angsep(ra1, dec1, ra2, dec2):
     """Find the angular separation of two sources, in arcseconds,
     using the proper spherical trig formula
-
     Keyword arguments:
     ra1,dec1 - RA and Dec of the first source, in decimal degrees
     ra2,dec2 - RA and Dec of the second source, in decimal degrees
-
     Return value:
     angsep - Angular separation, in arcseconds
-
     """
 
     b = (math.pi / 2) - math.radians(dec1)
@@ -303,14 +319,11 @@ def angsep(ra1, dec1, ra2, dec2):
 
 def alphasep(ra1, ra2, dec1, dec2):
     """Find the angular separation of two sources in RA, in arcseconds
-
     Keyword arguments:
     ra1,dec1 - RA and Dec of the first source, in decimal degrees
     ra2,dec2 - RA and Dec of the second source, in decimal degrees
-
     Return value:
     angsep - Angular separation, in arcseconds
-
     """
 
     return 3600 * (ra1 - ra2) * math.cos(math.radians((dec1 + dec2) / 2.0))
@@ -318,14 +331,11 @@ def alphasep(ra1, ra2, dec1, dec2):
 
 def deltasep(dec1, dec2):
     """Find the angular separation of two sources in Dec, in arcseconds
-
     Keyword arguments:
     dec1 - Dec of the first source, in decimal degrees
     dec2 - Dec of the second source, in decimal degrees
-
     Return value:
     angsep - Angular separation, in arcseconds
-
     """
 
     return 3600 * (dec1 - dec2)
@@ -334,11 +344,9 @@ def deltasep(dec1, dec2):
 # Find angular separation in Dec of 2 positions, in arcseconds
 def alpha(l, m, alpha0, delta0):
     """Convert a coordinate in l,m into an coordinate in RA
-
     Keyword arguments:
     l,m -- direction cosines, given by (offset in cells) x cellsi (radians)
     alpha_0, delta_0 -- centre of the field
-
     Return value:
     alpha -- RA in decimal degrees
     """
@@ -354,10 +362,8 @@ def alpha_inflate(theta, decl):
     
     Return value:
     alpha -- RA inflation in decimal degrees
-
     For a derivation, see MSR TR 2006 52, Section 2.1
     http://research.microsoft.com/apps/pubs/default.aspx?id=64524
-
     """
     if abs(decl) + theta > 89.9:
         return 180.0
@@ -367,11 +373,9 @@ def alpha_inflate(theta, decl):
 # Find the RA of a point in a radio image, given l,m and field centre
 def delta(l, m, delta0):
     """Convert a coordinate in l, m into an coordinate in Dec
-
     Keyword arguments:
     l, m -- direction cosines, given by (offset in cells) x cellsi (radians)
     alpha_0, delta_0 -- centre of the field
-
     Return value:
     delta -- Dec in decimal degrees
     """
@@ -382,15 +386,12 @@ def delta(l, m, delta0):
 
 def l(ra, dec, cra, incr):
     """Convert a coordinate in RA,Dec into a direction cosine l
-
     Keyword arguments:
     ra,dec -- Source location
     cra -- RA centre of the field
     incr -- number of degrees per pixel (negative in the case of RA)
-
     Return value:
     l -- Direction cosine
-
     """
     return ((math.cos(math.radians(dec)) * math.sin(math.radians(ra - cra))) /
             (math.radians(incr)))
@@ -398,24 +399,24 @@ def l(ra, dec, cra, incr):
 
 def m(ra, dec, cra, cdec, incr):
     """Convert a coordinate in RA,Dec into a direction cosine m
-
     Keyword arguments:
     ra,dec -- Source location
     cra,cdec -- centre of the field
     incr -- number of degrees per pixel
-
     Return value:
     m -- direction cosine
-
     """
     return ((math.sin(math.radians(dec)) * math.cos(math.radians(cdec))) -
             (math.cos(math.radians(dec)) * math.sin(math.radians(cdec)) *
              math.cos(math.radians(ra-cra)))) / math.radians(incr)
 
 
-# Find the l direction cosine in a radio image, given an RA and Dec and the
-# field centre
+
 def lm_to_radec(ra0, dec0, l, m):
+    """
+    Find the l direction cosine in a radio image, given an RA and Dec and the
+    field centre
+    """
     # This function should be the inverse of radec_to_lmn, but it is
     # not. There is likely an error here.
 
@@ -462,13 +463,10 @@ def radec_to_lmn(ra0, dec0, ra, dec):
 def eq_to_gal(ra, dec):
     """Find the Galactic co-ordinates of a source given the equatorial
     co-ordinates
-
     Keyword arguments:
     (alpha,delta) -- RA, Dec in decimal degrees
-
     Return value:
     (l,b) -- Galactic longitude and latitude, in decimal degrees
-
     """
     dm = measures()
 
@@ -485,13 +483,10 @@ def eq_to_gal(ra, dec):
 def gal_to_eq(lon_l, lat_b):
     """Find the Galactic co-ordinates of a source given the equatorial
     co-ordinates
-
     Keyword arguments:
     (l, b) -- Galactic longitude and latitude, in decimal degrees
-
     Return value:
     (alpha, delta) -- RA, Dec in decimal degrees
-
     """
     dm = measures()
 
@@ -504,14 +499,15 @@ def gal_to_eq(lon_l, lat_b):
 
     return ra, dec
 
+
 def eq_to_cart(ra, dec):
     """Find the cartesian co-ordinates on the unit sphere given the eq. co-ords.
-
         ra, dec should be in degrees.
     """
-    return (math.cos(math.radians(dec)) * math.cos(math.radians(ra)), # Cartesian x
-            math.cos(math.radians(dec)) * math.sin(math.radians(ra)), # Cartesian y
-            math.sin(math.radians(dec))) # Cartesian z
+    return (math.cos(math.radians(dec)) * math.cos(math.radians(ra)),  # Cartesian x
+            math.cos(math.radians(dec)) * math.sin(math.radians(ra)),  # Cartesian y
+            math.sin(math.radians(dec)))  # Cartesian z
+
 
 class CoordSystem(object):
     """A container for constant strings representing different coordinate
@@ -564,45 +560,68 @@ def convert_coordsystem(ra, dec, insys, outsys):
     return ra, dec
 
 
-class WCS(wcslib.wcs):
+class WCS(object):
     """
-    wcslib.wcs, extended to support different coordinate systems.
+    Wrapper around pywcs.WCS.
+    This is primarily to preserve API compatibility with the earlier,
+    home-brewed python-wcslib wrapper. It includes:
+      * A fix for the reference pixel lying at the zenith;
+      * Raises ValueError if coordinates are invalid.
     """
+    # ORIGIN is the upper-left corner of the image. pywcs supports both 0
+    # (NumPy, C-style) or 1 (FITS, Fortran-style). The TraP uses 1.
+    ORIGIN = 1
 
-    # A signal to use for message passing.
-    change = "WCS changed"
+    # We can set these attributes on the pywcs.WCS().wcs object to configure
+    # the coordinate system.
+    WCS_ATTRS = ("crpix", "cdelt", "crval", "ctype", "cunit", "crota")
+
+    def __init__(self):
+        # Currently, we only support two dimensional images.
+        self.wcs = pywcs.WCS(naxis=2)
 
     def __setattr__(self, attrname, value):
-        if attrname == "coordsys" or attrname == "outputsys":
-            wcslib.wcs.__setattr__(self, attrname, coordsystem(value))
-            # Notify any objects which depend on this that their parameters
-            # have changed.
-        else:
+        if attrname in self.WCS_ATTRS:
             # Account for arbitrary coordinate rotations in images pointing at
             # the North Celestial Pole. We set the reference direction to
             # infintesimally less than 90 degrees to avoid any ambiguity. See
             # discussion at #4599.
             if attrname == "crval" and (value[1] == 90 or value[1] == math.pi/2):
                 value = (value[0], value[1] * (1 - sys.float_info.epsilon))
-            wcslib.wcs.__setattr__(self, attrname, value)
+            self.wcs.wcs.__setattr__(attrname, value)
+        else:
+            super(WCS, self).__setattr__(attrname, value)
+
+    def __getattr__(self, attrname):
+        if attrname in  self.WCS_ATTRS:
+            return getattr(self.wcs.wcs, attrname)
+        else:
+            super(WCS, self).__getattr__(attrname)
 
     def p2s(self, pixpos):
-        ra, dec = wcslib.wcs.p2s(self, pixpos)
-        try:
-            if self.outputsys != self.coordsys:
-                ra, dec = convert_coordsystem(ra, dec,
-                    self.coordsys, self.outputsys)
-        except AttributeError:
-            logger.debug("Equinox conversion undefined.")
-        return [ra, dec]
+        """
+        Pixel to Spatial coordinate conversion.
+        Args:
+            pixpos (tuple):  [x, y] pixel position
+        Returns:
+            tuple: ra (float) Right ascension corresponding to position [x, y]
+                   dec (float) Declination corresponding to position [x, y]
+        """
+        ra, dec = self.wcs.wcs_pix2world(pixpos[0], pixpos[1], self.ORIGIN)
+        if math.isnan(ra) or math.isnan(dec):
+            raise RuntimeError("Spatial position is not a number")
+        return float(ra), float(dec)
 
     def s2p(self, spatialpos):
-        ra, dec = spatialpos
-        try:
-            if self.outputsys != self.coordsys:
-                ra, dec = convert_coordsystem(ra, dec,
-                    self.outputsys, self.coordsys)
-        except AttributeError:
-            logger.debug("Equinox conversion undefined.")
-        x, y = wcslib.wcs.s2p(self, [ra, dec])
-        return [x, y]
+        """
+        Spatial to Pixel coordinate conversion.
+        Args:
+            pixpos (tuple):  [ra, dec] spatial position
+        Returns:
+            tuple: X pixel value corresponding to position [ra, dec],
+                   Y pixel value corresponding to position [ra, dec]
+        """
+        x, y = self.wcs.wcs_world2pix(spatialpos[0], spatialpos[1], self.ORIGIN)
+        if math.isnan(x) or math.isnan(y):
+            raise RuntimeError("Pixel position is not a number")
+        return float(x), float(y)

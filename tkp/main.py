@@ -359,7 +359,7 @@ def timestamp_step(runner, images, job_config, dataset_id, copy_images):
                                                   successful_ids)
 
     # update the variable metrics for running catalogs
-    varmetric(dataset_id)
+#    varmetric(dataset_id)
 
 
 def run_stream(runner, job_config, dataset_id, copy_images):
@@ -430,8 +430,9 @@ def run(job_name, supplied_mon_coords=None):
     copy_images = pipe_config.image_cache['copy_images']
     if job_config.pipeline.mode == 'stream':
         run_stream(runner, job_config, dataset_id, copy_images)
+	varmetric(dataset_id)
     elif job_config.pipeline.mode == 'batch':
         image_paths = load_images(job_name, job_dir)
         run_batch(image_paths, job_config, runner, dataset_id, copy_images)
-
+	varmetric(dataset_id)
 

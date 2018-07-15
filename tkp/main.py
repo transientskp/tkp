@@ -271,9 +271,9 @@ def varmetric(dataset_id):
 
 def close_database(dataset_id):
     dbgen.update_dataset_process_end_ts(dataset_id)
-    db = tkp.db.Database()
-    db.session.commit()
-    db.close()
+    #db = tkp.db.Database()
+    #db.session.commit()
+    #db.close()
 
 
 def get_accessors(runner, all_images):
@@ -425,7 +425,7 @@ def run(job_name, supplied_mon_coords=None):
     job_dir, job_config, dataset_id = setup(pipe_config, supplied_mon_coords)
 
     # make sure we close the database connection at program exit
-    atexit.register(close_database, dataset_id)
+    #atexit.register(close_database, dataset_id)
 
     copy_images = pipe_config.image_cache['copy_images']
     if job_config.pipeline.mode == 'stream':
@@ -436,3 +436,4 @@ def run(job_name, supplied_mon_coords=None):
         run_batch(image_paths, job_config, runner, dataset_id, copy_images)
 	varmetric(dataset_id)
 
+    dbgen.update_dataset_process_end_ts(dataset_id)

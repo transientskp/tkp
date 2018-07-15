@@ -1,13 +1,36 @@
 import math
 from datetime import datetime
+import tkp.db
 from tkp.db.model import Frequencyband, Skyregion, Image, Dataset
 from tkp.utility.coordinates import eq_to_cart
 from sqlalchemy import func, cast
 from sqlalchemy.dialects.postgresql import DOUBLE_PRECISION as Double
 
+insert_freqband_query = """
+insert into frequencyband
+(dataset
+,freq_central
+,freq_low
+,freq_high
+)
+values
+(%(dataset)s
+,%(freq_central)s
+,%(freq_low)s
+,%(freq_high)s
+)
+"""
+get_freqband_query = """
+select id
+  from frequencyband
+ where dataset = %(dataset)s
+   and (greatest(%(high)s, freq_high) - least(%(low)s, freq_low))
+       <
+       (%(freq_bw)s + (freq_high - freq_low))
+limit 1
+"""
 
-
-def get_band(session, dataset, freq_eff, freq_bw, freq_bw_max=.0):
+def get_bandid(session, dataset, freq_eff, freq_bw, freq_bw_max=.0):
     """
     Returns the frequency band for the given frequency parameters. Will create a new frequency band entry in the
     database if no match is found. You can limit the bandwidth of the band association with the freq_bw_max.
@@ -22,7 +45,7 @@ def get_band(session, dataset, freq_eff, freq_bw, freq_bw_max=.0):
     returns:
         tkp.db.model.Frequencyband: a frequency band object
     """
-    
+
     if freq_bw_max == .0:
         bw_half = freq_bw / 2
         low = freq_eff - bw_half
@@ -37,19 +60,36 @@ def get_band(session, dataset, freq_eff, freq_bw, freq_bw_max=.0):
     max_ = func.greatest(high, Frequencyband.freq_high)
     min_ = func.least(low, Frequencyband.freq_low)
 
-    band = session.query(Frequencyband).filter(
-        (Frequencyband.dataset == dataset) & (max_ - min_ < w1 + w2)
-    ).first()
-    
-    if not band:
-        # no match so we create a new band
-        band = Frequencyband(freq_central=freq_eff, freq_low=low, freq_high=high, dataset=dataset)
-        session.add(band)
+    #print "But now check this: vvvvvvvvvvv"
+    params = {'dataset': dataset.id
+             ,'low': low
+             ,'high': high
+             ,'freq_bw': freq_bw}
+    cursor = tkp.db.execute(get_freqband_query, params, commit=True)
+    results = cursor.fetchall()
+    #print "results = %s" % (results)
+    if len(results) == 0:
+        bandid = None
+    else:
+        bandid = results[0][0]
+    #print "A bandid = %s" % (bandid)
+    #print "What about that?? ^^^^^^^^^^^^^^^^"
 
-    return band
+    if not bandid:
+        params = {'dataset': dataset.id
+                 ,'freq_central': freq_eff
+                 ,'freq_low': low
+                 ,'freq_high': high
+                 }
+        #print "freqband params = %s" % (params)
+        #print "freqband ins query = %s" % (insert_freqband_query % params)
+        cursor = tkp.db.execute(insert_freqband_query, params, commit=True)
+        bandid = cursor.lastrowid
 
+    #print "B bandid = %s" % (bandid)
+    return bandid
 
-def update_skyregion_members(session, skyregion):
+def update_skyregionid_members(session, skyregionid, xtr_radius):
     """
     This function performs a simple distance-check against current members of the
     runningcatalog to find sources that should be visible in the given skyregion,
@@ -66,9 +106,12 @@ def update_skyregion_members(session, skyregion):
     restricting to a range of RA values, as we do with the Dec.
     However, this optimization is complicated by the meridian wrap-around issue.
         """
-    inter = 2. * math.sin(math.radians(skyregion.xtr_radius) / 2.)
+    inter = 2. * math.sin(math.radians(xtr_radius) / 2.)
     inter_sq = inter * inter
 
+    params = {'inter_sq': inter_sq
+             ,'skyregion_id': skyregionid
+             }
     q = """
       INSERT INTO assocskyrgn
         (
@@ -94,12 +137,42 @@ def update_skyregion_members(session, skyregion):
                 + (rc.z - sky.z) * (rc.z - sky.z)
              ) < %(inter_sq)s
       ;
-    """ % {'inter_sq': inter_sq, 'skyregion_id': skyregion.id}
-    session.execute(q)
+    """
+    tkp.db.execute(q, params, commit=True)
     return inter
 
+insert_skyregion_query = """
+INSERT INTO skyregion
+(dataset
+,centre_ra
+,centre_decl
+,xtr_radius
+,x
+,y
+,z
+)
+VALUES
+(%(dataset)s
+,%(centre_ra)s
+,%(centre_decl)s
+,%(xtr_radius)s
+,%(x)s
+,%(y)s
+,%(z)s
+)
+"""
 
-def get_skyregion(session, dataset, centre_ra, centre_decl, xtr_radius):
+select_skyregion_query = """
+select id
+  from skyregion
+ where dataset = %(dataset)s
+   and centre_ra = %(centre_ra)s
+   and centre_decl = %(centre_decl)s
+   and xtr_radius = %(xtr_radius)s
+limit 1
+"""
+
+def get_skyregionid(session, dataset, centre_ra, centre_decl, xtr_radius):
     """
      gets an id for a skyregion, given a pair of central co-ordinates and a radius.
 
@@ -118,19 +191,78 @@ def get_skyregion(session, dataset, centre_ra, centre_decl, xtr_radius):
      returns:
         tkp.db.models.Skyregion: a SQLalchemy skyregion
      """
-    skyregion = session.query(Skyregion).filter(Skyregion.dataset == dataset,
-                                                Skyregion.centre_ra == centre_ra,
-                                                Skyregion.centre_decl == centre_decl,
-                                                Skyregion.xtr_radius == xtr_radius).one_or_none()
-    if not skyregion:
-        x, y, z = eq_to_cart(centre_ra, centre_decl)
-        skyregion = Skyregion(dataset=dataset, centre_ra=centre_ra, centre_decl=centre_decl,
-                              xtr_radius=xtr_radius, x=x, y=y, z=z)
-        session.add(skyregion)
-        session.flush()
-        update_skyregion_members(session, skyregion)
-    return skyregion
+    params = {'dataset': dataset.id
+             ,'centre_ra': centre_ra
+             ,'centre_decl': centre_decl
+             ,'xtr_radius': xtr_radius
+             }
+    cursor = tkp.db.execute(select_skyregion_query, params, commit=True)
+    results = cursor.fetchall()
+    if len(results) == 0:
+        skyregionid = None
+    else:
+        skyregionid = results[0][0]
 
+    if not skyregionid:
+        x, y, z = eq_to_cart(centre_ra, centre_decl)
+        params = {'dataset': dataset.id
+                 ,'centre_ra': centre_ra
+                 ,'centre_decl': centre_decl
+                 ,'xtr_radius': xtr_radius
+                 ,'x': x
+                 ,'y': y
+                 ,'z': z
+                 }
+        cursor = tkp.db.execute(insert_skyregion_query, params, commit=True)
+        skyregionid = cursor.lastrowid
+
+        skyregion = Skyregion(id=skyregionid)
+        update_skyregionid_members(session, skyregionid, xtr_radius)
+
+    return skyregionid
+
+insert_image_query = """
+insert into image
+(dataset
+,band
+,skyrgn
+,tau_time
+,freq_eff
+,freq_bw
+,taustart_ts
+,rb_smaj
+,rb_smin
+,rb_pa
+,deltax
+,deltay
+,rms_qc
+,rms_min
+,rms_max
+,detection_thresh
+,analysis_thresh
+,url
+)
+values
+(%(dataset)s
+,%(band)s
+,%(skyrgn)s
+,%(tau_time)s
+,%(freq_eff)s
+,%(freq_bw)s
+,%(taustart_ts)s
+,%(rb_smaj)s
+,%(rb_smin)s
+,%(rb_pa)s
+,%(deltax)s
+,%(deltay)s
+,%(rms_qc)s
+,%(rms_min)s
+,%(rms_max)s
+,%(detection_thresh)s
+,%(analysis_thresh)s
+,%(url)s
+)
+"""
 
 def insert_image(session, dataset, freq_eff, freq_bw, taustart_ts, tau_time, beam_smaj_pix, beam_smin_pix,
                  beam_pa_rad, deltax, deltay, url, centre_ra, centre_decl, xtr_radius, rms_qc, freq_bw_max=0.0,
@@ -162,10 +294,13 @@ def insert_image(session, dataset, freq_eff, freq_bw, taustart_ts, tau_time, bea
     """
     # this looks a bit weird, but this simplifies backwards compatibility
     dataset_id = dataset
-    dataset = session.query(Dataset).filter(Dataset.id == dataset_id).one()
+    dataset = Dataset(id=dataset_id)
 
-    skyrgn = get_skyregion(session, dataset, centre_ra, centre_decl, xtr_radius)
-    band = get_band(session, dataset, freq_eff, freq_bw, freq_bw_max)
+    skyrgnid = get_skyregionid(session, dataset, centre_ra, centre_decl, xtr_radius)
+    skyrgn = Skyregion(id=skyrgnid)
+
+    bandid = get_bandid(session, dataset, freq_eff, freq_bw, freq_bw_max)
+    band = Frequencyband(id=bandid)
     rb_smaj = beam_smaj_pix * math.fabs(deltax)
     rb_smin = beam_smin_pix * math.fabs(deltay)
     rb_pa = 180 * beam_pa_rad / math.pi
@@ -176,9 +311,28 @@ def insert_image(session, dataset, freq_eff, freq_bw, taustart_ts, tau_time, bea
     l = locals()
     kwargs = {arg: l[arg] for arg in args}
     image = Image(**kwargs)
-    session.add(image)
-    return image
-
+    params = {'dataset': dataset.id
+             ,'band': bandid
+             ,'skyrgn': skyrgnid
+             ,'tau_time': kwargs['tau_time']
+             ,'freq_eff': kwargs['freq_eff']
+             ,'freq_bw': kwargs['freq_bw']
+             ,'taustart_ts': kwargs['taustart_ts'].strftime("%Y-%m-%d %H:%M:%S")
+             ,'rb_smaj': kwargs['rb_smaj']
+             ,'rb_smin': kwargs['rb_smin']
+             ,'rb_pa': kwargs['rb_pa']
+             ,'deltax': kwargs['deltax']
+             ,'deltay': kwargs['deltay']
+             ,'rms_qc': kwargs['rms_qc']
+             ,'rms_min': kwargs['rms_min']
+             ,'rms_max': kwargs['rms_max']
+             ,'detection_thresh': kwargs['detection_thresh']
+             ,'analysis_thresh': kwargs['analysis_thresh']
+             ,'url': kwargs['url']
+             }
+    cursor = tkp.db.execute(insert_image_query, params, commit=True)
+    imageid = cursor.lastrowid
+    return imageid
 
 def insert_dataset(session, description):
     rerun = session.query(func.max(Dataset.rerun)). \

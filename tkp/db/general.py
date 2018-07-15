@@ -53,7 +53,7 @@ def update_dataset_process_end_ts(dataset_id):
     """Update dataset start-of-processing timestamp.
 
     """
-    args = {'dataset_id': dataset_id, 'end': datetime.now()}
+    args = {'dataset_id': dataset_id, 'end': datetime.now().strftime("%Y-%m-%d %H:%M:%S")}
     tkp.db.execute(update_dataset_process_end_ts_query, args, commit=True)
     return dataset_id
 

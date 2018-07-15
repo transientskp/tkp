@@ -370,9 +370,9 @@ class Image(DBObject):
             args.pop('kwargs', None)
             args['session'] = self.database.session
             try:
-                image = insert_image(**args)
-                self.database.session.commit()
-                self._id = image.id
+                imageid = insert_image(**args)
+                #self.database.session.commit()
+                self._id = imageid
             except Exception as e:
                 logger.error("ORM: error inserting image,  %s: %s" %
                                 (type(e).__name__, str(e)))

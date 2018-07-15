@@ -2,6 +2,7 @@ import numpy
 from tkp.utility import nice_format
 from scipy.stats import norm
 from sqlalchemy.sql.expression import desc
+import tkp.db
 from tkp.db.model import Image
 from tkp.db.quality import reject_reasons
 
@@ -78,6 +79,19 @@ def rms_with_clipped_subregion(data, rms_est_sigma=3, rms_est_fraction=4):
     """
     return rms(clip(subregion(data, rms_est_fraction), rms_est_sigma))
 
+select_image_query = """
+select band
+      ,rms_qc
+  from image
+ where id = %(image_id)s
+"""
+
+select_image_rmss_query = """
+select rms_qc
+  from image
+ where band = %(band)s
+order by taustart_ts desc
+"""
 
 def reject_historical_rms(image_id, session, history=100, est_sigma=4, rms_max=100., rms_min=0.0):
     """
@@ -96,21 +110,35 @@ def reject_historical_rms(image_id, session, history=100, est_sigma=4, rms_max=1
     returns:
         bool: None if not rejected, (rejectreason, comment) if rejected
     """
-    image = session.query(Image).filter(Image.id == image_id).one()
-    rmss = session.query(Image.rms_qc).filter(
-        (Image.band == image.band)).order_by(desc(Image.taustart_ts)).limit(
-        history).all()
+    params = {'image_id': image_id}
+    cursor = tkp.db.execute(select_image_query, params, commit=True)
+    results = zip(*cursor.fetchall())
+    if len(results) != 1:
+        band = None
+        rms_qc = None
+    else:
+        band = results[0]
+        rms_qc = results[1]
+
+    params = {'band': band}
+    cursor = tkp.db.execute(select_image_rmss_query, params, commit=True)
+    results = zip(*cursor.fetchall())
+    if len(results) != 1:
+        rmss = numpy.asarray([])
+    else:
+        rmss = numpy.asarray(results[0])
+
     if len(rmss) < history:
         return False
     mu, sigma = norm.fit(rmss)
     t_low = mu - sigma * est_sigma
     t_high = mu + sigma * est_sigma
 
-    if not rms_min < image.rms_qc < rms_max:
+    if not rms_min < rms_qc < rms_max:
         return reject_reasons['rms'],\
                "RMS value not within {} and {}".format(0.0, rms_max)
 
-    if not t_low < image.rms_qc < t_high or not 0.0 < image.rms_qc < rms_max:
+    if not t_low < rms_qc < t_high or not 0.0 < rms_qc < rms_max:
         return reject_reasons['rms'],\
                "RMS value not within {} and {}".format(t_low, t_high)
 

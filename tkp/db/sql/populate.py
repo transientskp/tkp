@@ -180,9 +180,6 @@ def populate(dbconfig):
             database.session.rollback()
     if dbconfig['engine'] == 'monetdb':
         set_monetdb_schema(database.session, dbconfig)
-        # reconnect to switch to schema
-        database.session.commit()
-        database.reconnect()
 
     batch_file = os.path.join(sql_repo, 'batch')
 

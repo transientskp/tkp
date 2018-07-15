@@ -26,7 +26,7 @@ def associate_extracted_sources(image_id, deRuiter_r, beamwidths_limit=1,
     logger.debug("Using a De Ruiter radius of %s" % (deRuiter_r,))
     ##This is used as a check that everything from the sourcefinder is sensible.
     ##Currently switched off as it's incompatible with sources about the meridian.
-#    _delete_bad_blind_extractions(conn, image_id)
+    #_delete_bad_blind_extractions(conn, image_id)
     _empty_temprunningcatalog()
     #+------------------------------------------------------+
     #| Here we select all extracted sources that have one or|
@@ -1358,36 +1358,45 @@ INSERT INTO assocxtrsource
         ,t0.v_int_inter / t0.avg_f_int
         ,t0.eta_int_inter / t0.avg_f_int_weight
         ,t0.f_datapoints
-    FROM (SELECT tmprc.runcat
-                ,tmprc.xtrsrc
-                ,tmprc.distance_arcsec
-                ,tmprc.r
-                ,tmprc.f_datapoints
-                ,CASE WHEN tmprc.avg_f_int = 0.0
-                      THEN 0.000001
-                      ELSE avg_f_int
-                 END AS avg_f_int
-                ,tmprc.avg_f_int_weight
-                ,CASE WHEN tmprc.f_datapoints = 1
-                      THEN 0
-                      ELSE CASE WHEN ABS(tmprc.avg_f_int_sq - tmprc.avg_f_int * tmprc.avg_f_int) < 8e-14
-                                THEN 0
-                                ELSE SQRT(CAST(tmprc.f_datapoints AS DOUBLE PRECISION)
-                                         * (tmprc.avg_f_int_sq - tmprc.avg_f_int * tmprc.avg_f_int)
-                                         / (CAST(tmprc.f_datapoints AS DOUBLE PRECISION) - 1.0)
-                                         )
-                           END
-                 END AS v_int_inter
-                ,CASE WHEN tmprc.f_datapoints = 1
-                      THEN 0
-                      ELSE (CAST(tmprc.f_datapoints AS DOUBLE PRECISION)
-                            / (CAST(tmprc.f_datapoints AS DOUBLE PRECISION) - 1.0))
-                           * (tmprc.avg_f_int_weight * tmprc.avg_weighted_f_int_sq
-                             - tmprc.avg_weighted_f_int * tmprc.avg_weighted_f_int)
-                 END AS eta_int_inter
-            FROM temprunningcatalog tmprc
-           WHERE tmprc.inactive = FALSE
-           ) t0
+    FROM (SELECT t1.runcat
+                ,t1.xtrsrc
+                ,t1.distance_arcsec
+                ,t1.r
+                ,t1.f_datapoints
+                ,t1.avg_f_int
+                ,t1.avg_f_int_weight
+                ,SQRT(t1.v_int_inter_temp) AS v_int_inter
+                ,t1.eta_int_inter
+            FROM (SELECT tmprc.runcat
+                        ,tmprc.xtrsrc
+                        ,tmprc.distance_arcsec
+                        ,tmprc.r
+                        ,tmprc.f_datapoints
+                        ,CASE WHEN tmprc.avg_f_int = 0.0
+                              THEN 0.000001
+                              ELSE avg_f_int
+                         END AS avg_f_int
+                        ,tmprc.avg_f_int_weight
+                        ,CASE WHEN tmprc.f_datapoints = 1
+                              THEN 0
+                              ELSE CASE WHEN ABS(tmprc.avg_f_int_sq - tmprc.avg_f_int * tmprc.avg_f_int) < 8e-14
+                                        THEN 0
+                                        ELSE CAST(tmprc.f_datapoints AS DOUBLE PRECISION)
+                                                 * (tmprc.avg_f_int_sq - tmprc.avg_f_int * tmprc.avg_f_int)
+                                                 / (CAST(tmprc.f_datapoints AS DOUBLE PRECISION) - 1.0)
+                                   END
+                         END AS v_int_inter_temp
+                        ,CASE WHEN tmprc.f_datapoints = 1
+                              THEN 0
+                              ELSE (CAST(tmprc.f_datapoints AS DOUBLE PRECISION)
+                                    / (CAST(tmprc.f_datapoints AS DOUBLE PRECISION) - 1.0))
+                                   * (tmprc.avg_f_int_weight * tmprc.avg_weighted_f_int_sq
+                                     - tmprc.avg_weighted_f_int * tmprc.avg_weighted_f_int)
+                         END AS eta_int_inter
+                    FROM temprunningcatalog tmprc
+                   WHERE tmprc.inactive = FALSE
+                 ) t1
+         ) t0
 """
 
 def _insert_1_to_1_assoc():

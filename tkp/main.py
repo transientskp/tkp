@@ -28,7 +28,10 @@ import tkp.steps.forced_fitting as steps_ff
 from tkp.steps.varmetric import execute_store_varmetric
 from tkp.stream import stream_generator
 from tkp.quality.rms import reject_historical_rms
-
+import time
+import numpy as np
+from os.path import basename, dirname
+from astropy.io import fits
 
 logger = logging.getLogger(__name__)
 
@@ -306,6 +309,51 @@ def store_image_data(db_images, fits_datas, fits_headers):
     logger.info("storing {} images to database".format(len(db_images)))
     store_fits(db_images, fits_datas, fits_headers)
 
+def write_bincatfits(metadata, sourcelist):
+    logger.debug('performing writing binary catalog fits file of found sources')
+
+    hdr = fits.Header()
+    hdr['COMMENT'] = 'Generated from transientskp TraP sourcefinder'
+    hdr['DATE'] = (time.strftime("%Y-%m-%dT%H:%M:%S"), "File creation timestamp")
+    primary_hdu = fits.PrimaryHDU(header = hdr)
+
+    zsrcs = zip(*sourcelist.sources)
+    ra = fits.Column(name='ra', array=np.asarray(zsrcs[0]), format='D', unit='degrees')
+    decl = fits.Column(name='decl', array=np.asarray(zsrcs[1]), format='D', unit='degrees')
+    ra_fit_err = fits.Column(name='ra_fit_err', array=np.asarray(zsrcs[2]), format='D')
+    decl_fit_err = fits.Column(name='decl_fit_err', array=np.asarray(zsrcs[3]), format='D')
+    peak_flux = fits.Column(name='peak_flux', array=np.asarray(zsrcs[4]), format='D', unit='jansky')
+    peak_flux_err = fits.Column(name='peak_flux_err', array=np.asarray(zsrcs[5]), format='D')
+    int_flux = fits.Column(name='int_flux', array=np.asarray(zsrcs[6]), format='D')
+    int_flux_err = fits.Column(name='int_flux_err', array=np.asarray(zsrcs[7]), format='D')
+    det_sigma = fits.Column(name='det_sigma', array=np.asarray(zsrcs[8]), format='D')
+    semimajor = fits.Column(name='semimajor', array=np.asarray(zsrcs[9]), format='D')
+    semiminor = fits.Column(name='semiminor', array=np.asarray(zsrcs[10]), format='D')
+    pa = fits.Column(name='pa', array=np.asarray(zsrcs[11]), format='D')
+    ew_sys_err = fits.Column(name='ew_sys_err', array=np.asarray(zsrcs[12]), format='D')
+    ns_sys_err = fits.Column(name='ns_sys_err', array=np.asarray(zsrcs[13]), format='D')
+    err_radius = fits.Column(name='err_radius', array=np.asarray(zsrcs[14]), format='D')
+    gaussfit = fits.Column(name='gaussfit', array=np.asarray(zsrcs[15]), format='L')
+    chisq = fits.Column(name='chisq', array=np.asarray(zsrcs[16]), format='D')
+    red_chisq = fits.Column(name='red_chisq', array=np.asarray(zsrcs[17]), format='D')
+    cols = fits.ColDefs([ra, decl, ra_fit_err, decl_fit_err
+                        ,peak_flux, peak_flux_err, int_flux, int_flux_err
+                        ,det_sigma, semimajor, semiminor, pa
+                        , ew_sys_err, ns_sys_err, err_radius
+                        ,gaussfit, chisq, red_chisq])
+    hdu = fits.BinTableHDU.from_columns(cols)
+
+    for key in metadata.keys():
+        if key == 'taustart_ts':
+            hdu.header[key] = metadata[key].strftime("%Y-%m-%d %H:%M:%S")
+        else:
+            hdu.header[key] = metadata[key]
+
+    out_fits = dirname(metadata['url']) + '/ilt_sourcefinder_' + basename(metadata['url'])
+    hdul = fits.HDUList([primary_hdu, hdu])
+    hdul.writeto(out_fits, overwrite=True)
+    logger.info("binary catalog fits file {} written".format(out_fits))
+    return out_fits
 
 def timestamp_step(runner, images, job_config, dataset_id, copy_images):
     """
@@ -339,6 +387,13 @@ def timestamp_step(runner, images, job_config, dataset_id, copy_images):
 
     # do the source extractions
     extraction_results = source_extraction(good_accessors, job_config, runner)
+
+    #print "accessors = %s" % (accessors)
+    #print "metadatas = %s" % (metadatas)
+    #print "db_images = %s" % (db_images)
+    #print "extraction_results = %s" % (extraction_results)
+
+    out_fits = write_bincatfits(metadatas[0], extraction_results[0])
 
     store_extractions(good_images, extraction_results, job_config)
 

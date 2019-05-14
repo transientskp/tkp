@@ -133,10 +133,10 @@ class FitsImage(DataAccessor):
                                    " setting to 1 MHz".format(self.url))
                     freq_bw = 1e6
             else:
-                if header['ctype3'] in ('FREQ', 'VOPT'):
+                if ('ctype3' in header) and (header['ctype3'] in ('FREQ', 'VOPT')):
                     freq_eff = header['crval3']
                     freq_bw = header['cdelt3']
-                elif header['ctype4'] in ('FREQ', 'VOPT'):
+                elif ('ctype4' in header) and (header['ctype4'] in ('FREQ', 'VOPT')):
                     freq_eff = header['crval4']
                     freq_bw = header['cdelt4']
                 else:

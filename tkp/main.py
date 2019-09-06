@@ -254,8 +254,10 @@ def assocate_and_get_force_fits(db_image, job_config):
                                                                     db_image.url))
 
     r = job_config.association.deruiter_radius
+    b = job_config.association.beamwidths_limit
     s = job_config.transient_search.new_source_sigma_margin
     dbass.associate_extracted_sources(db_image.id, deRuiter_r=r,
+                                      beamwidths_limit=b,
                                       new_source_sigma_margin=s)
 
     expiration = job_config.source_extraction.expiration

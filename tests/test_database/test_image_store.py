@@ -8,12 +8,14 @@ from tkp.db.model import Image
 from tkp.db.database import Database
 from tkp.testutil.data import DATAPATH
 from tkp.testutil.alchemy import gen_image
+from tkp.testutil.decorators import requires_database
 
 FITS_FILE = path.join(DATAPATH, 'accessors/aartfaac.fits')
 
 
 
 class TestImageStore(unittest.TestCase):
+    @requires_database()
     def setUp(self):
         self.db = Database()
         self.image = gen_image()

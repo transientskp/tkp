@@ -5,6 +5,7 @@ import tkp.db.model
 
 from tkp.testutil.alchemy import gen_band, gen_dataset, gen_skyregion,\
     gen_lightcurve
+from tkp.testutil.decorators import database_disabled
 
 import tkp.db
 
@@ -18,6 +19,11 @@ logging.getLogger('sqlalchemy.engine').setLevel(logging.WARNING)
 class TestApi(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
+        # Can't use a regular skip here, due to a Nose bug:
+        # https://github.com/nose-devs/nose/issues/946
+        if database_disabled():
+            raise unittest.SkipTest("Database functionality disabled "
+                                    "in configuration.")
         cls.db = tkp.db.Database()
         cls.db.connect()
 

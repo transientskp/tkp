@@ -2,6 +2,7 @@ import unittest
 from tkp.db.database import Database
 from tkp.testutil.alchemy import gen_dataset, gen_image, gen_band,\
     gen_skyregion, gen_runningcatalog, gen_extractedsource
+from tkp.testutil.decorators import requires_database
 from tkp.db.model import Image
 
 import logging
@@ -11,6 +12,7 @@ logging.getLogger('sqlalchemy.engine').setLevel(logging.INFO)
 
 
 class TestDeleteDataset(unittest.TestCase):
+    @requires_database()
     def test_delete_dataset(self):
         db = Database()
         dataset = gen_dataset('delete test')

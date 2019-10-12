@@ -25,6 +25,8 @@ before_install:
   - sudo add-apt-repository -y ppa:radio-astro/main
   - sudo apt-get update -q
   - sudo apt-get install -qy casacore-data libcasacore2-dev python-numpy python-scipy libboost-python-dev libcfitsio3-dev wcslib-dev postgresql-server-dev-all
+  - dpkg -l casacore-data
+  - dpkg -L casacore-data
   - psql -c "ALTER ROLE postgres WITH PASSWORD 'postgres';" -U postgres
   - psql -c "create database testdb;" -U postgres
   - git submodule init
@@ -42,6 +44,7 @@ script:
   - cd pipeline
   - "${TRAVIS_BUILD_DIR}/tkp/bin/trap-manage.py initdb -dy"
   - cd ${TRAVIS_BUILD_DIR}/tests
+  - findmeastable TAI_UTC
   - TKP_DBUSER=postgres TKP_DBPASSWORD= nosetests -sv
 deploy:
   provider: pypi

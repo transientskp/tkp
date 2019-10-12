@@ -24,17 +24,17 @@ def check_for_valid_ephemeris(measures):
     """
     # Note that we need to catch and parse the standard error produced by
     # casacore: there doesn't seem to be any other way of figuring this out.
-    casacore_stderr = BytesIO()
-    with redirect_stream(sys.__stderr__, casacore_stderr):
+#    casacore_stderr = BytesIO()
+#    with redirect_stream(sys.__stderr__, casacore_stderr):
         # We assume the ephemeris is valid if it has position of the sun.
-        measures.separation(
-            measures.direction("SUN"), measures.direction("SUN")
-        )
-    if "WARN" in casacore_stderr.getvalue():
-        # casacore sends a warning to stderr if the ephemeris is invalid
-        return False
-    else:
-        return True
+    measures.separation(
+        measures.direction("SUN"), measures.direction("SUN")
+    )
+#    if "WARN" in casacore_stderr.getvalue():
+#        # casacore sends a warning to stderr if the ephemeris is invalid
+#        return False
+#    else:
+#        return True
 
 def is_bright_source_near(accessor, distance=20):
     """

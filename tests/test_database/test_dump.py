@@ -6,6 +6,7 @@ from tkp.db.dump import dump_db, dump_monetdb, dump_pg
 from tkp.testutil.decorators import requires_database
 
 class TestDump(unittest.TestCase):
+    @unittest.skip
     @requires_database()
     @unittest.skipUnless(get_database_config()['engine'] == "postgresql", "Postgres disabled")
     def test_database_dump_pg(self):

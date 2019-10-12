@@ -2,14 +2,14 @@
 from setuptools import setup, find_packages
 
 install_requires = """
-    astropy
+    astropy<3.0.0
     colorlog
-    numpy>=1.3.0
+    numpy>=1.3.0,<1.17.0
     psycopg2
     python-casacore
     python-dateutil>=1.4.1
     pytz
-    scipy>=0.7.0
+    scipy>=0.7.0,<1.3.0
     sqlalchemy>=1.0.0
     alembic
     monotonic

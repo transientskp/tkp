@@ -44,6 +44,7 @@ script:
   - cd pipeline
   - "${TRAVIS_BUILD_DIR}/tkp/bin/trap-manage.py initdb -dy"
   - cd ${TRAVIS_BUILD_DIR}/tests
+  - findmeastable TAI_UTC
   - TKP_DBUSER=postgres TKP_DBPASSWORD= nosetests -sv
 deploy:
   provider: pypi

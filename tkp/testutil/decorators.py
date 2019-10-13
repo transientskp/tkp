@@ -2,8 +2,13 @@ import os
 import unittest
 
 
+def database_disabled():
+    """Return ``True`` if the database is disabled for test purposes."""
+    return os.environ.get("TKP_DISABLEDB", False)
+
+
 def requires_database():
-    if os.environ.get("TKP_DISABLEDB", False):
+    if database_disabled():
         return unittest.skip("Database functionality disabled in configuration")
     return lambda func: func
 

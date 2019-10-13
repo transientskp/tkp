@@ -104,6 +104,7 @@ class TestBand(unittest.TestCase):
         phz_freq_image = Image(dataset=dataset, data=data)
         self.assertEqual(data['freq_eff'], get_freq_for_image(phz_freq_image))
 
+    @requires_database()
     def test_max_bandwidth(self):
         """
         Test if setting max bandwidth correctly affects the band of images

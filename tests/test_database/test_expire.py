@@ -20,6 +20,7 @@ from tkp.db.associations import _update_1_to_1_runcat
 from tkp.testutil.alchemy import gen_band, gen_dataset, gen_skyregion, \
     gen_extractedsource, gen_runningcatalog, gen_assocskyrgn, \
     gen_assocxtrsource, gen_image
+from tkp.testutil.decorators import database_disabled
 
 
 logging.basicConfig(level=logging.DEBUG)
@@ -29,6 +30,11 @@ logging.basicConfig(level=logging.DEBUG)
 class TestExpire(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
+        # Can't use a regular skip here, due to a Nose bug:
+        # https://github.com/nose-devs/nose/issues/946
+        if database_disabled():
+            raise unittest.SkipTest("Database functionality disabled "
+                                    "in configuration.")
         cls.database = Database()
         cls.database.connect()
 

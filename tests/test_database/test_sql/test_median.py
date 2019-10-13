@@ -2,10 +2,16 @@ import unittest
 import tkp
 from tkp.db import execute, Database
 from tkp.testutil import db_subs
+from tkp.testutil.decorators import database_disabled
 from numpy import median
 
 class testMedian(unittest.TestCase):
     def setUp(self):
+        # Can't use a regular skip here, due to a Nose bug:
+        # https://github.com/nose-devs/nose/issues/946
+        if database_disabled():
+            raise unittest.SkipTest("Database functionality disabled "
+                                    "in configuration.")
         self.database = tkp.db.Database()
 
         self.dataset = tkp.db.DataSet(database=self.database,

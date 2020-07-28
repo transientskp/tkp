@@ -123,25 +123,23 @@ class FitsImage(DataAccessor):
         freq_bw = None
         try:
             header = self.header
-            if header['TELESCOP'] in ('LOFAR', 'AARTFAAC'):
+            if 'RESTFRQ' in header:
                 freq_eff = header['RESTFRQ']
                 if 'RESTBW' in header:
                     freq_bw = header['RESTBW']
-
                 else:
                     logger.warning("bandwidth header missing in image {},"
                                    " setting to 1 MHz".format(self.url))
                     freq_bw = 1e6
+            elif ('CTYPE3' in header) and (header['CTYPE3'] in ('FREQ', 'VOPT')):
+                freq_eff = header['CRVAL3']
+                freq_bw = header['CDELT3']
+            elif ('CTYPE4' in header) and (header['CTYPE4'] in ('FREQ', 'VOPT')):
+                freq_eff = header['CRVAL4']
+                freq_bw = header['CDELT4']
             else:
-                if ('ctype3' in header) and (header['ctype3'] in ('FREQ', 'VOPT')):
-                    freq_eff = header['crval3']
-                    freq_bw = header['cdelt3']
-                elif ('ctype4' in header) and (header['ctype4'] in ('FREQ', 'VOPT')):
-                    freq_eff = header['crval4']
-                    freq_bw = header['cdelt4']
-                else:
-                    freq_eff = header['restfreq']
-                    freq_bw = 0.0
+                freq_eff = header['RESTFREQ']
+                freq_bw = 1e6
         except KeyError:
             msg = "Frequency not specified in headers for {}".format(self.url)
             logger.error(msg)

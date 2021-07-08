@@ -8,16 +8,6 @@
 CREATE FUNCTION cartesian(ira DOUBLE PRECISION, idecl DOUBLE PRECISION)
 RETURNS TABLE (x DOUBLE PRECISION, y DOUBLE PRECISION, z DOUBLE PRECISION)
 
-{% ifdb monetdb %}
-BEGIN
-  RETURN TABLE (
-    SELECT  COS(RADIANS(idecl)) * COS(RADIANS(ira)) AS x
-           ,COS(RADIANS(idecl)) * SIN(RADIANS(ira)) AS y
-           ,SIN(RADIANS(idecl)) AS z
-  );
-END;
-{% endifdb %}
-
 
 {% ifdb postgresql %}
 AS $$

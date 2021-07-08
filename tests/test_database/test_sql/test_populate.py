@@ -45,11 +45,6 @@ class TestPopulate(unittest.TestCase):
         tkp.db.sql.populate.destroy_postgres(connection)
 
     @requires_test_db_managed()
-    def test_destroy_monetdb(self):
-        with self.assertRaises(SystemExit):
-            tkp.db.sql.populate.destroy_monetdb()
-
-    @requires_test_db_managed()
     def test_destroy(self):
         config2 = config.copy()
         config2['destroy'] = True

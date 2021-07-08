@@ -15,10 +15,6 @@ install_requires = """
     monotonic
     """.split()
 
-extras_require = {
-    'monetdb': ['sqlalchemy_monetdb>=0.9.1'],
-}
-
 tkp_scripts = [
     "tkp/bin/pyse.py",
     "tkp/bin/trap-manage.py",
@@ -43,6 +39,5 @@ setup(
     author="TKP Discovery WG",
     author_email="discovery@transientskp.org",
     url="http://docs.transientskp.org/",
-    install_requires=install_requires,
-    extras_require=extras_require
+    install_requires=install_requires
 )

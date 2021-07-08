@@ -8,7 +8,6 @@ on how to use it.
 import argparse
 import os
 import sys
-import monetdb
 
 sql_folder = os.path.join(os.path.dirname(__file__), 'sql/upgrade')
 
@@ -106,11 +105,11 @@ def main():
     hostname = args['hostname']
     port = args['port']
 
-    connection = monetdb.sql.connect(database=database, username=username, password=password, hostname=hostname, port=port)
-    connection.set_autocommit(False)
-    cursor = connection.cursor()
-    version = get_version(cursor)
-    path = ask_version(version)
+#    connection = monetdb.sql.connect(database=database, username=username, password=password, hostname=hostname, port=port)
+#    connection.set_autocommit(False)
+#    cursor = connection.cursor()
+#    version = get_version(cursor)
+#    path = ask_version(version)
     if not path:
         print "no upgrade path found"
         sys.exit(2)

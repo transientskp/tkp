@@ -216,9 +216,7 @@ class DBObject(object):
                 if not self.database.connection.connection.autocommit:
                     self.database.connection.connection.commit()
 
-                if self.database.engine == "monetdb":
-                    self._id = cursor.lastrowid
-                elif self.database.engine == "postgresql":
+                if self.database.engine == "postgresql":
                     self._id = cursor.fetchone()[0]
                 else:
                     raise self.database.connection.Error(

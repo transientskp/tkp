@@ -44,9 +44,6 @@ def requires_test_db_managed():
     database management operations like destroy and create. You can enable
     these tests by setting the TKP_TESTDBMANAGEMENT environment variable.
     """
-    if os.environ.get('TKP_DBENGINE', 'postgresql') == 'monetdb':
-        return unittest.skip("DB management tests not supported for Monetdb,"
-                             "must be tested manually.")
 
     if os.environ.get("TKP_TESTDBMANAGEMENT", False):
         return lambda func: func

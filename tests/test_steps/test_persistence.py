@@ -54,8 +54,7 @@ class TestPersistence(unittest.TestCase):
                                                            self.extraction_radius,
                                                            self.dataset_id,
 							   0.0)
-        # xtr_radius >=0 is a Postgres constraint, but we should also test
-        # manually, in case running MonetDB:
+        # xtr_radius >=0 is a Postgres constraint
         for id in img_ids:
             image = tkp.db.Image(id=id)
             skyrgn = tkp.db.generic.columns_from_table('skyregion',

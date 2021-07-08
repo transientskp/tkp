@@ -112,18 +112,6 @@ class DatabaseConfigTestCase(unittest.TestCase):
         self.assertEqual(db_config['host'], "localhost")
         self.assertEqual(db_config['port'], 5432)
 
-    def test_defaults_monetdb(self):
-        # Demonstrate that we get the expected default values
-        os.environ["TKP_DBENGINE"] = "monetdb"
-        username = getpass.getuser()
-        db_config = get_database_config()
-        self.assertEqual(db_config['engine'], "monetdb")
-        self.assertEqual(db_config['database'], username)
-        self.assertEqual(db_config['user'], "monetdb")
-        self.assertEqual(db_config['password'], "monetdb")
-        self.assertEqual(db_config['host'], "localhost")
-        self.assertEqual(db_config['port'], 50000)
-
     def test_env_vars(self):
         # Demonstrate that we correctly read the environment
         os.environ["TKP_DBENGINE"] = "monetdb"

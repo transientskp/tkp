@@ -64,10 +64,8 @@ manually. The database then needs to be initialised with the TRAP database
 schema before it can be used.
 
 Depending on your site configuration, creating a database may require sysadmin
-rights. Refer to the relevant documentation for your installed database engine
-on creating a database:
+rights. Refer to the documentation on creating a database:
 
-* `MonetDB online documentation`_
 * `PostgreSQL online documentation`_
 
 Initialize a database
@@ -94,22 +92,6 @@ You may wish to reset a previously used TraP database to an empty state.
 **PostgreSQL**
   For PostgreSQL there is the optional **-d** flag for the ``initdb`` subcommand,
   which removes all content before populating the database.
-
-**MonetDB**
-  In the case of MonetDB you need to do this manually. You can do this with the
-  following commands, where **${dbname}** should be replaced with the database
-  name::
-
-    monetdb stop ${dbname}
-    monetdb destroy -f ${dbname}
-    monetdb create ${dbname}
-    monetdb start ${dbname}
-    monetdb release ${dbname}
-
-  For security reasons you should change the default password::
-
-    mclient -d ${dbname} -s"ALTER USER \"monetdb\" RENAME TO \"${username}\";
-    ALTER USER SET PASSWORD '${password}' USING OLD PASSWORD 'monetdb';"
 
 
 Create and configure a job
@@ -166,5 +148,4 @@ Or in a JSON-formatted file, e.g.::
 
 
 
-.. _MonetDB online documentation: https://www.monetdb.org/Documentation/monetdbd
 .. _PostgreSQL online documentation: http://www.postgresql.org/docs/9.1/static/app-createdb.html

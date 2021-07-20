@@ -25,11 +25,8 @@ all the data processed by a particular user. The resulting data can then be
 archived as a coherent unit, while other projects continue to use the same
 RDBMS undisturbed.
 
-Within the context of the TraP, we support two different RDBMSs: `MonetDB
-<http://www.monetdb.org/>`_ and `PostgreSQL <http://www.postgresql.org/>`_.
-All TraP functionality is available whichever database you choose: it is
-suggested you experiment to determine which provides the best combination of
-usability and performance for your particular usage.
+Within the context of the TraP, we support one RDBMS:
+`PostgreSQL <http://www.postgresql.org/>`_.
 
 See the :ref:`relevant section <database_background>` of the documentation for
 much more information about configuring and operating the database as well as

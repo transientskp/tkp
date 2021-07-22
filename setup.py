@@ -6,11 +6,11 @@ install_requires = """
     colorlog
     numpy>=1.3.0,<1.17.0
     psycopg2
-    python-casacore
+    python-casacore==3.3.0
     python-dateutil>=1.4.1
     pytz
     scipy>=0.7.0,<1.3.0
-    sqlalchemy>=1.0.0
+    sqlalchemy>=1.0.0,<1.4.0
     alembic
     monotonic
     """.split()

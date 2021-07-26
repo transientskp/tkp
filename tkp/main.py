@@ -201,7 +201,7 @@ def quality_check(db_images, accessors, job_config, runner):
     rms_max = job_config.persistence.rms_est_max
     rms_min = job_config.persistence.rms_est_min
     est_sigma = job_config.persistence.rms_est_sigma
-    rej_sigma = job.config.persistence.rms_rej_sigma
+    rej_sigma = job_config.persistence.rms_rej_sigma
     good_images = []
     for db_image, rejected, accessor in zip(db_images, rejecteds, accessors):
         if not rejected:

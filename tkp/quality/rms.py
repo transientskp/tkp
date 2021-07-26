@@ -79,7 +79,7 @@ def rms_with_clipped_subregion(data, rms_est_sigma=3, rms_est_fraction=4):
     return rms(clip(subregion(data, rms_est_fraction), rms_est_sigma))
 
 
-def reject_historical_rms(image_id, session, history=100, est_sigma=4, rms_max=100., rms_min=0.0):
+def reject_historical_rms(image_id, session, history=100, est_sigma=4, rms_max=100., rms_min=0.0, , rej_sigma=3):
     """
     Check if the RMS value of an image lies within a range defined
     by a gaussian fit on the histogram calculated from the last x RMS
@@ -103,8 +103,8 @@ def reject_historical_rms(image_id, session, history=100, est_sigma=4, rms_max=1
     if len(rmss) < history:
         return False
     mu, sigma = norm.fit(rmss)
-    t_low = mu - sigma * est_sigma
-    t_high = mu + sigma * est_sigma
+    t_low = mu - sigma * rej_sigma
+    t_high = mu + sigma * rej_sigma
 
     if not rms_min < image.rms_qc < rms_max:
         return reject_reasons['rms'],\

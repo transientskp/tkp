@@ -29,6 +29,7 @@ from tkp.steps.varmetric import execute_store_varmetric
 from tkp.stream import stream_generator
 from tkp.quality.rms import reject_historical_rms
 from tkp.quality.rms import reject_basic_rms
+from tkp.quality.restoringbeam import reject_beam
 
 logger = logging.getLogger(__name__)
 
@@ -233,11 +234,17 @@ def quality_check_all(db_images, accessors, job_config,runner):
     rms_max = job_config.persistence.rms_est_max
     rms_min = job_config.persistence.rms_est_min
     est_sigma = job_config.persistence.rms_est_sigma
+    oversampled_x = job_config.persistence.oversampled_x
+    elliptical_x = job_config.persistence.elliptical_x
+
     good_images = []
     for db_image, rejected, accessor in zip(db_images, rejecteds, accessors):
         if not rejected:
             rejected = reject_basic_rms(db_image.id, db.session,
                                          est_sigma, rms_max, rms_min)
+        if not rejected:
+            (semimaj, semimin, theta) = accessor.beam
+            rejected = check_beam(semimaj, semimin, theta, oversampled_x, elliptical_x)
 
         if rejected:
             reason, comment = rejected

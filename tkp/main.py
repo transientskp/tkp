@@ -219,7 +219,7 @@ def quality_check(db_images, accessors, job_config, runner):
         logger.warn(msg)
     return good_images
 
-def quality_check_all(db_images, accessors, job_config, runner):
+def quality_check_all(db_images, accessors, job_config,runner):
     """                                                                                                                     
     returns:                                                                                                                
         tuple: a list of db_image and accessor tuples                                                                       
@@ -237,7 +237,7 @@ def quality_check_all(db_images, accessors, job_config, runner):
     for db_image, rejected, accessor in zip(db_images, rejecteds, accessors):
         if not rejected:
             rejected = reject_basic_rms(db_image.id, db.session,
-                                             history, est_sigma, rms_max, rms_min)
+                                        history, est_sigma, rms_max, rms_min)
 
         if rejected:
             reason, comment = rejected
@@ -435,6 +435,14 @@ def run_batch(image_paths, job_config, runner, dataset_id, copy_images):
     """
     sorting_metadata = get_metadata_for_sorting(runner, image_paths)
     grouped_images = group_per_timestep(sorting_metadata)
+
+    accessors = get_accessors(runner,images)
+    metadatas = extract_metadata(job_config, accessors,runner)
+    db_images = store_image_metadata(metadatas, job_config, dataset_id)
+    error = "%s != %s != %s" % (len(accessors), len(metadatas), len(db_images))
+    assert len(accessors) == len(metadatas) == len(db_images), error
+    good_images = quality_check_all(db_images, accessors, job_config,runner)
+    good_accessors = [i[1] for i in good_images]
 
     for n, (timestep, images) in enumerate(grouped_images):
         msg = "processing %s images in timestep %s (%s/%s)"

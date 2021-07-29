@@ -244,7 +244,7 @@ def quality_check_all(db_images, accessors, job_config,runner):
                                          est_sigma, rms_max, rms_min)
         if not rejected:
             (semimaj, semimin, theta) = accessor.beam
-            rejected = check_beam(semimaj, semimin, theta, oversampled_x, elliptical_x)
+            rejected = reject_beam(semimaj, semimin, theta, oversampled_x, elliptical_x)
 
         if rejected:
             reason, comment = rejected

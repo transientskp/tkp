@@ -30,6 +30,7 @@ from tkp.stream import stream_generator
 from tkp.quality.rms import reject_historical_rms
 from tkp.quality.rms import reject_basic_rms
 from tkp.quality.restoringbeam import reject_beam
+from tkp.accessors.dataaccessor import degrees2pixels
 
 logger = logging.getLogger(__name__)
 
@@ -244,7 +245,9 @@ def quality_check_all(db_images, accessors, job_config,runner):
                                          est_sigma, rms_max, rms_min)
         if not rejected:
             (semimaj, semimin, theta) = accessor.beam
-            rejected = reject_beam(semimaj, semimin, theta, oversampled_x, elliptical_x)
+            (deltax, deltay) = accessor.wcs.cdelt
+            (semimaj_pix, semimin_pix, theta) = degrees2pixels(semimaj,semimin,theta,deltax,deltay)
+            rejected = reject_beam(semimaj_pix, semimin_pix, theta, oversampled_x, elliptical_x)
 
         if rejected:
             reason, comment = rejected

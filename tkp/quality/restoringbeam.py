@@ -1,5 +1,6 @@
 import tkp.quality
 from tkp.utility import nice_format
+from tkp.db.quality import reject_reasons
 
 
 def undersampled(semibmaj, semibmin):
@@ -93,10 +94,7 @@ def beam_invalid(semibmaj, semibmin, theta, oversampled_x=30, elliptical_x=2.0):
 
 def reject_beam(semimaj, semimin, theta, oversampled_x=30, elliptical_x=2.0):
     beam_check = beam_invalid(semimaj, semimin, theta, oversampled_x, elliptical_x)
-    if not beam_check:
-        logger.info("image %s accepted: semimaj: %s, semimin: %s" % (accessor.url,
-                                             nice_format(semimaj),
-                                             nice_format(semimin)))
+    if beam_check:
+        return reject_reasons['beam'],beam_check
     else:
-        logger.info("image %s REJECTED: %s " % (accessor.url, beam_check))
-        return (dbquality.reject_reasons['beam'], beam_check)
+        return False

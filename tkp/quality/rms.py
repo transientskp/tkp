@@ -78,7 +78,7 @@ def rms_with_clipped_subregion(data, rms_est_sigma=3, rms_est_fraction=4):
     """
     return rms(clip(subregion(data, rms_est_fraction), rms_est_sigma))
 
-def reject_basic_rms(db_image.id, db.session, est_sigma=4, rms_max=100., rms_min=0.0):
+def reject_basic_rms(image_id, session, est_sigma=4, rms_max=100., rms_min=0.0):
     """Check if the RMS value of an image lies within a range predetermined
     at the start of a pipeline run.
     

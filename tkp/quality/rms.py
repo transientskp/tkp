@@ -108,7 +108,7 @@ def reject_historical_rms(image_id, session, history=100, est_sigma=4, rms_max=1
 
     if not rms_min < image.rms_qc < rms_max:
         return reject_reasons['rms'],\
-               "RMS value not within {} and {}".format(0.0, rms_max)
+               "RMS value not within {} and {}".format(rms_min, rms_max)
 
     if not t_low < image.rms_qc < t_high or not rms_min < image.rms_qc < rms_max:
         return reject_reasons['rms'],\

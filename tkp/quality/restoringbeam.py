@@ -89,3 +89,14 @@ def beam_invalid(semibmaj, semibmin, theta, oversampled_x=30, elliptical_x=2.0):
 
     else:
         return False
+
+
+def check_beam(semimaj, semimin, theta, oversampled_x=30, elliptical_x=2.0):
+    beam_check = beam_invalid(semimaj, semimin, theta, oversampled_x, elliptical_x)
+    if not beam_check:
+        logger.info("image %s accepted: semimaj: %s, semimin: %s" % (accessor.url,
+                                             nice_format(semimaj),
+                                             nice_format(semimin)))
+    else:
+        logger.info("image %s REJECTED: %s " % (accessor.url, beam_check))
+        return (dbquality.reject_reasons['beam'], beam_check)

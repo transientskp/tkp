@@ -237,7 +237,7 @@ def quality_check_all(db_images, accessors, job_config,runner):
     for db_image, rejected, accessor in zip(db_images, rejecteds, accessors):
         if not rejected:
             rejected = reject_basic_rms(db_image.id, db.session,
-                                        history, est_sigma, rms_max, rms_min)
+                                         est_sigma, rms_max, rms_min)
 
         if rejected:
             reason, comment = rejected

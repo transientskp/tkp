@@ -28,7 +28,7 @@ import tkp.steps.forced_fitting as steps_ff
 from tkp.steps.varmetric import execute_store_varmetric
 from tkp.stream import stream_generator
 from tkp.quality.rms import reject_historical_rms
-
+from tkp.quality.rms import reject_basic_rms
 
 logger = logging.getLogger(__name__)
 
@@ -436,7 +436,7 @@ def run_batch(image_paths, job_config, runner, dataset_id, copy_images):
     sorting_metadata = get_metadata_for_sorting(runner, image_paths)
     grouped_images = group_per_timestep(sorting_metadata)
 
-    accessors = get_accessors(runner,images)
+    accessors = get_accessors(runner,image_paths)
     metadatas = extract_metadata(job_config, accessors,runner)
     db_images = store_image_metadata(metadatas, job_config, dataset_id)
     error = "%s != %s != %s" % (len(accessors), len(metadatas), len(db_images))

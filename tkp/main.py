@@ -193,7 +193,7 @@ def quality_check(db_images, accessors, job_config, runner):
     returns:
         tuple: a list of db_image and accessor tuples
     """
-    logger.debug("performing quality check")
+    logger.info("performing quality check")
     arguments = [job_config]
     rejecteds = runner.map("quality_reject_check", accessors, arguments)
 
@@ -203,37 +203,6 @@ def quality_check(db_images, accessors, job_config, runner):
     rms_min = job_config.persistence.rms_est_min
     est_sigma = job_config.persistence.rms_est_sigma
     rej_sigma = job_config.persistence.rms_rej_sigma
-    good_images = []
-    for db_image, rejected, accessor in zip(db_images, rejecteds, accessors):
-        if not rejected:
-            rejected = reject_historical_rms(db_image.id, db.session,
-                                             history, est_sigma, rms_max, rms_min, rej_sigma)
-
-        if rejected:
-            reason, comment = rejected
-            steps.quality.reject_image(db_image.id, reason, comment)
-        else:
-            good_images.append((db_image, accessor))
-
-    if not good_images:
-        msg = "No good images under these quality checking criteria"
-        logger.warn(msg)
-    return good_images
-
-def quality_check_all(db_images, accessors, job_config,runner):
-    """                                                                                                                     
-    returns:                                                                                                                
-        tuple: a list of db_image and accessor tuples                                                                       
-    """
-    logger.debug("performing basic quality check on all images")
-    arguments = [job_config]
-    rejecteds = runner.map("quality_reject_check", accessors, arguments)
-
-    db = tkp.db.Database()
-    history = job_config.persistence.rms_est_history
-    rms_max = job_config.persistence.rms_est_max
-    rms_min = job_config.persistence.rms_est_min
-    est_sigma = job_config.persistence.rms_est_sigma
     oversampled_x = job_config.persistence.oversampled_x
     elliptical_x = job_config.persistence.elliptical_x
 
@@ -246,7 +215,9 @@ def quality_check_all(db_images, accessors, job_config,runner):
             (semimaj, semimin, theta) = accessor.beam
             logger.info("{}, {}, {}".format(semimaj,semimin,theta))
             rejected = reject_beam(semimaj, semimin, theta, oversampled_x, elliptical_x)
-
+        if not rejected:
+            rejected = reject_historical_rms(db_image.id, db.session,
+                                             history, est_sigma, rms_max, rms_min, rej_sigma)
         if rejected:
             reason, comment = rejected
             steps.quality.reject_image(db_image.id, reason, comment)
@@ -257,6 +228,7 @@ def quality_check_all(db_images, accessors, job_config,runner):
         msg = "No good images under these quality checking criteria"
         logger.warn(msg)
     return good_images
+
 
 def source_extraction(accessors, job_config, runner):
     logger.debug("performing source extraction")
@@ -348,7 +320,7 @@ def store_image_data(db_images, fits_datas, fits_headers):
     store_fits(db_images, fits_datas, fits_headers)
 
 
-def timestamp_step(runner, images, job_config, dataset_id, copy_images, accessors, metadatas, db_images):
+def timestamp_step(runner, images, job_config, dataset_id, copy_images):
     """
     Called from the main loop with all images in a certain timestep
 
@@ -362,13 +334,15 @@ def timestamp_step(runner, images, job_config, dataset_id, copy_images, accessor
     returns:
         tuple: of tuples (rms_qc, band)
     """
-    ## gather all image info
-    #accessors = get_accessors(runner, images)
-    #metadatas = extract_metadata(job_config, accessors, runner)
-    #db_images = store_image_metadata(metadatas, job_config, dataset_id)
-    #error = "%s != %s != %s" % (len(accessors), len(metadatas), len(db_images))
-    #assert len(accessors) == len(metadatas) == len(db_images), error
+    # gather all image info
+    accessors = get_accessors(runner, images)
+    metadatas = extract_metadata(job_config, accessors, runner)
+    db_images = store_image_metadata(metadatas, job_config, dataset_id)
+    error = "%s != %s != %s" % (len(accessors), len(metadatas), len(db_images))
+    assert len(accessors) == len(metadatas) == len(db_images), error
 
+    logger.info("{} {} {}".format(db_images, accessors, runner))
+    
     # store copy of image data in database
     if copy_images:
         fits_datas, fits_headers = extract_fits_from_files(runner, images)
@@ -444,19 +418,11 @@ def run_batch(image_paths, job_config, runner, dataset_id, copy_images):
     sorting_metadata = get_metadata_for_sorting(runner, image_paths)
     grouped_images = group_per_timestep(sorting_metadata)
 
-    accessors = get_accessors(runner,image_paths)
-    metadatas = extract_metadata(job_config, accessors,runner)
-    db_images = store_image_metadata(metadatas, job_config, dataset_id)
-    error = "%s != %s != %s" % (len(accessors), len(metadatas), len(db_images))
-    assert len(accessors) == len(metadatas) == len(db_images), error
-    good_images = quality_check_all(db_images, accessors, job_config,runner)
-    good_accessors = [i[1] for i in good_images]
-
     for n, (timestep, images) in enumerate(grouped_images):
         msg = "processing %s images in timestep %s (%s/%s)"
         logger.info(msg % (len(images), timestep, n + 1, len(grouped_images)))
         try:
-            timestamp_step(runner, images, job_config, dataset_id, copy_images, accessors, metadatas, db_images)
+            timestamp_step(runner, images, job_config, dataset_id, copy_images)
         except Exception as e:
             logger.error("timestep raised {} exception: {}".format(type(e), str(e)))
 

@@ -244,7 +244,7 @@ def quality_check_all(db_images, accessors, job_config,runner):
                                          est_sigma, rms_max, rms_min)
         if not rejected:
             (semimaj, semimin, theta) = accessor.beam
-            logger.info(semimaj,semimin,theta)
+            logger.info("{}, {}, {}".format(semimaj,semimin,theta))
             rejected = reject_beam(semimaj, semimin, theta, oversampled_x, elliptical_x)
 
         if rejected:
@@ -348,7 +348,7 @@ def store_image_data(db_images, fits_datas, fits_headers):
     store_fits(db_images, fits_datas, fits_headers)
 
 
-def timestamp_step(runner, images, job_config, dataset_id, copy_images):
+def timestamp_step(runner, images, job_config, dataset_id, copy_images, accessors, metadatas, db_images):
     """
     Called from the main loop with all images in a certain timestep
 
@@ -362,12 +362,12 @@ def timestamp_step(runner, images, job_config, dataset_id, copy_images):
     returns:
         tuple: of tuples (rms_qc, band)
     """
-    # gather all image info
-    accessors = get_accessors(runner, images)
-    metadatas = extract_metadata(job_config, accessors, runner)
-    db_images = store_image_metadata(metadatas, job_config, dataset_id)
-    error = "%s != %s != %s" % (len(accessors), len(metadatas), len(db_images))
-    assert len(accessors) == len(metadatas) == len(db_images), error
+    ## gather all image info
+    #accessors = get_accessors(runner, images)
+    #metadatas = extract_metadata(job_config, accessors, runner)
+    #db_images = store_image_metadata(metadatas, job_config, dataset_id)
+    #error = "%s != %s != %s" % (len(accessors), len(metadatas), len(db_images))
+    #assert len(accessors) == len(metadatas) == len(db_images), error
 
     # store copy of image data in database
     if copy_images:
@@ -456,7 +456,7 @@ def run_batch(image_paths, job_config, runner, dataset_id, copy_images):
         msg = "processing %s images in timestep %s (%s/%s)"
         logger.info(msg % (len(images), timestep, n + 1, len(grouped_images)))
         try:
-            timestamp_step(runner, images, job_config, dataset_id, copy_images)
+            timestamp_step(runner, images, job_config, dataset_id, copy_images, accessors, metadatas, db_images)
         except Exception as e:
             logger.error("timestep raised {} exception: {}".format(type(e), str(e)))
 

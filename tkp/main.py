@@ -188,7 +188,7 @@ def extract_fits_from_files(runner, paths):
         logging.error('unknown type')
 
 
-def quality_check(db_images, accessors, job_config, runner):
+def quality_check(db_images, accessors, job_config, runner, mode, n_img):
     """
     returns:
         tuple: a list of db_image and accessor tuples
@@ -213,11 +213,17 @@ def quality_check(db_images, accessors, job_config, runner):
                                          est_sigma, rms_max, rms_min)
         if not rejected:
             (semimaj, semimin, theta) = accessor.beam
-            logger.info("{}, {}, {}".format(semimaj,semimin,theta))
             rejected = reject_beam(semimaj, semimin, theta, oversampled_x, elliptical_x)
         if not rejected:
-            rejected = reject_historical_rms(db_image.id, db.session,
+            if mode == "Stream":
+                logger.info("Entering streaming QC Check")
+                rejected = reject_historical_rms(db_image.id, db.session,
                                              history, est_sigma, rms_max, rms_min, rej_sigma)
+            else:
+                logger.info("Batch mode QC check. No images = {}".format(n_img))
+                rejected = reject_historical_rms(db_image.id, db.session,
+                                             n_img, est_sigma, rms_max, rms_min, rej_sigma)
+
         if rejected:
             reason, comment = rejected
             steps.quality.reject_image(db_image.id, reason, comment)
@@ -320,7 +326,7 @@ def store_image_data(db_images, fits_datas, fits_headers):
     store_fits(db_images, fits_datas, fits_headers)
 
 
-def timestamp_step(runner, images, job_config, dataset_id, copy_images):
+def timestamp_step(runner, images, job_config, dataset_id, copy_images, mode, nimg):
     """
     Called from the main loop with all images in a certain timestep
 
@@ -341,15 +347,13 @@ def timestamp_step(runner, images, job_config, dataset_id, copy_images):
     error = "%s != %s != %s" % (len(accessors), len(metadatas), len(db_images))
     assert len(accessors) == len(metadatas) == len(db_images), error
 
-    logger.info("{} {} {}".format(db_images, accessors, runner))
-    
     # store copy of image data in database
     if copy_images:
         fits_datas, fits_headers = extract_fits_from_files(runner, images)
         store_image_data(db_images, fits_datas, fits_headers)
 
     # filter out the bad ones
-    good_images = quality_check(db_images, accessors, job_config, runner)
+    good_images = quality_check(db_images, accessors, job_config, runner, mode, nimg)
     good_accessors = [i[1] for i in good_images]
 
     # do the source extractions
@@ -395,7 +399,7 @@ def run_stream(runner, job_config, dataset_id, copy_images):
         logger.info("processing {} stream images...".format(len(images)))
         trap_start = datetime.now()
         try:
-            timestamp_step(runner, images, job_config, dataset_id, copy_images)
+            timestamp_step(runner, images, job_config, dataset_id, copy_images, "Stream", len(sorting_metadata))
         except Exception as e:
             logger.error("timestep raised {} exception: {}".format(type(e), str(e)))
         else:
@@ -422,7 +426,7 @@ def run_batch(image_paths, job_config, runner, dataset_id, copy_images):
         msg = "processing %s images in timestep %s (%s/%s)"
         logger.info(msg % (len(images), timestep, n + 1, len(grouped_images)))
         try:
-            timestamp_step(runner, images, job_config, dataset_id, copy_images)
+            timestamp_step(runner, images, job_config, dataset_id, copy_images, "Batch", len(sorting_metadata))
         except Exception as e:
             logger.error("timestep raised {} exception: {}".format(type(e), str(e)))
 

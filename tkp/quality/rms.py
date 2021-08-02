@@ -98,8 +98,6 @@ def reject_basic_rms(image_id, session, est_sigma=4, rms_max=100., rms_min=0.0):
         return reject_reasons['rms'],\
                "RMS value not within {} and {}".format(rms_min, rms_max)
 
-
-
 def reject_historical_rms(image_id, session, history=100, est_sigma=4, rms_max=100., rms_min=0.0, rej_sigma=3.0):
     """
     Check if the RMS value of an image lies within a range defined

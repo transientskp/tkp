@@ -219,11 +219,6 @@ def quality_check(db_images, accessors, job_config, runner, mode, n_img):
                 logger.info("Entering streaming QC Check")
                 rejected = reject_historical_rms(db_image.id, db.session,
                                              history, est_sigma, rms_max, rms_min, rej_sigma)
-            else:
-                logger.info("Batch mode QC check. No images = {}".format(n_img))
-                rejected = reject_historical_rms(db_image.id, db.session,
-                                             n_img, est_sigma, rms_max, rms_min, rej_sigma)
-
         if rejected:
             reason, comment = rejected
             steps.quality.reject_image(db_image.id, reason, comment)

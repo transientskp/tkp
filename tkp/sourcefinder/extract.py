@@ -960,9 +960,7 @@ class Detection(object):
 
         # Fix negative ra values going into the database as this messes
         # up the source association step.
-        if self.ra<0.:
-            self.ra=self.ra+360.
-
+        self.ra.value = self.ra.value % 360.
 
         def pixel_to_spatial(x, y):
             try:

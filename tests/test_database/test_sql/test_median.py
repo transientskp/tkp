@@ -32,20 +32,12 @@ class testMedian(unittest.TestCase):
 
 
     def test_median(self):
-        if Database().engine == 'monetdb':
-            qry = ("""
-              SELECT sys.median(id) as median_id
-                    ,sys.median(rms_max) as median_rms_max
-              FROM image
-              WHERE dataset = %(dataset_id)s
-              """)
-        else:
-            qry = ("""
-              SELECT median(id) as median_id
-                    ,median(rms_max) as median_rms_max
-              FROM image
-              WHERE dataset = %(dataset_id)s
-              """)
+        qry = ("""
+          SELECT median(id) as median_id
+                ,median(rms_max) as median_rms_max
+          FROM image
+          WHERE dataset = %(dataset_id)s
+          """)
         cursor = execute(qry, {'dataset_id': self.dataset.id})
         results = db_subs.get_db_rows_as_dicts(cursor)
         # self.assertAlmostEqual(results[0]['median_id'], median(self.image_ids))

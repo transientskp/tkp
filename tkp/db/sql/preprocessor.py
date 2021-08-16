@@ -4,7 +4,7 @@ The preprocessor for SQL.
 This makes it possible to maintain multiple dialects in one SQL statement. The
 preprocessor language looks like the django template syntax, and for now only
 supports {% dbif <dialect> %}<dialect specific SQL>{% enddbif %} where dialect
-is one of 'monetdb' or 'postgresql'.
+is 'postgresql'.
 """
 
 import re

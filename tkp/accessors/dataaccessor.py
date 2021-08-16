@@ -85,8 +85,6 @@ class DataAccessor(object):
 
         May be extended by subclasses to return additional data.
         """
-        # some values are casted to a standard float since MonetDB cannot
-        # handle numpy.float64
         return {
             'tau_time': self.tau_time,
             'freq_eff': self.freq_eff,

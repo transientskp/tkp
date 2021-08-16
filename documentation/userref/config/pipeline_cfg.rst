@@ -64,8 +64,9 @@ be referred to be other sections. The following parameters may be defined:
    See :py:func:`tkp.config.get_database_config` for details.
 
 ``engine``
-   The database engine to use. Two engines are supported: ``postgresql`` and
-   ``monetdb``. See the :ref:`introductory material on databases
+   The database engine to use. One engine is supported:
+   ``postgresql``.
+   See the :ref:`introductory material on databases
    <database-intro>` for details.
 
 ``host``, ``port``
@@ -74,12 +75,6 @@ be referred to be other sections. The following parameters may be defined:
 ``database``, ``user``, ``password``
    The name of the database to use, and the username and password required to
    connect to it.
-
-``passphrase``
-   A passphrase which provides administrative access to the database server.
-   Only applicable to the ``monetdb`` engine. This is not required for normal
-   operation, but enables the user to (for example) create and destroy
-   databases.
 
 ``dump_backup_copy``
    A boolean value. If True, a copy of the configured database will be

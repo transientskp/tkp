@@ -94,17 +94,12 @@ def get_database_config(pipeline_config=None, apply=None):
         combined['engine'] = 'postgresql'
 
     if not combined['user']:
-        if combined['engine'] == 'monetdb':
-            combined['user'] = 'monetdb'
-        else:
-            combined['user'] = user
+        combined['user'] = user
 
     if not combined['password']:
         combined['password'] = combined['user']
 
     if not combined['port']:
-        if combined['engine'] == "monetdb":
-            combined['port'] = 50000
         if combined['engine'] == "postgresql":
             combined['port'] = 5432
     else:

@@ -64,7 +64,7 @@ def destroy_postgres(connection):
     !! WARNING !! DESTROYS ALL CONTENTS OF THE DATABASE
 
     args:
-        connection: A monetdb DB connection
+        connection: A PostgresSQL DB connection
     """
 
     # queries below generate a resultset with rows containing SQL queries
@@ -100,22 +100,6 @@ where ns.nspname = 'public' and c.relkind = 'S';
         connection.commit()
 
 
-def destroy_monetdb():
-    """
-    Maybe some day destroys the content of a MonetDB database.
-    """
-
-    msg = """
-trap-manage.py doesn't support the removal of all db content at the moment, you
-need to do this manually by destroying and recreating the database. Please refer
-to the TKP manual on how to recreate a TKP database. When you recreate the
-database manually you should run trap-manage.py initdb again without the -d
-flag.
-"""
-    sys.stderr.write(msg)
-    sys.exit(1)
-
-
 def destroy(dbconfig):
     """
     Destroys the content of a database defined by settings in dbconfig dict.
@@ -130,24 +114,6 @@ def destroy(dbconfig):
         database = tkp.db.database.Database()
 
         destroy_postgres(database.connection.connection)
-    elif dbconfig['engine'] == 'monetdb':
-        destroy_monetdb()
-
-
-def set_monetdb_schema(session, dbconfig):
-    """
-    create custom schema. use with MonetDB only.
-    """
-    create_query = """
-CREATE SCHEMA "trap" AUTHORIZATION "%(user)s";
-ALTER USER "%(user)s" SET SCHEMA "trap";
-SET SCHEMA "trap";
-"""
-    q = session.execute("select id from sys.schemas where name = 'trap'")
-    if len(q.fetchall()) == 0:
-        print create_query % dbconfig
-        session.execute(create_query % dbconfig)
-        session.commit()
 
 
 def populate(dbconfig):
@@ -178,11 +144,6 @@ def populate(dbconfig):
             database.session.execute("CREATE LANGUAGE plpgsql;")
         except ProgrammingError:
             database.session.rollback()
-    if dbconfig['engine'] == 'monetdb':
-        set_monetdb_schema(database.session, dbconfig)
-        # reconnect to switch to schema
-        database.session.commit()
-        database.reconnect()
 
     batch_file = os.path.join(sql_repo, 'batch')
 

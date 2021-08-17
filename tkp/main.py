@@ -28,7 +28,8 @@ import tkp.steps.forced_fitting as steps_ff
 from tkp.steps.varmetric import execute_store_varmetric
 from tkp.stream import stream_generator
 from tkp.quality.rms import reject_historical_rms
-
+from tkp.quality.rms import reject_basic_rms
+from tkp.quality.restoringbeam import reject_beam
 
 logger = logging.getLogger(__name__)
 
@@ -192,7 +193,7 @@ def quality_check(db_images, accessors, job_config, runner):
     returns:
         tuple: a list of db_image and accessor tuples
     """
-    logger.debug("performing quality check")
+    logger.info("performing quality check")
     arguments = [job_config]
     rejecteds = runner.map("quality_reject_check", accessors, arguments)
 
@@ -202,12 +203,21 @@ def quality_check(db_images, accessors, job_config, runner):
     rms_min = job_config.persistence.rms_est_min
     est_sigma = job_config.persistence.rms_est_sigma
     rej_sigma = job_config.persistence.rms_rej_sigma
+    oversampled_x = job_config.persistence.oversampled_x
+    elliptical_x = job_config.persistence.elliptical_x
+
     good_images = []
     for db_image, rejected, accessor in zip(db_images, rejecteds, accessors):
         if not rejected:
+            rejected = reject_basic_rms(db_image.id, db.session,
+                                         est_sigma, rms_max, rms_min)
+        if not rejected:
+            (semimaj, semimin, theta) = accessor.beam
+            logger.info("{}, {}, {}".format(semimaj,semimin,theta))
+            rejected = reject_beam(semimaj, semimin, theta, oversampled_x, elliptical_x)
+        if not rejected:
             rejected = reject_historical_rms(db_image.id, db.session,
                                              history, est_sigma, rms_max, rms_min, rej_sigma)
-
         if rejected:
             reason, comment = rejected
             steps.quality.reject_image(db_image.id, reason, comment)
@@ -331,6 +341,8 @@ def timestamp_step(runner, images, job_config, dataset_id, copy_images):
     error = "%s != %s != %s" % (len(accessors), len(metadatas), len(db_images))
     assert len(accessors) == len(metadatas) == len(db_images), error
 
+    logger.info("{} {} {}".format(db_images, accessors, runner))
+    
     # store copy of image data in database
     if copy_images:
         fits_datas, fits_headers = extract_fits_from_files(runner, images)

@@ -78,6 +78,27 @@ def rms_with_clipped_subregion(data, rms_est_sigma=3, rms_est_fraction=4):
     """
     return rms(clip(subregion(data, rms_est_fraction), rms_est_sigma))
 
+def reject_basic_rms(image_id, session, est_sigma=4, rms_max=100., rms_min=0.0):
+    """Check if the RMS value of an image lies within a range predetermined
+    at the start of a pipeline run.
+    
+    args:
+        image_id (int): database ID of the image we want to check
+        session (sqlalchemy.orm.session.Session): the database session
+        est_sigma (float): sigma multiplication factor
+        rms_max (float): global maximum rms for image quality check
+        rms_min (float): global minimum rms for image quality check
+    returns:
+        bool: None if not rejected, (rejectreason, comment) if rejected
+    """
+
+    image = session.query(Image).filter(Image.id == image_id).one()
+
+    if not rms_min < image.rms_qc < rms_max:
+        return reject_reasons['rms'],\
+               "RMS value not within {} and {}".format(rms_min, rms_max)
+
+
 
 def reject_historical_rms(image_id, session, history=100, est_sigma=4, rms_max=100., rms_min=0.0, rej_sigma=3.0):
     """

@@ -1,5 +1,6 @@
 import tkp.quality
 from tkp.utility import nice_format
+from tkp.db.quality import reject_reasons
 
 
 def undersampled(semibmaj, semibmin):
@@ -87,5 +88,13 @@ def beam_invalid(semibmaj, semibmin, theta, oversampled_x=30, elliptical_x=2.0):
     #elif not tkp.quality.restoringbeam.full_fieldofview(nx, ny, cellsize, fov):
     #    return "Full field of view not imaged. Imaged FoV=XXdegrees, Observed FoV=XXdegrees"
 
+    else:
+        return False
+
+
+def reject_beam(semimaj, semimin, theta, oversampled_x=30, elliptical_x=2.0):
+    beam_check = beam_invalid(semimaj, semimin, theta, oversampled_x, elliptical_x)
+    if beam_check:
+        return reject_reasons['beam'],beam_check
     else:
         return False

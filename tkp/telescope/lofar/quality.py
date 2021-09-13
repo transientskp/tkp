@@ -12,11 +12,12 @@ logger = logging.getLogger(__name__)
 def reject_check_lofar(accessor, job_config):
 
     lofar_quality_params = job_config['quality_lofar']
+    quality_params = job_config['quality']
 
     low_bound = lofar_quality_params['low_bound']
     high_bound = lofar_quality_params['high_bound']
-    oversampled_x = lofar_quality_params['oversampled_x']
-    elliptical_x = lofar_quality_params['elliptical_x']
+    oversampled_x = quality_params['oversampled_x']
+    elliptical_x = quality_params['elliptical_x']
     min_separation = lofar_quality_params['min_separation']
 
     if accessor.tau_time == 0:

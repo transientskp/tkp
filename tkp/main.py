@@ -198,13 +198,13 @@ def quality_check(db_images, accessors, job_config, runner):
     rejecteds = runner.map("quality_reject_check", accessors, arguments)
 
     db = tkp.db.Database()
-    history = job_config.persistence.rms_est_history
-    rms_max = job_config.persistence.rms_est_max
-    rms_min = job_config.persistence.rms_est_min
-    est_sigma = job_config.persistence.rms_est_sigma
-    rej_sigma = job_config.persistence.rms_rej_sigma
-    oversampled_x = job_config.persistence.oversampled_x
-    elliptical_x = job_config.persistence.elliptical_x
+    history = job_config.quality.rms_est_history
+    rms_max = job_config.quality.rms_est_max
+    rms_min = job_config.quality.rms_est_min
+    est_sigma = job_config.quality.rms_est_sigma
+    rej_sigma = job_config.quality.rms_rej_sigma
+    oversampled_x = job_config.quality.oversampled_x
+    elliptical_x = job_config.quality.elliptical_x
 
     good_images = []
     for db_image, rejected, accessor in zip(db_images, rejecteds, accessors):

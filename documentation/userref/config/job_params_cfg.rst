@@ -40,11 +40,40 @@ The parameters in this file are defined as follows:
    Integer. Determines the size of the subsection used for RMS measurement:
    the central ``1/f`` of the image will be used (where f=rms_est_fraction).
 
+
+ .. _job_params_quality:
+
+``quality`` Section
+=========================
+These are the quality-checking parameters applied to all ingested data
+in fits format.
+See also :ref:`stage-quality`.
+
+``rms_est_history``
+  Integer. How many images are used for calculating rms
+  histogram. Currently only works for streaming mode.
+
+``rms_est_max``
+  Float. The global maximum acceptable rms.
+
+``rms_est_min``
+  Float. The global minimum acceptable rms.
+
+``rms_rej_sigma``
+  Float. Sigma threshold used for rejecting outlier images when using
+  the rms histogram
+
 ``bandwidth_max``
    Float. Limit the maximum bandwidth used when determining if two images
    belong to the same 'band' grouping.
 
-.. _job_params_quality:
+``oversampled_x``
+   Integer. The maximum length of a beam axis.
+
+``elliptical_x``
+   Float. The maximum ratio of major to minor axis length.
+   
+.. _job_params_quality_lofar:
 
 ``quality_lofar`` Section
 =========================
@@ -57,10 +86,6 @@ See also :ref:`stage-quality`.
 ``high_bound``
    Float. Reject the image if the measured RMS is greater than ``high_bound``
    times the theoretical noise.
-``oversampled_x``
-    The maximum length of a beam axis.
-``elliptical_x``
-    The maximum ratio of major to minor axis length.
 ``min_separation``
     The minimum allowed distance from the image centre to a bright radio
     source in degrees.
@@ -113,7 +138,7 @@ See also :ref:`stage-extraction` and :ref:`stage-forcedfit`.
    are *stored* during the source-extraction process, they affect the
    source-association process.)
 
-`expiration`
+``expiration``
     The number of forced fits performed since the last blind fit. Used to
     'expire' the runningcatalog - else said to stop monitoring a source of
     which the flux went below the detection threshold after a configurable
@@ -155,3 +180,21 @@ Parameters used in transient-detection. See also the
     around the detection threshold due to measurement noise.
     This value sets that margin as a multiple of the RMS of the previous-best
     image.
+
+
+ .. _job_params_pipeline:
+
+``pipeline`` Section
+==============================
+Parameters used to detemine if the pipeline is run in batch or
+streaming mode.
+
+``mode``
+   String. batch is for a set of images to be processed
+   offline. stream is for streaming mode where new images are
+   automatically fed into the pipeline
+
+``hosts``, ``ports``
+  String. These are the hosts and ports required for streaming
+  mode. If multiple hosts are defined they need splitting by , and the
+  length of the number of ports needs to match.

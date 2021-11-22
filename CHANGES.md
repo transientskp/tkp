@@ -1,6 +1,65 @@
 # Changelog
 -----------
 
+##5.0
+
+### Update to job_params.cfg
+
+A new section for all quality checks was created. Generic quality
+control parameters in persistence and quality_lofar were moved to this
+new section.
+
+[#590]: https://github.com/transientskp/tkp/issues/590
+
+### Quality checks
+
+The rms values of all fits images are checked to global minimum and
+maximum rms values.
+
+The automatic rms based image quality control check was given its own
+independent sigma threshold.
+
+    [quality]
+    rms_rej_sigma = 3	     ; threshold for rejecting images using rms histogram
+
+The restoring beam parameter checks, initially developed for LOFAR
+images, now applied to all fits images.
+
+[#512]: https://github.com/transientskp/tkp/issues/512
+[#578]: https://github.com/transientskp/tkp/issues/578
+
+### Negative RA values
+
+Some imagers, e.g. WSClean, define the WCS in the fits files as
+-180<RA<180. This caused issues within the source association
+algorithms. A new simple fix has been applied so these images can be
+correctly processed.
+
+[#572]: https://github.com/transientskp/tkp/issues/572
+
+### Removal of MonetDB
+
+MonetDB is no longer supported but was still present in code and
+documentation. All references to MonetDB have now been removed.
+
+[#579]: https://github.com/transientskp/tkp/issues/579
+
+### Fixing of errors 
+
+A number of outstanding errors have been fixed.
+
+[#582]: https://github.com/transientskp/tkp/issues/582
+[#583]: https://github.com/transientskp/tkp/issues/583
+[#586]: https://github.com/transientskp/tkp/issues/586
+[#564]: https://github.com/transientskp/tkp/issues/564
+[#556]: https://github.com/transientskp/tkp/issues/556
+[#555]: https://github.com/transientskp/tkp/issues/555
+[#584]: https://github.com/transientskp/tkp/issues/584
+[#565]: https://github.com/transientskp/tkp/issues/565
+[#575]: https://github.com/transientskp/tkp/issues/575
+[#571]: https://github.com/transientskp/tkp/issues/571
+
+
 ##4.0
 
 No changes since 4.0rc1

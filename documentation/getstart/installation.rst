@@ -108,20 +108,7 @@ straightforward. You can either install from source::
 
   $ git clone https://github.com/transientskp/tkp.git
   $ cd tkp
-  $ python setup.py install
-
-Or you can install directly from the Python Package Index
-(`PyPI <https://pypi.python.org/pypi/tkp>`_), e.g. using
-`pip <https://pip.pypa.io>`_)::
-
-  $ pip install tkp
-
-Note that if you want to make use of the :ref:`pixel store <mongodb-intro>`
-functionality, then::
-
-  $ pip install tkp[pixelstore]
-
-will install the required libraries.
+  $ pip install -e ".[pixelstore]"
 
 Following installation, including setting up and configuring the database,
 follow the :ref:`test procedure <testing>` to ensure that everything is

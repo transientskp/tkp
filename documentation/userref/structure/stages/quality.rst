@@ -14,18 +14,28 @@ The quality check code is structured such that different sets of tests can be
 applied to images from different telescopes
 (see source of the :py:func:`tkp.steps.quality.reject_check` function for
 implementation details).
-Currently, only a selection of
-tests designed to process LOFAR images are available. Three separate tests are
-performed:
+
+Quality checks are performed on all fits images input into TraP. Two
+key tests are performed.
+
 
 Image RMS
 ---------
 The central subsection of the image is iteratively sigma-clipped
-until it reaches a user-defined convergence. The RMS of the clipped value is
-compared to the theoretically expected image noise based on the LOFAR
-configuration in use. The image is rejected if the noise is signifcantly
-greated than expected.
+until it reaches a user-defined convergence giving the rms of the
+clipped region.
 
+The rms is first compared to the globally acceptable minimum and
+maximum rms values as defined in the job_params.cfg file.
+
+Once sufficient images have been processed (given by rms_est_history
+in the job_params.cfg file), the rms values for all the images are
+fitted using a Gaussian distribution. The rms value of the
+new image is then compared to the allowed sigma deviation
+(rms_rej_sigma) from this Gaussian distribution.
+
+The image is rejected if the noise is signifcantly
+greated or less than expected.
 
 
 Beam shape
@@ -41,21 +51,6 @@ for sanity. Four separate checks are applied:
   is not oversampled).
 * The ratio of the major to the minor axis should be lower than a user defined
   threshold (the beam is not excessively elliptical).
-
-
-Nearby bright sources
----------------------
-There should be no bright radio sources within a user-defined radius of the
-image centre. The sources checked for are:
-
-* Cassiopeia A
-* Cygnus A
-* Tauraus A
-* Hercules A
-* Virgo A
-* The Sun
-* Jupiter
-
 
 
 

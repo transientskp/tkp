@@ -958,6 +958,9 @@ class Detection(object):
         self.start_smin_y = (self.y.value - numpy.sin(self.theta.value) *
                       self.smin.value)
 
+        # Fix negative ra values going into the database as this messes
+        # up the source association step.
+        self.ra.value = self.ra.value % 360.
 
         def pixel_to_spatial(x, y):
             try:

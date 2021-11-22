@@ -85,6 +85,7 @@ def store_images_in_db(images_metadata, extraction_radius_pix, dataset_id, bandw
     for metadata in images_metadata:
         metadata['freq_bw_max'] = bandwidth_max
         metadata['xtr_radius'] = extraction_radius_pix * abs(metadata['deltax'])
+        metadata['centre_ra'] = metadata['centre_ra'] % 360.
         filename = metadata['url']
         db_image = Image(data=metadata, dataset=dataset)
         image_ids.append(db_image.id)

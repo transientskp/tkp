@@ -201,7 +201,7 @@ def quality_check(db_images, accessors, job_config, runner):
     history = job_config.quality.rms_est_history
     rms_max = job_config.quality.rms_est_max
     rms_min = job_config.quality.rms_est_min
-    est_sigma = job_config.quality.rms_est_sigma
+    est_sigma = job_config.persistence.rms_est_sigma
     rej_sigma = job_config.quality.rms_rej_sigma
     oversampled_x = job_config.quality.oversampled_x
     elliptical_x = job_config.quality.elliptical_x
@@ -341,8 +341,6 @@ def timestamp_step(runner, images, job_config, dataset_id, copy_images):
     error = "%s != %s != %s" % (len(accessors), len(metadatas), len(db_images))
     assert len(accessors) == len(metadatas) == len(db_images), error
 
-    logger.info("{} {} {}".format(db_images, accessors, runner))
-    
     # store copy of image data in database
     if copy_images:
         fits_datas, fits_headers = extract_fits_from_files(runner, images)

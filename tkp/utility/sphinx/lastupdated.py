@@ -5,13 +5,12 @@
 #
 #   *This document last updated:* |last_updated|.
 
+import datetime
 import subprocess
 from email.utils import parsedate_tz
 
 from docutils import nodes
-from sphinx.util.compat import Directive
-
-import datetime
+from docutils.parsers.rst import Directive
 
 
 def setup(app):

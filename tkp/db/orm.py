@@ -390,7 +390,7 @@ class Image(DBObject):
         try:
             self.database.cursor.execute(query, (self._id,))
             results = self.database.cursor.fetchall()
-        except self.database.connection.Error, e:
+        except self.database.connection.Error as e:
             query = query % self._id
             logger.warn("database failed on query: %s", query)
             raise

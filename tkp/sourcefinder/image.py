@@ -680,7 +680,7 @@ class ImageData(object):
         for idx, posn in enumerate(positions):
             try:
                 x, y, = self.wcs.s2p((posn[0], posn[1]))
-            except RuntimeError, e:
+            except RuntimeError as e:
                 if (str(e).startswith("wcsp2s error: 8:") or
                     str(e).startswith("wcsp2s error: 9:")):
                     logger.warning("Input coordinates (%.2f, %.2f) invalid: ",

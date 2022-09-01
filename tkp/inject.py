@@ -65,7 +65,7 @@ def modify_fits_headers(parset, fits_file, overwrite):
     header = fits_file[0].header
     already_present = header.keys()
     for parset_field, (type_, fits_field) in parset_fields.items():
-        if parset.has_key(parset_field):
+        if parset_field in parset:
             if (fits_field not in already_present) or overwrite:
                 value = parset[parset_field]
                 logger.info("setting %s (%s) to %s" % (parset_field, fits_field, value))

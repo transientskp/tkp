@@ -1,3 +1,4 @@
+from __future__ import print_function
 import math
 import logging
 from io import BytesIO
@@ -1225,21 +1226,21 @@ class TestMany2Many(unittest.TestCase):
         """Print a nice summary of the results dictionaries
         (as ouput by insert_many_to_many_sources)"""
 
-        print "\nSources input:"
+        print("\nSources input:")
         for ex in sorted(extracted, key=lambda x:x['image']):
-            print ', '.join(kw + ':' + str(ex[kw]) for kw in
-                             ('image', 'id', 'ra', 'decl'))
+            print(', '.join(kw + ':' + str(ex[kw]) for kw in
+                             ('image', 'id', 'ra', 'decl')))
 
-        print "\nResulting associations"
+        print("\nResulting associations")
         for rc_entry in sorted(runcat, key=lambda x:x['id']):
-            print "Runcat:", rc_entry['id']
-            print ', '.join(kw + ':' + str(rc_entry[kw]) for kw in
+            print("Runcat:", rc_entry['id'])
+            print(', '.join(kw + ':' + str(rc_entry[kw]) for kw in
                             ('id', 'wm_ra', 'wm_decl', 'datapoints', 'inactive',
-                              'xtrsrc'))
-            print "\t Associated extractions:"
+                              'xtrsrc')))
+            print("\t Associated extractions:")
             for assoc_entry in sorted(rc_entry['assoc'], key=lambda x:x['image']):
-                print '\t', assoc_entry
-        print
+                print('\t', assoc_entry)
+        print()
 
 
 

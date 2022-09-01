@@ -1,3 +1,4 @@
+from __future__ import print_function
 import unittest
 from collections import defaultdict
 import tkp.db
@@ -772,7 +773,7 @@ class TestPreviousLimitsImageId(unittest.TestCase):
 
         self.assertEqual(len(newsources),len(mock_sources))
         newsource_properties = newsources[0]
-        print "Image IDs:", image_ids
+        print("Image IDs:", image_ids)
         self.assertEqual(newsource_properties['previous_limits_image'],
                          image_ids[4])
 

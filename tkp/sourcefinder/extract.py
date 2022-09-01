@@ -791,7 +791,7 @@ class Detection(object):
 
         try:
             self._physical_coordinates()
-        except RuntimeError, e:
+        except RuntimeError as e:
             logger.warn("Physical coordinates failed at %f, %f" % (
                 self.x, self.y))
             raise

@@ -1,13 +1,14 @@
 """
 Source fitting routines.
 """
+from __future__ import absolute_import
 
 import math
 import numpy
 import scipy.optimize
 from .gaussian import gaussian
 from .stats import indep_pixels
-import utils
+from . import utils
 
 FIT_PARAMS = ('peak', 'xbar', 'ybar', 'semimajor', 'semiminor', 'theta')
 

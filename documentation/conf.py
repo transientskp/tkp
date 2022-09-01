@@ -19,6 +19,7 @@
 # -- General configuration -----------------------------------------------------
 
 #Mock out numpy, scipy etc if building on readthedocs.org:
+from __future__ import print_function
 import os
 on_rtd = os.environ.get('READTHEDOCS', None) == 'True'
 # if on_rtd:
@@ -32,7 +33,7 @@ from mock import  Mock as MagicMock
 # present. Therefore the install fails.
 # Instead, we hack the PYTHONPATH, and mock out modules that we can't use.
 rootdir = os.path.join(os.path.dirname(__file__), os.pardir)
-print "Rootdir", rootdir
+print("Rootdir", rootdir)
 sys.path.append(rootdir)
 
 class Mock(MagicMock):

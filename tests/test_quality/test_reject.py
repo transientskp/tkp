@@ -1,3 +1,4 @@
+from __future__ import print_function
 import unittest
 import tkp.quality
 import tkp.db
@@ -72,7 +73,7 @@ class TestReject(unittest.TestCase):
         Delete a rejectreason, then re-sync and double check the counts match.
         """
         reason = self.session.query(Rejectreason).all()[-1]
-        print "Deleting reason id", reason.id
+        print("Deleting reason id", reason.id)
         self.session.delete(reason)
         self.assertNotEqual(
             self.session.query(Rejectreason).count(),

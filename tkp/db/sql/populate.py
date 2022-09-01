@@ -1,6 +1,7 @@
 """
 initialises or removes TRAP tables in a database.
 """
+from __future__ import print_function
 import os
 import re
 import sys
@@ -95,7 +96,7 @@ where ns.nspname = 'public' and c.relkind = 'S';
         cursor.execute(big_query)
         queries = [row[0] for row in cursor.fetchall()]
         for query in queries:
-            print query
+            print(query)
             cursor.execute(query)
         connection.commit()
 
@@ -161,7 +162,7 @@ def populate(dbconfig):
     for line in [l.strip() for l in open(batch_file) if not l.startswith("#")]:
         if not line:  # skip empty lines
             continue
-        print "processing %s" % line
+        print("processing %s" % line)
         sql_file = os.path.join(sql_repo, line)
         with open(sql_file) as sql_handler:
             sql = sql_handler.read()

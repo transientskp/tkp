@@ -4,6 +4,7 @@ This script is used to upgrade or downgrade a TKP database to the latest or a sp
 SQL files in sql/upgrade are used. Run this script directly from your shell, use -h or --help to get more info
 on how to use it.
 """
+from __future__ import print_function
 
 import argparse
 import os
@@ -83,14 +84,14 @@ def ask_version(version):
         if answer:
             path = get_path(version, latest, upgrades)
     else:
-        print "you already have the latest revision (%s)" % latest
+        print("you already have the latest revision (%s)" % latest)
 
     if version == latest or not answer:
         while True:
             msg = "do you want to up/down grade to a different revision? If so, which version?"
             answer = raw_input("%s (rev no) " % msg)
             if not answer.isdigit():
-                print "please enter a version NUMBER"
+                print("please enter a version NUMBER")
                 continue
             answer = int(answer)
             path = get_path(version, answer, upgrades)
@@ -111,11 +112,11 @@ def main():
 #    version = get_version(cursor)
 #    path = ask_version(version)
     if not path:
-        print "no upgrade path found"
+        print("no upgrade path found")
         sys.exit(2)
 
     query = construct_sql(path)
-    print query
+    print(query)
 
     msg = "continue with upgrade?"
     answer = True if raw_input("%s (y/N) " % msg).lower() == 'y' else False
@@ -126,9 +127,9 @@ def main():
             cursor.execute(statement)
 #            raw_input('Done... continue?')
         connection.commit()
-        print "Upgrade completed"
+        print("Upgrade completed")
     else:
-        print "upgrade cancelled"
+        print("upgrade cancelled")
         sys.exit(2)
 
 if __name__ == "__main__":

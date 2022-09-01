@@ -12,6 +12,7 @@ specific `trap-manage.py` subcommand, run:
 
 Have a nice day!
 """
+
 import argparse
 import os
 from os import path
@@ -104,7 +105,7 @@ def copy_template(job_or_project, name, target=None, **options):
         top_dir = path.join(os.getcwd(), name)
         try:
             os.makedirs(top_dir)
-        except OSError, e:
+        except OSError as e:
             if e.errno == errno.EEXIST:
                 message = "'%s' already exists" % top_dir
             else:
@@ -164,7 +165,7 @@ def copy_template(job_or_project, name, target=None, **options):
             with open(new_path, 'w') as new_file:
                 new_file.write(content)
 
-            print "Creating %s" % new_path
+            print("Creating %s" % new_path)
             try:
                 shutil.copymode(old_path, new_path)
                 make_writeable(new_path)
@@ -205,12 +206,12 @@ def parse_monitoringlist_positions(args, str_name="monitor_coords",
 
 
 def init_project(args):
-    print "creating project '%s'" % args.name
+    print("creating project '%s'" % args.name)
     return copy_template("project", args.name, args.target)
 
 
 def init_job(args):
-    print "creating job '%s'" % args.name
+    print("creating job '%s'" % args.name)
     return copy_template("job", args.name)
 
 
@@ -222,7 +223,7 @@ def prepare_job(jobname):
 
 
 def run_job(args):
-    print "running job '%s'" % args.name
+    print("running job '%s'" % args.name)
     prepare_job(args.name)
     monitor_coords = parse_monitoringlist_positions(args)
     run(args.name, monitor_coords)
@@ -261,7 +262,7 @@ def deldataset(options):
         print("\tpassword:   " + (dbconfig['password'] or ""))
         print("\thost:       " + (dbconfig['host'] or ""))
         print("\tport:       " + str(dbconfig['port']))
-        answer = raw_input("\nAre you sure you want to delete dataset {}? "
+        answer = input("\nAre you sure you want to delete dataset {}? "
                            "[y/N]: ".format(options.id))
         if answer.lower() != 'y':
             sys.stderr.write("Aborting.\n")

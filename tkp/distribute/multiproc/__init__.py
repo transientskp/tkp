@@ -3,6 +3,7 @@ A computation distribution implementation using the build in multiprocessing
 module. the Pool.map function only accepts one argument, so we need to
 zip the iterable together with the arguments.
 """
+
 import sys
 from multiprocessing import Pool, cpu_count, log_to_stderr
 
@@ -42,5 +43,5 @@ def map(func, iterable, args):
         return pool.map_async(func, zipped).get(9999999)
     except KeyboardInterrupt:
         pool.terminate()
-        print "You pressed CTRL-C, exiting"
+        print("You pressed CTRL-C, exiting")
         sys.exit(1)

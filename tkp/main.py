@@ -181,7 +181,7 @@ def extract_fits_from_files(runner, paths):
     # we assume pahtss is uniform
     if type(paths[0]) == str:
         fitss = runner.map("open_as_fits", [[p] for p in paths])
-        return zip(*list(chain.from_iterable(fitss)))
+        return list(zip(*list(chain.from_iterable(fitss))))
     elif type(paths[0]) == HDUList:
         return [f[0].data for f in paths], [str(f[0].header) for f in paths]
     else:

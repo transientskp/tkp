@@ -18,11 +18,12 @@ For help with command line options:
 See chapters 2 & 3 of Spreeuw, PhD Thesis, University of Amsterdam, 2010,
 <http://dare.uva.nl/en/record/340633> for details.
 """
+
 import sys
 import math
 import numbers
 import os.path
-from cStringIO import StringIO
+from io import StringIO
 import argparse
 import numpy
 import astropy.io.fits as pyfits
@@ -41,18 +42,18 @@ def regions(sourcelist):
     sources in sourcelist.
     """
     output = StringIO()
-    print >>output, "# Region file format: DS9 version 4.1"
-    print >>output, "global color=green dashlist=8 3 width=1 font=\"helvetica 10 normal\" select=1 highlite=1 dash=0 fixed=0 edit=1 move=1 delete=1 include=1 source=1"
-    print >>output, "image"
+    print("# Region file format: DS9 version 4.1", file=output)
+    print("global color=green dashlist=8 3 width=1 font=\"helvetica 10 normal\" select=1 highlite=1 dash=0 fixed=0 edit=1 move=1 delete=1 include=1 source=1", file=output)
+    print("image", file=output)
     for source in sourcelist:
         # NB, here we convert from internal 0-origin indexing to DS9 1-origin indexing
-        print >>output, "ellipse(%f, %f, %f, %f, %f)" % (
+        print("ellipse(%f, %f, %f, %f, %f)" % (
             source.x.value + 1.0,
             source.y.value + 1.0,
             source.smaj.value*2,
             source.smin.value*2,
             math.degrees(source.theta)+90
-        )
+        ), file=output)
     return output.getvalue()
 
 def skymodel(sourcelist, ref_freq=73800000):
@@ -60,9 +61,9 @@ def skymodel(sourcelist, ref_freq=73800000):
     Return a string containing a skymodel from the extracted sources for use in self-calibration.
     """
     output = StringIO()
-    print >>output, "#(Name, Type, Ra, Dec, I, Q, U, V, MajorAxis, MinorAxis, Orientation, ReferenceFrequency='60e6', SpectralIndex='[0.0]') = format"
+    print("#(Name, Type, Ra, Dec, I, Q, U, V, MajorAxis, MinorAxis, Orientation, ReferenceFrequency='60e6', SpectralIndex='[0.0]') = format", file=output)
     for source in sourcelist:
-        print >>output, "%s, GAUSSIAN, %s, %s, %f, 0, 0, 0, %f, %f, %f, %f, [0]" % (
+        print("%s, GAUSSIAN, %s, %s, %f, 0, 0, 0, %f, %f, %f, %f, [0]" % (
             "ra:%fdec:%f" % (source.ra, source.dec),
             "%fdeg" % (source.ra,),
             "%fdeg" % (source.dec,),
@@ -71,7 +72,7 @@ def skymodel(sourcelist, ref_freq=73800000):
             source.smin_asec,
             source.theta_celes,
             ref_freq
-        )
+        ), file=output)
     return output.getvalue()
 
 def csv(sourcelist):
@@ -79,9 +80,9 @@ def csv(sourcelist):
     Return a string containing a csv from the extracted sources.
     """
     output = StringIO()
-    print >> output, "ra, ra_err, dec, dec_err, smaj, smaj_err, smin, smin_err, pa, pa_err, int_flux, int_flux_err, pk_flux, pk_flux_err"
+    print("ra, ra_err, dec, dec_err, smaj, smaj_err, smin, smin_err, pa, pa_err, int_flux, int_flux_err, pk_flux, pk_flux_err", file=output)
     for source in sourcelist:
-        print >> output, "%f, %f, %f, %f, %f, %f, %f, %f, %f, %f, %f, %f, %f, %f" % (
+        print("%f, %f, %f, %f, %f, %f, %f, %f, %f, %f, %f, %f, %f, %f" % (
             source.ra,
             source.ra.error,
             source.dec,
@@ -96,7 +97,7 @@ def csv(sourcelist):
             source.flux.error,
             source.peak,
             source.peak.error,
-        )
+        ), file=output)
     return output.getvalue()
 
 def summary(filename, sourcelist):
@@ -105,15 +106,15 @@ def summary(filename, sourcelist):
     sourcelist.
     """
     output = StringIO()
-    print >>output, "** %s **\n" % (filename)
+    print("** %s **\n" % (filename), file=output)
     for source in sourcelist:
-        print >>output, "RA: %s, dec: %s" % (str(source.ra), str(source.dec))
-        print >>output, "Error radius (arcsec): %s" % (str(source.error_radius))
-        print >>output, "Semi-major axis (arcsec): %s" % (str(source.smaj_asec))
-        print >>output, "Semi-minor axis (arcsec): %s" % (str(source.smin_asec))
-        print >>output, "Position angle: %s" % (str(source.theta_celes))
-        print >>output, "Flux: %s" % (str(source.flux))
-        print >>output, "Peak: %s\n" % (str(source.peak))
+        print("RA: %s, dec: %s" % (str(source.ra), str(source.dec)), file=output)
+        print("Error radius (arcsec): %s" % (str(source.error_radius)), file=output)
+        print("Semi-major axis (arcsec): %s" % (str(source.smaj_asec)), file=output)
+        print("Semi-minor axis (arcsec): %s" % (str(source.smin_asec)), file=output)
+        print("Position angle: %s" % (str(source.theta_celes)), file=output)
+        print("Flux: %s" % (str(source.flux)), file=output)
+        print("Peak: %s\n" % (str(source.peak)), file=output)
     return output.getvalue()
 
 
@@ -233,8 +234,8 @@ def writefits(filename, data, header={}):
     tkp_writefits(data, filename, header)
 
 def get_detection_labels(filename, det, anl, beam, configuration, plane=0):
-    print "Detecting islands in %s" % (filename,)
-    print "Thresholding with det = %f sigma, analysis = %f sigma" % (det, anl)
+    print("Detecting islands in %s" % (filename,))
+    print("Thresholding with det = %f sigma, analysis = %f sigma" % (det, anl))
     ff = open_accessor(filename, beam=beam, plane=plane)
     imagedata = sourcefinder_image_from_accessor(ff, **configuration)
     labels, labelled_data = imagedata.label_islands(
@@ -262,12 +263,12 @@ def get_beam(bmaj, bmin, bpa):
     ):
         return (float(bmaj), float(bmin), float(bpa))
     if bmaj or bmin or bpa:
-        print "WARNING: partial beam specification ignored"
+        print("WARNING: partial beam specification ignored")
     return None
 
 def bailout(reason):
     # Exit with error
-    print "ERROR: %s" % (reason)
+    print("ERROR: %s" % (reason))
     sys.exit(1)
 
 def run_sourcefinder(files, options):
@@ -290,7 +291,7 @@ def run_sourcefinder(files, options):
         labels, labelled_data = [], None
 
     for counter, filename in enumerate(files):
-        print "Processing %s (file %d of %d)." % (filename, counter+1, len(files))
+        print("Processing %s (file %d of %d)." % (filename, counter+1, len(files)))
         imagename = os.path.splitext(os.path.basename(filename))[0]
         ff = open_accessor(filename, beam=beam, plane=0)
         imagedata = sourcefinder_image_from_accessor(ff, **configuration)
@@ -302,7 +303,7 @@ def run_sourcefinder(files, options):
 
         else:
             if options.mode == "fdr":
-                print "Using False Detection Rate algorithm with alpha = %f" % (options.alpha,)
+                print("Using False Detection Rate algorithm with alpha = %f" % (options.alpha,))
                 sr = imagedata.fd_extract(
                     alpha=options.alpha,
                     deblend_nthresh=options.deblend_thresholds,
@@ -310,7 +311,7 @@ def run_sourcefinder(files, options):
                 )
             else:
                 if labelled_data is None:
-                    print "Thresholding with det = %f sigma, analysis = %f sigma" % (options.detection, options.analysis)
+                    print("Thresholding with det = %f sigma, analysis = %f sigma" % (options.detection, options.analysis))
 
                 sr = imagedata.extract(
                     det=options.detection, anl=options.analysis,
@@ -343,16 +344,16 @@ def run_sourcefinder(files, options):
                 if ff.freq_eff:
                     skymodelfile.write(skymodel(sr, ff.freq_eff))
                 else:
-                    print "WARNING: Using default reference frequency for %s" % (skymodelfile.name,)
+                    print("WARNING: Using default reference frequency for %s" % (skymodelfile.name,))
                     skymodelfile.write(skymodel(sr))
         if options.csv:
             with open(imagename + ".csv", 'w') as csvfile:
                 csvfile.write(csv(sr))
-        print >>output, summary(filename, sr),
+        print(summary(filename, sr), end=' ', file=output)
     return output.getvalue()
 
 
 if __name__ == "__main__":
     logging.basicConfig()
     options, files = handle_args()
-    print run_sourcefinder(files, options),
+    print(run_sourcefinder(files, options), end=' ')

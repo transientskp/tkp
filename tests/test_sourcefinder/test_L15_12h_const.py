@@ -82,14 +82,14 @@ class L15_12hConstCor(unittest.TestCase):
         # But they don't, because the simulation is broken, so this test
         # checks they fall in a vaguely plausible range.
         for mysource in self.results:
-            self.assert_(mysource.peak.value > 0.35)
-            self.assert_(mysource.peak.value < 0.60)
+            self.assertTrue(mysource.peak.value > 0.35)
+            self.assertTrue(mysource.peak.value < 0.60)
 
     @requires_data(corrected_fits)
     def testSeparation(self):
         centre = self.results.closest_to(1440, 1440)[0]
         # How accurate should the '2 degrees' be?
-        for mysource in filter(lambda src: src != centre, self.results):
+        for mysource in [src for src in self.results if src != centre]:
             self.assertAlmostEqual(round(
                 coords.angsep(centre.ra, centre.dec, mysource.ra, mysource.dec) /
                 60**2), 2)

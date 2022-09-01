@@ -3,11 +3,11 @@ Code for parsing streaming telescope data. For now we only support AARTFAAC
 data version 1. We implemented an emulator for this stream in
 `testutil.stream_emu`.
 """
-from __future__ import print_function
+
 
 import logging
 import socket
-import StringIO
+import io
 import struct
 import astropy.io.fits.header
 import astropy.io.fits
@@ -15,7 +15,7 @@ import numpy as np
 import time
 import dateutil.parser
 
-from Queue import Full
+from queue import Full
 from multiprocessing import Manager
 
 
@@ -53,7 +53,7 @@ def getbytes(socket_, bytes_):
     returns:
         str: raw bytes from socket
     """
-    result = StringIO.StringIO()
+    result = io.StringIO()
     count = bytes_
     while count > 0:
         recv = socket_.recv(count)

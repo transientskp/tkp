@@ -10,9 +10,9 @@ import time
 import monotonic
 from datetime import datetime
 import socket
-import StringIO
+import io
 import logging
-from Queue import Queue
+from queue import Queue
 from os import path
 import atexit
 from threading import Lock, Thread, active_count
@@ -23,8 +23,8 @@ from tkp.stream import CHECKSUM
 # if true only start one thread on the first port, useful for debugging
 DEBUGGING = False
 
-DEFAULT_PORTS = range(6666, 6672)
-DEFAULT_FREQS = range(int(6e6), int(9e6), int(5e5))
+DEFAULT_PORTS = list(range(6666, 6672))
+DEFAULT_FREQS = list(range(int(6e6), int(9e6), int(5e5)))
 
 logger = logging.getLogger(__name__)
 
@@ -135,7 +135,7 @@ def make_window(hdu):
     returns:
         str: serialised fits file
     """
-    result = StringIO.StringIO()
+    result = io.StringIO()
     data, fits_header = serialize_hdu(hdu)
     header = create_header(len(fits_header), len(data))
     result.write(header)

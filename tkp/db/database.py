@@ -37,7 +37,7 @@ def sanitize_db_inputs(params):
     # According to the DB-API, params could be a dict-alike (ie, has key-value
     # pairs) or a list-alike (an ordered sequence).
     if hasattr(params, "iteritems"):
-        cleaned = {k: sanitize(v) for k, v in params.iteritems()}
+        cleaned = {k: sanitize(v) for k, v in params.items()}
     else:
         cleaned = [sanitize(v) for v in params]
 

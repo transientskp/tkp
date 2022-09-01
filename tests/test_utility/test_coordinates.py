@@ -225,7 +225,7 @@ class juliandate(unittest.TestCase):
 
     def testNow(self):
         now = coordinates.julian_date()
-        self.failUnless(now > 2454574)
+        self.assertTrue(now > 2454574)
 
 class coordsystemTest(unittest.TestCase):
     knownValues = (

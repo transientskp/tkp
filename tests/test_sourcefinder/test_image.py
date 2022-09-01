@@ -1,3 +1,4 @@
+
 import numpy as np
 import os
 
@@ -33,10 +34,10 @@ class TestNumpySubroutines(unittest.TestCase):
         central_value = a[y,x] #34
 
         round_down_to_single_pixel = a[sfimage.ImageData.box_slice_about_pixel(x, y, 0.9)]
-        self.assertEquals(round_down_to_single_pixel, [[central_value]])
+        self.assertEqual(round_down_to_single_pixel, [[central_value]])
 
         chunk_3_by_3 = a[sfimage.ImageData.box_slice_about_pixel(x, y, 1)]
-        self.assertEquals(chunk_3_by_3.shape, (3,3))
+        self.assertEqual(chunk_3_by_3.shape, (3,3))
         self.assertEqual(central_value, chunk_3_by_3[1,1])
 
         chunk_3_by_3_round_down = a[sfimage.ImageData.box_slice_about_pixel(x, y, 1.9)]

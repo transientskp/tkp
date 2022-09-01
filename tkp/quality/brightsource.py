@@ -68,7 +68,7 @@ def is_bright_source_near(accessor, distance=20):
         "J2000", "%sdeg" % accessor.centre_ra,  "%sdeg"  % accessor.centre_decl
     )
 
-    for name, position in targets.items():
+    for name, position in list(targets.items()):
         if not position:
             direction = m.direction(name)
         else:

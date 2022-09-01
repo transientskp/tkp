@@ -223,9 +223,9 @@ class ImageData(object):
         my_xdim, my_ydim = useful_data.shape
 
         rmsgrid, bggrid = [], []
-        for startx in xrange(0, my_xdim, self.back_size_x):
+        for startx in range(0, my_xdim, self.back_size_x):
             rmsrow, bgrow = [], []
-            for starty in xrange(0, my_ydim, self.back_size_y):
+            for starty in range(0, my_ydim, self.back_size_y):
                 chunk = useful_data[
                     startx:startx + self.back_size_x,
                     starty:starty + self.back_size_y
@@ -680,7 +680,7 @@ class ImageData(object):
         for idx, posn in enumerate(positions):
             try:
                 x, y, = self.wcs.s2p((posn[0], posn[1]))
-            except RuntimeError, e:
+            except RuntimeError as e:
                 if (str(e).startswith("wcsp2s error: 8:") or
                     str(e).startswith("wcsp2s error: 9:")):
                     logger.warning("Input coordinates (%.2f, %.2f) invalid: ",
@@ -879,7 +879,7 @@ class ImageData(object):
 
         # Deblend each of the islands to its consituent parts, if necessary
         if deblend_nthresh:
-            deblended_list = map(lambda x: x.deblend(), island_list)
+            deblended_list = [x.deblend() for x in island_list]
             #deblended_list = [x.deblend() for x in island_list]
             island_list = list(utils.flatten(deblended_list))
 
@@ -948,4 +948,4 @@ class ImageData(object):
                     return False
             return True
         # Filter will return a list; ensure we return an ExtractionResults.
-        return containers.ExtractionResults(filter(is_usable, results))
+        return containers.ExtractionResults(list(filter(is_usable, results)))

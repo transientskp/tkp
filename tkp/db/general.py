@@ -315,7 +315,7 @@ def frequency_bands(dataset_id):
      WHERE dataset = %s
     """
     cursor = tkp.db.execute(query, (dataset_id,))
-    bands = zip(*cursor.fetchall())[0]
+    bands = list(zip(*cursor.fetchall()))[0]
     return bands
 
 

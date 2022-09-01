@@ -164,15 +164,12 @@ class Island(object):
                 # Sufficient means: the flux of the branch above the
                 # subthreshold (=level) must exceed some user given fraction
                 # of the composite object, i.e., the original island.
-                subislands = filter(
-                    lambda isl: (isl.data-numpy.ma.array(
+                subislands = [isl for isl in subislands if (isl.data-numpy.ma.array(
                     numpy.ones(isl.data.shape)*level,
                     mask=isl.data.mask)).sum() > self.deblend_mincont *
-                                    self.flux_orig, subislands)
+                                    self.flux_orig]
                 # Discard subislands below detection threshold
-                subislands = filter(
-                    lambda isl: (isl.data - isl.detection_map).max() >= 0,
-                    subislands)
+                subislands = [isl for isl in subislands if (isl.data - isl.detection_map).max() >= 0]
                 numbersignifsub = len(subislands)
                 # Proceed with the previous island, but make sure the next
                 # subthreshold is higher than the present one.
@@ -181,9 +178,7 @@ class Island(object):
                     if niter+1 < self.deblend_nthresh:
                         # Apparently, the map command always results in
                         # nested lists.
-                        return list(utils.flatten(map(
-                            lambda island: island.deblend(niter=niter+1),
-                            subislands)))
+                        return list(utils.flatten([island.deblend(niter=niter+1) for island in subislands]))
                     else:
                         return subislands
                 elif numbersignifsub == 1 and niter+1 < self.deblend_nthresh:
@@ -286,7 +281,7 @@ class ParamSet(DictMixin):
 
     def keys(self):
         """ """
-        return self.values.keys()
+        return list(self.values.keys())
 
     def calculate_errors(self, noise, beam, threshold):
         """Calculate positional errors
@@ -791,7 +786,7 @@ class Detection(object):
 
         try:
             self._physical_coordinates()
-        except RuntimeError, e:
+        except RuntimeError as e:
             logger.warn("Physical coordinates failed at %f, %f" % (
                 self.x, self.y))
             raise

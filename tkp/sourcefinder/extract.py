@@ -18,11 +18,14 @@ try:
 except ImportError:
     from collections import UserDict
     from collections import MutableMapping as DictMixin
+
 import numpy
+
 try:
     import ndimage
 except ImportError:
     from scipy import ndimage
+    
 from tkp.sourcefinder.deconv import deconv
 from ..utility import coordinates
 from ..utility.uncertain import Uncertain

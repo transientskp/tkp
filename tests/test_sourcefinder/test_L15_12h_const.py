@@ -1,7 +1,10 @@
 """
 Tests for simulated LOFAR datasets.
 """
+from __future__ import division
 
+from past.builtins import cmp
+from past.utils import old_div
 import os
 
 import unittest
@@ -89,10 +92,10 @@ class L15_12hConstCor(unittest.TestCase):
     def testSeparation(self):
         centre = self.results.closest_to(1440, 1440)[0]
         # How accurate should the '2 degrees' be?
-        for mysource in filter(lambda src: src != centre, self.results):
+        for mysource in [src for src in self.results if src != centre]:
             self.assertAlmostEqual(round(
-                coords.angsep(centre.ra, centre.dec, mysource.ra, mysource.dec) /
-                60**2), 2)
+                old_div(coords.angsep(centre.ra, centre.dec, mysource.ra, mysource.dec),
+                60**2)), 2)
 
 
 

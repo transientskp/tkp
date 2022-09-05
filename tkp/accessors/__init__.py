@@ -5,6 +5,7 @@ These can be used to populate ImageData objects based on some data source
 (FITS file, array in memory... etc).
 """
 
+from builtins import str
 import os
 from astropy.io.fits.hdu.hdulist import HDUList
 import astropy.io.fits as pyfits
@@ -45,7 +46,7 @@ def writefits(data, filename, header = {}):
         pyfits.writeto(filename, data.transpose(), header)
     else:
         hdu = pyfits.PrimaryHDU(data.transpose())
-        for key in header.iterkeys():
+        for key in header.keys():
             hdu.header.update(key, header[key])
         hdu.writeto(filename)
 

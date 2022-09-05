@@ -5,6 +5,7 @@ In this module we collect together various routines
 that don't fit into a more specific collection.
 """
 
+from builtins import zip
 import itertools
 import logging
 import math

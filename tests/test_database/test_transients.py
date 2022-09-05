@@ -1,4 +1,5 @@
 from __future__ import print_function
+from builtins import range
 import unittest
 from collections import defaultdict
 import tkp.db
@@ -143,7 +144,7 @@ class TestSimplestCases(unittest.TestCase):
 
         # Check the correct trigger xtrsrc was identified:
         self.assertEqual(newsrc_properties['taustart_ts'],
-                         transient_src.lightcurve.keys()[0])
+                         list(transient_src.lightcurve.keys())[0])
 
         # Ok, now add the last image and check that we get a correct forced-fit
         # request:
@@ -383,7 +384,7 @@ class TestDecreasingImageRMS(unittest.TestCase):
         #First, check that we've set up the test correctly:
         rms_max0 = img_params[0]['rms_max']
         det0 = img_params[0]['detection_thresh']
-        self.assertTrue(bright_transient.lightcurve.values()[0] >
+        self.assertTrue(list(bright_transient.lightcurve.values())[0] >
             rms_max0*(det0 + self.new_source_sigma_margin ) )
 
         for pars in self.img_params:
@@ -761,7 +762,7 @@ class TestPreviousLimitsImageId(unittest.TestCase):
 
         image_ids={}
 
-        for img_idx in xrange(self.n_images):
+        for img_idx in range(self.n_images):
             image, _,_ = insert_image_and_simulated_sources(
                 self.dataset,self.img_params[img_idx],mock_sources,
                 self.new_source_sigma_margin)
@@ -880,7 +881,7 @@ class TestMultipleSourceField(unittest.TestCase):
 
     def test_full_transient_search_routine(self):
         inserted_imgs = []
-        for img_idx in xrange(self.n_images):
+        for img_idx in range(self.n_images):
             image, _,_ = insert_image_and_simulated_sources(
                 self.dataset,self.img_params[img_idx],self.all_mock_sources,
                 self.new_source_sigma_margin)

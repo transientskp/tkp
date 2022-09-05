@@ -1,3 +1,4 @@
+from builtins import str
 import numpy
 import logging
 from tkp.accessors.fitsimage import FitsImage

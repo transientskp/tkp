@@ -1,7 +1,9 @@
 """
 Definition of a two dimensional elliptical Gaussian.
 """
+from __future__ import division
 
+from past.utils import old_div
 from numpy import exp, log, cos, sin
 
 def gaussian(height, center_x, center_y, semimajor, semiminor, theta):
@@ -28,9 +30,9 @@ def gaussian(height, center_x, center_y, semimajor, semiminor, theta):
     """
 
     return lambda x, y: height * exp(
-        -log(2.0) * (((cos(theta) * (x - center_x) +
-                            sin(theta) * (y - center_y)) /
-                           semiminor)**2.0 +
-                          ((cos(theta) * (y - center_y) -
-                            sin(theta) * (x - center_x)) /
-                           semimajor)**2.))
+        -log(2.0) * ((old_div((cos(theta) * (x - center_x) +
+                            sin(theta) * (y - center_y)),
+                           semiminor))**2.0 +
+                          (old_div((cos(theta) * (y - center_y) -
+                            sin(theta) * (x - center_x)),
+                           semimajor))**2.))

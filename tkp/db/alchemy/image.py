@@ -1,3 +1,5 @@
+from __future__ import division
+from past.utils import old_div
 import math
 from datetime import datetime
 from tkp.db.model import Frequencyband, Skyregion, Image, Dataset
@@ -24,11 +26,11 @@ def get_band(session, dataset, freq_eff, freq_bw, freq_bw_max=.0):
     """
     
     if freq_bw_max == .0:
-        bw_half = freq_bw / 2
+        bw_half = old_div(freq_bw, 2)
         low = freq_eff - bw_half
         high = freq_eff + bw_half
     else:
-        bw_half = freq_bw_max / 2
+        bw_half = old_div(freq_bw_max, 2)
         low = freq_eff - bw_half
         high = freq_eff + bw_half
 
@@ -168,7 +170,7 @@ def insert_image(session, dataset, freq_eff, freq_bw, taustart_ts, tau_time, bea
     band = get_band(session, dataset, freq_eff, freq_bw, freq_bw_max)
     rb_smaj = beam_smaj_pix * math.fabs(deltax)
     rb_smin = beam_smin_pix * math.fabs(deltay)
-    rb_pa = 180 * beam_pa_rad / math.pi
+    rb_pa = old_div(180 * beam_pa_rad, math.pi)
 
     args = ['dataset', 'band', 'tau_time', 'freq_eff', 'freq_bw', 'taustart_ts', 'skyrgn', 'rb_smaj', 'rb_smin',
             'rb_pa', 'deltax', 'deltay', 'url', 'rms_qc', 'rms_min', 'rms_max', 'detection_thresh', 'analysis_thresh']

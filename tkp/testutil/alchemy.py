@@ -1,3 +1,4 @@
+from builtins import range
 from datetime import datetime, timedelta
 import tkp.db
 import tkp.db.model

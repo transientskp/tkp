@@ -13,6 +13,8 @@ specific `trap-manage.py` subcommand, run:
 Have a nice day!
 """
 from __future__ import print_function
+from builtins import input
+from builtins import str
 import argparse
 import os
 from os import path
@@ -262,7 +264,7 @@ def deldataset(options):
         print("\tpassword:   " + (dbconfig['password'] or ""))
         print("\thost:       " + (dbconfig['host'] or ""))
         print("\tport:       " + str(dbconfig['port']))
-        answer = raw_input("\nAre you sure you want to delete dataset {}? "
+        answer = input("\nAre you sure you want to delete dataset {}? "
                            "[y/N]: ".format(options.id))
         if answer.lower() != 'y':
             sys.stderr.write("Aborting.\n")

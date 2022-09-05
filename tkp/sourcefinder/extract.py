@@ -3,12 +3,21 @@ Source Extraction Helpers.
 
 These are used in conjunction with image.ImageData.
 """
+from __future__ import division
 
+from builtins import str
+from builtins import object
+from past.utils import old_div
 import logging
 import math
 # DictMixin may need to be replaced using collections.MutableMapping;
 # see http://docs.python.org/library/userdict.html#UserDict.DictMixin
-from UserDict import DictMixin
+try:
+    from UserDict import UserDict
+    from UserDict import DictMixin
+except ImportError:
+    from collections import UserDict
+    from collections import MutableMapping as DictMixin
 import numpy
 try:
     import ndimage
@@ -164,15 +173,12 @@ class Island(object):
                 # Sufficient means: the flux of the branch above the
                 # subthreshold (=level) must exceed some user given fraction
                 # of the composite object, i.e., the original island.
-                subislands = filter(
-                    lambda isl: (isl.data-numpy.ma.array(
+                subislands = [isl for isl in subislands if (isl.data-numpy.ma.array(
                     numpy.ones(isl.data.shape)*level,
                     mask=isl.data.mask)).sum() > self.deblend_mincont *
-                                    self.flux_orig, subislands)
+                                    self.flux_orig]
                 # Discard subislands below detection threshold
-                subislands = filter(
-                    lambda isl: (isl.data - isl.detection_map).max() >= 0,
-                    subislands)
+                subislands = [isl for isl in subislands if (isl.data - isl.detection_map).max() >= 0]
                 numbersignifsub = len(subislands)
                 # Proceed with the previous island, but make sure the next
                 # subthreshold is higher than the present one.
@@ -181,9 +187,7 @@ class Island(object):
                     if niter+1 < self.deblend_nthresh:
                         # Apparently, the map command always results in
                         # nested lists.
-                        return list(utils.flatten(map(
-                            lambda island: island.deblend(niter=niter+1),
-                            subislands)))
+                        return list(utils.flatten([island.deblend(niter=niter+1) for island in subislands]))
                     else:
                         return subislands
                 elif numbersignifsub == 1 and niter+1 < self.deblend_nthresh:
@@ -206,7 +210,7 @@ class Island(object):
 
     def sig(self):
         """Deviation"""
-        return (self.data/ self.rms_orig).max()
+        return (old_div(self.data, self.rms_orig)).max()
 
     def fit(self, fixed=None):
         """Fit the position"""
@@ -286,7 +290,7 @@ class ParamSet(DictMixin):
 
     def keys(self):
         """ """
-        return self.values.keys()
+        return list(self.values.keys())
 
     def calculate_errors(self, noise, beam, threshold):
         """Calculate positional errors
@@ -323,18 +327,18 @@ class ParamSet(DictMixin):
         theta_B, theta_b = utils.calculate_correlation_lengths(
             beam[0], beam[1])
 
-        rho_sq1 = ((smaj*smin/(theta_B*theta_b)) *
-                   (1.+(theta_B/(2.*smaj))**2)**self.alpha_maj1 *
-                   (1.+(theta_b/(2.*smin))**2)**self.alpha_min1 *
-                   (peak/noise)**2)
-        rho_sq2 = ((smaj*smin/(theta_B*theta_b)) *
-                   (1.+(theta_B/(2.*smaj))**2)**self.alpha_maj2 *
-                   (1.+(theta_b/(2.*smin))**2)**self.alpha_min2 *
-                   (peak/noise)**2)
-        rho_sq3 = ((smaj*smin/(theta_B*theta_b)) *
-                   (1.+(theta_B/(2.*smaj))**2)**self.alpha_maj3 *
-                   (1.+(theta_b/(2.*smin))**2)**self.alpha_min3 *
-                   (peak/noise)**2)
+        rho_sq1 = ((old_div(smaj*smin,(theta_B*theta_b))) *
+                   (1.+(old_div(theta_B,(2.*smaj)))**2)**self.alpha_maj1 *
+                   (1.+(old_div(theta_b,(2.*smin)))**2)**self.alpha_min1 *
+                   (old_div(peak,noise))**2)
+        rho_sq2 = ((old_div(smaj*smin,(theta_B*theta_b))) *
+                   (1.+(old_div(theta_B,(2.*smaj)))**2)**self.alpha_maj2 *
+                   (1.+(old_div(theta_b,(2.*smin)))**2)**self.alpha_min2 *
+                   (old_div(peak,noise))**2)
+        rho_sq3 = ((old_div(smaj*smin,(theta_B*theta_b))) *
+                   (1.+(old_div(theta_B,(2.*smaj)))**2)**self.alpha_maj3 *
+                   (1.+(old_div(theta_b,(2.*smin)))**2)**self.alpha_min3 *
+                   (old_div(peak,noise))**2)
 
         rho1 = numpy.sqrt(rho_sq1)
         rho2 = numpy.sqrt(rho_sq2)
@@ -362,17 +366,17 @@ class ParamSet(DictMixin):
 
         # Note that we report errors in HWHM axes instead of FWHM axes
         # so the errors are half the errors of formula 29 of the NVSS paper.
-        errorsmaj = numpy.sqrt(2) * smaj / rho1
-        errorsmin = numpy.sqrt(2) * smin / rho2
+        errorsmaj = old_div(numpy.sqrt(2) * smaj, rho1)
+        errorsmin = old_div(numpy.sqrt(2) * smin, rho2)
 
         if smaj > smin:
-            errortheta = 2.0 * (smaj*smin/(smaj**2-smin**2))/rho2
+            errortheta = 2.0 * (old_div(smaj*smin,(smaj**2-smin**2)))/rho2
         else:
             errortheta = numpy.pi
         if errortheta > numpy.pi:
             errortheta = numpy.pi
 
-        peak += -noise**2/peak + self.clean_bias
+        peak += old_div(-noise**2,peak) + self.clean_bias
 
         errorpeaksq = ((self.frac_flux_cal_error * peak)**2 +
                        self.clean_bias_error**2 +
@@ -380,10 +384,10 @@ class ParamSet(DictMixin):
 
         errorpeak = numpy.sqrt(errorpeaksq)
 
-        help1 = (errorsmaj/smaj)**2
-        help2 = (errorsmin/smin)**2
-        help3 = theta_B * theta_b / (4. * smaj * smin)
-        errorflux = numpy.abs(flux)*numpy.sqrt(errorpeaksq/peak**2+help3*(help1+help2))
+        help1 = (old_div(errorsmaj,smaj))**2
+        help2 = (old_div(errorsmin,smin))**2
+        help3 = old_div(theta_B * theta_b, (4. * smaj * smin))
+        errorflux = numpy.abs(flux)*numpy.sqrt(old_div(errorpeaksq,peak**2)+help3*(help1+help2))
 
         self['peak'] = Uncertain(peak, errorpeak)
         self['flux'].error = errorflux
@@ -426,8 +430,8 @@ class ParamSet(DictMixin):
         # This is eq. 2.81 from Spreeuw's thesis.
         rho_sq = ((16. * smaj * smin /
                   (numpy.log(2.) * theta_B * theta_b*noise**2))
-                  * ((peak - threshold) /
-                     (numpy.log(peak) - numpy.log(threshold)))**2)
+                  * (old_div((peak - threshold),
+                     (numpy.log(peak) - numpy.log(threshold))))**2)
 
         rho = numpy.sqrt(rho_sq)
         denom = numpy.sqrt(2.*numpy.log(2.))*rho
@@ -447,11 +451,11 @@ class ParamSet(DictMixin):
 
         # Note that we report errors in HWHM axes instead of FWHM axes
         # so the errors are half the errors of formula 29 of the NVSS paper.
-        errorsmaj = numpy.sqrt(2) * smaj / rho
-        errorsmin = numpy.sqrt(2) * smin / rho
+        errorsmaj = old_div(numpy.sqrt(2) * smaj, rho)
+        errorsmin = old_div(numpy.sqrt(2) * smin, rho)
 
         if smaj > smin:
-            errortheta = 2.0 * (smaj * smin / (smaj**2 -smin**2)) / rho
+            errortheta = 2.0 * (old_div(smaj * smin, (smaj**2 -smin**2))) / rho
         else:
             errortheta = numpy.pi
         if errortheta > numpy.pi:
@@ -475,10 +479,10 @@ class ParamSet(DictMixin):
             beam[0], beam[1], beam[2])*peak**2)
         errorpeak = numpy.sqrt(errorpeaksq)
 
-        help1 = (errorsmaj/smaj)**2
-        help2 = (errorsmin/smin)**2
-        help3 = theta_B*theta_b/(4.*smaj*smin)
-        errorflux = flux*numpy.sqrt(errorpeaksq/peak**2+help3*(help1+help2))
+        help1 = (old_div(errorsmaj,smaj))**2
+        help2 = (old_div(errorsmin,smin))**2
+        help3 = old_div(theta_B*theta_b,(4.*smaj*smin))
+        errorflux = flux*numpy.sqrt(old_div(errorpeaksq,peak**2)+help3*(help1+help2))
 
         self['peak'].error = errorpeak
         self['flux'].error = errorflux
@@ -695,8 +699,8 @@ def source_profile_and_errors(data, threshold, noise,
         raise ValueError("fit failed with given fixed parameters")
 
     beamsize = utils.calculate_beamsize(beam[0], beam[1])
-    param["flux"] = (numpy.pi * param["peak"] * param["semimajor"] *
-                     param["semiminor"] / beamsize)
+    param["flux"] = (old_div(numpy.pi * param["peak"] * param["semimajor"] *
+                     param["semiminor"], beamsize))
     param.calculate_errors(noise, beam, threshold)
     param.deconvolve_from_clean_beam(beam)
 
@@ -874,13 +878,13 @@ class Detection(object):
         # The formula above is commented out because the angle computed
         # in this way will always be 0<=yoffset_angle<=90.
         # We'll use the dotproduct instead.
-        yoffs_rad = (numpy.arccos(numpy.dot(diff1, diff2) /
-                                  numpy.sqrt(normalization)))
+        yoffs_rad = (numpy.arccos(old_div(numpy.dot(diff1, diff2),
+                                  numpy.sqrt(normalization))))
 
         # The multiplication with -sign_cor makes sure that the angle
         # is measured eastwards (increasing RA), not westwards.
-        sign_cor = (numpy.dot(cross_prod, center_position) /
-                    numpy.sqrt(length_cross_sq))
+        sign_cor = (old_div(numpy.dot(cross_prod, center_position),
+                    numpy.sqrt(length_cross_sq)))
         yoffs_rad *= -sign_cor
         yoffset_angle = numpy.degrees(yoffs_rad)
 
@@ -973,13 +977,13 @@ class Detection(object):
 
         smaj_asec = coordinates.angsep(self.ra.value, self.dec.value,
                                        end_smaj_ra, end_smaj_dec)
-        scaling_smaj = smaj_asec / self.smaj.value
+        scaling_smaj = old_div(smaj_asec, self.smaj.value)
         errsmaj_asec = scaling_smaj * self.smaj.error
         self.smaj_asec = Uncertain(smaj_asec, errsmaj_asec)
 
         smin_asec = coordinates.angsep(self.ra.value, self.dec.value,
                                        end_smin_ra, end_smin_dec)
-        scaling_smin = smin_asec / self.smin.value
+        scaling_smin = old_div(smin_asec, self.smin.value)
         errsmin_asec = scaling_smin * self.smin.error
         self.smin_asec = Uncertain(smin_asec, errsmin_asec)
 

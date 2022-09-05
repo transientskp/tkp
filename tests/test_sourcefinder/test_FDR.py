@@ -34,7 +34,9 @@ threshold (alpha).  For these unit tests, we'll be bold and use the number
 of detected sources in the presence of correlated noise in a single map
 (TEST_DECONV.FITS).
 """
+from __future__ import division
 
+from past.utils import old_div
 import os
 
 import unittest
@@ -78,18 +80,18 @@ class test_maps(unittest.TestCase):
 
     def test_alpha0_1(self):
         self.number_alpha_10pc = len(self.image_with_sources.fd_extract(alpha=0.1))
-        self.assertTrue((self.number_alpha_10pc - NUMBER_INSERTED) /
-                        NUMBER_INSERTED < 0.1)
+        self.assertTrue(old_div((self.number_alpha_10pc - NUMBER_INSERTED),
+                        NUMBER_INSERTED) < 0.1)
 
     def test_alpha0_01(self):
         self.number_alpha_1pc = len(self.image_with_sources.fd_extract(alpha=0.01))
-        self.assertTrue((self.number_alpha_1pc - NUMBER_INSERTED) /
-                        NUMBER_INSERTED < 0.01)
+        self.assertTrue(old_div((self.number_alpha_1pc - NUMBER_INSERTED),
+                        NUMBER_INSERTED) < 0.01)
 
     def test_alpha0_001(self):
         self.number_alpha_point1pc = len(self.image_with_sources.fd_extract(alpha=0.001))
-        self.assertTrue((self.number_alpha_point1pc - NUMBER_INSERTED) /
-                        NUMBER_INSERTED < 0.001)
+        self.assertTrue(old_div((self.number_alpha_point1pc - NUMBER_INSERTED),
+                        NUMBER_INSERTED) < 0.001)
 
 
 if __name__ == '__main__':

@@ -1,6 +1,7 @@
 """
 Code for storing FITS images in the database
 """
+from builtins import zip
 from tkp.db import Database
 from tkp.db.model import ImageData
 import logging

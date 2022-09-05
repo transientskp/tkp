@@ -1,8 +1,9 @@
+from builtins import object
 from tkp.accessors.dataaccessor import RequiredAttributesMetaclass
+from future.utils import with_metaclass
 
 
-class LofarAccessor(object):
-    __metaclass__ = RequiredAttributesMetaclass
+class LofarAccessor(with_metaclass(RequiredAttributesMetaclass, object)):
     """
     Additional metadata required for processing LOFAR images through QC
     checks.

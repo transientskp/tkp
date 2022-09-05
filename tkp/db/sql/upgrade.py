@@ -6,6 +6,8 @@ on how to use it.
 """
 from __future__ import print_function
 
+from past.builtins import cmp
+from builtins import input
 import argparse
 import os
 import sys
@@ -80,7 +82,7 @@ def ask_version(version):
     answer = False
     if latest > version:
         msg = "a new version (%s) is available. You have %s. Upgrade?" % (latest, version)
-        answer = True if raw_input("%s (y/N) " % msg).lower() == 'y' else False
+        answer = True if input("%s (y/N) " % msg).lower() == 'y' else False
         if answer:
             path = get_path(version, latest, upgrades)
     else:
@@ -89,7 +91,7 @@ def ask_version(version):
     if version == latest or not answer:
         while True:
             msg = "do you want to up/down grade to a different revision? If so, which version?"
-            answer = raw_input("%s (rev no) " % msg)
+            answer = input("%s (rev no) " % msg)
             if not answer.isdigit():
                 print("please enter a version NUMBER")
                 continue
@@ -119,7 +121,7 @@ def main():
     print(query)
 
     msg = "continue with upgrade?"
-    answer = True if raw_input("%s (y/N) " % msg).lower() == 'y' else False
+    answer = True if input("%s (y/N) " % msg).lower() == 'y' else False
     if answer:
         for statement in query.split("%SPLIT%"):
 #            print "Executing:"

@@ -1,3 +1,5 @@
+from future import standard_library
+standard_library.install_aliases()
 import os
 import unittest
 import tkp.steps.persistence
@@ -6,7 +8,7 @@ from tkp.testutil.decorators import requires_database, requires_data
 import tkp.db
 import tkp.db.generic
 import tkp.accessors
-from ConfigParser import SafeConfigParser
+from configparser import SafeConfigParser
 
 from tkp.config import parse_to_dict, initialize_pipeline_config
 from tkp.testutil.data import default_job_config, default_pipeline_config

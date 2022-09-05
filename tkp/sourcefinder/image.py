@@ -2,7 +2,13 @@
 Some generic utility routines for number handling and
 calculating (specific) variances
 """
+from __future__ import division
 
+from builtins import filter
+from builtins import str
+from builtins import range
+from builtins import object
+from past.utils import old_div
 import logging
 import itertools
 import numpy
@@ -223,9 +229,9 @@ class ImageData(object):
         my_xdim, my_ydim = useful_data.shape
 
         rmsgrid, bggrid = [], []
-        for startx in xrange(0, my_xdim, self.back_size_x):
+        for startx in range(0, my_xdim, self.back_size_x):
             rmsrow, bgrow = [], []
-            for starty in xrange(0, my_ydim, self.back_size_y):
+            for starty in range(0, my_ydim, self.back_size_y):
                 chunk = useful_data[
                     startx:startx + self.back_size_x,
                     starty:starty + self.back_size_y
@@ -249,7 +255,7 @@ class ImageData(object):
                     # <http://terapix.iap.fr/forum/showthread.php?tid=267>.
                     # (mean - median) / sigma is a quick n' dirty skewness
                     # estimator devised by Karl Pearson.
-                    if numpy.fabs(mean - median) / sigma >= 0.3:
+                    if old_div(numpy.fabs(mean - median), sigma) >= 0.3:
                         sigmaclip_logger.debug(
                             'bg skewed, %f clipping iterations', num_clip_its)
                         bgrow.append(median)
@@ -475,12 +481,12 @@ class ImageData(object):
             else:
                 self.rmsmap = noisemap
 
-        normalized_data = self.data_bgsubbed/self.rmsmap
+        normalized_data = old_div(self.data_bgsubbed,self.rmsmap)
 
         n1 = numpy.sqrt(2 * numpy.pi)
-        prob = numpy.sort(numpy.ravel(numpy.exp(-0.5 * normalized_data**2)/n1))
+        prob = numpy.sort(numpy.ravel(old_div(numpy.exp(-0.5 * normalized_data**2),n1)))
         lengthprob = float(len(prob))
-        compare = (alpha / C_n) * numpy.arange(lengthprob+1)[1:] / lengthprob
+        compare = old_div((old_div(alpha, C_n)) * numpy.arange(lengthprob+1)[1:], lengthprob)
         # Find the last undercrossing, see, e.g., fig. 9 in Miller et al., AJ
         # 122, 3492 (2001).  Searchsorted is not used because the array is not
         # sorted.
@@ -637,7 +643,7 @@ class ImageData(object):
 
         measurement['xbar'] += x-boxsize/2.0
         measurement['ybar'] += y-boxsize/2.0
-        measurement.sig = (fitme / self.rmsmap[chunk]).max()
+        measurement.sig = (old_div(fitme, self.rmsmap[chunk])).max()
 
         return extract.Detection(measurement, self)
 
@@ -841,8 +847,8 @@ class ImageData(object):
 
         for label in labels:
             chunk = slices[label-1]
-            analysis_threshold = (analysisthresholdmap[chunk] /
-                                  self.rmsmap[chunk]).max()
+            analysis_threshold = (old_div(analysisthresholdmap[chunk],
+                                  self.rmsmap[chunk])).max()
             # In selected_data only the pixels with the "correct"
             # (see above) labels are retained. Other pixel values are
             # set to -(bignum).
@@ -879,7 +885,7 @@ class ImageData(object):
 
         # Deblend each of the islands to its consituent parts, if necessary
         if deblend_nthresh:
-            deblended_list = map(lambda x: x.deblend(), island_list)
+            deblended_list = [x.deblend() for x in island_list]
             #deblended_list = [x.deblend() for x in island_list]
             island_list = list(utils.flatten(deblended_list))
 
@@ -948,4 +954,4 @@ class ImageData(object):
                     return False
             return True
         # Filter will return a list; ensure we return an ExtractionResults.
-        return containers.ExtractionResults(filter(is_usable, results))
+        return containers.ExtractionResults(list(filter(is_usable, results)))

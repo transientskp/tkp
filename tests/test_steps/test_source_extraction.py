@@ -1,6 +1,8 @@
+from future import standard_library
+standard_library.install_aliases()
 import unittest
 import numpy as np
-from ConfigParser import SafeConfigParser
+from configparser import SafeConfigParser
 from tkp.config import parse_to_dict
 from tkp.testutil.data import default_job_config
 from tkp.testutil.decorators import requires_data, requires_database

@@ -1,6 +1,9 @@
 """
 Mock / synthetic data objects for use in testing.
 """
+from __future__ import division
+from past.utils import old_div
+from builtins import object
 import numpy as np
 from tkp.accessors.dataaccessor import DataAccessor
 from tkp.utility.coordinates import WCS
@@ -101,5 +104,5 @@ class SyntheticImage(DataAccessor):
 
     def calculate_phase_centre(self):
         x, y = self.data.shape
-        centre_ra, centre_decl = self.wcs.p2s((x / 2, y / 2))
+        centre_ra, centre_decl = self.wcs.p2s((old_div(x, 2), old_div(y, 2)))
         return centre_ra, centre_decl

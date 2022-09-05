@@ -2,7 +2,9 @@
 Source fitting routines.
 """
 from __future__ import absolute_import
+from __future__ import division
 
+from past.utils import old_div
 import math
 import numpy
 import scipy.optimize
@@ -40,17 +42,17 @@ def moments(data, beam, threshold=0):
         peak = data.max() * utils.fudge_max_pix(beam[0], beam[1], beam[2])
     else:
         peak = data.min()
-    ratio = threshold / peak
+    ratio = old_div(threshold, peak)
     total = data.sum()
     x, y = numpy.indices(data.shape)
-    xbar = float((x * data).sum()/total)
-    ybar = float((y * data).sum()/total)
-    xxbar = (x * x * data).sum()/total - xbar**2
-    yybar = (y * y * data).sum()/total - ybar**2
-    xybar = (x * y * data).sum()/total - xbar * ybar
+    xbar = float(old_div((x * data).sum(),total))
+    ybar = float(old_div((y * data).sum(),total))
+    xxbar = old_div((x * x * data).sum(),total) - xbar**2
+    yybar = old_div((y * y * data).sum(),total) - ybar**2
+    xybar = old_div((x * y * data).sum(),total) - xbar * ybar
 
     working1 = (xxbar + yybar) / 2.0
-    working2 = math.sqrt(((xxbar - yybar)/2)**2 + xybar**2)
+    working2 = math.sqrt((old_div((xxbar - yybar),2))**2 + xybar**2)
     beamsize = utils.calculate_beamsize(beam[0], beam[1])
 
     # Some problems arise with the sqrt of (working1-working2) when they are
@@ -60,8 +62,8 @@ def moments(data, beam, threshold=0):
     if len(data.nonzero()[0]) == 1:
         # This is the case when the island (or more likely subisland) has
         # a size of only one pixel.
-        semiminor = numpy.sqrt(beamsize/numpy.pi)
-        semimajor = numpy.sqrt(beamsize/numpy.pi)
+        semiminor = numpy.sqrt(old_div(beamsize,numpy.pi))
+        semimajor = numpy.sqrt(old_div(beamsize,numpy.pi))
     else:
         semimajor_tmp = (working1 + working2) * 2.0 * math.log(2.0)
         semiminor_tmp = (working1 - working2) * 2.0 * math.log(2.0)
@@ -71,15 +73,15 @@ def moments(data, beam, threshold=0):
             # The corrections below for the semi-major and semi-minor axes are
             # to compensate for the underestimate of these quantities
             # due to the cutoff at the threshold.
-            semimajor_tmp /= (1.0 + math.log(ratio) * ratio / (1.0 - ratio))
-            semiminor_tmp /= (1.0 + math.log(ratio) * ratio / (1.0 - ratio))
+            semimajor_tmp /= (1.0 + old_div(math.log(ratio) * ratio, (1.0 - ratio)))
+            semiminor_tmp /= (1.0 + old_div(math.log(ratio) * ratio, (1.0 - ratio)))
         semimajor = math.sqrt(semimajor_tmp)
         semiminor = math.sqrt(semiminor_tmp)
         if semiminor == 0:
             # A semi-minor axis exactly zero gives all kinds of problems.
             # For instance wrt conversion to celestial coordinates.
             # This is a quick fix.
-            semiminor = beamsize / (numpy.pi * semimajor)
+            semiminor = old_div(beamsize, (numpy.pi * semimajor))
 
     if (numpy.isnan(xbar) or numpy.isnan(ybar) or
         numpy.isnan(semimajor) or numpy.isnan(semiminor)):
@@ -213,7 +215,7 @@ def fitgaussian(pixels, params, fixed=None, maxfev=0):
         # Swapped axis order is a perfectly valid fit, but inconvenient for
         # the rest of our codebase.
         results['semimajor'], results['semiminor'] = results['semiminor'], results['semimajor']
-        results['theta'] += numpy.pi/2
+        results['theta'] += old_div(numpy.pi,2)
 
     # Negative axes are a valid fit, since they are squared in the definition
     # of the Gaussian.
@@ -264,9 +266,9 @@ def goodness_of_fit(masked_residuals, noise, beam):
         tuple: chisq, reduced_chisq
 
     """
-    gauss_resid_normed = (masked_residuals / noise).compressed()
+    gauss_resid_normed = (old_div(masked_residuals, noise)).compressed()
     chisq = numpy.sum(gauss_resid_normed*gauss_resid_normed)
     n_fitted_pix = len(masked_residuals.compressed().ravel())
     n_indep_pix = indep_pixels(n_fitted_pix, beam)
-    reduced_chisq = chisq / n_indep_pix
+    reduced_chisq = old_div(chisq, n_indep_pix)
     return chisq, reduced_chisq

@@ -1,6 +1,10 @@
 """
 The main pipeline logic, from where all other components are called.
 """
+from __future__ import division
+from builtins import zip
+from builtins import str
+from past.utils import old_div
 import imp
 import logging
 import atexit
@@ -181,7 +185,7 @@ def extract_fits_from_files(runner, paths):
     # we assume pahtss is uniform
     if type(paths[0]) == str:
         fitss = runner.map("open_as_fits", [[p] for p in paths])
-        return zip(*list(chain.from_iterable(fitss)))
+        return list(zip(*list(chain.from_iterable(fitss))))
     elif type(paths[0]) == HDUList:
         return [f[0].data for f in paths], [str(f[0].header) for f in paths]
     else:
@@ -398,7 +402,7 @@ def run_stream(runner, job_config, dataset_id, copy_images):
             logger.error("timestep raised {} exception: {}".format(type(e), str(e)))
         else:
             trap_end = datetime.now()
-            delta = (trap_end - trap_start).microseconds/1000
+            delta = old_div((trap_end - trap_start).microseconds,1000)
             logging.info("trap iteration took {} ms".format(delta))
 
 

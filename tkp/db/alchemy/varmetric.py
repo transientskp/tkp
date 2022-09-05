@@ -3,6 +3,8 @@ An example how to use this is shown in an IPython notebook:
 
 https://github.com/transientskp/notebooks/blob/master/transients.ipynb
 """
+from __future__ import division
+from past.utils import old_div
 from sqlalchemy import func, insert, delete
 from sqlalchemy.orm import aliased
 from tkp.db.model import Assocxtrsource, Extractedsource, Runningcatalog,\
@@ -105,8 +107,8 @@ def _newsrc_trigger(session, dataset):
     return session.query(
         newsource.id,
         newsource.runcat_id.label('rc_id'),
-        (e.f_int / i.rms_min).label('sigma_rms_min'),
-        (e.f_int / i.rms_max).label('sigma_rms_max')
+        (old_div(e.f_int, i.rms_min)).label('sigma_rms_min'),
+        (old_div(e.f_int, i.rms_max)).label('sigma_rms_max')
     ). \
         select_from(newsource). \
         join(e, e.id == newsource.trigger_xtrsrc_id). \

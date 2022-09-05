@@ -1,7 +1,9 @@
 """
 This module contain utilities for the source finding routines
 """
+from __future__ import division
 
+from past.utils import old_div
 import numpy
 import math
 import scipy.integrate
@@ -85,7 +87,7 @@ def generate_result_maps(data, sourcelist):
     for src in sourcelist:
         # Include everything with 6 times the std deviation along the major
         # axis. Should be very very close to 100% of the flux.
-        box_size = 6 * src.smaj.value / math.sqrt(2 * math.log(2))
+        box_size = old_div(6 * src.smaj.value, math.sqrt(2 * math.log(2)))
 
         lower_bound_x = max(0, int(src.x.value - 1 - box_size))
         upper_bound_x = min(residual_map.shape[0], int(src.x.value - 1 + box_size))
@@ -165,8 +167,8 @@ def fudge_max_pix(semimajor, semiminor, theta):
     sin_theta = numpy.sin(theta)
 
     def landscape(y, x):
-        up = math.pow(((cos_theta * x + sin_theta * y) / semiminor ), 2)
-        down = math.pow(((cos_theta * y - sin_theta * x) / semimajor ), 2)
+        up = math.pow((old_div((cos_theta * x + sin_theta * y), semiminor) ), 2)
+        down = math.pow((old_div((cos_theta * y - sin_theta * x), semimajor) ), 2)
         return numpy.exp(log20 * ( up + down ))
 
     (correction, abserr) = scipy.integrate.dblquad(landscape, -0.5, 0.5,
@@ -203,8 +205,8 @@ def maximum_pixel_method_variance(semimajor, semiminor, theta):
 
     def landscape(y, x):
         return numpy.exp(2.0 * log20 *
-                  ( math.pow(((cos_theta * x + sin_theta * y) / semiminor), 2) +
-                    math.pow(((cos_theta * y - sin_theta * x) / semimajor), 2)
+                  ( math.pow((old_div((cos_theta * x + sin_theta * y), semiminor)), 2) +
+                    math.pow((old_div((cos_theta * y - sin_theta * x), semimajor)), 2)
                   )
         )
 

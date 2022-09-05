@@ -4,6 +4,7 @@ sub modules should communicate with the other parts of TKP through the
 `tkp.steps` submodule.
 """
 
+from builtins import object
 import importlib
 import logging
 

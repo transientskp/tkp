@@ -1,3 +1,5 @@
+from __future__ import division
+from past.utils import old_div
 import logging
 import warnings
 from casacore.tables import table as casacore_table
@@ -88,7 +90,7 @@ class CasaImage(DataAccessor):
             if quantity['unit'] == 'deg':
                 return quantity['value']
             elif quantity['unit'] == 'arcsec':
-                return quantity['value'] / 3600
+                return old_div(quantity['value'], 3600)
             elif quantity['unit'] == 'rad':
                 return degrees(quantity['value'])
             else:

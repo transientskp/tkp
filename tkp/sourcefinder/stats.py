@@ -2,7 +2,9 @@
 Generic utility routines for number handling and calculating (specific)
 variances used by the TKP sourcefinder.
 """
+from __future__ import division
 
+from past.utils import old_div
 import numpy
 from numpy.ma import MaskedArray
 from scipy.special import erf
@@ -20,16 +22,16 @@ def var_helper(N):
     distribution.  The correction factor is a function of the computed
     rms noise only.
     """
-    term1 = numpy.sqrt(2. * numpy.pi) * erf(N / numpy.sqrt(2.))
+    term1 = numpy.sqrt(2. * numpy.pi) * erf(old_div(N, numpy.sqrt(2.)))
     term2 = 2. * N * numpy.exp(-N**2 / 2.)
-    return term1 / (term1 - term2)
+    return old_div(term1, (term1 - term2))
 
 
 def indep_pixels(N, beam):
     corlengthlong, corlengthshort = calculate_correlation_lengths(
         beam[0], beam[1])
     correlated_area = 0.25 * numpy.pi * corlengthlong * corlengthshort
-    return N / correlated_area
+    return old_div(N, correlated_area)
 
 
 def unbiased_sigma(N_indep):
@@ -104,7 +106,7 @@ def sigma_clip(data, beam, sigma=unbiased_sigma, max_iter=100,
     # distf=numpy.var is a sample variance with the factor N/(N-1)
     # already built in, N being the number of pixels. So, we are
     # going to remove that and replace it by N_indep/(N_indep-1)
-    clipped_var = distf(data) * (N - 1.) * N_indep / (N * (N_indep - 1.))
+    clipped_var = old_div(distf(data) * (N - 1.) * N_indep, (N * (N_indep - 1.)))
     unbiased_var = corr_clip * clipped_var
 
     # There is an extra factor c4 needed to get a unbiased standard
@@ -112,7 +114,7 @@ def sigma_clip(data, beam, sigma=unbiased_sigma, max_iter=100,
     # http://en.wikipedia.org/wiki/Unbiased_estimation_of_standard_deviation\
     #         #Results_for_the_normal_distribution
     c4 = 1. - 0.25 / N_indep - 0.21875 / N_indep**2
-    unbiased_std = numpy.sqrt(unbiased_var) / c4
+    unbiased_std = old_div(numpy.sqrt(unbiased_var), c4)
 
     limit = my_sigma * unbiased_std
 

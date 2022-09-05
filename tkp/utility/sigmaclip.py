@@ -6,6 +6,7 @@ utilities.py
 """
 
 from __future__ import division
+from builtins import range
 import numpy
 
 def clip(data, mean, sigma, siglow, sighigh, indices=None):

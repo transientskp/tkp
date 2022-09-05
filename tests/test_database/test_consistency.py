@@ -1,3 +1,4 @@
+from builtins import object
 import unittest
 import tkp.db.consistency as db_consistency
 import tkp.db

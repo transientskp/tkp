@@ -7,6 +7,7 @@ false positive light curves in the case of a noise image, and eventually the
 whole image will be monitored.
 
 """
+from builtins import range
 import unittest
 from datetime import datetime, timedelta
 import logging

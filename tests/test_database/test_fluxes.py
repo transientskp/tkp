@@ -1,3 +1,5 @@
+from builtins import zip
+from builtins import range
 import unittest
 import tkp.db
 import tkp.db.general as dbgen
@@ -49,7 +51,7 @@ class TestOne2OneFlux(unittest.TestCase):
            AND r.id = rf.runcat
         """
         self.database.cursor.execute(query, {'dataset': dataset.id})
-        result = zip(*self.database.cursor.fetchall())
+        result = list(zip(*self.database.cursor.fetchall()))
         avg_f_int = result[0]
         self.assertEqual(len(avg_f_int), 1)
         py_metrics = db_subs.lightcurve_metrics(src_list)
@@ -150,7 +152,7 @@ class TestOne2ManyFlux(unittest.TestCase):
         self.assertEqual(len(runcat_flux_entries), 2)
         for idx, flux_summary in enumerate(runcat_flux_entries):
             py_results = db_subs.lightcurve_metrics(lightcurves_sorted_by_ra[idx])
-            for key in flux_summary.keys():
+            for key in list(flux_summary.keys()):
                 self.assertAlmostEqual(flux_summary[key], py_results[-1][key])
 
 
@@ -253,7 +255,7 @@ class TestMany2OneFlux(unittest.TestCase):
 
         for idx, flux_summary in enumerate(runcat_flux_entries):
             py_results = db_subs.lightcurve_metrics(lightcurves_sorted_by_ra[idx])
-            for key in flux_summary.keys():
+            for key in list(flux_summary.keys()):
                 self.assertAlmostEqual(flux_summary[key], py_results[-1][key])
 
 
@@ -372,7 +374,7 @@ class TestMany2Many(unittest.TestCase):
 
         for idx, flux_summary in enumerate(runcat_flux_entries):
             py_results = db_subs.lightcurve_metrics(lightcurves_sorted_by_ra_dec[idx])
-            for key in flux_summary.keys():
+            for key in list(flux_summary.keys()):
                 self.assertAlmostEqual(flux_summary[key], py_results[-1][key])
 
         #Now check the per-timestep statistics (variability indices)
@@ -475,7 +477,7 @@ class TestMany2Many(unittest.TestCase):
 
         for idx, flux_summary in enumerate(runcat_flux_entries):
             py_results = db_subs.lightcurve_metrics(lightcurves_sorted_by_ra[idx])
-            for key in flux_summary.keys():
+            for key in list(flux_summary.keys()):
                 self.assertAlmostEqual(flux_summary[key], py_results[-1][key])
 
         #Now check the per-timestep statistics (variability indices)

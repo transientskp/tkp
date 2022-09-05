@@ -1,3 +1,5 @@
+from __future__ import division
+from past.utils import old_div
 import tkp.quality
 from tkp.utility import nice_format
 from tkp.db.quality import reject_reasons
@@ -34,7 +36,7 @@ def highly_elliptical(semibmaj, semibmin, x=2.0):
     :param Semibmaj/semibmin: describe the beam size in pixels
     :returns: True if the beam is highly elliptical, False otherwise
     """
-    return semibmaj / semibmin > x
+    return old_div(semibmaj, semibmin) > x
 
 
 def not_full_fieldofview(nx, ny, cellsize, fov):
@@ -48,7 +50,7 @@ def not_full_fieldofview(nx, ny, cellsize, fov):
     :param ny: number of pixels in y direction
     :returns: True if the full FOV is imaged, False otherwise
     """
-    return nx * ny * (cellsize/3600) * (cellsize/3600) < fov
+    return nx * ny * (old_div(cellsize,3600)) * (old_div(cellsize,3600)) < fov
 
 
 def infinite(smaj, smin, bpa):

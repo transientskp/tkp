@@ -1,3 +1,7 @@
+from __future__ import division
+from builtins import range
+from builtins import object
+from past.utils import old_div
 import logging
 from collections import namedtuple
 
@@ -175,11 +179,11 @@ def deRuiter_radius(src1, src2):
 
     ra_nom = ((src1.ra - src2.ra) * math.cos(math.radians(0.5 * (src1.dec + src2.dec))))**2
     ra_denom = src1_ew_uncertainty**2 + src2_ew_uncertainty**2
-    ra_fac = ra_nom / ra_denom
+    ra_fac = old_div(ra_nom, ra_denom)
 
     dec_nom = (src1.dec - src2.dec)**2
     dec_denom = src1_ns_uncertainty**2 + src2_ns_uncertainty**2
-    dec_fac = dec_nom / dec_denom
+    dec_fac = old_div(dec_nom, dec_denom)
 
     dr = math.sqrt(ra_fac + dec_fac)
     return dr
@@ -207,17 +211,17 @@ def lightcurve_metrics(src_list):
     metrics = []
     for i, src in enumerate(src_list):
         N = i + 1
-        avg_int_flux = sum(src.flux for src in src_list[0:N]) / N
-        avg_int_flux_sq = sum(src.flux**2 for src in src_list[0:N]) / N
-        avg_w_f_int = sum(src.flux/src.flux_err**2 for src in src_list[0:N]) / N
-        avg_w_f_int_sq = sum(src.flux**2/src.flux_err**2 for src in src_list[0:N]) / N
-        avg_w = sum(1./src.flux_err**2 for src in src_list[0:N]) / N
+        avg_int_flux = old_div(sum(src.flux for src in src_list[0:N]), N)
+        avg_int_flux_sq = old_div(sum(src.flux**2 for src in src_list[0:N]), N)
+        avg_w_f_int = old_div(sum(old_div(src.flux,src.flux_err**2) for src in src_list[0:N]), N)
+        avg_w_f_int_sq = old_div(sum(old_div(src.flux**2,src.flux_err**2) for src in src_list[0:N]), N)
+        avg_w = old_div(sum(1./src.flux_err**2 for src in src_list[0:N]), N)
         if N == 1:
             v = 0.0
             eta = 0.0
         else:
-            v = math.sqrt(N * (avg_int_flux_sq - avg_int_flux**2) / (N - 1.)) / avg_int_flux
-            eta = N * (avg_w_f_int_sq - avg_w_f_int**2/avg_w) / (N - 1.)
+            v = old_div(math.sqrt(old_div(N * (avg_int_flux_sq - avg_int_flux**2), (N - 1.))), avg_int_flux)
+            eta = old_div(N * (avg_w_f_int_sq - old_div(avg_w_f_int**2,avg_w)), (N - 1.))
 
         metrics.append({
                 'v_int': v,
@@ -277,7 +281,7 @@ class MockSource(object):
         except KeyError:
             fluxval = 0
         return self.base_source._replace(
-                peak=fluxval,flux=fluxval,sigma=fluxval/image_rms)
+                peak=fluxval,flux=fluxval,sigma=old_div(fluxval,image_rms))
 
     def simulate_extraction(self, db_image, extraction_type,
                             rms_attribute='rms_min'):

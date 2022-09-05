@@ -1,6 +1,8 @@
 """
 Tests for elliptical Gaussian fitting code in the TKP pipeline.
 """
+from __future__ import division
+from past.utils import old_div
 import numpy
 
 import unittest
@@ -120,7 +122,7 @@ class RotatedGaussTest(SimpleGaussTest):
         self.y = 250
         self.maj = 40
         self.min = 20
-        self.theta = numpy.pi / 4
+        self.theta = old_div(numpy.pi, 4)
         self.mygauss = numpy.ma.array(gaussian(
             self.height, self.x, self.y, self.maj, self.min, self.theta)(Xin, Yin))
         self.moments = moments(self.mygauss, beam, 0)
@@ -138,7 +140,7 @@ class RotatedGaussTest2(SimpleGaussTest):
         self.y = 250
         self.maj = 40
         self.min = 20
-        self.theta = 3 * numpy.pi / 4
+        self.theta = old_div(3 * numpy.pi, 4)
         self.mygauss = numpy.ma.array(gaussian(
             self.height, self.x, self.y, self.maj, self.min, self.theta)(Xin, Yin))
         self.moments = moments(self.mygauss, beam, 0)
@@ -173,7 +175,7 @@ class AxesSwapGaussTest(SimpleGaussTest):
         # but equivalent, convergence in the optimization.
         if theta <0:
             theta = theta + numpy.pi
-        self.assertAlmostEqual( theta,numpy.pi/2)
+        self.assertAlmostEqual( theta,old_div(numpy.pi,2))
 
     def testFitAngle(self):
         theta = self.fit["theta"]
@@ -182,7 +184,7 @@ class AxesSwapGaussTest(SimpleGaussTest):
         # but equivalent, convergence in the optimization.
         if theta <0:
             theta = theta + numpy.pi
-        self.assertAlmostEqual(theta,  numpy.pi/2)
+        self.assertAlmostEqual(theta,  old_div(numpy.pi,2))
 
     def testMomentSize(self):
         self.assertAlmostEqual(self.moments["semiminor"], self.maj, 5)
@@ -279,6 +281,6 @@ class NoisyGaussTest(unittest.TestCase):
         # independent pixels, i.e. uncorrelated noise.
         # For real data, we try to take the noise-correlation into account.
         # print "Reduced chisq", self.fit_w_errs.chisq / npix
-        self.assertTrue( 0.9 < self.fit_w_errs.chisq / npix < 1.1)
+        self.assertTrue( 0.9 < old_div(self.fit_w_errs.chisq, npix) < 1.1)
 
 

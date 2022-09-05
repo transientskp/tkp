@@ -1,3 +1,4 @@
+from builtins import range
 import unittest
 import tkp.db
 from tkp.db import nulldetections as dbnd

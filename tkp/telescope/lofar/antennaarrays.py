@@ -250,7 +250,7 @@ def pretty_print(file_):
     """
     parsed = parse_antennafile(file_)
     print("{")
-    for key, value in [x for x in parsed.items() if x[0].startswith("LBA")]:
+    for key, value in [x for x in list(parsed.items()) if x[0].startswith("LBA")]:
         print('"%s": \n\t[' % key, end=' ')
         ds = shortest_distances(value, parsed["LBA"])
         for d in ds:

@@ -1,6 +1,8 @@
 from __future__ import absolute_import
 
-from ConfigParser import SafeConfigParser
+from future import standard_library
+standard_library.install_aliases()
+from configparser import SafeConfigParser
 import datetime
 import getpass
 import logging

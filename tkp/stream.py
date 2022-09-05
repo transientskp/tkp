@@ -4,10 +4,16 @@ data version 1. We implemented an emulator for this stream in
 `testutil.stream_emu`.
 """
 from __future__ import print_function
+from __future__ import division
 
+from future import standard_library
+standard_library.install_aliases()
+from builtins import zip
+from builtins import str
+from past.utils import old_div
 import logging
 import socket
-import StringIO
+import io
 import struct
 import astropy.io.fits.header
 import astropy.io.fits
@@ -15,7 +21,7 @@ import numpy as np
 import time
 import dateutil.parser
 
-from Queue import Full
+from queue import Full
 from multiprocessing import Manager
 
 
@@ -53,7 +59,7 @@ def getbytes(socket_, bytes_):
     returns:
         str: raw bytes from socket
     """
-    result = StringIO.StringIO()
+    result = io.StringIO()
     count = bytes_
     while count > 0:
         recv = socket_.recv(count)
@@ -97,7 +103,7 @@ def reconstruct_fits(fits_bytes, image_bytes):
     hdu_header = astropy.io.fits.header.Header.fromstring(fits_bytes)   
     width = hdu_header["NAXIS1"]
     length = hdu_header["NAXIS2"]
-    image_array = struct.unpack(str(len(image_bytes)/4) + 'f', image_bytes)
+    image_array = struct.unpack(str(old_div(len(image_bytes),4)) + 'f', image_bytes)
     image_matrix = np.reshape(image_array, (width, length))
     hdu = astropy.io.fits.PrimaryHDU(image_matrix)
     hdu.header = hdu_header

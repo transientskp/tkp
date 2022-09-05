@@ -2,6 +2,8 @@
 initialises or removes TRAP tables in a database.
 """
 from __future__ import print_function
+from builtins import input
+from builtins import str
 import os
 import re
 import sys
@@ -24,7 +26,7 @@ def get_input(text):
     """
     We take this out of verify() so we can mock it in the test.
     """
-    return raw_input(text)
+    return input(text)
 
 
 def verify(dbconfig):

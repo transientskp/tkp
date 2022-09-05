@@ -1,13 +1,15 @@
+from __future__ import division
+from builtins import object
+from past.utils import old_div
 import logging
 from tkp.quality.rms import rms_with_clipped_subregion
 from tkp.accessors.requiredatts import RequiredAttributesMetaclass
 from math import degrees, sqrt, sin, pi, cos
+from future.utils import with_metaclass
 
 logger = logging.getLogger(__name__)
 
-class DataAccessor(object):
-    __metaclass__ = RequiredAttributesMetaclass
-
+class DataAccessor(with_metaclass(RequiredAttributesMetaclass, object)):
     _required_attributes = [
             'beam',
             'centre_ra',
@@ -148,13 +150,13 @@ class DataAccessor(object):
           - theta:   Beam position angle in radians
         """
         semimaj = (bmaj / 2.) * (sqrt(
-            (sin(pi * bpa / 180.)**2) / (deltax**2) +
-            (cos(pi * bpa / 180.)**2) / (deltay**2))
+            old_div((sin(pi * bpa / 180.)**2), (deltax**2)) +
+            old_div((cos(pi * bpa / 180.)**2), (deltay**2)))
         )
         semimin = (bmin / 2.) * (sqrt(
-            (cos(pi * bpa / 180.)**2) / (deltax**2) +
-            (sin(pi * bpa / 180.)**2) / (deltay**2))
+            old_div((cos(pi * bpa / 180.)**2), (deltax**2)) +
+            old_div((sin(pi * bpa / 180.)**2), (deltay**2)))
         )
-        theta = pi * bpa / 180
+        theta = old_div(pi * bpa, 180)
         return (semimaj, semimin, theta)
 

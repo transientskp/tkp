@@ -1,4 +1,6 @@
+from __future__ import division
 
+from past.utils import old_div
 import numpy
 import pytz
 import datetime
@@ -106,7 +108,7 @@ class FitsImage(DataAccessor):
 
     def calculate_phase_centre(self):
         x, y = self.data.shape
-        centre_ra, centre_decl = self.wcs.p2s((x / 2, y / 2))
+        centre_ra, centre_decl = self.wcs.p2s((old_div(x, 2), old_div(y, 2)))
         return float(centre_ra), float(centre_decl)
 
 

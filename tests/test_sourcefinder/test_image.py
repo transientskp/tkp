@@ -1,4 +1,7 @@
 from __future__ import print_function
+from __future__ import division
+from builtins import range
+from past.utils import old_div
 import numpy as np
 import os
 
@@ -170,7 +173,7 @@ class TestFitFixedPositions(unittest.TestCase):
         """Same if right on the edge -- too few pixels to fit"""
         img = self.image
         boxsize = BOX_IN_BEAMPIX*max(img.beam[0], img.beam[1])
-        edge_posn = img.wcs.p2s((0 + boxsize/2 -2, img.data.shape[1]/2.0))
+        edge_posn = img.wcs.p2s((0 + old_div(boxsize,2) -2, img.data.shape[1]/2.0))
         results = self.image.fit_fixed_positions(
                                     positions= [edge_posn],
                                     boxsize = boxsize,
@@ -225,7 +228,7 @@ class TestFitFixedPositions(unittest.TestCase):
         # valid pixels and fit gets rejected.
         # However, if we only cover the central quarter (containing all the
         # real signal!) then we get a dodgy fit back.
-        nanbox_radius = fitting_boxsize/2
+        nanbox_radius = old_div(fitting_boxsize,2)
         boxsize_proportion = 0.5
         nanbox_radius *= boxsize_proportion
 

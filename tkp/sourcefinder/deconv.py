@@ -1,7 +1,9 @@
 """
 Gaussian deconvolution.
 """
+from __future__ import division
 
+from past.utils import old_div
 from math import sin, cos, atan, sqrt, pi
 
 def deconv(fmaj, fmin, fpa, cmaj, cmin, cpa):
@@ -34,7 +36,7 @@ def deconv(fmaj, fmin, fpa, cmaj, cmin, cpa):
     cmin2 = cmin * cmin
     fmaj2 = fmaj * fmaj
     fmin2 = fmin * fmin
-    theta = (fpa - cpa) / HALF_RAD
+    theta = old_div((fpa - cpa), HALF_RAD)
     det = ((fmaj2 + fmin2) - (cmaj2 + cmin2)) / 2.0
     rhoc = (fmaj2 - fmin2) * cos(theta) - (cmaj2 - cmin2)
     sigic2 = 0.0
@@ -42,9 +44,9 @@ def deconv(fmaj, fmin, fpa, cmaj, cmin, cpa):
     ierr = 0
 
     if abs(rhoc) > 0.0:
-        sigic2 = atan((fmaj2 - fmin2) * sin(theta) / rhoc)
-        rhoa = (((cmaj2 - cmin2) - (fmaj2 - fmin2) * cos(theta)) /
-                (2.0 * cos(sigic2)))
+        sigic2 = atan(old_div((fmaj2 - fmin2) * sin(theta), rhoc))
+        rhoa = (old_div(((cmaj2 - cmin2) - (fmaj2 - fmin2) * cos(theta)),
+                (2.0 * cos(sigic2))))
 
     rpa = sigic2 * HALF_RAD + cpa
     rmaj = det - rhoa

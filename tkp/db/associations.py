@@ -2,6 +2,7 @@
 A collection of back end subroutines (mostly SQL queries), In this module we
 deal with source association.
 """
+from builtins import zip
 import logging
 import tkp.db
 from sqlalchemy.exc import IntegrityError
@@ -278,7 +279,7 @@ SELECT CASE WHEN s.centre_ra - alpha(s.xtr_radius, s.centre_decl) < 0 OR
 """
     args = {'image_id': image_id}
     cursor = tkp.db.execute(meridian_wrap_query, args, commit=True)
-    results = zip(*cursor.fetchall())
+    results = list(zip(*cursor.fetchall()))
 
     if len(results) != 0:
         q_across = results[0]

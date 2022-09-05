@@ -49,7 +49,7 @@ class TestReject(unittest.TestCase):
             self.session.flush()
 
     def test_all_reasons_present_in_database(self):
-        for reason in dbqual.reject_reasons.values():
+        for reason in list(dbqual.reject_reasons.values()):
             dbqual.reject(self.image.id, reason, "comment", self.session)
             dbqual.unreject(self.image.id, self.session)
 

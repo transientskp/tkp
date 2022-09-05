@@ -2,6 +2,7 @@
 Utility routines to help in the construction of test cases. Not required for
 core pipeline functionality.
 """
+from builtins import object
 import contextlib
 import sys
 

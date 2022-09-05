@@ -1,3 +1,4 @@
+from builtins import str
 import os.path
 import astropy.io.fits as pyfits
 import logging

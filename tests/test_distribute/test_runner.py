@@ -1,4 +1,5 @@
 from __future__ import print_function
+from builtins import range
 import unittest
 import tkp.distribute
 
@@ -25,4 +26,4 @@ class TestRunner(unittest.TestCase):
     def test_invalid_function(self):
         celery_runner = tkp.distribute.Runner('serial')
         self.assertRaises(NotImplementedError, celery_runner.map, "invalid",
-                          range(5))
+                          list(range(5)))

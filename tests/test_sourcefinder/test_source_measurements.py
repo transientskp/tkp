@@ -12,7 +12,9 @@ Accuracy tests for integrated fluxes and positions will be added
 later, as well as tests for the kappa*sigma clipper and the
 deblending algorithm.
 """
+from __future__ import division
 
+from past.utils import old_div
 import os
 import numpy as np
 
@@ -97,40 +99,40 @@ class SourceParameters(unittest.TestCase):
         # Test peak fluxes
         peak_weights = 1./self.peak_fluxes[:,1]**2
         sum_peak_weights = np.sum(peak_weights)
-        av_peak = np.sum(self.peak_fluxes[:,0] * peak_weights /
-                         sum_peak_weights)
+        av_peak = np.sum(old_div(self.peak_fluxes[:,0] * peak_weights,
+                         sum_peak_weights))
         av_peak_err = np.mean(self.peak_fluxes[:,1])
-        signif_dev_peak = ((TRUE_PEAK_FLUX-av_peak) *
-                           np.sqrt(self.number_sources) / av_peak_err)
+        signif_dev_peak = (old_div((TRUE_PEAK_FLUX-av_peak) *
+                           np.sqrt(self.number_sources), av_peak_err))
         self.assertTrue(np.abs(signif_dev_peak) < MAX_BIAS)
 
         # Test major axes
         smaj_weights = 1./self.deconv_smajaxes[:,1]**2
         sum_smaj_weights = np.sum(smaj_weights)
-        av_smaj = np.sum(self.deconv_smajaxes[:,0]*smaj_weights /
-                         sum_smaj_weights)
+        av_smaj = np.sum(old_div(self.deconv_smajaxes[:,0]*smaj_weights,
+                         sum_smaj_weights))
         av_smaj_err = np.mean(self.deconv_smajaxes[:,1])
-        signif_dev_smaj = ((TRUE_DECONV_SMAJ-av_smaj) *
-                           np.sqrt(self.number_sources) / av_smaj_err)
+        signif_dev_smaj = (old_div((TRUE_DECONV_SMAJ-av_smaj) *
+                           np.sqrt(self.number_sources), av_smaj_err))
         self.assertTrue(np.abs(signif_dev_smaj) < MAX_BIAS)
 
         # Test minor axes
         smin_weights = 1./self.deconv_sminaxes[:,1]**2
         sum_smin_weights = np.sum(smin_weights)
-        av_smin = np.sum(self.deconv_sminaxes[:,0] * smin_weights /
-                         sum_smin_weights)
+        av_smin = np.sum(old_div(self.deconv_sminaxes[:,0] * smin_weights,
+                         sum_smin_weights))
         av_smin_err = np.mean(self.deconv_sminaxes[:,1])
-        signif_dev_smin = ((TRUE_DECONV_SMIN-av_smin) *
-                           np.sqrt(self.number_sources) / av_smin_err)
+        signif_dev_smin = (old_div((TRUE_DECONV_SMIN-av_smin) *
+                           np.sqrt(self.number_sources), av_smin_err))
         self.assertTrue(np.abs(signif_dev_smin) < MAX_BIAS)
 
         # Test position angles
         bpa_weights = 1./self.deconv_bpas[:,1]**2
         sum_bpa_weights = np.sum(bpa_weights)
-        av_bpa = np.sum(self.deconv_bpas[:,0]*bpa_weights/sum_bpa_weights)
+        av_bpa = np.sum(old_div(self.deconv_bpas[:,0]*bpa_weights,sum_bpa_weights))
         av_bpa_err = np.mean(self.deconv_bpas[:,1])
-        signif_dev_bpa = ((TRUE_DECONV_BPA-av_bpa) *
-                          np.sqrt(self.number_sources) / av_bpa_err)
+        signif_dev_bpa = (old_div((TRUE_DECONV_BPA-av_bpa) *
+                          np.sqrt(self.number_sources), av_bpa_err))
         self.assertTrue(np.abs(signif_dev_bpa) < MAX_BIAS)
 
 

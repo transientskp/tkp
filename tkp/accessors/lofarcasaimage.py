@@ -4,6 +4,9 @@ document:
 
 http://www.lofar.org/operations/lib/exe/fetch.php?media=:public:documents:casa_image_for_lofar_0.03.00.pdf
 """
+from __future__ import division
+from builtins import zip
+from past.utils import old_div
 import logging
 import numpy
 import datetime
@@ -146,7 +149,7 @@ class LofarCasaImage(CasaImage, LofarAccessor):
             clock = clock_values[0]
             unit = clockcol.getkeyword('QuantumUnits')[0]
             trueclock = freq_units[unit] * clock
-            subbandwidth = trueclock / 1024
+            subbandwidth = old_div(trueclock, 1024)
             return subbandwidth
         else:
             raise Exception("Cannot handle varying clocks in image")

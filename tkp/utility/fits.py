@@ -1,3 +1,5 @@
+from __future__ import division
+from past.utils import old_div
 import os
 import math
 import shutil
@@ -30,7 +32,7 @@ def fix_reference_dec(imagename):
         # too, just to be on the safe side.
         critical_value = 90.0 # degrees
         if "CUNIT2" in ff[0].header and ff[0].header["CUNIT2"] == "rad":
-            critical_value = math.pi/2 # radians
+            critical_value = old_div(math.pi,2) # radians
 
         ref_dec = ff[0].header['CRVAL2']
         if (critical_value - abs(ref_dec)) < TINY:
@@ -78,11 +80,11 @@ def convert(casa_image, ms, fits_filename=None):
 
     t = casacore.tables.table(t0.getkeyword('FIELD'), ack=False)
     phasedir = t.getcol('PHASE_DIR')
-    phase_ra = phasedir[0][0][0] * 180 / math.pi
+    phase_ra = old_div(phasedir[0][0][0] * 180, math.pi)
     if phase_ra < 0:
         phase_ra += 360
     header.update('phasera', phase_ra, 'degrees')
-    header.update('phasedec', phasedir[0][0][1] * 180 / math.pi, 'degrees')
+    header.update('phasedec', old_div(phasedir[0][0][1] * 180, math.pi), 'degrees')
     header.update('field', t.getcol('NAME')[0])
 
     # When the MS we access is actually a slice through a current MS,
@@ -93,7 +95,7 @@ def convert(casa_image, ms, fits_filename=None):
     start_time = MJD0 + datetime.timedelta(0, time_table.getcol('TIME')[0], 0)
     time_table = t0.query("", sortlist="-TIME", limit=1, columns="TIME")
     end_time = MJD0 + datetime.timedelta(0, time_table.getcol('TIME')[0], 0)
-    mid_time  = start_time + (end_time - start_time) / 2
+    mid_time  = start_time + old_div((end_time - start_time), 2)
     header.update('date-obs', start_time.strftime("%Y-%m-%dT%H:%M:%S"),
                   "Start time of observation")
     header.update('STARTUTC', start_time.strftime("%Y-%m-%dT%H:%M:%S"),
@@ -153,7 +155,7 @@ def combine(fitsfiles, outputfile, method="average"):
 
     minfreq, maxfreq = min(freqs), max(freqs)
     hdu = pyfits.PrimaryHDU(data)
-    reffreq = (minfreq + maxfreq) / 2
+    reffreq = old_div((minfreq + maxfreq), 2)
     bandwidth = maxfreq - minfreq
     header0.update('reffreq', reffreq,
                   'reference frequency')

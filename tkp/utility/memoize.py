@@ -3,6 +3,7 @@
 #
 # Memoization.
 #
+from builtins import object
 from weakref import WeakKeyDictionary
 from functools import update_wrapper
 

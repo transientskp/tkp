@@ -3,9 +3,12 @@ This script is used to inject missing header info into a FITS file or CASA
 table. This can be useful to make your data processable by the TraP pipeline.
 """
 
+from future import standard_library
+standard_library.install_aliases()
+from builtins import map
 import os.path
 import argparse
-from ConfigParser import SafeConfigParser
+from configparser import SafeConfigParser
 from tkp.config import parse_to_dict
 import astropy.io.fits as pyfits
 from casacore.tables import table as casacore_table
@@ -42,7 +45,7 @@ parset_fields = {
 }
 
 extra_doc = " Properties which can be overwritten or set in the parset file are: " + \
-    ", ".join(parset_fields.keys())
+    ", ".join(list(parset_fields.keys()))
 
 def parse_arguments():
     parser = argparse.ArgumentParser(description=__doc__ + extra_doc)
@@ -54,7 +57,7 @@ def parse_arguments():
                         'set/overwrite tau_time only.)')
     parsed = parser.parse_args()
     parsetfile = os.path.expanduser(parsed.parsetfile)
-    targetfiles = map(os.path.expanduser, parsed.targetfile)
+    targetfiles = list(map(os.path.expanduser, parsed.targetfile))
     overwrite = parsed.over
     return parsetfile, targetfiles, overwrite
 
@@ -63,8 +66,8 @@ def modify_fits_headers(parset, fits_file, overwrite):
     hdu = 0 # Header Data Unit, usually 0
     fits_file = pyfits.open(fits_file, mode='update')
     header = fits_file[0].header
-    already_present = header.keys()
-    for parset_field, (type_, fits_field) in parset_fields.items():
+    already_present = list(header.keys())
+    for parset_field, (type_, fits_field) in list(parset_fields.items()):
         if parset_field in parset:
             if (fits_field not in already_present) or overwrite:
                 value = parset[parset_field]
@@ -81,7 +84,7 @@ def modify_lofarcasa_tau_time(parset, casa_file):
     origin_location = table.getkeyword("ATTRGROUPS")['LOFAR_ORIGIN']
     origin_table = casacore_table(origin_location, ack=False, readonly=False)
 
-    for parset_field, value in parset.items():
+    for parset_field, value in list(parset.items()):
         if parset_field == 'tau_time':
             tau_time = value
             logger.info("setting tau_time to %s" % (tau_time))

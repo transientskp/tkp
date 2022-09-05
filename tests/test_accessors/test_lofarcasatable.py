@@ -1,3 +1,4 @@
+from builtins import object
 import os
 
 import unittest
@@ -76,7 +77,7 @@ class TestLofarCasaImage(unittest.TestCase):
         """
         Insert some mock data in self.subtables, check it parses correctly.
         """
-        class MockOriginTable:
+        class MockOriginTable(object):
             def col(self, name):
                 if name == 'START': return [100, 100, 200]
                 elif name == 'END': return [150, 175, 300]

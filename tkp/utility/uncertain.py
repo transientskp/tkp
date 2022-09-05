@@ -1,3 +1,4 @@
+from __future__ import division
 #
 # LOFAR Transients Key Project
 #
@@ -6,6 +7,9 @@
 # (c) Robert Jordens <jordens@debian.org>
 # Made available freely under the Python license
 # http://aspn.activestate.com/ASPN/Cookbook/Python/Recipe/535164
+from past.builtins import cmp
+from builtins import object
+from past.utils import old_div
 import math
 
 
@@ -82,7 +86,7 @@ class Uncertain(object):
         return self * (1. / other)  # other.__div__ and __mul__
 
     def __rdiv__(self, other):
-        return (self / other)**-1.  # __pow__ and __div__
+        return (old_div(self, other))**-1.  # __pow__ and __div__
 
     def __pow__(self, other):
         if isinstance(other, Uncertain):
@@ -113,7 +117,7 @@ class Uncertain(object):
         return math.e**self
 
     def log(self):
-        return Uncertain(math.log(self.value), self.error / self.value)
+        return Uncertain(math.log(self.value), old_div(self.error, self.value))
 
     def max(self):
         return self.value + self.error

@@ -1,6 +1,7 @@
 """
 store and retrieve pipeline settings to/from database
 """
+from builtins import str
 import logging
 from tkp.db import execute
 from tkp.utility import adict
@@ -25,8 +26,8 @@ def store_config(config, dataset_id):
     """
     logger.info("storing config to database for dataset %s" % dataset_id)
     error = "type of value %s, key %s in section %s has type %s, we only do %s"
-    for section, v in config.items():
-        for key, value in v.items():
+    for section, v in list(config.items()):
+        for key, value in list(v.items()):
             if key == 'password':
                 logger.debug("not storing %s password to DB" % section)
                 continue

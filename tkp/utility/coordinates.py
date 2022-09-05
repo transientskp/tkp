@@ -3,7 +3,11 @@
 """
 General purpose astronomical coordinate handling routines.
 """
+from __future__ import division
 
+from past.builtins import cmp
+from builtins import object
+from past.utils import old_div
 import sys
 import math
 from astropy import wcs as pywcs
@@ -48,8 +52,8 @@ def julian_date(time=None, modified=False):
         time = datetime.datetime.now(pytz.utc)
     mjdstart = datetime.datetime(1858, 11, 17, tzinfo=pytz.utc)
     mjd = time - mjdstart
-    mjd_daynumber = (mjd.days + mjd.seconds / (24. * 60**2) +
-                     mjd.microseconds / (24. * 60**2 * 1000**2))
+    mjd_daynumber = (mjd.days + old_div(mjd.seconds, (24. * 60**2)) +
+                     old_div(mjd.microseconds, (24. * 60**2 * 1000**2)))
     if modified:
         return mjd_daynumber
     return 2400000.5 + mjd_daynumber
@@ -92,7 +96,7 @@ def mjds2lst(mjds, position=None):
         mjds (float):Modified Julian Date (in seconds)
         position (casacore measure): Position for LST calcs
     """
-    return mjd2lst(mjds/SECONDS_IN_DAY, position)
+    return mjd2lst(old_div(mjds,SECONDS_IN_DAY), position)
 
 
 def jd2lst(jd, position=None):
@@ -159,7 +163,7 @@ def sec2deg(seconds):
 
 def sec2days(seconds):
     """Seconds to number of days"""
-    return seconds / (24.0 * 3600)
+    return old_div(seconds, (24.0 * 3600))
 
 
 def sec2hms(seconds):
@@ -189,8 +193,8 @@ def altaz(mjds, ra, dec, lat=CORE_LAT):
 
     # compute azimuth in radians
     # divide by zero error at poles or if alt = 90 deg
-    cos_az = ((math.sin(dec) - math.sin(alt) * math.sin(lat)) /
-              (math.cos(alt) * math.cos(lat)))
+    cos_az = (old_div((math.sin(dec) - math.sin(alt) * math.sin(lat)),
+              (math.cos(alt) * math.cos(lat))))
     az = math.acos(cos_az)
     # convert radians to degrees
     hrz_altitude, hrz_azimuth = [math.degrees(value) for value in (alt, az)]
@@ -333,8 +337,8 @@ def angsep(ra1, dec1, ra2, dec2):
 
     """
 
-    b = (math.pi / 2) - math.radians(dec1)
-    c = (math.pi / 2) - math.radians(dec2)
+    b = (old_div(math.pi, 2)) - math.radians(dec1)
+    c = (old_div(math.pi, 2)) - math.radians(dec2)
     temp = (math.cos(b) * math.cos(c)) + (math.sin(b) * math.sin(c) * math.cos(math.radians(ra1 - ra2)))
 
     # Truncate the value of temp at +- 1: it makes no sense to do math.acos()
@@ -407,7 +411,7 @@ def alpha_inflate(theta, decl):
     if abs(decl) + theta > 89.9:
         return 180.0
     else:
-        return math.degrees(abs(math.atan(math.sin(math.radians(theta)) / math.sqrt(abs(math.cos(math.radians(decl - theta)) * math.cos(math.radians(decl + theta)))))))
+        return math.degrees(abs(math.atan(old_div(math.sin(math.radians(theta)), math.sqrt(abs(math.cos(math.radians(decl - theta)) * math.cos(math.radians(decl + theta))))))))
 
 # Find the RA of a point in a radio image, given l,m and field centre
 def delta(l, m, delta0):
@@ -437,8 +441,8 @@ def l(ra, dec, cra, incr):
     l -- Direction cosine
 
     """
-    return ((math.cos(math.radians(dec)) * math.sin(math.radians(ra - cra))) /
-            (math.radians(incr)))
+    return (old_div((math.cos(math.radians(dec)) * math.sin(math.radians(ra - cra))),
+            (math.radians(incr))))
 
 
 def m(ra, dec, cra, cdec, incr):
@@ -453,9 +457,9 @@ def m(ra, dec, cra, cdec, incr):
     m -- direction cosine
 
     """
-    return ((math.sin(math.radians(dec)) * math.cos(math.radians(cdec))) -
+    return old_div(((math.sin(math.radians(dec)) * math.cos(math.radians(cdec))) -
             (math.cos(math.radians(dec)) * math.sin(math.radians(cdec)) *
-             math.cos(math.radians(ra-cra)))) / math.radians(incr)
+             math.cos(math.radians(ra-cra)))), math.radians(incr))
 
 
 
@@ -642,7 +646,7 @@ class WCS(object):
             # the North Celestial Pole. We set the reference direction to
             # infintesimally less than 90 degrees to avoid any ambiguity. See
             # discussion at #4599.
-            if attrname == "crval" and (value[1] == 90 or value[1] == math.pi/2):
+            if attrname == "crval" and (value[1] == 90 or value[1] == old_div(math.pi,2)):
                 value = (value[0], value[1] * (1 - sys.float_info.epsilon))
             self.wcs.wcs.__setattr__(attrname, value)
         else:

@@ -2,9 +2,12 @@
 This `step` is used for the storing of images and metadata
 to the database
 """
+from future import standard_library
+standard_library.install_aliases()
+from builtins import str
 import os
 import logging
-import cPickle
+import pickle
 from tempfile import NamedTemporaryFile
 from astropy.io.fits import open as fits_open
 from casacore.images import image as casacore_image
@@ -125,4 +128,4 @@ def paths_to_fits(paths):
             with NamedTemporaryFile() as temp_file:
                 i.tofits(temp_file.name)
                 fits = fits_open(temp_file.name)
-                yield cPickle.dumps(fits[0].data), str(fits[0].header)
+                yield pickle.dumps(fits[0].data), str(fits[0].header)

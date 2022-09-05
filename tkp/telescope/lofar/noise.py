@@ -9,6 +9,9 @@ To check the values calculated here one can use this `LOFAR image noise
 calculator <http://www.astron.nl/~heald/test/sens.php>`_.
 
 """
+from __future__ import division
+from builtins import zip
+from past.utils import old_div
 import math
 import logging
 import warnings
@@ -58,9 +61,9 @@ def noise_level(freq_eff, bandwidth, tau_time, antenna_set, Ncore, Nremote,
     Ssys_r = system_sensitivity(freq_eff, Aeff_remote)
     Ssys_i = system_sensitivity(freq_eff, Aeff_intl)
 
-    baselines_cc = (Ncore * (Ncore - 1)) / 2
-    baselines_rr = (Nremote * (Nremote - 1)) / 2
-    baselines_ii = (Nintl * (Nintl - 1)) / 2
+    baselines_cc = old_div((Ncore * (Ncore - 1)), 2)
+    baselines_rr = old_div((Nremote * (Nremote - 1)), 2)
+    baselines_ii = old_div((Nintl * (Nintl - 1)), 2)
     baselines_cr = (Ncore * Nremote)
     baselines_ci = (Ncore * Nintl)
     baselines_ri = (Nremote * Nintl)
@@ -78,18 +81,18 @@ def noise_level(freq_eff, bandwidth, tau_time, antenna_set, Ncore, Nremote,
     #temp_ri = math.sqrt(SEFD_rr) * math.sqrt(SEFD_ii)
 
     # The noise level in a LOFAR image
-    t_cc = baselines_cc / (temp_cc * temp_cc)
-    t_rr = baselines_rr / (temp_rr * temp_cc)
-    t_ii = baselines_ii / (temp_ii * temp_ii)
-    t_cr = baselines_cr / (temp_cc * temp_rr)
-    t_ci = baselines_ci / (temp_cc * temp_ii)
-    t_ri = baselines_ri / (temp_rr * temp_ii)
+    t_cc = old_div(baselines_cc, (temp_cc * temp_cc))
+    t_rr = old_div(baselines_rr, (temp_rr * temp_cc))
+    t_ii = old_div(baselines_ii, (temp_ii * temp_ii))
+    t_cr = old_div(baselines_cr, (temp_cc * temp_rr))
+    t_ci = old_div(baselines_ci, (temp_cc * temp_ii))
+    t_ri = old_div(baselines_ri, (temp_rr * temp_ii))
 
     # factor for increase of noise due to the weighting scheme
     W = 1  # taken from PHP script
 
-    image_sens = W / math.sqrt(4 * bandwidth * tau_time *
-                               (t_cc + t_rr + t_ii + t_cr + t_ci + t_ri))
+    image_sens = old_div(W, math.sqrt(4 * bandwidth * tau_time *
+                               (t_cc + t_rr + t_ii + t_cr + t_ci + t_ri)))
 
     return image_sens
 
@@ -102,16 +105,16 @@ def Aeff_dipole(freq_eff, distance=None):
     :param freq_eff: Frequency
     :param distance: Distance to nearest dipole, only required for LBA.
     """
-    wavelength = scipy.constants.c/freq_eff
+    wavelength = old_div(scipy.constants.c,freq_eff)
     if wavelength > 3:  # LBA dipole
         if not distance:
             msg = "Distance to nearest dipole required for LBA noise calculation"
             logger.error(msg)
             warnings.warn(msg)
             distance = 1
-        return min(pow(wavelength, 2) / 3, (math.pi * pow(distance, 2)) / 4)
+        return min(old_div(pow(wavelength, 2), 3), old_div((math.pi * pow(distance, 2)), 4))
     else: # HBA dipole
-        return min(pow(wavelength, 2) / 3, 1.5625)
+        return min(old_div(pow(wavelength, 2), 3), 1.5625)
 
 
 def system_sensitivity(freq_eff, Aeff):
@@ -119,7 +122,7 @@ def system_sensitivity(freq_eff, Aeff):
     Returns the SEFD of a system, given the freq_eff and effective
     collecting area. Returns SEFD in Jansky's.
     """
-    wavelength = scipy.constants.c / freq_eff
+    wavelength = old_div(scipy.constants.c, freq_eff)
 
     # Ts0 = 60 +/- 20 K for Galactic latitudes between 10 and 90 degrees.
     Ts0 = 60
@@ -148,14 +151,14 @@ def system_sensitivity(freq_eff, Aeff):
         (120e6, 200),
         (300e6, 200)
     ]
-    x, y = zip(*sensitivities)
+    x, y = list(zip(*sensitivities))
     sensitivity = scipy.interpolate.interp1d(x, y, kind='linear')
     Tinst = sensitivity(freq_eff)
 
     Tsys = Tsky + Tinst
 
     # SEFD or system sensitivity
-    S = (2 * n * scipy.constants.k / Aeff) * Tsys
+    S = (old_div(2 * n * scipy.constants.k, Aeff)) * Tsys
 
     # S is in Watts per square metre per Hertz.  One Jansky = 10**-26 Watts/sq
     # metre/Hz

@@ -1,3 +1,6 @@
+from __future__ import division
+from builtins import range
+from past.utils import old_div
 import math
 
 import unittest
@@ -37,8 +40,8 @@ class TestCartesianConversions(unittest.TestCase):
         fortyfive_eq = ((45, 0.0),
                      (1.0 / math.sqrt(2), 1.0 / math.sqrt(2), 0))
         fortyfive_fortyfive = ((45, 45.0),
-                     (math.sin(math.radians(45)) / math.sqrt(2),
-                      math.sin(math.radians(45)) / math.sqrt(2),
+                     (old_div(math.sin(math.radians(45)), math.sqrt(2)),
+                      old_div(math.sin(math.radians(45)), math.sqrt(2)),
                       math.cos(math.radians(45))))
 
         def check_known_result(kr):

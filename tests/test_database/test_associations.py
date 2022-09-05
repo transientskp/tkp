@@ -1,4 +1,9 @@
 from __future__ import print_function
+from __future__ import division
+from builtins import zip
+from builtins import str
+from builtins import range
+from past.utils import old_div
 import math
 import logging
 from io import BytesIO
@@ -71,7 +76,7 @@ class TestOne2One(unittest.TestCase):
         ORDER BY wm_ra
         """
         cursor = tkp.db.execute(query, (dataset.id,))
-        runcat = zip(*cursor.fetchall())
+        runcat = list(zip(*cursor.fetchall()))
         self.assertNotEqual(len(runcat), 0)
         dp = runcat[0]
         wm_ra = runcat[1]
@@ -86,12 +91,12 @@ class TestOne2One(unittest.TestCase):
         self.assertEqual(dp[0], n_images)
         self.assertAlmostEqual(wm_ra[0], steady_srcs[0].ra)
         self.assertAlmostEqual(wm_decl[0], steady_srcs[0].dec)
-        self.assertAlmostEqual(wm_uncertainty_ew[0], math.sqrt(
-                           1./ (n_images / ( (steady_srcs[0].error_radius)**2 + (steady_srcs[0].ew_sys_err)**2))
-                               ) / 3600)
-        self.assertAlmostEqual(wm_uncertainty_ns[0], math.sqrt(
-                           1./ (n_images / ((steady_srcs[0].error_radius)**2 + (steady_srcs[0].ns_sys_err)**2 ))
-                               ) / 3600)
+        self.assertAlmostEqual(wm_uncertainty_ew[0], old_div(math.sqrt(
+                           1./ (old_div(n_images, ( (steady_srcs[0].error_radius)**2 + (steady_srcs[0].ew_sys_err)**2)))
+                               ), 3600))
+        self.assertAlmostEqual(wm_uncertainty_ns[0], old_div(math.sqrt(
+                           1./ (old_div(n_images, ((steady_srcs[0].error_radius)**2 + (steady_srcs[0].ns_sys_err)**2 )))
+                               ), 3600))
 
         self.assertAlmostEqual(x[0],
                     math.cos(math.radians(steady_srcs[0].dec))*
@@ -112,7 +117,7 @@ class TestOne2One(unittest.TestCase):
         ORDER BY a.xtrsrc
         """
         cursor = tkp.db.execute(query, (dataset.id,))
-        assoc = zip(*cursor.fetchall())
+        assoc = list(zip(*cursor.fetchall()))
         self.assertNotEqual(len(assoc), 0)
         aruncat = assoc[0]
         axtrsrc = assoc[1]
@@ -127,7 +132,7 @@ class TestOne2One(unittest.TestCase):
         ORDER BY x.id
         """
         cursor = tkp.db.execute(query, (dataset.id,))
-        xtrsrcs = zip(*cursor.fetchall())
+        xtrsrcs = list(zip(*cursor.fetchall()))
         self.assertNotEqual(len(xtrsrcs), 0)
         xtrsrc = xtrsrcs[0]
         self.assertEqual(len(xtrsrc), n_images * n_steady_srcs)
@@ -150,7 +155,7 @@ class TestOne2One(unittest.TestCase):
            AND r.dataset = %s
         """
         cursor = tkp.db.execute(query, (dataset.id,))
-        fluxes = zip(*cursor.fetchall())
+        fluxes = list(zip(*cursor.fetchall()))
         self.assertNotEqual(len(fluxes), 0)
         f_datapoints = fluxes[2]
         avg_f_peak = fluxes[3]
@@ -527,7 +532,7 @@ class TestMeridianOne2One(unittest.TestCase):
                                     where={'dataset': dataset.id})
         self.assertEqual(len(runcat), 1)
         self.assertEqual(runcat[0]['datapoints'], 3)
-        avg_ra = ((src0.ra+180) % 360 + (src1.ra+180) % 360 + (src2.ra+180) % 360)/3 - 180
+        avg_ra = old_div(((src0.ra+180) % 360 + (src1.ra+180) % 360 + (src2.ra+180) % 360),3) - 180
         # Ensure our Python calculation is wrapped to positive
         avg_ra = (avg_ra + 360.0) % 360.0
         self.assertAlmostEqual(runcat[0]['wm_ra'], avg_ra)
@@ -558,7 +563,7 @@ class TestMeridianOne2One(unittest.TestCase):
                                    where={'dataset': dataset.id})
         self.assertEqual(len(runcat), 1)
         self.assertEqual(runcat[0]['datapoints'], 3)
-        avg_ra = ((src0.ra+180)%360 + (src1.ra+180) % 360 + (src2.ra+180) % 360)/3 - 180
+        avg_ra = old_div(((src0.ra+180)%360 + (src1.ra+180) % 360 + (src2.ra+180) % 360),3) - 180
         # Ensure our Python calculation is wrapped to positive
         avg_ra = (avg_ra + 360.0)%360.0
         self.assertAlmostEqual(runcat[0]['wm_ra'], avg_ra)
@@ -588,7 +593,7 @@ class TestMeridianOne2One(unittest.TestCase):
                                    where={'dataset': dataset.id})
         self.assertEqual(len(runcat), 1)
         self.assertEqual(runcat[0]['datapoints'], 3)
-        avg_ra = (src0.ra + src1.ra +src2.ra)/3
+        avg_ra = old_div((src0.ra + src1.ra +src2.ra),3)
         # Ensure our Python calculation is wrapped to positive
         avg_ra = (avg_ra + 360.0) % 360.0
         self.assertAlmostEqual(runcat[0]['wm_ra'], avg_ra)
@@ -622,7 +627,7 @@ class TestMeridianOne2One(unittest.TestCase):
                                    where={'dataset':dataset.id})
         self.assertEqual(len(runcat), 1)
         self.assertEqual(runcat[0]['datapoints'], 3)
-        avg_ra = (src0.ra + src1.ra +src2.ra)/3
+        avg_ra = old_div((src0.ra + src1.ra +src2.ra),3)
         # Ensure our Python calculation is wrapped to positive
         avg_ra = (avg_ra + 360.0) % 360.0
         self.assertAlmostEqual(runcat[0]['wm_ra'], avg_ra)
@@ -649,8 +654,8 @@ class TestMeridianOne2One(unittest.TestCase):
         # error on ra used in DR calculation is based on error_radius and sys_err,
         # which are here in arcsec, and thus we have to multiply with 3600.
         # NB dec_fit_err nonzero, but since delta_dec==0 this simplifies to:
-        expected_DR_radius = 3600 * math.sqrt((src1.ra - src0.ra) ** 2 /
-                               (src0.error_radius ** 2 + src1.error_radius ** 2))
+        expected_DR_radius = 3600 * math.sqrt(old_div((src1.ra - src0.ra) ** 2,
+                               (src0.error_radius ** 2 + src1.error_radius ** 2)))
 
         for idx in [0, 1]:
             image = tkp.db.Image(dataset=dataset,
@@ -720,7 +725,7 @@ class TestMeridianOne2One(unittest.TestCase):
                 ,x.ra
         """
         cursor = tkp.db.execute(query, {'dataset_id': dataset.id})
-        dr_result = zip(*cursor.fetchall())
+        dr_result = list(zip(*cursor.fetchall()))
         self.assertNotEqual(len(dr_result), 0)
         runcat = dr_result[0]
         xtrsrc = dr_result[1]
@@ -780,7 +785,7 @@ class TestOne2Many(unittest.TestCase):
          WHERE image = %s
         """
         self.database.cursor.execute(query, (imageid1,))
-        im1 = zip(*self.database.cursor.fetchall())
+        im1 = list(zip(*self.database.cursor.fetchall()))
         self.assertNotEqual(len(im1), 0)
         im1src1 = im1[0]
         self.assertEqual(len(im1src1), 1)
@@ -792,7 +797,7 @@ class TestOne2Many(unittest.TestCase):
          WHERE dataset = %s
         """
         self.database.cursor.execute(query, (dataset.id,))
-        rc1 = zip(*self.database.cursor.fetchall())
+        rc1 = list(zip(*self.database.cursor.fetchall()))
         self.assertNotEqual(len(rc1), 0)
         runcat1 = rc1[0]
         xtrsrc1 = rc1[1]
@@ -809,7 +814,7 @@ class TestOne2Many(unittest.TestCase):
            AND r.dataset = %s
         """
         self.database.cursor.execute(query, (dataset.id,))
-        assoc1 = zip(*self.database.cursor.fetchall())
+        assoc1 = list(zip(*self.database.cursor.fetchall()))
         self.assertNotEqual(len(assoc1), 0)
         aruncat1 = assoc1[0]
         axtrsrc1 = assoc1[1]
@@ -853,7 +858,7 @@ class TestOne2Many(unittest.TestCase):
         ORDER BY id
         """
         self.database.cursor.execute(query, (imageid2,))
-        im2 = zip(*self.database.cursor.fetchall())
+        im2 = list(zip(*self.database.cursor.fetchall()))
         self.assertNotEqual(len(im2), 0)
         im2src = im2[0]
         self.assertEqual(len(im2src), len(src))
@@ -869,7 +874,7 @@ class TestOne2Many(unittest.TestCase):
         ORDER BY r.id
         """
         self.database.cursor.execute(query, (dataset.id,))
-        rc2 = zip(*self.database.cursor.fetchall())
+        rc2 = list(zip(*self.database.cursor.fetchall()))
         self.assertNotEqual(len(rc2), 0)
         runcat2 = rc2[0]
         xtrsrc2 = rc2[1]
@@ -894,7 +899,7 @@ class TestOne2Many(unittest.TestCase):
                 ,a.runcat
         """
         self.database.cursor.execute(query, (dataset.id,))
-        assoc2 = zip(*self.database.cursor.fetchall())
+        assoc2 = list(zip(*self.database.cursor.fetchall()))
         self.assertNotEqual(len(assoc2), 0)
         aruncat2 = assoc2[0]
         axtrsrc2 = assoc2[1]
@@ -923,7 +928,7 @@ class TestOne2Many(unittest.TestCase):
                          )
         """
         self.database.cursor.execute(query, (dataset.id, imageid1))
-        count = zip(*self.database.cursor.fetchall())
+        count = list(zip(*self.database.cursor.fetchall()))
         self.assertEqual(count[0][0], 0)
 
 
@@ -980,7 +985,7 @@ class TestMany2One(unittest.TestCase):
         ORDER BY id
         """
         self.database.cursor.execute(query, (imageid1,))
-        im1 = zip(*self.database.cursor.fetchall())
+        im1 = list(zip(*self.database.cursor.fetchall()))
         self.assertNotEqual(len(im1), 0)
         im1src = im1[0]
         self.assertEqual(len(im1src), len(src))
@@ -1009,7 +1014,7 @@ class TestMany2One(unittest.TestCase):
          WHERE image = %s
         """
         self.database.cursor.execute(query, (imageid2,))
-        im2 = zip(*self.database.cursor.fetchall())
+        im2 = list(zip(*self.database.cursor.fetchall()))
         self.assertNotEqual(len(im2), 0)
         im2src = im2[0]
         self.assertEqual(len(im2src), 1)
@@ -1023,7 +1028,7 @@ class TestMany2One(unittest.TestCase):
         ORDER BY xtrsrc
         """
         self.database.cursor.execute(query, (dataset.id,))
-        rc2 = zip(*self.database.cursor.fetchall())
+        rc2 = list(zip(*self.database.cursor.fetchall()))
         self.assertNotEqual(len(rc2), 0)
         runcat2 = rc2[0]
         xtrsrc2 = rc2[1]
@@ -1050,7 +1055,7 @@ class TestMany2One(unittest.TestCase):
                 ,a.xtrsrc
         """
         self.database.cursor.execute(query, (dataset.id,))
-        assoc2 = zip(*self.database.cursor.fetchall())
+        assoc2 = list(zip(*self.database.cursor.fetchall()))
         self.assertNotEqual(len(assoc2), 0)
         aruncat2 = assoc2[0]
         rxtrsrc2 = assoc2[1]

@@ -2,6 +2,7 @@
 A collection of generic functions used to generate SQL queries
 and return data in an easy to use format such as dictionaries.
 """
+from builtins import zip
 import logging
 import tkp.db
 
@@ -66,8 +67,8 @@ def columns_from_table(table, keywords=None, alias=None, where=None,
         query = "SELECT " + ", ".join(keywords) + " FROM " + table
     if where is None:
         where = {}
-    where_args = tuple(where.itervalues())
-    where = " AND ".join(["%s=%%s" % key for key in where.iterkeys()])
+    where_args = tuple(where.values())
+    where = " AND ".join(["%s=%%s" % key for key in where.keys()])
     if where:
         query += " WHERE " + where
     if order:
@@ -93,11 +94,11 @@ def convert_db_rows_to_dicts(results, cursor_description=None, alias_map=None):
     dic_list = []
     for row in results:
         if cursor_description:
-            dict_row = dict(zip(cursor_description, row))
+            dict_row = dict(list(zip(cursor_description, row)))
         else:
-            dict_row = dict(row.items())
+            dict_row = dict(list(row.items()))
         if alias_map:
-            for old_key, new_key in alias_map.items():
+            for old_key, new_key in list(alias_map.items()):
                 if old_key in row:
                    dict_row[new_key] = dict_row.pop(old_key)
         dic_list.append(dict_row)
@@ -128,12 +129,12 @@ def set_columns_for_table(table, data=None, where=None):
     The data argument is a dictionary with the names and corresponding
     values of the columns that need to be updated.
     """
-    query = "UPDATE " + table + " SET " + ", ".join(["%s=%%s" % key for key in data.iterkeys()])
+    query = "UPDATE " + table + " SET " + ", ".join(["%s=%%s" % key for key in data.keys()])
     if where is None:
         where = {}
-    where_args = tuple(where.itervalues())
-    where = " AND ".join(["%s=%%s" % key for key in where.iterkeys()])
-    values = tuple(data.itervalues())
+    where_args = tuple(where.values())
+    where = " AND ".join(["%s=%%s" % key for key in where.keys()])
+    values = tuple(data.values())
     if where:
         query += " WHERE " + where
 

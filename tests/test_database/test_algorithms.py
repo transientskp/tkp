@@ -1,3 +1,4 @@
+from builtins import str
 import unittest
 from tkp.db.orm import DataSet, Image
 import tkp.db

@@ -1,3 +1,4 @@
+from builtins import object
 import unittest
 from datetime import datetime
 import dateutil

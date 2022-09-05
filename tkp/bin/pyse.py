@@ -19,11 +19,16 @@ See chapters 2 & 3 of Spreeuw, PhD Thesis, University of Amsterdam, 2010,
 <http://dare.uva.nl/en/record/340633> for details.
 """
 from __future__ import print_function
+from __future__ import division
+from future import standard_library
+standard_library.install_aliases()
+from builtins import str
+from past.utils import old_div
 import sys
 import math
 import numbers
 import os.path
-from cStringIO import StringIO
+from io import StringIO
 import argparse
 import numpy
 import astropy.io.fits as pyfits
@@ -338,7 +343,7 @@ def run_sourcefinder(files, options):
             writefits(rmsfile, numpy.array(imagedata.rmsmap), pyfits.getheader(filename))
         if options.sigmap:
             sigfile = imagename + ".sig.fits"
-            writefits(sigfile, numpy.array(imagedata.data_bgsubbed / imagedata.rmsmap), pyfits.getheader(filename))
+            writefits(sigfile, numpy.array(old_div(imagedata.data_bgsubbed, imagedata.rmsmap)), pyfits.getheader(filename))
         if options.skymodel:
             with open(imagename + ".skymodel", 'w') as skymodelfile:
                 if ff.freq_eff:

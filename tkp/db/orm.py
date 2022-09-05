@@ -112,6 +112,8 @@ database, using the ``id`` in the initializer::
 If an ``id`` is supplied, ``data`` is ignored.
 """
 
+from builtins import str
+from builtins import object
 import logging
 from tkp.db.generic import columns_from_table, set_columns_for_table
 from tkp.db.general import insert_dataset
@@ -203,12 +205,12 @@ class DBObject(object):
         """
         if self._id is None:
             query = ("INSERT INTO " + self.TABLE + " (" +
-                     ", ".join(self._data.iterkeys()) + ") VALUES (" +
+                     ", ".join(iter(self._data.keys())) + ") VALUES (" +
                      ", ".join(["%s"] * len(self._data)) + ")"
                      )
             if self.database.engine == "postgresql":
                 query = query + "RETURNING ID"
-            values = tuple(self._data.itervalues())
+            values = tuple(self._data.values())
             cursor = self.database.cursor
             try:
                 # Insert a default source

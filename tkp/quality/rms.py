@@ -1,3 +1,5 @@
+from __future__ import division
+from past.utils import old_div
 import numpy
 from tkp.utility import nice_format
 from scipy.stats import norm
@@ -18,7 +20,7 @@ def rms_invalid(rms, noise, low_bound=1, high_bound=50):
     :returns: True/False
     """
     if (rms < noise * low_bound) or (rms > noise * high_bound):
-        ratio = rms / noise
+        ratio = old_div(rms, noise)
         return "rms value (%s) is %s times theoretical noise (%s)" % \
                     (nice_format(rms), nice_format(ratio), nice_format(noise))
     else:
@@ -31,7 +33,7 @@ def rms(data):
         data: a numpy array
     """
     data -= numpy.median(data)
-    return numpy.sqrt(numpy.power(data, 2).sum()/len(data))
+    return numpy.sqrt(old_div(numpy.power(data, 2).sum(),len(data)))
 
 
 def clip(data, sigma=3):
@@ -58,7 +60,7 @@ def subregion(data, f=4):
         data: a numpy array
     """
     x, y = data.shape
-    return data[(x/2 - x/f):(x/2 + x/f), (y/2 - y/f):(y/2 + y/f)]
+    return data[(old_div(x,2) - old_div(x,f)):(old_div(x,2) + old_div(x,f)), (old_div(y,2) - old_div(y,f)):(old_div(y,2) + old_div(y,f))]
 
 
 def rms_with_clipped_subregion(data, rms_est_sigma=3, rms_est_fraction=4):

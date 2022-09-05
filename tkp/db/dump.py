@@ -1,6 +1,7 @@
 """
 Dump database schema and content
 """
+from builtins import str
 import logging
 import subprocess
 import tempfile

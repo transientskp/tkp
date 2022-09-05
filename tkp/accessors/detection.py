@@ -61,7 +61,7 @@ def iscasa(filename):
             logger.debug("%s doesn't contain %s" % (filename, file_))
             return False
     try:
-        table = casacore_table(filename.encode(), ack=False)
+        table = casacore_table(filename, ack=False)
         table.close()
     except RuntimeError as e:
         logger.debug("directory looks casacore, but cannot open: %s" % str(e))
@@ -104,7 +104,7 @@ def casa_detect(filename):
     Checks for known CASA table types where we expect additional metadata.
     If the telescope is unknown we return nothing.
     """
-    table = casacore_table(filename.encode(), ack=False)
+    table = casacore_table(filename, ack=False)
     telescope = table.getkeyword('coords')['telescope']
     return casa_telescope_keyword_mapping.get(telescope, None)
 

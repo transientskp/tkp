@@ -13,4 +13,4 @@ class TestLofarCasaImage(unittest.TestCase):
     # CasaImages can't be directly instantiated, since they don't provide the
     # DataAccessor interface.
     def test_casaimage(self):
-        self.assertRaises(IOError, accessors.open, casatable)
+        self.assertRaises(OSError, accessors.open, casatable)

@@ -118,4 +118,4 @@ def detect(filename):
     elif islofarhdf5(filename):
         return LofarHdf5Image
     else:
-        raise IOError("unsupported format: %s" % filename)
+        raise OSError("unsupported format: %s" % filename)

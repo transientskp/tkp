@@ -66,12 +66,12 @@ def open(path, *args, **kwargs):
         return FitsImageBlob(path, *args, **kwargs)
     elif type(path) == str:
         if not os.access(path, os.F_OK):
-            raise IOError("%s does not exist!" % path)
+            raise OSError("%s does not exist!" % path)
         if not os.access(path, os.R_OK):
-            raise IOError("Don't have permission to read %s!" % path)
+            raise OSError("Don't have permission to read %s!" % path)
         Accessor = tkp.accessors.detection.detect(path)
         if not Accessor:
-            raise IOError("no accessor found for %s" % path)
+            raise OSError("no accessor found for %s" % path)
         return Accessor(path, *args, **kwargs)
     else:
         raise Exception("image should be path or HDUlist, got " + str(path))

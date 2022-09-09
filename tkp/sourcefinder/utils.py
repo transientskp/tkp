@@ -7,8 +7,8 @@ import math
 import numpy
 import scipy.integrate
 
-from sourcefinder.gaussian import gaussian
-from sourcefinder.utility import coordinates
+from tkp.sourcefinder.gaussian import gaussian
+from tkp.utility import coordinates
 
 
 def generate_subthresholds(min_value, max_value, num_thresholds):

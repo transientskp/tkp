@@ -8,11 +8,11 @@ import logging
 
 import numpy
 
-from sourcefinder import extract
-from sourcefinder import stats
-from sourcefinder import utils
-from sourcefinder.utility import containers
-from sourcefinder.utility.memoize import Memoize
+from tkp.sourcefinder import extract
+from tkp.sourcefinder import stats
+from tkp.sourcefinder import utils
+from tkp.utility import containers
+from tkp.utility.memoize import Memoize
 
 import time
 import dask.array as da

@@ -5,15 +5,7 @@ These are used in conjunction with image.ImageData.
 """
 
 import logging
-import math
-# DictMixin may need to be replaced using collections.MutableMapping;
-# see http://docs.python.org/library/userdict.html#UserDict.DictMixin
-try:
-    from UserDict import UserDict
-    from UserDict import DictMixin
-except ImportError:
-    from collections import UserDict
-    from collections.abc import MutableMapping as DictMixin
+from collections import MutableMapping
 
 import numpy
 
@@ -21,14 +13,12 @@ try:
     import ndimage
 except ImportError:
     from scipy import ndimage
-    
-from tkp.sourcefinder.deconv import deconv
-from ..utility import coordinates
-from ..utility.uncertain import Uncertain
+from sourcefinder.deconv import deconv
+from sourcefinder.utility import coordinates
+from sourcefinder.utility.uncertain import Uncertain
 from .gaussian import gaussian
 from . import fitting
 from . import utils
-
 
 logger = logging.getLogger(__name__)
 
@@ -37,6 +27,7 @@ logger = logging.getLogger(__name__)
 # since we will get negative values representing real data after
 # background subtraction, etc.
 BIGNUM = 99999.0
+
 
 class Island(object):
     """
@@ -51,9 +42,9 @@ class Island(object):
     """
 
     def __init__(self, data, rms, chunk, analysis_threshold, detection_map,
-        beam, deblend_nthresh, deblend_mincont, structuring_element,
-        rms_orig=None, flux_orig=None, subthrrange=None
-    ):
+                 beam, deblend_nthresh, deblend_mincont, structuring_element,
+                 rms_orig=None, flux_orig=None, subthrrange=None
+                 ):
 
         # deblend_nthresh is the number of subthresholds used when deblending.
         self.deblend_nthresh = deblend_nthresh
@@ -147,24 +138,25 @@ class Island(object):
                     # We can achieve this by setting rms=level*ones and
                     # analysis_threshold=1.
                     island = Island(
-                                 newdata[chunk],
-                                 (numpy.ones(self.data[chunk].shape) * level),
-                                 (
-                                     slice(self.chunk[0].start + chunk[0].start,
-                                        self.chunk[0].start + chunk[0].stop),
-                                     slice(self.chunk[1].start + chunk[1].start,
-                                        self.chunk[1].start + chunk[1].stop)
-                                 ),
-                                 1,
-                                 self.detection_map[chunk],
-                                 self.beam,
-                                 self.deblend_nthresh,
-                                 self.deblend_mincont,
-                                 self.structuring_element,
-                                 self.rms_orig[chunk[0].start:chunk[0].stop, chunk[1].start:chunk[1].stop],
-                                 self.flux_orig,
-                                 self.subthrrange
-                            )
+                        newdata[chunk],
+                        (numpy.ones(self.data[chunk].shape) * level),
+                        (
+                            slice(self.chunk[0].start + chunk[0].start,
+                                  self.chunk[0].start + chunk[0].stop),
+                            slice(self.chunk[1].start + chunk[1].start,
+                                  self.chunk[1].start + chunk[1].stop)
+                        ),
+                        1,
+                        self.detection_map[chunk],
+                        self.beam,
+                        self.deblend_nthresh,
+                        self.deblend_mincont,
+                        self.structuring_element,
+                        self.rms_orig[chunk[0].start:chunk[0].stop,
+                        chunk[1].start:chunk[1].stop],
+                        self.flux_orig,
+                        self.subthrrange
+                    )
 
                     subislands.append(island)
                 # This line should filter out any subisland with insufficient
@@ -172,10 +164,10 @@ class Island(object):
                 # Sufficient means: the flux of the branch above the
                 # subthreshold (=level) must exceed some user given fraction
                 # of the composite object, i.e., the original island.
-                subislands = [isl for isl in subislands if (isl.data-numpy.ma.array(
-                    numpy.ones(isl.data.shape)*level,
-                    mask=isl.data.mask)).sum() > self.deblend_mincont *
-                                    self.flux_orig]
+                subislands = [isl for isl in subislands if (isl.data - numpy.ma.array(
+                        numpy.ones(isl.data.shape) * level,
+                        mask=isl.data.mask)).sum() > self.deblend_mincont *
+                                                     self.flux_orig]
                 # Discard subislands below detection threshold
                 subislands = [isl for isl in subislands if (isl.data - isl.detection_map).max() >= 0]
                 numbersignifsub = len(subislands)
@@ -183,14 +175,14 @@ class Island(object):
                 # subthreshold is higher than the present one.
                 # Or we would end up in an infinite loop...
                 if numbersignifsub > 1:
-                    if niter+1 < self.deblend_nthresh:
+                    if niter + 1 < self.deblend_nthresh:
                         # Apparently, the map command always results in
                         # nested lists.
-                        return list(utils.flatten([island.deblend(niter=niter+1) for island in subislands]))
+                        return list(utils.flatten([island.deblend(niter=niter + 1) for island in subislands]))
                     else:
                         return subislands
-                elif numbersignifsub == 1 and niter+1 < self.deblend_nthresh:
-                    return Island.deblend(self, niter=niter+1)
+                elif numbersignifsub == 1 and niter + 1 < self.deblend_nthresh:
+                    return Island.deblend(self, niter=niter + 1)
                 else:
                     # In this case we have numbersignifsub == 0 or
                     # (1 and reached the highest subthreshold level).
@@ -209,17 +201,18 @@ class Island(object):
 
     def sig(self):
         """Deviation"""
-        return (self.data/ self.rms_orig).max()
+        return (self.data / self.rms_orig).max()
 
-    def fit(self, fixed=None):
+    def fit(self, fudge_max_pix_factor, max_pix_variance_factor, beamsize, correlation_lengths, fixed=None):
         """Fit the position"""
         try:
             measurement, gauss_residual = source_profile_and_errors(
-                self.data, self.threshold(), self.noise(), self.beam, fixed=fixed
-            )
+                self.data, self.threshold(), self.noise(), self.beam,
+                fudge_max_pix_factor, max_pix_variance_factor, beamsize, correlation_lengths, fixed=fixed)
         except ValueError:
             # Fitting failed
-            logger.error("Moments & Gaussian fitting failed at %s" % (str(self.position)))
+            logger.error("Moments & Gaussian fitting failed at %s" % (
+            str(self.position)))
             return None
         measurement["xbar"] += self.position[0]
         measurement["ybar"] += self.position[1]
@@ -227,7 +220,7 @@ class Island(object):
         return measurement, gauss_residual
 
 
-class ParamSet(DictMixin):
+class ParamSet(MutableMapping):
     """
     All the source fitting methods should go to produce a ParamSet, which
     gives all the information necessary to make a Detection.
@@ -235,7 +228,8 @@ class ParamSet(DictMixin):
 
     def __init__(self, clean_bias=0.0, clean_bias_error=0.0,
                  frac_flux_cal_error=0.0, alpha_maj1=2.5, alpha_min1=0.5,
-                 alpha_maj2=0.5, alpha_min2=2.5, alpha_maj3=1.5, alpha_min3=1.5):
+                 alpha_maj2=0.5, alpha_min2=2.5, alpha_maj3=1.5,
+                 alpha_min3=1.5):
 
         self.clean_bias = clean_bias
         self.clean_bias_error = clean_bias_error
@@ -258,7 +252,7 @@ class ParamSet(DictMixin):
             'semimaj_deconv': Uncertain(),
             'semimin_deconv': Uncertain(),
             'theta_deconv': Uncertain()
-            }
+        }
         # This parameter gives the number of components that could not be
         # deconvolved, IERR from deconf.f.
         self.deconv_imposs = 2
@@ -282,16 +276,25 @@ class ParamSet(DictMixin):
                 self.values[item] = value
             else:
                 self.values[item].value = value
-        elif item[:3] == 'err' and item[3:] in  self.values:
+        elif item[:3] == 'err' and item[3:] in self.values:
             self.values[item[3:]].error = value
         else:
             raise AttributeError("Invalid parameter")
+
+    def __delitem__(self, key):
+        raise Exception
+
+    def __iter__(self):
+        raise Exception
+
+    def __len__(self):
+        raise Exception
 
     def keys(self):
         """ """
         return list(self.values.keys())
 
-    def calculate_errors(self, noise, beam, threshold):
+    def calculate_errors(self, noise, max_pix_variance_factor, correlation_lengths, threshold):
         """Calculate positional errors
 
         Uses _condon_formulae() if this object is based on a Gaussian fit,
@@ -299,15 +302,16 @@ class ParamSet(DictMixin):
         """
 
         if self.gaussian:
-            return self._condon_formulae(noise, beam)
+            return self._condon_formulae(noise, correlation_lengths)
         elif self.moments:
             if not threshold:
                 threshold = 0
-            return self._error_bars_from_moments(noise, beam, threshold)
+            return self._error_bars_from_moments(noise, max_pix_variance_factor, correlation_lengths,
+                                                 threshold)
         else:
             return False
 
-    def _condon_formulae(self, noise, beam):
+    def _condon_formulae(self, noise, correlation_lengths):
         """Returns the errors on parameters from Gaussian fits according to
         the Condon (PASP 109, 166 (1997)) formulae.
 
@@ -323,28 +327,27 @@ class ParamSet(DictMixin):
         smin = self['semiminor'].value
         theta = self['theta'].value
 
-        theta_B, theta_b = utils.calculate_correlation_lengths(
-            beam[0], beam[1])
+        theta_B, theta_b = correlation_lengths
 
-        rho_sq1 = ((smaj*smin/(theta_B*theta_b)) *
-                   (1.+(theta_B/(2.*smaj))**2)**self.alpha_maj1 *
-                   (1.+(theta_b/(2.*smin))**2)**self.alpha_min1 *
-                   (peak/noise)**2)
-        rho_sq2 = ((smaj*smin/(theta_B*theta_b)) *
-                   (1.+(theta_B/(2.*smaj))**2)**self.alpha_maj2 *
-                   (1.+(theta_b/(2.*smin))**2)**self.alpha_min2 *
-                   (peak/noise)**2)
-        rho_sq3 = ((smaj*smin/(theta_B*theta_b)) *
-                   (1.+(theta_B/(2.*smaj))**2)**self.alpha_maj3 *
-                   (1.+(theta_b/(2.*smin))**2)**self.alpha_min3 *
-                   (peak/noise)**2)
+        rho_sq1 = ((smaj * smin / (theta_B * theta_b)) *
+                   (1. + (theta_B / (2. * smaj)) ** 2) ** self.alpha_maj1 *
+                   (1. + (theta_b / (2. * smin)) ** 2) ** self.alpha_min1 *
+                   (peak / noise) ** 2)
+        rho_sq2 = ((smaj * smin / (theta_B * theta_b)) *
+                   (1. + (theta_B / (2. * smaj)) ** 2) ** self.alpha_maj2 *
+                   (1. + (theta_b / (2. * smin)) ** 2) ** self.alpha_min2 *
+                   (peak / noise) ** 2)
+        rho_sq3 = ((smaj * smin / (theta_B * theta_b)) *
+                   (1. + (theta_B / (2. * smaj)) ** 2) ** self.alpha_maj3 *
+                   (1. + (theta_b / (2. * smin)) ** 2) ** self.alpha_min3 *
+                   (peak / noise) ** 2)
 
         rho1 = numpy.sqrt(rho_sq1)
         rho2 = numpy.sqrt(rho_sq2)
         rho3 = numpy.sqrt(rho_sq3)
 
-        denom1 = numpy.sqrt(2.*numpy.log(2.)) * rho1
-        denom2 = numpy.sqrt(2.*numpy.log(2.)) * rho2
+        denom1 = numpy.sqrt(2. * numpy.log(2.)) * rho1
+        denom2 = numpy.sqrt(2. * numpy.log(2.)) * rho2
 
         # Here you get the errors parallel to the fitted semi-major and
         # semi-minor axes as taken from the NVSS paper (Condon et al. 1998,
@@ -352,16 +355,16 @@ class ParamSet(DictMixin):
         # Those variances are twice the theoreticals, so the errors in
         # position are sqrt(2) as large as one would get from formula 21
         # of the Condon (1997) paper.
-        error_par_major = 2.*smaj/denom1
-        error_par_minor = 2.*smin/denom2
+        error_par_major = 2. * smaj / denom1
+        error_par_minor = 2. * smin / denom2
 
         # When these errors are converted to RA and Dec,
         # calibration uncertainties will have to be added,
         # like in formulae 27 of the NVSS paper.
-        errorx = numpy.sqrt((error_par_major * numpy.sin(theta))**2 +
-                            (error_par_minor * numpy.cos(theta))**2)
-        errory = numpy.sqrt((error_par_major * numpy.cos(theta))**2 +
-                            (error_par_minor * numpy.sin(theta))**2)
+        errorx = numpy.sqrt((error_par_major * numpy.sin(theta)) ** 2 +
+                            (error_par_minor * numpy.cos(theta)) ** 2)
+        errory = numpy.sqrt((error_par_major * numpy.cos(theta)) ** 2 +
+                            (error_par_minor * numpy.sin(theta)) ** 2)
 
         # Note that we report errors in HWHM axes instead of FWHM axes
         # so the errors are half the errors of formula 29 of the NVSS paper.
@@ -369,24 +372,25 @@ class ParamSet(DictMixin):
         errorsmin = numpy.sqrt(2) * smin / rho2
 
         if smaj > smin:
-            errortheta = 2.0 * (smaj*smin/(smaj**2-smin**2))/rho2
+            errortheta = 2.0 * (smaj * smin / (smaj ** 2 - smin ** 2)) / rho2
         else:
             errortheta = numpy.pi
         if errortheta > numpy.pi:
             errortheta = numpy.pi
 
-        peak += -noise**2/peak + self.clean_bias
+        peak += -noise ** 2 / peak + self.clean_bias
 
-        errorpeaksq = ((self.frac_flux_cal_error * peak)**2 +
-                       self.clean_bias_error**2 +
-                       2. * peak**2 / rho_sq3)
+        errorpeaksq = ((self.frac_flux_cal_error * peak) ** 2 +
+                       self.clean_bias_error ** 2 +
+                       2. * peak ** 2 / rho_sq3)
 
         errorpeak = numpy.sqrt(errorpeaksq)
 
-        help1 = (errorsmaj/smaj)**2
-        help2 = (errorsmin/smin)**2
+        help1 = (errorsmaj / smaj) ** 2
+        help2 = (errorsmin / smin) ** 2
         help3 = theta_B * theta_b / (4. * smaj * smin)
-        errorflux = numpy.abs(flux)*numpy.sqrt(errorpeaksq/peak**2+help3*(help1+help2))
+        errorflux = numpy.abs(flux) * numpy.sqrt(
+            errorpeaksq / peak ** 2 + help3 * (help1 + help2))
 
         self['peak'] = Uncertain(peak, errorpeak)
         self['flux'].error = errorflux
@@ -398,7 +402,8 @@ class ParamSet(DictMixin):
 
         return self
 
-    def _error_bars_from_moments(self, noise, beam, threshold):
+    def _error_bars_from_moments(self, noise, max_pix_variance_factor, correlation_lengths,
+                                 threshold):
         """Provide reasonable error estimates from the moments"""
 
         # The formulae below should give some reasonable estimate of the
@@ -423,17 +428,16 @@ class ParamSet(DictMixin):
 
         clean_bias_error = self.clean_bias_error
         frac_flux_cal_error = self.frac_flux_cal_error
-        theta_B, theta_b = utils.calculate_correlation_lengths(
-            beam[0], beam[1])
+        theta_B, theta_b = correlation_lengths
 
         # This is eq. 2.81 from Spreeuw's thesis.
         rho_sq = ((16. * smaj * smin /
-                  (numpy.log(2.) * theta_B * theta_b*noise**2))
+                   (numpy.log(2.) * theta_B * theta_b * noise ** 2))
                   * ((peak - threshold) /
-                     (numpy.log(peak) - numpy.log(threshold)))**2)
+                     (numpy.log(peak) - numpy.log(threshold))) ** 2)
 
         rho = numpy.sqrt(rho_sq)
-        denom = numpy.sqrt(2.*numpy.log(2.))*rho
+        denom = numpy.sqrt(2. * numpy.log(2.)) * rho
 
         # Again, like above for the Condon formulae, we set the
         # positional variances to twice the theoretical values.
@@ -443,10 +447,10 @@ class ParamSet(DictMixin):
         # When these errors are converted to RA and Dec,
         # calibration uncertainties will have to be added,
         # like in formulae 27 of the NVSS paper.
-        errorx = numpy.sqrt((error_par_major * numpy.sin(theta))**2
-                            + (error_par_minor * numpy.cos(theta))**2)
-        errory = numpy.sqrt((error_par_major * numpy.cos(theta))**2
-                            + (error_par_minor * numpy.sin(theta))**2)
+        errorx = numpy.sqrt((error_par_major * numpy.sin(theta)) ** 2
+                            + (error_par_minor * numpy.cos(theta)) ** 2)
+        errory = numpy.sqrt((error_par_major * numpy.cos(theta)) ** 2
+                            + (error_par_minor * numpy.sin(theta)) ** 2)
 
         # Note that we report errors in HWHM axes instead of FWHM axes
         # so the errors are half the errors of formula 29 of the NVSS paper.
@@ -454,7 +458,7 @@ class ParamSet(DictMixin):
         errorsmin = numpy.sqrt(2) * smin / rho
 
         if smaj > smin:
-            errortheta = 2.0 * (smaj * smin / (smaj**2 -smin**2)) / rho
+            errortheta = 2.0 * (smaj * smin / (smaj ** 2 - smin ** 2)) / rho
         else:
             errortheta = numpy.pi
         if errortheta > numpy.pi:
@@ -472,16 +476,20 @@ class ParamSet(DictMixin):
         # replaced by noise**2 since the threshold should not affect
         # the error from the (corrected) maximum pixel method,
         # while it is part of the expression for rho_sq above.
-        errorpeaksq = ((frac_flux_cal_error*peak)**2 +
-                       clean_bias_error**2+noise**2 +
-                       utils.maximum_pixel_method_variance(
-            beam[0], beam[1], beam[2])*peak**2)
+        # errorpeaksq = ((frac_flux_cal_error * peak) ** 2 +
+        #                clean_bias_error ** 2 + noise ** 2 +
+        #                utils.maximum_pixel_method_variance(
+        #                    beam[0], beam[1], beam[2]) * peak ** 2)
+        errorpeaksq = ((frac_flux_cal_error * peak) ** 2 +
+                       clean_bias_error ** 2 + noise ** 2 +
+                       max_pix_variance_factor * peak ** 2)
         errorpeak = numpy.sqrt(errorpeaksq)
 
-        help1 = (errorsmaj/smaj)**2
-        help2 = (errorsmin/smin)**2
-        help3 = theta_B*theta_b/(4.*smaj*smin)
-        errorflux = flux*numpy.sqrt(errorpeaksq/peak**2+help3*(help1+help2))
+        help1 = (errorsmaj / smaj) ** 2
+        help2 = (errorsmin / smin) ** 2
+        help3 = theta_B * theta_b / (4. * smaj * smin)
+        errorflux = flux * numpy.sqrt(
+            errorpeaksq / peak ** 2 + help3 * (help1 + help2))
 
         self['peak'].error = errorpeak
         self['flux'].error = errorflux
@@ -499,14 +507,14 @@ class ParamSet(DictMixin):
         # If the fitted axes are smaller than the clean beam
         # (=restoring beam) axes, the axes and position angle
         # can be deconvolved from it.
-        fmaj = 2.*self['semimajor'].value
-        fmajerror = 2.*self['semimajor'].error
-        fmin = 2.*self['semiminor'].value
-        fminerror = 2.*self['semiminor'].error
+        fmaj = 2. * self['semimajor'].value
+        fmajerror = 2. * self['semimajor'].error
+        fmin = 2. * self['semiminor'].value
+        fminerror = 2. * self['semiminor'].error
         fpa = numpy.degrees(self['theta'].value)
         fpaerror = numpy.degrees(self['theta'].error)
-        cmaj = 2.*beam[0]
-        cmin = 2.*beam[1]
+        cmaj = 2. * beam[0]
+        cmin = 2. * beam[1]
         cpa = numpy.degrees(beam[2])
 
         rmaj, rmin, rpa, ierr = deconv(fmaj, fmin, fpa, cmaj, cmin, cpa)
@@ -528,18 +536,18 @@ class ParamSet(DictMixin):
             # In the NVSS case the error bars of the deconvolved angle are
             # equal to the fitted angle.
             rmaj1, rmin1, rpa1, ierr1 = deconv(
-                fmaj, fmin, fpa+fpaerror, cmaj, cmin, cpa)
+                fmaj, fmin, fpa + fpaerror, cmaj, cmin, cpa)
             if ierr1 < 2:
                 if rpa1 > 90:
                     rpa1 = -numpy.mod(-rpa1, 180.)
-                rpaerror1 = numpy.abs(rpa1-rpa)
+                rpaerror1 = numpy.abs(rpa1 - rpa)
                 # An angle error can never be more than 90 degrees.
                 if rpaerror1 > 90.:
                     rpaerror1 = numpy.mod(-rpaerror1, 180.)
             else:
                 rpaerror1 = numpy.nan
             rmaj2, rmin2, rpa2, ierr2 = deconv(
-                fmaj, fmin, fpa-fpaerror, cmaj, cmin, cpa)
+                fmaj, fmin, fpa - fpaerror, cmaj, cmin, cpa)
             if ierr2 < 2:
                 if rpa2 > 90:
                     rpa2 = -numpy.mod(-rpa2, 180.)
@@ -561,38 +569,38 @@ class ParamSet(DictMixin):
             # If rmaj>0, then rmaj3 should also be > 0,
             # if I am not mistaken, see the formulas at
             # the end of ch.2 of Spreeuw's Ph.D. thesis.
-            if fmaj-fmajerror > fmin:
+            if fmaj - fmajerror > fmin:
                 rmaj4, rmin4, rpa4, ierr4 = deconv(
-                    fmaj-fmajerror, fmin, fpa, cmaj, cmin, cpa)
+                    fmaj - fmajerror, fmin, fpa, cmaj, cmin, cpa)
                 if rmaj4 > 0:
                     self['semimaj_deconv'].error = numpy.mean(
-                        [numpy.abs(rmaj3-rmaj), numpy.abs(rmaj - rmaj4)])
+                        [numpy.abs(rmaj3 - rmaj), numpy.abs(rmaj - rmaj4)])
                 else:
                     self['semimaj_deconv'].error = numpy.abs(rmaj3 - rmaj)
             else:
                 rmin4, rmaj4, rpa4, ierr4 = deconv(
                     fmin, fmaj - fmajerror, fpa, cmaj, cmin, cpa)
-                if rmaj4>0:
+                if rmaj4 > 0:
                     self['semimaj_deconv'].error = numpy.mean(
-                        [numpy.abs(rmaj3-rmaj), numpy.abs(rmaj - rmaj4)])
+                        [numpy.abs(rmaj3 - rmaj), numpy.abs(rmaj - rmaj4)])
                 else:
                     self['semimaj_deconv'].error = numpy.abs(rmaj3 - rmaj)
             if rmin > 0:
                 self['semimin_deconv'].value = rmin / 2.
                 if fmin + fminerror < fmaj:
                     rmaj5, rmin5, rpa5, ierr5 = deconv(
-                        fmaj, fmin+fminerror, fpa, cmaj, cmin, cpa)
+                        fmaj, fmin + fminerror, fpa, cmaj, cmin, cpa)
                 else:
                     rmin5, rmaj5, rpa5, ierr5 = deconv(
-                        fmin+fminerror, fmaj, fpa, cmaj, cmin, cpa)
+                        fmin + fminerror, fmaj, fpa, cmaj, cmin, cpa)
                 # If rmin > 0, then rmin5 should also be > 0,
                 # if I am not mistaken, see the formulas at
                 # the end of ch.2 of Spreeuw's Ph.D. thesis.
                 rmaj6, rmin6, rpa6, ierr6 = deconv(
-                    fmaj, fmin-fminerror, fpa, cmaj, cmin, cpa)
+                    fmaj, fmin - fminerror, fpa, cmaj, cmin, cpa)
                 if rmin6 > 0:
                     self['semimin_deconv'].error = numpy.mean(
-                        [numpy.abs(rmin6-rmin), numpy.abs(rmin5 - rmin)])
+                        [numpy.abs(rmin6 - rmin), numpy.abs(rmin5 - rmin)])
                 else:
                     self['semimin_deconv'].error = numpy.abs(rmin5 - rmin)
             else:
@@ -607,7 +615,8 @@ class ParamSet(DictMixin):
 
 
 def source_profile_and_errors(data, threshold, noise,
-                              beam, fixed=None):
+                              beam, fudge_max_pix_factor, max_pix_variance_factor,
+                              beamsize, correlation_lengths, fixed=None):
     """Return a number of measurable properties with errorbars
 
     Given an island of pixels it will return a number of measurable
@@ -617,7 +626,7 @@ def source_profile_and_errors(data, threshold, noise,
     In addition to handling the initial parameter estimation, and any fits
     which fail to converge, this function runs the goodness-of-fit
     calculations -
-    see :func:`tkp.sourcefinder.fitting.goodness_of_fit` for details.
+    see :func:`sourcefinder.fitting.goodness_of_fit` for details.
 
     Args:
 
@@ -633,6 +642,23 @@ def source_profile_and_errors(data, threshold, noise,
         noise (float): Noise level in data
 
         beam (tuple): beam parameters (semimaj,semimin,theta)
+
+        fudge_max_pix_factor(float): Correct for the underestimation of the peak
+                                     by taking the maximum pixel value.
+
+        max_pix_variance_factor(float): Take account of additional variance induced by the
+                                        maximum pixel method, on top of the background noise.
+
+        beamsize(float): The FWHM size of the clean beam
+
+        correlation_lengths(tuple): Tuple of two floats describing the distance along the semimajor
+                                    and semiminor axes of the clean beam beyond which noise
+                                    is assumed uncorrelated. Some background: Aperture synthesis imaging
+                                    yields noise that is partially correlated
+                                    over the entire image. This has a considerable effect on error
+                                    estimates. We approximate this by considering all noise within the
+                                    correlation length completely correlated and beyond that completely
+                                    uncorrelated.
 
     Kwargs:
 
@@ -651,12 +677,12 @@ def source_profile_and_errors(data, threshold, noise,
     param = ParamSet()
 
     if threshold is None:
-        moments_threshold=0
+        moments_threshold = 0
     else:
         moments_threshold = threshold
 
     try:
-        param.update(fitting.moments(data, beam, moments_threshold))
+        param.update(fitting.moments(data, fudge_max_pix_factor, beamsize, moments_threshold))
         param.moments = True
     except ValueError:
         # If this happens, we have two choices:
@@ -666,14 +692,14 @@ def source_profile_and_errors(data, threshold, noise,
         param.update({
             "peak": 1,
             "flux": 1,
-            "xbar": data.shape[0]/2.0,
-            "ybar": data.shape[1]/2.0,
+            "xbar": data.shape[0] / 2.0,
+            "ybar": data.shape[1] / 2.0,
             "semimajor": 1,
             "semiminor": 1,
             "theta": 0
-            })
+        })
         logger.debug("Unable to estimate gaussian parameters."
-                      " Proceeding with defaults %s""",
+                     " Proceeding with defaults %s""",
                      str(param))
 
     ranges = data.nonzero()
@@ -682,7 +708,7 @@ def source_profile_and_errors(data, threshold, noise,
     ymin = min(ranges[1])
     ymax = max(ranges[1])
 
-    if (numpy.fabs(xmax-xmin) > 2) and (numpy.fabs(ymax-ymin) > 2):
+    if (numpy.fabs(xmax - xmin) > 2) and (numpy.fabs(ymax - ymin) > 2):
         # Now we can do Gauss fitting if the island or subisland has a
         # thickness of more than 2 in both dimensions.
         try:
@@ -697,10 +723,9 @@ def source_profile_and_errors(data, threshold, noise,
         # moments can't handle fixed params
         raise ValueError("fit failed with given fixed parameters")
 
-    beamsize = utils.calculate_beamsize(beam[0], beam[1])
     param["flux"] = (numpy.pi * param["peak"] * param["semimajor"] *
                      param["semiminor"] / beamsize)
-    param.calculate_errors(noise, beam, threshold)
+    param.calculate_errors(noise, max_pix_variance_factor, correlation_lengths, threshold)
     param.deconvolve_from_clean_beam(beam)
 
     # Calculate residuals
@@ -712,10 +737,11 @@ def source_profile_and_errors(data, threshold, noise,
                  param["semimajor"].value,
                  param["semiminor"].value,
                  param["theta"].value)
-    gauss_resid_masked = -(gaussian(*gauss_arg)(*numpy.indices(data.shape)) - data)
+    gauss_resid_masked = -(
+        gaussian(*gauss_arg)(*numpy.indices(data.shape)) - data)
 
     param.chisq, param.reduced_chisq = fitting.goodness_of_fit(
-        gauss_resid_masked, noise, beam)
+        gauss_resid_masked, noise, correlation_lengths)
 
     gauss_resid_filled = gauss_resid_masked.filled(fill_value=0.)
     return param, gauss_resid_filled
@@ -808,7 +834,8 @@ class Detection(object):
 
     def __str__(self):
         return "(%.2f, %.2f) +/- (%.2f, %.2f): %g +/- %g" % (
-            self.ra.value, self.dec.value, self.ra.error*3600, self.dec.error*3600,
+            self.ra.value, self.dec.value, self.ra.error * 3600,
+            self.dec.error * 3600,
             self.peak.value, self.peak.error)
 
     def __repr__(self):
@@ -829,14 +856,15 @@ class Detection(object):
         help2 = numpy.sin(numpy.radians(self.ra.value))
         help3 = numpy.cos(numpy.radians(self.dec.value))
         help4 = numpy.sin(numpy.radians(self.dec.value))
-        center_position = numpy.array([help3*help1, help3*help2, help4])
+        center_position = numpy.array([help3 * help1, help3 * help2, help4])
 
         # The length of this vector is chosen such that it touches
         # the tangent plane at center position.
         # The cross product of the local north vector and the local east
         # vector will always be aligned with the center_position vector.
         if center_position[2] != 0:
-            local_north_position = numpy.array([0., 0., 1./center_position[2]])
+            local_north_position = numpy.array(
+                [0., 0., 1. / center_position[2]])
         else:
             # If we are right on the equator (ie dec=0) the division above
             # will blow up: as a workaround, we use something Really Big
@@ -848,19 +876,19 @@ class Detection(object):
         # chosen to be an increment of 1 pixel.
 
         endy_ra, endy_dec = self.imagedata.wcs.p2s(
-            [self.x.value, self.y.value+1.])
+            [self.x.value, self.y.value + 1.])
         help5 = numpy.cos(numpy.radians(endy_ra))
         help6 = numpy.sin(numpy.radians(endy_ra))
         help7 = numpy.cos(numpy.radians(endy_dec))
         help8 = numpy.sin(numpy.radians(endy_dec))
-        endy_position = numpy.array([help7*help5, help7*help6, help8])
+        endy_position = numpy.array([help7 * help5, help7 * help6, help8])
 
         # Extend the length of endy_position to make it touch the plane
         # tangent at center_position.
         endy_position /= numpy.dot(center_position, endy_position)
 
-        diff1 = endy_position-center_position
-        diff2 = local_north_position-center_position
+        diff1 = endy_position - center_position
+        diff2 = local_north_position - center_position
 
         cross_prod = numpy.cross(diff2, diff1)
 
@@ -891,19 +919,19 @@ class Detection(object):
         # properly, by projecting the errors in pixel coordinates (x and y)
         # on local north and local east.
         errorx_proj = numpy.sqrt(
-            (self.x.error*numpy.cos(yoffs_rad))**2 +
-            (self.y.error*numpy.sin(yoffs_rad))**2)
+            (self.x.error * numpy.cos(yoffs_rad)) ** 2 +
+            (self.y.error * numpy.sin(yoffs_rad)) ** 2)
         errory_proj = numpy.sqrt(
-            (self.x.error*numpy.sin(yoffs_rad))**2 +
-            (self.y.error*numpy.cos(yoffs_rad))**2)
+            (self.x.error * numpy.sin(yoffs_rad)) ** 2 +
+            (self.y.error * numpy.cos(yoffs_rad)) ** 2)
 
         # Now we have to sort out which combination of errorx_proj and
         # errory_proj gives the largest errors in RA and Dec.
         try:
             end_ra1, end_dec1 = self.imagedata.wcs.p2s(
-                                       [self.x.value+errorx_proj, self.y.value])
+                [self.x.value + errorx_proj, self.y.value])
             end_ra2, end_dec2 = self.imagedata.wcs.p2s(
-                [self.x.value, self.y.value+errory_proj])
+                [self.x.value, self.y.value + errory_proj])
             # Here we include the position calibration errors
             self.ra.error = self.eps_ra + max(
                 numpy.fabs(self.ra.value - end_ra1),
@@ -912,15 +940,16 @@ class Detection(object):
                 numpy.fabs(self.dec.value - end_dec1),
                 numpy.fabs(self.dec.value - end_dec2))
         except RuntimeError:
-            #We get a runtime error from wcs.p2s if the errors place the
-            #limits outside of the image.
-            #In which case we set the RA / DEC uncertainties to infinity
+            # We get a runtime error from wcs.p2s if the errors place the
+            # limits outside of the image.
+            # In which case we set the RA / DEC uncertainties to infinity
             self.ra.error = float('inf')
             self.dec.error = float('inf')
 
         # Estimate an absolute angular error on our central position.
         self.error_radius = utils.get_error_radius(
-            self.imagedata.wcs, self.x.value, self.x.error, self.y.value, self.y.error
+            self.imagedata.wcs, self.x.value, self.x.error, self.y.value,
+            self.y.error
         )
 
         # Now we can compute the BPA, east from local north.
@@ -937,33 +966,32 @@ class Detection(object):
         self.theta_celes = Uncertain(
             (numpy.degrees(self.theta.value) + yoffset_angle) % 180,
             numpy.degrees(self.theta.error))
-        self.theta_dc_celes = Uncertain(
-            (self.theta_dc.value + yoffset_angle) % 180,
-            numpy.degrees(self.theta_dc.error))
+        if not numpy.isnan(self.theta_dc.value):
+            self.theta_dc_celes = Uncertain(
+                (self.theta_dc.value + yoffset_angle) % 180,
+                 numpy.degrees(self.theta_dc.error))
+        else:
+             self.theta_dc_celes = Uncertain(numpy.nan, numpy.nan)
 
         # Next, the axes.
         # Note that the signs of numpy.sin and numpy.cos in the
         # four expressions below are arbitrary.
         self.end_smaj_x = (self.x.value - numpy.sin(self.theta.value) *
-                      self.smaj.value)
+                           self.smaj.value)
         self.start_smaj_x = (self.x.value + numpy.sin(self.theta.value) *
-                      self.smaj.value)
+                             self.smaj.value)
         self.end_smaj_y = (self.y.value + numpy.cos(self.theta.value) *
-                      self.smaj.value)
+                           self.smaj.value)
         self.start_smaj_y = (self.y.value - numpy.cos(self.theta.value) *
-                      self.smaj.value)
+                             self.smaj.value)
         self.end_smin_x = (self.x.value + numpy.cos(self.theta.value) *
-                      self.smin.value)
+                           self.smin.value)
         self.start_smin_x = (self.x.value - numpy.cos(self.theta.value) *
-                      self.smin.value)
+                             self.smin.value)
         self.end_smin_y = (self.y.value + numpy.sin(self.theta.value) *
-                      self.smin.value)
+                           self.smin.value)
         self.start_smin_y = (self.y.value - numpy.sin(self.theta.value) *
-                      self.smin.value)
-
-        # Fix negative ra values going into the database as this messes
-        # up the source association step.
-        self.ra.value = self.ra.value % 360.
+                             self.smin.value)
 
         def pixel_to_spatial(x, y):
             try:
@@ -971,8 +999,11 @@ class Detection(object):
             except RuntimeError:
                 logger.debug("pixel_to_spatial failed at %f, %f" % (x, y))
                 return numpy.nan, numpy.nan
-        end_smaj_ra, end_smaj_dec = pixel_to_spatial(self.end_smaj_x, self.end_smaj_y)
-        end_smin_ra, end_smin_dec = pixel_to_spatial(self.end_smin_x, self.end_smin_y)
+
+        end_smaj_ra, end_smaj_dec = pixel_to_spatial(self.end_smaj_x,
+                                                     self.end_smaj_y)
+        end_smin_ra, end_smin_dec = pixel_to_spatial(self.end_smin_x,
+                                                     self.end_smin_y)
 
         smaj_asec = coordinates.angsep(self.ra.value, self.dec.value,
                                        end_smaj_ra, end_smaj_dec)
@@ -988,7 +1019,7 @@ class Detection(object):
 
     def distance_from(self, x, y):
         """Distance from center"""
-        return ((self.x - x)**2 + (self.y - y)**2)**0.5
+        return ((self.x - x) ** 2 + (self.y - y) ** 2) ** 0.5
 
     def serialize(self, ew_sys_err, ns_sys_err):
         """

@@ -2,25 +2,33 @@
 Source fitting routines.
 """
 
-
 import math
+
 import numpy
 import scipy.optimize
+
+from . import utils
 from .gaussian import gaussian
 from .stats import indep_pixels
-from . import utils
 
 FIT_PARAMS = ('peak', 'xbar', 'ybar', 'semimajor', 'semiminor', 'theta')
 
-def moments(data, beam, threshold=0):
+
+def moments(data, fudge_max_pix_factor, beamsize, threshold=0):
     """Calculate source positional values using moments
 
     Args:
 
         data (numpy.ndarray): Actual 2D image data
 
-        beam (3-tuple): beam (psf) information, with semi-major and
-            semi-minor axes
+        fudge_max_pix_factor(float): Correct for the underestimation of the peak
+                                     by taking the maximum pixel value.
+
+        beamsize(float): The FWHM size of the clean beam
+
+        threshold(float): source parameters like the semimajor and semiminor axes
+                          derived from moments can be underestimated if one does not take
+                          account of the threshold that was used to segment the source islands.
 
     Returns:
         dict: peak, total, x barycenter, y barycenter, semimajor
@@ -37,21 +45,20 @@ def moments(data, beam, threshold=0):
     # Are we fitting a -ve or +ve Gaussian?
     if data.mean() >= 0:
         # The peak is always underestimated when you take the highest pixel.
-        peak = data.max() * utils.fudge_max_pix(beam[0], beam[1], beam[2])
+        peak = data.max() * fudge_max_pix_factor
     else:
         peak = data.min()
     ratio = threshold / peak
     total = data.sum()
     x, y = numpy.indices(data.shape)
-    xbar = float((x * data).sum()/total)
-    ybar = float((y * data).sum()/total)
-    xxbar = (x * x * data).sum()/total - xbar**2
-    yybar = (y * y * data).sum()/total - ybar**2
-    xybar = (x * y * data).sum()/total - xbar * ybar
+    xbar = float((x * data).sum() / total)
+    ybar = float((y * data).sum() / total)
+    xxbar = (x * x * data).sum() / total - xbar ** 2
+    yybar = (y * y * data).sum() / total - ybar ** 2
+    xybar = (x * y * data).sum() / total - xbar * ybar
 
     working1 = (xxbar + yybar) / 2.0
-    working2 = math.sqrt(((xxbar - yybar)/2)**2 + xybar**2)
-    beamsize = utils.calculate_beamsize(beam[0], beam[1])
+    working2 = math.sqrt(((xxbar - yybar) / 2) ** 2 + xybar ** 2)
 
     # Some problems arise with the sqrt of (working1-working2) when they are
     # equal, this happens with islands that have a thickness of only one pixel
@@ -60,8 +67,8 @@ def moments(data, beam, threshold=0):
     if len(data.nonzero()[0]) == 1:
         # This is the case when the island (or more likely subisland) has
         # a size of only one pixel.
-        semiminor = numpy.sqrt(beamsize/numpy.pi)
-        semimajor = numpy.sqrt(beamsize/numpy.pi)
+        semiminor = numpy.sqrt(beamsize / numpy.pi)
+        semimajor = numpy.sqrt(beamsize / numpy.pi)
     else:
         semimajor_tmp = (working1 + working2) * 2.0 * math.log(2.0)
         semiminor_tmp = (working1 - working2) * 2.0 * math.log(2.0)
@@ -82,7 +89,7 @@ def moments(data, beam, threshold=0):
             semiminor = beamsize / (numpy.pi * semimajor)
 
     if (numpy.isnan(xbar) or numpy.isnan(ybar) or
-        numpy.isnan(semimajor) or numpy.isnan(semiminor)):
+            numpy.isnan(semimajor) or numpy.isnan(semiminor)):
         raise ValueError("Unable to estimate Gauss shape")
 
     # Theta is not affected by the cut-off at the threshold (see Spreeuw 2010,
@@ -91,7 +98,11 @@ def moments(data, beam, threshold=0):
         # short circuit!
         theta = 0.
     else:
-        theta = math.atan(2. * xybar / (xxbar - yybar))/2.
+        if xxbar!=yybar:
+            theta = math.atan(2. * xybar / (xxbar - yybar)) / 2.
+        else:
+            theta = numpy.sign(xybar) * math.pi / 4.0
+
         if theta * xybar > 0.:
             if theta < 0.:
                 theta += math.pi / 2.0
@@ -108,7 +119,7 @@ def moments(data, beam, threshold=0):
         "semimajor": semimajor,
         "semiminor": semiminor,
         "theta": theta
-        }
+    }
 
 
 def fitgaussian(pixels, params, fixed=None, maxfev=0):
@@ -178,8 +189,8 @@ def fitgaussian(pixels, params, fixed=None, maxfev=0):
         # take account of the masked values (=below threshold) at the edges
         # and corners of pixels (=(masked) array, so rectangular in shape).
         pixel_resids = numpy.ma.MaskedArray(
-            data = numpy.fromfunction(g, pixels.shape) - pixels,
-            mask = pixels.mask)
+            data=numpy.fromfunction(g, pixels.shape) - pixels,
+            mask=pixels.mask)
         return pixel_resids.compressed()
 
     # maxfev=0, the default, corresponds to 200*(N+1) (NB, not 100*(N+1) as
@@ -212,8 +223,9 @@ def fitgaussian(pixels, params, fixed=None, maxfev=0):
     if results['semiminor'] > results['semimajor']:
         # Swapped axis order is a perfectly valid fit, but inconvenient for
         # the rest of our codebase.
-        results['semimajor'], results['semiminor'] = results['semiminor'], results['semimajor']
-        results['theta'] += numpy.pi/2
+        results['semimajor'], results['semiminor'] = results['semiminor'], \
+                                                     results['semimajor']
+        results['theta'] += numpy.pi / 2
 
     # Negative axes are a valid fit, since they are squared in the definition
     # of the Gaussian.
@@ -222,7 +234,8 @@ def fitgaussian(pixels, params, fixed=None, maxfev=0):
 
     return results
 
-def goodness_of_fit(masked_residuals, noise, beam):
+
+def goodness_of_fit(masked_residuals, noise, correlation_lengths):
     """
     Calculates the goodness-of-fit values, `chisq` and `reduced_chisq`.
 
@@ -258,15 +271,23 @@ def goodness_of_fit(masked_residuals, noise, beam):
         noise (float): An estimate of the noise level. Could also be set to
             a masked numpy array matching the data, for per-pixel noise
             estimates.
-        beam (tuple): Beam parameters
+
+        correlation_lengths(tuple): Tuple of two floats describing the distance along the semimajor
+                                    and semiminor axes of the clean beam beyond which noise
+                                    is assumed uncorrelated. Some background: Aperture synthesis imaging
+                                    yields noise that is partially correlated
+                                    over the entire image. This has a considerable effect on error
+                                    estimates. We approximate this by considering all noise within the
+                                    correlation length completely correlated and beyond that completely
+                                    uncorrelated.
 
     Returns:
         tuple: chisq, reduced_chisq
 
     """
     gauss_resid_normed = (masked_residuals / noise).compressed()
-    chisq = numpy.sum(gauss_resid_normed*gauss_resid_normed)
+    chisq = numpy.sum(gauss_resid_normed * gauss_resid_normed)
     n_fitted_pix = len(masked_residuals.compressed().ravel())
-    n_indep_pix = indep_pixels(n_fitted_pix, beam)
+    n_indep_pix = indep_pixels(n_fitted_pix, correlation_lengths)
     reduced_chisq = chisq / n_indep_pix
     return chisq, reduced_chisq

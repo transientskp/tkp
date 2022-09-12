@@ -46,7 +46,7 @@ class Uncertain(object):
     def __add__(self, other):
         if isinstance(other, Uncertain):
             v = self.value + other.value
-            e = (self.error**2 + other.error**2)**.5
+            e = (self.error ** 2 + other.error ** 2) ** .5
             return Uncertain(v, e)
         else:
             return Uncertain(self.value + other, self.error)
@@ -63,8 +63,8 @@ class Uncertain(object):
     def __mul__(self, other):
         if isinstance(other, Uncertain):
             v = self.value * other.value
-            e = ((self.error * other.value)**2 +
-                 (other.error * self.value)**2)**.5
+            e = ((self.error * other.value) ** 2 +
+                 (other.error * self.value) ** 2) ** .5
             return Uncertain(v, e)
         else:
             return Uncertain(self.value * other, self.error * other)
@@ -78,30 +78,36 @@ class Uncertain(object):
     def __pos__(self):
         return self
 
+    def __round__(self, pos):
+        return round(self.value, pos)
+
     def __div__(self, other):
         return self * (1. / other)  # other.__div__ and __mul__
 
+    def __truediv__(self, other):
+        return self * (1. / other)
+
     def __rdiv__(self, other):
-        return (self / other)**-1.  # __pow__ and __div__
+        return (self / other) ** -1.  # __pow__ and __div__
 
     def __pow__(self, other):
         if isinstance(other, Uncertain):
-            v = self.value**other.value
+            v = self.value ** other.value
             e = ((self.error * other.value *
-                  self.value**(other.value - 1.0))**2 +
+                  self.value ** (other.value - 1.0)) ** 2 +
                  (other.error * math.log(self.value) *
-                  self.value**other.value)**2
-            )**.5
+                  self.value ** other.value) ** 2
+                 ) ** .5
             return Uncertain(v, e)
         else:
-            return Uncertain(self.value**other,
-                             self.error * other * self.value**(other - 1))
+            return Uncertain(self.value ** other,
+                             self.error * other * self.value ** (other - 1))
 
     def __rpow__(self, other):
         assert not isinstance(other, Uncertain)
-            # otherwise other.__pow__ would have been called
-        return Uncertain(other**self.value,
-                self.error * math.log(other) * other**self.value)
+        # otherwise other.__pow__ would have been called
+        return Uncertain(other ** self.value,
+                         self.error * math.log(other) * other ** self.value)
 
     def __cmp__(self, compare):
         try:
@@ -109,8 +115,20 @@ class Uncertain(object):
         except AttributeError:
             return cmp(self.value, compare)
 
+    def __lt__(self, compare):
+        try:
+            return self.value < compare.value
+        except AttributeError:
+            return self.value < compare
+
+    def __gt__(self, compare):
+        try:
+            return self.value > compare.value
+        except AttributeError:
+            return self.value > compare
+
     def exp(self):
-        return math.e**self
+        return math.e ** self
 
     def log(self):
         return Uncertain(math.log(self.value), self.error / self.value)

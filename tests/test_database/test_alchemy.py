@@ -73,7 +73,8 @@ class TestApi(unittest.TestCase):
         r = list(self.session.query(q).all()[0])
         r = [item for i, item in enumerate(r) if i not in (0, 5, 6, 10, 11, 16)]
         shouldbe = [1.0, 1.0, 1.0, 1.0, 1, 0.0, 0.0, None, None, 0.01, 0.01]
-        self.assertAlmostEqual(r, shouldbe)
+        for index, el in enumerate(r):
+            self.assertAlmostEqual(el, shouldbe[index])
 
     def test_calculate_varmetric(self):
         r = tkp.db.alchemy.varmetric.calculate_varmetric(self.session, self.dataset1).all()

@@ -3,7 +3,7 @@ import os
 import getpass
 import datetime
 import io
-from configparser import SafeConfigParser
+from configparser import ConfigParser
 
 from tkp.testutil.data import (default_job_config, default_pipeline_config,
                                default_header_inject_config)
@@ -23,19 +23,22 @@ class TestParsingCode(unittest.TestCase):
 
         example_config_str = """\
 [test1]
-float = 0.5 ; some comment
+float = 0.5 
+; some comment
 int = 1
-string1 = bob               ; default to string when no other parsers work
-time1 = 2007-07-20T14:18:09.909001    ; times are parsed if matching this format
+string1 = bob               
+; default to string when no other parsers work
+time1 = 2007-07-20T14:18:09.909001    
+; times are parsed if matching this format
 #But must have at least a single digit after the decimal point:
 time2 = 2007-07-20T14:18:09.0
 [test2]
-string2 = "0.235"           ; force string by enclosing in double-quotes
-
+string2 = "0.235"           
+; force string by enclosing in double-quotes
 """
 
-        cls.config = SafeConfigParser()
-        cls.config.readfp(io.StringIO(example_config_str))
+        cls.config = ConfigParser()
+        cls.config.read_file(io.StringIO(example_config_str))
 
         cls.parset = {}
         cls.parset['test1']= {
@@ -59,7 +62,7 @@ string2 = "0.235"           ; force string by enclosing in double-quotes
 class TestConfigParsing(unittest.TestCase):
     """Ensure that the default config files get parsed as expected"""
     def test_default_job_config(self):
-        c = SafeConfigParser()
+        c = ConfigParser()
         c.read(default_job_config)
         job_config = parse_to_dict(c)
 
@@ -67,7 +70,7 @@ class TestConfigParsing(unittest.TestCase):
         pipe_config = initialize_pipeline_config(default_pipeline_config, 'test')
 
     def test_default_inject_config(self):
-        c = SafeConfigParser()
+        c = ConfigParser()
         c.read(default_header_inject_config)
         inject_config = parse_to_dict(c)
 

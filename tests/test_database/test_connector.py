@@ -1,5 +1,8 @@
 import unittest
-from exceptions import Exception
+try:
+    import exceptions
+except ImportError:
+    import builtins as exceptions
 from tkp.testutil.decorators import requires_database
 import tkp.db
 

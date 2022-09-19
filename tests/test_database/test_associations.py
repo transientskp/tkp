@@ -1,7 +1,7 @@
 
 import math
 import logging
-from io import BytesIO
+from io import StringIO
 
 import unittest
 
@@ -1448,7 +1448,7 @@ class TestMany2Many(unittest.TestCase):
 
         # We will add a handler to the root logger which catches all log
         # output in a buffer.
-        iostream = BytesIO()
+        iostream = StringIO()
         hdlr = logging.StreamHandler(iostream)
         logging.getLogger().addHandler(hdlr)
 

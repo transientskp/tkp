@@ -1,7 +1,7 @@
 import unittest
 import datetime
 import logging
-from io import BytesIO
+from io import StringIO
 from tkp.testutil.decorators import requires_database
 import tkp.db
 from tkp.db.orm import DataSet, Image
@@ -208,7 +208,7 @@ class TestExtractedSource(unittest.TestCase):
 
                 # We will add a handler to the root logger which catches all log
         # output in a buffer.
-        iostream = BytesIO()
+        iostream = StringIO()
         hdlr = logging.StreamHandler(iostream)
         logging.getLogger().addHandler(hdlr)
 

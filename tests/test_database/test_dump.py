@@ -18,11 +18,11 @@ class TestDump(unittest.TestCase):
 
             # Output should start with "--\n-- PostgreSQL database dump\n":
             dumpfile.seek(0)
-            self.assertEqual(dumpfile.readline().strip(), "--")
-            self.assertEqual(dumpfile.readline().strip(), "-- PostgreSQL database dump")
+            self.assertEqual(dumpfile.readline().strip(), b"--")
+            self.assertEqual(dumpfile.readline().strip(), b"-- PostgreSQL database dump")
             # And end with "-- PostgreSQL database dump complete\n--\n\n"
             dumpfile.seek(-41, os.SEEK_END)
-            self.assertEqual(dumpfile.read().strip(), "-- PostgreSQL database dump complete\n--")
+            self.assertEqual(dumpfile.read().strip(), b"-- PostgreSQL database dump complete\n--")
 
 
     def test_database_dump_unknown(self):

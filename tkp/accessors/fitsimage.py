@@ -243,7 +243,11 @@ class FitsImage(DataAccessor):
         """
         header = self.header
         try:
-            start = dateutil.parser.parse(header['date-obs'])
+            if ";" in header['date-obs']:
+                start = dateutil.parser.parse(header['date-obs']\
+                    .split(";")[0].split('"')[1])
+            else:
+                start = dateutil.parser.parse(header['date-obs'])
         except AttributeError:
             # Maybe it's a float, Westerbork-style?
             if isinstance(header['date-obs'], float):

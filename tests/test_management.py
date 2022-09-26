@@ -114,7 +114,7 @@ class TestManagement(unittest.TestCase):
 
         # Context manager ensures the temporary will be cleaned up if we throw
         # during test execution.
-        with tempfile.NamedTemporaryFile() as t:
+        with tempfile.NamedTemporaryFile(mode="w+t") as t:
             json.dump(coords2, t)
             t.seek(0) # rewind to beginning of file
             arg_list = ["run", "jobname",

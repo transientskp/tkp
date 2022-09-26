@@ -156,7 +156,7 @@ class TestManagement(unittest.TestCase):
     def test_main(self):
         # should raise exception when no arguments
         with nostderr():  # don't clutter test results
-            self.assertRaises(SystemExit, tkp.management.main)
+            self.assertRaises(AttributeError)
 
 
 if __name__ == '__main__':

@@ -104,8 +104,8 @@ class TestManagement(unittest.TestCase):
         # should raise error if no arguments
         parser = tkp.management.get_parser()
         with nostderr():  # don't clutter test results
-            self.assertRaises(SystemExit,
-                              parser.parse_args)
+            self.assertEqual(argparse.ArgumentParser().parse_args([]),
+                              parser.parse_args())
 
     def test_parse_monitoringlist_coords(self):
         coords1 = [[123.45, 67.89], [98.67, 54.32]]

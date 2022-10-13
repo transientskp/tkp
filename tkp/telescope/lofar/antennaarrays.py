@@ -230,7 +230,7 @@ def shortest_distances(coordinates, full_array):
     """
     distances = []
     for a in coordinates:
-        shortest_distance = None
+        shortest_distance = 0
         for b in full_array:
             distance = pow((a[0] - b[0]), 2) + pow((a[1] - b[1]), 2) + \
                        pow((a[2] - b[2]), 2)

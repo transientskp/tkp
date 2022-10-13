@@ -30,7 +30,7 @@ def check_for_valid_ephemeris(measures):
         measures.separation(
             measures.direction("SUN"), measures.direction("SUN")
         )
-    if "WARN" in casacore_stderr.getvalue():
+    if b"WARN" in casacore_stderr.getvalue():
         # casacore sends a warning to stderr if the ephemeris is invalid
         return False
     else:

@@ -68,7 +68,9 @@ class test_maps(unittest.TestCase):
                                           uncorr_map.wcs)
         self.image_with_sources = image.ImageData(map_with_sources.data,
                                                   map_with_sources.beam,
-                                                  map_with_sources.wcs)
+                                                  map_with_sources.wcs,
+                                                  back_size_x=64,
+                                                  back_size_y=64)
 
     def test_normal(self):
         self.number_detections_uncorr = len(self.uncorr_image.fd_extract(1e-2))

@@ -122,7 +122,7 @@ class L15_12hConstMod(unittest.TestCase):
 
     @requires_data(all_fits)
     def testFluxes(self):
-        self.results.sort(lambda x, y: cmp(y.peak, x.peak))
+        self.results.sort(key = lambda x, y: cmp(y.peak, x.peak))
         self.assertAlmostEqual(self.results[0].peak.value, 1.0*FUDGEFACTOR, 1)
 
 

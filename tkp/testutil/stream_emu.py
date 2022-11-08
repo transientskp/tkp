@@ -135,7 +135,7 @@ def make_window(hdu):
     returns:
         str: serialised fits file
     """
-    result = io.StringIO()
+    result = io.BytesIO()
     data, fits_header = serialize_hdu(hdu)
     header = create_header(len(fits_header), len(data))
     result.write(header)

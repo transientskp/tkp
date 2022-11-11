@@ -53,7 +53,11 @@ def getbytes(socket_, bytes_):
     returns:
         str: raw bytes from socket
     """
-    result = io.StringIO()
+    if type(socket_.recv(bytes_)) == bytes:
+        result = io.BytesIO()
+    else:
+        result = io.StringIO()
+
     count = bytes_
     while count > 0:
         recv = socket_.recv(count)
@@ -62,7 +66,6 @@ def getbytes(socket_, bytes_):
         count -= len(recv)
         result.write(recv)
     return result.getvalue()
-
 
 def read_window(socket_):
     """

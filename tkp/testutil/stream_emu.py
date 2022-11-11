@@ -107,7 +107,8 @@ def serialize_hdu(hdu):
         str: a serialized fits object.
     """
     data = struct.pack('=%sf' % hdu.data.size, *hdu.data.flatten('F'))
-    header = hdu.header.tobytes()
+    header = bytes(str(hdu.header), 'UTF-8')
+
     return data, header
 
 

@@ -100,7 +100,8 @@ def reconstruct_fits(fits_bytes, image_bytes):
     hdu_header = astropy.io.fits.header.Header.fromstring(fits_bytes)   
     width = hdu_header["NAXIS1"]
     length = hdu_header["NAXIS2"]
-    image_array = struct.unpack(str(len(image_bytes)/4) + 'f', image_bytes)
+    image_array = struct.unpack(str(len(image_bytes) // 4) + 'f', \
+        image_bytes)
     image_matrix = np.reshape(image_array, (width, length))
     hdu = astropy.io.fits.PrimaryHDU(image_matrix)
     hdu.header = hdu_header

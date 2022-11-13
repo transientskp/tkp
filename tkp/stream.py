@@ -53,7 +53,7 @@ def getbytes(socket_, bytes_):
     returns:
         str: raw bytes from socket
     """
-    if type(socket_.recv(bytes_)) == bytes:
+    if type(socket_.recv(0)) == bytes:
         result = io.BytesIO()
     else:
         result = io.StringIO()

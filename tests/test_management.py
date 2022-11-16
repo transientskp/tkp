@@ -108,7 +108,8 @@ class TestManagement(unittest.TestCase):
             # self.assertEqual(argparse.ArgumentParser().parse_args([]),
             #                   parser.parse_args())
             # This passes in Python 3.
-            self.assertRaises(argparse.ArgumentError)
+            with self.assertRaises(SystemExit): 
+                parser.parse_args()
 
     def test_parse_monitoringlist_coords(self):
         coords1 = [[123.45, 67.89], [98.67, 54.32]]

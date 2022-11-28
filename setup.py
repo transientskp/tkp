@@ -5,7 +5,7 @@ install_requires = """
     astropy
     colorlog
     numpy
-    psycopg2
+    psycopg2-binary
     python-casacore
     python-dateutil
     pytz

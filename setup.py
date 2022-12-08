@@ -13,6 +13,9 @@ install_requires = """
     sqlalchemy
     alembic
     monotonic
+    pytest
+    dask
+    dask[array]
     """.split()
 
 tkp_scripts = [

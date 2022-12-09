@@ -171,7 +171,7 @@ WHERE image = %(imgid)s
     cursor = tkp.db.execute(query, qry_params, commit=True)
     n_deleted = cursor.rowcount
     if n_deleted:
-        logger.warn("Removed %s bad blind extractions for image %s"
+        logger.warning("Removed %s bad blind extractions for image %s"
                      "(centred outside extraction region)",
                      n_deleted, image_id)
     return n_deleted

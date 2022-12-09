@@ -50,7 +50,7 @@ class Island(object):
         self.deblend_nthresh = deblend_nthresh
         # If we deblend too far, we hit the recursion limit. And it's slow.
         if self.deblend_nthresh > 300:
-            logger.warn("Limiting to 300 deblending subtresholds")
+            logger.warning("Limiting to 300 deblending subtresholds")
             self.deblend_nthresh = 300
         else:
             logger.debug("Using %d subthresholds", deblend_nthresh)
@@ -717,7 +717,7 @@ def source_profile_and_errors(data, threshold, noise,
             param.gaussian = True
             logger.debug('Gauss fitting was successful.')
         except ValueError:
-            logger.warn('Gauss fitting failed.')
+            logger.warning('Gauss fitting failed.')
 
     if fixed and not param.gaussian:
         # moments can't handle fixed params
@@ -782,7 +782,7 @@ class Detection(object):
         try:
             self._physical_coordinates()
         except RuntimeError:
-            logger.warn("Physical coordinates failed at %f, %f" % (
+            logger.warning("Physical coordinates failed at %f, %f" % (
                 self.x, self.y))
             raise
 
@@ -821,7 +821,7 @@ class Detection(object):
         try:
             self._physical_coordinates()
         except RuntimeError as e:
-            logger.warn("Physical coordinates failed at %f, %f" % (
+            logger.warning("Physical coordinates failed at %f, %f" % (
                 self.x, self.y))
             raise
 

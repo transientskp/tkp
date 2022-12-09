@@ -136,13 +136,13 @@ def initialise_dataset(job_config, supplied_mon_coords):
         if check_job_configs_match(job_config, job_config_from_db):
             logger.debug("Job configs from file / database match OK.")
         else:
-            logger.warn("Job config file has changed since dataset was "
+            logger.warning("Job config file has changed since dataset was "
                         "first loaded into database. ")
-            logger.warn("Using job config settings loaded from database, see "
+            logger.warning("Using job config settings loaded from database, see "
                         "log dir for details")
         job_config = job_config_from_db
         if supplied_mon_coords:
-            logger.warn("Monitor positions supplied will be ignored. "
+            logger.warning("Monitor positions supplied will be ignored. "
                         "(Previous dataset specified)")
     return job_config, dataset_id
 
@@ -226,7 +226,7 @@ def quality_check(db_images, accessors, job_config, runner):
 
     if not good_images:
         msg = "No good images under these quality checking criteria"
-        logger.warn(msg)
+        logger.warning(msg)
     return good_images
 
 

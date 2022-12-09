@@ -445,7 +445,7 @@ class ImageData(object):
         """
 
         if anl > det:
-            logger.warn(
+            logger.warning(
                 "Analysis threshold is higher than detection threshold"
             )
 
@@ -697,7 +697,7 @@ class ImageData(object):
             assert (abs(measurement['xbar']) < boxsize)
             assert (abs(measurement['ybar']) < boxsize)
         except AssertionError:
-            logger.warn('Fit falls outside of box.')
+            logger.warning('Fit falls outside of box.')
 
         measurement['xbar'] += x - boxsize / 2.0
         measurement['ybar'] += y - boxsize / 2.0
@@ -978,7 +978,7 @@ class ImageData(object):
                 det = extract.Detection(measurement, self, chunk=island.chunk)
                 if (det.ra.error == float('inf') or
                         det.dec.error == float('inf')):
-                    logger.warn('Bad fit from blind extraction at pixel coords:'
+                    logger.warning('Bad fit from blind extraction at pixel coords:'
                                 '%f %f - measurement discarded'
                                 '(increase fitting margin?)', det.x, det.y)
                 else:

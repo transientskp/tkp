@@ -177,7 +177,7 @@ def insert_extracted_sources(image_id, results, extract_type='blind',
         r = list(src)
         # Drop any fits with infinite flux errors
         if math.isinf(r[5]) or math.isinf(r[7]):
-            logger.warn("Dropped source fit with infinite flux errors "
+            logger.warning("Dropped source fit with infinite flux errors "
                         "at position {} {} in image {}".format(
                 r[0], r[1], image_id))
             continue

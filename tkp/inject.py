@@ -105,7 +105,7 @@ def main():
         #Normally accessors.open checks this, but we're going straight 
         #to detect here because we don't want to actually open it:
         if not (os.path.isfile(target_file) or os.path.isdir(target_file)):
-            logger.warn("File not found: %s (check path is correct?)"
+            logger.warning("File not found: %s (check path is correct?)"
                         % target_file)
             continue
         logger.info("injecting data into %s" % target_file)

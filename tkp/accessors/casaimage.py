@@ -46,7 +46,7 @@ class CasaImage(DataAccessor):
         planes = len(data.shape)
         if planes != 2:
             msg = "received datacube with %s planes, assuming Stokes I and taking plane 0" % planes
-            logger.warn(msg)
+            logger.warning(msg)
             warnings.warn(msg)
             data = data[plane, :, :]
         data = data.transpose()

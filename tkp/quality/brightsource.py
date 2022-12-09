@@ -60,7 +60,7 @@ def is_bright_source_near(accessor, distance=20):
     # Now check and ensure the ephemeris in use is actually valid for this
     # data.
     if not check_for_valid_ephemeris(m):
-        logger.warn("Bright source check failed due to invalid ephemeris")
+        logger.warning("Bright source check failed due to invalid ephemeris")
         return "Invalid ephemeris"
 
     # Second, you need to set your image pointing.

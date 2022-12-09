@@ -65,7 +65,7 @@ class FitsImage(DataAccessor):
             data = data[plane].squeeze()
         n_dim = len(data.shape)
         if n_dim != 2:
-            logger.warn("Loaded datacube with %s dimensions, assuming Stokes I and taking plane 0" % n_dim)
+            logger.warning("Loaded datacube with %s dimensions, assuming Stokes I and taking plane 0" % n_dim)
             data = data[0, :, :]
         data = data.transpose()
         return data
@@ -210,7 +210,7 @@ class FitsImage(DataAccessor):
             start = self.parse_start_time()
         except KeyError:
             #If no start time specified, give up:
-            logger.warn("Timestamp not specified in FITS file:"
+            logger.warning("Timestamp not specified in FITS file:"
                         " using 'now' with dummy (zero-valued) integration time.")
             return datetime.datetime.now(), 0.
 
@@ -251,7 +251,7 @@ class FitsImage(DataAccessor):
         except AttributeError:
             # Maybe it's a float, Westerbork-style?
             if isinstance(header['date-obs'], float):
-                logger.warn("Non-standard date specified in FITS file!")
+                logger.warning("Non-standard date specified in FITS file!")
                 frac, year = numpy.modf(header['date-obs'])
                 start = datetime.datetime(int(year), 1, 1)
                 delta = datetime.timedelta(365.242199 * frac)

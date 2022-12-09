@@ -223,7 +223,7 @@ class DBObject(object):
                          "Database engine not implemented in ORM.")
 
             except self.database.connection.Error:
-                logger.warn("insertion into database failed: %s",
+                logger.warning("insertion into database failed: %s",
                              (query % values))
                 raise
             except Exception as e:
@@ -392,7 +392,7 @@ class Image(DBObject):
             results = self.database.cursor.fetchall()
         except self.database.connection.Error as e:
             query = query % self._id
-            logger.warn("database failed on query: %s", query)
+            logger.warning("database failed on query: %s", query)
             raise
         sources = set()
         for result in results:

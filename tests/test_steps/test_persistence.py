@@ -6,7 +6,7 @@ from tkp.testutil.decorators import requires_database, requires_data
 import tkp.db
 import tkp.db.generic
 import tkp.accessors
-from configparser import SafeConfigParser
+from configparser import ConfigParser
 
 from tkp.config import parse_to_dict, initialize_pipeline_config
 from tkp.testutil.data import default_job_config, default_pipeline_config
@@ -28,7 +28,7 @@ class TestPersistence(unittest.TestCase):
         cls.images = [datafile]
         cls.accessors = [tkp.accessors.open(datafile)]
         cls.extraction_radius = 256
-        job_config = SafeConfigParser()
+        job_config = ConfigParser()
         job_config.read(default_job_config)
         job_config = parse_to_dict(job_config)
         cls.persistence_pars = job_config['persistence']

@@ -5,7 +5,7 @@ table. This can be useful to make your data processable by the TraP pipeline.
 
 import os.path
 import argparse
-from configparser import SafeConfigParser
+from configparser import ConfigParser
 from tkp.config import parse_to_dict
 import astropy.io.fits as pyfits
 from casacore.tables import table as casacore_table
@@ -97,7 +97,7 @@ def modify_lofarcasa_tau_time(parset, casa_file):
 def main():
     logging.basicConfig(level=logging.DEBUG)
     parset_file, target_files, overwrite = parse_arguments()
-    c = SafeConfigParser()
+    c = ConfigParser()
     c.read(parset_file)
     new_hdr_entries = parse_to_dict(c)['inject']
 

@@ -25,7 +25,7 @@ def load_job_config(pipe_config):
     Locates the job_params.cfg in 'job_directory' and loads via ConfigParser.
     """
     job_directory = pipe_config['DEFAULT']['job_directory']
-    job_config = configparser.SafeConfigParser()
+    job_config = configparser.ConfigParser()
     job_config.read(os.path.join(job_directory, 'job_params.cfg'))
     return parse_to_dict(job_config)
 

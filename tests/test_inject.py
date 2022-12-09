@@ -2,7 +2,7 @@ import unittest
 import os
 import tempfile
 import shutil
-from configparser import SafeConfigParser
+from configparser import ConfigParser
 import tkp
 import tkp.accessors
 import tkp.inject
@@ -29,7 +29,7 @@ class TestFitsInject(unittest.TestCase):
         shutil.rmtree(cls.temp_dir)
 
     def test_injection(self):
-        c = SafeConfigParser()
+        c = ConfigParser()
         c.read(default_header_inject_config)
         parset = parse_to_dict(c)['inject']
 

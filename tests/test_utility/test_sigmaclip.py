@@ -84,7 +84,7 @@ class TestClip(unittest.TestCase):
     def test_unweighted(self):
         """Perform unweighted sigma clipping"""
 
-        INDICES = numpy.ones(len(self.data), dtype=numpy.bool)
+        INDICES = numpy.ones(len(self.data), dtype=bool)
         indices, niter = sigmaclip.sigmaclip(data=self.data, errors=None, niter=0,
                             siglow=1., sighigh=1., use_median=False)
         self.assertEqual((indices == INDICES).all(), True)
@@ -102,7 +102,7 @@ class TestClip(unittest.TestCase):
     def test_weighted(self):
         """Perform weighted sigma clipping"""
 
-        INDICES = numpy.ones(len(self.data), dtype=numpy.bool)
+        INDICES = numpy.ones(len(self.data), dtype=bool)
         indices, niter = sigmaclip.sigmaclip(data=self.data, errors=self.errors, niter=0,
                             siglow=1., sighigh=1., use_median=False)
         self.assertEqual((indices == INDICES).all(), True)
@@ -143,7 +143,7 @@ class TestClip(unittest.TestCase):
                                    niter=-100, siglow=1., sighigh=1.)
         self.assertEqual(niter, 3)
 
-        INDICES = numpy.zeros(len(self.data), dtype=numpy.bool)
+        INDICES = numpy.zeros(len(self.data), dtype=bool)
         indices, niter = sigmaclip.sigmaclip(data=self.data, errors=self.errors,
                                    niter=-100, siglow=.2, sighigh=.2)
         self.assertEqual((indices == INDICES).all(), True)

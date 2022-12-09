@@ -157,7 +157,7 @@ def sigmaclip(data, errors=None, niter=0, siglow=3., sighigh=3.,
     """
 
     # indices keeps track which data should be discarded
-    indices = numpy.ones(len(data.ravel()), dtype=numpy.bool).reshape(
+    indices = numpy.ones(len(data.ravel()), dtype=bool).reshape(
         data.shape)
     nniter = -niter if niter < 0 else niter
     i = 0

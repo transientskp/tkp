@@ -95,7 +95,7 @@ def convert_db_rows_to_dicts(results, cursor_description=None, alias_map=None):
         if cursor_description:
             dict_row = dict(list(zip(cursor_description, row)))
         else:
-            dict_row = dict(list(row.items()))
+            dict_row = dict(list(row._mapping.items()))
         if alias_map:
             for old_key, new_key in list(alias_map.items()):
                 if old_key in row:

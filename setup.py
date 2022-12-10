@@ -13,6 +13,7 @@ install_requires = """
     sqlalchemy
     alembic
     monotonic
+    psutil
     pytest
     dask
     dask[array]

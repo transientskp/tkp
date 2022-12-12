@@ -195,7 +195,7 @@ def del_duplicate_varmetric(session, dataset):
     """
     del_varmetrics = session.query(Varmetric.id).\
         filter(Varmetric.runcat_id == Runningcatalog.id,
-               Runningcatalog.dataset == dataset).subquery()
+               Runningcatalog.dataset == dataset)
     return delete(Varmetric).where(Varmetric.id.in_(del_varmetrics))
 
 

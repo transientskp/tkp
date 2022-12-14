@@ -305,7 +305,7 @@ def get_parser():
         description=trap_manage_note,
         formatter_class=argparse.RawDescriptionHelpFormatter
     )
-    parser_subparsers = parser.add_subparsers()
+    parser_subparsers = parser.add_subparsers(required=True)
 
     # initproject
     initproject_parser = parser_subparsers.add_parser(

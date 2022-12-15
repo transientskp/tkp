@@ -16,7 +16,7 @@ from tkp.utility.uncertain import Uncertain
 
 BOX_IN_BEAMPIX = 10  # HARDCODING - FIXME! (see also monitoringlist recipe)
 
-GRB120422A = os.path.join(DATAPATH, "GRB120422A-120429.fits")
+GRB120422A = os.path.join(DATAPATH, "sourcefinder/GRB120422A-120429.fits")
 
 
 class TestNumpySubroutines(unittest.TestCase):
@@ -66,7 +66,7 @@ class TestFitFixedPositions(unittest.TestCase):
     """Test various fitting cases where the pixel position is predetermined"""
 
     @requires_data(
-        os.path.join(DATAPATH, 'NCP_sample_image_1.fits'))
+        os.path.join(DATAPATH, 'sourcefinder/NCP_sample_image_1.fits'))
     def setUp(self):
         """
         NB the required image has been committed to the tkp/data subversion repository.
@@ -77,7 +77,7 @@ class TestFitFixedPositions(unittest.TestCase):
         """
         self.image = accessors.sourcefinder_image_from_accessor(
             accessors.open(
-                os.path.join(DATAPATH, 'NCP_sample_image_1.fits'))
+                os.path.join(DATAPATH, 'sourcefinder/NCP_sample_image_1.fits'))
         )
         self.assertListEqual(list(self.image.data.shape), [1024, 1024])
         self.boxsize = BOX_IN_BEAMPIX * max(self.image.beam[0],
@@ -205,7 +205,7 @@ class TestFitFixedPositions(unittest.TestCase):
         """
         img = self.image
 
-        fake_params = sourcefinder.extract.ParamSet()
+        fake_params = tkp.sourcefinder.extract.ParamSet()
         fake_params.values.update({
             'peak': Uncertain(0.0, 0.5),
             'flux': Uncertain(0.0, 0.5),
@@ -216,7 +216,7 @@ class TestFitFixedPositions(unittest.TestCase):
             'theta': Uncertain(30, 10),
         })
         fake_params.sig = 0
-        det = sourcefinder.extract.Detection(fake_params, img)
+        det = tkp.sourcefinder.extract.Detection(fake_params, img)
         # Raises runtime error prior to bugfix for issue #3294
         det._physical_coordinates()
         self.assertEqual(det.ra.error, float('inf'))
@@ -324,8 +324,8 @@ class TestSimpleImageSourceFind(unittest.TestCase):
         self.assertEqual(results[0].smaj.value, self.image.beam[0])
         self.assertEqual(results[0].smin.value, self.image.beam[1])
 
-    @requires_data(os.path.join(DATAPATH, 'SWIFT_554620-130504.fits'))
-    @requires_data(os.path.join(DATAPATH, 'SWIFT_554620-130504.image'))
+    @requires_data(os.path.join(DATAPATH, 'sourcefinder/GRB130828A/SWIFT_554620-130504.fits'))
+    @requires_data(os.path.join(DATAPATH, 'sourcefinder/GRB130828A/SWIFT_554620-130504.image'))
     def testWcsConversionConsistency(self):
         """
         Check that extracting a source from FITS and CASA versions of the
@@ -333,12 +333,12 @@ class TestSimpleImageSourceFind(unittest.TestCase):
         """
 
         fits_image = accessors.sourcefinder_image_from_accessor(
-            FitsImage(os.path.join(DATAPATH, 'SWIFT_554620-130504.fits')))
+            FitsImage(os.path.join(DATAPATH, 'sourcefinder/GRB130828A/SWIFT_554620-130504.fits')))
         # Abuse the KAT7 CasaImage class here, since we just want to access
         # the pixel data and the WCS:
         casa_image = accessors.sourcefinder_image_from_accessor(
             accessors.kat7casaimage.Kat7CasaImage(
-                os.path.join(DATAPATH, 'SWIFT_554620-130504.image')))
+                os.path.join(DATAPATH, 'sourcefinder/GRB130828A/SWIFT_554620-130504.image')))
 
         ew_sys_err, ns_sys_err = 0.0, 0.0
         fits_results = fits_image.extract(det=5, anl=3)

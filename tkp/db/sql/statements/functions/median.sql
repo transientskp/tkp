@@ -5,7 +5,7 @@
   https://wiki.postgresql.org/wiki/Aggregate_Median
 */
 
-CREATE FUNCTION _final_median(anyarray) RETURNS float8 AS $$
+CREATE FUNCTION _final_median(anycompatiblearray) RETURNS float8 AS $$
   WITH q AS
   (
      SELECT val
@@ -26,9 +26,9 @@ CREATE FUNCTION _final_median(anyarray) RETURNS float8 AS $$
   ) q2;
 $$ LANGUAGE sql IMMUTABLE;
 
-CREATE AGGREGATE median(anyelement) (
+CREATE AGGREGATE median(anycompatible) (
   SFUNC=array_append,
-  STYPE=anyarray,
+  STYPE=anycompatiblearray,
   FINALFUNC=_final_median,
   INITCOND='{}'
 );

@@ -11,9 +11,9 @@
 CREATE FUNCTION alpha(theta DOUBLE PRECISION, decl DOUBLE PRECISION)
 RETURNS DOUBLE PRECISION
 
-{% ifdb postgresql %}
+{% if db.engine == 'postgresql' %}
 AS $$
-{% endifdb %}
+{% endif %}
 
 BEGIN
   IF ABS(decl) + theta > 89.9 THEN 
@@ -23,6 +23,6 @@ BEGIN
   END IF ;
 END;
 
-{% ifdb postgresql %}
+{% if db.engine == 'postgresql' %}
 $$ LANGUAGE plpgsql;
-{% endifdb %}
+{% endif %}

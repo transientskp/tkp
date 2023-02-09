@@ -4,6 +4,7 @@ from setuptools import setup, find_packages
 install_requires = """
     astropy
     colorlog
+    Jinja2
     numpy
     psycopg2
     python-casacore

@@ -166,7 +166,8 @@ def populate(dbconfig):
         sql_file = os.path.join(sql_repo, line)
         with open(sql_file) as sql_handler:
             sql = sql_handler.read()
-            dialected = dialectise(sql, dbconfig['engine']).strip()
+            major_version = database.session.get_bind().dialect.server_version_info[0]
+            dialected = dialectise(sql, dbconfig['engine'], version=major_version).strip()
 
             if not dialected:  # empty query, can happen
                 continue

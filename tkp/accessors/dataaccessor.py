@@ -5,9 +5,7 @@ from math import degrees, sqrt, sin, pi, cos
 
 logger = logging.getLogger(__name__)
 
-class DataAccessor(object):
-    __metaclass__ = RequiredAttributesMetaclass
-
+class DataAccessor(object, metaclass=RequiredAttributesMetaclass):
     _required_attributes = [
             'beam',
             'centre_ra',

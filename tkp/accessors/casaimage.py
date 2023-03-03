@@ -26,7 +26,7 @@ class CasaImage(DataAccessor):
 
         # we don't want the table as a property since it makes the accessor
         # not serializable
-        table = casacore_table(self.url.encode(), ack=False)
+        table = casacore_table(self.url, ack=False)
         self.data = self.parse_data(table, plane)
         self.wcs = self.parse_coordinates(table)
         self.centre_ra, self.centre_decl = self.parse_phase_centre(table)
@@ -46,7 +46,7 @@ class CasaImage(DataAccessor):
         planes = len(data.shape)
         if planes != 2:
             msg = "received datacube with %s planes, assuming Stokes I and taking plane 0" % planes
-            logger.warn(msg)
+            logger.warning(msg)
             warnings.warn(msg)
             data = data[plane, :, :]
         data = data.transpose()

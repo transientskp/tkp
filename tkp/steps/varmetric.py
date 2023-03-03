@@ -19,7 +19,9 @@ def execute_store_varmetric(dataset_id, session=None):
 
     dataset = Dataset(id=dataset_id)
     delete_ = del_duplicate_varmetric(session=session, dataset=dataset)
-    session.execute(delete_)
+    session.execute(delete_, \
+        execution_options=dict({"synchronize_session": 'fetch'}))
     insert_ = store_varmetric(session, dataset=dataset)
-    session.execute(insert_)
+    session.execute(insert_, \
+        execution_options=dict({"synchronize_session": 'fetch'}))
     session.commit()

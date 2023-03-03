@@ -2,17 +2,21 @@
 from setuptools import setup, find_packages
 
 install_requires = """
-    astropy<3.0.0
+    astropy
     colorlog
-    numpy>=1.3.0,<1.17.0
+    numpy
     psycopg2
-    python-casacore==3.3.0
-    python-dateutil>=1.4.1
+    python-casacore
+    python-dateutil
     pytz
-    scipy>=0.7.0,<1.3.0
-    sqlalchemy>=1.0.0,<1.4.0
+    scipy
+    sqlalchemy
     alembic
     monotonic
+    psutil
+    pytest
+    dask
+    dask[array]
     """.split()
 
 tkp_scripts = [

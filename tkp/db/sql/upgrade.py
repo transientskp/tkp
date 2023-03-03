@@ -5,6 +5,7 @@ SQL files in sql/upgrade are used. Run this script directly from your shell, use
 on how to use it.
 """
 
+
 import argparse
 import os
 import sys
@@ -79,18 +80,18 @@ def ask_version(version):
     answer = False
     if latest > version:
         msg = "a new version (%s) is available. You have %s. Upgrade?" % (latest, version)
-        answer = True if raw_input("%s (y/N) " % msg).lower() == 'y' else False
+        answer = True if input("%s (y/N) " % msg).lower() == 'y' else False
         if answer:
             path = get_path(version, latest, upgrades)
     else:
-        print "you already have the latest revision (%s)" % latest
+        print("you already have the latest revision (%s)" % latest)
 
     if version == latest or not answer:
         while True:
             msg = "do you want to up/down grade to a different revision? If so, which version?"
-            answer = raw_input("%s (rev no) " % msg)
+            answer = input("%s (rev no) " % msg)
             if not answer.isdigit():
-                print "please enter a version NUMBER"
+                print("please enter a version NUMBER")
                 continue
             answer = int(answer)
             path = get_path(version, answer, upgrades)
@@ -111,14 +112,14 @@ def main():
 #    version = get_version(cursor)
 #    path = ask_version(version)
     if not path:
-        print "no upgrade path found"
+        print("no upgrade path found")
         sys.exit(2)
 
     query = construct_sql(path)
-    print query
+    print(query)
 
     msg = "continue with upgrade?"
-    answer = True if raw_input("%s (y/N) " % msg).lower() == 'y' else False
+    answer = True if input("%s (y/N) " % msg).lower() == 'y' else False
     if answer:
         for statement in query.split("%SPLIT%"):
 #            print "Executing:"
@@ -126,9 +127,9 @@ def main():
             cursor.execute(statement)
 #            raw_input('Done... continue?')
         connection.commit()
-        print "Upgrade completed"
+        print("Upgrade completed")
     else:
-        print "upgrade cancelled"
+        print("upgrade cancelled")
         sys.exit(2)
 
 if __name__ == "__main__":

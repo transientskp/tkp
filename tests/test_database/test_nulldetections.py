@@ -40,7 +40,7 @@ class TestForcedFit(unittest.TestCase):
         timestamps = itertools.repeat(taustart_tss, len(freq_effs))
 
         for im, freq, ts in zip(im_params, itertools.cycle(freq_effs),
-                                itertools.chain.from_iterable(zip(*timestamps))):
+                                itertools.chain.from_iterable(list(zip(*timestamps)))):
             im['freq_eff'] = freq
             im['taustart_ts'] = ts
 
@@ -269,7 +269,7 @@ class TestForcedFit(unittest.TestCase):
 
 
         for im, freq, ts in zip(im_params, itertools.cycle(freq_effs),
-                                itertools.chain.from_iterable(zip(*timestamps))):
+                                itertools.chain.from_iterable(list(zip(*timestamps)))):
             im['freq_eff'] = freq
             im['taustart_ts'] = ts
 
@@ -356,7 +356,7 @@ class TestForcedFit(unittest.TestCase):
         timestamps = itertools.repeat(taustart_tss, len(freq_effs))
 
         for im, freq, ts in zip(im_params, itertools.cycle(freq_effs),
-                                itertools.chain.from_iterable(zip(*timestamps))):
+                                itertools.chain.from_iterable(list(zip(*timestamps)))):
             im['freq_eff'] = freq
             im['taustart_ts'] = ts
 

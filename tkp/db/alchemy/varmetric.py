@@ -7,6 +7,7 @@ from sqlalchemy import func, insert, delete
 from sqlalchemy.orm import aliased
 from tkp.db.model import Assocxtrsource, Extractedsource, Runningcatalog,\
     Image, Newsource, Varmetric
+from sqlalchemy.sql import text
 
 
 def _last_assoc_timestamps(session, dataset):
@@ -194,7 +195,7 @@ def del_duplicate_varmetric(session, dataset):
     """
     del_varmetrics = session.query(Varmetric.id).\
         filter(Varmetric.runcat_id == Runningcatalog.id,
-               Runningcatalog.dataset == dataset).subquery()
+               Runningcatalog.dataset == dataset)
     return delete(Varmetric).where(Varmetric.id.in_(del_varmetrics))
 
 
@@ -211,10 +212,15 @@ def store_varmetric(session, dataset):
               'sigma_rms_max', 'sigma_rms_min', 'lightcurve_max',
               'lightcurve_avg', 'lightcurve_median']
 
+    fields_txt = []          
+
+    for item in fields:
+        fields_txt.append(text(item))
+
     subquery = _combined(session=session, dataset=dataset)
 
     # only select the columns we are going to insert
-    filtered = session.query(*fields).select_from(subquery)
+    filtered = session.query(*fields_txt).select_from(subquery)
 
     return insert(Varmetric).from_select(names=fields, select=filtered)
 

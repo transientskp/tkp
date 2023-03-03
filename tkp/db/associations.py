@@ -171,7 +171,7 @@ WHERE image = %(imgid)s
     cursor = tkp.db.execute(query, qry_params, commit=True)
     n_deleted = cursor.rowcount
     if n_deleted:
-        logger.warn("Removed %s bad blind extractions for image %s"
+        logger.warning("Removed %s bad blind extractions for image %s"
                      "(centred outside extraction region)",
                      n_deleted, image_id)
     return n_deleted
@@ -278,7 +278,7 @@ SELECT CASE WHEN s.centre_ra - alpha(s.xtr_radius, s.centre_decl) < 0 OR
 """
     args = {'image_id': image_id}
     cursor = tkp.db.execute(meridian_wrap_query, args, commit=True)
-    results = zip(*cursor.fetchall())
+    results = list(zip(*cursor.fetchall()))
 
     if len(results) != 0:
         q_across = results[0]

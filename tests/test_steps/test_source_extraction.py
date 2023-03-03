@@ -1,6 +1,6 @@
 import unittest
 import numpy as np
-from ConfigParser import SafeConfigParser
+from configparser import ConfigParser
 from tkp.config import parse_to_dict
 from tkp.testutil.data import default_job_config
 from tkp.testutil.decorators import requires_data, requires_database
@@ -24,7 +24,7 @@ class TestSourceExtraction(unittest.TestCase):
     def setUpClass(cls):
         dataset = DataSet(data={'description': "Test source extraction step"})
         cls.dataset_id = dataset.id
-        config = SafeConfigParser()
+        config = ConfigParser()
         config.read(default_job_config)
         config = parse_to_dict(config)
         cls.parset = config['source_extraction']

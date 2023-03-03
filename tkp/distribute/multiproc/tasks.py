@@ -1,7 +1,7 @@
 """
 Parallisable tasks used with python multiprocessing
 """
-from __future__ import absolute_import
+
 import logging
 import tkp.steps
 from tkp.steps.misc import ImageMetadataForSort

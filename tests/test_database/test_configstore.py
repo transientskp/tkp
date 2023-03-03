@@ -29,10 +29,10 @@ class TestConfigStore(unittest.TestCase):
         """
         args1 = ('section1', 'key1', 'value1', self.dataset_id)
         num1 = execute(query1, args1).rowcount
-        self.assertEquals(num1, 1)
+        self.assertEqual(num1, 1)
         args2 = ('section2', 'key3', 'value3', self.dataset_id)
         num2 = execute(query1, args2).rowcount
-        self.assertEquals(num2, 1)
+        self.assertEqual(num2, 1)
 
     def test_bad_type(self):
         """
@@ -55,7 +55,7 @@ class TestConfigStore(unittest.TestCase):
     def test_config_fetch(self):
         store_config(config, self.dataset_id)
         fetched_config = fetch_config(self.dataset_id)
-        self.assertEquals(config, fetched_config)
+        self.assertEqual(config, fetched_config)
 
     def test_double_store(self):
         """

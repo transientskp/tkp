@@ -19,6 +19,7 @@
 # -- General configuration -----------------------------------------------------
 
 #Mock out numpy, scipy etc if building on readthedocs.org:
+
 import os
 on_rtd = os.environ.get('READTHEDOCS', None) == 'True'
 # if on_rtd:
@@ -32,7 +33,7 @@ from mock import  Mock as MagicMock
 # present. Therefore the install fails.
 # Instead, we hack the PYTHONPATH, and mock out modules that we can't use.
 rootdir = os.path.join(os.path.dirname(__file__), os.pardir)
-print "Rootdir", rootdir
+print("Rootdir", rootdir)
 sys.path.append(rootdir)
 
 class Mock(MagicMock):
@@ -93,15 +94,15 @@ rst_prolog = """
 master_doc = 'index'
 
 # General information about the project.
-project = u'LOFAR Transients Pipeline'
-author = u'LOFAR Transients Key Science Project'
+project = 'LOFAR Transients Pipeline'
+author = 'LOFAR Transients Key Science Project'
 import datetime
 start_year = 2006
 if datetime.datetime.now().year == start_year:
-    years = u"%d" % start_year
+    years = "%d" % start_year
 else:
-    years = u"%d—%d" % (start_year, datetime.datetime.now().year)
-copyright = u"%s, %s" % (years, author)
+    years = "%d—%d" % (start_year, datetime.datetime.now().year)
+copyright = "%s, %s" % (years, author)
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
@@ -241,7 +242,7 @@ htmlhelp_basename = 'TKP'
 # Grouping the document tree into LaTeX files. List of tuples
 # (source start file, target name, title, author, documentclass [howto/manual]).
 latex_documents = [
-  ('index', 'TKP.tex', u'TKP Documentation',
+  ('index', 'TKP.tex', 'TKP Documentation',
    author, 'manual'),
 ]
 
@@ -274,7 +275,7 @@ latex_documents = [
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
 man_pages = [
-    ('index', 'tkp', u'TKP Documentation',
+    ('index', 'tkp', 'TKP Documentation',
      [author], 1)
 ]
 

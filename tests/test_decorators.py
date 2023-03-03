@@ -1,3 +1,4 @@
+
 import os
 
 import unittest
@@ -7,10 +8,10 @@ from tkp.testutil.data import DATAPATH
 
 def debug_print(*args):
     return #Comment to switch on debug prints.
-    print "**",
+    print("**", end=' ')
     for a in args:
-        print a,
-    print "**"
+        print(a, end=' ')
+    print("**")
 
 
 testfile1 = '/bin/true'

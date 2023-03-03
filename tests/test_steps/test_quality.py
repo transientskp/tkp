@@ -1,5 +1,5 @@
 import unittest
-from ConfigParser import SafeConfigParser
+from configparser import ConfigParser
 import tkp.steps.quality
 import tkp.accessors
 from tkp.telescope.lofar.quality import reject_check_lofar
@@ -13,7 +13,7 @@ from tkp.config import parse_to_dict
 class TestQuality(unittest.TestCase):
     def setUp(self):
         self.accessor = tkp.accessors.open(fits_file)
-        config = SafeConfigParser()
+        config = ConfigParser()
         config.read(default_job_config)
         self.job_config = parse_to_dict(config)
 

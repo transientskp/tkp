@@ -6,7 +6,9 @@ lightcurves, detections, sources, etc -- that the pipeline must handle.
 """
 
 import logging
+
 logger = logging.getLogger(__name__)
+
 
 class ObjectContainer(list):
     """A container class for objects.
@@ -20,13 +22,14 @@ class ObjectContainer(list):
     You probably don't want to use this on it's own: see ExtractionResults,
     TargetList or source for more useful derived classes.
     """
+
     def closest_to(self, pix_x, pix_y):
         distance, target = False, False
         logger.debug("Beginning a search for objects near %.1f, %.1f: ",
-                      pix_x, pix_y)
+                     pix_x, pix_y)
         logger.debug("%s contains %d objects", str(self), len(self))
         for obj in self:
-            tmpdist = (pix_x - obj.x)**2 + (pix_y - obj.y)**2
+            tmpdist = (pix_x - obj.x) ** 2 + (pix_y - obj.y) ** 2
             logger.debug("Object at %f, %f", obj.x, obj.y)
             logger.debug("Has distance %f", tmpdist)
             if not distance:
@@ -41,7 +44,7 @@ class ObjectContainer(list):
         if not distance:
             return (target, distance)
         else:
-            return (target, distance**0.5)
+            return (target, distance ** 0.5)
 
     def __setslice__(self, section, items):
         """

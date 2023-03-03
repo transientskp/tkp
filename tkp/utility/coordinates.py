@@ -4,13 +4,13 @@
 General purpose astronomical coordinate handling routines.
 """
 
-import sys
-import math
-from astropy import wcs as pywcs
-import logging
 import datetime
-import pytz
+import logging
+import math
+import sys
 
+import pytz
+from astropy import wcs as pywcs
 from casacore.measures import measures
 from casacore.quanta import quantity
 
@@ -27,8 +27,9 @@ ITRF_Y = 461022.947639000
 ITRF_Z = 5064892.786
 
 # Useful constants
-SECONDS_IN_HOUR = 60**2
+SECONDS_IN_HOUR = 60 ** 2
 SECONDS_IN_DAY = 24 * SECONDS_IN_HOUR
+
 
 def julian_date(time=None, modified=False):
     """
@@ -48,8 +49,8 @@ def julian_date(time=None, modified=False):
         time = datetime.datetime.now(pytz.utc)
     mjdstart = datetime.datetime(1858, 11, 17, tzinfo=pytz.utc)
     mjd = time - mjdstart
-    mjd_daynumber = (mjd.days + mjd.seconds / (24. * 60**2) +
-                     mjd.microseconds / (24. * 60**2 * 1000**2))
+    mjd_daynumber = (mjd.days + mjd.seconds / (24. * 60 ** 2) +
+                     mjd.microseconds / (24. * 60 ** 2 * 1000 ** 2))
     if modified:
         return mjd_daynumber
     return 2400000.5 + mjd_daynumber
@@ -92,7 +93,7 @@ def mjds2lst(mjds, position=None):
         mjds (float):Modified Julian Date (in seconds)
         position (casacore measure): Position for LST calcs
     """
-    return mjd2lst(mjds/SECONDS_IN_DAY, position)
+    return mjd2lst(mjds / SECONDS_IN_DAY, position)
 
 
 def jd2lst(jd, position=None):
@@ -108,20 +109,20 @@ def jd2lst(jd, position=None):
     return mjd2lst(jd - 2400000.5, position)
 
 
-
 # NB: datetime is not sensitive to leap seconds.
 # However, leap seconds were first introduced in 1972.
 # So there are no leap seconds between the start of the
 # Modified Julian epoch and the start of the Unix epoch,
 # so this calculation is safe.
-#julian_epoch = datetime.datetime(1858, 11, 17)
-#unix_epoch = datetime.datetime(1970, 1, 1, 0, 0)
-#delta = unix_epoch - julian_epoch
-#deltaseconds = delta.total_seconds()
-#unix_epoch = 3506716800
+# julian_epoch = datetime.datetime(1858, 11, 17)
+# unix_epoch = datetime.datetime(1970, 1, 1, 0, 0)
+# delta = unix_epoch - julian_epoch
+# deltaseconds = delta.total_seconds()
+# unix_epoch = 3506716800
 
 # The above is equivalent to this:
 unix_epoch = quantity("1970-01-01T00:00:00").get_value('s')
+
 
 def julian2unix(timestamp):
     """
@@ -164,7 +165,7 @@ def sec2days(seconds):
 
 def sec2hms(seconds):
     """Seconds to hours, minutes, seconds"""
-    hours, seconds = divmod(seconds, 60**2)
+    hours, seconds = divmod(seconds, 60 ** 2)
     minutes, seconds = divmod(seconds, 60)
     return (int(hours), int(minutes), seconds)
 
@@ -275,7 +276,7 @@ def propagate_sign(val1, val2, val3):
         tuple: "+" or "-" string denoting sign,
             val1, val2, val3 (numeric) denoting absolute values of inputs.
     """
-    signs = [x<0 for x in (val1, val2, val3)]
+    signs = [x < 0 for x in (val1, val2, val3)]
     if signs.count(True) == 0:
         sign = "+"
     elif signs.count(True) == 1:
@@ -283,6 +284,7 @@ def propagate_sign(val1, val2, val3):
     else:
         raise ValueError("Too many negative coordinates")
     return sign, val1, val2, val3
+
 
 def hmstora(rah, ram, ras):
     """Convert RA in hours, minutes, seconds format to decimal
@@ -318,7 +320,9 @@ def dmstodec(decd, decm, decs):
     if abs(dec) > 90:
         raise ValueError("coordinates out of range")
     return dec
-
+    
+def cmp(a, b):
+    return (a > b) - (a < b) 
 
 def angsep(ra1, dec1, ra2, dec2):
     """Find the angular separation of two sources, in arcseconds,
@@ -335,7 +339,8 @@ def angsep(ra1, dec1, ra2, dec2):
 
     b = (math.pi / 2) - math.radians(dec1)
     c = (math.pi / 2) - math.radians(dec2)
-    temp = (math.cos(b) * math.cos(c)) + (math.sin(b) * math.sin(c) * math.cos(math.radians(ra1 - ra2)))
+    temp = (math.cos(b) * math.cos(c)) + (
+    math.sin(b) * math.sin(c) * math.cos(math.radians(ra1 - ra2)))
 
     # Truncate the value of temp at +- 1: it makes no sense to do math.acos()
     # of a value outside this range, but occasionally we might get one due to
@@ -388,8 +393,9 @@ def alpha(l, m, alpha0, delta0):
     alpha -- RA in decimal degrees
     """
     return (alpha0 + (math.degrees(math.atan2(l, (
-        (math.sqrt(1 - (l*l) - (m*m)) * math.cos(math.radians(delta0))) -
+        (math.sqrt(1 - (l * l) - (m * m)) * math.cos(math.radians(delta0))) -
         (m * math.sin(math.radians(delta0))))))))
+
 
 def alpha_inflate(theta, decl):
     """Compute the ra expansion for a given theta at a given declination
@@ -407,7 +413,11 @@ def alpha_inflate(theta, decl):
     if abs(decl) + theta > 89.9:
         return 180.0
     else:
-        return math.degrees(abs(math.atan(math.sin(math.radians(theta)) / math.sqrt(abs(math.cos(math.radians(decl - theta)) * math.cos(math.radians(decl + theta)))))))
+        return math.degrees(abs(math.atan(
+            math.sin(math.radians(theta)) / math.sqrt(abs(
+                math.cos(math.radians(decl - theta)) * math.cos(
+                    math.radians(decl + theta)))))))
+
 
 # Find the RA of a point in a radio image, given l,m and field centre
 def delta(l, m, delta0):
@@ -421,7 +431,7 @@ def delta(l, m, delta0):
     delta -- Dec in decimal degrees
     """
     return math.degrees(math.asin(m * math.cos(math.radians(delta0)) +
-                                  (math.sqrt(1 - (l*l) - (m*m)) *
+                                  (math.sqrt(1 - (l * l) - (m * m)) *
                                    math.sin(math.radians(delta0)))))
 
 
@@ -455,8 +465,7 @@ def m(ra, dec, cra, cdec, incr):
     """
     return ((math.sin(math.radians(dec)) * math.cos(math.radians(cdec))) -
             (math.cos(math.radians(dec)) * math.sin(math.radians(cdec)) *
-             math.cos(math.radians(ra-cra)))) / math.radians(incr)
-
+             math.cos(math.radians(ra - cra)))) / math.radians(incr)
 
 
 def lm_to_radec(ra0, dec0, l, m):
@@ -486,10 +495,10 @@ def lm_to_radec(ra0, dec0, l, m):
     else:
         ra = math.atan2((1e-10), (cosd0 - dm * sind0)) + ra0
 
-     # Calculate RA,Dec from l,m and phase center.  Note: As done in
-     # Meqtrees, which seems to differ from l, m functions above.  Meqtrees
-     # equation may have problems, judging from my difficulty fitting a
-     # fringe to L4086 data.  Pandey's equation is now used in radec_to_lmn
+        # Calculate RA,Dec from l,m and phase center.  Note: As done in
+        # Meqtrees, which seems to differ from l, m functions above.  Meqtrees
+        # equation may have problems, judging from my difficulty fitting a
+        # fringe to L4086 data.  Pandey's equation is now used in radec_to_lmn
 
     return (ra, dec)
 
@@ -503,7 +512,7 @@ def radec_to_lmn(ra0, dec0, ra, dec):
              math.cos(dec) * math.sin(dec0) * math.cos(ra - ra0))
     else:
         m = 0
-    n = math.sqrt(1 - l**2 - m**2)
+    n = math.sqrt(1 - l ** 2 - m ** 2)
     return (l, m, n)
 
 
@@ -524,7 +533,7 @@ def eq_to_gal(ra, dec):
         dm.direction("J200", "%fdeg" % ra, "%fdeg" % dec),
         "GALACTIC"
     )
-    lon_l = math.degrees(result['m0']['value']) % 360 # 0 < ra < 360
+    lon_l = math.degrees(result['m0']['value']) % 360  # 0 < ra < 360
     lat_b = math.degrees(result['m1']['value'])
 
     return lon_l, lat_b
@@ -547,7 +556,7 @@ def gal_to_eq(lon_l, lat_b):
         dm.direction("GALACTIC", "%fdeg" % lon_l, "%fdeg" % lat_b),
         "J2000"
     )
-    ra = math.degrees(result['m0']['value']) % 360 # 0 < ra < 360
+    ra = math.degrees(result['m0']['value']) % 360  # 0 < ra < 360
     dec = math.degrees(result['m1']['value'])
 
     return ra, dec
@@ -558,9 +567,10 @@ def eq_to_cart(ra, dec):
 
         ra, dec should be in degrees.
     """
-    return (math.cos(math.radians(dec)) * math.cos(math.radians(ra)),  # Cartesian x
-            math.cos(math.radians(dec)) * math.sin(math.radians(ra)),  # Cartesian y
-            math.sin(math.radians(dec)))  # Cartesian z
+    return (
+    math.cos(math.radians(dec)) * math.cos(math.radians(ra)),  # Cartesian x
+    math.cos(math.radians(dec)) * math.sin(math.radians(ra)),  # Cartesian y
+    math.sin(math.radians(dec)))  # Cartesian z
 
 
 class CoordSystem(object):
@@ -579,7 +589,7 @@ def coordsystem(name):
         'b1950': CoordSystem.FK4,
         'fk4': CoordSystem.FK4,
         CoordSystem.FK4.lower(): CoordSystem.FK4
-        }
+    }
     return mappings[name.lower()]
 
 
@@ -608,7 +618,7 @@ def convert_coordsystem(ra, dec, insys, outsys):
         outsys
     )
 
-    ra = math.degrees(result['m0']['value']) % 360 # 0 < ra < 360
+    ra = math.degrees(result['m0']['value']) % 360  # 0 < ra < 360
     dec = math.degrees(result['m1']['value'])
 
     return ra, dec
@@ -642,14 +652,15 @@ class WCS(object):
             # the North Celestial Pole. We set the reference direction to
             # infintesimally less than 90 degrees to avoid any ambiguity. See
             # discussion at #4599.
-            if attrname == "crval" and (value[1] == 90 or value[1] == math.pi/2):
+            if attrname == "crval" and (
+                    value[1] == 90 or value[1] == math.pi / 2):
                 value = (value[0], value[1] * (1 - sys.float_info.epsilon))
             self.wcs.wcs.__setattr__(attrname, value)
         else:
             super(WCS, self).__setattr__(attrname, value)
 
     def __getattr__(self, attrname):
-        if attrname in  self.WCS_ATTRS:
+        if attrname in self.WCS_ATTRS:
             return getattr(self.wcs.wcs, attrname)
         else:
             super(WCS, self).__getattr__(attrname)

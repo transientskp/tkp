@@ -2,11 +2,14 @@
 This module contain utilities for the source finding routines
 """
 
-import numpy
 import math
+
+import numpy
 import scipy.integrate
+
 from tkp.sourcefinder.gaussian import gaussian
 from tkp.utility import coordinates
+
 
 def generate_subthresholds(min_value, max_value, num_thresholds):
     """
@@ -21,9 +24,9 @@ def generate_subthresholds(min_value, max_value, num_thresholds):
     subthrrange = numpy.logspace(
         0.0,
         numpy.log(max_value + 1 - min_value),
-        num=num_thresholds+1, # first value == min_value
+        num=num_thresholds + 1,  # first value == min_value
         base=numpy.e,
-        endpoint=False # do not include max_value
+        endpoint=False  # do not include max_value
     )[1:]
     subthrrange += (min_value - 1)
     return subthrrange
@@ -68,9 +71,9 @@ def circular_mask(xdim, ydim, radius):
     Returns a numpy array of shape (xdim, ydim). All points with radius of
     the centre are set to 0; outside that region, they are set to 1.
     """
-    centre_x, centre_y = (xdim-1)/2.0, (ydim-1)/2.0
-    x, y = numpy.ogrid[-centre_x:xdim-centre_x, -centre_y:ydim-centre_y]
-    return x*x + y*y >= radius*radius
+    centre_x, centre_y = (xdim - 1) / 2.0, (ydim - 1) / 2.0
+    x, y = numpy.ogrid[-centre_x:xdim - centre_x, -centre_y:ydim - centre_y]
+    return x * x + y * y >= radius * radius
 
 
 def generate_result_maps(data, sourcelist):
@@ -80,7 +83,7 @@ def generate_result_maps(data, sourcelist):
     showing the sources themselves and the other the residual after the
     sources have been removed from the input data.
     """
-    residual_map = numpy.array(data) # array constructor copies by default
+    residual_map = numpy.array(data)  # array constructor copies by default
     gaussian_map = numpy.zeros(residual_map.shape)
     for src in sourcelist:
         # Include everything with 6 times the std deviation along the major
@@ -88,9 +91,11 @@ def generate_result_maps(data, sourcelist):
         box_size = 6 * src.smaj.value / math.sqrt(2 * math.log(2))
 
         lower_bound_x = max(0, int(src.x.value - 1 - box_size))
-        upper_bound_x = min(residual_map.shape[0], int(src.x.value - 1 + box_size))
+        upper_bound_x = min(residual_map.shape[0],
+                            int(src.x.value - 1 + box_size))
         lower_bound_y = max(0, int(src.y.value - 1 - box_size))
-        upper_bound_y = min(residual_map.shape[1], int(src.y.value - 1 + box_size))
+        upper_bound_y = min(residual_map.shape[1],
+                            int(src.y.value - 1 + box_size))
 
         local_gaussian = gaussian(
             src.peak.value,
@@ -100,12 +105,16 @@ def generate_result_maps(data, sourcelist):
             src.smin.value,
             src.theta.value
         )(
-            numpy.indices(residual_map.shape)[0,lower_bound_x:upper_bound_x,lower_bound_y:upper_bound_y],
-            numpy.indices(residual_map.shape)[1,lower_bound_x:upper_bound_x,lower_bound_y:upper_bound_y]
+            numpy.indices(residual_map.shape)[0, lower_bound_x:upper_bound_x,
+            lower_bound_y:upper_bound_y],
+            numpy.indices(residual_map.shape)[1, lower_bound_x:upper_bound_x,
+            lower_bound_y:upper_bound_y]
         )
 
-        gaussian_map[lower_bound_x:upper_bound_x, lower_bound_y:upper_bound_y] += local_gaussian
-        residual_map[lower_bound_x:upper_bound_x, lower_bound_y:upper_bound_y] -= local_gaussian
+        gaussian_map[lower_bound_x:upper_bound_x,
+        lower_bound_y:upper_bound_y] += local_gaussian
+        residual_map[lower_bound_x:upper_bound_x,
+        lower_bound_y:upper_bound_y] -= local_gaussian
 
     return gaussian_map, residual_map
 
@@ -165,12 +174,13 @@ def fudge_max_pix(semimajor, semiminor, theta):
     sin_theta = numpy.sin(theta)
 
     def landscape(y, x):
-        up = math.pow(((cos_theta * x + sin_theta * y) / semiminor ), 2)
-        down = math.pow(((cos_theta * y - sin_theta * x) / semimajor ), 2)
-        return numpy.exp(log20 * ( up + down ))
+        up = math.pow(((cos_theta * x + sin_theta * y) / semiminor), 2)
+        down = math.pow(((cos_theta * y - sin_theta * x) / semimajor), 2)
+        return numpy.exp(log20 * (up + down))
 
     (correction, abserr) = scipy.integrate.dblquad(landscape, -0.5, 0.5,
-        lambda ymin: -0.5, lambda ymax: 0.5)
+                                                   lambda ymin: -0.5,
+                                                   lambda ymax: 0.5)
 
     return correction
 
@@ -203,12 +213,17 @@ def maximum_pixel_method_variance(semimajor, semiminor, theta):
 
     def landscape(y, x):
         return numpy.exp(2.0 * log20 *
-                  ( math.pow(((cos_theta * x + sin_theta * y) / semiminor), 2) +
-                    math.pow(((cos_theta * y - sin_theta * x) / semimajor), 2)
-                  )
-        )
+                         (
+                         math.pow(((cos_theta * x + sin_theta * y) / semiminor),
+                                  2) +
+                         math.pow(((cos_theta * y - sin_theta * x) / semimajor),
+                                  2)
+                         )
+                         )
 
-    (result, abserr) = scipy.integrate.dblquad(landscape, -0.5, 0.5, lambda ymin: -0.5, lambda ymax: 0.5)
+    (result, abserr) = scipy.integrate.dblquad(landscape, -0.5, 0.5,
+                                               lambda ymin: -0.5,
+                                               lambda ymax: 0.5)
     variance = result - math.pow(fudge_max_pix(semimajor, semiminor, theta), 2)
 
     return variance

@@ -5,7 +5,7 @@ table. This can be useful to make your data processable by the TraP pipeline.
 
 import os.path
 import argparse
-from ConfigParser import SafeConfigParser
+from configparser import ConfigParser
 from tkp.config import parse_to_dict
 import astropy.io.fits as pyfits
 from casacore.tables import table as casacore_table
@@ -42,7 +42,7 @@ parset_fields = {
 }
 
 extra_doc = " Properties which can be overwritten or set in the parset file are: " + \
-    ", ".join(parset_fields.keys())
+    ", ".join(list(parset_fields.keys()))
 
 def parse_arguments():
     parser = argparse.ArgumentParser(description=__doc__ + extra_doc)
@@ -54,7 +54,7 @@ def parse_arguments():
                         'set/overwrite tau_time only.)')
     parsed = parser.parse_args()
     parsetfile = os.path.expanduser(parsed.parsetfile)
-    targetfiles = map(os.path.expanduser, parsed.targetfile)
+    targetfiles = list(map(os.path.expanduser, parsed.targetfile))
     overwrite = parsed.over
     return parsetfile, targetfiles, overwrite
 
@@ -63,9 +63,9 @@ def modify_fits_headers(parset, fits_file, overwrite):
     hdu = 0 # Header Data Unit, usually 0
     fits_file = pyfits.open(fits_file, mode='update')
     header = fits_file[0].header
-    already_present = header.keys()
-    for parset_field, (type_, fits_field) in parset_fields.items():
-        if parset.has_key(parset_field):
+    already_present = list(header.keys())
+    for parset_field, (type_, fits_field) in list(parset_fields.items()):
+        if parset_field in parset:
             if (fits_field not in already_present) or overwrite:
                 value = parset[parset_field]
                 logger.info("setting %s (%s) to %s" % (parset_field, fits_field, value))
@@ -81,7 +81,7 @@ def modify_lofarcasa_tau_time(parset, casa_file):
     origin_location = table.getkeyword("ATTRGROUPS")['LOFAR_ORIGIN']
     origin_table = casacore_table(origin_location, ack=False, readonly=False)
 
-    for parset_field, value in parset.items():
+    for parset_field, value in list(parset.items()):
         if parset_field == 'tau_time':
             tau_time = value
             logger.info("setting tau_time to %s" % (tau_time))
@@ -97,7 +97,7 @@ def modify_lofarcasa_tau_time(parset, casa_file):
 def main():
     logging.basicConfig(level=logging.DEBUG)
     parset_file, target_files, overwrite = parse_arguments()
-    c = SafeConfigParser()
+    c = ConfigParser()
     c.read(parset_file)
     new_hdr_entries = parse_to_dict(c)['inject']
 
@@ -105,7 +105,7 @@ def main():
         #Normally accessors.open checks this, but we're going straight 
         #to detect here because we don't want to actually open it:
         if not (os.path.isfile(target_file) or os.path.isdir(target_file)):
-            logger.warn("File not found: %s (check path is correct?)"
+            logger.warning("File not found: %s (check path is correct?)"
                         % target_file)
             continue
         logger.info("injecting data into %s" % target_file)

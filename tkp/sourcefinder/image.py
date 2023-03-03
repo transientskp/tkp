@@ -3,34 +3,46 @@ Some generic utility routines for number handling and
 calculating (specific) variances
 """
 
-import logging
 import itertools
+import logging
+
 import numpy
+
+from tkp.sourcefinder import extract
+from tkp.sourcefinder import stats
+from tkp.sourcefinder import utils
 from tkp.utility import containers
 from tkp.utility.memoize import Memoize
-from tkp.sourcefinder import utils
-from tkp.sourcefinder import stats
-from tkp.sourcefinder import extract
+
+import time
+import dask.array as da
+from scipy.interpolate import interp1d
+import psutil
+from multiprocessing import Pool
+from functools import partial
+
 try:
     import ndimage
 except ImportError:
     from scipy import ndimage
-
+    
+def gather(*args):
+    return list(args)
 
 logger = logging.getLogger(__name__)
 
 #
 # Hard-coded configuration parameters; not user settable.
 #
-INTERPOLATE_ORDER = 1   # Spline order for grid interpolation
-MEDIAN_FILTER = 0       # If non-zero, apply a median filter of size
-                        # MEDIAN_FILTER to the background and RMS grids prior
-                        # to interpolating.
-MF_THRESHOLD = 0        # If MEDIAN_FILTER is non-zero, only use the filtered
-                        # grid when the (absolute) difference between the raw
-                        # and filtered grids is larger than MF_THRESHOLD.
-DEBLEND_MINCONT = 0.005 # Min. fraction of island flux in deblended subisland
-STRUCTURING_ELEMENT = [[0,1,0], [1,1,1], [0,1,0]] # Island connectiivty
+INTERPOLATE_ORDER = 1
+MEDIAN_FILTER = 0  # If non-zero, apply a median filter of size
+# MEDIAN_FILTER to the background and RMS grids prior
+# to interpolating.
+MF_THRESHOLD = 0  # If MEDIAN_FILTER is non-zero, only use the filtered
+# grid when the (absolute) difference between the raw
+# and filtered grids is larger than MF_THRESHOLD.
+DEBLEND_MINCONT = 0.005  # Min. fraction of island flux in deblended subisland
+STRUCTURING_ELEMENT = [[0, 1, 0], [1, 1, 1], [0, 1, 0]]  # Island connectiivty
 
 class ImageData(object):
     """Encapsulates an image in terms of a numpy array + meta/headerdata.
@@ -41,7 +53,7 @@ class ImageData(object):
 
     def __init__(self, data, beam, wcs, margin=0, radius=0, back_size_x=32,
                  back_size_y=32, residuals=True
-    ):
+                 ):
         """Sets up an ImageData object.
 
         *Args:*
@@ -57,20 +69,26 @@ class ImageData(object):
         # Probably not (memory overhead, in particular for data),
         # but then the user shouldn't change them outside ImageData in the
         # mean time
-        self.rawdata = data   # a 2D numpy array
-        self.wcs = wcs   # a utility.coordinates.wcs instance
-        self.beam = beam   # tuple of (semimaj, semimin, theta)
+        self.rawdata = data  # a 2D numpy array
+        self.wcs = wcs  # a utility.coordinates.wcs instance
+        self.beam = beam  # tuple of (semimaj, semimin, theta)
+        # These three quantities are only dependent on the beam, so should be calculated
+        # once the beam is known and not for each source separately.
+        self.fudge_max_pix_factor = utils.fudge_max_pix(beam[0], beam[1], beam[2])
+        self.max_pix_variance_factor = utils.maximum_pixel_method_variance(
+                           beam[0], beam[1], beam[2])
+        self.beamsize = utils.calculate_beamsize(beam[0], beam[1])
+        self.correlation_lengths = utils.calculate_correlation_lengths(beam[0], beam[1])
         self.clip = {}
         self.labels = {}
         self.freq_low = 1
         self.freq_high = 1
 
         self.back_size_x = back_size_x
-        self.back_size_y= back_size_y
+        self.back_size_y = back_size_y
         self.margin = margin
         self.radius = radius
         self.residuals = residuals
-
 
     ###########################################################################
     #                                                                         #
@@ -90,6 +108,7 @@ class ImageData(object):
     def _grids(self):
         """Gridded RMS and background data for interpolating"""
         return self.__grids()
+
     grids = property(fget=_grids, fdel=_grids.delete)
 
     @Memoize
@@ -102,8 +121,8 @@ class ImageData(object):
 
     def _set_backmap(self, bgmap):
         self._user_backmap = bgmap
-        del(self.backmap)
-        del(self.data_bgsubbed)
+        del (self.backmap)
+        del (self.data_bgsubbed)
 
     backmap = property(fget=_backmap, fdel=_backmap.delete, fset=_set_backmap)
 
@@ -117,7 +136,7 @@ class ImageData(object):
 
     def _set_rm(self, noisemap):
         self._user_noisemap = noisemap
-        del(self.rmsmap)
+        del (self.rmsmap)
 
     rmsmap = property(fget=_get_rm, fdel=_get_rm.delete, fset=_set_rm)
 
@@ -141,14 +160,16 @@ class ImageData(object):
             mask = numpy.logical_or(mask, radius_mask)
         mask = numpy.logical_or(mask, numpy.isnan(self.rawdata))
         return numpy.ma.array(self.rawdata, mask=mask)
+
     data = property(fget=_get_data, fdel=_get_data.delete)
 
     @Memoize
     def _get_data_bgsubbed(self):
         """Background subtracted masked image data"""
         return self.data - self.backmap
+
     data_bgsubbed = property(fget=_get_data_bgsubbed,
-        fdel=_get_data_bgsubbed.delete)
+                             fdel=_get_data_bgsubbed.delete)
 
     @property
     def xdim(self):
@@ -180,16 +201,15 @@ class ImageData(object):
         """
         self.labels.clear()
         self.clip.clear()
-        del(self.backmap)
-        del(self.rmsmap)
-        del(self.data)
-        del(self.data_bgsubbed)
-        del(self.grids)
+        del (self.backmap)
+        del (self.rmsmap)
+        del (self.data)
+        del (self.data_bgsubbed)
+        del (self.grids)
         if hasattr(self, 'residuals_from_gauss_fitting'):
-            del(self.residuals_from_gauss_fitting)
+            del (self.residuals_from_gauss_fitting)
         if hasattr(self, 'residuals_from_deblending'):
-            del(self.residuals_from_deblending)
-
+            del (self.residuals_from_deblending)
 
     ###########################################################################
     #                                                                         #
@@ -211,37 +231,58 @@ class ImageData(object):
         ImageData.rmsmap or ImageData.fdrmap is first accessed.
         """
 
-        # We set up a dedicated logging subchannel, as the sigmaclip loop
-        # logging is very chatty:
-        sigmaclip_logger = logging.getLogger(__name__+'.sigmaclip')
-
         # there's no point in working with the whole of the data array
         # if it's masked.
         useful_chunk = ndimage.find_objects(numpy.where(self.data.mask, 0, 1))
-        assert(len(useful_chunk) == 1)
-        useful_data = self.data[useful_chunk[0]]
-        my_xdim, my_ydim = useful_data.shape
+        assert (len(useful_chunk) == 1)
+        y_dim = self.data[useful_chunk[0]].data.shape[1]
+        useful_data = da.from_array(self.data[useful_chunk[0]].data, chunks=(self.back_size_x, y_dim))
 
-        rmsgrid, bggrid = [], []
-        for startx in xrange(0, my_xdim, self.back_size_x):
-            rmsrow, bgrow = [], []
-            for starty in xrange(0, my_ydim, self.back_size_y):
-                chunk = useful_data[
-                    startx:startx + self.back_size_x,
-                    starty:starty + self.back_size_y
-                ].ravel()
-                if not chunk.any():
-                    rmsrow.append(False)
-                    bgrow.append(False)
-                    continue
+        mode_and_rms = useful_data.map_blocks(ImageData.compute_mode_and_rms_of_row_of_subimages,
+                                              y_dim,  self.back_size_y,
+                                              dtype=numpy.complex64,
+                                              chunks=(1, 1)).compute()
+
+        # See also similar comment below. This solution was chosen because map_blocks does not seem to be able to
+        # output multiple arrays. One can however output to a complex array and take real and imaginary
+        # parts afterwards. Not a very clean solution, I admit.
+        mode_grid = mode_and_rms.real
+        rms_grid = mode_and_rms.imag
+
+        rms_grid = numpy.ma.array(
+            rms_grid, mask=numpy.where(rms_grid == 0, 1, 0))
+        # A rms of zero is not physical, since any instrument has system noise, so I use that as criterion
+        # to mask values. A zero background mode is physically possible, but also highly unlikely, given the way
+        # we determine it.
+        mode_grid = numpy.ma.array(
+            mode_grid, mask=numpy.where(rms_grid == 0, 1, 0))
+
+        return { 'bg': mode_grid, 'rms': rms_grid,}
+
+    @staticmethod
+    def compute_mode_and_rms_of_row_of_subimages(row_of_subimages, y_dim, back_size_y):
+
+        # We set up a dedicated logging subchannel, as the sigmaclip loop
+        # logging is very chatty:
+        sigmaclip_logger = logging.getLogger(__name__ + '.sigmaclip')
+        row_of_complex_values = numpy.empty((0), numpy.complex64)
+
+        for starty in range(0, y_dim, back_size_y):
+            chunk = row_of_subimages[:, starty:starty+back_size_y]
+            if not chunk.any():
+                # In the original code we had rmsrow.append(False), but now we work with an array instead of a list,
+                # so I'll set these values to zero instead and use these zeroes to create the mask.
+                rms = 0
+                mode = 0
+            else:
                 chunk, sigma, median, num_clip_its = stats.sigma_clip(
-                    chunk, self.beam)
+                    chunk.ravel())
                 if len(chunk) == 0 or not chunk.any():
-                    rmsrow.append(False)
-                    bgrow.append(False)
+                    rms = 0
+                    mode = 0
                 else:
                     mean = numpy.mean(chunk)
-                    rmsrow.append(sigma)
+                    rms = sigma
                     # In the case of a crowded field, the distribution will be
                     # skewed and we take the median as the background level.
                     # Otherwise, we take 2.5 * median - 1.5 * mean. This is the
@@ -252,21 +293,18 @@ class ImageData(object):
                     if numpy.fabs(mean - median) / sigma >= 0.3:
                         sigmaclip_logger.debug(
                             'bg skewed, %f clipping iterations', num_clip_its)
-                        bgrow.append(median)
+                        mode=median
                     else:
                         sigmaclip_logger.debug(
-                            'bg not skewed, %f clipping iterations', num_clip_its)
-                        bgrow.append(2.5 * median - 1.5 * mean)
-
-            rmsgrid.append(rmsrow)
-            bggrid.append(bgrow)
-
-        rmsgrid = numpy.ma.array(
-            rmsgrid, mask=numpy.where(numpy.array(rmsgrid) == False, 1, 0))
-        bggrid = numpy.ma.array(
-            bggrid, mask=numpy.where(numpy.array(bggrid) == False, 1, 0))
-
-        return {'rms': rmsgrid, 'bg': bggrid}
+                            'bg not skewed, %f clipping iterations',
+                            num_clip_its)
+                        mode=2.5 * median - 1.5 * mean
+            row_of_complex_values = numpy.append(row_of_complex_values,  numpy.array(mode + 1j*rms))[None]
+        # This solution is a bit dirty. I would like dask.array.map_blocks to output two arrays,
+        # but presently that module does not seem to provide for that. But I can, however, output to a
+        # complex array and later take the real part of that for the mode and the imaginary part
+        # for the rms.
+        return row_of_complex_values
 
     def _interpolate(self, grid, roundup=False):
         """
@@ -293,7 +331,7 @@ class ImageData(object):
         # there's no point in working with the whole of the data array if it's
         # masked.
         useful_chunk = ndimage.find_objects(numpy.where(self.data.mask, 0, 1))
-        assert(len(useful_chunk) == 1)
+        assert (len(useful_chunk) == 1)
         my_xdim, my_ydim = self.data[useful_chunk[0]].shape
 
         if MEDIAN_FILTER:
@@ -306,23 +344,48 @@ class ImageData(object):
                 grid = f_grid
 
         # Bicubic spline interpolation
-        xratio = float(my_xdim)/self.back_size_x
-        yratio = float(my_ydim)/self.back_size_y
-        # First arg: starting point. Second arg: ending point. Third arg:
-        # 1j * number of points. (Why is this complex? Sometimes, NumPy has an
-        # utterly baffling API...)
-        slicex = slice(-0.5, -0.5+xratio, 1j*my_xdim)
-        slicey = slice(-0.5, -0.5+yratio, 1j*my_ydim)
+        xratio = float(my_xdim) / self.back_size_x
+        yratio = float(my_ydim) / self.back_size_y
+
         my_map = numpy.ma.MaskedArray(numpy.zeros(self.data.shape),
-                                      mask = self.data.mask)
+                                      mask=self.data.mask)
 
         # Remove the MaskedArrayFutureWarning warning and keep old numpy < 1.11
         # behavior
         my_map.unshare_mask()
 
-        my_map[useful_chunk[0]] = ndimage.map_coordinates(
-            grid, numpy.mgrid[slicex, slicey],
-            mode='nearest', order=INTERPOLATE_ORDER)
+        # Inspired by https://stackoverflow.com/questions/13242382/resampling-a-numpy-array-representing-an-image
+        # Should be much faster than scipy.ndimage.map_coordinates.
+        # scipy.ndimage.zoom should also be an option for speedup, but zoom dit not let me produce the exact
+        # same output as map_coordinates. My bad.
+        # I checked, using fitsdiff, that it gives the exact same output as the original code
+        # up to and including --relative-tolerance=1e-15 for INTERPOLATE_ORDER=1.
+        # It was actually quite a hassle to get the same output and the fill_value is essential
+        # in interp1d. However, for some unit tests, grid.shape=(1,1) and then it will break
+        # with "ValueError: x and y arrays must have at least 2 entries". So in that case
+        # map_coordinates should be used.
+
+        if INTERPOLATE_ORDER==1 and grid.shape[0]>1 and grid.shape[1]>1:
+            x_initial = numpy.linspace(0., grid.shape[0]-1, grid.shape[0], endpoint=True)
+            y_initial = numpy.linspace(0., grid.shape[1]-1, grid.shape[1], endpoint=True)
+            x_sought = numpy.linspace(-0.5, -0.5 + xratio, my_xdim, endpoint=True)
+            y_sought = numpy.linspace(-0.5, -0.5 + yratio, my_ydim, endpoint=True)
+
+            primary_interpolation = interp1d(y_initial, grid, kind='slinear', assume_sorted=True,
+                                             axis=1, copy=False, bounds_error=False,
+                                             fill_value=(grid[:, 0], grid[:, -1]))
+            transposed = primary_interpolation(y_sought).T
+
+            perpendicular_interpolation = interp1d(x_initial, transposed, kind='slinear', assume_sorted=True,
+                                                   axis=1, copy=False, bounds_error=False,
+                                                   fill_value=(transposed[:, 0], transposed[:, -1]))
+            my_map[useful_chunk[0]] = perpendicular_interpolation(x_sought).T
+        else:
+            slicex = slice(-0.5, -0.5 + xratio, 1j * my_xdim)
+            slicey = slice(-0.5, -0.5 + yratio, 1j * my_ydim)
+            my_map[useful_chunk[0]] = ndimage.map_coordinates(
+               grid, numpy.mgrid[slicex, slicey],
+               mode='nearest', order=INTERPOLATE_ORDER)
 
         # If the input grid was entirely masked, then the output map must
         # also be masked: there's no useful data here. We don't search for
@@ -336,9 +399,9 @@ class ImageData(object):
             # can be trimmed off. No point doing this if the map is already
             # fully masked, though.
             my_map = numpy.ma.MaskedArray(
-                    data = numpy.where(
-                        my_map >= numpy.min(grid), my_map, numpy.min(grid)),
-                    mask = my_map.mask
+                data=numpy.where(
+                    my_map >= numpy.min(grid), my_map, numpy.min(grid)),
+                mask=my_map.mask
             )
         return my_map
 
@@ -378,11 +441,11 @@ class ImageData(object):
                 equal to the restoring beam
 
         Returns:
-             :class:`tkp.utility.containers.ExtractionResults`
+             :class:`sourcefinder.utility.containers.ExtractionResults`
         """
 
         if anl > det:
-            logger.warn(
+            logger.warning(
                 "Analysis threshold is higher than detection threshold"
             )
 
@@ -393,14 +456,14 @@ class ImageData(object):
             raise RuntimeError("Bad data: Image data is flat")
 
         if (type(bgmap).__name__ == 'ndarray' or
-            type(bgmap).__name__ == 'MaskedArray'):
+                    type(bgmap).__name__ == 'MaskedArray'):
             if bgmap.shape != self.backmap.shape:
                 raise IndexError("Background map has wrong shape")
             else:
                 self.backmap = bgmap
 
         if (type(noisemap).__name__ == 'ndarray' or
-            type(noisemap).__name__ == 'MaskedArray'):
+                    type(noisemap).__name__ == 'MaskedArray'):
             if noisemap.shape != self.rmsmap.shape:
                 raise IndexError("Noisemap has wrong shape")
             if noisemap.min() < 0:
@@ -409,7 +472,7 @@ class ImageData(object):
                 self.rmsmap = noisemap
 
         if labelled_data is not None and labelled_data.shape != self.data.shape:
-                raise ValueError("Labelled map is wrong shape")
+            raise ValueError("Labelled map is wrong shape")
 
         return self._pyse(
             det * self.rmsmap, anl * self.rmsmap, deblend_nthresh, force_beam,
@@ -438,7 +501,7 @@ class ImageData(object):
 
     def fd_extract(self, alpha, anl=None, noisemap=None,
                    bgmap=None, deblend_nthresh=0, force_beam=False
-    ):
+                   ):
         """False Detection Rate based source extraction.
         The FDR procedure guarantees that <FDR> < alpha.
 
@@ -449,8 +512,7 @@ class ImageData(object):
         # The correlation length in config.py is used not only for the
         # calculation of error bars with the Condon formulae, but also for
         # calculating the number of independent pixels.
-        corlengthlong, corlengthshort = utils.calculate_correlation_lengths(
-            self.beam[0], self.beam[1])
+        corlengthlong, corlengthshort = self.correlation_lengths
 
         C_n = (1.0 / numpy.arange(
             round(0.25 * numpy.pi * corlengthlong *
@@ -461,31 +523,32 @@ class ImageData(object):
         # noise values get very close or below zero. Use INTERPOLATE_ORDER=1
         # or the roundup option.
         if (type(bgmap).__name__ == 'ndarray' or
-            type(bgmap).__name__ == 'MaskedArray'):
+                    type(bgmap).__name__ == 'MaskedArray'):
             if bgmap.shape != self.backmap.shape:
                 raise IndexError("Background map has wrong shape")
             else:
                 self.backmap = bgmap
         if (type(noisemap).__name__ == 'ndarray' or
-            type(noisemap).__name__ == 'MaskedArray'):
+                    type(noisemap).__name__ == 'MaskedArray'):
             if noisemap.shape != self.rmsmap.shape:
                 raise IndexError("Noisemap has wrong shape")
-            if noisemap.min()<0:
+            if noisemap.min() < 0:
                 raise ValueError("RMS noise cannot be negative")
             else:
                 self.rmsmap = noisemap
 
-        normalized_data = self.data_bgsubbed/self.rmsmap
+        normalized_data = self.data_bgsubbed / self.rmsmap
 
         n1 = numpy.sqrt(2 * numpy.pi)
-        prob = numpy.sort(numpy.ravel(numpy.exp(-0.5 * normalized_data**2)/n1))
+        prob = numpy.sort(
+            numpy.ravel(numpy.exp(-0.5 * normalized_data ** 2) / n1))
         lengthprob = float(len(prob))
-        compare = (alpha / C_n) * numpy.arange(lengthprob+1)[1:] / lengthprob
+        compare = (alpha / C_n) * numpy.arange(lengthprob + 1)[1:] / lengthprob
         # Find the last undercrossing, see, e.g., fig. 9 in Miller et al., AJ
         # 122, 3492 (2001).  Searchsorted is not used because the array is not
         # sorted.
         try:
-            index = (numpy.where(prob-compare < 0.)[0]).max()
+            index = (numpy.where(prob - compare < 0.)[0]).max()
         except ValueError:
             # Everything below threshold
             return containers.ExtractionResults()
@@ -506,8 +569,8 @@ class ImageData(object):
 
         # numpix is the number of pixels to look around the target.
         # e.g. numpix = 1 means a total of 9 pixels, 1 in each direction.
-        return self.data_bgsubbed[y-numpix:y+numpix+1,
-                                  x-numpix:x+numpix+1].max()
+        return self.data_bgsubbed[y - numpix:y + numpix + 1,
+               x - numpix:x + numpix + 1].max()
 
     @staticmethod
     def box_slice_about_pixel(x, y, box_radius):
@@ -529,7 +592,7 @@ class ImageData(object):
         is set to ``position``, then the pixel coordinates are fixed
         in the fit.
 
-        Returns an instance of :class:`tkp.sourcefinder.extract.Detection`.
+        Returns an instance of :class:`sourcefinder.extract.Detection`.
         """
 
         logger.debug("Force-fitting pixel location ({},{})".format(x, y))
@@ -538,11 +601,11 @@ class ImageData(object):
         # If they are too high (positive), then indexing will fail
         # BUT, if they are negative, then we get wrap-around indexing
         # and the fit continues at the wrong position!
-        if (x < 0 or x >self.xdim
-            or y < 0 or y >self.ydim ):
+        if (x < 0 or x > self.xdim
+            or y < 0 or y > self.ydim):
             logger.warning("Dropping forced fit at ({},{}), "
-                           "pixel position outside image".format(x,y)
-            )
+                           "pixel position outside image".format(x, y)
+                           )
             return None
 
         # Next, check if any of the central pixels (in a 3x3 box about the
@@ -552,13 +615,13 @@ class ImageData(object):
         if self.data.mask[central_pixels_slice].any():
             logger.warning(
                 "Dropping forced fit at ({},{}), "
-                   "Masked pixel in central fitting region".format(x,y))
+                "Masked pixel in central fitting region".format(x, y))
             return None
 
         if ((
-                # Recent NumPy
-                hasattr(numpy.ma.core, "MaskedConstant") and
-                isinstance(self.rmsmap, numpy.ma.core.MaskedConstant)
+                    # Recent NumPy
+                        hasattr(numpy.ma.core, "MaskedConstant") and
+                        isinstance(self.rmsmap, numpy.ma.core.MaskedConstant)
             ) or (
                 # Old NumPy
                 numpy.ma.is_masked(self.rmsmap[int(x), int(y)])
@@ -566,24 +629,27 @@ class ImageData(object):
             logger.error("Background is masked: cannot fit")
             return None
 
-        chunk = ImageData.box_slice_about_pixel(x, y, boxsize/2.0)
+        chunk = ImageData.box_slice_about_pixel(x, y, boxsize / 2.0)
         if threshold is not None:
             # We'll mask out anything below threshold*self.rmsmap from the fit.
-            labels, num = self.labels.setdefault( #Dictionary mapping threshold -> islands map
+            labels, num = self.labels.setdefault(
+                # Dictionary mapping threshold -> islands map
                 threshold,
                 ndimage.label(
-                    self.clip.setdefault( #Dictionary mapping threshold -> mask
+                    self.clip.setdefault(
+                        # Dictionary mapping threshold -> mask
                         threshold,
                         numpy.where(
                             self.data_bgsubbed > threshold * self.rmsmap, 1, 0
-                            )
                         )
                     )
                 )
+            )
 
             mylabel = labels[int(x), int(y)]
             if mylabel == 0:  # 'Background'
-                raise ValueError("Fit region is below specified threshold, fit aborted.")
+                raise ValueError(
+                    "Fit region is below specified threshold, fit aborted.")
             mask = numpy.where(labels[chunk] == mylabel, 0, 1)
             fitme = numpy.ma.array(self.data_bgsubbed[chunk], mask=mask)
             if len(fitme.compressed()) < 1:
@@ -599,9 +665,9 @@ class ImageData(object):
 
         # set argument for fixed parameters based on input string
         if fixed == 'position':
-            fixed = {'xbar': boxsize/2.0, 'ybar': boxsize/2.0}
+            fixed = {'xbar': boxsize / 2.0, 'ybar': boxsize / 2.0}
         elif fixed == 'position+shape':
-            fixed = {'xbar': boxsize/2.0, 'ybar': boxsize/2.0,
+            fixed = {'xbar': boxsize / 2.0, 'ybar': boxsize / 2.0,
                      'semimajor': self.beam[0],
                      'semiminor': self.beam[1],
                      'theta': self.beam[2]}
@@ -617,11 +683,9 @@ class ImageData(object):
 
         try:
             measurement, residuals = extract.source_profile_and_errors(
-                fitme,
-                threshold_at_pixel,
-                self.rmsmap[int(x), int(y)],
-                self.beam,
-                fixed=fixed
+                fitme, threshold_at_pixel,self.rmsmap[int(x), int(y)],
+                self.beam, self.fudge_max_pix_factor, self.max_pix_variance_factor,
+                self.beamsize, self.correlation_lengths, fixed=fixed
             )
         except ValueError:
             # Fit failed to converge
@@ -630,13 +694,13 @@ class ImageData(object):
             return None
 
         try:
-            assert(abs(measurement['xbar']) < boxsize)
-            assert(abs(measurement['ybar']) < boxsize)
+            assert (abs(measurement['xbar']) < boxsize)
+            assert (abs(measurement['ybar']) < boxsize)
         except AssertionError:
-            logger.warn('Fit falls outside of box.')
+            logger.warning('Fit falls outside of box.')
 
-        measurement['xbar'] += x-boxsize/2.0
-        measurement['ybar'] += y-boxsize/2.0
+        measurement['xbar'] += x - boxsize / 2.0
+        measurement['ybar'] += y - boxsize / 2.0
         measurement.sig = (fitme / self.rmsmap[chunk]).max()
 
         return extract.Detection(measurement, self)
@@ -667,37 +731,37 @@ class ImageData(object):
         Returns:
             tuple: A list of successful fits.
                 If ``ids`` is None, returns a single list of
-                :class:`tkp.sourcefinder.extract.Detection` s.
+                :class:`sourcefinder.extract.Detection` s.
                 Otherwise, returns a tuple of two matched lists:
                 ([detections], [matching_ids]).
         """
 
         if ids is not None:
-            assert len(ids)==len(positions)
+            assert len(ids) == len(positions)
 
         successful_fits = []
         successful_ids = []
         for idx, posn in enumerate(positions):
             try:
                 x, y, = self.wcs.s2p((posn[0], posn[1]))
-            except RuntimeError, e:
+            except RuntimeError as e:
                 if (str(e).startswith("wcsp2s error: 8:") or
-                    str(e).startswith("wcsp2s error: 9:")):
+                        str(e).startswith("wcsp2s error: 9:")):
                     logger.warning("Input coordinates (%.2f, %.2f) invalid: ",
-                                    posn[0], posn[1])
+                                   posn[0], posn[1])
                 else:
                     raise
             else:
                 try:
                     fit_results = self.fit_to_point(x, y,
-                                                boxsize=boxsize,
-                                                threshold=threshold,
-                                                fixed=fixed)
+                                                    boxsize=boxsize,
+                                                    threshold=threshold,
+                                                    fixed=fixed)
                     if not fit_results:
                         # We were unable to get a good fit
                         continue
-                    if ( fit_results.ra.error == float('inf') or
-                          fit_results.dec.error == float('inf')):
+                    if (fit_results.ra.error == float('inf') or
+                                fit_results.dec.error == float('inf')):
                         logging.warning("position errors extend outside image")
                     else:
                         successful_fits.append(fit_results)
@@ -706,8 +770,8 @@ class ImageData(object):
 
                 except IndexError as e:
                     logger.warning("Input pixel coordinates (%.2f, %.2f) "
-                                    "could not be fit because: " + e.message,
-                                    posn[0], posn[1])
+                                   "could not be fit because: " + str(e),
+                                   posn[0], posn[1])
         if ids:
             return successful_fits, successful_ids
         return successful_fits
@@ -750,11 +814,11 @@ class ImageData(object):
         RMS_FILTER = 0.001
         clipped_data = numpy.ma.where(
             (self.data_bgsubbed > analysisthresholdmap) &
-            (self.rmsmap >= (RMS_FILTER * numpy.ma.median(self.rmsmap))),
+            (self.rmsmap >= (RMS_FILTER * numpy.ma.median(self.grids["rms"]))),
             1, 0
         ).filled(fill_value=0)
-        labelled_data, num_labels = ndimage.label(clipped_data, STRUCTURING_ELEMENT)
-
+        labelled_data, num_labels = ndimage.label(clipped_data,
+                                                  STRUCTURING_ELEMENT)
         labels_below_det_thr, labels_above_det_thr = [], []
         if num_labels > 0:
             # Select the labels of the islands above the analysis threshold
@@ -787,16 +851,20 @@ class ImageData(object):
                     labels_above_det_thr.append(i)
             # Set to zero all labelled islands that are below det_thr:
             labelled_data = numpy.where(
-                numpy.in1d(labelled_data.ravel(), labels_above_det_thr).reshape(labelled_data.shape),
+                numpy.in1d(labelled_data.ravel(), labels_above_det_thr).reshape(
+                    labelled_data.shape),
                 labelled_data, 0
             )
 
         return labels_above_det_thr, labelled_data
 
+    @staticmethod
+    def fit_islands(fudge_max_pix_factor, max_pix_variance_factor, beamsize, correlation_lengths, fixed, island):
+        return island.fit(fudge_max_pix_factor, max_pix_variance_factor, beamsize, correlation_lengths, fixed=fixed)
 
     def _pyse(
-        self, detectionthresholdmap, analysisthresholdmap,
-        deblend_nthresh, force_beam, labelled_data=None, labels=[]
+            self, detectionthresholdmap, analysisthresholdmap,
+            deblend_nthresh, force_beam, labelled_data=None, labels=[]
     ):
         """
         Run Python-based source extraction on this image.
@@ -828,6 +896,7 @@ class ImageData(object):
         by John Swinbank, available from TKP svn.
         """
         # Map our chunks onto a list of islands.
+
         island_list = []
         if labelled_data is None:
             labels, labelled_data = self.label_islands(
@@ -840,7 +909,7 @@ class ImageData(object):
         slices = ndimage.find_objects(labelled_data)
 
         for label in labels:
-            chunk = slices[label-1]
+            chunk = slices[label - 1]
             analysis_threshold = (analysisthresholdmap[chunk] /
                                   self.rmsmap[chunk]).max()
             # In selected_data only the pixels with the "correct"
@@ -879,8 +948,8 @@ class ImageData(object):
 
         # Deblend each of the islands to its consituent parts, if necessary
         if deblend_nthresh:
-            deblended_list = map(lambda x: x.deblend(), island_list)
-            #deblended_list = [x.deblend() for x in island_list]
+            deblended_list = [x.deblend() for x in island_list]
+            # deblended_list = [x.deblend() for x in island_list]
             island_list = list(utils.flatten(deblended_list))
 
         # Set up the fixed fit parameters if 'force beam' is on:
@@ -894,10 +963,14 @@ class ImageData(object):
         # Iterate over the list of islands and measure the source in each,
         # appending it to the results list.
         results = containers.ExtractionResults()
-        for island in island_list:
-            fit_results = island.fit(fixed=fixed)
-            if fit_results:
-                measurement, residual = fit_results
+        with Pool(psutil.cpu_count()) as p:
+            fit_islands_fixed = partial(ImageData.fit_islands, self.fudge_max_pix_factor,
+                                        self. max_pix_variance_factor, self.beamsize,
+                                        self.correlation_lengths, fixed)
+            fit_results = p.map(fit_islands_fixed, island_list)
+        for island, fit_result in zip(island_list, fit_results):
+            if fit_result:
+                measurement, residual = fit_result
             else:
                 # Failed to fit; drop this island and go to the next.
                 continue
@@ -905,9 +978,9 @@ class ImageData(object):
                 det = extract.Detection(measurement, self, chunk=island.chunk)
                 if (det.ra.error == float('inf') or
                         det.dec.error == float('inf')):
-                    logger.warn('Bad fit from blind extraction at pixel coords:'
-                                  '%f %f - measurement discarded'
-                                  '(increase fitting margin?)', det.x, det.y )
+                    logger.warning('Bad fit from blind extraction at pixel coords:'
+                                '%f %f - measurement discarded'
+                                '(increase fitting margin?)', det.x, det.y)
                 else:
                     results.append(det)
             except RuntimeError as e:
@@ -937,15 +1010,17 @@ class ImageData(object):
                         return False
                 # Point is ok
                 return True
+
             for point in (
-                (det.start_smaj_x, det.start_smaj_y),
-                (det.start_smin_x, det.start_smin_y),
-                (det.end_smaj_x, det.end_smaj_y),
-                (det.end_smin_x, det.end_smin_y)
+                    (det.start_smaj_x, det.start_smaj_y),
+                    (det.start_smin_x, det.start_smin_y),
+                    (det.end_smaj_x, det.end_smaj_y),
+                    (det.end_smin_x, det.end_smin_y)
             ):
                 if not check_point(*point):
-                    logger.debug("Unphysical source at pixel %f, %f" % (det.x.value, det.y.value))
+                    logger.debug("Unphysical source at pixel %f, %f" % (
+                    det.x.value, det.y.value))
                     return False
             return True
         # Filter will return a list; ensure we return an ExtractionResults.
-        return containers.ExtractionResults(filter(is_usable, results))
+        return containers.ExtractionResults(list(filter(is_usable, results)))

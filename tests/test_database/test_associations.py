@@ -1,6 +1,7 @@
+
 import math
 import logging
-from io import BytesIO
+from io import StringIO
 
 import unittest
 
@@ -70,7 +71,7 @@ class TestOne2One(unittest.TestCase):
         ORDER BY wm_ra
         """
         cursor = tkp.db.execute(query, (dataset.id,))
-        runcat = zip(*cursor.fetchall())
+        runcat = list(zip(*cursor.fetchall()))
         self.assertNotEqual(len(runcat), 0)
         dp = runcat[0]
         wm_ra = runcat[1]
@@ -111,7 +112,7 @@ class TestOne2One(unittest.TestCase):
         ORDER BY a.xtrsrc
         """
         cursor = tkp.db.execute(query, (dataset.id,))
-        assoc = zip(*cursor.fetchall())
+        assoc = list(zip(*cursor.fetchall()))
         self.assertNotEqual(len(assoc), 0)
         aruncat = assoc[0]
         axtrsrc = assoc[1]
@@ -126,7 +127,7 @@ class TestOne2One(unittest.TestCase):
         ORDER BY x.id
         """
         cursor = tkp.db.execute(query, (dataset.id,))
-        xtrsrcs = zip(*cursor.fetchall())
+        xtrsrcs = list(zip(*cursor.fetchall()))
         self.assertNotEqual(len(xtrsrcs), 0)
         xtrsrc = xtrsrcs[0]
         self.assertEqual(len(xtrsrc), n_images * n_steady_srcs)
@@ -149,7 +150,7 @@ class TestOne2One(unittest.TestCase):
            AND r.dataset = %s
         """
         cursor = tkp.db.execute(query, (dataset.id,))
-        fluxes = zip(*cursor.fetchall())
+        fluxes = list(zip(*cursor.fetchall()))
         self.assertNotEqual(len(fluxes), 0)
         f_datapoints = fluxes[2]
         avg_f_peak = fluxes[3]
@@ -719,7 +720,7 @@ class TestMeridianOne2One(unittest.TestCase):
                 ,x.ra
         """
         cursor = tkp.db.execute(query, {'dataset_id': dataset.id})
-        dr_result = zip(*cursor.fetchall())
+        dr_result = list(zip(*cursor.fetchall()))
         self.assertNotEqual(len(dr_result), 0)
         runcat = dr_result[0]
         xtrsrc = dr_result[1]
@@ -779,7 +780,7 @@ class TestOne2Many(unittest.TestCase):
          WHERE image = %s
         """
         self.database.cursor.execute(query, (imageid1,))
-        im1 = zip(*self.database.cursor.fetchall())
+        im1 = list(zip(*self.database.cursor.fetchall()))
         self.assertNotEqual(len(im1), 0)
         im1src1 = im1[0]
         self.assertEqual(len(im1src1), 1)
@@ -791,7 +792,7 @@ class TestOne2Many(unittest.TestCase):
          WHERE dataset = %s
         """
         self.database.cursor.execute(query, (dataset.id,))
-        rc1 = zip(*self.database.cursor.fetchall())
+        rc1 = list(zip(*self.database.cursor.fetchall()))
         self.assertNotEqual(len(rc1), 0)
         runcat1 = rc1[0]
         xtrsrc1 = rc1[1]
@@ -808,7 +809,7 @@ class TestOne2Many(unittest.TestCase):
            AND r.dataset = %s
         """
         self.database.cursor.execute(query, (dataset.id,))
-        assoc1 = zip(*self.database.cursor.fetchall())
+        assoc1 = list(zip(*self.database.cursor.fetchall()))
         self.assertNotEqual(len(assoc1), 0)
         aruncat1 = assoc1[0]
         axtrsrc1 = assoc1[1]
@@ -852,7 +853,7 @@ class TestOne2Many(unittest.TestCase):
         ORDER BY id
         """
         self.database.cursor.execute(query, (imageid2,))
-        im2 = zip(*self.database.cursor.fetchall())
+        im2 = list(zip(*self.database.cursor.fetchall()))
         self.assertNotEqual(len(im2), 0)
         im2src = im2[0]
         self.assertEqual(len(im2src), len(src))
@@ -868,7 +869,7 @@ class TestOne2Many(unittest.TestCase):
         ORDER BY r.id
         """
         self.database.cursor.execute(query, (dataset.id,))
-        rc2 = zip(*self.database.cursor.fetchall())
+        rc2 = list(zip(*self.database.cursor.fetchall()))
         self.assertNotEqual(len(rc2), 0)
         runcat2 = rc2[0]
         xtrsrc2 = rc2[1]
@@ -893,7 +894,7 @@ class TestOne2Many(unittest.TestCase):
                 ,a.runcat
         """
         self.database.cursor.execute(query, (dataset.id,))
-        assoc2 = zip(*self.database.cursor.fetchall())
+        assoc2 = list(zip(*self.database.cursor.fetchall()))
         self.assertNotEqual(len(assoc2), 0)
         aruncat2 = assoc2[0]
         axtrsrc2 = assoc2[1]
@@ -922,7 +923,7 @@ class TestOne2Many(unittest.TestCase):
                          )
         """
         self.database.cursor.execute(query, (dataset.id, imageid1))
-        count = zip(*self.database.cursor.fetchall())
+        count = list(zip(*self.database.cursor.fetchall()))
         self.assertEqual(count[0][0], 0)
 
 
@@ -979,7 +980,7 @@ class TestMany2One(unittest.TestCase):
         ORDER BY id
         """
         self.database.cursor.execute(query, (imageid1,))
-        im1 = zip(*self.database.cursor.fetchall())
+        im1 = list(zip(*self.database.cursor.fetchall()))
         self.assertNotEqual(len(im1), 0)
         im1src = im1[0]
         self.assertEqual(len(im1src), len(src))
@@ -1008,7 +1009,7 @@ class TestMany2One(unittest.TestCase):
          WHERE image = %s
         """
         self.database.cursor.execute(query, (imageid2,))
-        im2 = zip(*self.database.cursor.fetchall())
+        im2 = list(zip(*self.database.cursor.fetchall()))
         self.assertNotEqual(len(im2), 0)
         im2src = im2[0]
         self.assertEqual(len(im2src), 1)
@@ -1022,7 +1023,7 @@ class TestMany2One(unittest.TestCase):
         ORDER BY xtrsrc
         """
         self.database.cursor.execute(query, (dataset.id,))
-        rc2 = zip(*self.database.cursor.fetchall())
+        rc2 = list(zip(*self.database.cursor.fetchall()))
         self.assertNotEqual(len(rc2), 0)
         runcat2 = rc2[0]
         xtrsrc2 = rc2[1]
@@ -1049,7 +1050,7 @@ class TestMany2One(unittest.TestCase):
                 ,a.xtrsrc
         """
         self.database.cursor.execute(query, (dataset.id,))
-        assoc2 = zip(*self.database.cursor.fetchall())
+        assoc2 = list(zip(*self.database.cursor.fetchall()))
         self.assertNotEqual(len(assoc2), 0)
         aruncat2 = assoc2[0]
         rxtrsrc2 = assoc2[1]
@@ -1225,21 +1226,21 @@ class TestMany2Many(unittest.TestCase):
         """Print a nice summary of the results dictionaries
         (as ouput by insert_many_to_many_sources)"""
 
-        print "\nSources input:"
+        print("\nSources input:")
         for ex in sorted(extracted, key=lambda x:x['image']):
-            print ', '.join(kw + ':' + str(ex[kw]) for kw in
-                             ('image', 'id', 'ra', 'decl'))
+            print(', '.join(kw + ':' + str(ex[kw]) for kw in
+                             ('image', 'id', 'ra', 'decl')))
 
-        print "\nResulting associations"
+        print("\nResulting associations")
         for rc_entry in sorted(runcat, key=lambda x:x['id']):
-            print "Runcat:", rc_entry['id']
-            print ', '.join(kw + ':' + str(rc_entry[kw]) for kw in
+            print("Runcat:", rc_entry['id'])
+            print(', '.join(kw + ':' + str(rc_entry[kw]) for kw in
                             ('id', 'wm_ra', 'wm_decl', 'datapoints', 'inactive',
-                              'xtrsrc'))
-            print "\t Associated extractions:"
+                              'xtrsrc')))
+            print("\t Associated extractions:")
             for assoc_entry in sorted(rc_entry['assoc'], key=lambda x:x['image']):
-                print '\t', assoc_entry
-        print
+                print('\t', assoc_entry)
+        print()
 
 
 
@@ -1447,7 +1448,7 @@ class TestMany2Many(unittest.TestCase):
 
         # We will add a handler to the root logger which catches all log
         # output in a buffer.
-        iostream = BytesIO()
+        iostream = StringIO()
         hdlr = logging.StreamHandler(iostream)
         logging.getLogger().addHandler(hdlr)
 

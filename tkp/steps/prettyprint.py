@@ -14,17 +14,17 @@ def prettyprint(transients):
         indent = 8 * " "
         features = ""
         catalogs = ""
-        for key, value in sorted(transient.features.iteritems(),
+        for key, value in sorted(iter(transient.features.items()),
             key=itemgetter(1)):
             try:
                 features += "|" + indent + "%s: %.3f\n" % (key, value)
             except TypeError:  # incorrect format argument
                 features += "|" + indent + "%s: %s\n" % (key, str(value))
-        for key, value in sorted(transient.catalogs.iteritems(),
+        for key, value in sorted(iter(transient.catalogs.items()),
             key=itemgetter(1)):
             catalogs += "|" + indent + "%s: %s\n" % (key, str(value))
         classification = ""
-        for key, value in sorted(transient.classification.iteritems(),
+        for key, value in sorted(iter(transient.classification.items()),
             key=itemgetter(1), reverse=True):
             classification += "|" + indent + "%s: %.1f\n" % (key, value)
         results += """\

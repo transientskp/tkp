@@ -3,8 +3,8 @@
 #
 # Memoization.
 #
-from weakref import WeakKeyDictionary
 from functools import update_wrapper
+from weakref import WeakKeyDictionary
 
 
 class Memoize(object):
@@ -32,6 +32,6 @@ class Memoize(object):
     def delete(self, instance):
         """Forget a memoized value"""
         try:
-            del(self.memo[instance])
+            del (self.memo[instance])
         except KeyError:
             pass

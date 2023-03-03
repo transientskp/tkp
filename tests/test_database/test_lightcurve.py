@@ -104,7 +104,7 @@ class TestLightCurve(unittest.TestCase):
         self.assertEqual(len(runcat_flux_entries), len(lightcurves_sorted_by_ra))
         for idx, flux_summary in enumerate(runcat_flux_entries):
             py_results = db_subs.lightcurve_metrics(lightcurves_sorted_by_ra[idx])
-            for key in flux_summary.keys():
+            for key in list(flux_summary.keys()):
                 self.assertAlmostEqual(flux_summary[key], py_results[-1][key])
 
         #Now check the per-timestep statistics (variability indices)

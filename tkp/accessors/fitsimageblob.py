@@ -49,7 +49,7 @@ class FitsImageBlob(FitsImage):
             data = data[plane].squeeze()
         n_dim = len(data.shape)
         if n_dim != 2:
-            logger.warn(
+            logger.warning(
                 "Loaded datacube with %s dimensions, assuming Stokes I and taking plane 0" % n_dim)
             data = data[0, :, :]
         data = data.transpose()

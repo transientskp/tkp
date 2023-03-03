@@ -56,8 +56,8 @@ class TestAutodetect(unittest.TestCase):
     def test_open(self):
         accessor = tkp.accessors.open(lofarcasatable)
         self.assertEqual(accessor.__class__, LofarCasaImage)
-        self.assertRaises(IOError, tkp.accessors.open, antennafile)
-        self.assertRaises(IOError, tkp.accessors.open, 'doesntexists')
+        self.assertRaises(OSError, tkp.accessors.open, antennafile)
+        self.assertRaises(OSError, tkp.accessors.open, 'doesntexists')
 
     @requires_data(amicasatable)
     def test_isamicasa(self):

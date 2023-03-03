@@ -1,7 +1,7 @@
 import unittest
 import datetime
 import logging
-from io import BytesIO
+from io import StringIO
 from tkp.testutil.decorators import requires_database
 import tkp.db
 from tkp.db.orm import DataSet, Image
@@ -208,7 +208,7 @@ class TestExtractedSource(unittest.TestCase):
 
                 # We will add a handler to the root logger which catches all log
         # output in a buffer.
-        iostream = BytesIO()
+        iostream = StringIO()
         hdlr = logging.StreamHandler(iostream)
         logging.getLogger().addHandler(hdlr)
 
@@ -254,7 +254,7 @@ class TestExtractedSource(unittest.TestCase):
         self.assertEqual(src1.id, src4.id)
         self.assertAlmostEqual(src1.ra, src4.ra)
         del extracted_source_data['x']
-        self.assertRaisesRegexp(
+        self.assertRaisesRegex(
             AttributeError, "missing required data key: x",
             ExtractedSource, data=extracted_source_data, database=self.database)
 

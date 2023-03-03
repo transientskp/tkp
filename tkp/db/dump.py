@@ -47,6 +47,6 @@ def dump_pg(hostname, port, dbname, dbuser, dbpass, output_filename):
             ],
             env=env
         )
-    except Exception, e:
+    except Exception as e:
         logger.error("Failed to dump: %s" % (e,))
         raise

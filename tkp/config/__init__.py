@@ -1,6 +1,6 @@
-from __future__ import absolute_import
 
-from ConfigParser import SafeConfigParser
+
+from configparser import ConfigParser
 import datetime
 import getpass
 import logging
@@ -21,7 +21,7 @@ def initialize_pipeline_config(pipe_cfg_file, job_name=False):
 
     """
     start_time = datetime.datetime.utcnow().replace(microsecond=0).isoformat()
-    config = SafeConfigParser({
+    config = ConfigParser({
         "job_name": job_name,
         "start_time": start_time,
         "cwd": os.getcwd(),

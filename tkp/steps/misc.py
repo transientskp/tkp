@@ -5,7 +5,7 @@ We keep them separately to make the pipeline logic easier to read at a glance.
 """
 
 import datetime
-import ConfigParser
+import configparser
 import logging
 import os
 from pprint import pprint
@@ -25,7 +25,7 @@ def load_job_config(pipe_config):
     Locates the job_params.cfg in 'job_directory' and loads via ConfigParser.
     """
     job_directory = pipe_config['DEFAULT']['job_directory']
-    job_config = ConfigParser.SafeConfigParser()
+    job_config = configparser.ConfigParser()
     job_config.read(os.path.join(job_directory, 'job_params.cfg'))
     return parse_to_dict(job_config)
 
@@ -165,7 +165,7 @@ def group_per_timestep(metadatas):
     for metadata in metadatas:
         grouped_dict[metadata.timestamp].append(metadata)
 
-    grouped_tuple = grouped_dict.items()
+    grouped_tuple = list(grouped_dict.items())
 
     # sort for timestamp
     grouped_tuple.sort()

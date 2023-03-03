@@ -30,7 +30,7 @@ def check_for_valid_ephemeris(measures):
         measures.separation(
             measures.direction("SUN"), measures.direction("SUN")
         )
-    if "WARN" in casacore_stderr.getvalue():
+    if b"WARN" in casacore_stderr.getvalue():
         # casacore sends a warning to stderr if the ephemeris is invalid
         return False
     else:
@@ -60,7 +60,7 @@ def is_bright_source_near(accessor, distance=20):
     # Now check and ensure the ephemeris in use is actually valid for this
     # data.
     if not check_for_valid_ephemeris(m):
-        logger.warn("Bright source check failed due to invalid ephemeris")
+        logger.warning("Bright source check failed due to invalid ephemeris")
         return "Invalid ephemeris"
 
     # Second, you need to set your image pointing.
@@ -68,7 +68,7 @@ def is_bright_source_near(accessor, distance=20):
         "J2000", "%sdeg" % accessor.centre_ra,  "%sdeg"  % accessor.centre_decl
     )
 
-    for name, position in targets.items():
+    for name, position in list(targets.items()):
         if not position:
             direction = m.direction(name)
         else:

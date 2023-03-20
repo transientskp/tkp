@@ -4,8 +4,8 @@
 cff-version: 1.2.0
 title: The LOFAR Transients Pipeline
 message: >-
-  Enhancements of the LOFAR Transients Pipeline ("TraP") as
-  part of PADRE
+  If you use this software, please cite it using the
+  metadata from this file.
 type: software
 authors:
   - given-names: Gijs
@@ -87,7 +87,7 @@ keywords:
   - SQL
   - Image processing
 license: BSD-2-Clause
-commit: 683081f866b48e9408b336420e448e2bcd49114d
+commit: c4a73810602f5a0d2ba4e21bcd5b3aefb0ec7a1a
 version: '5.0'
 date-released: '2022-04-19'
 preferred-citation:

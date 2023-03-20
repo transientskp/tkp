@@ -1,3 +1,6 @@
+# This CITATION.cff file was generated with cffinit.
+# Visit https://bit.ly/cffinit to generate yours today!
+
 cff-version: 1.2.0
 title: The LOFAR Transients Pipeline
 message: >-
@@ -57,6 +60,10 @@ authors:
     email: j.hidding@esciencecenter.nl
     affiliation: The Netherlands eScience Center
     orcid: 'https://orcid.org/0000-0002-7550-1796'
+  - given-names: Hugh
+    family-names: Garsden
+    email: h.garsden@qmul.ac.uk
+    affiliation: Queen Mary University of London
 identifiers:
   - type: doi
     value: 10.1016/j.ascom.2015.03.002
@@ -88,3 +95,4 @@ preferred-citation:
          - family-names: Swinbank, Staley, Molenaar, Rol, Rowlinson, Scheers, Spreeuw, Bell, Broderick, Carbone, Garsden, Van Der Horst, Law, Wise, Breton, Cendes, Corbel, Eislöffel, Falcke, Fender, Griessmeier, Hessels, Stappers, Stewart, Wijers, Wijnands, Zarka
     title: The LOFAR Transients Pipeline 
     doi:  10.1016/j.ascom.2015.03.002
+    type: article

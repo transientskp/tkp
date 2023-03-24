@@ -1,0 +1,98 @@
+# This CITATION.cff file was generated with cffinit.
+# Visit https://bit.ly/cffinit to generate yours today!
+
+cff-version: 1.2.0
+title: The LOFAR Transients Pipeline
+message: >-
+  If you use this software, please cite it using the
+  metadata from this file.
+type: software
+authors:
+  - given-names: Gijs
+    family-names: Molenaar
+    email: gijsmolenaar@gmail.com
+    affiliation: 'http://pythonic.nl'
+    orcid: 'https://orcid.org/0000-0002-6136-3724'
+  - given-names: Tim
+    family-names: Staley
+    email: tim.staley@physics.ox.ac.uk
+    orcid: 'https://orcid.org/0000-0002-4474-5253'
+    affiliation: University of Oxford
+  - orcid: 'https://orcid.org/0000-0001-9445-1846'
+    given-names: John
+    family-names: Swinbank
+    email: john@swinbank.org
+    affiliation: ASTRON
+  - given-names: Bart
+    family-names: Scheers
+    orcid: 'https://orcid.org/0000-0003-3242-6076'
+    email: bartscheers@dataspex.nl
+    affiliation: Dataspex
+  - given-names: Antonia
+    family-names: Rowlinson
+    email: B.A.Rowlinson@uva.nl
+    affiliation: University of Amsterdam
+    orcid: 'https://orcid.org/0000-0002-1195-7022'
+  - given-names: Hanno
+    family-names: Spreeuw
+    email: h.spreeuw@esciencecenter.nl
+    affiliation: The Netherlands eScience Center
+    orcid: 'https://orcid.org/0000-0002-5057-0322'
+  - given-names: Adam
+    family-names: Stewart
+    affiliation: Intelligent Growth Solutions
+  - given-names: Mark
+    family-names: Kuiack
+    orcid: 'https://orcid.org/0000-0002-8899-434X'
+    affiliation: Sygno
+  - given-names: Martin
+    family-names: Hardcastle
+    orcid: 'https://orcid.org/0000-0003-4223-1117'
+    affiliation: University of Hertfordshire
+    email: m.j.hardcastle@herts.ac.uk
+  - given-names: David
+    family-names: Ruhe
+    orcid: 'https://orcid.org/0000-0003-2857-5255'
+    email: d.ruhe@uva.nl
+    affiliation: University of Amsterdam
+  - given-names: Johan
+    family-names: Hidding
+    email: j.hidding@esciencecenter.nl
+    affiliation: The Netherlands eScience Center
+    orcid: 'https://orcid.org/0000-0002-7550-1796'
+  - given-names: Hugh
+    family-names: Garsden
+    email: h.garsden@qmul.ac.uk
+    affiliation: Queen Mary University of London
+identifiers:
+  - type: doi
+    value: 10.1016/j.ascom.2015.03.002
+    description: ' The LOFAR Transients Pipeline '
+  - type: other
+    value: 'http://ascl.net/1412.011'
+    description: ASCL Code Record
+repository-code: 'https://github.com/transientskp/tkp'
+url: 'https://docs.transientskp.org/'
+repository: 'https://github.com/transientskp/pyse'
+abstract: >-
+  The LOFAR Transients Pipeline (or "TraP") is a Python and
+  SQL based system for detecting and responding to transient
+  and variable sources in a stream of astronomical images.
+  It primarily targets LOFAR data, but is also applicable to
+  a range of other instruments.
+keywords:
+  - Radio astronomy
+  - Transient detection
+  - Source association
+  - SQL
+  - Image processing
+license: BSD-2-Clause
+commit: c4a73810602f5a0d2ba4e21bcd5b3aefb0ec7a1a
+version: '5.0'
+date-released: '2022-04-19'
+preferred-citation:
+    authors: 
+         - family-names: Swinbank, Staley, Molenaar, Rol, Rowlinson, Scheers, Spreeuw, Bell, Broderick, Carbone, Garsden, Van Der Horst, Law, Wise, Breton, Cendes, Corbel, Eislöffel, Falcke, Fender, Griessmeier, Hessels, Stappers, Stewart, Wijers, Wijnands, Zarka
+    title: The LOFAR Transients Pipeline 
+    doi:  10.1016/j.ascom.2015.03.002
+    type: article

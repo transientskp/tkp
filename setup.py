@@ -10,7 +10,7 @@ install_requires = """
     python-dateutil
     pytz
     scipy
-    sqlalchemy
+    sqlalchemy==1.4
     alembic
     monotonic
     psutil

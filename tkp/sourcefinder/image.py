@@ -18,7 +18,7 @@ import time
 import dask.array as da
 from scipy.interpolate import interp1d
 import psutil
-from multiprocessing import Pool
+from multiprocessing import Pool, parent_process
 from functools import partial
 
 try:
@@ -963,11 +963,24 @@ class ImageData(object):
         # Iterate over the list of islands and measure the source in each,
         # appending it to the results list.
         results = containers.ExtractionResults()
-        with Pool(psutil.cpu_count()) as p:
-            fit_islands_fixed = partial(ImageData.fit_islands, self.fudge_max_pix_factor,
-                                        self. max_pix_variance_factor, self.beamsize,
-                                        self.correlation_lengths, fixed)
-            fit_results = p.map(fit_islands_fixed, island_list)
+
+        fit_islands_fixed = partial(ImageData.fit_islands, 
+                                self.fudge_max_pix_factor,
+                                self. max_pix_variance_factor, 
+                                self.beamsize,
+                                self.correlation_lengths, 
+                                fixed)
+
+        # This check is necessary for a pipeline.cfg file with
+        # method = "multiproc", to prevent an AssertionError: 
+        # daemonic processes are not allowed to have children.
+        if not parent_process():
+            number_of_processes = psutil.cpu_count()
+            with Pool(number_of_processes) as p:
+                fit_results = p.map(fit_islands_fixed, island_list)
+        else:
+            fit_results = map(fit_islands_fixed, island_list)
+
         for island, fit_result in zip(island_list, fit_results):
             if fit_result:
                 measurement, residual = fit_result

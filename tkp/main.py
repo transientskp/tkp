@@ -1,8 +1,8 @@
 """
 The main pipeline logic, from where all other components are called.
 """
-import imp
 import importlib
+from importlib.machinery import SourceFileLoader
 import logging
 import atexit
 import os
@@ -97,7 +97,8 @@ def load_images(job_name, job_dir):
         tuple: a list of paths
     """
     path = os.path.join(job_dir, 'images_to_process.py')
-    images = imp.load_source('images_to_process', path).images
+    images = SourceFileLoader('images_to_process', 
+                              path).load_module().images
     logger.info("dataset %s contains %s images" % (job_name,
                                                    len(images)))
     return images

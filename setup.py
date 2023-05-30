@@ -4,13 +4,14 @@ from setuptools import setup, find_packages
 install_requires = """
     astropy
     colorlog
+    Jinja2
     numpy
     psycopg2
     python-casacore
     python-dateutil
     pytz
     scipy
-    sqlalchemy==1.4
+    sqlalchemy<2
     alembic
     monotonic
     psutil

@@ -9,11 +9,11 @@ CREATE FUNCTION cartesian(ira DOUBLE PRECISION, idecl DOUBLE PRECISION)
 RETURNS TABLE (x DOUBLE PRECISION, y DOUBLE PRECISION, z DOUBLE PRECISION)
 
 
-{% ifdb postgresql %}
+{% if db.engine == 'postgresql' %}
 AS $$
   SELECT  COS(RADIANS($2)) * COS(RADIANS($1)) AS x
          ,COS(RADIANS($2)) * SIN(RADIANS($1)) AS y
          ,SIN(RADIANS($2)) AS z;
          ;
 $$ LANGUAGE SQL;
-{% endifdb %}
+{% endif %}

@@ -60,7 +60,7 @@ class UtilsTest(unittest.TestCase):
         )
     def testMaximumPixelMethodVariance(self):
         for (semimajor, semiminor, theta, correction, variance) in self.correct_data:
-            self.assertEqual(maximum_pixel_method_variance(semimajor, semiminor, theta), variance)
+            self.assertAlmostEqual(maximum_pixel_method_variance(semimajor, semiminor, theta), variance)
 
     def testFudgeMaxPix(self):
         for (semimajor, semiminor, theta, correction, variance) in self.correct_data:

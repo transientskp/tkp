@@ -1,6 +1,7 @@
 """
 The main pipeline logic, from where all other components are called.
 """
+import imp
 import importlib
 import logging
 import atexit

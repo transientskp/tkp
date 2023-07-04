@@ -334,10 +334,6 @@ class Runningcatalog(Base):
     mon_src = Column(Boolean, nullable=False, server_default=text("false"))
     forcedfits_count = Column(Integer, server_default=text("0"))
 
-    extractedsources = relationship('Extractedsource',
-                                    secondary='assocxtrsource',
-                                    backref='runningcatalogs')
-
     varmetric = relationship("Varmetric", uselist=False, backref="runcat",
                              cascade="all,delete")
 

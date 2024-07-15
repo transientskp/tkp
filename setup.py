@@ -5,7 +5,7 @@ install_requires = """
     astropy
     colorlog
     Jinja2
-    numpy
+    numpy>1.19.5,<2.0.0
     psycopg2
     python-casacore
     python-dateutil

@@ -5,8 +5,8 @@ import shutil
 import unittest
 
 import tkp.bin.pyse
-from tkp.accessors import FitsImage
-from tkp.accessors import sourcefinder_image_from_accessor
+from sourcefinder.accessors.fitsimage import FitsImage
+from sourcefinder.accessors import sourcefinder_image_from_accessor
 from tkp.testutil.data import DATAPATH
 from tkp.testutil.mock import Mock
 

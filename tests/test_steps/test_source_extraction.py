@@ -8,6 +8,7 @@ from tkp.testutil.mock import Mock
 import tkp.steps.source_extraction
 from tkp.db import DataSet
 from tkp.testutil.data import fits_file
+from sourcefinder import accessors
 
 
 class MockImage(Mock):
@@ -32,7 +33,7 @@ class TestSourceExtraction(unittest.TestCase):
     @requires_data(fits_file)
     def test_extract_sources(self):
         image_path = fits_file
-        accessor = tkp.accessors.open(image_path)
+        accessor = accessors.open(image_path)
         tkp.steps.source_extraction.extract_sources(accessor, self.parset)
 
     @requires_data(fits_file)
@@ -46,7 +47,7 @@ class TestSourceExtraction(unittest.TestCase):
         mock_method = Mock(MockImage([]))
         orig_method = tkp.steps.source_extraction.sourcefinder_image_from_accessor
         tkp.steps.source_extraction.sourcefinder_image_from_accessor = mock_method
-        accessor = tkp.accessors.open(image_path)
+        accessor = accessors.open(image_path)
         tkp.steps.source_extraction.extract_sources(accessor, self.parset)
         tkp.steps.source_extraction.sourcefinder_image_from_accessor = orig_method
 

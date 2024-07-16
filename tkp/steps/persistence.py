@@ -9,7 +9,7 @@ from tempfile import NamedTemporaryFile
 from astropy.io.fits import open as fits_open
 from casacore.images import image as casacore_image
 
-import tkp.accessors
+import sourcefinder.accessors
 from tkp.db.database import Database
 from tkp.db.orm import DataSet, Image
 from tkp.quality.rms import rms_with_clipped_subregion
@@ -98,7 +98,7 @@ def get_accessors(images):
     results = []
     for image in images:
         try:
-            accessor = tkp.accessors.open(image)
+            accessor = sourcefinder.accessors.open(image)
         except TypeError as e:
             logger.error("Can't open image %s: %s" % (image, e))
             raise

@@ -9,8 +9,9 @@ from configparser import ConfigParser
 from tkp.config import parse_to_dict
 import astropy.io.fits as pyfits
 from casacore.tables import table as casacore_table
-import tkp.accessors.detection
-from tkp.accessors import FitsImage, LofarCasaImage
+import sourcefinder.accessors.detection
+from sourcefinder.accessors.fitsimage import FitsImage
+from sourcefinder.accessors.lofarcasaimage import LofarCasaImage
 
 import logging
 
@@ -109,7 +110,7 @@ def main():
                         % target_file)
             continue
         logger.info("injecting data into %s" % target_file)
-        accessor_class = tkp.accessors.detection.detect(target_file)
+        accessor_class = sourcefinder.accessors.detection.detect(target_file)
         if FitsImage in accessor_class.mro():
             modify_fits_headers(new_hdr_entries, target_file, overwrite)
         elif accessor_class == LofarCasaImage:

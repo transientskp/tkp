@@ -1,5 +1,5 @@
 import logging
-from tkp.accessors import sourcefinder_image_from_accessor
+from sourcefinder.accessors import sourcefinder_image_from_accessor
 from tkp.db import general as dbgen
 from tkp.db import monitoringlist as dbmon
 from tkp.db import nulldetections as dbnd

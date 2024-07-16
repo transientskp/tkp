@@ -5,7 +5,7 @@ import tkp.testutil.data as testdata
 from tkp.testutil.decorators import requires_database, requires_data
 import tkp.db
 import tkp.db.generic
-import tkp.accessors
+import sourcefinder.accessors
 from configparser import ConfigParser
 
 from tkp.config import parse_to_dict, initialize_pipeline_config
@@ -26,7 +26,7 @@ class TestPersistence(unittest.TestCase):
         dataset = tkp.db.DataSet(data={'description': "Test persistence"})
         cls.dataset_id = dataset.id
         cls.images = [datafile]
-        cls.accessors = [tkp.accessors.open(datafile)]
+        cls.accessors = [sourcefinder.accessors.open(datafile)]
         cls.extraction_radius = 256
         job_config = ConfigParser()
         job_config.read(default_job_config)

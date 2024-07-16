@@ -30,9 +30,9 @@ import astropy.io.fits as pyfits
 
 import logging
 
-from tkp.accessors import open as open_accessor
-from tkp.accessors import sourcefinder_image_from_accessor
-from tkp.accessors import writefits as tkp_writefits
+from sourcefinder.accessors import open as open_accessor
+from sourcefinder.accessors import sourcefinder_image_from_accessor
+from sourcefinder.accessors import writefits as tkp_writefits
 from sourcefinder.utils import generate_result_maps
 from tkp.management import parse_monitoringlist_positions
 

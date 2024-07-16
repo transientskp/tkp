@@ -18,7 +18,7 @@ install_requires = """
     pytest
     dask
     dask[array]
-    radio-pyse
+    radio-pyse>=0.3.1
     """.split()
 
 tkp_scripts = [

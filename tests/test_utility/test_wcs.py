@@ -1,7 +1,7 @@
 import unittest
 
 from tkp.utility import coordinates
-from tkp.sourcefinder import extract
+from sourcefinder import extract
 from tkp.utility.uncertain import Uncertain
 
 

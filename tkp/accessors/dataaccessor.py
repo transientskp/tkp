@@ -25,7 +25,7 @@ class DataAccessor(object, metaclass=RequiredAttributesMetaclass):
         # *le sigh*
         """
         Base class for accessors used with
-        :class:`tkp.sourcefinder.image.ImageData`.
+        :class:`sourcefinder.image.ImageData`.
 
         Data accessors provide a uniform way for the ImageData class (ie,
         generic image representation) to access the various ways in which

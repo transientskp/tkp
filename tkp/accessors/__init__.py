@@ -8,7 +8,7 @@ These can be used to populate ImageData objects based on some data source
 import os
 from astropy.io.fits.hdu.hdulist import HDUList
 import astropy.io.fits as pyfits
-from tkp.sourcefinder.image import ImageData
+from sourcefinder.image import ImageData
 from tkp.accessors.dataaccessor import DataAccessor
 from tkp.accessors.fitsimage import FitsImage
 from tkp.accessors.casaimage import CasaImage
@@ -28,7 +28,7 @@ def sourcefinder_image_from_accessor(image, **args):
           an accessor.
 
     Returns:
-        (:class:`tkp.sourcefinder.image.ImageData`): a source finder image.
+        (:class:`sourcefinder.image.ImageData`): a source finder image.
     """
     image = ImageData(image.data, image.beam, image.wcs, **args)
     return image

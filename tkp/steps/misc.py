@@ -119,7 +119,7 @@ def setup_logging(log_dir, debug, use_colorlog,
 
     logger.info("logging to %s" % log_dir)
     # Suppress noisy streams
-    logging.getLogger('tkp.sourcefinder.image.sigmaclip').setLevel(logging.INFO)
+    logging.getLogger('sourcefinder.image.sigmaclip').setLevel(logging.INFO)
 
 
 def dump_database_backup(db_config, job_dir):

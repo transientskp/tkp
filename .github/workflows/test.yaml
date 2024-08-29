@@ -13,32 +13,28 @@ jobs:
   pytest:
     runs-on: ubuntu-latest
 
-    container:
-      image: ubuntu-latest
-      options: --user root
-
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
       - name: Install python+pip and PostgreSQL
         run: |
-          apt-get update
-          apt-get install -y python3 python3-pip
-          apt-get install -y postgresql libpq-dev
+          sudo apt-get update
+          sudo apt-get install -y python3 python3-pip
+          sudo apt-get install -y postgresql libpq-dev
 
       - name: Start sql service
-        run: service postgresql start
+        run: sudo service postgresql start
 
       - name: Create db user and install python dependencies
         run: |
-          su - postgres -c "psql -c 'CREATE DATABASE testdb;'"
-          su - postgres -c "psql -c \"CREATE USER root WITH PASSWORD 'test_pw';\""
+          sudo su - postgres -c "psql -c 'CREATE DATABASE testdb;'"
+          sudo su - postgres -c "psql -c \"CREATE USER root WITH PASSWORD 'test_pw';\""
           python3 -m pip install -e ./
 
       - name: Initialize test data submodule
         run: |
-          apt-get install -y git
+          sudo apt-get install -y git
           git clone https://github.com/transientskp/trap-test-data.git tests/data
 
       - name: Initialize trap db

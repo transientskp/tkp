@@ -14,11 +14,10 @@ jobs:
     runs-on: ubuntu-latest
 
     container:
-      image: quay.io/casacore/casacore
+      image: ubuntu-latest
       options: --user root
 
     steps:
-
       - name: Checkout code
         uses: actions/checkout@v4
 

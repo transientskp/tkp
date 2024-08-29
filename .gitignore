@@ -5,3 +5,4 @@ dist/
 tkp.egg-info/
 .virtualenv/
 .virtualenv3/
+*/__pycache__/

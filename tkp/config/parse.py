@@ -21,7 +21,7 @@ loads_methods = (ast.literal_eval,
                   loads_timestamp_w_microseconds)
 
 
-def parse_to_dict(config):
+def parse_to_dict(config, comment_delimiter=";"):
     """Loads the ConfigParser object as a nested dictionary.
     
     Automatically converts strings representing ints and floats to their
@@ -38,6 +38,7 @@ def parse_to_dict(config):
     
     Args:
       config: A ConfigParser object.
+      comment_delimiter: A character to be used mark a comment. Can be ``None``, default: ``';'``.
       
     Returns:
         Nested dict {sections -> keys -> values } representing parsed params.
@@ -54,6 +55,8 @@ def parse_to_dict(config):
         if section_name not in pars:
             pars[section_name] = adict()
         for k, rawval in config.items(section_name):
+            if comment_delimiter is not None:
+                rawval = rawval.split(comment_delimiter)[0]
             val = rawval
             for func in loads_methods:
                 try:

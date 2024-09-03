@@ -5,8 +5,8 @@ import logging
 import tkp.db.quality
 import tkp.quality
 import tkp.quality.brightsource
-from tkp.accessors import AartfaacCasaImage
-from tkp.accessors.lofaraccessor import LofarAccessor
+from sourcefinder.accessors.aartfaaccasaimage import AartfaacCasaImage
+from sourcefinder.accessors.lofaraccessor import LofarAccessor
 from tkp.db import Database
 from tkp.telescope.aartfaac.quality import reject_check_aartfaac
 from tkp.telescope.generic.quality import reject_check_generic_data

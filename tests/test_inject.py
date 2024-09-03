@@ -4,13 +4,13 @@ import tempfile
 import shutil
 from configparser import ConfigParser
 import tkp
-import tkp.accessors
+import sourcefinder.accessors
 import tkp.inject
 from tkp.testutil.data import DATAPATH
 from tkp.config import parse_to_dict
 from tkp.testutil.data import default_header_inject_config
-from tkp.accessors.lofaraccessor import LofarAccessor
-from tkp.accessors.dataaccessor import DataAccessor
+from sourcefinder.accessors.lofaraccessor import LofarAccessor
+from sourcefinder.accessors.dataaccessor import DataAccessor
 
 fits_file = os.path.join(DATAPATH, 'inject/missingheaders.fits')
 lofar_casatable = os.path.join(DATAPATH, 'casatable/L55596_000TO009_skymodellsc_wmax6000_noise_mult10_cell40_npix512_wplanes215.img.restored.corr')
@@ -34,7 +34,7 @@ class TestFitsInject(unittest.TestCase):
         parset = parse_to_dict(c)['inject']
 
         tkp.inject.modify_fits_headers(parset, self.fixed_file, overwrite=True)
-        fixed_fits = tkp.accessors.open(self.fixed_file)
+        fixed_fits = sourcefinder.accessors.open(self.fixed_file)
         self.assertTrue(isinstance(fixed_fits, DataAccessor))
         self.assertTrue(isinstance(fixed_fits, LofarAccessor))
 
@@ -52,13 +52,13 @@ class TestLofarCasaInject(unittest.TestCase):
         shutil.rmtree(cls.temp_dir)
 
     def test_no_injection(self):
-        original_ms = tkp.accessors.open(lofar_casatable)
+        original_ms = sourcefinder.accessors.open(lofar_casatable)
         self.assertAlmostEqual(original_ms.tau_time, 58141509)
 
     def test_tau_time_injection(self):
         inject_dict = {'tau_time' : 42 }
         tkp.inject.modify_lofarcasa_tau_time(inject_dict, self.fixed_ms)
-        fixed_ms = tkp.accessors.open(self.fixed_ms)
+        fixed_ms = sourcefinder.accessors.open(self.fixed_ms)
         self.assertTrue(isinstance(fixed_ms, DataAccessor))
         self.assertTrue(isinstance(fixed_ms, LofarAccessor))
         self.assertAlmostEqual(fixed_ms.tau_time, inject_dict['tau_time'])

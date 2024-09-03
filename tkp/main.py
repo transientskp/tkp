@@ -328,7 +328,7 @@ def timestamp_step(runner, images, job_config, dataset_id, copy_images):
 
     args:
          runner (tkp.distribute.Runner): Runner to use for distribution
-         images (tuple): list of things tkp.accessors can handle, like image
+         images (tuple): list of things sourcefinder.accessors can handle, like image
                         paths or fits objects
          job_config: a tkp job config object
          dataset_id (int): The ``tkp.db.model.Dataset`` id

@@ -1,5 +1,5 @@
 import logging
-from tkp.accessors import sourcefinder_image_from_accessor
+from sourcefinder.accessors import sourcefinder_image_from_accessor
 from collections import namedtuple
 
 logger = logging.getLogger(__name__)

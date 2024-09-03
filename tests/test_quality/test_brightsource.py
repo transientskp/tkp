@@ -5,7 +5,6 @@ import unittest
 import datetime
 
 import tkp.quality.brightsource
-import tkp.accessors
 from tkp.testutil.mock import SyntheticImage, make_wcs
 
 class TestEphemeris(unittest.TestCase):

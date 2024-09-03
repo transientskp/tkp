@@ -1,0 +1,44 @@
+name: PyTest
+on:
+  push:
+    branches:
+      - "*"
+
+env:
+  TKP_DBNAME: testdb
+  TKP_DBUSER: root
+  TKP_DBPASSWORD: test_pw
+
+jobs:
+  pytest:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install python+pip and PostgreSQL
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y python3 python3-pip
+          sudo apt-get install -y postgresql libpq-dev
+
+      - name: Start sql service
+        run: sudo service postgresql start
+
+      - name: Create db user and install python dependencies
+        run: |
+          sudo su - postgres -c "psql -c 'CREATE DATABASE testdb;'"
+          sudo su - postgres -c "psql -c \"CREATE USER root WITH PASSWORD 'test_pw';\""
+          python3 -m pip install -e ./
+
+      - name: Initialize test data submodule
+        run: |
+          sudo apt-get install -y git
+          git clone https://github.com/transientskp/trap-test-data.git tests/data
+
+      - name: Initialize trap db
+        run: trap-manage.py initdb -y
+
+      - name: Run pytest
+        run: python3 -m pytest tests --verbose

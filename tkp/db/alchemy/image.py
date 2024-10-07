@@ -1,7 +1,7 @@
 import math
 from datetime import datetime
+from sourcefinder.utility.coordinates import eq_to_cart
 from tkp.db.model import Frequencyband, Skyregion, Image, Dataset
-from tkp.utility.coordinates import eq_to_cart
 from sqlalchemy import func, cast
 from sqlalchemy.dialects.postgresql import DOUBLE_PRECISION as Double
 

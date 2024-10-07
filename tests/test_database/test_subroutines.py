@@ -2,10 +2,10 @@ import math
 
 import unittest
 
+from sourcefinder.utility.coordinates import eq_to_cart as py_cartesian
 import tkp.db
 from tkp.testutil.decorators import requires_database
 from tkp.testutil.db_queries import convert_to_cartesian as db_cartesian
-from tkp.utility.coordinates import eq_to_cart as py_cartesian
 
 """Test miscellaneous minor database functions"""
 

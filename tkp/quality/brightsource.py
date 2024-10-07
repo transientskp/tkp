@@ -2,7 +2,7 @@ import sys
 import logging
 from io import BytesIO
 from casacore.measures import measures
-from tkp.utility.coordinates import unix2julian
+from sourcefinder.utility.coordinates import unix2julian
 from tkp.utility.redirect_stream import redirect_stream
 
 logger = logging.getLogger(__name__)

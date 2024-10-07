@@ -11,11 +11,11 @@ import math
 
 import tkp.db
 from datetime import datetime
+from sourcefinder.utility.coordinates import alpha_inflate
+from sourcefinder.utility.coordinates import eq_to_cart
 from tkp.db.alchemy.image import insert_dataset as alchemy_insert_dataset
 from tkp.db.generic import columns_from_table
 from tkp.utility import substitute_inf
-from tkp.utility.coordinates import alpha_inflate
-from tkp.utility.coordinates import eq_to_cart
 
 logger = logging.getLogger(__name__)
 

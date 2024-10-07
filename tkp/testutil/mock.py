@@ -3,7 +3,7 @@ Mock / synthetic data objects for use in testing.
 """
 import numpy as np
 from sourcefinder.accessors.dataaccessor import DataAccessor
-from tkp.utility.coordinates import WCS
+from sourcefinder.utility.coordinates import WCS
 import datetime
 
 class Mock(object):

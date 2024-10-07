@@ -2,6 +2,8 @@ import logging
 from collections import namedtuple
 
 import datetime, math
+
+import sourcefinder.utility.coordinates as coords
 import tkp.db
 from tkp.db.generic import get_db_rows_as_dicts
 from tkp.db.database import Database
@@ -10,8 +12,6 @@ from tkp.db.general import insert_extracted_sources
 from tkp.db import general as dbgen
 from tkp.db import nulldetections
 import tkp.testutil.data as testdata
-
-import tkp.utility.coordinates as coords
 
 ExtractedSourceTuple = namedtuple("ExtractedSourceTuple",
                                 ['ra', 'dec' ,
